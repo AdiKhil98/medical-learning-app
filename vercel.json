@@ -1,0 +1,17 @@
+{
+  "buildCommand": "expo export --platform web",
+  "outputDirectory": "dist",
+  "devCommand": "expo start --web",
+  "installCommand": "npm install",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
