@@ -1,0 +1,36 @@
+import React from 'react';
+import { Stack } from 'expo-router';
+
+export default function BibliothekLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: true,
+        headerStyle: { backgroundColor: '#F9FAFB' },
+        headerTintColor: '#1F2937',
+        headerTitleStyle: { fontFamily: 'Inter-Bold' as any },
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false, // hide header on root list
+        }}
+      />
+      <Stack.Screen
+        name="[slug]"
+        options={({ route }) => ({
+          headerTitle: route.params.slug as string,
+          headerBackTitleVisible: false,
+        })}
+      />
+      <Stack.Screen
+        name="content/[slug]"
+        options={({ route }) => ({
+          headerTitle: route.params.slug as string,
+          headerBackTitleVisible: false,
+        })}
+      />
+    </Stack>
+  );
+}
