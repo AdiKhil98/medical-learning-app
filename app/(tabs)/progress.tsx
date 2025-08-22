@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { BookOpen, Award, Target, Plus } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '../../components/ui/Card';
 import { supabase } from '../../lib/supabase';
@@ -19,6 +20,7 @@ interface Evaluation {
 
 export default function ProgressScreen() {
   const { colors, isDarkMode } = useTheme();
+  const { user } = useAuth();
   const [caseCount, setCaseCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -344,13 +346,15 @@ export default function ProgressScreen() {
           <Card style={dynamicStyles.evaluationCard}>
             <View style={dynamicStyles.evaluationHeader}>
               <Text style={dynamicStyles.evaluationTitle}>Bewertungen</Text>
-              <TouchableOpacity
-                style={dynamicStyles.addButton}
-                onPress={() => setShowAddForm(!showAddForm)}
-              >
-                <Plus size={14} color="#FFFFFF" />
-                <Text style={dynamicStyles.addButtonText}>Hinzufügen</Text>
-              </TouchableOpacity>
+              {user?.role === 'admin' && (
+                <TouchableOpacity
+                  style={dynamicStyles.addButton}
+                  onPress={() => setShowAddForm(!showAddForm)}
+                >
+                  <Plus size={14} color="#FFFFFF" />
+                  <Text style={dynamicStyles.addButtonText}>Hinzufügen</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {showAddForm && (
@@ -415,7 +419,7 @@ export default function ProgressScreen() {
                 <Target size={32} color={colors.textSecondary} />
                 <Text style={dynamicStyles.emptyText}>
                   Noch keine Bewertungen vorhanden.{'\n'}
-                  Bewertungen werden automatisch über das Make.com Szenario hinzugefügt.
+                  Bewertungen werden automatisch nach Abschluss von Simulationen hinzugefügt.
                 </Text>
               </View>
             ) : (
