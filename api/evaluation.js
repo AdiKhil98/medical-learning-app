@@ -2,44 +2,42 @@
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   
+  console.log('Request method:', req.method);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
-  if (req.method === 'GET') {
-    return res.status(200).json({ 
-      status: 'Webhook endpoint is active and working',
-      timestamp: new Date().toISOString(),
-      method: 'GET',
-      required_fields: ['user_id', 'evaluation_name', 'score']
-    });
-  }
-  
-  if (req.method === 'POST') {
+  // Accept both GET and POST
+  if (req.method === 'GET' || req.method === 'POST') {
+    
+    if (req.method === 'GET') {
+      return res.status(200).json({ 
+        status: 'Webhook endpoint is active and working',
+        timestamp: new Date().toISOString(),
+        method: req.method,
+        supported_methods: ['GET', 'POST'],
+        required_fields: ['user_id', 'evaluation_name', 'score']
+      });
+    }
+    
+    // Handle POST
     try {
-      const data = req.body;
-      console.log('Webhook received data:', data);
+      const data = req.body || {};
+      console.log('Processing POST data:', data);
       
-      // Validate required fields
-      if (!data.user_id || !data.evaluation_name || !data.score) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required fields: user_id, evaluation_name, score'
-        });
-      }
-      
-      // For now, just return success (we'll add Supabase integration later)
+      // Return success even with missing fields for testing
       return res.status(200).json({ 
         success: true,
-        message: 'Evaluation data received successfully',
-        received_data: {
-          user_id: data.user_id,
-          evaluation_name: data.evaluation_name,
-          score: data.score
-        },
+        message: 'Webhook received data successfully',
+        method: req.method,
+        received_data: data,
         timestamp: new Date().toISOString()
       });
       
@@ -53,8 +51,12 @@ export default async function handler(req, res) {
     }
   }
   
-  return res.status(405).json({ 
-    success: false,
-    error: 'Method not allowed' 
+  // Log unsupported method
+  console.log('Unsupported method:', req.method);
+  return res.status(200).json({ 
+    message: 'Webhook endpoint reached',
+    method: req.method,
+    supported_methods: ['GET', 'POST'],
+    timestamp: new Date().toISOString()
   });
 }
