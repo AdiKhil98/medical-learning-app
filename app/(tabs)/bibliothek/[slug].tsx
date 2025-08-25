@@ -46,7 +46,7 @@ export default function SectionDetailScreen() {
       const { data: cur, error: curErr } = await supabase
         .from('sections')
         .select('*, content_improved, content_html')
-        .eq('title', slug)
+        .eq('slug', slug)
         .maybeSingle();
       if (curErr) throw curErr;
       if (!cur) throw new Error('Section not found');
@@ -77,11 +77,11 @@ export default function SectionDetailScreen() {
 
       setCurrent(cur);
 
-      // 4) Fetch direct children only - use parent title instead of parent_slug
+      // 4) Fetch direct children only
       const { data: kids, error: kidsErr } = await supabase
         .from('sections')
         .select('*')
-        .eq('parent_slug', slug)  // Keep this as parent_slug since it's the structure field
+        .eq('parent_slug', slug)
         .order('display_order', { ascending: true });
       if (kidsErr) throw kidsErr;
       console.log(`Fetched ${kids?.length || 0} children for "${slug}"`);
@@ -212,12 +212,12 @@ export default function SectionDetailScreen() {
         ) : (
           children.map((sec) => (
             <TouchableOpacity
-              key={sec.title}
+              key={sec.slug}
               style={dynamicStyles.item}
               onPress={() =>
                 router.push({
                   pathname: '/bibliothek/[slug]',
-                  params: { slug: sec.title },
+                  params: { slug: sec.slug },
                 })
               }
               activeOpacity={0.7}

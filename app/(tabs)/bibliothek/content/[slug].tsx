@@ -67,7 +67,7 @@ export default function ContentDetailScreen() {
       const { data: sectionData, error: sectionError } = await supabase
         .from('sections')
         .select('content_improved, content_html, title, description')
-        .eq('title', slug)
+        .eq('slug', slug)
         .maybeSingle();
 
       if (sectionError) throw sectionError;

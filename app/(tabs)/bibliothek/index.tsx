@@ -79,8 +79,8 @@ export default function IndexScreen() {
   // Navigate into folder or content
   const navigateTo = (sec: Section) => {
     const isLeaf = sec.type === 'file-text' || sec.type === 'markdown';
-    if (isLeaf) router.push(`/bibliothek/content/${sec.title}`);
-    else router.push(`/bibliothek/${sec.title}`);
+    if (isLeaf) router.push(`/bibliothek/content/${sec.slug}`);
+    else router.push(`/bibliothek/${sec.slug}`);
   };
 
   // Filter root sections by search

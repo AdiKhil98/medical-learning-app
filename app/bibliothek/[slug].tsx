@@ -119,7 +119,7 @@ export default function SectionDetailScreen() {
       const { data: currentSectionData, error: currentSectionError } = await supabase
         .from('sections')
         .select('*')
-        .eq('title', slug)
+        .eq('slug', slug)
         .maybeSingle();
 
       if (currentSectionError) {
@@ -239,9 +239,9 @@ export default function SectionDetailScreen() {
           onPress={() => {
             if (isLeafNode) {
               // Navigate to content view
-              navigateToSection(section.title);
+              navigateToSection(section.slug);
             } else if (hasChildren) {
-              toggleSection(section.title);
+              toggleSection(section.slug);
             }
           }}
           activeOpacity={0.7}
