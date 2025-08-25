@@ -33,7 +33,8 @@ interface Section {
   color: string;
   display_order: number;
   content_details?: string;
-  content_json?: any;
+  content_improved?: any;
+  content_html?: string;
   content_type?: string;
   has_content?: boolean;
   hierarchy_level?: number;
@@ -65,8 +66,8 @@ export default function ContentDetailScreen() {
     try {
       const { data: sectionData, error: sectionError } = await supabase
         .from('sections')
-        .select('content_json, title, description')
-        .eq('slug', slug)
+        .select('content_improved, content_html, title, description')
+        .eq('title', slug)
         .maybeSingle();
 
       if (sectionError) throw sectionError;
@@ -74,8 +75,8 @@ export default function ContentDetailScreen() {
       
       setCurrentSection(sectionData);
       
-      // Auto-expand first section if content_json exists
-      if (Array.isArray(sectionData.content_json) && sectionData.content_json.length > 0) {
+      // Auto-expand first section if content_improved exists
+      if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
         setExpandedSections({ '0': true });
       }
     } catch (e: any) {
@@ -149,9 +150,16 @@ export default function ContentDetailScreen() {
               </View>
             )}
             
-            {contentSection.content && (
+            {/* Render HTML content if available, otherwise use regular text */}
+            {currentSection.content_html ? (
+              <View style={dynamicStyles.htmlContainer}>
+                <Text style={dynamicStyles.htmlNote}>📋 Enhanced content view</Text>
+                <Text style={dynamicStyles.contentText}>{contentSection.content}</Text>
+                {/* TODO: Add proper HTML rendering with react-native-webview or similar */}
+              </View>
+            ) : contentSection.content ? (
               <Text style={dynamicStyles.contentText}>{contentSection.content}</Text>
-            )}
+            ) : null}
             
             {contentSection.type === 'list' && contentSection.items && (
               <View style={dynamicStyles.listContainer}>
@@ -343,6 +351,20 @@ export default function ContentDetailScreen() {
     errorLink: {
       color: colors.primary,
     },
+    htmlContainer: {
+      marginTop: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 12,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.primary,
+    },
+    htmlNote: {
+      fontSize: 12,
+      color: colors.primary,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
   });
 
   if (loading) {
@@ -375,7 +397,7 @@ export default function ContentDetailScreen() {
     );
   }
 
-  const contentSections = currentSection.content_json || [];
+  const contentSections = currentSection.content_improved || [];
 
   return (
     <SafeAreaView style={dynamicStyles.container}>

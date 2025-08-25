@@ -45,29 +45,29 @@ export default function SectionDetailScreen() {
       // 1) Fetch current section
       const { data: cur, error: curErr } = await supabase
         .from('sections')
-        .select('*, content_json')
-        .eq('slug', slug)
+        .select('*, content_improved, content_html')
+        .eq('title', slug)
         .maybeSingle();
       if (curErr) throw curErr;
       if (!cur) throw new Error('Section not found');
 
-      // 2) Check if this section has content_json with data
-      if (Array.isArray(cur.content_json) && cur.content_json.length > 0) {
+      // 2) Check if this section has content_improved with data
+      if (Array.isArray(cur.content_improved) && cur.content_improved.length > 0) {
         router.replace(`/bibliothek/content/${slug}`);
         return;
       }
 
       // 3) Check if this is a leaf section with other content indicators
-      const hasContentJson = cur.content_json && 
-        Array.isArray(cur.content_json.sections) && 
-        cur.content_json.sections.length > 0;
+      const hasContentImproved = cur.content_improved && 
+        Array.isArray(cur.content_improved.sections) && 
+        cur.content_improved.sections.length > 0;
 
       const isLeaf = 
         cur.type === 'file-text' ||
         cur.type === 'markdown' ||
         cur.content_type === 'document' ||
         cur.has_content ||
-        hasContentJson;
+        hasContentImproved;
 
       if (isLeaf) {
         // Redirect to content viewer
@@ -77,11 +77,11 @@ export default function SectionDetailScreen() {
 
       setCurrent(cur);
 
-      // 4) Fetch direct children only
+      // 4) Fetch direct children only - use parent title instead of parent_slug
       const { data: kids, error: kidsErr } = await supabase
         .from('sections')
         .select('*')
-        .eq('parent_slug', slug)
+        .eq('parent_slug', slug)  // Keep this as parent_slug since it's the structure field
         .order('display_order', { ascending: true });
       if (kidsErr) throw kidsErr;
       console.log(`Fetched ${kids?.length || 0} children for "${slug}"`);
@@ -212,12 +212,12 @@ export default function SectionDetailScreen() {
         ) : (
           children.map((sec) => (
             <TouchableOpacity
-              key={sec.slug}
+              key={sec.title}
               style={dynamicStyles.item}
               onPress={() =>
                 router.push({
                   pathname: '/bibliothek/[slug]',
-                  params: { slug: sec.slug },
+                  params: { slug: sec.title },
                 })
               }
               activeOpacity={0.7}
