@@ -218,7 +218,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               onPress={() => handleMenuItemPress('/feedback')}
             >
               <Bug size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Report a Bug</Text>
+              <Text style={dynamicStyles.menuItemText}>Fehler melden</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
