@@ -5,6 +5,7 @@ import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
+import { getDailyContent } from '@/lib/dailyContentHelper';
 import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -59,30 +60,24 @@ export default function DashboardScreen() {
           setUserData(data);
         }
 
-        // Fetch today's tip
-        const { data: tipData, error: tipError } = await supabase
-          .from('daily_tips')
-          .select('*')
-          .eq('date', new Date().toISOString().split('T')[0])
-          .maybeSingle();
+        // Get daily content with automatic generation if missing
+        const { tip, question, tipError, questionError } = await getDailyContent();
+        
+        console.log('Daily content retrieved:', { 
+          tipFound: !!tip, 
+          questionFound: !!question,
+          tipTitle: tip?.title,
+          questionText: question?.question 
+        });
 
-        if (tipError && tipError.code !== 'PGRST116') {
-          console.error('Error fetching daily tip:', tipError);
-        } else {
-          setDailyTip(tipData);
+        setDailyTip(tip);
+        setDailyQuestion(question);
+
+        if (tipError) {
+          console.error('Error with daily tip:', tipError);
         }
-
-        // Fetch today's question
-        const { data: questionData, error: questionError } = await supabase
-          .from('daily_questions')
-          .select('*')
-          .eq('date', new Date().toISOString().split('T')[0])
-          .maybeSingle();
-
-        if (questionError && questionError.code !== 'PGRST116') {
-          console.error('Error fetching daily question:', questionError);
-        } else {
-          setDailyQuestion(questionData);
+        if (questionError) {
+          console.error('Error with daily question:', questionError);
         }
       } catch (error) {
         console.error('Error loading dashboard data', error);
