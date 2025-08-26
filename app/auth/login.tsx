@@ -4,14 +4,14 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 
 export default function Login() {
-  const [email, setEmail] = useState('kheadi10@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
       return;
     }
 
@@ -25,15 +25,15 @@ export default function Login() {
 
       if (error) {
         console.log('Login error:', error.message);
-        Alert.alert('Login Failed', error.message);
+        Alert.alert('Anmeldung fehlgeschlagen', error.message);
       } else if (data.user) {
         console.log('Login successful!');
-        Alert.alert('Success', 'Login successful!');
+        Alert.alert('Erfolgreich', 'Anmeldung erfolgreich!');
         router.replace('/(tabs)');
       }
     } catch (err: any) {
       console.log('Login exception:', err.message);
-      Alert.alert('Error', 'An unexpected error occurred');
+      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setLoading(false);
     }
@@ -41,11 +41,11 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Anmelden</Text>
       
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="E-Mail"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -56,7 +56,7 @@ export default function Login() {
       
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Passwort"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -69,7 +69,7 @@ export default function Login() {
         disabled={loading}
       >
         <Text style={styles.buttonText}>
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Wird angemeldet...' : 'Anmelden'}
         </Text>
       </TouchableOpacity>
     </View>
