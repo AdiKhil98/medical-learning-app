@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, BookOpen, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,11 +21,8 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const { user } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
-  const [isBibliothekOpen, setIsBibliothekOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
   const submenuHeightAnim = React.useRef(new Animated.Value(0)).current;
-  const bibliothekRotateAnim = React.useRef(new Animated.Value(0)).current;
-  const bibliothekHeightAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     Animated.timing(slideAnim, {
@@ -52,23 +49,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     setIsSubmenuOpen(!isSubmenuOpen);
   };
 
-  const toggleBibliothek = () => {
-    const toValue = isBibliothekOpen ? 0 : 1;
-    Animated.parallel([
-      Animated.timing(bibliothekRotateAnim, {
-        toValue,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(bibliothekHeightAnim, {
-        toValue,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-    setIsBibliothekOpen(!isBibliothekOpen);
-  };
-
   const menuItems = [
     { icon: Home, label: 'Dashboard', route: '/' },
     { icon: Bell, label: 'Updates', route: '/updates' },
@@ -76,12 +56,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     { icon: Settings, label: 'Profil', route: '/profile' },
   ];
 
-  const bibliothekItems = [
-    { label: 'Anatomie', route: '/bibliothek/anatomie-herz', color: '#0077B6' },
-    { label: 'Kardiologie', route: '/bibliothek/ekg-grundlagen', color: '#EF4444' },
-    { label: 'Radiologie', route: '/bibliothek/bildgebung-thorax', color: '#22C55E' },
-    { label: 'Sonographie', route: '/bibliothek/sono-abdomen', color: '#48CAE4' },
-  ];
 
   const submenuItems = [
     { label: 'Hilfe & Support', route: '/help' },
@@ -102,19 +76,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     outputRange: ['0deg', '180deg'],
   });
 
-  const bibliothekRotateInterpolate = bibliothekRotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
   const submenuHeightInterpolate = submenuHeightAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, submenuItems.length * 44],
-  });
-
-  const bibliothekHeightInterpolate = bibliothekHeightAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, bibliothekItems.length * 44],
   });
 
   const gradientColors = isDarkMode 
@@ -222,30 +186,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 <Text style={dynamicStyles.menuItemText}>{item.label}</Text>
               </TouchableOpacity>
             ))}
-
-            <TouchableOpacity
-              style={dynamicStyles.menuItem}
-              onPress={toggleBibliothek}
-            >
-              <BookOpen size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Bibliothek</Text>
-              <Animated.View style={{ transform: [{ rotate: bibliothekRotateInterpolate }] }}>
-                <ChevronDown size={20} color={colors.text} />
-              </Animated.View>
-            </TouchableOpacity>
-
-            <Animated.View style={[styles.submenu, { height: bibliothekHeightInterpolate }]}>
-              {bibliothekItems.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={dynamicStyles.submenuItem}
-                  onPress={() => handleMenuItemPress(item.route)}
-                >
-                  <View style={[styles.colorDot, { backgroundColor: item.color }]} />
-                  <Text style={dynamicStyles.submenuText}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </Animated.View>
 
             <TouchableOpacity
               style={dynamicStyles.menuItem}
