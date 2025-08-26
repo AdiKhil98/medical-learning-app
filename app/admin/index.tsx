@@ -14,7 +14,8 @@ import {
   Bell,
   Settings,
   Database,
-  MessageSquare
+  MessageSquare,
+  Lightbulb
 } from 'lucide-react-native';
 
 export default function AdminDashboard() {
@@ -85,6 +86,13 @@ export default function AdminDashboard() {
       route: '/admin/content',
       description: 'Fragen & Inhalte verwalten',
       color: '#EF4444'
+    },
+    {
+      title: 'Daily Tips',
+      icon: Lightbulb,
+      route: '/admin/daily-tips',
+      description: 'Tägliche Tipps verwalten',
+      color: '#F59E0B'
     },
     {
       title: 'Database',
