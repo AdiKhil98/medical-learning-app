@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug, LogOut } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,7 +18,7 @@ interface MenuProps {
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
@@ -68,6 +68,11 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const handleMenuItemPress = (route: string) => {
     onClose();
     router.push(route);
+  };
+
+  const handleLogout = async () => {
+    onClose();
+    await signOut();
   };
 
   const rotateInterpolate = rotateAnim.interpolate({
@@ -142,6 +147,22 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       fontFamily: 'Inter-Regular',
       fontSize: 15,
       color: colors.textSecondary,
+    },
+    logoutButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderRadius: 12,
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(239, 68, 68, 0.2)',
+    },
+    logoutText: {
+      fontFamily: 'Inter-Medium',
+      fontSize: 16,
+      color: '#EF4444',
+      marginLeft: 16,
+      flex: 1,
     },
   });
 
@@ -237,6 +258,17 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             </Animated.View>
           </View>
         </ScrollView>
+        
+        {/* Logout Button at Bottom */}
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity
+            style={dynamicStyles.logoutButton}
+            onPress={handleLogout}
+          >
+            <LogOut size={20} color="#EF4444" />
+            <Text style={dynamicStyles.logoutText}>Abmelden</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
     </View>
   );
@@ -286,6 +318,10 @@ const styles = StyleSheet.create({
   },
   submenu: {
     overflow: 'hidden',
+  },
+  logoutContainer: {
+    padding: 16,
+    paddingTop: 0,
   },
   colorDot: {
     width: 8,
