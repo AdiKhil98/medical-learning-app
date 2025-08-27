@@ -88,11 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        SecureLogger.log('Auth state change', { event });
-        setSession(session);
-        setUser(session?.user ?? null);
+        SecureLogger.log('Auth state change', { event, hasSession: !!session });
         
-        if (session?.user && event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && session?.user) {
+          SecureLogger.log('Processing SIGNED_IN event');
+          setSession(session);
+          setUser(session.user);
           await ensureUserProfile(session.user);
           // Initialize session timeout on sign in
           await SessionTimeoutManager.init(
@@ -100,9 +101,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             () => handleSessionTimeout()
           );
         } else if (event === 'SIGNED_OUT') {
+          SecureLogger.log('Processing SIGNED_OUT event');
           // Cleanup session timeout on sign out
           SessionTimeoutManager.destroy();
+          setSession(null);
+          setUser(null);
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          SecureLogger.log('Processing TOKEN_REFRESHED event');
+          setSession(session);
+          setUser(session.user);
+        } else {
+          SecureLogger.log('Processing other auth event or clearing session');
+          setSession(session);
+          setUser(session?.user ?? null);
         }
+        
         setLoading(false);
       }
     );
@@ -340,6 +353,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const startTime = Date.now();
       SecureLogger.log('Starting signOut process');
       
+      // Set loading to prevent immediate navigation issues
+      setLoading(true);
+      
       const { data: { session: beforeSession } } = await supabase.auth.getSession();
       SecureLogger.log('Session exists before signOut', { hasSession: !!beforeSession });
       
@@ -351,6 +367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) {
         SecureLogger.error('Supabase signOut error', error);
+        setLoading(false);
         throw error;
       }
 
@@ -365,14 +382,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clean up session timeout manager
       SessionTimeoutManager.destroy();
       
-      // Clear local state
+      // Clear local state immediately
       SecureLogger.log('Clearing local session state');
       setSession(null);
       setUser(null);
       SecureLogger.log('Local state cleared');
 
       // Add a small delay to let state updates propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Verify session is actually cleared
       const { data: { session: afterSession } } = await supabase.auth.getSession();
@@ -380,9 +397,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (afterSession) {
         SecureLogger.warn('Session still exists after signOut - potential issue');
+        // Force clear again if needed
+        setSession(null);
+        setUser(null);
       } else {
         SecureLogger.log('Session successfully cleared from Supabase');
       }
+      
+      setLoading(false);
       
       const endTime = Date.now();
       SecureLogger.log('SignOut process completed', { totalDuration: endTime - startTime });
@@ -395,6 +417,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       SessionTimeoutManager.destroy();
       setSession(null);
       setUser(null);
+      setLoading(false);
       throw error;
     }
   };

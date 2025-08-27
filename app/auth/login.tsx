@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { signIn, session } = useAuth();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      router.replace('/(tabs)');
+    }
+  }, [session, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -18,22 +26,18 @@ export default function Login() {
     setLoading(true);
     try {
       console.log('Attempting login with:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
-      });
-
-      if (error) {
-        console.log('Login error:', error.message);
-        Alert.alert('Anmeldung fehlgeschlagen', error.message);
-      } else if (data.user) {
-        console.log('Login successful!');
-        Alert.alert('Erfolgreich', 'Anmeldung erfolgreich!');
-        router.replace('/(tabs)');
-      }
-    } catch (err: any) {
-      console.log('Login exception:', err.message);
-      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
+      await signIn(email.trim(), password);
+      
+      // Success - the AuthContext will handle navigation via useEffect
+      console.log('Login successful!');
+      
+      // Clear form
+      setEmail('');
+      setPassword('');
+      
+    } catch (error: any) {
+      console.log('Login error:', error.message);
+      Alert.alert('Anmeldung fehlgeschlagen', error.message);
     } finally {
       setLoading(false);
     }
