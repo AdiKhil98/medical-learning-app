@@ -388,8 +388,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       SecureLogger.log('Local state cleared');
 
-      // Add a small delay to let state updates propagate
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Add a delay to ensure state updates propagate to all components
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Verify session is actually cleared
       const { data: { session: afterSession } } = await supabase.auth.getSession();

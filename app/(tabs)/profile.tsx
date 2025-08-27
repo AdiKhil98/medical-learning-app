@@ -197,10 +197,8 @@ export default function ProfileScreen() {
       console.log('Calling signOut from context...');
       console.log('🔍 signOut function type:', typeof signOut);
       
-      // Pre-emptively navigate to login to avoid navigation timing issues
-      console.log('📍 Pre-emptively navigating to login...');
-      router.replace('/auth/login');
-      console.log('📍 Pre-emptive navigation completed');
+      // Let the AuthContext handle navigation after signOut completes
+      console.log('📍 Skipping pre-emptive navigation - will let AuthContext handle it');
       
       console.log('🔍 signOut function:', signOut);
       console.log('🔍 useAuth hook result:', { user: !!user, session: !!session, loading, signOut: typeof signOut });
