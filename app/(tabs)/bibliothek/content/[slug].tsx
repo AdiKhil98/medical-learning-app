@@ -20,24 +20,11 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
+import MedicalContentViewer from '@/components/ui/MedicalContentViewer';
+import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
-interface Section {
-  id: string;
-  slug: string;
-  title: string;
-  parent_slug: string | null;
-  description: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
-  icon: string;
-  color: string;
-  display_order: number;
-  content_details?: string;
-  content_improved?: any;
-  content_html?: string;
-  content_type?: string;
-  has_content?: boolean;
-  hierarchy_level?: number;
-}
+// Use MedicalSection from service
+type Section = MedicalSection;
 
 interface ContentSection {
   type: string;
@@ -197,7 +184,7 @@ const ContentDetailScreen = memo(() => {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
 
-  const [currentSection, setCurrentSection] = useState<Section | null>(null);
+  const [currentSection, setCurrentSection] = useState<MedicalSection | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -222,22 +209,11 @@ const ContentDetailScreen = memo(() => {
     setLoading(true);
     
     try {
-      const { data: sectionData, error: sectionError } = await supabase
-        .from('sections')
-        .select('content_improved,content_html,title,description,content_details')
-        .eq('slug', slug)
-        .maybeSingle();
-
-      if (sectionError) throw sectionError;
+      const sectionData = await medicalContentService.getSection(slug);
+      
       if (!sectionData) throw new Error('Abschnitt nicht gefunden');
       
       setCurrentSection(sectionData);
-      
-      // Cache the data
-      contentCache.set(slug, {
-        data: sectionData,
-        timestamp: now,
-      });
       
       // Auto-expand first section if content_improved exists
       if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
@@ -393,30 +369,13 @@ const ContentDetailScreen = memo(() => {
         )}
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {contentSections.length > 0 ? (
-          contentSections.map((section: ContentSection, index: number) => (
-            <ContentSectionComponent
-              key={`${index}-${section.title || section.type}`}
-              contentSection={section}
-              index={index}
-              isExpanded={!!expandedSections[index.toString()]}
-              onToggle={() => toggleSection(index.toString())}
-              colors={colors}
-              currentSection={currentSection}
-            />
-          ))
-        ) : (
-          <Card style={dynamicStyles.fallbackContent}>
-            <Text style={dynamicStyles.fallbackTitle}>Inhalt</Text>
-            <Text style={dynamicStyles.fallbackText}>
-              {currentSection.content_details || 
-               currentSection.description || 
-               'Für diesen Abschnitt sind noch keine detaillierten Inhalte verfügbar.'}
-            </Text>
-          </Card>
-        )}
-      </ScrollView>
+      <MedicalContentViewer 
+        section={currentSection}
+        onError={(error) => {
+          console.error('Content viewer error:', error);
+          setError('Fehler beim Anzeigen des Inhalts');
+        }}
+      />
     </SafeAreaView>
   );
 });
