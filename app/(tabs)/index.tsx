@@ -5,7 +5,6 @@ import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
-import { getDailyContent } from '@/lib/dailyContentHelper';
 import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -60,25 +59,40 @@ export default function DashboardScreen() {
           setUserData(data);
         }
 
-        // Get daily content with automatic generation if missing
-        const { tip, question, tipError, questionError } = await getDailyContent();
-        
-        console.log('Daily content retrieved:', { 
-          tipFound: !!tip, 
-          questionFound: !!question,
-          tipTitle: tip?.title,
-          questionText: question?.question 
-        });
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        console.log('Fetching daily content for date:', today);
 
-        setDailyTip(tip);
-        setDailyQuestion(question);
+        // Fetch today's tip - direct query only
+        const { data: tipData, error: tipError } = await supabase
+          .from('daily_tips')
+          .select('*')
+          .eq('date', today)
+          .maybeSingle();
 
         if (tipError) {
-          console.error('Error with daily tip:', tipError);
+          console.error('Error fetching daily tip:', tipError);
         }
+        
+        setDailyTip(tipData); // Will be null if no tip exists for today
+
+        // Fetch today's question - direct query only  
+        const { data: questionData, error: questionError } = await supabase
+          .from('daily_questions')
+          .select('*')
+          .eq('date', today)
+          .maybeSingle();
+
         if (questionError) {
-          console.error('Error with daily question:', questionError);
+          console.error('Error fetching daily question:', questionError);
         }
+        
+        setDailyQuestion(questionData); // Will be null if no question exists for today
+        
+        console.log('Daily content found:', { 
+          tipExists: !!tipData, 
+          questionExists: !!questionData 
+        });
       } catch (error) {
         console.error('Error loading dashboard data', error);
       } finally {
@@ -380,7 +394,7 @@ export default function DashboardScreen() {
           <Card style={dynamicStyles.emptyStateCard}>
             <Lightbulb size={48} color={colors.textSecondary} />
             <Text style={dynamicStyles.emptyStateText}>
-              Kein Tipp für heute hinterlegt.
+              Kein Tipp für heute verfügbar
             </Text>
           </Card>
         )}
@@ -459,7 +473,7 @@ export default function DashboardScreen() {
           <Card style={dynamicStyles.emptyStateCard}>
             <HelpCircle size={48} color={colors.textSecondary} />
             <Text style={dynamicStyles.emptyStateText}>
-              Keine Frage für heute hinterlegt.
+              Keine Frage für heute verfügbar
             </Text>
           </Card>
         )}
