@@ -88,12 +88,12 @@ export default function Login() {
       Animated.sequence([
         Animated.timing(rotateAnim, {
           toValue: 1,
-          duration: 8000,
+          duration: 2000,
           useNativeDriver: true,
         }),
         Animated.timing(rotateAnim, {
           toValue: 0,
-          duration: 8000,
+          duration: 2000,
           useNativeDriver: true,
         })
       ])
