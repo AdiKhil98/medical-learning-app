@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,7 +50,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   };
 
   const menuItems = [
-    { icon: Home, label: 'Dashboard', route: '/' },
     { icon: Bell, label: 'Updates', route: '/updates' },
     { icon: Crown, label: 'Subscription', route: '/subscription' },
     { icon: Settings, label: 'Profil', route: '/profile' },
