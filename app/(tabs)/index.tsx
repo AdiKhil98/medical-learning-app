@@ -12,17 +12,27 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Logo from '@/components/ui/Logo';
 
 interface DailyTip {
+  id?: string;
   date: string;
-  tip_content: string;
+  title?: string;
+  content?: string;
+  tip_content?: string;
+  category?: string;
 }
 
 interface DailyQuestion {
+  id?: string;
   date: string;
   question: string;
-  choice_a: string;
-  choice_b: string;
-  choice_c: string;
-  correct_answer: 'a' | 'b' | 'c';
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  choice_a?: string;
+  choice_b?: string;
+  choice_c?: string;
+  correct_answer: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
+  explanation?: string;
+  category?: string;
 }
 
 export default function DashboardScreen() {
@@ -60,7 +70,7 @@ export default function DashboardScreen() {
         // Fetch today's tip - direct query only
         const { data: tipData, error: tipError } = await supabase
           .from('daily_tips')
-          .select('tip_content')
+          .select('*')
           .eq('date', today)
           .maybeSingle();
 
@@ -76,7 +86,7 @@ export default function DashboardScreen() {
         // Fetch today's question - direct query only  
         const { data: questionData, error: questionError } = await supabase
           .from('daily_questions')
-          .select('question, choice_a, choice_b, choice_c, correct_answer')
+          .select('*')
           .eq('date', today)
           .maybeSingle();
 
@@ -86,12 +96,8 @@ export default function DashboardScreen() {
           console.log('Question data received:', questionData);
           console.log('Question columns:', questionData ? Object.keys(questionData) : 'No data');
           if (questionData) {
-            console.log('Choices:', {
-              choice_a: questionData.choice_a,
-              choice_b: questionData.choice_b, 
-              choice_c: questionData.choice_c,
-              correct_answer: questionData.correct_answer
-            });
+            console.log('Question data:', questionData);
+            console.log('Available columns:', Object.keys(questionData));
           }
         }
         
@@ -134,11 +140,13 @@ export default function DashboardScreen() {
       return selectedAnswer === option ? styles.selectedAnswer : styles.answerButton;
     }
     
-    if (option === dailyQuestion?.correct_answer) {
+    const correctAnswer = dailyQuestion?.correct_answer?.toLowerCase();
+    
+    if (option === correctAnswer) {
       return styles.correctAnswer;
     }
     
-    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
+    if (selectedAnswer === option && option !== correctAnswer) {
       return styles.wrongAnswer;
     }
     
@@ -148,11 +156,13 @@ export default function DashboardScreen() {
   const getAnswerIcon = (option: 'a' | 'b' | 'c') => {
     if (!showResult) return null;
     
-    if (option === dailyQuestion?.correct_answer) {
+    const correctAnswer = dailyQuestion?.correct_answer?.toLowerCase();
+    
+    if (option === correctAnswer) {
       return <CheckCircle size={20} color="#FFFFFF" />;
     }
     
-    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
+    if (selectedAnswer === option && option !== correctAnswer) {
       return <XCircle size={20} color="#FFFFFF" />;
     }
     
@@ -394,7 +404,7 @@ export default function DashboardScreen() {
               <Text style={dynamicStyles.tipTitle}>Tipp des Tages</Text>
             </View>
             <Text style={dynamicStyles.tipContent}>
-              {dailyTip.tip_content}
+              {dailyTip.tip_content || dailyTip.content || 'No tip content available'}
             </Text>
           </Card>
         ) : (
@@ -424,7 +434,7 @@ export default function DashboardScreen() {
                 onPress={() => handleAnswerSelect('a')}
                 disabled={showResult}
               >
-                <Text style={styles.answerText}>{dailyQuestion.choice_a}</Text>
+                <Text style={styles.answerText}>{dailyQuestion.choice_a || dailyQuestion.option_a || 'Choice A'}</Text>
                 {getAnswerIcon('a')}
               </TouchableOpacity>
 
@@ -433,7 +443,7 @@ export default function DashboardScreen() {
                 onPress={() => handleAnswerSelect('b')}
                 disabled={showResult}
               >
-                <Text style={styles.answerText}>{dailyQuestion.choice_b}</Text>
+                <Text style={styles.answerText}>{dailyQuestion.choice_b || dailyQuestion.option_b || 'Choice B'}</Text>
                 {getAnswerIcon('b')}
               </TouchableOpacity>
 
@@ -442,7 +452,7 @@ export default function DashboardScreen() {
                 onPress={() => handleAnswerSelect('c')}
                 disabled={showResult}
               >
-                <Text style={styles.answerText}>{dailyQuestion.choice_c}</Text>
+                <Text style={styles.answerText}>{dailyQuestion.choice_c || dailyQuestion.option_c || 'Choice C'}</Text>
                 {getAnswerIcon('c')}
               </TouchableOpacity>
             </View>
@@ -451,7 +461,7 @@ export default function DashboardScreen() {
               <View style={dynamicStyles.explanationContainer}>
                 <Text style={dynamicStyles.explanationText}>
                   <Text style={{ fontFamily: 'Inter-Bold' }}>Ergebnis: </Text>
-                  {selectedAnswer === dailyQuestion?.correct_answer ? 'Richtig! 🎉' : 'Leider falsch. 😔'}
+                  {selectedAnswer === dailyQuestion?.correct_answer?.toLowerCase() ? 'Richtig! 🎉' : 'Leider falsch. 😔'}
                 </Text>
                 <Button
                   title="Neue Frage"

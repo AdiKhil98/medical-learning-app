@@ -8,17 +8,27 @@ import { Lightbulb, Calendar, RefreshCw, CheckCircle } from 'lucide-react-native
 import Card from '@/components/ui/Card';
 
 interface DailyTip {
+  id?: string;
   date: string;
-  tip_content: string;
+  title?: string;
+  content?: string;
+  tip_content?: string;
+  category?: string;
 }
 
 interface DailyQuestion {
+  id?: string;
   date: string;
   question: string;
-  choice_a: string;
-  choice_b: string;
-  choice_c: string;
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  choice_a?: string;
+  choice_b?: string;
+  choice_c?: string;
   correct_answer: string;
+  explanation?: string;
+  category?: string;
 }
 
 export default function DailyTipsManager() {
@@ -42,13 +52,13 @@ export default function DailyTipsManager() {
       const [tipsResponse, questionsResponse] = await Promise.all([
         supabase
           .from('daily_tips')
-          .select('date, tip_content')
+          .select('*')
           .gte('date', startDate)
           .lte('date', endDate)
           .order('date', { ascending: true }),
         supabase
           .from('daily_questions')
-          .select('date, question, choice_a, choice_b, choice_c, correct_answer')
+          .select('*')
           .gte('date', startDate)
           .lte('date', endDate)
           .order('date', { ascending: true })
@@ -147,8 +157,9 @@ export default function DailyTipsManager() {
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.tipContent, { color: colors.text }]}>
-                  {tip.tip_content}
+                <Text style={[styles.tipTitle, { color: colors.text }]}>{tip.title || 'Daily Tip'}</Text>
+                <Text style={[styles.tipContent, { color: colors.textSecondary }]}>
+                  {tip.tip_content || tip.content || 'No content available'}
                 </Text>
               </Card>
             ))
@@ -185,9 +196,11 @@ export default function DailyTipsManager() {
                 <View style={styles.answerPreview}>
                   <Text style={[styles.answerText, { color: colors.textSecondary }]}>
                     Antwort {question.correct_answer}: {
-                      question.correct_answer === 'a' ? question.choice_a :
-                      question.correct_answer === 'b' ? question.choice_b :
-                      question.choice_c
+                      question.correct_answer?.toLowerCase() === 'a' || question.correct_answer === 'A' ? 
+                        (question.choice_a || question.option_a) :
+                      question.correct_answer?.toLowerCase() === 'b' || question.correct_answer === 'B' ? 
+                        (question.choice_b || question.option_b) :
+                      (question.choice_c || question.option_c)
                     }
                   </Text>
                   <CheckCircle size={16} color="#22C55E" />
