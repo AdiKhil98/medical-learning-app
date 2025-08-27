@@ -79,13 +79,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <BarChart size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Einstellungen',
-          tabBarIcon: () => null, // Remove icon completely
-        }}
-      />
     </Tabs>
   );
 }
