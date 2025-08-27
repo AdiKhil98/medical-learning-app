@@ -26,9 +26,9 @@ interface DailyQuestion {
   option_a: string;
   option_b: string;
   option_c: string;
-  correct_answer: 'A' | 'B' | 'C';
-  explanation: string;
-  category: string;
+  correct_answer: 'A' | 'B' | 'C' | 'a' | 'b' | 'c';
+  explanation?: string;
+  category?: string;
 }
 
 export default function DashboardScreen() {
@@ -72,6 +72,9 @@ export default function DashboardScreen() {
 
         if (tipError) {
           console.error('Error fetching daily tip:', tipError);
+        } else {
+          console.log('Tip data received:', tipData);
+          console.log('Available columns:', tipData ? Object.keys(tipData) : 'No data');
         }
         
         setDailyTip(tipData); // Will be null if no tip exists for today
@@ -85,6 +88,17 @@ export default function DashboardScreen() {
 
         if (questionError) {
           console.error('Error fetching daily question:', questionError);
+        } else {
+          console.log('Question data received:', questionData);
+          console.log('Question columns:', questionData ? Object.keys(questionData) : 'No data');
+          if (questionData) {
+            console.log('Options:', {
+              option_a: questionData.option_a,
+              option_b: questionData.option_b, 
+              option_c: questionData.option_c,
+              correct_answer: questionData.correct_answer
+            });
+          }
         }
         
         setDailyQuestion(questionData); // Will be null if no question exists for today
@@ -126,11 +140,13 @@ export default function DashboardScreen() {
       return selectedAnswer === option ? styles.selectedAnswer : styles.answerButton;
     }
     
-    if (option === dailyQuestion?.correct_answer) {
+    const correctAnswer = dailyQuestion?.correct_answer?.toUpperCase();
+    
+    if (option === correctAnswer) {
       return styles.correctAnswer;
     }
     
-    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
+    if (selectedAnswer === option && option !== correctAnswer) {
       return styles.wrongAnswer;
     }
     
@@ -140,11 +156,13 @@ export default function DashboardScreen() {
   const getAnswerIcon = (option: 'A' | 'B' | 'C') => {
     if (!showResult) return null;
     
-    if (option === dailyQuestion?.correct_answer) {
+    const correctAnswer = dailyQuestion?.correct_answer?.toUpperCase();
+    
+    if (option === correctAnswer) {
       return <CheckCircle size={20} color="#FFFFFF" />;
     }
     
-    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
+    if (selectedAnswer === option && option !== correctAnswer) {
       return <XCircle size={20} color="#FFFFFF" />;
     }
     
@@ -383,12 +401,16 @@ export default function DashboardScreen() {
               <View style={dynamicStyles.tipIcon}>
                 <Lightbulb size={20} color="#FFFFFF" />
               </View>
-              <Text style={dynamicStyles.tipTitle}>{dailyTip.title}</Text>
+              <Text style={dynamicStyles.tipTitle}>
+                {dailyTip.title || 'Tipp des Tages'}
+              </Text>
               {dailyTip.category && (
                 <Text style={dynamicStyles.tipCategory}>{dailyTip.category}</Text>
               )}
             </View>
-            <Text style={dynamicStyles.tipContent}>{dailyTip.content}</Text>
+            <Text style={dynamicStyles.tipContent}>
+              {dailyTip.content || dailyTip.tip_text || dailyTip.tip || 'Tip content not found'}
+            </Text>
           </Card>
         ) : (
           <Card style={dynamicStyles.emptyStateCard}>
