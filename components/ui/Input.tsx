@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   TextInput, 
   Text, 
   StyleSheet,
   TextInputProps,
-  ViewStyle
+  ViewStyle,
+  Platform
 } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -26,32 +27,42 @@ export default function Input({
   ...props
 }: InputProps) {
   const { colors } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
 
   const dynamicStyles = StyleSheet.create({
     container: {
       marginBottom: 16,
     },
     label: {
-      fontFamily: 'Inter-Medium',
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
       fontSize: 14,
-      marginBottom: 6,
-      color: colors.textSecondary,
+      fontWeight: '500',
+      marginBottom: 8,
+      color: '#374151',
     },
     inputContainer: {
-      borderWidth: 1.5,
-      borderColor: error ? colors.error : colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
+      borderWidth: 2,
+      borderColor: error ? '#EF4444' : (isFocused ? '#10b981' : '#E5E7EB'),
+      borderRadius: 12,
+      backgroundColor: '#ffffff',
       flexDirection: 'row',
       alignItems: 'center',
+      shadowColor: isFocused ? '#10b981' : 'transparent',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: isFocused ? 0.1 : 0,
+      shadowRadius: 4,
+      elevation: isFocused ? 2 : 0,
     },
     input: {
       flex: 1,
-      fontFamily: 'Inter-Regular',
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
       fontSize: 16,
-      color: colors.text,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
+      color: '#1F2937',
+      paddingVertical: 14,
+      paddingHorizontal: 16,
     },
     inputWithLeftIcon: {
       paddingLeft: 8,
@@ -60,20 +71,20 @@ export default function Input({
       paddingRight: 8,
     },
     leftIcon: {
-      paddingLeft: 12,
+      paddingLeft: 16,
     },
     rightIcon: {
-      paddingRight: 12,
+      paddingRight: 16,
     },
     inputDisabled: {
-      backgroundColor: colors.border,
-      borderColor: colors.border,
+      backgroundColor: '#F3F4F6',
+      borderColor: '#D1D5DB',
     },
     errorText: {
-      color: colors.error,
+      color: '#EF4444',
       fontSize: 12,
-      fontFamily: 'Inter-Regular',
-      marginTop: 4,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+      marginTop: 6,
     },
   });
 
@@ -91,7 +102,9 @@ export default function Input({
             leftIcon ? dynamicStyles.inputWithLeftIcon : null,
             rightIcon ? dynamicStyles.inputWithRightIcon : null
           ]}
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor="#9CA3AF"
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           {...props}
         />
         {rightIcon && <View style={dynamicStyles.rightIcon}>{rightIcon}</View>}

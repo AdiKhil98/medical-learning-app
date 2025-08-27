@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckCircle, Star, Crown, Users, Shield, Calendar, BarChart3 } from 'lucide-react-native';
+import { Check, Star, Crown, Infinity, Shield, Calendar, BarChart3 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+
+const { width } = Dimensions.get('window');
+const isTablet = width >= 768;
 
 interface SubscriptionPlansProps {
   onSelectPlan?: (planId: string) => void;
@@ -17,124 +20,103 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
+  yearlyPrice: number;
   currency: string;
   period: string;
-  simulations: number;
-  bonusSimulations: number;
-  totalSimulations: number;
+  simulations: number | string;
+  badge: string;
   features: PlanFeature[];
   recommended?: boolean;
   icon: React.ComponentType<any>;
   gradient: string[];
-  idealFor: string;
+  costPerSimulation?: string;
 }
 
 export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
   const { colors, isDarkMode } = useTheme();
+  const [isYearly, setIsYearly] = useState(false);
 
   const plans: SubscriptionPlan[] = [
     {
       id: 'basic',
-      name: 'Basis-Tarif',
+      name: 'Basis-Plan',
       price: 50,
+      yearlyPrice: 35,
       currency: '€',
       period: 'Monat',
-      simulations: 30,
-      bonusSimulations: 2,
-      totalSimulations: 32,
+      simulations: '30K',
+      badge: '30K',
+      costPerSimulation: 'Nur 1,67€ pro Simulation',
       icon: Star,
-      gradient: ['#3B82F6', '#1E40AF'],
-      idealFor: 'Einzelne Mediziner, Medizinstudenten oder kleine Praxen',
+      gradient: ['#3b82f6', '#1e40af'],
       features: [
-        { text: '30 medizinische Simulationen pro Monat', included: true },
-        { text: '2 Bonus-Simulationen inklusive', included: true },
-        { text: '1 kostenlose Testsimulation', included: true },
-        { text: 'Zugang zur Standard-Simulationsbibliothek', included: true },
-        { text: 'Grundlegende Analysen und Fortschrittserfassung', included: true },
-        { text: 'E-Mail-Support (48-Stunden-Reaktionszeit)', included: true },
-        { text: 'Erweiterte Simulationsbibliothek', included: false },
+        { text: '30 Medizinische Simulationen', included: true },
+        { text: 'Grundlegende Analysen', included: true },
+        { text: 'E-Mail Support', included: true },
+        { text: 'Mobile App Zugang', included: true },
+        { text: 'Standard Bibliothek', included: true },
         { text: 'Prioritäts-Support', included: false },
         { text: 'Erweiterte Analysen', included: false },
+        { text: 'Team Management', included: false },
       ],
     },
     {
       id: 'professional',
-      name: 'Profi-Tarif',
+      name: 'Profi-Plan',
       price: 75,
+      yearlyPrice: 52,
       currency: '€',
       period: 'Monat',
-      simulations: 60,
-      bonusSimulations: 3,
-      totalSimulations: 63,
+      simulations: '60K',
+      badge: '60K',
+      costPerSimulation: 'Nur 1,25€ pro Simulation',
       recommended: true,
       icon: Crown,
-      gradient: ['#10B981', '#047857'],
-      idealFor: 'Aktive Mediziner, Abteilungsleiter oder mittelgroße Einrichtungen',
+      gradient: ['#3b82f6', '#1e40af'],
       features: [
-        { text: '60 medizinische Simulationen pro Monat', included: true },
-        { text: '3 Bonus-Simulationen inklusive', included: true },
-        { text: '1 kostenlose Testsimulation', included: true },
-        { text: 'Erweiterte Simulationsbibliothek mit Premium-Szenarien', included: true },
-        { text: 'Erweiterte Analysen und detaillierte Berichte', included: true },
-        { text: 'Prioritäts-E-Mail-Support (24-Stunden-Reaktionszeit)', included: true },
-        { text: 'Fortschrittserfassung mit Leistungseinblicken', included: true },
-        { text: 'Export-Funktionen für Berichte', included: true },
-        { text: 'Mehrbenutzerverwaltung', included: false },
+        { text: '60 Medizinische Simulationen', included: true },
+        { text: 'Erweiterte Analysen & Berichte', included: true },
+        { text: 'Prioritäts-Support (24h)', included: true },
+        { text: 'Mobile & Web App', included: true },
+        { text: 'Premium Bibliothek', included: true },
+        { text: 'Export Funktionen', included: true },
+        { text: 'Personalisierte Lernpfade', included: true },
+        { text: 'Team Management', included: false },
       ],
     },
     {
-      id: 'enterprise',
-      name: 'Unternehmens-Tarif',
-      price: 100,
+      id: 'unlimited',
+      name: 'Unlimited-Plan',
+      price: 150,
+      yearlyPrice: 105,
       currency: '€',
       period: 'Monat',
-      simulations: 90,
-      bonusSimulations: 5,
-      totalSimulations: 95,
-      icon: Users,
-      gradient: ['#8B5CF6', '#6D28D9'],
-      idealFor: 'Große medizinische Einrichtungen, Krankenhäuser, Medizinische Fakultäten oder Ausbildungszentren',
+      simulations: 'Unbegrenzt',
+      badge: '∞',
+      costPerSimulation: 'Unbegrenzte Simulationen',
+      icon: Infinity,
+      gradient: ['#3b82f6', '#1e40af'],
       features: [
-        { text: '90 medizinische Simulationen pro Monat', included: true },
-        { text: '5 Bonus-Simulationen inklusive', included: true },
-        { text: '1 kostenlose Testsimulation', included: true },
-        { text: 'Vollständiger Zugang zur Simulationsbibliothek', included: true },
-        { text: 'Premium-Szenarien und Fallstudien', included: true },
-        { text: 'Umfassendes Analyse-Dashboard', included: true },
-        { text: 'Prioritäts-Support mit dediziertem Account Manager', included: true },
-        { text: 'Individuelle Berichte und Datenexport', included: true },
-        { text: 'Mehrbenutzerverwaltung', included: true },
-        { text: 'Erweiterte Fortschrittserfassung mit Team-Einblicken', included: true },
+        { text: 'Unbegrenzte Simulationen', included: true },
+        { text: 'Vollständige Analytics Suite', included: true },
+        { text: 'VIP Support & Account Manager', included: true },
+        { text: 'Alle Plattformen', included: true },
+        { text: 'Komplette Bibliothek', included: true },
+        { text: 'Erweiterte Exports', included: true },
+        { text: 'KI-Powered Insights', included: true },
+        { text: 'Team Management Pro', included: true },
       ],
     },
   ];
 
-  const keyBenefits = [
-    {
-      icon: Shield,
-      title: 'Risikofreier Test',
-      description: 'Jeder Tarif beinhaltet 1 komplett kostenlose Simulation ohne Zahlungsverpflichtung und vollständigen Zugang zu allen Features.',
-      color: '#10B981',
-    },
-    {
-      icon: Calendar,
-      title: 'Flexible Abrechnung',
-      description: 'Monatliche Abrechnungszyklen mit der Möglichkeit, jederzeit zu kündigen, Tarife zu upgraden oder downgraden ohne Strafgebühren.',
-      color: '#3B82F6',
-    },
-    {
-      icon: BarChart3,
-      title: 'Simulations-Kreditsystem',
-      description: 'Monatliche Kredite setzen sich am Abrechnungsdatum zurück. Bonus-Simulationen sind automatisch in Ihrer monatlichen Zuteilung enthalten.',
-      color: '#F59E0B',
-    },
-    {
-      icon: Shield,
-      title: 'Sicherheit & Compliance',
-      description: 'HIPAA-konforme Datenverarbeitung mit Ende-zu-Ende-Verschlüsselung und sicherer Cloud-Speicherung für alle Simulationen.',
-      color: '#EF4444',
-    },
-  ];
+  const getPrice = (plan: SubscriptionPlan) => {
+    return isYearly ? plan.yearlyPrice : plan.price;
+  };
+
+  const getSavings = () => {
+    const yearlySavings = Math.round(((plans[0].price * 12 - plans[0].yearlyPrice * 12) / (plans[0].price * 12)) * 100);
+    return yearlySavings;
+  };
 
   const handleSelectPlan = (planId: string) => {
     onSelectPlan?.(planId);
@@ -143,288 +125,348 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
     },
-    header: {
-      padding: 24,
-      paddingTop: 48,
+    heroSection: {
+      paddingHorizontal: 24,
+      paddingVertical: 40,
       alignItems: 'center',
     },
-    headerTitle: {
-      fontSize: 32,
-      fontFamily: 'Inter-Bold',
-      color: colors.text,
-      marginBottom: 8,
-    },
-    headerSubtitle: {
-      fontSize: 16,
-      fontFamily: 'Inter-Regular',
-      color: colors.textSecondary,
+    heroTitle: {
+      fontSize: isTablet ? 36 : 28,
+      fontWeight: '800',
+      color: '#1e40af',
       textAlign: 'center',
-      lineHeight: 24,
+      marginBottom: 12,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+      letterSpacing: -0.5,
+    },
+    heroSubtitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#3b82f6',
+      textAlign: 'center',
+      marginBottom: 32,
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    },
+    toggleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      borderRadius: 16,
+      padding: 6,
+      marginBottom: 24,
+      shadowColor: '#3b82f6',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    toggleOption: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 12,
+      minWidth: 100,
+    },
+    toggleOptionActive: {
+      backgroundColor: '#3b82f6',
+    },
+    toggleText: {
+      fontSize: 16,
+      fontWeight: '600',
+      textAlign: 'center',
+      color: '#6b7280',
+    },
+    toggleTextActive: {
+      color: '#ffffff',
+    },
+    badgesContainer: {
+      flexDirection: isTablet ? 'row' : 'column',
+      alignItems: 'center',
+      marginBottom: 32,
+      gap: 12,
+    },
+    badge: {
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: '#3b82f6',
+    },
+    badgeText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#1e40af',
+    },
+    savingsBadge: {
+      backgroundColor: '#10b981',
+      borderColor: '#10b981',
+    },
+    savingsBadgeText: {
+      color: '#ffffff',
+    },
+    cardsContainer: {
+      flexDirection: isTablet ? 'row' : 'column',
+      paddingHorizontal: isTablet ? 24 : 16,
+      gap: isTablet ? 24 : 16,
+      alignItems: isTablet ? 'flex-start' : 'center',
+      justifyContent: 'center',
     },
     planCard: {
-      backgroundColor: colors.card,
-      borderRadius: 20,
-      margin: 16,
-      padding: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
-      shadowRadius: 8,
-      elevation: 4,
-      borderWidth: 2,
-      borderColor: 'transparent',
+      backgroundColor: '#ffffff',
+      borderRadius: 24,
+      padding: 32,
+      width: isTablet ? (width - 120) / 3 : width - 32,
+      maxWidth: 400,
+      shadowColor: '#3b82f6',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 24,
+      elevation: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 0.1)',
+      position: 'relative',
     },
     recommendedCard: {
-      borderColor: '#10B981',
+      borderColor: '#3b82f6',
       borderWidth: 2,
+      transform: isTablet ? [{ scale: 1.05 }] : [{ scale: 1 }],
+      shadowOpacity: 0.2,
+      shadowRadius: 32,
+    },
+    planBadge: {
+      position: 'absolute',
+      top: 24,
+      right: 24,
+      backgroundColor: '#3b82f6',
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      minWidth: 50,
+      alignItems: 'center',
+    },
+    planBadgeText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#ffffff',
     },
     planHeader: {
       alignItems: 'center',
-      marginBottom: 20,
-    },
-    planIcon: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 12,
+      marginBottom: 32,
     },
     planName: {
       fontSize: 24,
-      fontFamily: 'Inter-Bold',
-      color: colors.text,
-      marginBottom: 4,
+      fontWeight: '700',
+      color: '#1f2937',
+      marginBottom: 16,
+      textAlign: 'center',
     },
-    planPrice: {
-      fontSize: 36,
-      fontFamily: 'Inter-Bold',
-      color: colors.text,
+    priceContainer: {
+      alignItems: 'center',
       marginBottom: 8,
     },
+    planPrice: {
+      fontSize: 48,
+      fontWeight: '800',
+      color: '#1e40af',
+      lineHeight: 56,
+    },
     planPeriod: {
-      fontSize: 14,
-      fontFamily: 'Inter-Regular',
-      color: colors.textSecondary,
-    },
-    simulationInfo: {
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 20,
-    },
-    simulationText: {
       fontSize: 16,
-      fontFamily: 'Inter-Medium',
-      color: colors.text,
-      textAlign: 'center',
+      color: '#6b7280',
+      marginLeft: 4,
     },
-    totalSimulations: {
-      fontSize: 20,
-      fontFamily: 'Inter-Bold',
-      color: colors.primary,
-      textAlign: 'center',
-      marginTop: 4,
-    },
-    idealFor: {
+    costPerSimulation: {
       fontSize: 14,
-      fontFamily: 'Inter-Regular',
-      color: colors.textSecondary,
-      textAlign: 'center',
+      color: '#10b981',
+      fontWeight: '600',
+      marginTop: 8,
+    },
+    featuresTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#1f2937',
       marginBottom: 20,
-      lineHeight: 20,
+      textAlign: 'center',
     },
     featuresList: {
-      marginBottom: 24,
+      marginBottom: 32,
+      gap: 12,
     },
     featureItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 12,
     },
-    featureText: {
-      fontSize: 14,
-      fontFamily: 'Inter-Regular',
-      marginLeft: 12,
-      flex: 1,
-      lineHeight: 20,
-    },
-    featureIncluded: {
-      color: colors.text,
-    },
-    featureNotIncluded: {
-      color: colors.textSecondary,
-      textDecorationLine: 'line-through',
-    },
-    selectButton: {
-      borderRadius: 12,
-      paddingVertical: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    selectButtonText: {
-      fontSize: 16,
-      fontFamily: 'Inter-Bold',
-      color: '#FFFFFF',
-    },
-    recommendedBadge: {
-      position: 'absolute',
-      top: -8,
-      right: 16,
-      backgroundColor: '#10B981',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 12,
-    },
-    recommendedText: {
-      fontSize: 12,
-      fontFamily: 'Inter-Bold',
-      color: '#FFFFFF',
-    },
-    benefitsSection: {
-      margin: 16,
-      marginTop: 32,
-    },
-    benefitsTitle: {
-      fontSize: 24,
-      fontFamily: 'Inter-Bold',
-      color: colors.text,
-      marginBottom: 16,
-      textAlign: 'center',
-    },
-    benefitCard: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.2 : 0.05,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    benefitHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    benefitIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+    checkIcon: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: '#3b82f6',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
     },
-    benefitTitle: {
-      fontSize: 18,
-      fontFamily: 'Inter-Bold',
-      color: colors.text,
+    checkIconDisabled: {
+      backgroundColor: '#e5e7eb',
     },
-    benefitDescription: {
-      fontSize: 14,
-      fontFamily: 'Inter-Regular',
-      color: colors.textSecondary,
+    featureText: {
+      fontSize: 15,
       lineHeight: 20,
+      flex: 1,
+    },
+    featureIncluded: {
+      color: '#1f2937',
+      fontWeight: '500',
+    },
+    featureNotIncluded: {
+      color: '#9ca3af',
+    },
+    selectButton: {
+      backgroundColor: '#3b82f6',
+      borderRadius: 16,
+      paddingVertical: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#3b82f6',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    selectButtonText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#ffffff',
+      letterSpacing: 0.5,
+    },
+    recommendedBadge: {
+      position: 'absolute',
+      top: -12,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    recommendedBadgeInner: {
+      backgroundColor: '#3b82f6',
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    recommendedText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: '#ffffff',
+      letterSpacing: 0.5,
+    },
+    spacer: {
+      height: 60,
     },
   });
 
   return (
     <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
-      <View style={dynamicStyles.header}>
-        <Text style={dynamicStyles.headerTitle}>KP Med</Text>
-        <Text style={dynamicStyles.headerSubtitle}>
-          Umfassende Abo-Stufen, die für verschiedene Nutzungsanforderungen entwickelt wurden - von Einzelpraktikern bis hin zu medizinischen Fachkräften und Institutionen mit hohem Volumen.
-        </Text>
-      </View>
-
-      {plans.map((plan) => (
-        <View key={plan.id} style={[dynamicStyles.planCard, plan.recommended && dynamicStyles.recommendedCard]}>
-          {plan.recommended && (
-            <View style={dynamicStyles.recommendedBadge}>
-              <Text style={dynamicStyles.recommendedText}>EMPFOHLEN</Text>
-            </View>
-          )}
-          
-          <View style={dynamicStyles.planHeader}>
-            <LinearGradient
-              colors={plan.gradient}
-              style={dynamicStyles.planIcon}
-            >
-              <plan.icon size={28} color="#FFFFFF" />
-            </LinearGradient>
-            <Text style={dynamicStyles.planName}>{plan.name}</Text>
-            <Text style={dynamicStyles.planPrice}>
-              {plan.currency}{plan.price}
-            </Text>
-            <Text style={dynamicStyles.planPeriod}>pro {plan.period}</Text>
-          </View>
-
-          <View style={dynamicStyles.simulationInfo}>
-            <Text style={dynamicStyles.simulationText}>
-              {plan.simulations} Simulationen + {plan.bonusSimulations} Bonus
-            </Text>
-            <Text style={dynamicStyles.totalSimulations}>
-              Gesamt: {plan.totalSimulations} Simulationen monatlich
-            </Text>
-          </View>
-
-          <Text style={dynamicStyles.idealFor}>
-            Ideal für: {plan.idealFor}
-          </Text>
-
-          <View style={dynamicStyles.featuresList}>
-            {plan.features.map((feature, index) => (
-              <View key={index} style={dynamicStyles.featureItem}>
-                <CheckCircle 
-                  size={16} 
-                  color={feature.included ? '#10B981' : colors.textSecondary} 
-                />
-                <Text style={[
-                  dynamicStyles.featureText,
-                  feature.included ? dynamicStyles.featureIncluded : dynamicStyles.featureNotIncluded
-                ]}>
-                  {feature.text}
-                </Text>
-              </View>
-            ))}
-          </View>
-
+      {/* Hero Section */}
+      <View style={dynamicStyles.heroSection}>
+        <Text style={dynamicStyles.heroTitle}>MEISTERN SIE IHRE{"\n"}KENNTNISPRÜFUNG</Text>
+        <Text style={dynamicStyles.heroSubtitle}>WIR HABEN DEN PERFEKTEN PLAN FÜR SIE</Text>
+        
+        {/* Toggle Switch */}
+        <View style={dynamicStyles.toggleContainer}>
           <TouchableOpacity
-            style={dynamicStyles.selectButton}
-            onPress={() => handleSelectPlan(plan.id)}
+            style={[dynamicStyles.toggleOption, !isYearly && dynamicStyles.toggleOptionActive]}
+            onPress={() => setIsYearly(false)}
           >
-            <LinearGradient
-              colors={plan.gradient}
-              style={[dynamicStyles.selectButton, { margin: 0 }]}
-            >
-              <Text style={dynamicStyles.selectButtonText}>
-                {plan.name} wählen
-              </Text>
-            </LinearGradient>
+            <Text style={[dynamicStyles.toggleText, !isYearly && dynamicStyles.toggleTextActive]}>
+              MONATLICH
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[dynamicStyles.toggleOption, isYearly && dynamicStyles.toggleOptionActive]}
+            onPress={() => setIsYearly(true)}
+          >
+            <Text style={[dynamicStyles.toggleText, isYearly && dynamicStyles.toggleTextActive]}>
+              JÄHRLICH
+            </Text>
           </TouchableOpacity>
         </View>
-      ))}
-
-      <View style={dynamicStyles.benefitsSection}>
-        <Text style={dynamicStyles.benefitsTitle}>Hauptvorteile aller Tarife</Text>
         
-        {keyBenefits.map((benefit, index) => (
-          <View key={index} style={dynamicStyles.benefitCard}>
-            <View style={dynamicStyles.benefitHeader}>
-              <View style={[dynamicStyles.benefitIcon, { backgroundColor: benefit.color + '20' }]}>
-                <benefit.icon size={20} color={benefit.color} />
-              </View>
-              <Text style={dynamicStyles.benefitTitle}>{benefit.title}</Text>
+        {/* Feature Badges */}
+        <View style={dynamicStyles.badgesContainer}>
+          <View style={dynamicStyles.badge}>
+            <Text style={dynamicStyles.badgeText}>14-TAGE KOSTENLOSE TESTVERSION</Text>
+          </View>
+          <View style={dynamicStyles.badge}>
+            <Text style={dynamicStyles.badgeText}>JEDERZEIT KÜNDBAR</Text>
+          </View>
+          {isYearly && (
+            <View style={[dynamicStyles.badge, dynamicStyles.savingsBadge]}>
+              <Text style={[dynamicStyles.badgeText, dynamicStyles.savingsBadgeText]}>
+                SPAREN SIE BIS ZU {getSavings()}%
+              </Text>
             </View>
-            <Text style={dynamicStyles.benefitDescription}>{benefit.description}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Pricing Cards */}
+      <View style={dynamicStyles.cardsContainer}>
+        {plans.map((plan) => (
+          <View key={plan.id} style={[dynamicStyles.planCard, plan.recommended && dynamicStyles.recommendedCard]}>
+            {plan.recommended && (
+              <View style={dynamicStyles.recommendedBadge}>
+                <View style={dynamicStyles.recommendedBadgeInner}>
+                  <Text style={dynamicStyles.recommendedText}>BELIEBTESTE WAHL</Text>
+                </View>
+              </View>
+            )}
+            
+            {/* Badge */}
+            <View style={dynamicStyles.planBadge}>
+              <Text style={dynamicStyles.planBadgeText}>{plan.badge}</Text>
+            </View>
+            
+            <View style={dynamicStyles.planHeader}>
+              <Text style={dynamicStyles.planName}>{plan.name}</Text>
+              <View style={dynamicStyles.priceContainer}>
+                <Text style={dynamicStyles.planPrice}>
+                  {plan.currency}{getPrice(plan)}
+                  <Text style={dynamicStyles.planPeriod}>/Monat</Text>
+                </Text>
+              </View>
+              {plan.costPerSimulation && (
+                <Text style={dynamicStyles.costPerSimulation}>{plan.costPerSimulation}</Text>
+              )}
+            </View>
+
+            <Text style={dynamicStyles.featuresTitle}>Was ist enthalten</Text>
+            
+            <View style={dynamicStyles.featuresList}>
+              {plan.features.map((feature, index) => (
+                <View key={index} style={dynamicStyles.featureItem}>
+                  <View style={[dynamicStyles.checkIcon, !feature.included && dynamicStyles.checkIconDisabled]}>
+                    {feature.included && <Check size={12} color="#ffffff" />}
+                  </View>
+                  <Text style={[
+                    dynamicStyles.featureText,
+                    feature.included ? dynamicStyles.featureIncluded : dynamicStyles.featureNotIncluded
+                  ]}>
+                    {feature.text}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={dynamicStyles.selectButton}
+              onPress={() => handleSelectPlan(plan.id)}
+            >
+              <Text style={dynamicStyles.selectButtonText}>Abonnieren</Text>
+            </TouchableOpacity>
           </View>
         ))}
       </View>
-
-      <View style={{ height: 32 }} />
+      
+      <View style={dynamicStyles.spacer} />
     </ScrollView>
   );
 }
