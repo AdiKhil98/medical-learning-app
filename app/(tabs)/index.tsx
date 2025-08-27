@@ -12,23 +12,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Logo from '@/components/ui/Logo';
 
 interface DailyTip {
-  id: string;
   date: string;
-  title: string;
-  content: string;
-  category: string;
+  tip_content: string;
 }
 
 interface DailyQuestion {
-  id: string;
   date: string;
   question: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  correct_answer: 'A' | 'B' | 'C' | 'a' | 'b' | 'c';
-  explanation?: string;
-  category?: string;
+  choice_a: string;
+  choice_b: string;
+  choice_c: string;
+  correct_answer: 'a' | 'b' | 'c';
 }
 
 export default function DashboardScreen() {
@@ -40,7 +34,7 @@ export default function DashboardScreen() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
   const [dailyQuestion, setDailyQuestion] = useState<DailyQuestion | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<'a' | 'b' | 'c' | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
@@ -66,7 +60,7 @@ export default function DashboardScreen() {
         // Fetch today's tip - direct query only
         const { data: tipData, error: tipError } = await supabase
           .from('daily_tips')
-          .select('*')
+          .select('tip_content')
           .eq('date', today)
           .maybeSingle();
 
@@ -82,7 +76,7 @@ export default function DashboardScreen() {
         // Fetch today's question - direct query only  
         const { data: questionData, error: questionError } = await supabase
           .from('daily_questions')
-          .select('*')
+          .select('question, choice_a, choice_b, choice_c, correct_answer')
           .eq('date', today)
           .maybeSingle();
 
@@ -92,10 +86,10 @@ export default function DashboardScreen() {
           console.log('Question data received:', questionData);
           console.log('Question columns:', questionData ? Object.keys(questionData) : 'No data');
           if (questionData) {
-            console.log('Options:', {
-              option_a: questionData.option_a,
-              option_b: questionData.option_b, 
-              option_c: questionData.option_c,
+            console.log('Choices:', {
+              choice_a: questionData.choice_a,
+              choice_b: questionData.choice_b, 
+              choice_c: questionData.choice_c,
               correct_answer: questionData.correct_answer
             });
           }
@@ -123,7 +117,7 @@ export default function DashboardScreen() {
     return userData.name.split(' ')[0];
   };
 
-  const handleAnswerSelect = (answer: 'A' | 'B' | 'C') => {
+  const handleAnswerSelect = (answer: 'a' | 'b' | 'c') => {
     if (showResult) return; // Prevent changing answer after showing result
     
     setSelectedAnswer(answer);
@@ -135,34 +129,30 @@ export default function DashboardScreen() {
     setShowResult(false);
   };
 
-  const getAnswerButtonStyle = (option: 'A' | 'B' | 'C') => {
+  const getAnswerButtonStyle = (option: 'a' | 'b' | 'c') => {
     if (!showResult) {
       return selectedAnswer === option ? styles.selectedAnswer : styles.answerButton;
     }
     
-    const correctAnswer = dailyQuestion?.correct_answer?.toUpperCase();
-    
-    if (option === correctAnswer) {
+    if (option === dailyQuestion?.correct_answer) {
       return styles.correctAnswer;
     }
     
-    if (selectedAnswer === option && option !== correctAnswer) {
+    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
       return styles.wrongAnswer;
     }
     
     return styles.disabledAnswer;
   };
 
-  const getAnswerIcon = (option: 'A' | 'B' | 'C') => {
+  const getAnswerIcon = (option: 'a' | 'b' | 'c') => {
     if (!showResult) return null;
     
-    const correctAnswer = dailyQuestion?.correct_answer?.toUpperCase();
-    
-    if (option === correctAnswer) {
+    if (option === dailyQuestion?.correct_answer) {
       return <CheckCircle size={20} color="#FFFFFF" />;
     }
     
-    if (selectedAnswer === option && option !== correctAnswer) {
+    if (selectedAnswer === option && option !== dailyQuestion?.correct_answer) {
       return <XCircle size={20} color="#FFFFFF" />;
     }
     
@@ -401,15 +391,10 @@ export default function DashboardScreen() {
               <View style={dynamicStyles.tipIcon}>
                 <Lightbulb size={20} color="#FFFFFF" />
               </View>
-              <Text style={dynamicStyles.tipTitle}>
-                {dailyTip.title || 'Tipp des Tages'}
-              </Text>
-              {dailyTip.category && (
-                <Text style={dynamicStyles.tipCategory}>{dailyTip.category}</Text>
-              )}
+              <Text style={dynamicStyles.tipTitle}>Tipp des Tages</Text>
             </View>
             <Text style={dynamicStyles.tipContent}>
-              {dailyTip.content || dailyTip.tip_text || dailyTip.tip || 'Tip content not found'}
+              {dailyTip.tip_content}
             </Text>
           </Card>
         ) : (
@@ -430,55 +415,43 @@ export default function DashboardScreen() {
                 <HelpCircle size={20} color="#FFFFFF" />
               </View>
               <Text style={dynamicStyles.questionTitle}>Frage des Tages</Text>
-              {dailyQuestion.category && (
-                <Text style={dynamicStyles.questionCategory}>{dailyQuestion.category}</Text>
-              )}
             </View>
             <Text style={dynamicStyles.questionText}>{dailyQuestion.question}</Text>
             
             <View style={dynamicStyles.answersContainer}>
               <TouchableOpacity
-                style={getAnswerButtonStyle('A')}
-                onPress={() => handleAnswerSelect('A')}
+                style={getAnswerButtonStyle('a')}
+                onPress={() => handleAnswerSelect('a')}
                 disabled={showResult}
               >
-                <View style={styles.answerContent}>
-                  <Text style={styles.answerLabel}>A</Text>
-                  <Text style={styles.answerText}>{dailyQuestion.option_a}</Text>
-                  {getAnswerIcon('A')}
-                </View>
+                <Text style={styles.answerText}>{dailyQuestion.choice_a}</Text>
+                {getAnswerIcon('a')}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={getAnswerButtonStyle('B')}
-                onPress={() => handleAnswerSelect('B')}
+                style={getAnswerButtonStyle('b')}
+                onPress={() => handleAnswerSelect('b')}
                 disabled={showResult}
               >
-                <View style={styles.answerContent}>
-                  <Text style={styles.answerLabel}>B</Text>
-                  <Text style={styles.answerText}>{dailyQuestion.option_b}</Text>
-                  {getAnswerIcon('B')}
-                </View>
+                <Text style={styles.answerText}>{dailyQuestion.choice_b}</Text>
+                {getAnswerIcon('b')}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={getAnswerButtonStyle('C')}
-                onPress={() => handleAnswerSelect('C')}
+                style={getAnswerButtonStyle('c')}
+                onPress={() => handleAnswerSelect('c')}
                 disabled={showResult}
               >
-                <View style={styles.answerContent}>
-                  <Text style={styles.answerLabel}>C</Text>
-                  <Text style={styles.answerText}>{dailyQuestion.option_c}</Text>
-                  {getAnswerIcon('C')}
-                </View>
+                <Text style={styles.answerText}>{dailyQuestion.choice_c}</Text>
+                {getAnswerIcon('c')}
               </TouchableOpacity>
             </View>
 
-            {showResult && dailyQuestion.explanation && (
+            {showResult && (
               <View style={dynamicStyles.explanationContainer}>
                 <Text style={dynamicStyles.explanationText}>
-                  <Text style={{ fontFamily: 'Inter-Bold' }}>Erklärung: </Text>
-                  {dailyQuestion.explanation}
+                  <Text style={{ fontFamily: 'Inter-Bold' }}>Ergebnis: </Text>
+                  {selectedAnswer === dailyQuestion?.correct_answer ? 'Richtig! 🎉' : 'Leider falsch. 😔'}
                 </Text>
                 <Button
                   title="Neue Frage"
