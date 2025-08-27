@@ -13,6 +13,7 @@ interface DailyTip {
   title?: string;
   content?: string;
   tip_content?: string;
+  tip?: string;
   category?: string;
 }
 
@@ -26,7 +27,8 @@ interface DailyQuestion {
   choice_a?: string;
   choice_b?: string;
   choice_c?: string;
-  correct_answer: string;
+  correct_answer?: string;
+  correct_choice?: string;
   explanation?: string;
   category?: string;
 }
@@ -159,7 +161,7 @@ export default function DailyTipsManager() {
                 </View>
                 <Text style={[styles.tipTitle, { color: colors.text }]}>{tip.title || 'Daily Tip'}</Text>
                 <Text style={[styles.tipContent, { color: colors.textSecondary }]}>
-                  {tip.tip_content || tip.content || 'No content available'}
+                  {tip.tip || tip.tip_content || tip.content || 'No content available'}
                 </Text>
               </Card>
             ))
@@ -195,10 +197,10 @@ export default function DailyTipsManager() {
                 <Text style={[styles.tipTitle, { color: colors.text }]}>{question.question}</Text>
                 <View style={styles.answerPreview}>
                   <Text style={[styles.answerText, { color: colors.textSecondary }]}>
-                    Antwort {question.correct_answer}: {
-                      question.correct_answer?.toLowerCase() === 'a' || question.correct_answer === 'A' ? 
+                    Antwort {question.correct_choice || question.correct_answer}: {
+                      (question.correct_choice || question.correct_answer)?.toLowerCase() === 'a' ? 
                         (question.choice_a || question.option_a) :
-                      question.correct_answer?.toLowerCase() === 'b' || question.correct_answer === 'B' ? 
+                      (question.correct_choice || question.correct_answer)?.toLowerCase() === 'b' ? 
                         (question.choice_b || question.option_b) :
                       (question.choice_c || question.option_c)
                     }

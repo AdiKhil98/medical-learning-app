@@ -17,6 +17,7 @@ interface DailyTip {
   title?: string;
   content?: string;
   tip_content?: string;
+  tip?: string;
   category?: string;
 }
 
@@ -30,7 +31,8 @@ interface DailyQuestion {
   choice_a?: string;
   choice_b?: string;
   choice_c?: string;
-  correct_answer: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
+  correct_answer?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
+  correct_choice?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
   explanation?: string;
   category?: string;
 }
@@ -98,6 +100,10 @@ export default function DashboardScreen() {
           if (questionData) {
             console.log('Question data:', questionData);
             console.log('Available columns:', Object.keys(questionData));
+            console.log('Correct answer field:', questionData.correct_answer);
+            console.log('Correct choice field:', questionData.correct_choice);
+            console.log('Correct answer type:', typeof questionData.correct_answer);
+            console.log('Correct choice type:', typeof questionData.correct_choice);
           }
         }
         
@@ -126,6 +132,11 @@ export default function DashboardScreen() {
   const handleAnswerSelect = (answer: 'a' | 'b' | 'c') => {
     if (showResult) return; // Prevent changing answer after showing result
     
+    console.log('Selected answer:', answer);
+    console.log('Correct answer from DB:', dailyQuestion?.correct_answer);
+    console.log('Correct choice from DB:', dailyQuestion?.correct_choice);
+    console.log('Correct choice lowercase:', dailyQuestion?.correct_choice?.toLowerCase());
+    
     setSelectedAnswer(answer);
     setShowResult(true);
   };
@@ -140,7 +151,7 @@ export default function DashboardScreen() {
       return selectedAnswer === option ? styles.selectedAnswer : styles.answerButton;
     }
     
-    const correctAnswer = dailyQuestion?.correct_answer?.toLowerCase();
+    const correctAnswer = (dailyQuestion?.correct_choice || dailyQuestion?.correct_answer)?.toLowerCase();
     
     if (option === correctAnswer) {
       return styles.correctAnswer;
@@ -156,7 +167,7 @@ export default function DashboardScreen() {
   const getAnswerIcon = (option: 'a' | 'b' | 'c') => {
     if (!showResult) return null;
     
-    const correctAnswer = dailyQuestion?.correct_answer?.toLowerCase();
+    const correctAnswer = (dailyQuestion?.correct_choice || dailyQuestion?.correct_answer)?.toLowerCase();
     
     if (option === correctAnswer) {
       return <CheckCircle size={20} color="#FFFFFF" />;
@@ -404,7 +415,7 @@ export default function DashboardScreen() {
               <Text style={dynamicStyles.tipTitle}>Tipp des Tages</Text>
             </View>
             <Text style={dynamicStyles.tipContent}>
-              {dailyTip.tip_content || dailyTip.content || 'No tip content available'}
+              {dailyTip.tip || dailyTip.tip_content || dailyTip.content || 'No tip content available'}
             </Text>
           </Card>
         ) : (
@@ -461,7 +472,7 @@ export default function DashboardScreen() {
               <View style={dynamicStyles.explanationContainer}>
                 <Text style={dynamicStyles.explanationText}>
                   <Text style={{ fontFamily: 'Inter-Bold' }}>Ergebnis: </Text>
-                  {selectedAnswer === dailyQuestion?.correct_answer?.toLowerCase() ? 'Richtig! 🎉' : 'Leider falsch. 😔'}
+                  {selectedAnswer === (dailyQuestion?.correct_choice || dailyQuestion?.correct_answer)?.toLowerCase() ? 'Richtig! 🎉' : 'Leider falsch. 😔'}
                 </Text>
                 <Button
                   title="Neue Frage"
