@@ -7,44 +7,13 @@ import {
   StyleSheet, 
   SafeAreaView, 
   ScrollView,
-  Image,
-  Dimensions,
   Platform
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Mail, Lock, Eye, EyeOff, Star, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-
-const { width, height } = Dimensions.get('window');
-const isTablet = width >= 768;
-const isDesktop = width >= 1024;
-
-const testimonials = [
-  {
-    quote: "Diese Plattform hat mir geholfen, meine Kenntnisprüfung mit Vertrauen zu bestehen. Die KI-gestützten Simulationen waren unschätzbar wertvoll für meine Vorbereitung.",
-    author: "Dr. Sarah Weber",
-    role: "Allgemeinmedizin",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=600&fit=crop&crop=face"
-  },
-  {
-    quote: "Die Fachsprachprüfung schien unmöglich, aber mit den strukturierten Übungen hier habe ich sie beim ersten Versuch geschafft.",
-    author: "Dr. Ahmed Hassan",
-    role: "Innere Medizin", 
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=600&fit=crop&crop=face"
-  },
-  {
-    quote: "Hervorragende Vorbereitung auf beide Prüfungen. Die Simulationen sind realitätsnah und sehr hilfreich.",
-    author: "Dr. Maria González",
-    role: "Pädiatrie",
-    rating: 5,
-    image: "https://images.unsplash.com/photo-1594824804732-ca8db29ac2e3?w=400&h=600&fit=crop&crop=face"
-  }
-];
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -52,7 +21,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const router = useRouter();
   const { signIn, session } = useAuth();
   
@@ -94,327 +62,179 @@ export default function Login() {
     Alert.alert('Info', 'Google-Anmeldung wird bald verfügbar sein');
   };
 
-  const nextTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
-
-  const prevTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={16}
-        fill={i < rating ? '#FFD700' : 'transparent'}
-        color={i < rating ? '#FFD700' : '#E5E5E5'}
-      />
-    ));
-  };
-
-  if (isTablet || isDesktop) {
-    // Split-screen layout for tablets and desktop
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.splitContainer}>
-          {/* Left Panel - Login Form */}
-          <View style={styles.leftPanel}>
-            <ScrollView contentContainerStyle={styles.leftContent} showsVerticalScrollIndicator={false}>
-              <View style={styles.loginForm}>
-                <View style={styles.header}>
-                  <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
-                  <Text style={styles.subtitle}>
-                    Melden Sie sich bei Ihrer medizinischen Lernplattform an
-                  </Text>
-                </View>
-
-                <View style={styles.form}>
-                  <Input
-                    label="E-Mail"
-                    placeholder="E-Mail eingeben"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    leftIcon={<Mail size={20} color="#9CA3AF" />}
-                    editable={!loading}
-                  />
-
-                  <Input
-                    label="Passwort"
-                    placeholder="Passwort eingeben"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    leftIcon={<Lock size={20} color="#9CA3AF" />}
-                    rightIcon={
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? 
-                          <EyeOff size={20} color="#9CA3AF" /> : 
-                          <Eye size={20} color="#9CA3AF" />
-                        }
-                      </TouchableOpacity>
-                    }
-                    editable={!loading}
-                  />
-
-                  <View style={styles.optionsRow}>
-                    <TouchableOpacity 
-                      style={styles.rememberRow}
-                      onPress={() => setRememberMe(!rememberMe)}
-                    >
-                      <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                        {rememberMe && <Text style={styles.checkmark}>✓</Text>}
-                      </View>
-                      <Text style={styles.rememberText}>Für 30 Tage merken</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity>
-                      <Text style={styles.forgotPassword}>Passwort vergessen?</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <LinearGradient
-                    colors={['#667eea', '#764ba2']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.gradientButton}
-                  >
-                    <TouchableOpacity
-                      style={styles.signInButton}
-                      onPress={handleLogin}
-                      disabled={loading}
-                    >
-                      <Text style={styles.signInButtonText}>
-                        {loading ? 'Wird angemeldet...' : 'Anmelden'}
-                      </Text>
-                    </TouchableOpacity>
-                  </LinearGradient>
-
-                  <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>oder</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.googleButton}
-                    onPress={handleGoogleSignIn}
-                  >
-                    <Image 
-                      source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
-                      style={styles.googleLogo}
-                    />
-                    <Text style={styles.googleButtonText}>Mit Google anmelden</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.signUpRow}>
-                    <Text style={styles.signUpText}>Noch kein Konto? </Text>
-                    <Link href="/auth/register" asChild>
-                      <TouchableOpacity>
-                        <Text style={styles.signUpLink}>Registrieren</Text>
-                      </TouchableOpacity>
-                    </Link>
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* Right Panel - Hero Section */}
-          <View style={styles.rightPanel}>
-            <Image 
-              source={{ uri: testimonials[currentTestimonial].image }}
-              style={styles.heroImage}
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)']}
-              style={styles.heroOverlay}
-            >
-              <View style={styles.testimonialContainer}>
-                <View style={styles.testimonialNavigation}>
-                  <TouchableOpacity 
-                    style={styles.navButton}
-                    onPress={prevTestimonial}
-                  >
-                    <ChevronLeft size={24} color="white" />
-                  </TouchableOpacity>
-                  
-                  <View style={styles.testimonialContent}>
-                    <View style={styles.ratingContainer}>
-                      {renderStars(testimonials[currentTestimonial].rating)}
-                    </View>
-                    
-                    <Text style={styles.testimonialQuote}>
-                      "{testimonials[currentTestimonial].quote}"
-                    </Text>
-                    
-                    <View style={styles.testimonialAuthor}>
-                      <Text style={styles.authorName}>
-                        {testimonials[currentTestimonial].author}
-                      </Text>
-                      <Text style={styles.authorRole}>
-                        {testimonials[currentTestimonial].role}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <TouchableOpacity 
-                    style={styles.navButton}
-                    onPress={nextTestimonial}
-                  >
-                    <ChevronRight size={24} color="white" />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.indicators}>
-                  {testimonials.map((_, index) => (
-                    <View 
-                      key={index}
-                      style={[
-                        styles.indicator,
-                        index === currentTestimonial && styles.activeIndicator
-                      ]}
-                    />
-                  ))}
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Mobile layout (original simplified design)
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.mobileContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.mobileForm}>
-          <View style={styles.header}>
-            <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
-            <Text style={styles.subtitle}>
-              Kenntnisprüfung & Fachsprachprüfung Vorbereitung
-            </Text>
-          </View>
+    <LinearGradient
+      colors={['#ffffff', '#f0f9f0']}
+      style={styles.gradientBackground}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.loginCard}>
+            <View style={styles.header}>
+              <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
+              <Text style={styles.subtitle}>
+                Melden Sie sich bei Ihrer medizinischen Lernplattform an
+              </Text>
+              <Text style={styles.platformText}>
+                Kenntnisprüfung & Fachsprachprüfung Vorbereitung
+              </Text>
+            </View>
 
-          <View style={styles.form}>
-            <Input
-              label="E-Mail"
-              placeholder="E-Mail eingeben"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              leftIcon={<Mail size={20} color="#9CA3AF" />}
-              editable={!loading}
-            />
+            <View style={styles.form}>
+              <Input
+                label="E-Mail"
+                placeholder="E-Mail eingeben"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                leftIcon={<Mail size={20} color="#6B7280" />}
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="Passwort"
-              placeholder="Passwort eingeben"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              leftIcon={<Lock size={20} color="#9CA3AF" />}
-              rightIcon={
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  {showPassword ? 
-                    <EyeOff size={20} color="#9CA3AF" /> : 
-                    <Eye size={20} color="#9CA3AF" />
-                  }
+              <Input
+                label="Passwort"
+                placeholder="Passwort eingeben"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                leftIcon={<Lock size={20} color="#6B7280" />}
+                rightIcon={
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    {showPassword ? 
+                      <EyeOff size={20} color="#6B7280" /> : 
+                      <Eye size={20} color="#6B7280" />
+                    }
+                  </TouchableOpacity>
+                }
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
+
+              <View style={styles.optionsRow}>
+                <TouchableOpacity 
+                  style={styles.rememberRow}
+                  onPress={() => setRememberMe(!rememberMe)}
+                >
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                    {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.rememberText}>Für 30 Tage merken</Text>
                 </TouchableOpacity>
-              }
-              editable={!loading}
-            />
-
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradientButton}
-            >
-              <TouchableOpacity
-                style={styles.signInButton}
-                onPress={handleLogin}
-                disabled={loading}
-              >
-                <Text style={styles.signInButtonText}>
-                  {loading ? 'Wird angemeldet...' : 'Anmelden'}
-                </Text>
-              </TouchableOpacity>
-            </LinearGradient>
-
-            <View style={styles.signUpRow}>
-              <Text style={styles.signUpText}>Noch kein Konto? </Text>
-              <Link href="/auth/register" asChild>
+                
                 <TouchableOpacity>
-                  <Text style={styles.signUpLink}>Registrieren</Text>
+                  <Text style={styles.forgotPassword}>Passwort vergessen?</Text>
                 </TouchableOpacity>
-              </Link>
+              </View>
+
+              <LinearGradient
+                colors={['#10b981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.signInButtonGradient}
+              >
+                <TouchableOpacity
+                  style={styles.signInButton}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  <Text style={styles.signInButtonText}>
+                    {loading ? 'Wird angemeldet...' : 'Anmelden'}
+                  </Text>
+                </TouchableOpacity>
+              </LinearGradient>
+
+              <View style={styles.signUpRow}>
+                <Text style={styles.signUpText}>Noch kein Konto? </Text>
+                <Link href="/auth/register" asChild>
+                  <TouchableOpacity>
+                    <Text style={styles.signUpLink}>Registrieren</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
-  splitContainer: {
-    flex: 1,
-    flexDirection: isTablet || isDesktop ? 'row' : 'column',
-  },
-  leftPanel: {
-    flex: isDesktop ? 0.4 : 0.5,
-    backgroundColor: '#ffffff',
-    padding: 24,
-    justifyContent: 'center',
-  },
-  rightPanel: {
-    flex: isDesktop ? 0.6 : 0.5,
-    position: 'relative',
-  },
-  leftContent: {
+  scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    maxWidth: 400,
-    alignSelf: 'center',
+    padding: 24,
+    minHeight: '100%',
   },
-  loginForm: {
+  loginCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    marginHorizontal: 'auto',
+    maxWidth: 440,
     width: '100%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
     marginBottom: 32,
+    alignItems: 'center',
   },
   welcomeTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 8,
+    textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
     lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  platformText: {
+    fontSize: 14,
+    color: '#10b981',
+    fontWeight: '500',
+    textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   form: {
     gap: 20,
   },
+  inputContainer: {
+    marginBottom: 4,
+  },
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: -8,
+    marginTop: 8,
+    marginBottom: 8,
   },
   rememberRow: {
     flexDirection: 'row',
@@ -431,8 +251,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   checkmark: {
     color: 'white',
@@ -442,15 +262,25 @@ const styles = StyleSheet.create({
   rememberText: {
     fontSize: 14,
     color: '#374151',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   forgotPassword: {
     fontSize: 14,
-    color: '#667eea',
+    color: '#10b981',
     fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  gradientButton: {
-    borderRadius: 8,
+  signInButtonGradient: {
+    borderRadius: 12,
     marginTop: 8,
+    shadowColor: '#10b981',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   signInButton: {
     paddingVertical: 16,
@@ -461,136 +291,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    backgroundColor: 'white',
-  },
-  googleLogo: {
-    width: 20,
-    height: 20,
-    marginRight: 12,
-  },
-  googleButtonText: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   signUpRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 24,
   },
   signUpText: {
     fontSize: 14,
     color: '#6B7280',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   signUpLink: {
     fontSize: 14,
-    color: '#667eea',
+    color: '#10b981',
     fontWeight: '600',
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-end',
-    padding: 32,
-  },
-  testimonialContainer: {
-    alignItems: 'center',
-  },
-  testimonialNavigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  navButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  testimonialContent: {
-    flex: 1,
-    marginHorizontal: 20,
-    alignItems: 'center',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    gap: 4,
-  },
-  testimonialQuote: {
-    fontSize: 18,
-    color: 'white',
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 16,
-    fontStyle: 'italic',
-  },
-  testimonialAuthor: {
-    alignItems: 'center',
-  },
-  authorName: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  authorRole: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  indicators: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  activeIndicator: {
-    backgroundColor: 'white',
-  },
-  // Mobile styles
-  mobileContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  mobileForm: {
-    maxWidth: 400,
-    alignSelf: 'center',
-    width: '100%',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
