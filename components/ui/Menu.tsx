@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug, LogOut } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug, LogOut, Loader2 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +21,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const { user, signOut } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
   const submenuHeightAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -71,8 +72,14 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   };
 
   const handleLogout = async () => {
-    onClose();
-    await signOut();
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      onClose();
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
   };
 
   const rotateInterpolate = rotateAnim.interpolate({
@@ -262,11 +269,18 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
         {/* Logout Button at Bottom */}
         <View style={styles.logoutContainer}>
           <TouchableOpacity
-            style={dynamicStyles.logoutButton}
+            style={[dynamicStyles.logoutButton, isLoggingOut && { opacity: 0.7 }]}
             onPress={handleLogout}
+            disabled={isLoggingOut}
           >
-            <LogOut size={20} color="#EF4444" />
-            <Text style={dynamicStyles.logoutText}>Abmelden</Text>
+            {isLoggingOut ? (
+              <Loader2 size={20} color="#EF4444" />
+            ) : (
+              <LogOut size={20} color="#EF4444" />
+            )}
+            <Text style={dynamicStyles.logoutText}>
+              {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
+            </Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
