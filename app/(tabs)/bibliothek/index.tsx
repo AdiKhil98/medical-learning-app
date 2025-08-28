@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Search, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 import HierarchicalSectionCard from '@/components/ui/HierarchicalSectionCard';
@@ -57,6 +58,7 @@ const SectionCard = React.memo(({
 export default function BibliothekScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user, loading: authLoading } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,6 +74,14 @@ export default function BibliothekScreen() {
       }
       
       setError(null);
+
+      // Check if user is authenticated
+      if (!user) {
+        setError('Sie müssen angemeldet sein, um die Bibliothek zu verwenden');
+        return;
+      }
+
+      console.log('Loading sections for authenticated user:', user.id);
 
       // Get root sections (sections without parent)
       const rootSections = await medicalContentService.getRootSections();
@@ -92,11 +102,14 @@ export default function BibliothekScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    loadSections();
-  }, [loadSections]);
+    // Only load sections after auth loading is complete
+    if (!authLoading) {
+      loadSections();
+    }
+  }, [loadSections, authLoading]);
 
   const handleRefresh = useCallback(() => {
     loadSections(true);
@@ -132,7 +145,7 @@ export default function BibliothekScreen() {
     />
   ), [refreshing, handleRefresh, colors.primary]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <LinearGradient
