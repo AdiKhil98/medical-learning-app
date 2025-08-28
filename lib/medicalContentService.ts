@@ -89,6 +89,31 @@ class MedicalContentService {
   }
 
   /**
+   * Get hierarchical path for breadcrumb navigation
+   */
+  async getHierarchicalPath(slug: string): Promise<MedicalSection[]> {
+    try {
+      const path: MedicalSection[] = [];
+      let currentSlug = slug;
+      
+      while (currentSlug) {
+        const section = await this.getSectionBySlug(currentSlug);
+        if (section) {
+          path.unshift(section);
+          currentSlug = section.parent_slug || '';
+        } else {
+          break;
+        }
+      }
+      
+      return path;
+    } catch (error) {
+      SecureLogger.log('Error getting hierarchical path:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get sections by parent slug (for navigation)
    */
   async getSectionsByParent(parentSlug: string): Promise<MedicalSection[]> {

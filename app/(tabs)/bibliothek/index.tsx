@@ -1,64 +1,16 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Search, BookOpen, Stethoscope, Scissors, AlertTriangle, Microscope, Droplets, Scan, BookOpen as FolderIcon } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
+import { Search, BookOpen, Filter, Grid } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Input from '@/components/ui/Input';
 import { LinearGradient } from 'expo-linear-gradient';
-import Card from '@/components/ui/Card';
+import HierarchicalSectionCard from '@/components/ui/HierarchicalSectionCard';
+import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
-// Section type
-interface Section {
-  id: string;
-  slug: string;
-  title: string;
-  parent_slug: string | null;
-  description: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
-  icon: string;
-  color: string;
-  display_order: number;
-}
+// Use MedicalSection from service
+type Section = MedicalSection;
 
-// Map title/iconName to icon component and color
-const getCategoryDetails = (title: string, iconName?: string, color?: string) => {
-  const name = title.toLowerCase().trim();
-  switch (true) {
-    case name === 'innere medizin': return { icon: 'Stethoscope', color: '#0077B6' };
-    case name === 'chirurgie': return { icon: 'Scissors', color: '#48CAE4' };
-    case name === 'notfallmedizin': return { icon: 'AlertTriangle', color: '#EF4444' };
-    case name === 'infektiologie': return { icon: 'Microscope', color: '#DC2626' };
-    case name === 'urologie': return { icon: 'Droplets', color: '#0369A1' };
-    case name === 'radiologie': return { icon: 'Scan', color: '#22C55E' };
-    default: return { icon: iconName || 'FileText', color: color || '#6B7280' };
-  }
-};
-
-// Memoized icon components cache
-const iconCache = new Map();
-
-// Optimized icon component with memoization
-const getIconComponent = (iconName: string, color: string, size = 24) => {
-  const cacheKey = `${iconName}-${color}-${size}`;
-  if (iconCache.has(cacheKey)) {
-    return iconCache.get(cacheKey);
-  }
-  
-  let icon;
-  switch (iconName) {
-    case 'Stethoscope': icon = <Stethoscope size={size} color={color} />; break;
-    case 'Scissors': icon = <Scissors size={size} color={color} />; break;
-    case 'AlertTriangle': icon = <AlertTriangle size={size} color={color} />; break;
-    case 'Microscope': icon = <Microscope size={size} color={color} />; break;
-    case 'Droplets': icon = <Droplets size={size} color={color} />; break;
-    case 'Scan': icon = <Scan size={size} color={color} />; break;
-    default: icon = <FolderIcon size={size} color={color} />; break;
-  }
-  
-  iconCache.set(cacheKey, icon);
-  return icon;
-};
 
 // Skeleton loader component
 const SkeletonLoader = memo(() => {
@@ -78,37 +30,19 @@ const SkeletonLoader = memo(() => {
   );
 });
 
-// Memoized section item component
-const SectionItem = memo(({ section, onPress, colors }: { 
+// Memoized section item component using HierarchicalSectionCard
+const SectionItem = memo(({ section, onPress }: { 
   section: Section, 
-  onPress: () => void, 
-  colors: any 
+  onPress: () => void
 }) => {
-  const { icon, color } = useMemo(() => 
-    getCategoryDetails(section.title, section.icon, section.color), 
-    [section.title, section.icon, section.color]
-  );
-  
-  const gradientColors = useMemo(() => [`${color}20`, `${color}10`], [color]);
-  
   return (
-    <Card style={[styles.card, { backgroundColor: colors.card }]}>
-      <TouchableOpacity onPress={onPress} style={styles.row} activeOpacity={0.7}>
-        <LinearGradient colors={gradientColors} style={styles.rowBg}>
-          <View style={[styles.dot, { backgroundColor: color }]} />
-          {getIconComponent(icon, color)}
-          <Text style={[styles.itemText, { color: colors.text }]}>{section.title}</Text>
-          <ChevronRight size={20} color={colors.textSecondary} />
-        </LinearGradient>
-      </TouchableOpacity>
-    </Card>
+    <HierarchicalSectionCard 
+      section={section} 
+      onPress={onPress} 
+      hierarchyLevel={0} // Root level for main categories
+    />
   );
 });
-
-// Data cache to prevent unnecessary API calls
-let sectionsCache: Section[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const IndexScreen = memo(() => {
   const router = useRouter();
@@ -118,31 +52,13 @@ const IndexScreen = memo(() => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Optimized fetch with caching
+  // Fetch root sections using medical content service
   const fetchRootSections = useCallback(async () => {
-    // Check cache first
-    const now = Date.now();
-    if (sectionsCache && (now - cacheTimestamp) < CACHE_DURATION) {
-      setSections(sectionsCache);
-      setLoading(false);
-      return;
-    }
-    
     setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select('id,slug,title,description,type,icon,color,display_order')
-        .is('parent_slug', null)
-        .order('display_order', { ascending: true });
-      if (error) throw error;
-      
-      const sectionsData = data || [];
-      setSections(sectionsData);
-      
-      // Update cache
-      sectionsCache = sectionsData;
-      cacheTimestamp = now;
+      const rootSections = await medicalContentService.getRootSections();
+      setSections(rootSections);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -187,9 +103,8 @@ const IndexScreen = memo(() => {
     <SectionItem 
       section={sec} 
       onPress={() => navigateTo(sec)} 
-      colors={colors} 
     />
-  ), [navigateTo, colors]);
+  ), [navigateTo]);
   
   const keyExtractor = useCallback((item: Section) => item.slug, []);
 
@@ -220,19 +135,45 @@ const IndexScreen = memo(() => {
         <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
         <View style={styles.header}>
           <Text style={dynamicStyles.title}>Bibliothek</Text>
-          <View style={styles.searchContainer}>
-            <View style={{ height: 56, backgroundColor: colors.card, borderRadius: 8, opacity: 0.6 }} />
-          </View>
         </View>
-        <SkeletonLoader />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[dynamicStyles.emptyText, { marginTop: 16 }]}>
+            Lade medizinische Inhalte...
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={dynamicStyles.errorText}>{error}</Text>
+      <SafeAreaView style={[dynamicStyles.container]}>
+        <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+        <View style={styles.header}>
+          <Text style={dynamicStyles.title}>Bibliothek</Text>
+        </View>
+        <View style={styles.center}>
+          <BookOpen size={60} color={colors.textSecondary} />
+          <Text style={[dynamicStyles.errorText, { textAlign: 'center', marginTop: 16 }]}>
+            Fehler beim Laden der Inhalte
+          </Text>
+          <Text style={[dynamicStyles.emptyText, { textAlign: 'center', marginTop: 8 }]}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            onPress={fetchRootSections}
+            style={{
+              marginTop: 16,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              backgroundColor: colors.primary,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: '600' }}>Erneut versuchen</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
