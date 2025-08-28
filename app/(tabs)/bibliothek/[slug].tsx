@@ -6,25 +6,18 @@ import {
   TouchableOpacity,
   SafeAreaView,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, BookOpen } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '@/lib/supabase';
+import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
+import HierarchicalSectionCard from '@/components/ui/HierarchicalSectionCard';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 
-interface Section {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  parent_slug: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
-  content_type?: string;
-  has_content?: boolean;
-  content_json?: any;
-  display_order: number;
-}
+// Use MedicalSection from service
+type Section = MedicalSection;
 
 // Skeleton loader for children items
 const ChildrenSkeleton = memo(() => {
@@ -44,37 +37,21 @@ const ChildrenSkeleton = memo(() => {
   );
 });
 
-// Memoized child item component
-const ChildItem = memo(({ section, onPress, colors }: {
+// Memoized child item component using HierarchicalSectionCard
+const ChildItem = memo(({ section, onPress, hierarchyLevel }: {
   section: Section,
   onPress: () => void,
-  colors: any
+  hierarchyLevel: number
 }) => {
-  const itemStyles = useMemo(() => ({
-    ...styles.item,
-    backgroundColor: colors.card,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  }), [colors.card]);
-
   return (
-    <TouchableOpacity
-      style={itemStyles}
+    <HierarchicalSectionCard
+      section={section}
       onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <Text style={[styles.itemText, { color: colors.text }]}>{section.title}</Text>
-      <ChevronRight size={20} color={colors.textSecondary} />
-    </TouchableOpacity>
+      hierarchyLevel={hierarchyLevel}
+    />
   );
 });
 
-// Cache for section data
-const sectionCache = new Map<string, { data: Section, children: Section[], timestamp: number }>();
-const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes
 
 const SectionDetailScreen = memo(() => {
   const { slug } = useLocalSearchParams();
@@ -83,79 +60,47 @@ const SectionDetailScreen = memo(() => {
 
   const [current, setCurrent] = useState<Section | null>(null);
   const [children, setChildren] = useState<Section[]>([]);
+  const [breadcrumbPath, setBreadcrumbPath] = useState<Section[]>([]);
+  const [hierarchyLevel, setHierarchyLevel] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSectionAndChildren = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
 
-    // Check cache first
-    const cacheKey = slug;
-    const cached = sectionCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      setCurrent(cached.data);
-      setChildren(cached.children);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
+    setError(null);
 
     try {
-      // 1) Fetch current section with minimal data
-      const { data: cur, error: curErr } = await supabase
-        .from('sections')
-        .select('id,slug,title,description,type,content_type,has_content,content_improved,display_order')
-        .eq('slug', slug)
-        .maybeSingle();
-      
-      if (curErr) throw curErr;
-      if (!cur) throw new Error('Section not found');
+      // Fetch current section and its hierarchical path
+      const [currentSection, pathSections, childrenSections] = await Promise.all([
+        medicalContentService.getSectionBySlug(slug),
+        medicalContentService.getHierarchicalPath(slug),
+        medicalContentService.getSectionsByParent(slug)
+      ]);
 
-      // 2) Check if this section has content - redirect to content viewer
-      if (Array.isArray(cur.content_improved) && cur.content_improved.length > 0) {
+      if (!currentSection) {
+        throw new Error('Section not found');
+      }
+
+      // Check if this section has content - redirect to content viewer
+      const hasContent = currentSection.has_content ||
+        currentSection.content_html ||
+        (currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0) ||
+        currentSection.type === 'file-text' ||
+        currentSection.type === 'markdown';
+
+      if (hasContent) {
         router.replace(`/bibliothek/content/${slug}`);
         return;
       }
 
-      const hasContentImproved = cur.content_improved && 
-        Array.isArray(cur.content_improved.sections) && 
-        cur.content_improved.sections.length > 0;
-
-      const isLeaf = 
-        cur.type === 'file-text' ||
-        cur.type === 'markdown' ||
-        cur.content_type === 'document' ||
-        cur.has_content ||
-        hasContentImproved;
-
-      if (isLeaf) {
-        router.replace(`/bibliothek/content/${slug}`);
-        return;
-      }
-
-      setCurrent(cur);
-
-      // 3) Fetch direct children with minimal fields
-      const { data: kids, error: kidsErr } = await supabase
-        .from('sections')
-        .select('id,slug,title,description,type,display_order')
-        .eq('parent_slug', slug)
-        .order('display_order', { ascending: true });
-        
-      if (kidsErr) throw kidsErr;
+      setCurrent(currentSection);
+      setChildren(childrenSections);
+      setBreadcrumbPath(pathSections);
       
-      const childrenData = kids || [];
-      setChildren(childrenData);
-      
-      // Update cache
-      sectionCache.set(cacheKey, {
-        data: cur,
-        children: childrenData,
-        timestamp: now,
-      });
+      // Calculate hierarchy level based on breadcrumb path
+      setHierarchyLevel(pathSections.length);
 
     } catch (e: any) {
       console.error(e);
@@ -187,9 +132,9 @@ const SectionDetailScreen = memo(() => {
     <ChildItem 
       section={sec} 
       onPress={() => handleChildNavigation(sec)} 
-      colors={colors} 
+      hierarchyLevel={hierarchyLevel + 1}
     />
-  ), [handleChildNavigation, colors]);
+  ), [handleChildNavigation, hierarchyLevel]);
 
   const keyExtractor = useCallback((item: Section) => item.slug, []);
 
@@ -276,19 +221,18 @@ const SectionDetailScreen = memo(() => {
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
       
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-        activeOpacity={0.7}
-      >
-        <ChevronLeft size={24} color={colors.primary} />
-        <Text style={dynamicStyles.backText}>Zurück</Text>
-      </TouchableOpacity>
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb 
+        path={breadcrumbPath} 
+        currentTitle={current.title}
+      />
 
-      <Text style={dynamicStyles.header}>{current.title}</Text>
-      {current.description && (
-        <Text style={dynamicStyles.subHeader}>{current.description}</Text>
-      )}
+      <View style={{ padding: 16 }}>
+        <Text style={dynamicStyles.header}>{current.title}</Text>
+        {current.description && (
+          <Text style={dynamicStyles.subHeader}>{current.description}</Text>
+        )}
+      </View>
 
       {children.length === 0 ? (
         <View style={styles.emptyState}>
