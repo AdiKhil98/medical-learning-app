@@ -194,6 +194,13 @@ class MedicalContentService {
   }
 
   /**
+   * Get child sections (alias for getSectionsByParent)
+   */
+  async getChildSections(parentSlug: string): Promise<MedicalSection[]> {
+    return this.getSectionsByParent(parentSlug);
+  }
+
+  /**
    * Get single section with all content formats
    */
   async getSection(slug: string): Promise<MedicalSection | null> {
@@ -216,7 +223,15 @@ class MedicalContentService {
         .eq('slug', slug)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        SecureLogger.log(`Database error in getSection(${slug}):`, error);
+        // If columns don't exist, try a simpler query
+        if (error.message && (error.message.includes('column') && error.message.includes('does not exist'))) {
+          SecureLogger.log('Columns missing, trying fallback query');
+          return await this.getSectionFallback(slug);
+        }
+        throw error;
+      }
       if (!data) return null;
 
       const section = data as MedicalSection;
@@ -229,6 +244,38 @@ class MedicalContentService {
     } catch (error) {
       SecureLogger.log('Error fetching section:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Fallback method for when content columns don't exist yet
+   */
+  private async getSectionFallback(slug: string): Promise<MedicalSection | null> {
+    try {
+      const { data, error } = await supabase
+        .from('sections')
+        .select(`
+          id, slug, title, description, type, icon, color, display_order,
+          category, image_url, parent_slug, content_json, has_content,
+          hierarchy_level, created_at, updated_at
+        `)
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const section = data as MedicalSection;
+      
+      // Set empty values for missing columns
+      section.content_improved = [];
+      section.content_html = '';
+      section.content_details = '';
+      
+      return section;
+    } catch (error) {
+      SecureLogger.log(`Fallback query also failed for section ${slug}:`, error);
+      return null;
     }
   }
 
