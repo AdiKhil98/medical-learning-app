@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
@@ -27,7 +26,57 @@ interface Section {
   display_order: number;
 }
 
-export default function SectionDetailScreen() {
+// Skeleton loader for children items
+const ChildrenSkeleton = memo(() => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ padding: 16 }}>
+      {Array.from({ length: 4 }, (_, i) => (
+        <View key={i} style={{
+          height: 64,
+          backgroundColor: colors.card,
+          marginBottom: 8,
+          borderRadius: 12,
+          opacity: 0.5,
+        }} />
+      ))}
+    </View>
+  );
+});
+
+// Memoized child item component
+const ChildItem = memo(({ section, onPress, colors }: {
+  section: Section,
+  onPress: () => void,
+  colors: any
+}) => {
+  const itemStyles = useMemo(() => ({
+    ...styles.item,
+    backgroundColor: colors.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  }), [colors.card]);
+
+  return (
+    <TouchableOpacity
+      style={itemStyles}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Text style={[styles.itemText, { color: colors.text }]}>{section.title}</Text>
+      <ChevronRight size={20} color={colors.textSecondary} />
+    </TouchableOpacity>
+  );
+});
+
+// Cache for section data
+const sectionCache = new Map<string, { data: Section, children: Section[], timestamp: number }>();
+const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes
+
+const SectionDetailScreen = memo(() => {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
@@ -39,25 +88,38 @@ export default function SectionDetailScreen() {
 
   const fetchSectionAndChildren = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
+
+    // Check cache first
+    const cacheKey = slug;
+    const cached = sectionCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      setCurrent(cached.data);
+      setChildren(cached.children);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1) Fetch current section
+      // 1) Fetch current section with minimal data
       const { data: cur, error: curErr } = await supabase
         .from('sections')
-        .select('*, content_improved, content_html')
+        .select('id,slug,title,description,type,content_type,has_content,content_improved,display_order')
         .eq('slug', slug)
         .maybeSingle();
+      
       if (curErr) throw curErr;
       if (!cur) throw new Error('Section not found');
 
-      // 2) Check if this section has content_improved with data
+      // 2) Check if this section has content - redirect to content viewer
       if (Array.isArray(cur.content_improved) && cur.content_improved.length > 0) {
         router.replace(`/bibliothek/content/${slug}`);
         return;
       }
 
-      // 3) Check if this is a leaf section with other content indicators
       const hasContentImproved = cur.content_improved && 
         Array.isArray(cur.content_improved.sections) && 
         cur.content_improved.sections.length > 0;
@@ -70,22 +132,31 @@ export default function SectionDetailScreen() {
         hasContentImproved;
 
       if (isLeaf) {
-        // Redirect to content viewer
         router.replace(`/bibliothek/content/${slug}`);
         return;
       }
 
       setCurrent(cur);
 
-      // 4) Fetch direct children only
+      // 3) Fetch direct children with minimal fields
       const { data: kids, error: kidsErr } = await supabase
         .from('sections')
-        .select('*')
+        .select('id,slug,title,description,type,display_order')
         .eq('parent_slug', slug)
         .order('display_order', { ascending: true });
+        
       if (kidsErr) throw kidsErr;
-      console.log(`Fetched ${kids?.length || 0} children for "${slug}"`);
-      setChildren(kids || []);
+      
+      const childrenData = kids || [];
+      setChildren(childrenData);
+      
+      // Update cache
+      sectionCache.set(cacheKey, {
+        data: cur,
+        children: childrenData,
+        timestamp: now,
+      });
+
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'Unknown error');
@@ -98,11 +169,38 @@ export default function SectionDetailScreen() {
     fetchSectionAndChildren();
   }, [fetchSectionAndChildren]);
 
-  const gradientColors = isDarkMode 
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#e0f2fe', '#f0f9ff', '#ffffff'];
+  // Memoized navigation handler
+  const handleChildNavigation = useCallback((sec: Section) => {
+    router.push({
+      pathname: '/bibliothek/[slug]',
+      params: { slug: sec.slug },
+    });
+  }, [router]);
 
-  const dynamicStyles = StyleSheet.create({
+  // Memoized back handler
+  const handleBackPress = useCallback(() => {
+    router.back();
+  }, [router]);
+
+  // FlatList optimizations
+  const renderChild = useCallback(({ item: sec }: { item: Section }) => (
+    <ChildItem 
+      section={sec} 
+      onPress={() => handleChildNavigation(sec)} 
+      colors={colors} 
+    />
+  ), [handleChildNavigation, colors]);
+
+  const keyExtractor = useCallback((item: Section) => item.slug, []);
+
+  const gradientColors = useMemo(() => 
+    isDarkMode 
+      ? ['#1F2937', '#111827', '#0F172A']
+      : ['#e0f2fe', '#f0f9ff', '#ffffff'],
+    [isDarkMode]
+  );
+
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     container: { 
       flex: 1, 
       backgroundColor: colors.background 
@@ -131,24 +229,6 @@ export default function SectionDetailScreen() {
       fontSize: 16,
       color: colors.textSecondary,
     },
-    item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.card,
-      padding: 16,
-      marginBottom: 8,
-      borderRadius: 12,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
-      shadowRadius: 4,
-    },
-    itemText: {
-      flex: 1,
-      fontSize: 16,
-      color: colors.text,
-    },
     emptyText: {
       color: colors.textSecondary,
       fontSize: 16,
@@ -162,12 +242,21 @@ export default function SectionDetailScreen() {
       color: colors.primary,
       fontSize: 16,
     },
-  });
+  }), [colors]);
 
   if (loading) {
     return (
-      <SafeAreaView style={dynamicStyles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <SafeAreaView style={dynamicStyles.container}>
+        <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress} activeOpacity={0.7}>
+          <ChevronLeft size={24} color={colors.primary} />
+          <Text style={dynamicStyles.backText}>Zurück</Text>
+        </TouchableOpacity>
+        <View style={{ height: 80, paddingHorizontal: 16 }}>
+          <View style={{ height: 32, backgroundColor: colors.card, borderRadius: 8, opacity: 0.6, marginBottom: 8 }} />
+          <View style={{ height: 20, backgroundColor: colors.card, borderRadius: 4, opacity: 0.4, width: '70%' }} />
+        </View>
+        <ChildrenSkeleton />
       </SafeAreaView>
     );
   }
@@ -176,7 +265,7 @@ export default function SectionDetailScreen() {
     return (
       <SafeAreaView style={dynamicStyles.center}>
         <Text style={dynamicStyles.error}>Oops – konnte nichts laden.</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleBackPress}>
           <Text style={dynamicStyles.link}>← Zurück</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -185,14 +274,11 @@ export default function SectionDetailScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
       
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={handleBackPress}
         activeOpacity={0.7}
       >
         <ChevronLeft size={24} color={colors.primary} />
@@ -204,33 +290,33 @@ export default function SectionDetailScreen() {
         <Text style={dynamicStyles.subHeader}>{current.description}</Text>
       )}
 
-      <ScrollView style={styles.list}>
-        {children.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={dynamicStyles.emptyText}>Keine weiteren Unterpunkte.</Text>
-          </View>
-        ) : (
-          children.map((sec) => (
-            <TouchableOpacity
-              key={sec.slug}
-              style={dynamicStyles.item}
-              onPress={() =>
-                router.push({
-                  pathname: '/bibliothek/[slug]',
-                  params: { slug: sec.slug },
-                })
-              }
-              activeOpacity={0.7}
-            >
-              <Text style={dynamicStyles.itemText}>{sec.title}</Text>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
+      {children.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={dynamicStyles.emptyText}>Keine weiteren Unterpunkte.</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={children}
+          renderItem={renderChild}
+          keyExtractor={keyExtractor}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          maxToRenderPerBatch={8}
+          windowSize={8}
+          initialNumToRender={6}
+          getItemLayout={(_, index) => ({
+            length: 72, // Approximate item height
+            offset: 72 * index,
+            index,
+          })}
+        />
+      )}
     </SafeAreaView>
   );
-}
+});
+
+export default SectionDetailScreen;
 
 const styles = StyleSheet.create({
   gradientBackground: {
@@ -249,5 +335,17 @@ const styles = StyleSheet.create({
   emptyState: {
     padding: 32,
     alignItems: 'center',
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  itemText: {
+    flex: 1,
+    fontSize: 16,
   },
 });
