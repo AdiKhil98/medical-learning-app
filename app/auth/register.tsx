@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, ScrollView, Platform } from 'react-native';
 import { Link, router } from 'expo-router';
-import { Lock, Mail, User } from 'lucide-react-native';
+import { Lock, Mail, User, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Logo from '@/components/ui/Logo';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
@@ -14,6 +12,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signUp } = useAuth();
 
   const handleRegister = async () => {
@@ -39,153 +39,222 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
-        style={styles.gradientBackground}
-      />
-      
-      <View style={styles.headerImageContainer}>
-        <Image 
-          source={{ uri: 'https://images.pexels.com/photos/4226769/pexels-photo-4226769.jpeg' }}
-          style={styles.headerImage}
-        />
-        <View style={styles.imageOverlay} />
-      </View>
-      
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Logo size="large" />
-            <Text style={styles.subtitle}>
-              Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
-            </Text>
-          </View>
+    <LinearGradient
+      colors={['#ffffff', '#f0f9f0']}
+      style={styles.gradientBackground}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.registerCard}>
+            <View style={styles.header}>
+              <Text style={styles.welcomeTitle}>Konto erstellen</Text>
+              <Text style={styles.subtitle}>
+                Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
+              </Text>
+              <Text style={styles.platformText}>
+                Kenntnisprüfung & Fachsprachprüfung Vorbereitung
+              </Text>
+            </View>
 
-          <View style={styles.form}>
-            <Input
-              label="Name"
-              placeholder="Ihr vollständiger Name"
-              value={name}
-              onChangeText={setName}
-              leftIcon={<User size={20} color="#9CA3AF" />}
-            />
+            <View style={styles.form}>
+              <Input
+                label="Name"
+                placeholder="Vollständiger Name eingeben"
+                value={name}
+                onChangeText={setName}
+                leftIcon={<User size={20} color="#6B7280" />}
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="E-Mail"
-              placeholder="Ihre E-Mail-Adresse"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              leftIcon={<Mail size={20} color="#9CA3AF" />}
-            />
+              <Input
+                label="E-Mail"
+                placeholder="E-Mail eingeben"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={setEmail}
+                leftIcon={<Mail size={20} color="#6B7280" />}
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="Passwort"
-              placeholder="Erstellen Sie ein sicheres Passwort"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              leftIcon={<Lock size={20} color="#9CA3AF" />}
-            />
+              <Input
+                label="Passwort"
+                placeholder="Passwort eingeben"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                leftIcon={<Lock size={20} color="#6B7280" />}
+                rightIcon={
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    {showPassword ? 
+                      <EyeOff size={20} color="#6B7280" /> : 
+                      <Eye size={20} color="#6B7280" />
+                    }
+                  </TouchableOpacity>
+                }
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Input
-              label="Passwort bestätigen"
-              placeholder="Passwort wiederholen"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              leftIcon={<Lock size={20} color="#9CA3AF" />}
-            />
+              <Input
+                label="Passwort bestätigen"
+                placeholder="Passwort wiederholen"
+                secureTextEntry={!showConfirmPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                leftIcon={<Lock size={20} color="#6B7280" />}
+                rightIcon={
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    {showConfirmPassword ? 
+                      <EyeOff size={20} color="#6B7280" /> : 
+                      <Eye size={20} color="#6B7280" />
+                    }
+                  </TouchableOpacity>
+                }
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
 
-            <Button
-              title="Konto erstellen"
-              onPress={handleRegister}
-              loading={loading}
-              style={styles.button}
-            />
-
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Bereits registriert?</Text>
-              <Link href="/auth/login" asChild>
-                <TouchableOpacity>
-                  <Text style={styles.loginLink}>Anmelden</Text>
+              <LinearGradient
+                colors={['#10b981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.registerButtonGradient}
+              >
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={handleRegister}
+                  disabled={loading}
+                >
+                  <Text style={styles.registerButtonText}>
+                    {loading ? 'Wird erstellt...' : 'Registrieren'}
+                  </Text>
                 </TouchableOpacity>
-              </Link>
+              </LinearGradient>
+
+              <View style={styles.signInRow}>
+                <Text style={styles.signInText}>Bereits ein Konto? </Text>
+                <Link href="/auth/login" asChild>
+                  <TouchableOpacity>
+                    <Text style={styles.signInLink}>Anmelden</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  gradientBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-  },
-  headerImageContainer: {
-    width: '100%',
-    height: 200,
-    position: 'relative',
-  },
-  headerImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 119, 182, 0.2)',
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  content: {
-    flex: 1,
+    justifyContent: 'center',
     padding: 24,
+    minHeight: '100%',
+  },
+  registerCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    marginHorizontal: 'auto',
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   header: {
+    marginBottom: 32,
     alignItems: 'center',
-    marginBottom: 24,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   subtitle: {
-    fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: '#4B5563',
+    color: '#6B7280',
+    lineHeight: 24,
     textAlign: 'center',
-    marginTop: 8,
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  platformText: {
+    fontSize: 14,
+    color: '#10b981',
+    fontWeight: '500',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   form: {
-    marginBottom: 24,
+    gap: 20,
   },
-  button: {
-    marginTop: 16,
-    marginBottom: 16,
+  inputContainer: {
+    marginBottom: 4,
   },
-  loginContainer: {
+  registerButtonGradient: {
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: '#10b981',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  registerButton: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  registerButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  signInRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 24,
   },
-  loginText: {
-    fontFamily: 'Inter-Regular',
+  signInText: {
     fontSize: 14,
-    color: '#4B5563',
-    marginRight: 4,
+    color: '#6B7280',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  loginLink: {
-    fontFamily: 'Inter-Medium',
+  signInLink: {
     fontSize: 14,
-    color: '#0077B6',
+    color: '#10b981',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
