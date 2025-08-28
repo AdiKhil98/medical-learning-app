@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bug, LogOut, Loader2 } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,10 +18,9 @@ interface MenuProps {
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
   const submenuHeightAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -51,6 +50,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   };
 
   const menuItems = [
+    { icon: Home, label: 'Dashboard', route: '/' },
     { icon: Bell, label: 'Updates', route: '/updates' },
     { icon: Crown, label: 'Subscription', route: '/subscription' },
     { icon: Settings, label: 'Profil', route: '/profile' },
@@ -69,17 +69,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const handleMenuItemPress = (route: string) => {
     onClose();
     router.push(route);
-  };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await signOut();
-      onClose();
-    } catch (error) {
-      console.error('Logout error:', error);
-      setIsLoggingOut(false);
-    }
   };
 
   const rotateInterpolate = rotateAnim.interpolate({
@@ -155,22 +144,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       fontSize: 15,
       color: colors.textSecondary,
     },
-    logoutButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      borderRadius: 12,
-      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-      borderWidth: 1,
-      borderColor: 'rgba(239, 68, 68, 0.2)',
-    },
-    logoutText: {
-      fontFamily: 'Inter-Medium',
-      fontSize: 16,
-      color: '#EF4444',
-      marginLeft: 16,
-      flex: 1,
-    },
   });
 
   if (!isOpen) return null;
@@ -222,6 +195,13 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               <Text style={dynamicStyles.menuItemText}>Fortschritt</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={dynamicStyles.menuItem}
+              onPress={() => handleMenuItemPress('/help')}
+            >
+              <HelpCircle size={20} color={colors.text} />
+              <Text style={dynamicStyles.menuItemText}>Hilfe & Support</Text>
+            </TouchableOpacity>
 
             {user?.role === 'admin' && (
               <TouchableOpacity
@@ -265,24 +245,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             </Animated.View>
           </View>
         </ScrollView>
-        
-        {/* Logout Button at Bottom */}
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity
-            style={[dynamicStyles.logoutButton, isLoggingOut && { opacity: 0.7 }]}
-            onPress={handleLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <Loader2 size={20} color="#EF4444" />
-            ) : (
-              <LogOut size={20} color="#EF4444" />
-            )}
-            <Text style={dynamicStyles.logoutText}>
-              {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </Animated.View>
     </View>
   );
@@ -332,10 +294,6 @@ const styles = StyleSheet.create({
   },
   submenu: {
     overflow: 'hidden',
-  },
-  logoutContainer: {
-    padding: 16,
-    paddingTop: 0,
   },
   colorDot: {
     width: 8,
