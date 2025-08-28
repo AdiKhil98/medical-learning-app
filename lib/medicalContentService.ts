@@ -1,346 +1,386 @@
 import { supabase } from './supabase';
-import { SecureLogger } from './security';
+     import { SecureLogger } from './security';
 
-// Enhanced Section interface with all three content formats
-export interface MedicalSection {
-  id: string;
-  slug: string;
-  title: string;
-  parent_slug: string | null;
-  description: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
-  icon: string;
-  color: string;
-  display_order: number;
-  category?: string;
-  image_url?: string;
-  content_json?: any[];
-  content_improved?: any[];
-  content_html?: string;
-  content_details?: string;
-  content_type?: string;
-  has_content?: boolean;
-  hierarchy_level?: number;
-  created_at?: string;
-  updated_at?: string;
-}
+     // Enhanced Section interface with all three content formats
+     export interface MedicalSection {
+       id: string;
+       slug: string;
+       title: string;
+       parent_slug: string | null;
+       description: string | null;
+       type: 'folder' | 'file-text' | 'markdown';
+       icon: string;
+       color: string;
+       display_order: number;
+       category?: string;
+       image_url?: string;
+       content_json?: any[];
+       content_improved?: any[];
+       content_html?: string;
+       content_details?: string;
+       content_type?: string;
+       has_content?: boolean;
+       hierarchy_level?: number;
+       created_at?: string;
+       updated_at?: string;
+     }
 
-export interface ContentSection {
-  type: string;
-  title?: string;
-  content?: string;
-  term?: string;
-  definition?: string;
-  items?: string[];
-  clinical_pearl?: string;
-  clinical_relevance?: string;
-}
+     export interface ContentSection {
+       type: string;
+       title?: string;
+       content?: string;
+       term?: string;
+       definition?: string;
+       items?: string[];
+       clinical_pearl?: string;
+       clinical_relevance?: string;
+     }
 
-export interface SearchResult {
-  section: MedicalSection;
-  matchType: 'title' | 'description' | 'content';
-  snippet?: string;
-}
+     export interface SearchResult {
+       section: MedicalSection;
+       matchType: 'title' | 'description' | 'content';
+       snippet?: string;
+     }
 
-// Cache configuration
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-const sectionCache = new Map<string, { data: MedicalSection, timestamp: number }>();
-const listCache = new Map<string, { data: MedicalSection[], timestamp: number }>();
+     // Cache configuration
+     const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+     const sectionCache = new Map<string, { data: MedicalSection, timestamp: number }>();
+     const listCache = new Map<string, { data: MedicalSection[], timestamp: number }>();
 
-class MedicalContentService {
-  
-  /**
-   * Get all root sections (categories)
-   */
-  async getRootSections(): Promise<MedicalSection[]> {
-    const cacheKey = 'root_sections';
-    const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
-    }
+     class MedicalContentService {
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, content_type, has_content
-        `)
-        .is('parent_slug', null)
-        .eq('type', 'folder')
-        .order('display_order', { ascending: true });
+       /**
+        * Get all root sections (categories)
+        */
+       async getRootSections(): Promise<MedicalSection[]> {
+         const cacheKey = 'root_sections';
+         const cached = listCache.get(cacheKey);
+         const now = Date.now();
 
-      if (error) throw error;
+         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+           return cached.data;
+         }
 
-      const sections = (data || []) as MedicalSection[];
-      
-      // Update cache
-      listCache.set(cacheKey, { data: sections, timestamp: now });
-      
-      SecureLogger.log(`Fetched ${sections.length} root sections`);
-      return sections;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching root sections:', error);
-      throw error;
-    }
-  }
+         try {
+           const { data, error } = await supabase
+             .from('sections')
+             .select(`
+               id, slug, title, description, type, icon, color, display_order,
+               category, image_url, content_type, has_content
+             `)
+             .is('parent_slug', null)
+             .eq('type', 'folder')
+             .order('display_order', { ascending: true });
 
-  /**
-   * Get sections by parent slug (for navigation)
-   */
-  async getSectionsByParent(parentSlug: string): Promise<MedicalSection[]> {
-    const cacheKey = `parent_${parentSlug}`;
-    const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
-    }
+           if (error) throw error;
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, content_type, has_content
-        `)
-        .eq('parent_slug', parentSlug)
-        .order('display_order', { ascending: true });
+           const sections = (data || []) as MedicalSection[];
 
-      if (error) throw error;
+           // Update cache
+           listCache.set(cacheKey, { data: sections, timestamp: now });
 
-      const sections = (data || []) as MedicalSection[];
-      
-      // Update cache
-      listCache.set(cacheKey, { data: sections, timestamp: now });
-      
-      return sections;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching sections by parent:', error);
-      throw error;
-    }
-  }
+           SecureLogger.log(`Fetched ${sections.length} root sections`);
+           return sections;
 
-  /**
-   * Get sections by category
-   */
-  async getSectionsByCategory(category: string): Promise<MedicalSection[]> {
-    const cacheKey = `category_${category}`;
-    const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
-    }
+         } catch (error) {
+           SecureLogger.log('Error fetching root sections:', error);
+           throw error;
+         }
+       }
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, content_type, has_content
-        `)
-        .eq('category', category)
-        .order('display_order', { ascending: true });
+       /**
+        * Get sections by parent slug (for navigation)
+        */
+       async getSectionsByParent(parentSlug: string): Promise<MedicalSection[]> {
+         const cacheKey = `parent_${parentSlug}`;
+         const cached = listCache.get(cacheKey);
+         const now = Date.now();
 
-      if (error) throw error;
+         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+           return cached.data;
+         }
 
-      const sections = (data || []) as MedicalSection[];
-      
-      // Update cache
-      listCache.set(cacheKey, { data: sections, timestamp: now });
-      
-      return sections;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching sections by category:', error);
-      throw error;
-    }
-  }
+         try {
+           const { data, error } = await supabase
+             .from('sections')
+             .select(`
+               id, slug, title, description, type, icon, color, display_order,
+               category, image_url, content_type, has_content
+             `)
+             .eq('parent_slug', parentSlug)
+             .order('display_order', { ascending: true });
 
-  /**
-   * Get single section with all content formats
-   */
-  async getSection(slug: string): Promise<MedicalSection | null> {
-    const cached = sectionCache.get(slug);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
-    }
+           if (error) throw error;
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, parent_slug, content_json, content_improved, 
-          content_html, content_details, content_type, has_content,
-          hierarchy_level, created_at, updated_at
-        `)
-        .eq('slug', slug)
-        .maybeSingle();
+           const sections = (data || []) as MedicalSection[];
 
-      if (error) throw error;
-      if (!data) return null;
+           // Update cache
+           listCache.set(cacheKey, { data: sections, timestamp: now });
 
-      const section = data as MedicalSection;
-      
-      // Update cache
-      sectionCache.set(slug, { data: section, timestamp: now });
-      
-      return section;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching section:', error);
-      throw error;
-    }
-  }
+           return sections;
 
-  /**
-   * Search sections by title, description, and content
-   */
-  async searchSections(query: string, limit = 20): Promise<SearchResult[]> {
-    if (!query.trim()) return [];
+         } catch (error) {
+           SecureLogger.log('Error fetching sections by parent:', error);
+           throw error;
+         }
+       }
 
-    try {
-      const searchTerm = `%${query.toLowerCase()}%`;
-      
-      // Search in title and description using ilike
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, content_type, has_content
-        `)
-        .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
-        .limit(limit);
+       /**
+        * Get sections by category
+        */
+       async getSectionsByCategory(category: string): Promise<MedicalSection[]> {
+         const cacheKey = `category_${category}`;
+         const cached = listCache.get(cacheKey);
+         const now = Date.now();
 
-      if (error) throw error;
+         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+           return cached.data;
+         }
 
-      const results: SearchResult[] = (data || []).map(section => {
-        const matchType = section.title.toLowerCase().includes(query.toLowerCase()) 
-          ? 'title' as const
-          : 'description' as const;
-        
-        const snippet = matchType === 'description' 
-          ? this.createSnippet(section.description || '', query)
-          : undefined;
+         try {
+           const { data, error } = await supabase
+             .from('sections')
+             .select(`
+               id, slug, title, description, type, icon, color, display_order,
+               category, image_url, content_type, has_content
+             `)
+             .eq('category', category)
+             .order('display_order', { ascending: true });
 
-        return {
-          section: section as MedicalSection,
-          matchType,
-          snippet
-        };
-      });
+           if (error) throw error;
 
-      return results;
-      
-    } catch (error) {
-      SecureLogger.log('Error searching sections:', error);
-      throw error;
-    }
-  }
+           const sections = (data || []) as MedicalSection[];
 
-  /**
-   * Get all unique categories
-   */
-  async getCategories(): Promise<string[]> {
-    const cacheKey = 'categories';
-    const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data.map(item => item.category || '').filter(Boolean);
-    }
+           // Update cache
+           listCache.set(cacheKey, { data: sections, timestamp: now });
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select('category')
-        .not('category', 'is', null);
+           return sections;
 
-      if (error) throw error;
+         } catch (error) {
+           SecureLogger.log('Error fetching sections by category:', error);
+           throw error;
+         }
+       }
 
-      const categories = [...new Set(data?.map(item => item.category).filter(Boolean) || [])];
-      
-      return categories;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching categories:', error);
-      throw error;
-    }
-  }
+       /**
+        * Get single section with all content formats
+        */
+       async getSection(slug: string): Promise<MedicalSection | null> {
+         const cached = sectionCache.get(slug);
+         const now = Date.now();
 
-  /**
-   * Check if section has content in any format
-   */
-  hasAnyContent(section: MedicalSection): boolean {
-    return !!(
-      (Array.isArray(section.content_improved) && section.content_improved.length > 0) ||
-      (Array.isArray(section.content_json) && section.content_json.length > 0) ||
-      section.content_html ||
-      section.content_details
-    );
-  }
+         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+           return cached.data;
+         }
 
-  /**
-   * Determine the best content format to display
-   */
-  getBestContentFormat(section: MedicalSection): 'html' | 'improved' | 'json' | 'details' | null {
-    if (section.content_html) return 'html';
-    if (Array.isArray(section.content_improved) && section.content_improved.length > 0) return 'improved';
-    if (Array.isArray(section.content_json) && section.content_json.length > 0) return 'json';
-    if (section.content_details) return 'details';
-    return null;
-  }
+         try {
+           const { data, error } = await supabase
+             .from('sections')
+             .select(`
+               id, slug, title, description, type, icon, color, display_order,
+               category, image_url, parent_slug, content_json, content_improved,
+               content_html, content_details, content_type, has_content,
+               hierarchy_level, created_at, updated_at
+             `)
+             .eq('slug', slug)
+             .maybeSingle();
 
-  /**
-   * Create content snippet for search results
-   */
-  private createSnippet(text: string, query: string, maxLength = 150): string {
-    if (!text) return '';
-    
-    const queryIndex = text.toLowerCase().indexOf(query.toLowerCase());
-    if (queryIndex === -1) return text.substring(0, maxLength) + '...';
-    
-    const start = Math.max(0, queryIndex - 50);
-    const end = Math.min(text.length, queryIndex + query.length + 50);
-    
-    let snippet = text.substring(start, end);
-    if (start > 0) snippet = '...' + snippet;
-    if (end < text.length) snippet = snippet + '...';
-    
-    return snippet;
-  }
+           if (error) throw error;
+           if (!data) return null;
 
-  /**
-   * Clear cache for specific key or all cache
-   */
-  clearCache(key?: string): void {
-    if (key) {
-      sectionCache.delete(key);
-      listCache.delete(key);
-    } else {
-      sectionCache.clear();
-      listCache.clear();
-    }
-  }
+           const section = data as MedicalSection;
 
-  /**
-   * Get cache statistics
-   */
-  getCacheStats(): { sectionCacheSize: number; listCacheSize: number } {
-    return {
-      sectionCacheSize: sectionCache.size,
-      listCacheSize: listCache.size
-    };
-  }
-}
+           // Update cache
+           sectionCache.set(slug, { data: section, timestamp: now });
 
-// Export singleton instance
-export const medicalContentService = new MedicalContentService();
+           return section;
+
+         } catch (error) {
+           SecureLogger.log('Error fetching section:', error);
+           throw error;
+         }
+       }
+
+       /**
+        * Search sections by title, description, and content
+        */
+       async searchSections(query: string, limit = 20): Promise<SearchResult[]> {
+         if (!query.trim()) return [];
+
+         try {
+           const searchTerm = `%${query.toLowerCase()}%`;
+
+           // Search in title and description using ilike
+           const { data, error } = await supabase
+             .from('sections')
+             .select(`
+               id, slug, title, description, type, icon, color, display_order,
+               category, image_url, content_type, has_content
+             `)
+             .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
+             .limit(limit);
+
+           if (error) throw error;
+
+           const results: SearchResult[] = (data || []).map(section => {
+             const matchType = section.title.toLowerCase().includes(query.toLowerCase())
+               ? 'title' as const
+               : 'description' as const;
+
+             const snippet = matchType === 'description'
+               ? this.createSnippet(section.description || '', query)
+               : undefined;
+
+             return {
+               section: section as MedicalSection,
+               matchType,
+               snippet
+             };
+           });
+
+           return results;
+
+         } catch (error) {
+           SecureLogger.log('Error searching sections:', error);
+           throw error;
+         }
+       }
+
+       /**
+        * Get all unique categories
+        */
+       async getCategories(): Promise<string[]> {
+         const cacheKey = 'categories';
+         const cached = listCache.get(cacheKey);
+         const now = Date.now();
+
+         if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+           return cached.data.map(item => item.category || '').filter(Boolean);
+         }
+
+         try {
+           const { data, error } = await supabase
+             .from('sections')
+             .select('category')
+             .not('category', 'is', null);
+
+           if (error) throw error;
+
+           const categories = [...new Set(data?.map(item => item.category).filter(Boolean) || [])];
+
+           return categories;
+
+         } catch (error) {
+           SecureLogger.log('Error fetching categories:', error);
+           throw error;
+         }
+       }
+
+       /**
+        * Check if section has content in any format
+        */
+       hasAnyContent(section: MedicalSection): boolean {
+         return !!(
+           (Array.isArray(section.content_improved) && section.content_improved.length > 0) ||
+           (Array.isArray(section.content_json) && section.content_json.length > 0) ||
+           section.content_html ||
+           section.content_details
+         );
+       }
+
+       /**
+        * Determine the best content format to display (now supports integrated view)
+        */
+       getBestContentFormat(section: MedicalSection): 'integrated' | 'json' | 'details' | null {
+         // Prefer integrated view if we have structured content or HTML
+         if ((Array.isArray(section.content_improved) && section.content_improved.length > 0) || section.content_html) {
+           return 'integrated';
+         }
+         if (Array.isArray(section.content_json) && section.content_json.length > 0) return 'json';
+         if (section.content_details) return 'details';
+         return null;
+       }
+
+       /**
+        * Check if section supports integrated content view
+        */
+       supportsIntegratedView(section: MedicalSection): boolean {
+         return !!(
+           (Array.isArray(section.content_improved) && section.content_improved.length > 0) ||
+           section.content_html
+         );
+       }
+
+       /**
+        * Get content priority score for better content selection
+        */
+       getContentPriorityScore(section: MedicalSection): number {
+         let score = 0;
+
+         // Structured content gets highest priority
+         if (Array.isArray(section.content_improved) && section.content_improved.length > 0) {
+           score += 10;
+         }
+
+         // HTML content adds to the score
+         if (section.content_html) {
+           score += 5;
+         }
+
+         // Other content types have lower priority
+         if (Array.isArray(section.content_json) && section.content_json.length > 0) {
+           score += 2;
+         }
+
+         if (section.content_details) {
+           score += 1;
+         }
+
+         return score;
+       }
+
+       /**
+        * Create content snippet for search results
+        */
+       private createSnippet(text: string, query: string, maxLength = 150): string {
+         if (!text) return '';
+
+         const queryIndex = text.toLowerCase().indexOf(query.toLowerCase());
+         if (queryIndex === -1) return text.substring(0, maxLength) + '...';
+
+         const start = Math.max(0, queryIndex - 50);
+         const end = Math.min(text.length, queryIndex + query.length + 50);
+
+         let snippet = text.substring(start, end);
+         if (start > 0) snippet = '...' + snippet;
+         if (end < text.length) snippet = snippet + '...';
+
+         return snippet;
+       }
+
+       /**
+        * Clear cache for specific key or all cache
+        */
+       clearCache(key?: string): void {
+         if (key) {
+           sectionCache.delete(key);
+           listCache.delete(key);
+         } else {
+           sectionCache.clear();
+           listCache.clear();
+         }
+       }
+
+       /**
+        * Get cache statistics
+        */
+       getCacheStats(): { sectionCacheSize: number; listCacheSize: number } {
+         return {
+           sectionCacheSize: sectionCache.size,
+           listCacheSize: listCache.size
+         };
+       }
+     }
+
+     // Export singleton instance
+     export const medicalContentService = new MedicalContentService();
