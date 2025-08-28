@@ -1,4 +1,4 @@
- // Netlify serverless function for Make.com evaluation webhooks
+// Netlify serverless function for Make.com evaluation webhooks
   // Now uses Supabase for persistent data storage
 
   const { createClient } = require('@supabase/supabase-js');
