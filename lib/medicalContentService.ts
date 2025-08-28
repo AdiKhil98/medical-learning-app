@@ -61,6 +61,31 @@ class MedicalContentService {
     }
 
     try {
+      SecureLogger.log('Fetching root sections from database...');
+      
+      // Check authentication state
+      const { data: { session } } = await supabase.auth.getSession();
+      SecureLogger.log('Current auth session:', { hasSession: !!session, userId: session?.user?.id });
+      
+      // First, let's test if we can query the sections table at all
+      const { data: allSections, error: allError } = await supabase
+        .from('sections')
+        .select('*')
+        .limit(5);
+        
+      SecureLogger.log('Test query for any sections:', { data: allSections, error: allError, count: allSections?.length });
+      
+      if (allError) {
+        SecureLogger.log('Cannot access sections table:', allError);
+        throw new Error(`Database access error: ${allError.message}`);
+      }
+      
+      if (!allSections || allSections.length === 0) {
+        SecureLogger.log('Sections table is empty or inaccessible');
+        return []; // Return empty array instead of throwing error
+      }
+      
+      // Now try the specific root sections query
       const { data, error } = await supabase
         .from('sections')
         .select(`
@@ -68,12 +93,17 @@ class MedicalContentService {
           category, image_url, has_content
         `)
         .is('parent_slug', null)
-        .eq('type', 'folder')
         .order('display_order', { ascending: true });
 
-      if (error) throw error;
+      SecureLogger.log('Root sections query result:', { data, error, count: data?.length });
+
+      if (error) {
+        SecureLogger.log('Database error in getRootSections:', error);
+        throw error;
+      }
 
       const sections = (data || []) as MedicalSection[];
+      SecureLogger.log(`Found ${sections.length} root sections`);
       
       // Update cache
       listCache.set(cacheKey, { data: sections, timestamp: now });

@@ -79,7 +79,15 @@ export default function BibliothekScreen() {
 
     } catch (error) {
       console.error('Error loading sections:', error);
-      setError('Fehler beim Laden der Bibliothek');
+      console.error('Full error details:', JSON.stringify(error, null, 2));
+      
+      // More specific error message
+      let errorMessage = 'Fehler beim Laden der Bibliothek';
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setRefreshing(false);
