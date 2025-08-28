@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
@@ -18,9 +19,11 @@ import {
   Info,
   AlertCircle,
   ChevronDown,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Card from './Card';
+import ViewModeToggle from './ViewModeToggle';
 import { MedicalSection, ContentSection, medicalContentService } from '@/lib/medicalContentService';
 
 interface MedicalContentViewerProps {
@@ -189,19 +192,39 @@ export default function MedicalContentViewer({ section, onError }: MedicalConten
 
   // Available view modes based on section content
   const availableViewModes = useMemo(() => {
-    const modes: { key: ViewMode; label: string; icon: React.ComponentType<any> }[] = [];
+    const modes: { key: ViewMode; label: string; icon: React.ComponentType<any>; description: string }[] = [];
     
     if (section.content_html) {
-      modes.push({ key: 'html', label: 'HTML Ansicht', icon: Eye });
+      modes.push({ 
+        key: 'html', 
+        label: 'HTML Ansicht', 
+        icon: Eye, 
+        description: 'Vollständig formatierte medizinische Inhalte'
+      });
     }
     if (Array.isArray(section.content_improved) && section.content_improved.length > 0) {
-      modes.push({ key: 'improved', label: 'Strukturiert', icon: BookOpen });
+      modes.push({ 
+        key: 'improved', 
+        label: 'Strukturiert', 
+        icon: BookOpen, 
+        description: 'Strukturierte Inhalte mit expandierbaren Abschnitten'
+      });
     }
     if (Array.isArray(section.content_json) && section.content_json.length > 0) {
-      modes.push({ key: 'json', label: 'JSON Daten', icon: Code });
+      modes.push({ 
+        key: 'json', 
+        label: 'JSON Daten', 
+        icon: Code, 
+        description: 'Rohdaten zur Entwicklungsanalyse'
+      });
     }
     if (section.content_details) {
-      modes.push({ key: 'details', label: 'Details', icon: FileText });
+      modes.push({ 
+        key: 'details', 
+        label: 'Details', 
+        icon: FileText, 
+        description: 'Zusätzliche Informationen und Metadaten'
+      });
     }
     
     return modes;
@@ -424,42 +447,11 @@ export default function MedicalContentViewer({ section, onError }: MedicalConten
   return (
     <View style={dynamicStyles.container}>
       {/* View Mode Selector - only show if multiple modes available */}
-      {availableViewModes.length > 1 && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={dynamicStyles.viewModeSelector}
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {availableViewModes.map(mode => {
-            const IconComponent = mode.icon;
-            const isActive = viewMode === mode.key;
-            
-            return (
-              <TouchableOpacity
-                key={mode.key}
-                style={[
-                  dynamicStyles.viewModeButton,
-                  isActive && dynamicStyles.viewModeButtonActive
-                ]}
-                onPress={() => handleViewModeChange(mode.key)}
-                activeOpacity={0.7}
-              >
-                <IconComponent 
-                  size={16} 
-                  color={isActive ? colors.background : colors.textSecondary} 
-                />
-                <Text style={[
-                  dynamicStyles.viewModeText,
-                  isActive && dynamicStyles.viewModeTextActive
-                ]}>
-                  {mode.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
+      <ViewModeToggle
+        modes={availableViewModes}
+        currentMode={viewMode}
+        onModeChange={handleViewModeChange}
+      />
       
       {/* Content Display */}
       <View style={styles.contentContainer}>

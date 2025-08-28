@@ -186,9 +186,17 @@ const IndexScreen = memo(() => {
       />
       
       <View style={styles.header}>
-        <Text style={dynamicStyles.title}>Bibliothek</Text>
+        <View style={styles.headerRow}>
+          <Text style={dynamicStyles.title}>Bibliothek</Text>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={() => router.push('/bibliothek/search')}
+          >
+            <Search size={24} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
         <Input
-          placeholder="Fachgebiet suchen..."
+          placeholder="Fachgebiet filtern..."
           value={searchQuery}
           onChangeText={handleSearchChange}
           leftIcon={<Search size={20} color={colors.textSecondary} />}
@@ -234,6 +242,17 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   header: { padding: 16 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  searchButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
   searchContainer: { marginBottom: 12 },
   content: { paddingHorizontal: 16 },
   row: { flexDirection: 'row', alignItems: 'center' },
