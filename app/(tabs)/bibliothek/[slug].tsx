@@ -7,20 +7,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '@/components/ui/Card';
 
-// Type for section data from Supabase
+// Type for section data from Supabase - supports full 6-level hierarchy
 interface Section {
   id: string;
   slug: string;
   title: string;
   parent_slug: string | null;
   description: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
+  type: 'main-category' | 'sub-category' | 'section' | 'subsection' | 'sub-subsection' | 'document' | 'folder' | 'file-text' | 'markdown';
   icon: string;
   color: string;
   display_order: number;
   image_url?: string;
   category?: string;
   content_details?: string;
+  content_improved?: any; // JSON content for dynamic tree termination
+  content_html?: string;
   last_updated?: string;
   children?: Section[];
 }
@@ -237,21 +239,19 @@ export default function SectionDetailScreen() {
         <TouchableOpacity
           style={styles.sectionHeader}
           onPress={() => {
-            // Check if this section has actual content (not just children)
-            const hasContent = section.content_improved || section.content_html || section.content_details;
+            // Dynamic tree branching logic: Check if section has JSON content (leaf node)
+            const hasJsonContent = section.content_improved && 
+              ((Array.isArray(section.content_improved) && section.content_improved.length > 0) ||
+               (typeof section.content_improved === 'string' && section.content_improved.trim().length > 0));
             
-            if (isLeafNode || hasContent) {
-              // Navigate to content page for leaf nodes or sections with content
+            const hasAnyContent = hasJsonContent || section.content_html || section.content_details;
+            
+            if (hasAnyContent) {
+              // LEAF NODE: Has content - navigate to content page (branch ends here)
               router.push(`/bibliothek/content/${section.slug}`);
-            } else if (section.type === 'folder') {
-              // Navigate to subcategory page for folder types
-              navigateToSection(section.slug);
-            } else if (hasChildren) {
-              // Expand/collapse if has children but no content
-              toggleSection(section.slug);
             } else {
-              // Default: try to navigate to content page
-              router.push(`/bibliothek/content/${section.slug}`);
+              // BRANCH NODE: No content - continue navigation deeper into tree
+              navigateToSection(section.slug);
             }
           }}
           activeOpacity={0.7}

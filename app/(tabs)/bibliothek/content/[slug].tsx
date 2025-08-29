@@ -20,11 +20,28 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
-import MedicalContentViewer from '@/components/ui/MedicalContentViewer';
-import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
+// Removed MedicalContentViewer import - doesn't exist and causes WebView error
+// import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
-// Use MedicalSection from service
-type Section = MedicalSection;
+// Define Section type directly
+interface Section {
+  id: string;
+  slug: string;
+  title: string;
+  parent_slug: string | null;
+  description: string | null;
+  type: 'main-category' | 'sub-category' | 'section' | 'subsection' | 'sub-subsection' | 'document' | 'folder';
+  icon: string;
+  color: string;
+  display_order: number;
+  image_url?: string;
+  category?: string;
+  content_details?: string;
+  content_improved?: any; // JSON content
+  content_html?: string;
+  last_updated?: string;
+  children?: Section[];
+}
 
 interface ContentSection {
   type: string;
@@ -184,7 +201,7 @@ const ContentDetailScreen = memo(() => {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
 
-  const [currentSection, setCurrentSection] = useState<MedicalSection | null>(null);
+  const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -378,13 +395,46 @@ const ContentDetailScreen = memo(() => {
         )}
       </View>
 
-      <MedicalContentViewer 
-        section={currentSection}
-        onError={(error) => {
-          console.error('Content viewer error:', error);
-          setError('Fehler beim Anzeigen des Inhalts');
-        }}
-      />
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0 ? (
+          // Display structured content from content_improved JSON
+          currentSection.content_improved.map((contentSection: ContentSection, index: number) => (
+            <ContentSectionComponent
+              key={index}
+              contentSection={contentSection}
+              index={index}
+              isExpanded={expandedSections[index.toString()]}
+              onToggle={() => toggleSection(index.toString())}
+              colors={colors}
+              currentSection={currentSection}
+            />
+          ))
+        ) : currentSection.content_html ? (
+          // Display HTML content as plain text (avoiding WebView)
+          <View style={dynamicStyles.fallbackContent}>
+            <Text style={dynamicStyles.fallbackTitle}>Medical Content</Text>
+            <Text style={dynamicStyles.fallbackText}>
+              {currentSection.content_html.replace(/<[^>]*>/g, '')}
+            </Text>
+          </View>
+        ) : currentSection.content_details ? (
+          // Display content_details
+          <View style={dynamicStyles.fallbackContent}>
+            <Text style={dynamicStyles.fallbackTitle}>{currentSection.title}</Text>
+            <Text style={dynamicStyles.fallbackText}>{currentSection.content_details}</Text>
+          </View>
+        ) : (
+          // No content - show fallback message
+          <View style={dynamicStyles.fallbackContent}>
+            <Text style={dynamicStyles.fallbackTitle}>Kein Inhalt verfügbar</Text>
+            <Text style={dynamicStyles.fallbackText}>
+              Für diesen Abschnitt sind noch keine detaillierten Inhalte verfügbar.
+            </Text>
+          </View>
+        )}
+        
+        <View style={{ height: 60 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 });
