@@ -81,15 +81,25 @@ export default function BibliothekScreen() {
         return;
       }
 
-      console.log('Loading sections for authenticated user:', user.id);
+      console.log('🚀 Loading sections for authenticated user:', user.id);
 
       // Get root sections (sections without parent)
       const rootSections = await medicalContentService.getRootSections();
-      setSections(rootSections || []);
+      console.log('📊 Received root sections:', rootSections?.length || 0);
+      
+      if (!rootSections || rootSections.length === 0) {
+        console.log('⚠️ No root sections found - table might be empty');
+        setError('Keine Inhalte in der Bibliothek gefunden. Die Bibliothek ist möglicherweise leer.');
+        setSections([]);
+      } else {
+        console.log('✅ Successfully loaded sections:', rootSections.map(s => s.title));
+        setSections(rootSections);
+      }
 
     } catch (error) {
-      console.error('Error loading sections:', error);
-      console.error('Full error details:', JSON.stringify(error, null, 2));
+      console.error('💥 ERROR loading sections:', error);
+      console.error('📋 Full error details:', JSON.stringify(error, null, 2));
+      console.error('📋 Error stack:', error instanceof Error ? error.stack : 'No stack');
       
       // More specific error message
       let errorMessage = 'Fehler beim Laden der Bibliothek';
@@ -97,6 +107,7 @@ export default function BibliothekScreen() {
         errorMessage += `: ${error.message}`;
       }
       
+      console.error('📋 Setting error message:', errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);

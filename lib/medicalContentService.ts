@@ -49,6 +49,61 @@ const listCache = new Map<string, { data: MedicalSection[], timestamp: number }>
 class MedicalContentService {
   
   /**
+   * DEBUG METHOD: Test basic database connectivity
+   */
+  async testDatabaseConnection(): Promise<any> {
+    try {
+      console.log('🔍 TESTING DATABASE CONNECTION...');
+      
+      // Check auth session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('📊 Auth Session:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id, 
+        email: session?.user?.email,
+        error: sessionError 
+      });
+
+      // Test simple query to see if sections table exists
+      console.log('🔍 Testing sections table access...');
+      const { data: testData, error: testError, count } = await supabase
+        .from('sections')
+        .select('*', { count: 'exact' })
+        .limit(5);
+
+      console.log('📊 Sections table test result:', {
+        data: testData,
+        error: testError,
+        count: count,
+        dataLength: testData?.length
+      });
+
+      if (testError) {
+        console.error('❌ Cannot access sections table:', testError);
+        return { success: false, error: testError };
+      }
+
+      // If we have data, log the first few records
+      if (testData && testData.length > 0) {
+        console.log('✅ Sample sections data:', testData.map(s => ({ 
+          id: s.id, 
+          slug: s.slug, 
+          title: s.title, 
+          parent_slug: s.parent_slug, 
+          type: s.type 
+        })));
+      } else {
+        console.log('⚠️ Sections table is empty');
+      }
+
+      return { success: true, data: testData, count };
+    } catch (error) {
+      console.error('💥 Database connection test failed:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
    * Get all root sections (categories)
    */
   async getRootSections(): Promise<MedicalSection[]> {
@@ -57,35 +112,20 @@ class MedicalContentService {
     const now = Date.now();
     
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('📋 Returning cached root sections:', cached.data.length);
       return cached.data;
     }
 
     try {
-      SecureLogger.log('Fetching root sections from database...');
+      console.log('🔍 FETCHING ROOT SECTIONS FROM DATABASE...');
       
-      // Check authentication state
-      const { data: { session } } = await supabase.auth.getSession();
-      SecureLogger.log('Current auth session:', { hasSession: !!session, userId: session?.user?.id });
-      
-      // First, let's test if we can query the sections table at all
-      const { data: allSections, error: allError } = await supabase
-        .from('sections')
-        .select('*')
-        .limit(5);
-        
-      SecureLogger.log('Test query for any sections:', { data: allSections, error: allError, count: allSections?.length });
-      
-      if (allError) {
-        SecureLogger.log('Cannot access sections table:', allError);
-        throw new Error(`Database access error: ${allError.message}`);
+      // First run our debug test
+      const dbTest = await this.testDatabaseConnection();
+      if (!dbTest.success) {
+        throw new Error(`Database connection failed: ${dbTest.error?.message || 'Unknown error'}`);
       }
-      
-      if (!allSections || allSections.length === 0) {
-        SecureLogger.log('Sections table is empty or inaccessible');
-        return []; // Return empty array instead of throwing error
-      }
-      
-      // Now try the specific root sections query
+
+      console.log('🔍 Querying for root sections (parent_slug IS NULL)...');
       const { data, error } = await supabase
         .from('sections')
         .select(`
@@ -95,15 +135,52 @@ class MedicalContentService {
         .is('parent_slug', null)
         .order('display_order', { ascending: true });
 
-      SecureLogger.log('Root sections query result:', { data, error, count: data?.length });
+      console.log('📊 Root sections query result:', { 
+        data: data?.map(s => ({ slug: s.slug, title: s.title, type: s.type })), 
+        error, 
+        count: data?.length 
+      });
 
       if (error) {
-        SecureLogger.log('Database error in getRootSections:', error);
-        throw error;
+        console.error('❌ Database error in getRootSections:', error);
+        throw new Error(`Root sections query failed: ${error.message}`);
       }
 
       const sections = (data || []) as MedicalSection[];
-      SecureLogger.log(`Found ${sections.length} root sections`);
+      console.log(`✅ Found ${sections.length} root sections`);
+
+      // If no sections found, try to populate with basic data
+      if (sections.length === 0) {
+        console.log('📝 No sections found, attempting to populate with basic medical categories...');
+        try {
+          await this.populateBasicSections();
+          
+          // Retry the query after populating
+          console.log('🔄 Retrying root sections query after population...');
+          const { data: newData, error: newError } = await supabase
+            .from('sections')
+            .select(`
+              id, slug, title, description, type, icon, color, display_order,
+              category, image_url, has_content
+            `)
+            .is('parent_slug', null)
+            .order('display_order', { ascending: true });
+
+          if (newError) {
+            console.error('❌ Retry query failed:', newError);
+          } else {
+            const newSections = (newData || []) as MedicalSection[];
+            console.log(`✅ After population, found ${newSections.length} root sections`);
+            
+            // Update cache with new data
+            listCache.set(cacheKey, { data: newSections, timestamp: now });
+            SecureLogger.log(`Auto-populated ${newSections.length} root sections`);
+            return newSections;
+          }
+        } catch (populationError) {
+          console.error('❌ Failed to populate sections:', populationError);
+        }
+      }
       
       // Update cache
       listCache.set(cacheKey, { data: sections, timestamp: now });
@@ -273,6 +350,63 @@ class MedicalContentService {
       
     } catch (error) {
       SecureLogger.log('Error fetching section:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * EMERGENCY: Populate sections table if it's empty
+   */
+  async populateBasicSections(): Promise<void> {
+    try {
+      console.log('🔧 POPULATING BASIC SECTIONS...');
+      
+      const basicSections = [
+        {
+          slug: 'innere-medizin',
+          title: 'Innere Medizin',
+          description: 'Systematische Übersicht der internistischen Erkrankungen',
+          type: 'folder',
+          icon: 'Stethoscope',
+          color: '#0077B6',
+          display_order: 1,
+          parent_slug: null
+        },
+        {
+          slug: 'chirurgie',
+          title: 'Chirurgie', 
+          description: 'Systematische Übersicht der chirurgischen Fachgebiete',
+          type: 'folder',
+          icon: 'Scissors',
+          color: '#48CAE4',
+          display_order: 2,
+          parent_slug: null
+        },
+        {
+          slug: 'notfallmedizin',
+          title: 'Notfallmedizin',
+          description: 'Systematische Übersicht der notfallmedizinischen Versorgung',
+          type: 'folder',
+          icon: 'AlertTriangle',
+          color: '#EF4444',
+          display_order: 3,
+          parent_slug: null
+        }
+      ];
+
+      const { data, error } = await supabase
+        .from('sections')
+        .insert(basicSections)
+        .select();
+
+      if (error) {
+        console.error('❌ Error populating sections:', error);
+        throw error;
+      }
+
+      console.log('✅ Successfully populated sections:', data);
+    } catch (error) {
+      console.error('💥 Failed to populate sections:', error);
       throw error;
     }
   }
