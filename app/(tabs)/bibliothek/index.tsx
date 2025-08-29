@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Act
 import { useRouter } from 'expo-router';
 import { ChevronRight, Search, BookOpen, Activity, Heart, Stethoscope, Scissors, AlertTriangle, Baby, Brain, FlaskRound, Settings as Lungs, Pill, Plane as Ambulance, Scan, Circle, Syringe, Zap, Soup, Shield, Users, Eye, Bone, Smile, Thermometer, Zap as Lightning, CircuitBoard, Microscope, TestTube, FileText, Italic as Hospital, Cross, Droplets } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/ui/Input';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '@/components/ui/Card';
 
@@ -177,155 +179,187 @@ const getIconComponent = (iconName: string, color: string, size: number = 24) =>
 
 export default function BibliothekScreen() {
   const router = useRouter();
+  const { session, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Fetch data from Supabase - ONLY ROOT SECTIONS for main page
+  // Fetch data from Supabase
   const fetchSections = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('🔍 Fetching ALL sections to build hierarchy...');
+      console.log('🔐 Auth state:', { hasSession: !!session, userId: session?.user?.id });
       
-      console.log('🔍 Fetching root sections...');
-      
-      // First check if there are ANY sections at all
-      const { data: allSections, error: countError } = await supabase
-        .from('sections')
-        .select('id, slug, title, parent_slug', { count: 'exact' })
-        .limit(5);
-      
-      console.log('📊 Total sections in database:', allSections?.length || 0);
-      if (allSections && allSections.length > 0) {
-        console.log('📋 Sample sections:', allSections.map(s => ({ slug: s.slug, title: s.title, parent: s.parent_slug })));
+      // Check if user is authenticated
+      if (!session) {
+        console.log('⚠️ No session found - redirecting to auth');
+        setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
+        return;
       }
       
-      // Fetch ONLY root sections (main categories) for the main page
+      // Fetch all sections to build the hierarchy (like the old working version)
       const { data, error } = await supabase
         .from('sections')
         .select('*')
-        .is('parent_slug', null)
         .order('display_order', { ascending: true });
-
-      console.log('📊 Root sections found:', data?.length || 0);
-      if (data && data.length > 0) {
-        console.log('✅ Root sections:', data.map(s => s.title));
-      } else {
-        console.log('⚠️ No root sections found - all sections may have parent_slug values');
-      }
 
       if (error) {
         console.error('❌ Database error:', error);
         throw error;
       }
 
-      setSections(data || []);
+      console.log('📊 Total sections fetched:', data?.length || 0);
       
-      // If no root sections found, try to create basic medical categories
       if (!data || data.length === 0) {
-        console.log('🔧 No root sections found, attempting to create basic medical categories...');
-        try {
-          await createBasicMedicalCategories();
-          // Retry fetching after creating sections
-          const { data: newData } = await supabase
-            .from('sections')
-            .select('*')
-            .is('parent_slug', null)
-            .order('display_order', { ascending: true });
-          
-          if (newData && newData.length > 0) {
-            console.log('✅ Successfully created and loaded basic categories:', newData.map(s => s.title));
-            setSections(newData);
-          }
-        } catch (createError) {
-          console.error('❌ Failed to create basic categories:', createError);
-        }
+        console.log('⚠️ No sections found in database - table appears to be empty');
+        setSections([]);
+        return;
       }
+
+      // Build tree structure like the old working version
+      const sectionsTree = buildSectionsTree(data || []);
+      console.log('🌳 Built tree with root sections:', sectionsTree.length);
+      setSections(sectionsTree);
       
+      // Load expanded state from AsyncStorage
+      const storedState = await AsyncStorage.getItem('bibliothek_expanded');
+      if (storedState) {
+        setExpandedSections(JSON.parse(storedState));
+      }
     } catch (e) {
       console.error('💥 Error fetching sections:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
-  }, []);
-  
-  // Create basic medical categories if database is empty
-  const createBasicMedicalCategories = async () => {
-    const basicCategories = [
-      {
-        slug: 'innere-medizin',
-        title: 'Innere Medizin',
-        description: 'Systematische Übersicht der internistischen Erkrankungen',
-        type: 'main-category',
-        icon: 'Stethoscope',
-        color: '#0077B6',
-        display_order: 1,
-        parent_slug: null
-      },
-      {
-        slug: 'chirurgie',
-        title: 'Chirurgie', 
-        description: 'Systematische Übersicht der chirurgischen Fachgebiete',
-        type: 'main-category',
-        icon: 'Scissors',
-        color: '#48CAE4',
-        display_order: 2,
-        parent_slug: null
-      },
-      {
-        slug: 'notfallmedizin',
-        title: 'Notfallmedizin',
-        description: 'Systematische Übersicht der notfallmedizinischen Versorgung',
-        type: 'main-category',
-        icon: 'AlertTriangle',
-        color: '#EF4444',
-        display_order: 3,
-        parent_slug: null
+  }, [session]);
+
+  // Build a tree structure from flat sections data (EXACT copy from old working version)
+  const buildSectionsTree = (flatSections: Section[]): Section[] => {
+    const sectionsMap: Record<string, Section> = {};
+    
+    // First pass: map all sections by slug
+    flatSections.forEach(section => {
+      sectionsMap[section.slug] = {
+        ...section,
+        children: []
+      };
+    });
+    
+    // Second pass: build the tree
+    const rootSections: Section[] = [];
+    
+    flatSections.forEach(section => {
+      const currentSection = sectionsMap[section.slug];
+      
+      if (section.parent_slug === null) {
+        // This is a root section
+        rootSections.push(currentSection);
+      } else if (sectionsMap[section.parent_slug]) {
+        // This is a child section, add to parent's children
+        sectionsMap[section.parent_slug].children?.push(currentSection);
+      } else {
+        // Parent not found, add to root
+        rootSections.push(currentSection);
       }
-    ];
+    });
 
-    const { error } = await supabase
-      .from('sections')
-      .insert(basicCategories);
-
-    if (error) {
-      throw error;
-    }
+    // Sort children by display_order
+    const sortChildren = (sections: Section[]) => {
+      sections.forEach(section => {
+        if (section.children && section.children.length > 0) {
+          section.children.sort((a, b) => a.display_order - b.display_order);
+          sortChildren(section.children);
+        }
+      });
+    };
+    
+    sortChildren(rootSections);
+    return rootSections.sort((a, b) => a.display_order - b.display_order);
   };
 
-
   useEffect(() => {
-    fetchSections();
+    // Don't fetch until auth is ready
+    if (!authLoading) {
+      fetchSections();
+    }
     
     // Set up subscription for real-time updates
     const subscription = supabase
       .channel('sections-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sections' }, () => {
-        fetchSections();
+        if (session) {
+          fetchSections();
+        }
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchSections]);
+  }, [fetchSections, authLoading, session]);
 
-  // Navigate to a section - ALWAYS navigate to section page for main categories
-  const navigateToSection = (section: Section) => {
-    // For main page, always navigate to section page to show subcategories
-    router.push(`/bibliothek/${section.slug}`);
+  // Toggle section expansion
+  const toggleSection = (slug: string) => {
+    setExpandedSections(prev => {
+      const newState = {
+        ...prev,
+        [slug]: !prev[slug]
+      };
+      
+      // Save to AsyncStorage
+      AsyncStorage.setItem('bibliothek_expanded', JSON.stringify(newState)).catch(e => {
+        console.error('Failed to save expanded state to AsyncStorage', e);
+      });
+      
+      return newState;
+    });
   };
 
-  // Filter sections based on search query - simple filter for root sections only
-  const filteredSections = searchQuery 
-    ? sections.filter(section => 
-        section.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (section.description && section.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : sections;
+  // Navigate to a section
+  const navigateToSection = (section: Section) => {
+    if (section.type === 'file-text' || section.type === 'markdown') {
+      // Navigate to content page for leaf nodes
+      router.push(`/bibliothek/content/${section.slug}`);
+    } else {
+      // Navigate to section page for folders
+      router.push(`/bibliothek/${section.slug}`);
+    }
+  };
 
-  if (loading) {
+  // Filter sections based on search query
+  const filterSections = (sections: Section[], query: string): Section[] => {
+    if (!query.trim()) return sections;
+    
+    return sections.filter(section => {
+      const matchesQuery = 
+        section.title.toLowerCase().includes(query.toLowerCase()) || 
+        (section.description && section.description.toLowerCase().includes(query.toLowerCase())) ||
+        (section.category && section.category.toLowerCase().includes(query.toLowerCase())) ||
+        (section.content_details && section.content_details.toLowerCase().includes(query.toLowerCase()));
+      
+      if (matchesQuery) return true;
+      
+      if (section.children && section.children.length > 0) {
+        const filteredChildren = filterSections(section.children, query);
+        if (filteredChildren.length > 0) {
+          section.children = filteredChildren;
+          return true;
+        }
+      }
+      
+      return false;
+    });
+  };
+
+  // Filtered sections based on search query
+  const filteredSections = searchQuery ? filterSections([...sections], searchQuery) : sections;
+
+  // Show loading while auth is initializing or while fetching data
+  if (authLoading || loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0077B6" />
@@ -369,11 +403,18 @@ export default function BibliothekScreen() {
           <View style={styles.emptyState}>
             <BookOpen size={60} color="#D1D5DB" />
             <Text style={styles.emptyStateText}>
-              Keine Inhalte gefunden für "{searchQuery}"
+              {searchQuery 
+                ? `Keine Inhalte gefunden für "${searchQuery}"`
+                : 'Die Bibliothek ist zurzeit leer. Medizinische Inhalte werden bald hinzugefügt.'}
             </Text>
           </View>
         ) : (
           filteredSections.map((section) => {
+            const isExpanded = !!expandedSections[section.slug];
+            const hasChildren = section.children && section.children.length > 0;
+            const isFolder = section.type === 'folder';
+            const isLeafNode = section.type === 'file-text' || section.type === 'markdown';
+            
             // Use enhanced category detection
             const { icon, color } = getCategoryDetails(section.title, section.icon, section.color);
             
@@ -381,7 +422,15 @@ export default function BibliothekScreen() {
               <Card key={section.slug} style={styles.categoryContainer}>
                 <TouchableOpacity
                   style={styles.categoryHeader}
-                  onPress={() => navigateToSection(section)}
+                  onPress={() => {
+                    if (isLeafNode) {
+                      navigateToSection(section);
+                    } else if (isFolder && hasChildren) {
+                      toggleSection(section.slug);
+                    } else {
+                      navigateToSection(section);
+                    }
+                  }}
                   activeOpacity={0.7}
                 >
                   <LinearGradient
@@ -393,9 +442,42 @@ export default function BibliothekScreen() {
                     <View style={[styles.categoryColor, { backgroundColor: color }]} />
                     {getIconComponent(icon, color)}
                     <Text style={styles.categoryName}>{section.title}</Text>
-                    <ChevronRight size={20} color="#9CA3AF" />
+                    
+                    {hasChildren && (
+                      <ChevronRight 
+                        size={20} 
+                        color="#9CA3AF" 
+                        style={[
+                          styles.chevron, 
+                          isExpanded && styles.chevronDown
+                        ]} 
+                      />
+                    )}
                   </LinearGradient>
                 </TouchableOpacity>
+
+                {isExpanded && hasChildren && (
+                  <View style={styles.subsectionContainer}>
+                    {section.children?.map((subsection) => {
+                      const subIcon = getCategoryDetails(subsection.title, subsection.icon, subsection.color);
+                      return (
+                        <TouchableOpacity
+                          key={subsection.slug}
+                          style={styles.subsectionItem}
+                          onPress={() => navigateToSection(subsection)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={[styles.subsectionDot, { backgroundColor: subIcon.color }]} />
+                          <Text style={styles.subsectionName}>{subsection.title}</Text>
+                          <View style={styles.subsectionIconContainer}>
+                            {getIconComponent(subIcon.icon, subIcon.color, 20)}
+                          </View>
+                          <ChevronRight size={16} color="#9CA3AF" />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </Card>
             );
           })
@@ -508,6 +590,43 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
     marginLeft: 8,
+  },
+  chevron: {
+    transform: [{ rotate: '0deg' }],
+  },
+  chevronDown: {
+    transform: [{ rotate: '90deg' }],
+  },
+  subsectionContainer: {
+    paddingVertical: 8,
+    paddingRight: 16,
+    backgroundColor: '#F9FAFB',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  subsectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingLeft: 48,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  subsectionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  subsectionName: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: '#4B5563',
+    flex: 1,
+  },
+  subsectionIconContainer: {
+    marginRight: 8,
   },
   emptyState: {
     flex: 1,

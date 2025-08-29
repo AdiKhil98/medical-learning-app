@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Act
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, BookOpen, Activity, Heart, Stethoscope, Settings as Lungs, FlaskRound, Scissors, Plane as Ambulance, Baby, Brain } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '@/components/ui/Card';
@@ -102,6 +103,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
 export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
+  const { session, loading: authLoading } = useAuth();
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +118,12 @@ export default function SectionDetailScreen() {
 
     try {
       setLoading(true);
+      
+      // Check if user is authenticated
+      if (!session) {
+        setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
+        return;
+      }
       
       // Fetch the current section to get its title and ensure it exists
       const { data: currentSectionData, error: currentSectionError } = await supabase
@@ -156,7 +164,7 @@ export default function SectionDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [slug, storageKey]);
+  }, [slug, storageKey, session]);
 
   // Build a tree structure from flat sections data (recursive for deeper levels)
   const buildSectionsTree = (flatSections: Section[]): Section[] => {
@@ -197,10 +205,10 @@ export default function SectionDetailScreen() {
   };
 
   useEffect(() => {
-    if (typeof slug === 'string') {
+    if (typeof slug === 'string' && !authLoading) {
       fetchSections();
     }
-  }, [fetchSections, slug]);
+  }, [fetchSections, slug, authLoading]);
 
   // Toggle section expansion
   const toggleSection = (sectionSlug: string) => {
@@ -290,7 +298,7 @@ export default function SectionDetailScreen() {
     );
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0077B6" />
