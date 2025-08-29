@@ -238,10 +238,17 @@ export default function SectionDetailScreen() {
           style={styles.sectionHeader}
           onPress={() => {
             if (isLeafNode) {
-              // Navigate to content view
+              // Navigate to content view for actual content
+              navigateToSection(section.slug);
+            } else if (section.type === 'folder') {
+              // Always navigate for folder types (categories/subcategories)
               navigateToSection(section.slug);
             } else if (hasChildren) {
+              // Only expand/collapse if it's not a folder and has children
               toggleSection(section.slug);
+            } else {
+              // Default: navigate
+              navigateToSection(section.slug);
             }
           }}
           activeOpacity={0.7}
