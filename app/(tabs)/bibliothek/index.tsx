@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, Search, BookOpen, Activity, Heart, Stethoscope, Scissors, AlertTriangle, Baby, Brain, FlaskRound, Settings as Lungs, Pill, Plane as Ambulance, Scan, Circle, Syringe, Zap, Soup, Shield, Users, Eye, Bone, Smile, Thermometer, Zap as Lightning, CircuitBoard, Microscope, TestTube, FileText, Italic as Hospital, Cross, Droplets } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import Input from '@/components/ui/Input';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '@/components/ui/Card';
 
@@ -182,32 +181,24 @@ export default function BibliothekScreen() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Fetch data from Supabase
+  // Fetch data from Supabase - ONLY ROOT SECTIONS for main page
   const fetchSections = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Fetch all sections to build the hierarchy
+      // Fetch ONLY root sections (main categories) for the main page
       const { data, error } = await supabase
         .from('sections')
         .select('*')
+        .is('parent_slug', null)
         .order('display_order', { ascending: true });
 
       if (error) {
         throw error;
       }
 
-      // Build tree structure
-      const sectionsTree = buildSectionsTree(data || []);
-      setSections(sectionsTree);
-      
-      // Load expanded state from AsyncStorage
-      const storedState = await AsyncStorage.getItem('bibliothek_expanded');
-      if (storedState) {
-        setExpandedSections(JSON.parse(storedState));
-      }
+      setSections(data || []);
     } catch (e) {
       console.error('Error fetching sections:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
@@ -216,49 +207,6 @@ export default function BibliothekScreen() {
     }
   }, []);
 
-  // Build a tree structure from flat sections data
-  const buildSectionsTree = (flatSections: Section[]): Section[] => {
-    const sectionsMap: Record<string, Section> = {};
-    
-    // First pass: map all sections by slug
-    flatSections.forEach(section => {
-      sectionsMap[section.slug] = {
-        ...section,
-        children: []
-      };
-    });
-    
-    // Second pass: build the tree
-    const rootSections: Section[] = [];
-    
-    flatSections.forEach(section => {
-      const currentSection = sectionsMap[section.slug];
-      
-      if (section.parent_slug === null) {
-        // This is a root section
-        rootSections.push(currentSection);
-      } else if (sectionsMap[section.parent_slug]) {
-        // This is a child section, add to parent's children
-        sectionsMap[section.parent_slug].children?.push(currentSection);
-      } else {
-        // Parent not found, add to root
-        rootSections.push(currentSection);
-      }
-    });
-
-    // Sort children by display_order
-    const sortChildren = (sections: Section[]) => {
-      sections.forEach(section => {
-        if (section.children && section.children.length > 0) {
-          section.children.sort((a, b) => a.display_order - b.display_order);
-          sortChildren(section.children);
-        }
-      });
-    };
-    
-    sortChildren(rootSections);
-    return rootSections.sort((a, b) => a.display_order - b.display_order);
-  };
 
   useEffect(() => {
     fetchSections();
@@ -276,61 +224,19 @@ export default function BibliothekScreen() {
     };
   }, [fetchSections]);
 
-  // Toggle section expansion
-  const toggleSection = (slug: string) => {
-    setExpandedSections(prev => {
-      const newState = {
-        ...prev,
-        [slug]: !prev[slug]
-      };
-      
-      // Save to AsyncStorage
-      AsyncStorage.setItem('bibliothek_expanded', JSON.stringify(newState)).catch(e => {
-        console.error('Failed to save expanded state to AsyncStorage', e);
-      });
-      
-      return newState;
-    });
-  };
-
-  // Navigate to a section
+  // Navigate to a section - ALWAYS navigate to section page for main categories
   const navigateToSection = (section: Section) => {
-    if (section.type === 'file-text' || section.type === 'markdown') {
-      // Navigate to content page for leaf nodes
-      router.push(`/bibliothek/content/${section.slug}`);
-    } else {
-      // Navigate to section page for folders
-      router.push(`/bibliothek/${section.slug}`);
-    }
+    // For main page, always navigate to section page to show subcategories
+    router.push(`/bibliothek/${section.slug}`);
   };
 
-  // Filter sections based on search query
-  const filterSections = (sections: Section[], query: string): Section[] => {
-    if (!query.trim()) return sections;
-    
-    return sections.filter(section => {
-      const matchesQuery = 
-        section.title.toLowerCase().includes(query.toLowerCase()) || 
-        (section.description && section.description.toLowerCase().includes(query.toLowerCase())) ||
-        (section.category && section.category.toLowerCase().includes(query.toLowerCase())) ||
-        (section.content_details && section.content_details.toLowerCase().includes(query.toLowerCase()));
-      
-      if (matchesQuery) return true;
-      
-      if (section.children && section.children.length > 0) {
-        const filteredChildren = filterSections(section.children, query);
-        if (filteredChildren.length > 0) {
-          section.children = filteredChildren;
-          return true;
-        }
-      }
-      
-      return false;
-    });
-  };
-
-  // Filtered sections based on search query
-  const filteredSections = searchQuery ? filterSections([...sections], searchQuery) : sections;
+  // Filter sections based on search query - simple filter for root sections only
+  const filteredSections = searchQuery 
+    ? sections.filter(section => 
+        section.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (section.description && section.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : sections;
 
   if (loading) {
     return (
@@ -381,11 +287,6 @@ export default function BibliothekScreen() {
           </View>
         ) : (
           filteredSections.map((section) => {
-            const isExpanded = !!expandedSections[section.slug];
-            const hasChildren = section.children && section.children.length > 0;
-            const isFolder = section.type === 'folder';
-            const isLeafNode = section.type === 'file-text' || section.type === 'markdown';
-            
             // Use enhanced category detection
             const { icon, color } = getCategoryDetails(section.title, section.icon, section.color);
             
@@ -393,15 +294,7 @@ export default function BibliothekScreen() {
               <Card key={section.slug} style={styles.categoryContainer}>
                 <TouchableOpacity
                   style={styles.categoryHeader}
-                  onPress={() => {
-                    if (isLeafNode) {
-                      navigateToSection(section);
-                    } else if (isFolder && hasChildren) {
-                      toggleSection(section.slug);
-                    } else {
-                      navigateToSection(section);
-                    }
-                  }}
+                  onPress={() => navigateToSection(section)}
                   activeOpacity={0.7}
                 >
                   <LinearGradient
@@ -413,42 +306,9 @@ export default function BibliothekScreen() {
                     <View style={[styles.categoryColor, { backgroundColor: color }]} />
                     {getIconComponent(icon, color)}
                     <Text style={styles.categoryName}>{section.title}</Text>
-                    
-                    {hasChildren && (
-                      <ChevronRight 
-                        size={20} 
-                        color="#9CA3AF" 
-                        style={[
-                          styles.chevron, 
-                          isExpanded && styles.chevronDown
-                        ]} 
-                      />
-                    )}
+                    <ChevronRight size={20} color="#9CA3AF" />
                   </LinearGradient>
                 </TouchableOpacity>
-
-                {isExpanded && hasChildren && (
-                  <View style={styles.subsectionContainer}>
-                    {section.children?.map((subsection) => {
-                      const subIcon = getCategoryDetails(subsection.title, subsection.icon, subsection.color);
-                      return (
-                        <TouchableOpacity
-                          key={subsection.slug}
-                          style={styles.subsectionItem}
-                          onPress={() => navigateToSection(subsection)}
-                          activeOpacity={0.7}
-                        >
-                          <View style={[styles.subsectionDot, { backgroundColor: subIcon.color }]} />
-                          <Text style={styles.subsectionName}>{subsection.title}</Text>
-                          <View style={styles.subsectionIconContainer}>
-                            {getIconComponent(subIcon.icon, subIcon.color, 20)}
-                          </View>
-                          <ChevronRight size={16} color="#9CA3AF" />
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                )}
               </Card>
             );
           })
@@ -561,43 +421,6 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
     marginLeft: 8,
-  },
-  chevron: {
-    transform: [{ rotate: '0deg' }],
-  },
-  chevronDown: {
-    transform: [{ rotate: '90deg' }],
-  },
-  subsectionContainer: {
-    paddingVertical: 8,
-    paddingRight: 16,
-    backgroundColor: '#F9FAFB',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  subsectionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    paddingLeft: 48,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  subsectionDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  subsectionName: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: '#4B5563',
-    flex: 1,
-  },
-  subsectionIconContainer: {
-    marginRight: 8,
   },
   emptyState: {
     flex: 1,
