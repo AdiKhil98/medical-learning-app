@@ -130,7 +130,7 @@ class MedicalContentService {
         .from('sections')
         .select(`
           id, slug, title, description, type, icon, color, display_order,
-          category, image_url, has_content
+          category, image_url
         `)
         .is('parent_slug', null)
         .order('display_order', { ascending: true });
@@ -147,6 +147,12 @@ class MedicalContentService {
       }
 
       const sections = (data || []) as MedicalSection[];
+      
+      // Compute has_content for each section based on available content
+      sections.forEach(section => {
+        section.has_content = this.hasAnyContent(section);
+      });
+      
       console.log(`✅ Found ${sections.length} root sections`);
 
       // If no sections found, try to populate with basic data
@@ -161,7 +167,7 @@ class MedicalContentService {
             .from('sections')
             .select(`
               id, slug, title, description, type, icon, color, display_order,
-              category, image_url, has_content
+              category, image_url
             `)
             .is('parent_slug', null)
             .order('display_order', { ascending: true });
@@ -170,6 +176,12 @@ class MedicalContentService {
             console.error('❌ Retry query failed:', newError);
           } else {
             const newSections = (newData || []) as MedicalSection[];
+            
+            // Compute has_content for each section
+            newSections.forEach(section => {
+              section.has_content = this.hasAnyContent(section);
+            });
+            
             console.log(`✅ After population, found ${newSections.length} root sections`);
             
             // Update cache with new data
@@ -236,7 +248,7 @@ class MedicalContentService {
         .from('sections')
         .select(`
           id, slug, title, description, type, icon, color, display_order,
-          category, image_url, has_content
+          category, image_url
         `)
         .eq('parent_slug', parentSlug)
         .order('display_order', { ascending: true });
@@ -244,6 +256,11 @@ class MedicalContentService {
       if (error) throw error;
 
       const sections = (data || []) as MedicalSection[];
+      
+      // Compute has_content for each section
+      sections.forEach(section => {
+        section.has_content = this.hasAnyContent(section);
+      });
       
       // Update cache
       listCache.set(cacheKey, { data: sections, timestamp: now });
@@ -273,7 +290,7 @@ class MedicalContentService {
         .from('sections')
         .select(`
           id, slug, title, description, type, icon, color, display_order,
-          category, image_url, content_type, has_content
+          category, image_url
         `)
         .eq('category', category)
         .order('display_order', { ascending: true });
@@ -281,6 +298,11 @@ class MedicalContentService {
       if (error) throw error;
 
       const sections = (data || []) as MedicalSection[];
+      
+      // Compute has_content for each section
+      sections.forEach(section => {
+        section.has_content = this.hasAnyContent(section);
+      });
       
       // Update cache
       listCache.set(cacheKey, { data: sections, timestamp: now });
@@ -324,7 +346,7 @@ class MedicalContentService {
         .select(`
           id, slug, title, description, type, icon, color, display_order,
           category, image_url, parent_slug, content_json, content_improved, 
-          content_html, content_details, has_content,
+          content_html, content_details,
           hierarchy_level, created_at, updated_at
         `)
         .eq('slug', slug)
@@ -342,6 +364,9 @@ class MedicalContentService {
       if (!data) return null;
 
       const section = data as MedicalSection;
+      
+      // Compute has_content based on available content
+      section.has_content = this.hasAnyContent(section);
       
       // Update cache
       sectionCache.set(slug, { data: section, timestamp: now });
@@ -420,7 +445,7 @@ class MedicalContentService {
         .from('sections')
         .select(`
           id, slug, title, description, type, icon, color, display_order,
-          category, image_url, parent_slug, content_json, has_content,
+          category, image_url, parent_slug, content_json,
           hierarchy_level, created_at, updated_at
         `)
         .eq('slug', slug)
@@ -435,6 +460,9 @@ class MedicalContentService {
       section.content_improved = [];
       section.content_html = '';
       section.content_details = '';
+      
+      // Compute has_content based on available content
+      section.has_content = this.hasAnyContent(section);
       
       return section;
     } catch (error) {
@@ -457,7 +485,7 @@ class MedicalContentService {
         .from('sections')
         .select(`
           id, slug, title, description, type, icon, color, display_order,
-          category, image_url, has_content
+          category, image_url
         `)
         .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
         .limit(limit);
