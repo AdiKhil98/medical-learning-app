@@ -237,18 +237,21 @@ export default function SectionDetailScreen() {
         <TouchableOpacity
           style={styles.sectionHeader}
           onPress={() => {
-            if (isLeafNode) {
-              // Navigate to content view for actual content
-              navigateToSection(section.slug);
+            // Check if this section has actual content (not just children)
+            const hasContent = section.content_improved || section.content_html || section.content_details;
+            
+            if (isLeafNode || hasContent) {
+              // Navigate to content page for leaf nodes or sections with content
+              router.push(`/bibliothek/content/${section.slug}`);
             } else if (section.type === 'folder') {
-              // Always navigate for folder types (categories/subcategories)
+              // Navigate to subcategory page for folder types
               navigateToSection(section.slug);
             } else if (hasChildren) {
-              // Only expand/collapse if it's not a folder and has children
+              // Expand/collapse if has children but no content
               toggleSection(section.slug);
             } else {
-              // Default: navigate
-              navigateToSection(section.slug);
+              // Default: try to navigate to content page
+              router.push(`/bibliothek/content/${section.slug}`);
             }
           }}
           activeOpacity={0.7}

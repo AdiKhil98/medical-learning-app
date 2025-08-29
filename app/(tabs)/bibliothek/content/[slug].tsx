@@ -209,11 +209,20 @@ const ContentDetailScreen = memo(() => {
     setLoading(true);
     
     try {
-      const sectionData = await medicalContentService.getSection(slug);
-      
+      // Use direct Supabase query instead of service
+      const { data: sectionData, error } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle();
+        
+      if (error) throw error;
       if (!sectionData) throw new Error('Abschnitt nicht gefunden');
       
       setCurrentSection(sectionData);
+      
+      // Cache the result
+      contentCache.set(slug, { data: sectionData, timestamp: now });
       
       // Auto-expand first section if content_improved exists
       if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
