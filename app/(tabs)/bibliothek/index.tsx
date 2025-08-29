@@ -187,6 +187,19 @@ export default function BibliothekScreen() {
     try {
       setLoading(true);
       
+      console.log('🔍 Fetching root sections...');
+      
+      // First check if there are ANY sections at all
+      const { data: allSections, error: countError } = await supabase
+        .from('sections')
+        .select('id, slug, title, parent_slug', { count: 'exact' })
+        .limit(5);
+      
+      console.log('📊 Total sections in database:', allSections?.length || 0);
+      if (allSections && allSections.length > 0) {
+        console.log('📋 Sample sections:', allSections.map(s => ({ slug: s.slug, title: s.title, parent: s.parent_slug })));
+      }
+      
       // Fetch ONLY root sections (main categories) for the main page
       const { data, error } = await supabase
         .from('sections')
@@ -194,18 +207,92 @@ export default function BibliothekScreen() {
         .is('parent_slug', null)
         .order('display_order', { ascending: true });
 
+      console.log('📊 Root sections found:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('✅ Root sections:', data.map(s => s.title));
+      } else {
+        console.log('⚠️ No root sections found - all sections may have parent_slug values');
+      }
+
       if (error) {
+        console.error('❌ Database error:', error);
         throw error;
       }
 
       setSections(data || []);
+      
+      // If no root sections found, try to create basic medical categories
+      if (!data || data.length === 0) {
+        console.log('🔧 No root sections found, attempting to create basic medical categories...');
+        try {
+          await createBasicMedicalCategories();
+          // Retry fetching after creating sections
+          const { data: newData } = await supabase
+            .from('sections')
+            .select('*')
+            .is('parent_slug', null)
+            .order('display_order', { ascending: true });
+          
+          if (newData && newData.length > 0) {
+            console.log('✅ Successfully created and loaded basic categories:', newData.map(s => s.title));
+            setSections(newData);
+          }
+        } catch (createError) {
+          console.error('❌ Failed to create basic categories:', createError);
+        }
+      }
+      
     } catch (e) {
-      console.error('Error fetching sections:', e);
+      console.error('💥 Error fetching sections:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
   }, []);
+  
+  // Create basic medical categories if database is empty
+  const createBasicMedicalCategories = async () => {
+    const basicCategories = [
+      {
+        slug: 'innere-medizin',
+        title: 'Innere Medizin',
+        description: 'Systematische Übersicht der internistischen Erkrankungen',
+        type: 'main-category',
+        icon: 'Stethoscope',
+        color: '#0077B6',
+        display_order: 1,
+        parent_slug: null
+      },
+      {
+        slug: 'chirurgie',
+        title: 'Chirurgie', 
+        description: 'Systematische Übersicht der chirurgischen Fachgebiete',
+        type: 'main-category',
+        icon: 'Scissors',
+        color: '#48CAE4',
+        display_order: 2,
+        parent_slug: null
+      },
+      {
+        slug: 'notfallmedizin',
+        title: 'Notfallmedizin',
+        description: 'Systematische Übersicht der notfallmedizinischen Versorgung',
+        type: 'main-category',
+        icon: 'AlertTriangle',
+        color: '#EF4444',
+        display_order: 3,
+        parent_slug: null
+      }
+    ];
+
+    const { error } = await supabase
+      .from('sections')
+      .insert(basicCategories);
+
+    if (error) {
+      throw error;
+    }
+  };
 
 
   useEffect(() => {
