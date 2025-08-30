@@ -11,7 +11,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Logo from '@/components/ui/Logo';
+import Logo from '@/components/ui/Logo';\nimport UserAvatar from '@/components/ui/UserAvatar';
 
 interface DailyTip {
   id?: string;
@@ -569,6 +569,21 @@ export default function DashboardScreen() {
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
+    
+    // Enhanced Header Styles
+    headerGradient: {
+      paddingTop: 16,
+      paddingBottom: 20,
+      shadowColor: '#0F4C81',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    headerBlur: {
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(10px)',
+    },
     heroSection: {
       paddingHorizontal: 16,
       paddingTop: 16,
@@ -1033,24 +1048,34 @@ export default function DashboardScreen() {
         style={styles.gradientBackground}
       />
       
-      {/* Header */}
-      <View style={dynamicStyles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity 
-            onPress={() => setIsMenuOpen(true)}
-            style={styles.menuButtonContainer}
-          >
-            <MenuIcon size={24} color={colors.primary} />
-          </TouchableOpacity>
-          <Logo size="medium" textColor={isDarkMode ? '#FFFFFF' : undefined} />
-          <TouchableOpacity 
-            onPress={() => setShowAchievements(true)}
-            style={styles.achievementButton}
-          >
-            <Trophy size={20} color={MEDICAL_COLORS.warning} />
-          </TouchableOpacity>
+      {/* Enhanced Premium Header */}
+      <LinearGradient
+        colors={isDarkMode 
+          ? ['rgba(15, 76, 129, 0.95)', 'rgba(30, 136, 229, 0.95)', 'rgba(66, 165, 245, 0.85)']
+          : ['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)']
+        }
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerBlur}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              onPress={() => setIsMenuOpen(true)}
+              style={styles.menuButtonContainer}
+            >
+              <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+            <Logo size="medium" variant="premium" textColor="white" animated={true} />
+            <UserAvatar 
+              size="medium" 
+              userStats={userStats} 
+              showXP={true} 
+              showLevel={true} 
+            />
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Animated.View 
@@ -1558,12 +1583,43 @@ const styles = StyleSheet.create({
   },
   achievementButton: {
     padding: 8,
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  userStatsHeader: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    minWidth: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 2,
+  },
+  userXP: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  userXPLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+    marginTop: -1,
   },
 });
