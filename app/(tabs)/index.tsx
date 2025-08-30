@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Animated, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, Target, Brain, Zap, Clock, MapPin, PlayCircle, Sparkles, BarChart3 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
