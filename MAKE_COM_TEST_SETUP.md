@@ -13,7 +13,7 @@
 #### Basic Settings
 ```
 Method: POST
-URL: https://medical-learning-app.netlify.app/api/webhook-evaluation
+URL: https://medical-learning-app.vercel.app/api/webhook-evaluation
 ```
 
 #### Headers

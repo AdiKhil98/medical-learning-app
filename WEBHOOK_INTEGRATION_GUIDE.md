@@ -2,30 +2,35 @@
 
 ## 📍 Webhook Endpoint
 
-### Production URL (Netlify) ✅ **WORKING**
+### Production URL (Vercel) 🔧 **BEING DEPLOYED**
 ```
-https://medical-learning-app.netlify.app/.netlify/functions/webhook-evaluation
+https://medical-learning-app.vercel.app/api/webhook-evaluation
 ```
 
-> **Status**: ✅ Fully functional and tested
-> **Last Updated**: August 30, 2025
+> **Status**: 🔧 Fixed deployment platform (was incorrectly configured for Netlify)
+> **Platform**: Vercel (API functions in `/api` directory)
+> **Last Updated**: August 30, 2025  
 > **Database**: Connected to Supabase with `evaluation_scores` and `evaluation_sessions` tables
 
 ### Alternative URLs (all redirect to the same function)
 ```
-https://medical-learning-app.netlify.app/api/webhook-evaluation
-https://medical-learning-app.netlify.app/api/webhook/evaluation
+https://medical-learning-app.vercel.app/api/webhook/evaluation
+```
+
+### Legacy URLs (Netlify - No longer used)
+```
+https://medical-learning-app.netlify.app/api/webhook-evaluation (deprecated)
 ```
 
 ### Development URL
 ```
-http://localhost:8888/.netlify/functions/webhook-evaluation
+http://localhost:3000/api/webhook-evaluation (Vercel dev server)
 ```
 
 ## 🚀 Quick Setup for Make.com
 
 ### 1. HTTP Module Configuration
-- **URL**: `https://medical-learning-app.netlify.app/api/webhook-evaluation`
+- **URL**: `https://medical-learning-app.vercel.app/api/webhook-evaluation`
 - **Method**: `POST`
 - **Headers**:
   ```

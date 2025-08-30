@@ -5,9 +5,8 @@
   const { createClient } = require('@supabase/supabase-js');
 
   // Initialize Supabase client
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pavjavrijaihnwbydfrk.supabase.co';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhdmphdnJp
-  amFpaG53YnlkZnJrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NTE0Mzg2NiwiZXhwIjoyMDYwNzE5ODY2fQ.Kqmk5QEaUzUFjOPn42x1DV2PbZmUwi_AYbLvFh3_Lmc';
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
