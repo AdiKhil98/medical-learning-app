@@ -1,300 +1,152 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, BookOpen, Activity, Heart, Stethoscope, Settings as Lungs, FlaskRound, Scissors, Plane as Ambulance, Baby, Brain } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import Card from '@/components/ui/Card';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
-// Type for section data from Supabase
 interface Section {
   id: string;
   slug: string;
   title: string;
   parent_slug: string | null;
   description: string | null;
-  type: 'folder' | 'file-text' | 'markdown';
-  icon: string;
-  color: string;
+  type: string;
   display_order: number;
-  image_url?: string;
-  category?: string;
-  content_details?: string;
-  last_updated?: string;
-  children?: Section[];
+  content_improved?: string;
 }
 
-// Function to get the appropriate icon component based on icon name
+// Get icon and color for sub-categories based on their title/type
+const getSubCategoryDetails = (title: string, parentSlug: string) => {
+  const normalizedTitle = title.toLowerCase();
+  
+  // Color based on parent category
+  let baseColor = MEDICAL_COLORS.primary;
+  switch (parentSlug) {
+    case 'chirurgie': baseColor = '#EF4444'; break;
+    case 'innere-medizin': baseColor = '#0077B6'; break;
+    case 'notfallmedizin': baseColor = '#F59E0B'; break;
+    case 'infektiologie': baseColor = '#10B981'; break;
+    case 'urologie': baseColor = '#8B5CF6'; break;
+    case 'radiologie': baseColor = '#6366F1'; break;
+  }
+  
+  // Icon based on content
+  let icon = 'BookOpen';
+  if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz')) icon = 'Heart';
+  else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation')) icon = 'Scissors';
+  else if (normalizedTitle.includes('notfall') || normalizedTitle.includes('reanimat')) icon = 'AlertTriangle';
+  else if (normalizedTitle.includes('diagnostik') || normalizedTitle.includes('röntgen')) icon = 'Scan';
+  else if (normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge')) icon = 'Activity';
+  else if (normalizedTitle.includes('urolog') || normalizedTitle.includes('niere')) icon = 'Droplets';
+  else if (normalizedTitle.includes('infekt') || normalizedTitle.includes('hygiene')) icon = 'Shield';
+  else icon = 'Stethoscope';
+  
+  return { icon, color: baseColor };
+};
+
 const getIconComponent = (iconName: string) => {
-  const iconProps = { size: 24 };
-  
   switch (iconName) {
-    case 'Stethoscope':
-      return Stethoscope;
-    case 'Heart':
-      return Heart;
-    case 'Activity':
-      return Activity;
-    case 'Lungs':
-      return Lungs;
-    case 'FlaskRound':
-      return FlaskRound;
-    case 'Scissors':
-      return Scissors;
-    case 'Ambulance':
-      return Ambulance;
-    case 'Baby':
-      return Baby;
-    case 'Brain':
-      return Brain;
+    case 'Heart': return Heart;
+    case 'Scissors': return Scissors;
+    case 'AlertTriangle': return AlertTriangle;
+    case 'Scan': return Scan;
+    case 'Activity': return Activity;
+    case 'Droplets': return Droplets;
+    case 'Shield': return Shield;
+    case 'Stethoscope': return Stethoscope;
     case 'BookOpen':
-    default:
-      return BookOpen;
+    default: return BookOpen;
   }
 };
 
-// Map categories to icons and colors
-const getCategoryDetails = (title: string, iconName?: string, color?: string) => {
-  // Use provided icon and color if available
-  if (iconName && color) {
-    return { icon: iconName, color };
-  }
-  
-  // Default mappings
-  switch (title.toLowerCase()) {
-    case 'innere medizin':
-      return { icon: 'Stethoscope', color: '#0077B6' };
-    case 'kardiologie':
-      return { icon: 'Heart', color: '#0077B6' };
-    case 'gastroenterologie':
-      return { icon: 'Activity', color: '#48CAE4' };
-    case 'pneumologie':
-      return { icon: 'Lungs', color: '#22C55E' };
-    case 'nephrologie':
-      return { icon: 'Activity', color: '#8B5CF6' };
-    case 'endokrinologie':
-    case 'endokrinologie und stoffwechsel':
-      return { icon: 'FlaskRound', color: '#EF4444' };
-    case 'chirurgie':
-      return { icon: 'Scissors', color: '#48CAE4' };
-    case 'notfallmedizin':
-      return { icon: 'Ambulance', color: '#EF4444' };
-    case 'pädiatrie':
-      return { icon: 'Baby', color: '#8B5CF6' };
-    case 'gynäkologie':
-      return { icon: 'Activity', color: '#EC4899' };
-    case 'psychiatrie':
-      return { icon: 'Brain', color: '#F59E0B' };
-    case 'anatomie':
-      return { icon: 'Heart', color: '#0077B6' };
-    case 'radiologie':
-      return { icon: 'Activity', color: '#22C55E' };
-    case 'sonographie':
-      return { icon: 'Activity', color: '#48CAE4' };
-    default:
-      return { icon: 'BookOpen', color: '#0077B6' };
-  }
-};
-
-export default function SectionDetailScreen() {
+export default function CategoryDetailScreen() {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
-  const [currentSection, setCurrentSection] = useState<Section | null>(null);
-  const [sections, setSections] = useState<Section[]>([]);
+  
+  const [currentCategory, setCurrentCategory] = useState<Section | null>(null);
+  const [subCategories, setSubCategories] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  const storageKey = `bibliothek_detail_${slug}`;
-
-  // Fetch data from Supabase
-  const fetchSections = useCallback(async () => {
+  // Fetch the current main category and its sub-categories
+  const fetchCategoryData = async () => {
     if (!slug || typeof slug !== 'string') return;
 
     try {
       setLoading(true);
       
-      // Check if user is authenticated
       if (!session) {
         setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
         return;
       }
-      
-      // Fetch the current section to get its title and ensure it exists
-      const { data: currentSectionData, error: currentSectionError } = await supabase
+
+      console.log('Fetching category data for:', slug);
+
+      // Fetch current category details (the main category)
+      const { data: categoryData, error: categoryError } = await supabase
         .from('sections')
-        .select('*')
+        .select('id, slug, title, description, type, display_order')
         .eq('slug', slug)
         .maybeSingle();
 
-      if (currentSectionError) {
-        throw currentSectionError;
+      if (categoryError) {
+        throw categoryError;
       }
-      
-      setCurrentSection(currentSectionData);
 
-      // Fetch children sections
-      const { data, error } = await supabase
+      if (!categoryData) {
+        setError('Kategorie nicht gefunden.');
+        return;
+      }
+
+      setCurrentCategory(categoryData);
+      console.log('Current category:', categoryData.title);
+
+      // Fetch sub-categories (items where parent_slug = current slug)
+      const { data: subCategoriesData, error: subCategoriesError } = await supabase
         .from('sections')
-        .select('*')
-        .eq('parent_slug', slug)
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
+        .eq('parent_slug', slug)  // Get items that belong to this main category
         .order('display_order', { ascending: true });
 
-      if (error) {
-        throw error;
+      if (subCategoriesError) {
+        throw subCategoriesError;
       }
 
-      // Build tree structure for deeper levels
-      const sectionsTree = buildSectionsTree(data || []);
-      setSections(sectionsTree);
-      
-      // Load expanded state from AsyncStorage
-      const storedState = await AsyncStorage.getItem(storageKey);
-      if (storedState) {
-        setExpandedSections(JSON.parse(storedState));
-      }
+      console.log(`Found ${subCategoriesData?.length || 0} sub-categories`);
+      setSubCategories(subCategoriesData || []);
+
     } catch (e) {
-      console.error('Error fetching sections:', e);
-      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+      console.error('Error fetching category data:', e);
+      setError(e instanceof Error ? e.message : 'Fehler beim Laden der Kategorie');
     } finally {
       setLoading(false);
     }
-  }, [slug, storageKey, session]);
-
-  // Build a tree structure from flat sections data (recursive for deeper levels)
-  const buildSectionsTree = (flatSections: Section[]): Section[] => {
-    if (typeof slug !== 'string') return [];
-    
-    const sectionsMap: Record<string, Section> = {};
-
-    flatSections.forEach(section => {
-      sectionsMap[section.slug] = {
-        ...section,
-        children: []
-      };
-    });
-
-    const rootSections: Section[] = [];
-
-    flatSections.forEach(section => {
-      const currentSection = sectionsMap[section.slug];
-
-      if (section.parent_slug === slug) { // Only consider direct children of the current slug as root for this screen
-        rootSections.push(currentSection);
-      } else if (sectionsMap[section.parent_slug]) {
-        sectionsMap[section.parent_slug].children?.push(currentSection);
-      }
-    });
-
-    const sortChildrenRecursively = (sections: Section[]) => {
-      sections.forEach(section => {
-        if (section.children && section.children.length > 0) {
-          section.children.sort((a, b) => a.display_order - b.display_order);
-          sortChildrenRecursively(section.children);
-        }
-      });
-    };
-
-    sortChildrenRecursively(rootSections);
-    return rootSections.sort((a, b) => a.display_order - b.display_order);
   };
 
   useEffect(() => {
-    if (typeof slug === 'string' && !authLoading) {
-      fetchSections();
+    if (!authLoading) {
+      fetchCategoryData();
     }
-  }, [fetchSections, slug, authLoading]);
+  }, [slug, session, authLoading]);
 
-  // Toggle section expansion
-  const toggleSection = (sectionSlug: string) => {
-    setExpandedSections(prev => {
-      const newState = {
-        ...prev,
-        [sectionSlug]: !prev[sectionSlug]
-      };
-      
-      // Save to AsyncStorage
-      AsyncStorage.setItem(storageKey, JSON.stringify(newState)).catch(e => {
-        console.error('Failed to save expanded state to AsyncStorage', e);
-      });
-      
-      return newState;
-    });
+  const navigateToSubCategory = (subCategorySlug: string) => {
+    console.log('Navigating to sub-category:', subCategorySlug);
+    router.push(`/bibliothek/${subCategorySlug}`);
   };
 
-  // Navigate to a section
-  const navigateToSection = (sectionSlug: string) => {
-    router.push(`/bibliothek/${sectionSlug}`);
-  };
-
-  // Render a section item recursively for deeper levels
-  const renderSectionItem = (section: Section, depth: number = 0) => {
-    const isExpanded = !!expandedSections[section.slug];
-    const isLeafNode = section.type === 'file-text' || section.type === 'markdown';
-    const hasChildren = section.children && section.children.length > 0;
-    
-    const { icon, color } = getCategoryDetails(section.category || section.title, section.icon, section.color);
-    const IconComponent = getIconComponent(icon);
-    const paddingLeft = 16 + (depth * 16); // Indent based on depth
-    
-    return (
-      <View key={section.slug} style={styles.sectionCard}>
-        <TouchableOpacity
-          style={styles.sectionHeader}
-          onPress={() => {
-            if (isLeafNode) {
-              // Navigate to content view
-              router.push(`/bibliothek/content/${section.slug}`);
-            } else if (hasChildren) {
-              toggleSection(section.slug);
-            } else {
-              navigateToSection(section.slug);
-            }
-          }}
-          activeOpacity={0.7}
-        >
-          <LinearGradient
-            colors={[`${color}20`, `${color}05`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.sectionGradient, { paddingLeft }]}
-          >
-            <View style={[styles.sectionColorDot, { backgroundColor: color }]} />
-            <IconComponent size={24} color={color} />
-            <Text style={styles.sectionName}>{section.title}</Text>
-            
-            {hasChildren && (
-              <ChevronRight 
-                size={20} 
-                color="#9CA3AF" 
-                style={[
-                  styles.chevron,
-                  isExpanded && styles.chevronDown
-                ]} 
-              />
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {isExpanded && hasChildren && (
-          <View style={styles.childContainer}>
-            {section.children?.map((childSection) => 
-              renderSectionItem(childSection, depth + 1)
-            )}
-          </View>
-        )}
-      </View>
-    );
+  const handleBackPress = () => {
+    router.push('/bibliothek');
   };
 
   if (authLoading || loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0077B6" />
-        <Text style={styles.loadingText}>Lade Inhalte...</Text>
+        <ActivityIndicator size="large" color={MEDICAL_COLORS.primary} />
+        <Text style={styles.loadingText}>Lade Kategorien...</Text>
       </SafeAreaView>
     );
   }
@@ -304,22 +156,19 @@ export default function SectionDetailScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Fehler</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchSections}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchCategoryData}>
           <Text style={styles.retryButtonText}>Erneut versuchen</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  if (!currentSection) {
+  if (!currentCategory) {
     return (
       <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Inhalt nicht gefunden</Text>
-        <Text style={styles.errorText}>Der gesuchte Inhalt konnte nicht gefunden werden.</Text>
-        <TouchableOpacity 
-          style={styles.retryButton} 
-          onPress={() => router.push('/bibliothek')}
-        >
+        <Text style={styles.errorTitle}>Kategorie nicht gefunden</Text>
+        <Text style={styles.errorText}>Die gesuchte Kategorie konnte nicht gefunden werden.</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleBackPress}>
           <Text style={styles.retryButtonText}>Zurück zur Bibliothek</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -329,34 +178,66 @@ export default function SectionDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
+        colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
         style={styles.gradientBackground}
       />
       
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => router.back()} 
+          onPress={handleBackPress}
           style={styles.backButton}
         >
-          <ChevronLeft size={24} color="#0077B6" />
+          <ChevronLeft size={24} color={MEDICAL_COLORS.primary} />
           <Text style={styles.backText}>Zurück</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{currentSection.title}</Text>
-        {currentSection?.description && (
-          <Text style={styles.subtitle}>{currentSection.description}</Text>
-        )}
-        {currentSection?.content_details && (
-          <Text style={styles.contentDetails}>{currentSection.content_details}</Text>
+        
+        <Text style={styles.title}>{currentCategory.title}</Text>
+        {currentCategory.description && (
+          <Text style={styles.subtitle}>{currentCategory.description}</Text>
         )}
       </View>
 
-      {sections.length === 0 ? (
+      {subCategories.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>Keine Unterkategorien gefunden.</Text>
         </View>
       ) : (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {sections.map(section => renderSectionItem(section))}
+          {subCategories.map((subCategory) => {
+            const { icon, color } = getSubCategoryDetails(subCategory.title, slug as string);
+            const IconComponent = getIconComponent(icon);
+            
+            return (
+              <TouchableOpacity
+                key={subCategory.slug}
+                style={styles.subCategoryCard}
+                onPress={() => navigateToSubCategory(subCategory.slug)}
+                activeOpacity={0.7}
+              >
+                <LinearGradient
+                  colors={[`${color}15`, `${color}05`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.subCategoryGradient}
+                >
+                  <View style={[styles.subCategoryIcon, { backgroundColor: color }]}>
+                    <IconComponent size={24} color="white" />
+                  </View>
+                  
+                  <View style={styles.subCategoryContent}>
+                    <Text style={styles.subCategoryTitle}>{subCategory.title}</Text>
+                    <Text style={styles.subCategoryType}>{subCategory.type}</Text>
+                    {subCategory.description && (
+                      <Text style={styles.subCategoryDescription}>{subCategory.description}</Text>
+                    )}
+                  </View>
+                  
+                  <ChevronRight size={20} color={color} />
+                </LinearGradient>
+              </TouchableOpacity>
+            );
+          })}
+          
           <View style={styles.bottomPadding} />
         </ScrollView>
       )}
@@ -409,7 +290,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
   },
   retryButton: {
-    backgroundColor: '#0077B6',
+    backgroundColor: MEDICAL_COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -421,100 +302,95 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    paddingBottom: 8,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   backText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#0077B6',
+    color: MEDICAL_COLORS.primary,
     marginLeft: 4,
   },
   title: {
     fontFamily: 'Inter-Bold',
     fontSize: 24,
-    color: '#1F2937',
-    marginBottom: 8,
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 4,
   },
   subtitle: {
     fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  contentDetails: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-    marginTop: 8,
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 22,
   },
   content: {
     paddingHorizontal: 16,
+    paddingTop: 8,
   },
-  sectionCard: {
+  subCategoryCard: {
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
     overflow: 'hidden',
   },
-  sectionHeader: {
+  subCategoryGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  sectionGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
     padding: 16,
-    paddingRight: 16,
   },
-  sectionColorDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+  subCategoryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
-  sectionName: {
+  subCategoryContent: {
+    flex: 1,
+  },
+  subCategoryTitle: {
     fontFamily: 'Inter-Bold',
     fontSize: 16,
     color: '#1F2937',
-    flex: 1,
-    marginLeft: 8,
+    marginBottom: 2,
   },
-  chevron: {
-    transform: [{ rotate: '0deg' }],
+  subCategoryType: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 11,
+    color: MEDICAL_COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  chevronDown: {
-    transform: [{ rotate: '90deg' }],
-  },
-  childContainer: {
-    backgroundColor: '#F9FAFB',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+  subCategoryDescription: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 13,
+    color: MEDICAL_COLORS.gray,
+    marginTop: 4,
+    lineHeight: 16,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 40,
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: MEDICAL_COLORS.textSecondary,
     fontFamily: 'Inter-Regular',
+    textAlign: 'center',
   },
   bottomPadding: {
     height: 60,
-  }
+  },
 });
