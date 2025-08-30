@@ -10,8 +10,21 @@ import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import Logo from '@/components/ui/Logo';\nimport UserAvatar from '@/components/ui/UserAvatar';
+// Conditional import for haptics (mobile only)
+let Haptics: any = null;
+try {
+  Haptics = require('expo-haptics');
+} catch (e) {
+  // Haptics not available on web
+  Haptics = {
+    impactAsync: () => Promise.resolve(),
+    notificationAsync: () => Promise.resolve(),
+    ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
+    NotificationFeedbackType: { Success: 'success' }
+  };
+}
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface DailyTip {
   id?: string;

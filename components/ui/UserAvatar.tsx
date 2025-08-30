@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User, Settings, LogOut, Trophy, BarChart3, Book } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
