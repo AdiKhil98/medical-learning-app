@@ -54,23 +54,45 @@ export default function DashboardScreen() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Fetch daily tip
-      const { data: tipData } = await supabase
+      // Fetch daily tip - try today first, then most recent
+      let { data: tipData } = await supabase
         .from('daily_tips')
         .select('*')
         .eq('date', today)
         .maybeSingle();
 
+      if (!tipData) {
+        // If no tip for today, get the most recent one
+        const { data: recentTip } = await supabase
+          .from('daily_tips')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        tipData = recentTip;
+      }
+
       if (tipData) {
         setDailyTip(tipData);
       }
 
-      // Fetch daily question  
-      const { data: questionData } = await supabase
+      // Fetch daily question - try today first, then most recent
+      let { data: questionData } = await supabase
         .from('daily_questions')
         .select('*')
         .eq('date', today)
         .maybeSingle();
+
+      if (!questionData) {
+        // If no question for today, get the most recent one
+        const { data: recentQuestion } = await supabase
+          .from('daily_questions')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        questionData = recentQuestion;
+      }
 
       if (questionData) {
         setDailyQuestion(questionData);
@@ -103,7 +125,7 @@ export default function DashboardScreen() {
 
   const isCorrectAnswer = (answer: string) => {
     if (!dailyQuestion) return false;
-    const correctKey = (dailyQuestion.correct_answer || dailyQuestion.correct_choice || '').toLowerCase();
+    const correctKey = (dailyQuestion.correct_choice || dailyQuestion.correct_answer || '').toLowerCase();
     
     switch (answer) {
       case 'a': return correctKey === 'a';
