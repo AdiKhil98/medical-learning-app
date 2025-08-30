@@ -23,8 +23,6 @@ interface Section {
   image_url?: string;
   category?: string;
   content_details?: string;
-  content_improved?: any[];
-  content_html?: string;
   last_updated?: string;
   children?: Section[];
 }
@@ -91,21 +89,77 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case normalizedTitle.includes('rettung') || normalizedTitle.includes('ambulan'):
       return { icon: 'Ambulance', color: '#F59E0B' };
     
-    // Other specialties
+    // Pediatrics
     case normalizedTitle.includes('pädiatrie') || normalizedTitle.includes('kinder'):
       return { icon: 'Baby', color: '#8B5CF6' };
+    
+    // Obstetrics & Gynecology
     case normalizedTitle.includes('gynäkolog') || normalizedTitle.includes('geburtshilf'):
       return { icon: 'Users', color: '#EC4899' };
+    
+    // Psychiatry & Neurology
     case normalizedTitle.includes('psychiatrie') || normalizedTitle.includes('psycholog'):
       return { icon: 'Brain', color: '#F59E0B' };
     case normalizedTitle.includes('neurolog'):
       return { icon: 'Zap', color: '#6366F1' };
+    
+    // Radiology & Imaging
     case normalizedTitle.includes('radiolog') || normalizedTitle.includes('bildgeb'):
       return { icon: 'Scan', color: '#22C55E' };
     case normalizedTitle.includes('sonograph') || normalizedTitle.includes('ultraschall'):
       return { icon: 'Soup', color: '#48CAE4' };
+    case normalizedTitle.includes('ct') || normalizedTitle.includes('computertomograph'):
+      return { icon: 'CircuitBoard', color: '#10B981' };
+    case normalizedTitle.includes('mrt') || normalizedTitle.includes('kernspintomograph'):
+      return { icon: 'Zap', color: '#6366F1' };
+    
+    // Infectious Diseases
+    case normalizedTitle.includes('infektio') || normalizedTitle.includes('mikrobiolog'):
+      return { icon: 'Microscope', color: '#DC2626' };
+    
+    // Urology
+    case normalizedTitle.includes('urolog'):
+      return { icon: 'Droplets', color: '#0369A1' };
+    
+    // Dermatology
+    case normalizedTitle.includes('dermatolog') || normalizedTitle.includes('haut'):
+      return { icon: 'Eye', color: '#F97316' };
+    
+    // Ophthalmology
+    case normalizedTitle.includes('ophthalmolog') || normalizedTitle.includes('auge'):
+      return { icon: 'Eye', color: '#0891B2' };
+    
+    // ENT
+    case normalizedTitle.includes('hno') || normalizedTitle.includes('otolaryngolog'):
+      return { icon: 'Thermometer', color: '#7C3AED' };
+    
+    // Anesthesiology
+    case normalizedTitle.includes('anästhesi') || normalizedTitle.includes('narkose'):
+      return { icon: 'Syringe', color: '#4C1D95' };
+    
+    // Pathology
+    case normalizedTitle.includes('patholog'):
+      return { icon: 'Microscope', color: '#7F1D1D' };
+    
+    // Laboratory Medicine
+    case normalizedTitle.includes('labor') || normalizedTitle.includes('klinische chemie'):
+      return { icon: 'TestTube', color: '#059669' };
+    
+    // Pharmacology
+    case normalizedTitle.includes('pharmakolog') || normalizedTitle.includes('medikament'):
+      return { icon: 'Pill', color: '#9333EA' };
+    
+    // Anatomy
     case normalizedTitle.includes('anatomie'):
       return { icon: 'Heart', color: '#0077B6' };
+    
+    // Perioperative Management
+    case normalizedTitle.includes('perioperativ'):
+      return { icon: 'Hospital', color: '#0369A1' };
+    
+    // Soft tissue and lymph nodes
+    case normalizedTitle.includes('weichteile') || normalizedTitle.includes('lymph'):
+      return { icon: 'Circle', color: '#10B981' };
     
     // Default fallback
     default:
@@ -113,7 +167,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
   }
 };
 
-// Enhanced icon component mapping
+// Enhanced icon component mapping with many more medical icons
 const getIconComponent = (iconName: string, color: string, size: number = 24) => {
   switch (iconName) {
     case 'Heart':
@@ -190,38 +244,25 @@ export default function BibliothekScreen() {
   const fetchSections = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching ALL sections to build hierarchy...');
-      console.log('🔐 Auth state:', { hasSession: !!session, userId: session?.user?.id });
       
       // Check if user is authenticated
       if (!session) {
-        console.log('⚠️ No session found - redirecting to auth');
         setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
         return;
       }
       
-      // Fetch all sections to build the hierarchy (like the old working version)
+      // Fetch all sections to build the hierarchy
       const { data, error } = await supabase
         .from('sections')
         .select('*')
         .order('display_order', { ascending: true });
 
       if (error) {
-        console.error('❌ Database error:', error);
         throw error;
       }
 
-      console.log('📊 Total sections fetched:', data?.length || 0);
-      
-      if (!data || data.length === 0) {
-        console.log('⚠️ No sections found in database - table appears to be empty');
-        setSections([]);
-        return;
-      }
-
-      // Build tree structure like the old working version
+      // Build tree structure
       const sectionsTree = buildSectionsTree(data || []);
-      console.log('🌳 Built tree with root sections:', sectionsTree.length);
       setSections(sectionsTree);
       
       // Load expanded state from AsyncStorage
@@ -230,14 +271,14 @@ export default function BibliothekScreen() {
         setExpandedSections(JSON.parse(storedState));
       }
     } catch (e) {
-      console.error('💥 Error fetching sections:', e);
+      console.error('Error fetching sections:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
   }, [session]);
 
-  // Build a tree structure from flat sections data (EXACT copy from old working version)
+  // Build a tree structure from flat sections data
   const buildSectionsTree = (flatSections: Section[]): Section[] => {
     const sectionsMap: Record<string, Section> = {};
     
@@ -282,7 +323,6 @@ export default function BibliothekScreen() {
   };
 
   useEffect(() => {
-    // Don't fetch until auth is ready
     if (!authLoading) {
       fetchSections();
     }
