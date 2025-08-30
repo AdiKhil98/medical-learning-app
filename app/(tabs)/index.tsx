@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Animated, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, Target, Brain, Zap, Clock, MapPin, PlayCircle, Sparkles, BarChart3 } from 'lucide-react-native';
+import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, Target, Brain, Zap, Clock, MapPin, PlayCircle, BarChart3 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
@@ -10,7 +10,21 @@ import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+// Conditional import for haptics (mobile only)
+let Haptics: any = null;
+try {
+  Haptics = require('expo-haptics');
+} catch (e) {
+  // Haptics not available on web
+  Haptics = {
+    impactAsync: () => Promise.resolve(),
+    notificationAsync: () => Promise.resolve(),
+    ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
+    NotificationFeedbackType: { Success: 'success' }
+  };
+}
 import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface DailyTip {
   id?: string;
@@ -62,6 +76,78 @@ interface DailyQuestion {
   correct_choice?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
   explanation?: string;
   category?: string;
+}
+
+interface UserStats {
+  streak: number;
+  average: number;
+  completed: number;
+  bestScore: number;
+  totalXP: number;
+  level: number;
+  rank: string;
+}
+
+interface TodaysFocus {
+  title: string;
+  description: string;
+  progress: number;
+  total: number;
+  timeEstimate: string;
+  category: string;
+}
+
+interface DailyChallenge {
+  title: string;
+  question: string;
+  difficulty: string;
+  points: number;
+  timeLimit: string;
+  attempted: boolean;
+  streak: number;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
+
+interface LearningNode {
+  name: string;
+  completed: boolean;
+  inProgress: boolean;
+  locked: boolean;
+  score?: number;
+  progress?: number;
+}
+
+interface QuickAction {
+  icon: string;
+  title: string;
+  subtitle: string;
+  gradient: string[];
+  route: string;
+}
+
+interface UpcomingEvent {
+  date: string;
+  title: string;
+  type: string;
+  icon: string;
+}
+
+interface Recommendation {
+  title: string;
+  description: string;
+  type: string;
+  confidence: number;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  progress?: number;
+  maxProgress?: number;
 }
 
 export default function DashboardScreen() {
@@ -134,7 +220,6 @@ export default function DashboardScreen() {
   const [showChallengeResult, setShowChallengeResult] = useState(false);
   const [selectedQuestionAnswer, setSelectedQuestionAnswer] = useState<'a' | 'b' | 'c' | null>(null);
   const [showQuestionResult, setShowQuestionResult] = useState(false);
-  const [showDailyReward, setShowDailyReward] = useState(false);
   
   // Animation Values
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -145,7 +230,6 @@ export default function DashboardScreen() {
     initializeAnimations();
     loadUserData();
     loadDailyContent();
-    checkDailyReward();
   }, [user]);
   
   const initializeAnimations = () => {
@@ -261,14 +345,6 @@ export default function DashboardScreen() {
     }
   };
   
-  const checkDailyReward = () => {
-    const lastRewardDate = localStorage?.getItem('lastRewardDate');
-    const today = new Date().toDateString();
-    
-    if (lastRewardDate !== today && userStats.streak > 0) {
-      setTimeout(() => setShowDailyReward(true), 2000);
-    }
-  };
 
   // Get user's first name from full name
   const getFirstName = () => {
@@ -415,15 +491,6 @@ export default function DashboardScreen() {
     return null;
   };
   
-  const claimDailyReward = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    localStorage?.setItem('lastRewardDate', new Date().toDateString());
-    setUserStats(prev => ({
-      ...prev,
-      totalXP: prev.totalXP + (prev.streak * 10)
-    }));
-    setShowDailyReward(false);
-  };
 
   // Quick actions data
   const quickActions: QuickAction[] = [
@@ -506,14 +573,29 @@ export default function DashboardScreen() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: MEDICAL_COLORS.lightGray,
+      backgroundColor: MEDICAL_COLORS.offWhite,
     },
     header: {
-      backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: isDarkMode ? 'rgba(46, 125, 50, 0.9)' : 'rgba(255, 255, 255, 0.95)',
       paddingTop: 16,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+    },
+    
+    // Enhanced Header Styles
+    headerGradient: {
+      paddingTop: 16,
+      paddingBottom: 20,
+      shadowColor: '#4CAF50',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 8,
+    },
+    headerBlur: {
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(10px)',
     },
     heroSection: {
       paddingHorizontal: 16,
@@ -621,7 +703,7 @@ export default function DashboardScreen() {
     sectionTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       marginBottom: 12,
       paddingHorizontal: 16,
     },
@@ -650,7 +732,7 @@ export default function DashboardScreen() {
     focusTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       flex: 1,
     },
     focusDescription: {
@@ -683,15 +765,20 @@ export default function DashboardScreen() {
     },
     focusProgressFill: {
       height: '100%',
-      backgroundColor: MEDICAL_COLORS.success,
+      backgroundColor: MEDICAL_COLORS.primary,
       borderRadius: 4,
     },
     focusButton: {
       backgroundColor: MEDICAL_COLORS.primary,
       paddingVertical: 12,
       paddingHorizontal: 20,
-      borderRadius: 8,
+      borderRadius: 12,
       alignSelf: 'flex-start',
+      shadowColor: MEDICAL_COLORS.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
     },
     focusButtonText: {
       color: MEDICAL_COLORS.white,
@@ -723,7 +810,7 @@ export default function DashboardScreen() {
     challengeTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       flex: 1,
     },
     challengeBadges: {
@@ -770,15 +857,15 @@ export default function DashboardScreen() {
     },
     correctOption: {
       borderColor: MEDICAL_COLORS.success,
-      backgroundColor: '#E8F5E8',
+      backgroundColor: MEDICAL_COLORS.mintGreen,
     },
     wrongOption: {
       borderColor: MEDICAL_COLORS.danger,
-      backgroundColor: '#FEE8E8',
+      backgroundColor: 'rgba(239, 83, 80, 0.1)',
     },
     optionText: {
       fontSize: 14,
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textSecondary,
       flex: 1,
     },
     optionContent: {
@@ -789,12 +876,14 @@ export default function DashboardScreen() {
     challengeResult: {
       padding: 16,
       borderRadius: 12,
-      backgroundColor: MEDICAL_COLORS.light,
+      backgroundColor: MEDICAL_COLORS.mintGreen,
       marginTop: 16,
+      borderWidth: 1,
+      borderColor: MEDICAL_COLORS.primaryLight,
     },
     resultText: {
       fontSize: 14,
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       marginBottom: 8,
     },
     explanationText: {
@@ -826,7 +915,7 @@ export default function DashboardScreen() {
       backgroundColor: MEDICAL_COLORS.success,
     },
     inProgressNode: {
-      backgroundColor: MEDICAL_COLORS.primary,
+      backgroundColor: MEDICAL_COLORS.primaryLight,
     },
     lockedNode: {
       backgroundColor: MEDICAL_COLORS.gray,
@@ -946,45 +1035,29 @@ export default function DashboardScreen() {
       backgroundColor: MEDICAL_COLORS.white,
       borderRadius: 20,
       padding: 24,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.3,
-      shadowRadius: 20,
-      elevation: 10,
-      maxWidth: 300,
       width: '100%',
+      maxWidth: 400,
+      maxHeight: '80%',
     },
     modalTitle: {
       fontSize: 24,
       fontWeight: 'bold',
       color: MEDICAL_COLORS.dark,
       textAlign: 'center',
-      marginBottom: 16,
-    },
-    rewardContainer: {
-      alignItems: 'center',
       marginBottom: 20,
-    },
-    rewardText: {
-      fontSize: 16,
-      color: MEDICAL_COLORS.dark,
-      textAlign: 'center',
-      marginTop: 12,
-      lineHeight: 22,
     },
     claimButton: {
       backgroundColor: MEDICAL_COLORS.primary,
+      paddingVertical: 16,
       paddingHorizontal: 24,
-      paddingVertical: 12,
       borderRadius: 12,
-      width: '100%',
+      alignItems: 'center',
+      marginTop: 20,
     },
     claimButtonText: {
       color: MEDICAL_COLORS.white,
       fontSize: 16,
       fontWeight: 'bold',
-      textAlign: 'center',
     },
   });
 
@@ -995,24 +1068,34 @@ export default function DashboardScreen() {
         style={styles.gradientBackground}
       />
       
-      {/* Header */}
-      <View style={dynamicStyles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity 
-            onPress={() => setIsMenuOpen(true)}
-            style={styles.menuButtonContainer}
-          >
-            <MenuIcon size={24} color={colors.primary} />
-          </TouchableOpacity>
-          <Logo size="medium" textColor={isDarkMode ? '#FFFFFF' : undefined} />
-          <TouchableOpacity 
-            onPress={() => setShowAchievements(true)}
-            style={styles.achievementButton}
-          >
-            <Trophy size={20} color={MEDICAL_COLORS.warning} />
-          </TouchableOpacity>
+      {/* Enhanced Premium Header */}
+      <LinearGradient
+        colors={isDarkMode 
+          ? ['rgba(76, 175, 80, 0.95)', 'rgba(102, 187, 106, 0.95)', 'rgba(129, 199, 132, 0.85)']
+          : ['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)']
+        }
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.headerBlur}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              onPress={() => setIsMenuOpen(true)}
+              style={styles.menuButtonContainer}
+            >
+              <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+            <Logo size="medium" variant="premium" textColor="white" animated={true} />
+            <UserAvatar 
+              size="medium" 
+              userStats={userStats} 
+              showXP={true} 
+              showLevel={true} 
+            />
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Animated.View 
@@ -1024,7 +1107,7 @@ export default function DashboardScreen() {
           {/* Hero Section */}
           <View style={dynamicStyles.heroSection}>
             <LinearGradient
-              colors={MEDICAL_COLORS.gradient1}
+              colors={MEDICAL_COLORS.primaryGradient}
               style={dynamicStyles.heroGradient}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 1}}
@@ -1067,7 +1150,7 @@ export default function DashboardScreen() {
               ]}
             >
               <View style={dynamicStyles.statIcon}>
-                <Flame size={24} color={MEDICAL_COLORS.warning} />
+                <Flame size={24} color={MEDICAL_COLORS.primary} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.streak}</Text>
               <Text style={dynamicStyles.statLabel}>Lernsträhne</Text>
@@ -1079,7 +1162,7 @@ export default function DashboardScreen() {
               onPress={() => handleCardPress('progress')}
             >
               <View style={dynamicStyles.statIcon}>
-                <BarChart3 size={24} color={MEDICAL_COLORS.success} />
+                <BarChart3 size={24} color={MEDICAL_COLORS.secondary} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.average}%</Text>
               <Text style={dynamicStyles.statLabel}>Durchschnitt</Text>
@@ -1088,7 +1171,7 @@ export default function DashboardScreen() {
             
             <TouchableOpacity style={dynamicStyles.statCard}>
               <View style={dynamicStyles.statIcon}>
-                <Target size={24} color={MEDICAL_COLORS.primary} />
+                <Target size={24} color={MEDICAL_COLORS.primaryDark} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.completed}</Text>
               <Text style={dynamicStyles.statLabel}>Simulationen</Text>
@@ -1447,34 +1530,6 @@ export default function DashboardScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Daily Reward Modal */}
-      <Modal
-        visible={showDailyReward}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowDailyReward(false)}
-      >
-        <View style={dynamicStyles.modalOverlay}>
-          <View style={dynamicStyles.modalContainer}>
-            <Text style={dynamicStyles.modalTitle}>🎁 Tägliche Belohnung!</Text>
-            <View style={dynamicStyles.rewardContainer}>
-              <Sparkles size={48} color={MEDICAL_COLORS.warning} />
-              <Text style={dynamicStyles.rewardText}>
-                Großartig! Du hast deine {userStats.streak}-Tage-Serie fortgesetzt!
-              </Text>
-              <Text style={dynamicStyles.rewardText}>
-                Belohnung: {userStats.streak * 10} XP
-              </Text>
-            </View>
-            <TouchableOpacity 
-              style={dynamicStyles.claimButton}
-              onPress={claimDailyReward}
-            >
-              <Text style={dynamicStyles.claimButtonText}>Belohnung einlösen</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Achievements Modal */}
       <Modal
@@ -1548,12 +1603,43 @@ const styles = StyleSheet.create({
   },
   achievementButton: {
     padding: 8,
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  userStatsHeader: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    minWidth: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 2,
+  },
+  userXP: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  userXPLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+    marginTop: -1,
   },
 });
