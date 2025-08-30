@@ -160,7 +160,7 @@ export default function DashboardScreen() {
 
       {/* User Welcome Section */}
       <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Willkommen zurück,</Text>
+        <Text style={styles.welcomeText}>Willkommen zurück</Text>
         <Text style={styles.userName}>{getUserDisplayName()}</Text>
         {user?.email && (
           <Text style={styles.userEmail}>{user.email}</Text>
