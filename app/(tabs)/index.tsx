@@ -933,6 +933,59 @@ export default function DashboardScreen() {
       fontSize: 12,
       color: MEDICAL_COLORS.gray,
     },
+    
+    // Modal Styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      backgroundColor: MEDICAL_COLORS.white,
+      borderRadius: 20,
+      padding: 24,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
+      maxWidth: 300,
+      width: '100%',
+    },
+    modalTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: MEDICAL_COLORS.dark,
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    rewardContainer: {
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    rewardText: {
+      fontSize: 16,
+      color: MEDICAL_COLORS.dark,
+      textAlign: 'center',
+      marginTop: 12,
+      lineHeight: 22,
+    },
+    claimButton: {
+      backgroundColor: MEDICAL_COLORS.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 12,
+      width: '100%',
+    },
+    claimButtonText: {
+      color: MEDICAL_COLORS.white,
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
   });
 
   return (
