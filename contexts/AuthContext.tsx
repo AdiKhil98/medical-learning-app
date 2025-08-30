@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             if (refreshedSession) {
               setSession(refreshedSession);
-              setUser(refreshedSession.user);
+              // Ensure user profile is loaded with role information
+              await ensureUserProfile(refreshedSession.user);
               SecureLogger.log('Session restored from refresh');
               console.log('Session restored from refresh');
             } else {
@@ -63,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setSession(session);
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Ensure user profile is loaded with role information
+          await ensureUserProfile(session.user);
+        } else {
+          setUser(null);
+        }
       }
       
       // Get the final session state (either original or refreshed)
@@ -109,11 +115,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (event === 'TOKEN_REFRESHED' && session) {
           SecureLogger.log('Processing TOKEN_REFRESHED event');
           setSession(session);
-          setUser(session.user);
+          // Re-ensure user profile to maintain role information
+          await ensureUserProfile(session.user);
         } else {
           SecureLogger.log('Processing other auth event or clearing session');
           setSession(session);
-          setUser(session?.user ?? null);
+          if (session?.user) {
+            // Re-ensure user profile to maintain role information
+            await ensureUserProfile(session.user);
+          } else {
+            setUser(null);
+          }
         }
         
         setLoading(false);
