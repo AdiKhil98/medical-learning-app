@@ -77,6 +77,67 @@ const getIconComponent = (iconName: string) => {
   }
 };
 
+// Function to render JSONB content_improved with proper formatting
+const renderContentImproved = (contentData: any) => {
+  if (!contentData) {
+    return <Text style={styles.contentText}>Kein Inhalt verfügbar.</Text>;
+  }
+
+  // If it's a string, display as is
+  if (typeof contentData === 'string') {
+    return <Text style={styles.contentText}>{contentData}</Text>;
+  }
+
+  // If it's an object/array, parse and display with titles as headers
+  try {
+    let parsedContent = contentData;
+    
+    // If it's a JSON string, parse it
+    if (typeof contentData === 'string') {
+      parsedContent = JSON.parse(contentData);
+    }
+
+    // Handle array of content sections
+    if (Array.isArray(parsedContent)) {
+      return (
+        <View>
+          {parsedContent.map((section: any, index: number) => (
+            <View key={index} style={styles.contentSection}>
+              {section.title && (
+                <Text style={styles.contentSectionTitle}>{section.title}</Text>
+              )}
+              {section.content && (
+                <Text style={styles.contentText}>{section.content}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      );
+    }
+
+    // Handle single object with title and content
+    if (parsedContent.title || parsedContent.content) {
+      return (
+        <View style={styles.contentSection}>
+          {parsedContent.title && (
+            <Text style={styles.contentSectionTitle}>{parsedContent.title}</Text>
+          )}
+          {parsedContent.content && (
+            <Text style={styles.contentText}>{parsedContent.content}</Text>
+          )}
+        </View>
+      );
+    }
+
+    // Fallback: display JSON as formatted text
+    return <Text style={styles.contentText}>{JSON.stringify(parsedContent, null, 2)}</Text>;
+
+  } catch (error) {
+    console.error('Error parsing content_improved:', error);
+    return <Text style={styles.contentText}>Fehler beim Laden des Inhalts.</Text>;
+  }
+};
+
 export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
@@ -138,9 +199,12 @@ export default function SectionDetailScreen() {
 
       // Determine if we should show content or navigation
       const hasChildren = children.length > 0;
-      const hasContent = itemData.content_improved && itemData.content_improved.trim() !== '';
+      // content_improved is JSONB - check if it exists and has content
+      const hasContent = itemData.content_improved && 
+                        (typeof itemData.content_improved === 'object' || typeof itemData.content_improved === 'string');
       
       console.log('Has children:', hasChildren, 'Has content:', hasContent);
+      console.log('Content type:', typeof itemData.content_improved);
       
       // Show content if no children OR if this is a final content item
       setShowContent(!hasChildren && hasContent);
@@ -238,7 +302,7 @@ export default function SectionDetailScreen() {
               <FileText size={24} color={MEDICAL_COLORS.primary} />
               <Text style={styles.contentTitle}>Medizinischer Inhalt</Text>
             </View>
-            <Text style={styles.contentText}>{currentItem.content_improved}</Text>
+{renderContentImproved(currentItem.content_improved)}
           </View>
           <View style={styles.bottomPadding} />
         </ScrollView>
@@ -255,7 +319,8 @@ export default function SectionDetailScreen() {
           {childItems.map((childItem) => {
             const { icon, color } = getItemDetails(childItem.title, childItem.type, slug as string);
             const IconComponent = getIconComponent(icon);
-            const hasContent = childItem.content_improved && childItem.content_improved.trim() !== '';
+            const hasContent = childItem.content_improved && 
+                              (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
             
             return (
               <TouchableOpacity
@@ -428,6 +493,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     lineHeight: 24,
+  },
+  contentSection: {
+    marginBottom: 20,
+  },
+  contentSectionTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: MEDICAL_COLORS.lightGray,
   },
   // Child navigation styles
   childCard: {
