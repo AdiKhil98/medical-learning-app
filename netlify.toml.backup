@@ -16,16 +16,6 @@
   status = 200
 
 [[redirects]]
-  from = "/api/webhook-evaluation"
-  to = "/.netlify/functions/webhook-evaluation"
-  status = 200
-
-[[redirects]]
-  from = "/api/webhook/evaluation"
-  to = "/.netlify/functions/webhook-evaluation"
-  status = 200
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
