@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Animated, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle } from 'lucide-react-native';
+import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, BarChart3, Target, Zap, Clock, PlayCircle, MapPin, Brain } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
@@ -9,8 +9,54 @@ import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import Logo from '@/components/ui/Logo';
 
+// Medical Color Scheme
+const MEDICAL_COLORS = {
+  primary: '#2563EB',
+  secondary: '#059669',
+  success: '#16A34A',
+  warning: '#EAB308',
+  danger: '#DC2626',
+  dark: '#1F2937',
+  gray: '#6B7280',
+  lightGray: '#F3F4F6',
+  light: '#F8FAFC',
+  white: '#FFFFFF',
+  gradient1: ['#2563EB', '#1D4ED8'],
+  gradient2: ['#7C3AED', '#5B21B6'],
+  gradient3: ['#059669', '#047857'],
+  gradient4: ['#EAB308', '#D97706'],
+  gradientGold: ['#F59E0B', '#D97706'],
+};
+
+interface DailyTip {
+  id?: string;
+  date: string;
+  title?: string;
+  content?: string;
+  tip_content?: string;
+  tip?: string;
+  category?: string;
+}
+
+interface DailyQuestion {
+  id?: string;
+  date: string;
+  question: string;
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  choice_a?: string;
+  choice_b?: string;
+  choice_c?: string;
+  correct_answer?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
+  correct_choice?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
+  explanation?: string;
+  category?: string;
+}
+
 interface DailyTip {
   id?: string;
   date: string;
@@ -37,30 +83,76 @@ interface DailyQuestion {
   category?: string;
 }
 
-interface DailyTip {
-  id?: string;
-  date: string;
-  title?: string;
-  content?: string;
-  tip_content?: string;
-  tip?: string;
-  category?: string;
+interface UserStats {
+  streak: number;
+  average: number;
+  completed: number;
+  bestScore: number;
+  totalXP: number;
+  level: number;
+  rank: string;
 }
 
-interface DailyQuestion {
-  id?: string;
-  date: string;
+interface TodaysFocus {
+  title: string;
+  description: string;
+  progress: number;
+  total: number;
+  timeEstimate: string;
+  category: string;
+}
+
+interface DailyChallenge {
+  title: string;
   question: string;
-  option_a?: string;
-  option_b?: string;
-  option_c?: string;
-  choice_a?: string;
-  choice_b?: string;
-  choice_c?: string;
-  correct_answer?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
-  correct_choice?: 'a' | 'b' | 'c' | 'A' | 'B' | 'C';
-  explanation?: string;
-  category?: string;
+  difficulty: string;
+  points: number;
+  timeLimit: string;
+  attempted: boolean;
+  streak: number;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
+
+interface LearningNode {
+  name: string;
+  completed: boolean;
+  inProgress: boolean;
+  locked: boolean;
+  score?: number;
+  progress?: number;
+}
+
+interface QuickAction {
+  icon: string;
+  title: string;
+  subtitle: string;
+  gradient: string[];
+  route: string;
+}
+
+interface UpcomingEvent {
+  date: string;
+  title: string;
+  type: string;
+  icon: string;
+}
+
+interface Recommendation {
+  title: string;
+  description: string;
+  type: string;
+  confidence: number;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  progress?: number;
+  maxProgress?: number;
 }
 
 export default function DashboardScreen() {
@@ -133,7 +225,6 @@ export default function DashboardScreen() {
   const [showChallengeResult, setShowChallengeResult] = useState(false);
   const [selectedQuestionAnswer, setSelectedQuestionAnswer] = useState<'a' | 'b' | 'c' | null>(null);
   const [showQuestionResult, setShowQuestionResult] = useState(false);
-  const [showDailyReward, setShowDailyReward] = useState(false);
   
   // Animation Values
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -144,7 +235,6 @@ export default function DashboardScreen() {
     initializeAnimations();
     loadUserData();
     loadDailyContent();
-    checkDailyReward();
   }, [user]);
   
   const initializeAnimations = () => {
@@ -260,14 +350,6 @@ export default function DashboardScreen() {
     }
   };
   
-  const checkDailyReward = () => {
-    const lastRewardDate = localStorage?.getItem('lastRewardDate');
-    const today = new Date().toDateString();
-    
-    if (lastRewardDate !== today && userStats.streak > 0) {
-      setTimeout(() => setShowDailyReward(true), 2000);
-    }
-  };
 
   // Get user's first name from full name
   const getFirstName = () => {
@@ -414,15 +496,6 @@ export default function DashboardScreen() {
     return null;
   };
   
-  const claimDailyReward = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    localStorage?.setItem('lastRewardDate', new Date().toDateString());
-    setUserStats(prev => ({
-      ...prev,
-      totalXP: prev.totalXP + (prev.streak * 10)
-    }));
-    setShowDailyReward(false);
-  };
 
   // Quick actions data
   const quickActions: QuickAction[] = [
@@ -932,6 +1005,43 @@ export default function DashboardScreen() {
       fontSize: 12,
       color: MEDICAL_COLORS.gray,
     },
+    
+    // Modal Styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      backgroundColor: MEDICAL_COLORS.white,
+      borderRadius: 20,
+      padding: 24,
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '80%',
+    },
+    modalTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: MEDICAL_COLORS.dark,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    claimButton: {
+      backgroundColor: MEDICAL_COLORS.primary,
+      paddingVertical: 16,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    claimButtonText: {
+      color: MEDICAL_COLORS.white,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
   });
 
   return (
@@ -1393,34 +1503,6 @@ export default function DashboardScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Daily Reward Modal */}
-      <Modal
-        visible={showDailyReward}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowDailyReward(false)}
-      >
-        <View style={dynamicStyles.modalOverlay}>
-          <View style={dynamicStyles.modalContainer}>
-            <Text style={dynamicStyles.modalTitle}>🎁 Tägliche Belohnung!</Text>
-            <View style={dynamicStyles.rewardContainer}>
-              <Sparkles size={48} color={MEDICAL_COLORS.warning} />
-              <Text style={dynamicStyles.rewardText}>
-                Großartig! Du hast deine {userStats.streak}-Tage-Serie fortgesetzt!
-              </Text>
-              <Text style={dynamicStyles.rewardText}>
-                Belohnung: {userStats.streak * 10} XP
-              </Text>
-            </View>
-            <TouchableOpacity 
-              style={dynamicStyles.claimButton}
-              onPress={claimDailyReward}
-            >
-              <Text style={dynamicStyles.claimButtonText}>Belohnung einlösen</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Achievements Modal */}
       <Modal
