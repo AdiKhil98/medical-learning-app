@@ -13,7 +13,7 @@ export default function LogoShowcase() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Premium Header (Recommended)</Text>
         <LinearGradient
-          colors={['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)', 'rgba(66, 165, 245, 0.85)']}
+          colors={['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)', 'rgba(129, 199, 132, 0.85)']}
           style={styles.headerPreview}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -42,7 +42,7 @@ export default function LogoShowcase() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Modern Medical Brand</Text>
         <LinearGradient
-          colors={['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)']}
+          colors={['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)']}
           style={styles.headerPreview}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -71,7 +71,7 @@ export default function LogoShowcase() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Professional Badge Style</Text>
         <LinearGradient
-          colors={['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)']}
+          colors={['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)']}
           style={styles.headerPreview}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -100,7 +100,7 @@ export default function LogoShowcase() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Minimalist Premium</Text>
         <LinearGradient
-          colors={['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)']}
+          colors={['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)']}
           style={styles.headerPreview}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -135,7 +135,7 @@ export default function LogoShowcase() {
           </View>
           <View style={styles.sizeDemo}>
             <Text style={styles.sizeLabel}>Medium</Text>
-            <Logo size="medium" variant="premium" textColor="#0F4C81" animated={false} />
+            <Logo size="medium" variant="premium" textColor="#2E7D32" animated={false} />
           </View>
           <View style={styles.sizeDemo}>
             <Text style={styles.sizeLabel}>Large</Text>
@@ -157,7 +157,7 @@ export default function LogoShowcase() {
         {/* Light Background */}
         <View style={[styles.backgroundDemo, { backgroundColor: '#F8FAFC' }]}>
           <Text style={[styles.backgroundLabel, { color: '#1F2937' }]}>Light Background</Text>
-          <Logo size="medium" variant="premium" textColor="#0F4C81" animated={false} />
+          <Logo size="medium" variant="premium" textColor="#2E7D32" animated={false} />
         </View>
       </View>
 
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0F4C81',
+    color: '#2E7D32',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 30,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
-    shadowColor: '#0F4C81',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   footer: {
-    backgroundColor: '#0F4C81',
+    backgroundColor: '#4CAF50',
     marginHorizontal: 20,
     marginBottom: 40,
     padding: 20,

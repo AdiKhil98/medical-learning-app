@@ -107,7 +107,7 @@ export default function UserAvatar({
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={['#0F4C81', '#1E88E5', '#42A5F5']}
+          colors={['#4CAF50', '#66BB6A', '#81C784']}
           style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -145,13 +145,13 @@ export default function UserAvatar({
           <View style={styles.dropdownContainer}>
             {/* User Info Header */}
             <LinearGradient
-              colors={['#0F4C81', '#1E88E5']}
+              colors={['#4CAF50', '#66BB6A']}
               style={styles.userInfoHeader}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <LinearGradient
-                colors={['#0F4C81', '#1E88E5', '#42A5F5']}
+                colors={['#4CAF50', '#66BB6A', '#81C784']}
                 style={styles.avatarLarge}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -192,7 +192,7 @@ export default function UserAvatar({
                   ]}>
                     <item.icon 
                       size={20} 
-                      color={item.isDestructive ? '#DC2626' : '#0F4C81'} 
+                      color={item.isDestructive ? '#EF5350' : '#4CAF50'} 
                     />
                   </View>
                   <View style={styles.menuText}>
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    shadowColor: '#0F4C81',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -364,19 +364,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   destructiveMenuItem: {
-    backgroundColor: 'rgba(220, 38, 38, 0.05)',
+    backgroundColor: 'rgba(239, 83, 80, 0.05),';
   },
   menuIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(15, 76, 129, 0.1)',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   destructiveIcon: {
-    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    backgroundColor: 'rgba(239, 83, 80, 0.1)',
   },
   menuText: {
     flex: 1,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   destructiveText: {
-    color: '#DC2626',
+    color: '#EF5350',
   },
   menuSubtitle: {
     fontSize: 13,

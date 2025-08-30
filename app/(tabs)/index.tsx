@@ -573,10 +573,10 @@ export default function DashboardScreen() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: MEDICAL_COLORS.lightGray,
+      backgroundColor: MEDICAL_COLORS.offWhite,
     },
     header: {
-      backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: isDarkMode ? 'rgba(46, 125, 50, 0.9)' : 'rgba(255, 255, 255, 0.95)',
       paddingTop: 16,
       paddingBottom: 16,
       borderBottomWidth: 1,
@@ -587,7 +587,7 @@ export default function DashboardScreen() {
     headerGradient: {
       paddingTop: 16,
       paddingBottom: 20,
-      shadowColor: '#0F4C81',
+      shadowColor: '#4CAF50',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25,
       shadowRadius: 12,
@@ -703,7 +703,7 @@ export default function DashboardScreen() {
     sectionTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       marginBottom: 12,
       paddingHorizontal: 16,
     },
@@ -732,7 +732,7 @@ export default function DashboardScreen() {
     focusTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       flex: 1,
     },
     focusDescription: {
@@ -765,15 +765,20 @@ export default function DashboardScreen() {
     },
     focusProgressFill: {
       height: '100%',
-      backgroundColor: MEDICAL_COLORS.success,
+      backgroundColor: MEDICAL_COLORS.primary,
       borderRadius: 4,
     },
     focusButton: {
       backgroundColor: MEDICAL_COLORS.primary,
       paddingVertical: 12,
       paddingHorizontal: 20,
-      borderRadius: 8,
+      borderRadius: 12,
       alignSelf: 'flex-start',
+      shadowColor: MEDICAL_COLORS.shadowMedium,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
     },
     focusButtonText: {
       color: MEDICAL_COLORS.white,
@@ -805,7 +810,7 @@ export default function DashboardScreen() {
     challengeTitle: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       flex: 1,
     },
     challengeBadges: {
@@ -852,15 +857,15 @@ export default function DashboardScreen() {
     },
     correctOption: {
       borderColor: MEDICAL_COLORS.success,
-      backgroundColor: '#E8F5E8',
+      backgroundColor: MEDICAL_COLORS.mintGreen,
     },
     wrongOption: {
       borderColor: MEDICAL_COLORS.danger,
-      backgroundColor: '#FEE8E8',
+      backgroundColor: 'rgba(239, 83, 80, 0.1)',
     },
     optionText: {
       fontSize: 14,
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textSecondary,
       flex: 1,
     },
     optionContent: {
@@ -871,12 +876,14 @@ export default function DashboardScreen() {
     challengeResult: {
       padding: 16,
       borderRadius: 12,
-      backgroundColor: MEDICAL_COLORS.light,
+      backgroundColor: MEDICAL_COLORS.mintGreen,
       marginTop: 16,
+      borderWidth: 1,
+      borderColor: MEDICAL_COLORS.primaryLight,
     },
     resultText: {
       fontSize: 14,
-      color: MEDICAL_COLORS.dark,
+      color: MEDICAL_COLORS.textPrimary,
       marginBottom: 8,
     },
     explanationText: {
@@ -908,7 +915,7 @@ export default function DashboardScreen() {
       backgroundColor: MEDICAL_COLORS.success,
     },
     inProgressNode: {
-      backgroundColor: MEDICAL_COLORS.primary,
+      backgroundColor: MEDICAL_COLORS.primaryLight,
     },
     lockedNode: {
       backgroundColor: MEDICAL_COLORS.gray,
@@ -1064,8 +1071,8 @@ export default function DashboardScreen() {
       {/* Enhanced Premium Header */}
       <LinearGradient
         colors={isDarkMode 
-          ? ['rgba(15, 76, 129, 0.95)', 'rgba(30, 136, 229, 0.95)', 'rgba(66, 165, 245, 0.85)']
-          : ['rgba(15, 76, 129, 0.98)', 'rgba(30, 136, 229, 0.95)']
+          ? ['rgba(76, 175, 80, 0.95)', 'rgba(102, 187, 106, 0.95)', 'rgba(129, 199, 132, 0.85)']
+          : ['rgba(76, 175, 80, 0.98)', 'rgba(102, 187, 106, 0.95)']
         }
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
@@ -1100,7 +1107,7 @@ export default function DashboardScreen() {
           {/* Hero Section */}
           <View style={dynamicStyles.heroSection}>
             <LinearGradient
-              colors={MEDICAL_COLORS.gradient1}
+              colors={MEDICAL_COLORS.primaryGradient}
               style={dynamicStyles.heroGradient}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 1}}
@@ -1143,7 +1150,7 @@ export default function DashboardScreen() {
               ]}
             >
               <View style={dynamicStyles.statIcon}>
-                <Flame size={24} color={MEDICAL_COLORS.warning} />
+                <Flame size={24} color={MEDICAL_COLORS.primary} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.streak}</Text>
               <Text style={dynamicStyles.statLabel}>Lernsträhne</Text>
@@ -1155,7 +1162,7 @@ export default function DashboardScreen() {
               onPress={() => handleCardPress('progress')}
             >
               <View style={dynamicStyles.statIcon}>
-                <BarChart3 size={24} color={MEDICAL_COLORS.success} />
+                <BarChart3 size={24} color={MEDICAL_COLORS.secondary} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.average}%</Text>
               <Text style={dynamicStyles.statLabel}>Durchschnitt</Text>
@@ -1164,7 +1171,7 @@ export default function DashboardScreen() {
             
             <TouchableOpacity style={dynamicStyles.statCard}>
               <View style={dynamicStyles.statIcon}>
-                <Target size={24} color={MEDICAL_COLORS.primary} />
+                <Target size={24} color={MEDICAL_COLORS.primaryDark} />
               </View>
               <Text style={dynamicStyles.statNumber}>{userStats.completed}</Text>
               <Text style={dynamicStyles.statLabel}>Simulationen</Text>

@@ -39,8 +39,8 @@ export default function Logo({
 
   const iconSize = getIconSize();
   
-  // Use provided textColor, or default to white in dark mode, dark blue in light mode
-  const finalTextColor = textColor || (isDarkMode ? '#FFFFFF' : '#0F4C81');
+  // Use provided textColor, or default to white in dark mode, dark green in light mode
+  const finalTextColor = textColor || (isDarkMode ? '#FFFFFF' : '#2E7D32');
   
   useEffect(() => {
     if (animated) {
@@ -90,7 +90,7 @@ export default function Logo({
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.modernIconContainer, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
-                colors={['#0F4C81', '#1E88E5']}
+                colors={['#4CAF50', '#66BB6A']}
                 style={[styles.modernIcon, { width: iconSize, height: iconSize }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -116,7 +116,7 @@ export default function Logo({
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.badgeContainer, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
-                colors={['#0F4C81', '#1E88E5']}
+                colors={['#4CAF50', '#66BB6A']}
                 style={[styles.badgeBackground, { width: iconSize, height: iconSize }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -142,7 +142,7 @@ export default function Logo({
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.minimalistContainer, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
-                colors={['#0F4C81', '#1E88E5']}
+                colors={['#4CAF50', '#66BB6A']}
                 style={[styles.minimalistBackground, { width: iconSize * 0.8, height: iconSize * 0.8 }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -167,7 +167,7 @@ export default function Logo({
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.premiumContainer, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
-                colors={['#0F4C81', '#1E88E5', '#42A5F5']}
+                colors={['#4CAF50', '#66BB6A', '#81C784']}
                 style={[styles.premiumBackground, { width: iconSize, height: iconSize }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#1E88E5',
+    backgroundColor: '#66BB6A',
     borderRadius: 8,
     width: 16,
     height: 16,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0F4C81',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
