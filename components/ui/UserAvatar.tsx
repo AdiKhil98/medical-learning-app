@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   destructiveMenuItem: {
-    backgroundColor: 'rgba(239, 83, 80, 0.05),';
+    backgroundColor: 'rgba(239, 83, 80, 0.05)',
   },
   menuIcon: {
     width: 36,

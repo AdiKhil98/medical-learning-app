@@ -774,7 +774,7 @@ export default function DashboardScreen() {
       paddingHorizontal: 20,
       borderRadius: 12,
       alignSelf: 'flex-start',
-      shadowColor: MEDICAL_COLORS.shadowMedium,
+      shadowColor: MEDICAL_COLORS.primary,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.2,
       shadowRadius: 4,
