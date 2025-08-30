@@ -5,6 +5,7 @@ import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
