@@ -1,35 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert, Animated, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, BarChart3, Target, Zap, Clock, PlayCircle, MapPin, Brain } from 'lucide-react-native';
+import { ChevronRight, BookOpen, Library, Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, Trophy, Flame, Target, Brain, Zap, Clock, MapPin, PlayCircle, BarChart3 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import Menu from '@/components/ui/Menu';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Logo from '@/components/ui/Logo';
-
-// Medical Color Scheme
-const MEDICAL_COLORS = {
-  primary: '#2563EB',
-  secondary: '#059669',
-  success: '#16A34A',
-  warning: '#EAB308',
-  danger: '#DC2626',
-  dark: '#1F2937',
-  gray: '#6B7280',
-  lightGray: '#F3F4F6',
-  light: '#F8FAFC',
-  white: '#FFFFFF',
-  gradient1: ['#2563EB', '#1D4ED8'],
-  gradient2: ['#7C3AED', '#5B21B6'],
-  gradient3: ['#059669', '#047857'],
-  gradient4: ['#EAB308', '#D97706'],
-  gradientGold: ['#F59E0B', '#D97706'],
-};
 
 interface DailyTip {
   id?: string;

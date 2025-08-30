@@ -17,6 +17,7 @@ import {
   Info,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
@@ -200,6 +201,7 @@ const ContentDetailScreen = memo(() => {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
+  const { session, loading: authLoading } = useAuth();
 
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
@@ -208,6 +210,12 @@ const ContentDetailScreen = memo(() => {
 
   const fetchSection = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
+    
+    // Check if user is authenticated
+    if (!session) {
+      setError('Sie müssen angemeldet sein, um Inhalte zu sehen.');
+      return;
+    }
     
     // Check cache first
     const cached = contentCache.get(slug);
@@ -251,11 +259,13 @@ const ContentDetailScreen = memo(() => {
     } finally {
       setLoading(false);
     }
-  }, [slug]);
+  }, [slug, session]);
 
   useEffect(() => {
-    fetchSection();
-  }, [fetchSection]);
+    if (!authLoading) {
+      fetchSection();
+    }
+  }, [fetchSection, authLoading]);
 
   const toggleSection = useCallback((index: string) => {
     setExpandedSections(prev => ({
