@@ -827,7 +827,7 @@ export default function DashboardScreen() {
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 12,
-      backgroundColor: MEDICAL_COLORS.gradientGold[0],
+      backgroundColor: MEDICAL_COLORS.warning,
     },
     badgeText: {
       fontSize: 12,
