@@ -1,102 +1,140 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, BookOpen, Activity, Heart, Stethoscope, Settings as Lungs, FlaskRound, Scissors, Plane as Ambulance, Baby, Brain } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import Card from '@/components/ui/Card';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
-// Type for section data from Supabase - supports full 6-level hierarchy
 interface Section {
   id: string;
   slug: string;
   title: string;
   parent_slug: string | null;
   description: string | null;
-  type: 'main-category' | 'sub-category' | 'section' | 'subsection' | 'sub-subsection' | 'document' | 'folder' | 'file-text' | 'markdown';
-  icon: string;
-  color: string;
+  type: string;
   display_order: number;
-  image_url?: string;
-  category?: string;
-  content_details?: string;
-  content_improved?: any; // JSON content for dynamic tree termination
-  content_html?: string;
-  last_updated?: string;
-  children?: Section[];
+  content_improved?: string;
 }
 
-// Function to get the appropriate icon component based on icon name
-const getIconComponent = (iconName: string) => {
-  const iconProps = { size: 24 };
+// Get icon and color for items based on their title/type
+const getItemDetails = (title: string, type: string, parentSlug?: string) => {
+  const normalizedTitle = title.toLowerCase();
   
+  // Base color logic
+  let baseColor = MEDICAL_COLORS.primary;
+  if (parentSlug) {
+    switch (parentSlug) {
+      case 'chirurgie': baseColor = '#EF4444'; break;
+      case 'innere-medizin': case 'kardiologie': case 'pneumologie': case 'gastroenterologie': case 'nephrologie': case 'endokrinologie-und-stoffwechsel':
+        baseColor = '#0077B6'; break;
+      case 'notfallmedizin': baseColor = '#F59E0B'; break;
+      case 'infektiologie': baseColor = '#10B981'; break;
+      case 'urologie': baseColor = '#8B5CF6'; break;
+      case 'radiologie': baseColor = '#6366F1'; break;
+    }
+  }
+  
+  // Icon based on content and type
+  let icon = 'BookOpen';
+  if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz') || normalizedTitle.includes('koronar')) {
+    icon = 'Heart';
+  } else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation') || normalizedTitle.includes('trauma')) {
+    icon = 'Scissors';
+  } else if (normalizedTitle.includes('notfall') || normalizedTitle.includes('reanimat') || normalizedTitle.includes('akut')) {
+    icon = 'AlertTriangle';
+  } else if (normalizedTitle.includes('diagnostik') || normalizedTitle.includes('röntgen') || normalizedTitle.includes('tomograf')) {
+    icon = 'Scan';
+  } else if (normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg')) {
+    icon = 'Activity';
+  } else if (normalizedTitle.includes('urolog') || normalizedTitle.includes('niere') || normalizedTitle.includes('harn')) {
+    icon = 'Droplets';
+  } else if (normalizedTitle.includes('infekt') || normalizedTitle.includes('hygiene') || normalizedTitle.includes('bakteri') || normalizedTitle.includes('viral')) {
+    icon = 'Shield';
+  } else if (type.toLowerCase().includes('content') || normalizedTitle.includes('content')) {
+    icon = 'FileText';
+  } else {
+    icon = 'Stethoscope';
+  }
+  
+  return { icon, color: baseColor };
+};
+
+const getIconComponent = (iconName: string) => {
   switch (iconName) {
-    case 'Stethoscope':
-      return Stethoscope;
-    case 'Heart':
-      return Heart;
-    case 'Activity':
-      return Activity;
-    case 'Lungs':
-      return Lungs;
-    case 'FlaskRound':
-      return FlaskRound;
-    case 'Scissors':
-      return Scissors;
-    case 'Ambulance':
-      return Ambulance;
-    case 'Baby':
-      return Baby;
-    case 'Brain':
-      return Brain;
+    case 'Heart': return Heart;
+    case 'Scissors': return Scissors;
+    case 'AlertTriangle': return AlertTriangle;
+    case 'Scan': return Scan;
+    case 'Activity': return Activity;
+    case 'Droplets': return Droplets;
+    case 'Shield': return Shield;
+    case 'Stethoscope': return Stethoscope;
+    case 'FileText': return FileText;
     case 'BookOpen':
-    default:
-      return BookOpen;
+    default: return BookOpen;
   }
 };
 
-// Map categories to icons and colors
-const getCategoryDetails = (title: string, iconName?: string, color?: string) => {
-  // Use provided icon and color if available
-  if (iconName && color) {
-    return { icon: iconName, color };
+// Function to render JSONB content_improved with proper formatting
+const renderContentImproved = (contentData: any) => {
+  if (!contentData) {
+    return <Text style={styles.contentText}>Kein Inhalt verfügbar.</Text>;
   }
-  
-  // Default mappings
-  switch (title.toLowerCase()) {
-    case 'innere medizin':
-      return { icon: 'Stethoscope', color: '#0077B6' };
-    case 'kardiologie':
-      return { icon: 'Heart', color: '#0077B6' };
-    case 'gastroenterologie':
-      return { icon: 'Activity', color: '#48CAE4' };
-    case 'pneumologie':
-      return { icon: 'Lungs', color: '#22C55E' };
-    case 'nephrologie':
-      return { icon: 'Activity', color: '#8B5CF6' };
-    case 'endokrinologie':
-    case 'endokrinologie und stoffwechsel':
-      return { icon: 'FlaskRound', color: '#EF4444' };
-    case 'chirurgie':
-      return { icon: 'Scissors', color: '#48CAE4' };
-    case 'notfallmedizin':
-      return { icon: 'Ambulance', color: '#EF4444' };
-    case 'pädiatrie':
-      return { icon: 'Baby', color: '#8B5CF6' };
-    case 'gynäkologie':
-      return { icon: 'Activity', color: '#EC4899' };
-    case 'psychiatrie':
-      return { icon: 'Brain', color: '#F59E0B' };
-    case 'anatomie':
-      return { icon: 'Heart', color: '#0077B6' };
-    case 'radiologie':
-      return { icon: 'Activity', color: '#22C55E' };
-    case 'sonographie':
-      return { icon: 'Activity', color: '#48CAE4' };
-    default:
-      return { icon: 'BookOpen', color: '#0077B6' };
+
+  // If it's a string, display as is
+  if (typeof contentData === 'string') {
+    return <Text style={styles.contentText}>{contentData}</Text>;
+  }
+
+  // If it's an object/array, parse and display with titles as headers
+  try {
+    let parsedContent = contentData;
+    
+    // If it's a JSON string, parse it
+    if (typeof contentData === 'string') {
+      parsedContent = JSON.parse(contentData);
+    }
+
+    // Handle array of content sections
+    if (Array.isArray(parsedContent)) {
+      return (
+        <View>
+          {parsedContent.map((section: any, index: number) => (
+            <View key={index} style={styles.contentSection}>
+              {section.title && (
+                <Text style={styles.contentSectionTitle}>{section.title}</Text>
+              )}
+              {section.content && (
+                <Text style={styles.contentText}>{section.content}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      );
+    }
+
+    // Handle single object with title and content
+    if (parsedContent.title || parsedContent.content) {
+      return (
+        <View style={styles.contentSection}>
+          {parsedContent.title && (
+            <Text style={styles.contentSectionTitle}>{parsedContent.title}</Text>
+          )}
+          {parsedContent.content && (
+            <Text style={styles.contentText}>{parsedContent.content}</Text>
+          )}
+        </View>
+      );
+    }
+
+    // Fallback: display JSON as formatted text
+    return <Text style={styles.contentText}>{JSON.stringify(parsedContent, null, 2)}</Text>;
+
+  } catch (error) {
+    console.error('Error parsing content_improved:', error);
+    return <Text style={styles.contentText}>Fehler beim Laden des Inhalts.</Text>;
   }
 };
 
@@ -104,205 +142,107 @@ export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
-  const [currentSection, setCurrentSection] = useState<Section | null>(null);
-  const [sections, setSections] = useState<Section[]>([]);
+  
+  const [currentItem, setCurrentItem] = useState<Section | null>(null);
+  const [childItems, setChildItems] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [showContent, setShowContent] = useState(false);
 
-  const storageKey = `bibliothek_detail_${slug}`;
-
-  // Fetch data from Supabase
-  const fetchSections = useCallback(async () => {
+  // Fetch the current item and its children
+  const fetchItemData = async () => {
     if (!slug || typeof slug !== 'string') return;
 
     try {
       setLoading(true);
       
-      // Check if user is authenticated
       if (!session) {
         setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
         return;
       }
-      
-      // Fetch the current section to get its title and ensure it exists
-      const { data: currentSectionData, error: currentSectionError } = await supabase
+
+      console.log('Fetching item data for:', slug);
+
+      // Fetch current item details
+      const { data: itemData, error: itemError } = await supabase
         .from('sections')
-        .select('*')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
         .eq('slug', slug)
         .maybeSingle();
 
-      if (currentSectionError) {
-        throw currentSectionError;
+      if (itemError) {
+        throw itemError;
       }
-      
-      setCurrentSection(currentSectionData);
 
-      // Fetch children sections
-      const { data, error } = await supabase
+      if (!itemData) {
+        setError('Inhalt nicht gefunden.');
+        return;
+      }
+
+      setCurrentItem(itemData);
+      console.log('Current item:', itemData.title, 'Type:', itemData.type);
+
+      // Fetch child items (items where parent_slug = current slug)
+      const { data: childItemsData, error: childItemsError } = await supabase
         .from('sections')
-        .select('*')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
         .eq('parent_slug', slug)
         .order('display_order', { ascending: true });
 
-      if (error) {
-        throw error;
+      if (childItemsError) {
+        throw childItemsError;
       }
 
-      // Build tree structure for deeper levels
-      const sectionsTree = buildSectionsTree(data || []);
-      setSections(sectionsTree);
+      const children = childItemsData || [];
+      setChildItems(children);
+      console.log(`Found ${children.length} child items`);
+
+      // Determine if we should show content or navigation
+      const hasChildren = children.length > 0;
+      // content_improved is JSONB - check if it exists and has content
+      const hasContent = itemData.content_improved && 
+                        (typeof itemData.content_improved === 'object' || typeof itemData.content_improved === 'string');
       
-      // Load expanded state from AsyncStorage
-      const storedState = await AsyncStorage.getItem(storageKey);
-      if (storedState) {
-        setExpandedSections(JSON.parse(storedState));
-      }
+      console.log('Has children:', hasChildren, 'Has content:', hasContent);
+      console.log('Content type:', typeof itemData.content_improved);
+      
+      // Show content if no children OR if this is a final content item
+      setShowContent(!hasChildren && hasContent);
+
     } catch (e) {
-      console.error('Error fetching sections:', e);
-      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+      console.error('Error fetching item data:', e);
+      setError(e instanceof Error ? e.message : 'Fehler beim Laden des Inhalts');
     } finally {
       setLoading(false);
     }
-  }, [slug, storageKey, session]);
-
-  // Build a tree structure from flat sections data (recursive for deeper levels)
-  const buildSectionsTree = (flatSections: Section[]): Section[] => {
-    if (typeof slug !== 'string') return [];
-    
-    const sectionsMap: Record<string, Section> = {};
-
-    flatSections.forEach(section => {
-      sectionsMap[section.slug] = {
-        ...section,
-        children: []
-      };
-    });
-
-    const rootSections: Section[] = [];
-
-    flatSections.forEach(section => {
-      const currentSection = sectionsMap[section.slug];
-
-      if (section.parent_slug === slug) { // Only consider direct children of the current slug as root for this screen
-        rootSections.push(currentSection);
-      } else if (sectionsMap[section.parent_slug]) {
-        sectionsMap[section.parent_slug].children?.push(currentSection);
-      }
-    });
-
-    const sortChildrenRecursively = (sections: Section[]) => {
-      sections.forEach(section => {
-        if (section.children && section.children.length > 0) {
-          section.children.sort((a, b) => a.display_order - b.display_order);
-          sortChildrenRecursively(section.children);
-        }
-      });
-    };
-
-    sortChildrenRecursively(rootSections);
-    return rootSections.sort((a, b) => a.display_order - b.display_order);
   };
 
   useEffect(() => {
-    if (typeof slug === 'string' && !authLoading) {
-      fetchSections();
+    if (!authLoading) {
+      fetchItemData();
     }
-  }, [fetchSections, slug, authLoading]);
+  }, [slug, session, authLoading]);
 
-  // Toggle section expansion
-  const toggleSection = (sectionSlug: string) => {
-    setExpandedSections(prev => {
-      const newState = {
-        ...prev,
-        [sectionSlug]: !prev[sectionSlug]
-      };
-      
-      // Save to AsyncStorage
-      AsyncStorage.setItem(storageKey, JSON.stringify(newState)).catch(e => {
-        console.error('Failed to save expanded state to AsyncStorage', e);
-      });
-      
-      return newState;
-    });
+  const navigateToChild = (childSlug: string) => {
+    console.log('Navigating to child:', childSlug);
+    router.push(`/bibliothek/${childSlug}`);
   };
 
-  // Navigate to a section
-  const navigateToSection = (sectionSlug: string) => {
-    router.push(`/bibliothek/${sectionSlug}`);
-  };
-
-  // Render a section item recursively for deeper levels
-  const renderSectionItem = (section: Section, depth: number = 0) => {
-    const isExpanded = !!expandedSections[section.slug];
-    const isLeafNode = section.type === 'file-text' || section.type === 'markdown';
-    const hasChildren = section.children && section.children.length > 0;
-    
-    const { icon, color } = getCategoryDetails(section.category || section.title, section.icon, section.color);
-    const IconComponent = getIconComponent(icon);
-    const paddingLeft = 16 + (depth * 16); // Indent based on depth
-    
-    return (
-      <View key={section.slug} style={styles.sectionCard}>
-        <TouchableOpacity
-          style={styles.sectionHeader}
-          onPress={() => {
-            // Dynamic tree branching logic: Check if section has JSON content (leaf node)
-            const hasJsonContent = section.content_improved && 
-              ((Array.isArray(section.content_improved) && section.content_improved.length > 0) ||
-               (typeof section.content_improved === 'string' && section.content_improved.trim().length > 0));
-            
-            const hasAnyContent = hasJsonContent || section.content_html || section.content_details;
-            
-            if (hasAnyContent) {
-              // LEAF NODE: Has content - navigate to content page (branch ends here)
-              router.push(`/bibliothek/content/${section.slug}`);
-            } else {
-              // BRANCH NODE: No content - continue navigation deeper into tree
-              navigateToSection(section.slug);
-            }
-          }}
-          activeOpacity={0.7}
-        >
-          <LinearGradient
-            colors={[`${color}20`, `${color}05`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.sectionGradient, { paddingLeft }]}
-          >
-            <View style={[styles.sectionColorDot, { backgroundColor: color }]} />
-            <IconComponent size={24} color={color} />
-            <Text style={styles.sectionName}>{section.title}</Text>
-            
-            {hasChildren && (
-              <ChevronRight 
-                size={20} 
-                color="#9CA3AF" 
-                style={[
-                  styles.chevron,
-                  isExpanded && styles.chevronDown
-                ]} 
-              />
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {isExpanded && hasChildren && (
-          <View style={styles.childContainer}>
-            {section.children?.map((childSection) => 
-              renderSectionItem(childSection, depth + 1)
-            )}
-          </View>
-        )}
-      </View>
-    );
+  const handleBackPress = () => {
+    if (currentItem?.parent_slug) {
+      // Go back to parent
+      router.push(`/bibliothek/${currentItem.parent_slug}`);
+    } else {
+      // Go back to main bibliothek
+      router.push('/bibliothek');
+    }
   };
 
   if (authLoading || loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0077B6" />
-        <Text style={styles.loadingText}>Lade Inhalte...</Text>
+        <ActivityIndicator size="large" color={MEDICAL_COLORS.primary} />
+        <Text style={styles.loadingText}>Lade Inhalt...</Text>
       </SafeAreaView>
     );
   }
@@ -312,23 +252,20 @@ export default function SectionDetailScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Fehler</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchSections}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchItemData}>
           <Text style={styles.retryButtonText}>Erneut versuchen</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  if (!currentSection) {
+  if (!currentItem) {
     return (
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Inhalt nicht gefunden</Text>
         <Text style={styles.errorText}>Der gesuchte Inhalt konnte nicht gefunden werden.</Text>
-        <TouchableOpacity 
-          style={styles.retryButton} 
-          onPress={() => router.push('/bibliothek')}
-        >
-          <Text style={styles.retryButtonText}>Zurück zur Bibliothek</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleBackPress}>
+          <Text style={styles.retryButtonText}>Zurück</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -337,34 +274,93 @@ export default function SectionDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
+        colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
         style={styles.gradientBackground}
       />
       
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => router.back()} 
+          onPress={handleBackPress}
           style={styles.backButton}
         >
-          <ChevronLeft size={24} color="#0077B6" />
+          <ChevronLeft size={24} color={MEDICAL_COLORS.primary} />
           <Text style={styles.backText}>Zurück</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{currentSection.title}</Text>
-        {currentSection?.description && (
-          <Text style={styles.subtitle}>{currentSection.description}</Text>
-        )}
-        {currentSection?.content_details && (
-          <Text style={styles.contentDetails}>{currentSection.content_details}</Text>
+        
+        <Text style={styles.title}>{currentItem.title}</Text>
+        <Text style={styles.typeLabel}>{currentItem.type}</Text>
+        {currentItem.description && (
+          <Text style={styles.subtitle}>{currentItem.description}</Text>
         )}
       </View>
 
-      {sections.length === 0 ? (
+      {showContent ? (
+        // Show the final content
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.contentCard}>
+            <View style={styles.contentHeader}>
+              <FileText size={24} color={MEDICAL_COLORS.primary} />
+              <Text style={styles.contentTitle}>Medizinischer Inhalt</Text>
+            </View>
+{renderContentImproved(currentItem.content_improved)}
+          </View>
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+      ) : childItems.length === 0 ? (
+        // Empty state
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Keine Unterkategorien gefunden.</Text>
+          <Text style={styles.emptyStateText}>
+            Keine weiteren Inhalte oder Unterkategorien verfügbar.
+          </Text>
         </View>
       ) : (
+        // Show child navigation
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {sections.map(section => renderSectionItem(section))}
+          {childItems.map((childItem) => {
+            const { icon, color } = getItemDetails(childItem.title, childItem.type, slug as string);
+            const IconComponent = getIconComponent(icon);
+            const hasContent = childItem.content_improved && 
+                              (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
+            
+            return (
+              <TouchableOpacity
+                key={childItem.slug}
+                style={styles.childCard}
+                onPress={() => navigateToChild(childItem.slug)}
+                activeOpacity={0.7}
+              >
+                <LinearGradient
+                  colors={[`${color}12`, `${color}05`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.childGradient}
+                >
+                  <View style={[styles.childIcon, { backgroundColor: color }]}>
+                    <IconComponent size={22} color="white" />
+                  </View>
+                  
+                  <View style={styles.childContent}>
+                    <Text style={styles.childTitle}>{childItem.title}</Text>
+                    <View style={styles.childMeta}>
+                      <Text style={styles.childType}>{childItem.type}</Text>
+                      {hasContent && (
+                        <View style={styles.contentIndicator}>
+                          <FileText size={12} color={MEDICAL_COLORS.success} />
+                          <Text style={styles.contentIndicatorText}>Inhalt</Text>
+                        </View>
+                      )}
+                    </View>
+                    {childItem.description && (
+                      <Text style={styles.childDescription}>{childItem.description}</Text>
+                    )}
+                  </View>
+                  
+                  <ChevronRight size={18} color={color} />
+                </LinearGradient>
+              </TouchableOpacity>
+            );
+          })}
+          
           <View style={styles.bottomPadding} />
         </ScrollView>
       )}
@@ -417,7 +413,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
   },
   retryButton: {
-    backgroundColor: '#0077B6',
+    backgroundColor: MEDICAL_COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -429,100 +425,169 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    paddingBottom: 8,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   backText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#0077B6',
+    color: MEDICAL_COLORS.primary,
     marginLeft: 4,
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 24,
-    color: '#1F2937',
-    marginBottom: 8,
+    fontSize: 22,
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 2,
+  },
+  typeLabel: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 12,
+    color: MEDICAL_COLORS.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   subtitle: {
     fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  contentDetails: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 15,
+    color: MEDICAL_COLORS.textSecondary,
     lineHeight: 20,
-    marginTop: 8,
   },
   content: {
     paddingHorizontal: 16,
+    paddingTop: 8,
   },
-  sectionCard: {
+  // Content display styles
+  contentCard: {
     backgroundColor: 'white',
     borderRadius: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  sectionHeader: {
+  contentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: MEDICAL_COLORS.lightGray,
   },
-  sectionGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    padding: 16,
-    paddingRight: 16,
-  },
-  sectionColorDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    marginRight: 12,
-  },
-  sectionName: {
+  contentTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 16,
-    color: '#1F2937',
-    flex: 1,
+    fontSize: 18,
+    color: MEDICAL_COLORS.textPrimary,
     marginLeft: 8,
   },
-  chevron: {
-    transform: [{ rotate: '0deg' }],
+  contentText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 16,
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 24,
   },
-  chevronDown: {
-    transform: [{ rotate: '90deg' }],
+  contentSection: {
+    marginBottom: 20,
   },
-  childContainer: {
-    backgroundColor: '#F9FAFB',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+  contentSectionTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: MEDICAL_COLORS.lightGray,
+  },
+  // Child navigation styles
+  childCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  childGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+  },
+  childIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  childContent: {
+    flex: 1,
+  },
+  childTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 15,
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  childMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  childType: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 10,
+    color: MEDICAL_COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginRight: 8,
+  },
+  contentIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${MEDICAL_COLORS.success}15`,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  contentIndicatorText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 10,
+    color: MEDICAL_COLORS.success,
+    marginLeft: 3,
+  },
+  childDescription: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+    color: MEDICAL_COLORS.gray,
+    marginTop: 2,
+    lineHeight: 15,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 40,
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: MEDICAL_COLORS.textSecondary,
     fontFamily: 'Inter-Regular',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   bottomPadding: {
     height: 60,
-  }
+  },
 });
