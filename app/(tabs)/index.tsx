@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -36,6 +36,13 @@ interface DailyQuestion {
   category?: string;
 }
 
+interface MedicalContent {
+  id: string;
+  title: string;
+  category?: string;
+  lastViewed: string;
+}
+
 export default function DashboardScreen() {
   const { user } = useAuth();
   const router = useRouter();
@@ -45,10 +52,23 @@ export default function DashboardScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
 
   useEffect(() => {
     fetchDailyContent();
+    loadRecentMedicalContents();
   }, []);
+
+  const loadRecentMedicalContents = () => {
+    // Sample data - replace with actual data from database
+    const sampleContents: MedicalContent[] = [
+      { id: '1', title: 'Unipolare Depression', category: 'Psychiatrie', lastViewed: '2 Stunden' },
+      { id: '2', title: 'Herzrhythmusstörungen', category: 'Kardiologie', lastViewed: '1 Tag' },
+      { id: '3', title: 'Notfallmanagement - Grundlegende Prinzipien', category: 'Notfallmedizin', lastViewed: '2 Tage' },
+      { id: '4', title: 'Astrozytome und Oligodendrogliome', category: 'Neurologie', lastViewed: '3 Tage' },
+    ];
+    setRecentMedicalContents(sampleContents);
+  };
 
   const fetchDailyContent = async () => {
     try {
@@ -199,6 +219,37 @@ export default function DashboardScreen() {
                 <Text style={styles.tipCategoryText}>{dailyTip.category}</Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Last Medical Contents */}
+        {recentMedicalContents.length > 0 && (
+          <View style={styles.medicalContentsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
+            </View>
+            <View style={styles.contentsContainer}>
+              {recentMedicalContents.map((content, index) => (
+                <TouchableOpacity 
+                  key={content.id} 
+                  style={[
+                    styles.contentItem,
+                    index === recentMedicalContents.length - 1 && styles.lastContentItem
+                  ]}
+                >
+                  <View style={styles.contentIcon}>
+                    <BookOpen size={18} color={MEDICAL_COLORS.primary} />
+                  </View>
+                  <View style={styles.contentInfo}>
+                    <Text style={styles.contentTitle}>{content.title}</Text>
+                    <View style={styles.contentMeta}>
+                      <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
+                      <Text style={styles.contentTime}>{content.lastViewed}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         )}
 
@@ -383,6 +434,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    alignItems: 'center',
   },
   tipTitle: {
     fontSize: 18,
@@ -555,5 +607,70 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 24,
+  },
+  
+  // Medical Contents Section
+  medicalContentsSection: {
+    marginBottom: 28,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    letterSpacing: -0.5,
+  },
+  contentsContainer: {
+    backgroundColor: 'white',
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  contentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: MEDICAL_COLORS.lightGray,
+  },
+  lastContentItem: {
+    borderBottomWidth: 0,
+  },
+  contentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: `${MEDICAL_COLORS.primary}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  contentInfo: {
+    flex: 1,
+  },
+  contentTitle: {
+    fontSize: 15,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  contentMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contentTime: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginLeft: 4,
+    opacity: 0.8,
   },
 });
