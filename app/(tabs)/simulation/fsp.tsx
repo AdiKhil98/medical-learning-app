@@ -222,17 +222,17 @@ export default function FSPSimulationScreen() {
           if (window.voiceflow && window.voiceflow.chat) {
             console.log('✅ FSP Voiceflow object found, initializing...');
             window.voiceflow.chat.load({
-              verify: { projectID: '68a199c455ea0e8a4aea5acc' },
+              verify: { projectID: '68b40ab94a5a50553729c86b' },
               url: 'https://general-runtime.voiceflow.com',
-              versionID: '68a199c455ea0e8a4aea5acd',
+              versionID: '68b40ab94a5a50553729c86c',
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
             });
             setVoiceflowLoaded(true);
             console.log('🚀 FSP Voiceflow chat loaded successfully with config:', {
-              projectID: '68a199c455ea0e8a4aea5acc',
-              versionID: '68a199c455ea0e8a4aea5acd'
+              projectID: '68b40ab94a5a50553729c86b',
+              versionID: '68b40ab94a5a50553729c86c'
             });
           } else {
             console.error('❌ FSP Voiceflow object not found on window');
@@ -240,9 +240,9 @@ export default function FSPSimulationScreen() {
               if (window.voiceflow && window.voiceflow.chat) {
                 console.log('⏰ FSP Voiceflow found after delay, initializing...');
                 window.voiceflow.chat.load({
-                  verify: { projectID: '68a199c455ea0e8a4aea5acc' },
+                  verify: { projectID: '68b40ab94a5a50553729c86b' },
                   url: 'https://general-runtime.voiceflow.com',
-                  versionID: '68a199c455ea0e8a4aea5acd',
+                  versionID: '68b40ab94a5a50553729c86c',
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }
@@ -338,7 +338,7 @@ export default function FSPSimulationScreen() {
         }
       } else {
         // Mobile: Open in external browser
-        const voiceflowUrl = `https://creator.voiceflow.com/prototype/68a199c455ea0e8a4aea5acc`;
+        const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab94a5a50553729c86b`;
         try {
           const supported = await Linking.canOpenURL(voiceflowUrl);
           if (supported) {
