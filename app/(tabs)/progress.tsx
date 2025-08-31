@@ -361,15 +361,6 @@ export default function ProgressScreen() {
               </View>
             )}
 
-            {/* Action buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>📤 Teilen</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Text style={styles.actionButtonText}>📑 Exportieren</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         )}
       </TouchableOpacity>
@@ -595,27 +586,6 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.textSecondary,
     lineHeight: 20,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: MEDICAL_COLORS.border,
-  },
-  actionButton: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
