@@ -236,32 +236,31 @@ export default function FSPSimulationScreen() {
             });
             
             // Set up event listeners for widget interactions
-            const handleVoiceflowOpen = () => {
-              console.log('🎯 FSP Voiceflow widget opened - starting timer');
-              if (!simulationStarted) {
+            const handleVoiceflowEvent = (eventType, data) => {
+              console.log(`🔍 FSP Voiceflow Event: ${eventType}`, data);
+              if (!simulationStarted && (eventType === 'voiceflow:open' || eventType === 'voiceflow:interact' || eventType === 'voiceflow:launch')) {
+                console.log('🚀 Starting FSP simulation timer');
                 setSimulationStarted(true);
                 resetTimer();
               }
             };
             
-            const handleVoiceflowInteract = () => {
-              console.log('💬 FSP User interacted with Voiceflow - starting timer');
-              if (!simulationStarted) {
-                setSimulationStarted(true);
-                resetTimer();
-              }
-            };
-            
-            // Listen for Voiceflow events
-            window.addEventListener('message', (event) => {
-              if (event.data && event.data.type) {
-                if (event.data.type === 'voiceflow:open') {
-                  handleVoiceflowOpen();
-                } else if (event.data.type === 'voiceflow:interact') {
-                  handleVoiceflowInteract();
+            // Listen for all possible Voiceflow events
+            const messageListener = (event) => {
+              // Debug: log all messages to see what we're receiving
+              if (event.data && typeof event.data === 'object') {
+                console.log('📬 FSP Message received:', event.data);
+                
+                if (event.data.type && event.data.type.startsWith('voiceflow:')) {
+                  handleVoiceflowEvent(event.data.type, event.data);
                 }
               }
-            });
+            };
+            
+            window.addEventListener('message', messageListener);
+            
+            // Store the listener for cleanup
+            window.fspMessageListener = messageListener;
             
           } else {
             console.error('❌ FSP Voiceflow object not found on window');
@@ -294,8 +293,14 @@ export default function FSPSimulationScreen() {
       document.head.appendChild(script);
       
       return () => {
+        // Cleanup script
         if (document.head.contains(script)) {
           document.head.removeChild(script);
+        }
+        // Cleanup event listener
+        if (window.fspMessageListener) {
+          window.removeEventListener('message', window.fspMessageListener);
+          delete window.fspMessageListener;
         }
       };
     }
@@ -399,6 +404,26 @@ export default function FSPSimulationScreen() {
       });
     }
   }, [voiceflowLoaded]);
+  
+  // Cleanup widget when component unmounts or navigating away
+  useEffect(() => {
+    return () => {
+      console.log('🧹 FSP Simulation cleanup - hiding Voiceflow widget');
+      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+        try {
+          if (window.voiceflow.chat.hide) {
+            window.voiceflow.chat.hide();
+          } else if (window.voiceflow.chat.close) {
+            window.voiceflow.chat.close();
+          }
+        } catch (error) {
+          console.error('❌ Error hiding Voiceflow widget during cleanup:', error);
+        }
+      }
+      // Reset simulation state
+      setSimulationStarted(false);
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
