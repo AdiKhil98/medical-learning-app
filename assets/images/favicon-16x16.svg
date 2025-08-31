@@ -1,0 +1,15 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg16" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2196F3"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="16" height="16" rx="3" fill="url(#bg16)"/>
+  
+  <!-- Medical Cross -->
+  <rect x="7" y="4" width="2" height="8" rx="1" fill="white"/>
+  <rect x="4" y="7" width="8" height="2" rx="1" fill="white"/>
+</svg>

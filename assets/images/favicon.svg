@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2196F3"/>
+      <stop offset="100%" stop-color="#1976D2"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="16" cy="16" r="14" fill="url(#bg)"/>
+  
+  <!-- Medical Cross -->
+  <rect x="14.5" y="9" width="3" height="14" rx="1.5" fill="white"/>
+  <rect x="9" y="14.5" width="14" height="3" rx="1.5" fill="white"/>
+  
+  <!-- Corner Accents -->
+  <circle cx="10.5" cy="10.5" r="1" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="21.5" cy="10.5" r="1" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="10.5" cy="21.5" r="1" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="21.5" cy="21.5" r="1" fill="rgba(255,255,255,0.5)"/>
+</svg>
