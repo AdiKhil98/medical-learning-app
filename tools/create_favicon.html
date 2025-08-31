@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favicon Creator</title>
+</head>
+<body>
+    <canvas id="faviconCanvas" width="32" height="32" style="border: 1px solid #000; image-rendering: pixelated; width: 320px; height: 320px;"></canvas>
+    <br>
+    <button onclick="downloadFavicon()">Download Favicon</button>
+    
+    <script>
+        const canvas = document.getElementById('faviconCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas with transparent background
+        ctx.clearRect(0, 0, 32, 32);
+        
+        // Create medical themed favicon
+        // Background - rounded rectangle in medical blue
+        ctx.fillStyle = '#2196F3';
+        ctx.beginPath();
+        ctx.roundRect(2, 2, 28, 28, 6);
+        ctx.fill();
+        
+        // Medical cross in white
+        ctx.fillStyle = '#FFFFFF';
+        
+        // Vertical bar
+        ctx.fillRect(14, 8, 4, 16);
+        
+        // Horizontal bar  
+        ctx.fillRect(8, 14, 16, 4);
+        
+        // Small accent dots in corners
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(9, 9, 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(23, 9, 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(9, 23, 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(23, 23, 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        function downloadFavicon() {
+            const link = document.createElement('a');
+            link.download = 'favicon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Auto-generate on load
+        console.log('Medical favicon generated!');
+    </script>
+</body>
+</html>
