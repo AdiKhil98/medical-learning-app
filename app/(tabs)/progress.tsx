@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Platform } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { LineChart } from 'react-native-chart-kit';
 import { format } from 'date-fns';
+
+// Conditionally import chart for native only
+let LineChart: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const ChartKit = require('react-native-chart-kit');
+    LineChart = ChartKit.LineChart;
+  } catch (error) {
+    console.log('Chart kit not available');
+  }
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -75,10 +85,10 @@ export default function ProgressScreen() {
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       .slice(-10);
 
-    const labels = sortedEvaluations.map(eval => 
-      format(new Date(eval.created_at), 'dd.MM')
+    const labels = sortedEvaluations.map(evaluation => 
+      format(new Date(evaluation.created_at), 'dd.MM')
     );
-    const data = sortedEvaluations.map(eval => eval.score);
+    const data = sortedEvaluations.map(evaluation => evaluation.score);
 
     setChartData({
       labels,
@@ -92,7 +102,7 @@ export default function ProgressScreen() {
 
   const getFilteredEvaluations = () => {
     return evaluations
-      .filter(eval => eval.exam_type === activeTab)
+      .filter(evaluation => evaluation.exam_type === activeTab)
       .slice(0, 7);
   };
 
@@ -103,6 +113,36 @@ export default function ProgressScreen() {
           <Text style={styles.emptyChartText}>
             Noch keine Bewertungen vorhanden
           </Text>
+        </View>
+      );
+    }
+
+    // Web fallback - simple visual representation
+    if (!LineChart || Platform.OS === 'web') {
+      return (
+        <View style={styles.webChart}>
+          <Text style={styles.webChartTitle}>Fortschritt Übersicht</Text>
+          <View style={styles.webChartData}>
+            {chartData.datasets[0].data.map((score: number, index: number) => (
+              <View key={index} style={styles.webChartBar}>
+                <View 
+                  style={[
+                    styles.webChartBarFill, 
+                    { 
+                      height: `${score}%`,
+                      backgroundColor: score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger
+                    }
+                  ]} 
+                />
+                <Text style={styles.webChartLabel}>
+                  {chartData.labels[index]}
+                </Text>
+                <Text style={styles.webChartScore}>
+                  {score}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       );
     }
@@ -334,5 +374,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     textAlign: 'center',
+  },
+  // Web chart fallback styles
+  webChart: {
+    height: 220,
+    padding: 16,
+  },
+  webChartTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: MEDICAL_COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  webChartData: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 150,
+  },
+  webChartBar: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  webChartBarFill: {
+    width: '80%',
+    minHeight: 4,
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  webChartLabel: {
+    fontSize: 10,
+    color: MEDICAL_COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  webChartScore: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: MEDICAL_COLORS.textPrimary,
   },
 });
