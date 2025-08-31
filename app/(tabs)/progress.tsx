@@ -13,8 +13,12 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface Evaluation {
   id: string;
-  evaluation_name: string;
-  score: string;
+  session_id: string;
+  exam_type: string;
+  conversation_type: string;
+  score: number;
+  evaluation: string;
+  evaluation_timestamp: string;
   created_at: string;
 }
 
@@ -92,7 +96,7 @@ export default function ProgressScreen() {
     if (!userId) return;
 
     const { data: evaluationsData, error } = await supabase
-      .from('user_evaluations')
+      .from('evaluation_scores')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -116,12 +120,17 @@ export default function ProgressScreen() {
     if (!userId) return;
 
     const { error } = await supabase
-      .from('user_evaluations')
+      .from('evaluation_scores')
       .insert([
         {
           user_id: userId,
-          evaluation_name: selectedEvaluation,
-          score: selectedScore
+          session_id: `manual_${Date.now()}`,
+          exam_type: selectedEvaluation.includes('FSP') ? 'FSP' : 'KP',
+          conversation_type: 'patient',
+          score: parseInt(selectedScore),
+          evaluation: `Manual evaluation: ${selectedEvaluation}`,
+          evaluation_timestamp: new Date().toISOString(),
+          webhook_source: 'manual'
         }
       ]);
 
@@ -430,10 +439,10 @@ export default function ProgressScreen() {
                   </View>
                   <View style={dynamicStyles.evaluationInfo}>
                     <Text style={dynamicStyles.evaluationName}>
-                      {evaluation.evaluation_name}
+                      {evaluation.exam_type} - {evaluation.conversation_type}
                     </Text>
                     <Text style={dynamicStyles.evaluationScore}>
-                      Punktzahl: {evaluation.score}
+                      Punktzahl: {evaluation.score}/100
                     </Text>
                     <Text style={dynamicStyles.evaluationDate}>
                       {new Date(evaluation.created_at).toLocaleDateString('de-DE')}
