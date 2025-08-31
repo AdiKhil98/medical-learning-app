@@ -207,7 +207,7 @@ export default function FSPSimulationScreen() {
     }
   });
 
-  // Load Voiceflow script on web platform
+  // Load Voiceflow script and set up event listeners
   useEffect(() => {
     if (Platform.OS === 'web') {
       console.log('🔄 Starting FSP Voiceflow script load...');
@@ -234,6 +234,35 @@ export default function FSPSimulationScreen() {
               projectID: '68b40ab94a5a50553729c86b',
               versionID: '68b40ab94a5a50553729c86c'
             });
+            
+            // Set up event listeners for widget interactions
+            const handleVoiceflowOpen = () => {
+              console.log('🎯 FSP Voiceflow widget opened - starting timer');
+              if (!simulationStarted) {
+                setSimulationStarted(true);
+                resetTimer();
+              }
+            };
+            
+            const handleVoiceflowInteract = () => {
+              console.log('💬 FSP User interacted with Voiceflow - starting timer');
+              if (!simulationStarted) {
+                setSimulationStarted(true);
+                resetTimer();
+              }
+            };
+            
+            // Listen for Voiceflow events
+            window.addEventListener('message', (event) => {
+              if (event.data && event.data.type) {
+                if (event.data.type === 'voiceflow:open') {
+                  handleVoiceflowOpen();
+                } else if (event.data.type === 'voiceflow:interact') {
+                  handleVoiceflowInteract();
+                }
+              }
+            });
+            
           } else {
             console.error('❌ FSP Voiceflow object not found on window');
             setTimeout(() => {
@@ -270,7 +299,7 @@ export default function FSPSimulationScreen() {
         }
       };
     }
-  }, []);
+  }, [simulationStarted, resetTimer]);
 
   // Handle back button and navigation prevention
   useEffect(() => {
@@ -314,58 +343,62 @@ export default function FSPSimulationScreen() {
     }
   }, [simulationStarted, router, resetTimer]);
 
-  const handleSimulationToggle = async () => {
-    if (!simulationStarted) {
-      setSimulationStarted(true);
-      resetTimer();
-      console.log('🚀 FSP Simulation started');
-      
-      if (Platform.OS === 'web') {
-        // Web: Open Voiceflow chat widget
-        if (voiceflowLoaded && window.voiceflow && window.voiceflow.chat) {
-          try {
-            setTimeout(() => {
-              if (window.voiceflow.chat.open) {
-                window.voiceflow.chat.open();
-              } else if (window.voiceflow.chat.show) {
-                window.voiceflow.chat.show();
-              }
-              console.log('✅ FSP Voiceflow chat opened');
-            }, 500);
-          } catch (error) {
-            console.error('❌ Error opening FSP Voiceflow chat:', error);
-          }
+  const handleEndSimulation = () => {
+    setSimulationStarted(false);
+    resetTimer();
+    console.log('⏹️ FSP Simulation ended by user');
+    
+    // Close Voiceflow widget if open
+    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+      try {
+        if (window.voiceflow.chat.close) {
+          window.voiceflow.chat.close();
         }
-      } else {
-        // Mobile: Open in external browser
-        const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab94a5a50553729c86b`;
-        try {
-          const supported = await Linking.canOpenURL(voiceflowUrl);
-          if (supported) {
-            await Linking.openURL(voiceflowUrl);
-            console.log('📱 Opened FSP Voiceflow in external browser');
-          } else {
-            Alert.alert(
-              'Browser öffnen',
-              'Um den KI-Assistenten zu verwenden, öffnen Sie bitte Ihren Browser.',
-              [{ text: 'OK' }]
-            );
+      } catch (error) {
+        console.error('❌ Error closing FSP Voiceflow chat:', error);
+      }
+    }
+  };
+  
+  // Auto-open Voiceflow widget when component mounts and voiceflow is loaded
+  useEffect(() => {
+    if (voiceflowLoaded && Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+      try {
+        setTimeout(() => {
+          if (window.voiceflow.chat.open) {
+            window.voiceflow.chat.open();
+          } else if (window.voiceflow.chat.show) {
+            window.voiceflow.chat.show();
           }
-        } catch (error) {
-          console.error('❌ Error opening browser:', error);
+          console.log('✅ FSP Voiceflow chat widget auto-opened');
+        }, 1000);
+      } catch (error) {
+        console.error('❌ Error auto-opening FSP Voiceflow chat:', error);
+      }
+    } else if (voiceflowLoaded && Platform.OS !== 'web') {
+      // Mobile: Open in external browser
+      const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab94a5a50553729c86b`;
+      Linking.canOpenURL(voiceflowUrl).then(supported => {
+        if (supported) {
+          Linking.openURL(voiceflowUrl);
+          console.log('📱 Opened FSP Voiceflow in external browser');
+        } else {
           Alert.alert(
-            'Fehler',
-            'Der Browser konnte nicht geöffnet werden.',
+            'Browser öffnen',
+            'Um den KI-Assistenten zu verwenden, öffnen Sie bitte Ihren Browser.',
             [{ text: 'OK' }]
           );
         }
-      }
-    } else {
-      setSimulationStarted(false);
-      resetTimer();
-      console.log('⏹️ FSP Simulation stopped');
+      }).catch(error => {
+        console.error('❌ Error opening browser:', error);
+        Alert.alert(
+          'Fehler',
+          'Der Browser konnte nicht geöffnet werden.',
+          [{ text: 'OK' }]
+        );
+      });
     }
-  };
+  }, [voiceflowLoaded]);
 
   return (
     <View style={styles.container}>
@@ -427,7 +460,7 @@ export default function FSPSimulationScreen() {
             {/* Main content */}
             <View style={styles.mainContent}>
               <MicrophoneButton 
-                onPress={handleSimulationToggle}
+                onPress={() => {}}
                 isActive={simulationStarted}
               />
               
@@ -455,6 +488,18 @@ export default function FSPSimulationScreen() {
                       📱 Mobile: Chat öffnet im Browser
                     </Text>
                   </View>
+                )}
+                
+                {simulationStarted && (
+                  <TouchableOpacity
+                    style={styles.endSimulationButton}
+                    onPress={handleEndSimulation}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.endSimulationButtonText}>
+                      Simulation beenden
+                    </Text>
+                  </TouchableOpacity>
                 )}
               </View>
 
@@ -660,5 +705,23 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 100,
+  },
+  endSimulationButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  endSimulationButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#ffffff',
+    textAlign: 'center',
   },
 });

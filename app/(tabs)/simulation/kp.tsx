@@ -108,7 +108,7 @@ export default function KPSimulationScreen() {
     }
   });
 
-  // Load Voiceflow script on web platform
+  // Load Voiceflow script and set up event listeners
   useEffect(() => {
     if (Platform.OS === 'web') {
       console.log('🔄 Starting Voiceflow script load...');
@@ -135,6 +135,35 @@ export default function KPSimulationScreen() {
               projectID: '68b40ab270a53105f6701677',
               versionID: '68b40ab270a53105f6701678'
             });
+            
+            // Set up event listeners for widget interactions
+            const handleVoiceflowOpen = () => {
+              console.log('🎯 Voiceflow widget opened - starting timer');
+              if (!simulationStarted) {
+                setSimulationStarted(true);
+                resetTimer();
+              }
+            };
+            
+            const handleVoiceflowInteract = () => {
+              console.log('💬 User interacted with Voiceflow - starting timer');
+              if (!simulationStarted) {
+                setSimulationStarted(true);
+                resetTimer();
+              }
+            };
+            
+            // Listen for Voiceflow events
+            window.addEventListener('message', (event) => {
+              if (event.data && event.data.type) {
+                if (event.data.type === 'voiceflow:open') {
+                  handleVoiceflowOpen();
+                } else if (event.data.type === 'voiceflow:interact') {
+                  handleVoiceflowInteract();
+                }
+              }
+            });
+            
           } else {
             console.error('❌ Voiceflow object not found on window');
             setTimeout(() => {
@@ -171,7 +200,7 @@ export default function KPSimulationScreen() {
         }
       };
     }
-  }, []);
+  }, [simulationStarted, resetTimer]);
 
   // Handle back button and navigation prevention
   useEffect(() => {
@@ -215,58 +244,62 @@ export default function KPSimulationScreen() {
     }
   }, [simulationStarted, router, resetTimer]);
 
-  const handleSimulationToggle = async () => {
-    if (!simulationStarted) {
-      setSimulationStarted(true);
-      resetTimer();
-      console.log('🚀 KP Simulation started');
-      
-      if (Platform.OS === 'web') {
-        // Web: Open Voiceflow chat widget
-        if (voiceflowLoaded && window.voiceflow && window.voiceflow.chat) {
-          try {
-            setTimeout(() => {
-              if (window.voiceflow.chat.open) {
-                window.voiceflow.chat.open();
-              } else if (window.voiceflow.chat.show) {
-                window.voiceflow.chat.show();
-              }
-              console.log('✅ Voiceflow chat opened');
-            }, 500);
-          } catch (error) {
-            console.error('❌ Error opening Voiceflow chat:', error);
-          }
+  const handleEndSimulation = () => {
+    setSimulationStarted(false);
+    resetTimer();
+    console.log('⏹️ KP Simulation ended by user');
+    
+    // Close Voiceflow widget if open
+    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+      try {
+        if (window.voiceflow.chat.close) {
+          window.voiceflow.chat.close();
         }
-      } else {
-        // Mobile: Open in external browser
-        const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab270a53105f6701677`;
-        try {
-          const supported = await Linking.canOpenURL(voiceflowUrl);
-          if (supported) {
-            await Linking.openURL(voiceflowUrl);
-            console.log('📱 Opened Voiceflow in external browser');
-          } else {
-            Alert.alert(
-              'Browser öffnen',
-              'Um den KI-Assistenten zu verwenden, öffnen Sie bitte Ihren Browser.',
-              [{ text: 'OK' }]
-            );
+      } catch (error) {
+        console.error('❌ Error closing Voiceflow chat:', error);
+      }
+    }
+  };
+  
+  // Auto-open Voiceflow widget when component mounts and voiceflow is loaded
+  useEffect(() => {
+    if (voiceflowLoaded && Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+      try {
+        setTimeout(() => {
+          if (window.voiceflow.chat.open) {
+            window.voiceflow.chat.open();
+          } else if (window.voiceflow.chat.show) {
+            window.voiceflow.chat.show();
           }
-        } catch (error) {
-          console.error('❌ Error opening browser:', error);
+          console.log('✅ Voiceflow chat widget auto-opened');
+        }, 1000);
+      } catch (error) {
+        console.error('❌ Error auto-opening Voiceflow chat:', error);
+      }
+    } else if (voiceflowLoaded && Platform.OS !== 'web') {
+      // Mobile: Open in external browser
+      const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab270a53105f6701677`;
+      Linking.canOpenURL(voiceflowUrl).then(supported => {
+        if (supported) {
+          Linking.openURL(voiceflowUrl);
+          console.log('📱 Opened Voiceflow in external browser');
+        } else {
           Alert.alert(
-            'Fehler',
-            'Der Browser konnte nicht geöffnet werden.',
+            'Browser öffnen',
+            'Um den KI-Assistenten zu verwenden, öffnen Sie bitte Ihren Browser.',
             [{ text: 'OK' }]
           );
         }
-      }
-    } else {
-      setSimulationStarted(false);
-      resetTimer();
-      console.log('⏹️ KP Simulation stopped');
+      }).catch(error => {
+        console.error('❌ Error opening browser:', error);
+        Alert.alert(
+          'Fehler',
+          'Der Browser konnte nicht geöffnet werden.',
+          [{ text: 'OK' }]
+        );
+      });
     }
-  };
+  }, [voiceflowLoaded]);
 
   return (
     <View style={styles.container}>
@@ -332,10 +365,10 @@ export default function KPSimulationScreen() {
                 <Text style={styles.description}>
                   {simulationStarted 
                     ? (Platform.OS === 'web' 
-                        ? "Die KI-Simulation läuft - der Voiceflow Chat sollte sich automatisch öffnen" 
-                        : "Die Simulation läuft - der KI-Chat wurde im Browser geöffnet"
+                        ? "Die KI-Simulation läuft! Interagieren Sie mit dem Chat-Widget, um zu beginnen." 
+                        : "Die Simulation läuft - der KI-Chat wurde im Browser geöffnet."
                       )
-                    : "Bereit für Ihre medizinische KI-Simulation? Starten Sie die Simulation, um mit dem KI-Assistenten zu interagieren."
+                    : "Bereit für Ihre medizinische KI-Simulation? Das Chat-Widget öffnet sich automatisch. Klicken Sie darauf, um die Simulation zu starten."
                   }
                 </Text>
                 
@@ -353,25 +386,17 @@ export default function KPSimulationScreen() {
                   </View>
                 )}
                 
-                <TouchableOpacity
-                  style={[
-                    styles.simulationButton,
-                    simulationStarted && styles.simulationButtonActive
-                  ]}
-                  onPress={handleSimulationToggle}
-                  activeOpacity={0.8}
-                >
-                  <MessageCircle 
-                    size={20} 
-                    color={simulationStarted ? "#ffffff" : "#3b82f6"} 
-                  />
-                  <Text style={[
-                    styles.simulationButtonText,
-                    simulationStarted && styles.simulationButtonTextActive
-                  ]}>
-                    {simulationStarted ? "Simulation beenden" : "Simulation starten"}
-                  </Text>
-                </TouchableOpacity>
+                {simulationStarted && (
+                  <TouchableOpacity
+                    style={styles.endSimulationButton}
+                    onPress={handleEndSimulation}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.endSimulationButtonText}>
+                      Simulation beenden
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Status indicator */}
@@ -522,6 +547,24 @@ const styles = StyleSheet.create({
   },
   simulationButtonTextActive: {
     color: '#ffffff',
+  },
+  endSimulationButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  endSimulationButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#ffffff',
+    textAlign: 'center',
   },
   textContent: {
     alignItems: 'center',
