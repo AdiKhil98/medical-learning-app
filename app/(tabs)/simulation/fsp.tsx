@@ -235,32 +235,77 @@ export default function FSPSimulationScreen() {
               versionID: '68b40ab94a5a50553729c86c'
             });
             
-            // Set up event listeners for widget interactions
-            const handleVoiceflowEvent = (eventType, data) => {
-              console.log(`🔍 FSP Voiceflow Event: ${eventType}`, data);
-              if (!simulationStarted && (eventType === 'voiceflow:open' || eventType === 'voiceflow:interact' || eventType === 'voiceflow:launch')) {
+            // Set up multiple detection methods for widget interaction
+            const startSimulationTimer = () => {
+              if (!simulationStarted) {
                 console.log('🚀 Starting FSP simulation timer');
                 setSimulationStarted(true);
                 resetTimer();
               }
             };
             
-            // Listen for all possible Voiceflow events
+            // Method 1: Listen for Voiceflow events
             const messageListener = (event) => {
-              // Debug: log all messages to see what we're receiving
               if (event.data && typeof event.data === 'object') {
                 console.log('📬 FSP Message received:', event.data);
-                
                 if (event.data.type && event.data.type.startsWith('voiceflow:')) {
-                  handleVoiceflowEvent(event.data.type, event.data);
+                  console.log(`🔍 FSP Voiceflow Event: ${event.data.type}`);
+                  startSimulationTimer();
                 }
               }
             };
             
             window.addEventListener('message', messageListener);
-            
-            // Store the listener for cleanup
             window.fspMessageListener = messageListener;
+            
+            // Method 2: Monitor widget DOM changes and interactions
+            const startWidgetMonitoring = () => {
+              let monitoringInterval = null;
+              let hasStarted = false;
+              
+              const checkWidgetInteraction = () => {
+                if (hasStarted) return;
+                
+                // Look for Voiceflow widget elements
+                const widgetContainer = document.querySelector('[data-testid="chat"]') || 
+                                       document.querySelector('.vfrc-widget') ||
+                                       document.querySelector('#voiceflow-chat');
+                
+                if (widgetContainer) {
+                  // Check if widget has messages or input
+                  const hasMessages = widgetContainer.querySelector('.vfrc-message') || 
+                                     widgetContainer.querySelector('[role="log"]') ||
+                                     widgetContainer.textContent.length > 100;
+                  
+                  const isInputActive = widgetContainer.querySelector('input:focus') ||
+                                       widgetContainer.querySelector('textarea:focus');
+                  
+                  if (hasMessages || isInputActive) {
+                    console.log('👁️ FSP Widget interaction detected via DOM monitoring');
+                    hasStarted = true;
+                    startSimulationTimer();
+                    if (monitoringInterval) {
+                      clearInterval(monitoringInterval);
+                    }
+                  }
+                }
+              };
+              
+              // Start monitoring after widget loads
+              setTimeout(() => {
+                monitoringInterval = setInterval(checkWidgetInteraction, 1000);
+                window.fspMonitoringInterval = monitoringInterval;
+                
+                // Stop monitoring after 5 minutes to prevent resource waste
+                setTimeout(() => {
+                  if (monitoringInterval) {
+                    clearInterval(monitoringInterval);
+                  }
+                }, 300000);
+              }, 2000);
+            };
+            
+            startWidgetMonitoring();
             
           } else {
             console.error('❌ FSP Voiceflow object not found on window');
@@ -408,20 +453,44 @@ export default function FSPSimulationScreen() {
   // Cleanup widget when component unmounts or navigating away
   useEffect(() => {
     return () => {
-      console.log('🧹 FSP Simulation cleanup - hiding Voiceflow widget');
+      console.log('🧹 FSP Simulation cleanup - complete widget removal');
+      
+      // Stop simulation
+      setSimulationStarted(false);
+      
+      // Cleanup monitoring interval
+      if (window.fspMonitoringInterval) {
+        clearInterval(window.fspMonitoringInterval);
+        delete window.fspMonitoringInterval;
+      }
+      
       if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
+          // Try multiple methods to hide/remove widget
           if (window.voiceflow.chat.hide) {
             window.voiceflow.chat.hide();
-          } else if (window.voiceflow.chat.close) {
+          }
+          if (window.voiceflow.chat.close) {
             window.voiceflow.chat.close();
           }
+          if (window.voiceflow.chat.destroy) {
+            window.voiceflow.chat.destroy();
+          }
+          
+          // Remove widget DOM elements as fallback
+          setTimeout(() => {
+            const widgetElements = document.querySelectorAll('[data-testid="chat"], .vfrc-widget, #voiceflow-chat, iframe[src*="voiceflow"]');
+            widgetElements.forEach(element => {
+              if (element && element.parentNode) {
+                element.parentNode.removeChild(element);
+              }
+            });
+          }, 100);
+          
         } catch (error) {
-          console.error('❌ Error hiding Voiceflow widget during cleanup:', error);
+          console.error('❌ Error during FSP widget cleanup:', error);
         }
       }
-      // Reset simulation state
-      setSimulationStarted(false);
     };
   }, []);
 

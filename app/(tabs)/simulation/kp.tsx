@@ -125,7 +125,7 @@ export default function KPSimulationScreen() {
             window.voiceflow.chat.load({
               verify: { projectID: '68b40ab270a53105f6701677' },
               url: 'https://general-runtime.voiceflow.com',
-              versionID: '68b40ab270a53105f6701678',
+              versionID: 'production',
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
@@ -136,32 +136,77 @@ export default function KPSimulationScreen() {
               versionID: '68b40ab270a53105f6701678'
             });
             
-            // Set up event listeners for widget interactions
-            const handleVoiceflowEvent = (eventType, data) => {
-              console.log(`🔍 KP Voiceflow Event: ${eventType}`, data);
-              if (!simulationStarted && (eventType === 'voiceflow:open' || eventType === 'voiceflow:interact' || eventType === 'voiceflow:launch')) {
+            // Set up multiple detection methods for widget interaction
+            const startSimulationTimer = () => {
+              if (!simulationStarted) {
                 console.log('🚀 Starting KP simulation timer');
                 setSimulationStarted(true);
                 resetTimer();
               }
             };
             
-            // Listen for all possible Voiceflow events
+            // Method 1: Listen for Voiceflow events
             const messageListener = (event) => {
-              // Debug: log all messages to see what we're receiving
               if (event.data && typeof event.data === 'object') {
                 console.log('📬 KP Message received:', event.data);
-                
                 if (event.data.type && event.data.type.startsWith('voiceflow:')) {
-                  handleVoiceflowEvent(event.data.type, event.data);
+                  console.log(`🔍 KP Voiceflow Event: ${event.data.type}`);
+                  startSimulationTimer();
                 }
               }
             };
             
             window.addEventListener('message', messageListener);
-            
-            // Store the listener for cleanup
             window.kpMessageListener = messageListener;
+            
+            // Method 2: Monitor widget DOM changes and interactions
+            const startWidgetMonitoring = () => {
+              let monitoringInterval = null;
+              let hasStarted = false;
+              
+              const checkWidgetInteraction = () => {
+                if (hasStarted) return;
+                
+                // Look for Voiceflow widget elements
+                const widgetContainer = document.querySelector('[data-testid="chat"]') || 
+                                       document.querySelector('.vfrc-widget') ||
+                                       document.querySelector('#voiceflow-chat');
+                
+                if (widgetContainer) {
+                  // Check if widget has messages or input
+                  const hasMessages = widgetContainer.querySelector('.vfrc-message') || 
+                                     widgetContainer.querySelector('[role="log"]') ||
+                                     widgetContainer.textContent.length > 100;
+                  
+                  const isInputActive = widgetContainer.querySelector('input:focus') ||
+                                       widgetContainer.querySelector('textarea:focus');
+                  
+                  if (hasMessages || isInputActive) {
+                    console.log('👁️ KP Widget interaction detected via DOM monitoring');
+                    hasStarted = true;
+                    startSimulationTimer();
+                    if (monitoringInterval) {
+                      clearInterval(monitoringInterval);
+                    }
+                  }
+                }
+              };
+              
+              // Start monitoring after widget loads
+              setTimeout(() => {
+                monitoringInterval = setInterval(checkWidgetInteraction, 1000);
+                window.kpMonitoringInterval = monitoringInterval;
+                
+                // Stop monitoring after 5 minutes to prevent resource waste
+                setTimeout(() => {
+                  if (monitoringInterval) {
+                    clearInterval(monitoringInterval);
+                  }
+                }, 300000);
+              }, 2000);
+            };
+            
+            startWidgetMonitoring();
             
           } else {
             console.error('❌ Voiceflow object not found on window');
@@ -171,7 +216,7 @@ export default function KPSimulationScreen() {
                 window.voiceflow.chat.load({
                   verify: { projectID: '68b40ab270a53105f6701677' },
                   url: 'https://general-runtime.voiceflow.com',
-                  versionID: '68b40ab270a53105f6701678',
+                  versionID: 'production',
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }
@@ -198,10 +243,14 @@ export default function KPSimulationScreen() {
         if (document.head.contains(script)) {
           document.head.removeChild(script);
         }
-        // Cleanup event listener
+        // Cleanup event listener and monitoring
         if (window.kpMessageListener) {
           window.removeEventListener('message', window.kpMessageListener);
           delete window.kpMessageListener;
+        }
+        if (window.kpMonitoringInterval) {
+          clearInterval(window.kpMonitoringInterval);
+          delete window.kpMonitoringInterval;
         }
       };
     }
@@ -309,20 +358,44 @@ export default function KPSimulationScreen() {
   // Cleanup widget when component unmounts or navigating away
   useEffect(() => {
     return () => {
-      console.log('🧹 KP Simulation cleanup - hiding Voiceflow widget');
+      console.log('🧹 KP Simulation cleanup - complete widget removal');
+      
+      // Stop simulation
+      setSimulationStarted(false);
+      
+      // Cleanup monitoring interval
+      if (window.kpMonitoringInterval) {
+        clearInterval(window.kpMonitoringInterval);
+        delete window.kpMonitoringInterval;
+      }
+      
       if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
+          // Try multiple methods to hide/remove widget
           if (window.voiceflow.chat.hide) {
             window.voiceflow.chat.hide();
-          } else if (window.voiceflow.chat.close) {
+          }
+          if (window.voiceflow.chat.close) {
             window.voiceflow.chat.close();
           }
+          if (window.voiceflow.chat.destroy) {
+            window.voiceflow.chat.destroy();
+          }
+          
+          // Remove widget DOM elements as fallback
+          setTimeout(() => {
+            const widgetElements = document.querySelectorAll('[data-testid="chat"], .vfrc-widget, #voiceflow-chat, iframe[src*="voiceflow"]');
+            widgetElements.forEach(element => {
+              if (element && element.parentNode) {
+                element.parentNode.removeChild(element);
+              }
+            });
+          }, 100);
+          
         } catch (error) {
-          console.error('❌ Error hiding Voiceflow widget during cleanup:', error);
+          console.error('❌ Error during KP widget cleanup:', error);
         }
       }
-      // Reset simulation state
-      setSimulationStarted(false);
     };
   }, []);
 
