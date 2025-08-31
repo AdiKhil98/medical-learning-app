@@ -1,11 +1,9 @@
 [build]
-  command = "npm run build:web"
+  command = "npm run build:web && npm install --prefix netlify/functions"
   publish = "dist"
 
 [functions]
   directory = "netlify/functions"
-  node_bundler = "nft"
-  external_node_modules = ["@supabase/supabase-js"]
 
 [build.environment]
   NODE_VERSION = "18"
