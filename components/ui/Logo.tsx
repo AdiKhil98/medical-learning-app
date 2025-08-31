@@ -214,13 +214,7 @@ export default function Logo({
                   color: finalTextColor, 
                   fontSize: size === 'small' ? 22 : size === 'large' ? 36 : 28 
                 }]}>
-                  MediCore
-                </Text>
-                <Text style={[styles.medicalSubtitle, { 
-                  color: finalTextColor,
-                  fontSize: size === 'small' ? 10 : size === 'large' ? 14 : 12
-                }]}>
-                  MEDICAL LEARNING
+                  KP MED
                 </Text>
               </View>
             )}
