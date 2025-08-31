@@ -54,6 +54,8 @@ interface Evaluation {
   conversation_type: string;
   score: number;
   evaluation: string;
+  patient_evaluation: string;
+  examiner_evaluation: string;
   evaluation_timestamp: string;
   created_at: string;
 }
@@ -63,6 +65,7 @@ export default function ProgressScreen() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
+  const [expandedEvaluation, setExpandedEvaluation] = useState<string | null>(null);
   
   console.log('ProgressScreen: Rendering, evaluations count:', evaluations.length);
   console.log('ProgressScreen: chartData:', chartData);
@@ -306,9 +309,19 @@ export default function ProgressScreen() {
   const renderEvaluationCard = (evaluation: Evaluation) => {
     const scoreColor = evaluation.score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger;
     const passStatus = evaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
+    const isExpanded = expandedEvaluation === evaluation.id;
+
+    const toggleExpansion = () => {
+      setExpandedEvaluation(isExpanded ? null : evaluation.id);
+    };
 
     return (
-      <View key={evaluation.id} style={styles.evaluationCard}>
+      <TouchableOpacity 
+        key={evaluation.id} 
+        style={styles.evaluationCard}
+        onPress={toggleExpansion}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardHeader}>
           <Text style={styles.cardDate}>
             {format(new Date(evaluation.created_at), 'dd.MM.yyyy')}
@@ -322,10 +335,79 @@ export default function ProgressScreen() {
             </Text>
           </View>
         </View>
-        <Text style={styles.cardType}>
-          {evaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
-        </Text>
-      </View>
+        
+        <View style={styles.cardContent}>
+          <Text style={styles.cardType}>
+            {evaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
+          </Text>
+          
+          {/* Expansion indicator */}
+          <Text style={styles.expandIndicator}>
+            {isExpanded ? '▼ Details ausblenden' : '▶ Details anzeigen'}
+          </Text>
+        </View>
+
+        {/* Expanded evaluation details */}
+        {isExpanded && (
+          <View style={styles.evaluationDetails}>
+            {/* Score header */}
+            <View style={styles.scoreHeader}>
+              <Text style={[styles.finalScore, { color: scoreColor }]}>
+                ENDPUNKTZAHL: {evaluation.score}/100
+              </Text>
+              <View style={[styles.statusBadge, { backgroundColor: scoreColor }]}>
+                <Text style={styles.statusText}>
+                  {evaluation.score >= 66 ? 'BESTANDEN ✓' : 'MEHR ÜBUNG NÖTIG ✗'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Evaluation content sections */}
+            {evaluation.patient_evaluation && (
+              <View style={styles.evaluationSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>📋 DETAILLIERTE BEWERTUNG</Text>
+                </View>
+                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
+                  <Text style={styles.evaluationContent}>{evaluation.patient_evaluation}</Text>
+                </ScrollView>
+              </View>
+            )}
+            
+            {evaluation.examiner_evaluation && (
+              <View style={styles.evaluationSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>👨‍⚕️ PRÜFER-FEEDBACK</Text>
+                </View>
+                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
+                  <Text style={styles.evaluationContent}>{evaluation.examiner_evaluation}</Text>
+                </ScrollView>
+              </View>
+            )}
+            
+            {evaluation.evaluation && (
+              <View style={styles.evaluationSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>📊 ZUSAMMENFASSUNG</Text>
+                </View>
+                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
+                  <Text style={styles.evaluationContent}>{evaluation.evaluation}</Text>
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Action buttons */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>📤 Teilen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>📑 Exportieren</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
     );
   };
 
@@ -510,10 +592,100 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  cardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   cardType: {
     fontSize: 14,
     color: MEDICAL_COLORS.textPrimary,
     fontWeight: '500',
+    flex: 1,
+  },
+  expandIndicator: {
+    fontSize: 12,
+    color: MEDICAL_COLORS.primary,
+    fontWeight: '600',
+  },
+  evaluationDetails: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: MEDICAL_COLORS.border,
+  },
+  scoreHeader: {
+    backgroundColor: MEDICAL_COLORS.lightBackground,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  finalScore: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  evaluationSection: {
+    marginBottom: 20,
+    backgroundColor: MEDICAL_COLORS.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: MEDICAL_COLORS.border,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    backgroundColor: MEDICAL_COLORS.lightGray,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: MEDICAL_COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: MEDICAL_COLORS.textPrimary,
+  },
+  evaluationScrollView: {
+    maxHeight: 200,
+    padding: 16,
+  },
+  evaluationContent: {
+    fontSize: 13,
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: MEDICAL_COLORS.border,
+  },
+  actionButton: {
+    backgroundColor: MEDICAL_COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
