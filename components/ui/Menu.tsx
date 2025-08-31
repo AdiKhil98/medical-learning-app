@@ -82,7 +82,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   const gradientColors = isDarkMode 
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#66BB6A', '#81C784', '#E8F5E9'];
+    : ['#A8E6CF', '#DCEDC8', '#F1F8E9'];
 
   const dynamicStyles = StyleSheet.create({
     menu: {
@@ -110,14 +110,14 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     closeButton: {
       padding: 8,
       borderRadius: 8,
-      backgroundColor: isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.2)',
+      backgroundColor: isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.3)',
     },
     menuItem: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
       borderRadius: 12,
-      backgroundColor: isDarkMode ? colors.card : 'rgba(255, 255, 255, 0.15)',
+      backgroundColor: isDarkMode ? colors.card : 'rgba(255, 255, 255, 0.25)',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: isDarkMode ? 0.3 : 0.1,
