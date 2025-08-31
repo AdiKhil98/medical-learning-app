@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 // Platform-specific Victory imports
-let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any;
+let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any;
 
 if (Platform.OS === 'web') {
   try {
@@ -13,6 +13,7 @@ if (Platform.OS === 'web') {
     VictoryArea = Victory.VictoryArea;
     VictoryAxis = Victory.VictoryAxis;
     VictoryTheme = Victory.VictoryTheme;
+    VictoryScatter = Victory.VictoryScatter;
   } catch (error) {
     console.log('Victory not available on web');
   }
@@ -23,6 +24,7 @@ if (Platform.OS === 'web') {
     VictoryArea = VictoryNative.VictoryArea;
     VictoryAxis = VictoryNative.VictoryAxis;
     VictoryTheme = VictoryNative.VictoryTheme;
+    VictoryScatter = VictoryNative.VictoryScatter;
   } catch (error) {
     console.log('Victory Native not available');
   }
@@ -143,7 +145,7 @@ export default function ProgressScreen() {
     }
 
     // Check if Victory components are available
-    if (!VictoryChart || !VictoryArea || !VictoryAxis) {
+    if (!VictoryChart || !VictoryArea || !VictoryAxis || !VictoryScatter) {
       // Fallback simple chart visualization
       return (
         <View style={styles.simpleChart}>
@@ -172,43 +174,77 @@ export default function ProgressScreen() {
     return (
       <View style={styles.chartWrapper}>
         <VictoryChart
-          theme={VictoryTheme.material}
-          height={250}
+          height={300}
           width={SCREEN_WIDTH - 32}
-          padding={{ left: 50, top: 20, right: 50, bottom: 50 }}
+          padding={{ left: 60, top: 20, right: 30, bottom: 60 }}
+          domainPadding={{ x: 20, y: 10 }}
         >
+          {/* Y-Axis with score labels */}
           <VictoryAxis
             dependentAxis
-            tickFormat={() => ''}
+            tickCount={5}
+            domain={[0, 100]}
             style={{
-              grid: { stroke: MEDICAL_COLORS.gridColor, strokeWidth: 1 },
+              grid: { 
+                stroke: '#f0f0f0', 
+                strokeWidth: 1,
+                strokeDasharray: 'none'
+              },
               axis: { stroke: 'transparent' },
-              ticks: { stroke: 'transparent' }
+              ticks: { stroke: 'transparent' },
+              tickLabels: { 
+                fontSize: 12, 
+                fill: '#999', 
+                fontFamily: 'system-ui'
+              }
             }}
           />
+          
+          {/* X-Axis with date labels */}
           <VictoryAxis
-            tickFormat={() => ''}
+            tickFormat={(x, i) => chartData[i] ? chartData[i].date : ''}
             style={{
               grid: { stroke: 'transparent' },
               axis: { stroke: 'transparent' },
-              ticks: { stroke: 'transparent' }
+              ticks: { stroke: 'transparent' },
+              tickLabels: { 
+                fontSize: 11, 
+                fill: '#999', 
+                angle: 0,
+                fontFamily: 'system-ui'
+              }
             }}
           />
+          
+          {/* Area chart with gradient fill */}
           <VictoryArea
             data={chartData}
             style={{
               data: {
-                fill: MEDICAL_COLORS.chartGradient,
-                fillOpacity: 0.3,
-                stroke: MEDICAL_COLORS.primary,
-                strokeWidth: 2
+                fill: 'rgba(33, 150, 243, 0.2)', // Light blue gradient
+                fillOpacity: 1,
+                stroke: MEDICAL_COLORS.primary, // Blue line
+                strokeWidth: 2.5
               }
             }}
             animate={{
-              duration: 1000,
-              onLoad: { duration: 500 }
+              duration: 1200,
+              onLoad: { duration: 600 }
             }}
             interpolation="cardinal"
+          />
+          
+          {/* Data point circles */}
+          <VictoryScatter
+            data={chartData}
+            size={4}
+            style={{
+              data: { 
+                fill: MEDICAL_COLORS.primary,
+                stroke: '#fff',
+                strokeWidth: 2
+              }
+            }}
           />
         </VictoryChart>
       </View>
