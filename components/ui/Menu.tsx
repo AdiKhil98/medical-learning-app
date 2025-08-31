@@ -82,7 +82,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   const gradientColors = isDarkMode 
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#A8E6CF', '#DCEDC8', '#F1F8E9'];
+    : ['#ffffff', '#f8f9fa', '#ffffff'];
 
   const dynamicStyles = StyleSheet.create({
     menu: {
@@ -105,19 +105,19 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     headerTitle: {
       fontFamily: 'Inter-Bold',
       fontSize: 24,
-      color: isDarkMode ? colors.text : '#FFFFFF',
+      color: colors.text,
     },
     closeButton: {
       padding: 8,
       borderRadius: 8,
-      backgroundColor: isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.3)',
+      backgroundColor: colors.border,
     },
     menuItem: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
       borderRadius: 12,
-      backgroundColor: isDarkMode ? colors.card : 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: colors.card,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: isDarkMode ? 0.3 : 0.1,
@@ -127,7 +127,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     menuItemText: {
       fontFamily: 'Inter-Medium',
       fontSize: 16,
-      color: isDarkMode ? colors.text : '#FFFFFF',
+      color: colors.text,
       marginLeft: 16,
       flex: 1,
     },
@@ -141,7 +141,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     submenuText: {
       fontFamily: 'Inter-Regular',
       fontSize: 15,
-      color: isDarkMode ? colors.textSecondary : 'rgba(255, 255, 255, 0.8)',
+      color: colors.textSecondary,
     },
   });
 
@@ -162,9 +162,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
         />
         
         <View style={styles.header}>
-          <Text style={dynamicStyles.headerTitle}>Menu</Text>
+          <View />
           <TouchableOpacity onPress={onClose} style={dynamicStyles.closeButton}>
-            <X size={24} color={isDarkMode ? colors.text : '#FFFFFF'} />
+            <X size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -181,7 +181,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={dynamicStyles.menuItem}
                 onPress={() => handleMenuItemPress(item.route)}
               >
-                <item.icon size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+                <item.icon size={20} color={colors.text} />
                 <Text style={dynamicStyles.menuItemText}>{item.label}</Text>
               </TouchableOpacity>
             ))}
@@ -191,7 +191,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               style={dynamicStyles.menuItem}
               onPress={() => handleMenuItemPress('/help')}
             >
-              <HelpCircle size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+              <HelpCircle size={20} color={colors.text} />
               <Text style={dynamicStyles.menuItemText}>Hilfe & Support</Text>
             </TouchableOpacity>
 
@@ -200,7 +200,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={dynamicStyles.menuItem}
                 onPress={() => handleMenuItemPress('/admin')}
               >
-                <Shield size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+                <Shield size={20} color={colors.text} />
                 <Text style={dynamicStyles.menuItemText}>Admin Panel</Text>
               </TouchableOpacity>
             )}
@@ -209,7 +209,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               style={dynamicStyles.menuItem}
               onPress={() => handleMenuItemPress('/feedback')}
             >
-              <Bug size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+              <Bug size={20} color={colors.text} />
               <Text style={dynamicStyles.menuItemText}>Fehler melden</Text>
             </TouchableOpacity>
 
@@ -217,10 +217,10 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               style={dynamicStyles.menuItem}
               onPress={toggleSubmenu}
             >
-              <Info size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+              <Info size={20} color={colors.text} />
               <Text style={dynamicStyles.menuItemText}>Kontakt & Info</Text>
               <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                <ChevronDown size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
+                <ChevronDown size={20} color={colors.text} />
               </Animated.View>
             </TouchableOpacity>
 
