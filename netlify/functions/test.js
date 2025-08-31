@@ -1,4 +1,5 @@
 // Simple test function to verify Netlify Functions are working
+// URL: https://medical-learning-app.netlify.app/.netlify/functions/test
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -21,11 +22,17 @@ exports.handler = async (event, context) => {
     statusCode: 200,
     headers,
     body: JSON.stringify({
-      message: 'Netlify Functions are working!',
+      message: '✅ Netlify Functions are working!',
       timestamp: new Date().toISOString(),
       method: event.httpMethod,
       path: event.path,
-      deployment: 'Netlify'
+      deployment: 'Netlify',
+      functions_available: [
+        'webhook-evaluation',
+        'webhook',
+        'test'
+      ],
+      webhook_url: 'https://medical-learning-app.netlify.app/api/webhook-evaluation'
     }),
   };
 };

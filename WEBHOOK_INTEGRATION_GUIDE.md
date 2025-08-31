@@ -2,35 +2,31 @@
 
 ## 📍 Webhook Endpoint
 
-### Production URL (Vercel) 🔧 **BEING DEPLOYED**
+### Production URL (Netlify) ✅ **FIXED & READY**
 ```
-https://medical-learning-app.vercel.app/api/webhook-evaluation
+https://medical-learning-app.netlify.app/api/webhook-evaluation
 ```
 
-> **Status**: 🔧 Fixed deployment platform (was incorrectly configured for Netlify)
-> **Platform**: Vercel (API functions in `/api` directory)
+> **Status**: ✅ All-Netlify configuration implemented and fixed
+> **Platform**: Netlify (functions in `/netlify/functions` directory)
 > **Last Updated**: August 30, 2025  
 > **Database**: Connected to Supabase with `evaluation_scores` and `evaluation_sessions` tables
 
 ### Alternative URLs (all redirect to the same function)
 ```
-https://medical-learning-app.vercel.app/api/webhook/evaluation
-```
-
-### Legacy URLs (Netlify - No longer used)
-```
-https://medical-learning-app.netlify.app/api/webhook-evaluation (deprecated)
+https://medical-learning-app.netlify.app/api/webhook/evaluation
+https://medical-learning-app.netlify.app/.netlify/functions/webhook-evaluation
 ```
 
 ### Development URL
 ```
-http://localhost:3000/api/webhook-evaluation (Vercel dev server)
+http://localhost:8888/.netlify/functions/webhook-evaluation (Netlify CLI)
 ```
 
 ## 🚀 Quick Setup for Make.com
 
 ### 1. HTTP Module Configuration
-- **URL**: `https://medical-learning-app.vercel.app/api/webhook-evaluation`
+- **URL**: `https://medical-learning-app.netlify.app/api/webhook-evaluation`
 - **Method**: `POST`
 - **Headers**:
   ```
@@ -194,7 +190,9 @@ The webhook stores data in two tables:
 ## ✅ **WEBHOOK STATUS: FULLY WORKING**
 
 ### Recent Updates (August 30, 2025)
+- ✅ **MAJOR FIX**: Consolidated all deployment on Netlify (removed Vercel confusion)
 - ✅ Security fix: Removed hardcoded credentials
+- ✅ Fixed Netlify Functions configuration and dependencies
 - ✅ Database connection verified with Supabase
 - ✅ Full end-to-end testing completed successfully  
 - ✅ Evaluation data properly stored in `evaluation_scores` table
@@ -209,6 +207,7 @@ The webhook stores data in two tables:
 ✅ Session tracking: Working (evaluation_sessions table) 
 ✅ Data validation: Working (proper error responses)
 ✅ CORS headers: Working (Make.com compatible)
+✅ Netlify deployment: Fixed and configured properly
 ```
 
 ## 🎯 Next Steps
