@@ -3,31 +3,23 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, Touchable
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
-
-// Conditionally import chart for native only
-let LineChart: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    const ChartKit = require('react-native-chart-kit');
-    LineChart = ChartKit.LineChart;
-  } catch (error) {
-    console.log('Chart kit not available');
-  }
-}
+import { VictoryChart, VictoryArea, VictoryAxis, VictoryTheme } from 'victory-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Medical-grade color scheme
+// Updated color scheme matching design requirements
 const MEDICAL_COLORS = {
-  primary: '#66BB6A',
+  primary: '#2196F3', // Blue for chart
+  chartGradient: '#E3F2FD', // Light blue for chart fill
   background: '#FFFFFF',
   lightBackground: '#E8F5E9',
   textPrimary: '#424242',
   textSecondary: '#757575',
   border: '#E0E0E0',
-  success: '#66BB6A',
-  danger: '#F44336',
-  lightGray: '#F5F5F5'
+  success: '#66BB6A', // Green for scores >= 60
+  danger: '#ef4444', // Red for scores < 60
+  lightGray: '#F5F5F5',
+  gridColor: '#f0f0f0'
 };
 
 interface Evaluation {
@@ -85,19 +77,14 @@ export default function ProgressScreen() {
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       .slice(-10);
 
-    const labels = sortedEvaluations.map(evaluation => 
-      format(new Date(evaluation.created_at), 'dd.MM')
-    );
-    const data = sortedEvaluations.map(evaluation => evaluation.score);
+    // Prepare data for Victory chart
+    const chartPoints = sortedEvaluations.map((evaluation, index) => ({
+      x: index + 1,
+      y: evaluation.score,
+      date: format(new Date(evaluation.created_at), 'dd.MM')
+    }));
 
-    setChartData({
-      labels,
-      datasets: [{
-        data,
-        color: (opacity = 1) => MEDICAL_COLORS.primary,
-        strokeWidth: 2
-      }]
-    });
+    setChartData(chartPoints);
   };
 
   const getFilteredEvaluations = () => {
@@ -106,8 +93,14 @@ export default function ProgressScreen() {
       .slice(0, 7);
   };
 
+  const getLastThreeScores = () => {
+    return evaluations
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 3);
+  };
+
   const renderChart = () => {
-    if (!chartData) {
+    if (!chartData || chartData.length === 0) {
       return (
         <View style={styles.emptyChart}>
           <Text style={styles.emptyChartText}>
@@ -117,65 +110,80 @@ export default function ProgressScreen() {
       );
     }
 
-    // Web fallback - simple visual representation
-    if (!LineChart || Platform.OS === 'web') {
+    return (
+      <View style={styles.chartWrapper}>
+        <VictoryChart
+          theme={VictoryTheme.material}
+          height={250}
+          width={SCREEN_WIDTH - 32}
+          padding={{ left: 50, top: 20, right: 50, bottom: 50 }}
+        >
+          <VictoryAxis
+            dependentAxis
+            tickFormat={() => ''}
+            style={{
+              grid: { stroke: MEDICAL_COLORS.gridColor, strokeWidth: 1 },
+              axis: { stroke: 'transparent' },
+              ticks: { stroke: 'transparent' }
+            }}
+          />
+          <VictoryAxis
+            tickFormat={() => ''}
+            style={{
+              grid: { stroke: 'transparent' },
+              axis: { stroke: 'transparent' },
+              ticks: { stroke: 'transparent' }
+            }}
+          />
+          <VictoryArea
+            data={chartData}
+            style={{
+              data: {
+                fill: MEDICAL_COLORS.chartGradient,
+                fillOpacity: 0.3,
+                stroke: MEDICAL_COLORS.primary,
+                strokeWidth: 2
+              }
+            }}
+            animate={{
+              duration: 1000,
+              onLoad: { duration: 500 }
+            }}
+            interpolation="cardinal"
+          />
+        </VictoryChart>
+      </View>
+    );
+  };
+
+  const renderScoreCards = () => {
+    const lastThreeScores = getLastThreeScores();
+    
+    if (lastThreeScores.length === 0) {
       return (
-        <View style={styles.webChart}>
-          <Text style={styles.webChartTitle}>Fortschritt Übersicht</Text>
-          <View style={styles.webChartData}>
-            {chartData.datasets[0].data.map((score: number, index: number) => (
-              <View key={index} style={styles.webChartBar}>
-                <View 
-                  style={[
-                    styles.webChartBarFill, 
-                    { 
-                      height: `${score}%`,
-                      backgroundColor: score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger
-                    }
-                  ]} 
-                />
-                <Text style={styles.webChartLabel}>
-                  {chartData.labels[index]}
-                </Text>
-                <Text style={styles.webChartScore}>
-                  {score}
-                </Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.emptyScoreCards}>
+          <Text style={styles.emptyText}>Noch keine Bewertungen vorhanden</Text>
         </View>
       );
     }
 
     return (
-      <LineChart
-        data={chartData}
-        width={SCREEN_WIDTH - 32}
-        height={220}
-        chartConfig={{
-          backgroundColor: MEDICAL_COLORS.background,
-          backgroundGradientFrom: MEDICAL_COLORS.background,
-          backgroundGradientTo: MEDICAL_COLORS.background,
-          decimalPlaces: 0,
-          color: (opacity = 1) => MEDICAL_COLORS.primary,
-          labelColor: (opacity = 1) => MEDICAL_COLORS.textSecondary,
-          style: {
-            borderRadius: 8,
-          },
-          propsForDots: {
-            r: '4',
-            strokeWidth: '2',
-            stroke: MEDICAL_COLORS.primary
-          },
-          propsForBackgroundLines: {
-            strokeDasharray: '',
-            stroke: MEDICAL_COLORS.border,
-            strokeWidth: 1
-          }
-        }}
-        bezier
-        style={styles.chart}
-      />
+      <View style={styles.scoreCardsContainer}>
+        {lastThreeScores.map((evaluation, index) => (
+          <View 
+            key={evaluation.id} 
+            style={[
+              styles.scoreCard,
+              { backgroundColor: evaluation.score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger }
+            ]}
+          >
+            <Text style={styles.scoreCardNumber}>{evaluation.score}</Text>
+            <Text style={styles.scoreCardDate}>
+              {format(new Date(evaluation.created_at), 'dd.MM')}
+            </Text>
+          </View>
+        ))}
+      </View>
     );
   };
 
@@ -232,6 +240,10 @@ export default function ProgressScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Fortschritt</Text>
+        <Text style={styles.subtitle}>Fortschritt Übersicht</Text>
+        
+        {/* Score Cards Section */}
+        {renderScoreCards()}
         
         {/* Chart Section */}
         <View style={styles.chartContainer}>
@@ -241,7 +253,7 @@ export default function ProgressScreen() {
         {/* Tabs Section */}
         {renderTabs()}
 
-        {/* Evaluation Cards */}
+        {/* Evaluation List */}
         <View style={styles.cardsContainer}>
           {filteredEvaluations.length === 0 ? (
             <View style={styles.emptyState}>
@@ -268,7 +280,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: MEDICAL_COLORS.textPrimary,
     textAlign: 'center',
-    marginVertical: 20,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: MEDICAL_COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  // Score Cards Styles
+  scoreCardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  scoreCard: {
+    flex: 1,
+    marginHorizontal: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  scoreCardNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  scoreCardDate: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  emptyScoreCards: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    marginHorizontal: 16,
+    marginBottom: 24,
   },
   chartContainer: {
     backgroundColor: MEDICAL_COLORS.background,
@@ -277,7 +328,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: MEDICAL_COLORS.border,
-    padding: 16,
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    paddingVertical: 10,
   },
   emptyChart: {
     height: 220,
@@ -374,44 +428,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     textAlign: 'center',
-  },
-  // Web chart fallback styles
-  webChart: {
-    height: 220,
-    padding: 16,
-  },
-  webChartTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: MEDICAL_COLORS.textPrimary,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  webChartData: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 150,
-  },
-  webChartBar: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 2,
-  },
-  webChartBarFill: {
-    width: '80%',
-    minHeight: 4,
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  webChartLabel: {
-    fontSize: 10,
-    color: MEDICAL_COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  webChartScore: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: MEDICAL_COLORS.textPrimary,
   },
 });
