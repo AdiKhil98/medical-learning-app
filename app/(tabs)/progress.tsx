@@ -3,7 +3,30 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, Touchable
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
-import { VictoryChart, VictoryArea, VictoryAxis, VictoryTheme } from 'victory-native';
+// Platform-specific Victory imports
+let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any;
+
+if (Platform.OS === 'web') {
+  try {
+    const Victory = require('victory');
+    VictoryChart = Victory.VictoryChart;
+    VictoryArea = Victory.VictoryArea;
+    VictoryAxis = Victory.VictoryAxis;
+    VictoryTheme = Victory.VictoryTheme;
+  } catch (error) {
+    console.log('Victory not available on web');
+  }
+} else {
+  try {
+    const VictoryNative = require('victory-native');
+    VictoryChart = VictoryNative.VictoryChart;
+    VictoryArea = VictoryNative.VictoryArea;
+    VictoryAxis = VictoryNative.VictoryAxis;
+    VictoryTheme = VictoryNative.VictoryTheme;
+  } catch (error) {
+    console.log('Victory Native not available');
+  }
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -38,6 +61,10 @@ export default function ProgressScreen() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
+  
+  console.log('ProgressScreen: Rendering, evaluations count:', evaluations.length);
+  console.log('ProgressScreen: chartData:', chartData);
+  console.log('ProgressScreen: activeTab:', activeTab);
 
   useEffect(() => {
     fetchEvaluations();
@@ -48,8 +75,10 @@ export default function ProgressScreen() {
   }, [evaluations]);
 
   const fetchEvaluations = async () => {
+    console.log('fetchEvaluations: Starting...');
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
+    console.log('fetchEvaluations: userId:', userId);
     if (!userId) return;
 
     const { data: evaluationsData, error } = await supabase
@@ -57,6 +86,9 @@ export default function ProgressScreen() {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
+
+    console.log('fetchEvaluations: evaluationsData:', evaluationsData);
+    console.log('fetchEvaluations: error:', error);
 
     if (error) {
       console.error('Error fetching evaluations:', error);
@@ -106,6 +138,33 @@ export default function ProgressScreen() {
           <Text style={styles.emptyChartText}>
             Noch keine Bewertungen vorhanden
           </Text>
+        </View>
+      );
+    }
+
+    // Check if Victory components are available
+    if (!VictoryChart || !VictoryArea || !VictoryAxis) {
+      // Fallback simple chart visualization
+      return (
+        <View style={styles.simpleChart}>
+          <Text style={styles.chartTitle}>Fortschritt Übersicht</Text>
+          <View style={styles.chartBars}>
+            {chartData.map((point, index) => (
+              <View key={index} style={styles.chartBarContainer}>
+                <View 
+                  style={[
+                    styles.chartBar,
+                    { 
+                      height: `${point.y}%`,
+                      backgroundColor: point.y >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger
+                    }
+                  ]}
+                />
+                <Text style={styles.chartLabel}>{point.date}</Text>
+                <Text style={styles.chartValue}>{point.y}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       );
     }
@@ -428,5 +487,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     textAlign: 'center',
+  },
+  // Fallback chart styles
+  simpleChart: {
+    height: 250,
+    padding: 16,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: MEDICAL_COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  chartBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 150,
+    paddingHorizontal: 10,
+  },
+  chartBarContainer: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  chartBar: {
+    width: '80%',
+    minHeight: 4,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  chartLabel: {
+    fontSize: 10,
+    color: MEDICAL_COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  chartValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: MEDICAL_COLORS.textPrimary,
   },
 });
