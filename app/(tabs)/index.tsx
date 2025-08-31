@@ -193,27 +193,22 @@ export default function DashboardScreen() {
         
         {/* Daily Tip Card */}
         {dailyTip && (
-          <View style={styles.card}>
+          <View style={styles.tipCard}>
             <LinearGradient
-              colors={[`${MEDICAL_COLORS.warning}15`, `${MEDICAL_COLORS.warning}08`]}
-              style={styles.cardGradient}
+              colors={[`${MEDICAL_COLORS.primary}12`, `${MEDICAL_COLORS.primary}06`]}
+              style={styles.tipCardGradient}
             >
-              <View style={styles.cardHeader}>
-                <Lightbulb size={24} color={MEDICAL_COLORS.warning} />
-                <Text style={styles.cardTitle}>Tipp des Tages</Text>
-              </View>
-              
               {dailyTip.title && (
-                <Text style={styles.tipTitle}>{dailyTip.title}</Text>
+                <Text style={styles.tipTitleEnhanced}>{dailyTip.title}</Text>
               )}
               
-              <Text style={styles.tipContent}>
+              <Text style={styles.tipContentEnhanced}>
                 {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
               </Text>
               
               {dailyTip.category && (
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryText}>{dailyTip.category}</Text>
+                <View style={styles.tipCategoryBadge}>
+                  <Text style={styles.tipCategoryText}>{dailyTip.category}</Text>
                 </View>
               )}
             </LinearGradient>
@@ -391,6 +386,50 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     padding: 20,
+  },
+  // Enhanced Tip Card Styles
+  tipCard: {
+    marginBottom: 20,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  tipCardGradient: {
+    padding: 24,
+  },
+  tipTitleEnhanced: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  tipContentEnhanced: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 26,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  tipCategoryBadge: {
+    alignSelf: 'center',
+    backgroundColor: MEDICAL_COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  tipCategoryText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: 'white',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   cardHeader: {
     flexDirection: 'row',
