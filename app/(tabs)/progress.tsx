@@ -130,11 +130,6 @@ export default function ProgressScreen() {
       .slice(0, 7);
   };
 
-  const getLastThreeScores = () => {
-    return evaluations
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 3);
-  };
 
   const renderChart = () => {
     if (!chartData || chartData.length === 0) {
@@ -254,36 +249,6 @@ export default function ProgressScreen() {
     );
   };
 
-  const renderScoreCards = () => {
-    const lastThreeScores = getLastThreeScores();
-    
-    if (lastThreeScores.length === 0) {
-      return (
-        <View style={styles.emptyScoreCards}>
-          <Text style={styles.emptyText}>Noch keine Bewertungen vorhanden</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.scoreCardsContainer}>
-        {lastThreeScores.map((evaluation, index) => (
-          <View 
-            key={evaluation.id} 
-            style={[
-              styles.scoreCard,
-              { backgroundColor: evaluation.score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger }
-            ]}
-          >
-            <Text style={styles.scoreCardNumber}>{evaluation.score}</Text>
-            <Text style={styles.scoreCardDate}>
-              {format(new Date(evaluation.created_at), 'dd.MM')}
-            </Text>
-          </View>
-        ))}
-      </View>
-    );
-  };
 
   const renderTabs = () => (
     <View style={styles.tabContainer}>
@@ -419,9 +384,6 @@ export default function ProgressScreen() {
         <Text style={styles.title}>Fortschritt</Text>
         <Text style={styles.subtitle}>Fortschritt Übersicht</Text>
         
-        {/* Score Cards Section */}
-        {renderScoreCards()}
-        
         {/* Chart Section */}
         <View style={styles.chartContainer}>
           {renderChart()}
@@ -464,38 +426,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  // Score Cards Styles
-  scoreCardsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginHorizontal: 16,
-    marginBottom: 24,
-  },
-  scoreCard: {
-    flex: 1,
-    marginHorizontal: 4,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  scoreCardNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  scoreCardDate: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    opacity: 0.9,
-  },
-  emptyScoreCards: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    marginHorizontal: 16,
     marginBottom: 24,
   },
   chartContainer: {
