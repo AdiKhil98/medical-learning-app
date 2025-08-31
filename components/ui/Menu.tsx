@@ -50,10 +50,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   };
 
   const menuItems = [
-    { icon: Home, label: 'Dashboard', route: '/' },
+    { icon: Settings, label: 'Profil', route: '/profile' },
     { icon: Bell, label: 'Updates', route: '/updates' },
     { icon: Crown, label: 'Subscription', route: '/subscription' },
-    { icon: Settings, label: 'Profil', route: '/profile' },
   ];
 
 
@@ -83,7 +82,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   const gradientColors = isDarkMode 
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#e0f2fe', '#f0f9ff', '#ffffff'];
+    : ['#66BB6A', '#81C784', '#E8F5E9'];
 
   const dynamicStyles = StyleSheet.create({
     menu: {
@@ -106,29 +105,29 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     headerTitle: {
       fontFamily: 'Inter-Bold',
       fontSize: 24,
-      color: colors.text,
+      color: isDarkMode ? colors.text : '#FFFFFF',
     },
     closeButton: {
       padding: 8,
       borderRadius: 8,
-      backgroundColor: colors.border,
+      backgroundColor: isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.2)',
     },
     menuItem: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
       borderRadius: 12,
-      backgroundColor: colors.card,
+      backgroundColor: isDarkMode ? colors.card : 'rgba(255, 255, 255, 0.15)',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
+      shadowOpacity: isDarkMode ? 0.3 : 0.1,
       shadowRadius: 2,
       elevation: 1,
     },
     menuItemText: {
       fontFamily: 'Inter-Medium',
       fontSize: 16,
-      color: colors.text,
+      color: isDarkMode ? colors.text : '#FFFFFF',
       marginLeft: 16,
       flex: 1,
     },
@@ -142,7 +141,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     submenuText: {
       fontFamily: 'Inter-Regular',
       fontSize: 15,
-      color: colors.textSecondary,
+      color: isDarkMode ? colors.textSecondary : 'rgba(255, 255, 255, 0.8)',
     },
   });
 
@@ -165,7 +164,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
         <View style={styles.header}>
           <Text style={dynamicStyles.headerTitle}>Menu</Text>
           <TouchableOpacity onPress={onClose} style={dynamicStyles.closeButton}>
-            <X size={24} color={colors.text} />
+            <X size={24} color={isDarkMode ? colors.text : '#FFFFFF'} />
           </TouchableOpacity>
         </View>
 
@@ -182,24 +181,17 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={dynamicStyles.menuItem}
                 onPress={() => handleMenuItemPress(item.route)}
               >
-                <item.icon size={20} color={colors.text} />
+                <item.icon size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
                 <Text style={dynamicStyles.menuItemText}>{item.label}</Text>
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity
-              style={dynamicStyles.menuItem}
-              onPress={() => handleMenuItemPress('/progress')}
-            >
-              <BarChart2 size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Fortschritt</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               style={dynamicStyles.menuItem}
               onPress={() => handleMenuItemPress('/help')}
             >
-              <HelpCircle size={20} color={colors.text} />
+              <HelpCircle size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
               <Text style={dynamicStyles.menuItemText}>Hilfe & Support</Text>
             </TouchableOpacity>
 
@@ -208,7 +200,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={dynamicStyles.menuItem}
                 onPress={() => handleMenuItemPress('/admin')}
               >
-                <Shield size={20} color={colors.text} />
+                <Shield size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
                 <Text style={dynamicStyles.menuItemText}>Admin Panel</Text>
               </TouchableOpacity>
             )}
@@ -217,7 +209,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               style={dynamicStyles.menuItem}
               onPress={() => handleMenuItemPress('/feedback')}
             >
-              <Bug size={20} color={colors.text} />
+              <Bug size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
               <Text style={dynamicStyles.menuItemText}>Fehler melden</Text>
             </TouchableOpacity>
 
@@ -225,10 +217,10 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               style={dynamicStyles.menuItem}
               onPress={toggleSubmenu}
             >
-              <Info size={20} color={colors.text} />
+              <Info size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
               <Text style={dynamicStyles.menuItemText}>Kontakt & Info</Text>
               <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                <ChevronDown size={20} color={colors.text} />
+                <ChevronDown size={20} color={isDarkMode ? colors.text : '#FFFFFF'} />
               </Animated.View>
             </TouchableOpacity>
 
