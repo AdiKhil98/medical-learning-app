@@ -181,7 +181,7 @@ export default function DashboardScreen() {
       </LinearGradient>
 
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentContainer}>
         
         {/* Daily Tip */}
         {dailyTip && (
@@ -358,42 +358,49 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
   card: {
-    marginBottom: 20,
-    borderRadius: 16,
+    marginBottom: 28,
+    borderRadius: 18,
     backgroundColor: 'white',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
     overflow: 'hidden',
   },
   cardGradient: {
-    padding: 20,
+    padding: 24,
   },
   // Lightweight Tip Styles
   tipContainer: {
-    marginBottom: 24,
-    paddingHorizontal: 4,
+    marginBottom: 32,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   tipTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   tipContent: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 24,
+    lineHeight: 26,
     textAlign: 'center',
-    opacity: 0.8,
-    marginBottom: 16,
+    opacity: 0.85,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
   tipCategoryBadge: {
     alignSelf: 'center',
@@ -412,13 +419,16 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingBottom: 4,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    marginLeft: 8,
+    marginLeft: 14,
+    letterSpacing: -0.4,
+    lineHeight: 24,
   },
   tipTitle: {
     fontSize: 16,
@@ -434,21 +444,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   questionText: {
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: 'Inter-Medium',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 26,
+    marginBottom: 24,
+    paddingHorizontal: 2,
   },
   answersContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 4,
   },
   answerOption: {
     backgroundColor: MEDICAL_COLORS.offWhite,
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: 14,
+    marginBottom: 10,
     borderWidth: 2,
     borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   selectedOption: {
     borderColor: MEDICAL_COLORS.primary,
@@ -465,21 +482,23 @@ const styles = StyleSheet.create({
   answerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 18,
+    paddingVertical: 16,
   },
   optionLetter: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    marginRight: 12,
-    minWidth: 24,
+    marginRight: 14,
+    minWidth: 26,
   },
   answerText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingRight: 8,
   },
   correctAnswerText: {
     color: MEDICAL_COLORS.success,
@@ -522,17 +541,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   emptyState: {
-    padding: 40,
+    padding: 48,
     alignItems: 'center',
+    marginTop: 20,
   },
   emptyStateText: {
     fontSize: 16,
     color: MEDICAL_COLORS.textSecondary,
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    opacity: 0.8,
   },
   bottomPadding: {
-    height: 40,
+    height: 24,
   },
 });
