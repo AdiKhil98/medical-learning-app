@@ -175,43 +175,30 @@ export default function DashboardScreen() {
           >
             <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
-          <Logo size="medium" variant="premium" textColor="white" animated={true} />
+          <Logo size="medium" variant="medical" textColor="white" animated={true} />
           <UserAvatar size={32} />
         </View>
       </LinearGradient>
 
-      {/* User Welcome Section */}
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Willkommen zurück</Text>
-        <Text style={styles.userName}>{getUserDisplayName()}</Text>
-        {user?.email && (
-          <Text style={styles.userEmail}>{user.email}</Text>
-        )}
-      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         
-        {/* Daily Tip Card */}
+        {/* Daily Tip */}
         {dailyTip && (
-          <View style={styles.tipCard}>
-            <LinearGradient
-              colors={[`${MEDICAL_COLORS.primary}12`, `${MEDICAL_COLORS.primary}06`]}
-              style={styles.tipCardGradient}
-            >
-              {dailyTip.title && (
-                <Text style={styles.tipTitleEnhanced}>{dailyTip.title}</Text>
-              )}
-              
-              <Text style={styles.tipContentEnhanced}>
-                {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
-              </Text>
-              
-              {dailyTip.category && (
-                <View style={styles.tipCategoryBadge}>
-                  <Text style={styles.tipCategoryText}>{dailyTip.category}</Text>
-                </View>
-              )}
-            </LinearGradient>
+          <View style={styles.tipContainer}>
+            {dailyTip.title && (
+              <Text style={styles.tipTitle}>{dailyTip.title}</Text>
+            )}
+            
+            <Text style={styles.tipContent}>
+              {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
+            </Text>
+            
+            {dailyTip.category && (
+              <View style={styles.tipCategoryBadge}>
+                <Text style={styles.tipCategoryText}>{dailyTip.category}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -387,34 +374,25 @@ const styles = StyleSheet.create({
   cardGradient: {
     padding: 20,
   },
-  // Enhanced Tip Card Styles
-  tipCard: {
-    marginBottom: 20,
-    borderRadius: 20,
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-    overflow: 'hidden',
+  // Lightweight Tip Styles
+  tipContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 4,
   },
-  tipCardGradient: {
-    padding: 24,
-  },
-  tipTitleEnhanced: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
+  tipTitle: {
+    fontSize: 17,
+    fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
-  tipContentEnhanced: {
-    fontSize: 16,
+  tipContent: {
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 26,
+    lineHeight: 24,
     textAlign: 'center',
+    opacity: 0.8,
     marginBottom: 16,
   },
   tipCategoryBadge: {

@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Shield, Plus, Stethoscope, Heart } from 'lucide-react-native';
+import { Shield, Plus, Stethoscope, Heart, Hexagon } from 'lucide-react-native';
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large';
   showText?: boolean;
   textColor?: string;
-  variant?: 'modern' | 'badge' | 'minimalist' | 'premium';
+  variant?: 'modern' | 'badge' | 'minimalist' | 'premium' | 'medical';
   animated?: boolean;
   onPress?: () => void;
 }
@@ -161,6 +161,72 @@ export default function Logo({
           </Container>
         );
         
+      case 'medical':
+        return (
+          <Container style={styles.container} onPress={onPress}>
+            <Animated.View style={[styles.medicalContainer, { transform: [{ scale: pulseAnim }] }]}>
+              {/* Outer hexagon */}
+              <View style={[styles.hexagonOuter, { width: iconSize, height: iconSize }]}>
+                <LinearGradient
+                  colors={['#2196F3', '#1976D2', '#0D47A1']}
+                  style={[styles.hexagonGradient, { width: iconSize, height: iconSize }]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  {/* Inner hexagon with medical cross */}
+                  <View style={[styles.hexagonInner, { width: iconSize * 0.7, height: iconSize * 0.7 }]}>
+                    {/* Medical cross - vertical bar */}
+                    <View style={[styles.crossVertical, { 
+                      width: iconSize * 0.08, 
+                      height: iconSize * 0.4,
+                      backgroundColor: 'white'
+                    }]} />
+                    {/* Medical cross - horizontal bar */}
+                    <View style={[styles.crossHorizontal, { 
+                      width: iconSize * 0.4, 
+                      height: iconSize * 0.08,
+                      backgroundColor: 'white'
+                    }]} />
+                    {/* Corner accent dots */}
+                    <View style={[styles.accentDot, styles.dotTopLeft, { 
+                      width: iconSize * 0.06, 
+                      height: iconSize * 0.06 
+                    }]} />
+                    <View style={[styles.accentDot, styles.dotTopRight, { 
+                      width: iconSize * 0.06, 
+                      height: iconSize * 0.06 
+                    }]} />
+                    <View style={[styles.accentDot, styles.dotBottomLeft, { 
+                      width: iconSize * 0.06, 
+                      height: iconSize * 0.06 
+                    }]} />
+                    <View style={[styles.accentDot, styles.dotBottomRight, { 
+                      width: iconSize * 0.06, 
+                      height: iconSize * 0.06 
+                    }]} />
+                  </View>
+                </LinearGradient>
+              </View>
+            </Animated.View>
+            {showText && (
+              <View style={styles.medicalTextContainer}>
+                <Text style={[styles.medicalTitle, { 
+                  color: finalTextColor, 
+                  fontSize: size === 'small' ? 22 : size === 'large' ? 36 : 28 
+                }]}>
+                  MediCore
+                </Text>
+                <Text style={[styles.medicalSubtitle, { 
+                  color: finalTextColor,
+                  fontSize: size === 'small' ? 10 : size === 'large' ? 14 : 12
+                }]}>
+                  MEDICAL LEARNING
+                </Text>
+              </View>
+            )}
+          </Container>
+        );
+
       case 'premium':
       default:
         return (
@@ -316,6 +382,81 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   
+  // Medical Variant (AMBOSS-style)
+  medicalContainer: {
+    marginRight: 12,
+    position: 'relative',
+  },
+  hexagonOuter: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: [{ rotate: '30deg' }],
+  },
+  hexagonGradient: {
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#2196F3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+  },
+  hexagonInner: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    transform: [{ rotate: '-30deg' }],
+  },
+  crossVertical: {
+    position: 'absolute',
+    borderRadius: 2,
+  },
+  crossHorizontal: {
+    position: 'absolute',
+    borderRadius: 2,
+  },
+  accentDot: {
+    position: 'absolute',
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+  dotTopLeft: {
+    top: '15%',
+    left: '15%',
+  },
+  dotTopRight: {
+    top: '15%',
+    right: '15%',
+  },
+  dotBottomLeft: {
+    bottom: '15%',
+    left: '15%',
+  },
+  dotBottomRight: {
+    bottom: '15%',
+    right: '15%',
+  },
+  medicalTextContainer: {
+    alignItems: 'flex-start',
+  },
+  medicalTitle: {
+    fontFamily: 'System',
+    fontWeight: '800',
+    letterSpacing: -1,
+    lineHeight: 32,
+  },
+  medicalSubtitle: {
+    fontFamily: 'System',
+    fontWeight: '600',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    opacity: 0.7,
+    marginTop: -4,
+  },
+
   // Premium Variant
   premiumContainer: {
     marginRight: 12,
