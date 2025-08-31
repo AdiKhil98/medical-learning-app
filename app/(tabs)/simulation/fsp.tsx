@@ -453,7 +453,7 @@ export default function FSPSimulationScreen() {
   // Cleanup widget when component unmounts or navigating away
   useEffect(() => {
     return () => {
-      console.log('🧹 FSP Simulation cleanup - complete widget removal');
+      console.log('🧹 FSP Simulation cleanup - AGGRESSIVE widget removal');
       
       // Stop simulation
       setSimulationStarted(false);
@@ -464,33 +464,68 @@ export default function FSPSimulationScreen() {
         delete window.fspMonitoringInterval;
       }
       
-      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-        try {
-          // Try multiple methods to hide/remove widget
-          if (window.voiceflow.chat.hide) {
-            window.voiceflow.chat.hide();
+      // Aggressive widget removal - try multiple approaches
+      const forceRemoveWidget = () => {
+        console.log('💯 FSP Force removing widget...');
+        
+        // Method 1: Voiceflow API calls
+        if (window.voiceflow && window.voiceflow.chat) {
+          try {
+            console.log('🔧 FSP Calling Voiceflow hide/close/destroy methods');
+            window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+            window.voiceflow.chat.close && window.voiceflow.chat.close();
+            window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
+          } catch (error) {
+            console.error('❌ FSP Voiceflow API cleanup error:', error);
           }
-          if (window.voiceflow.chat.close) {
-            window.voiceflow.chat.close();
-          }
-          if (window.voiceflow.chat.destroy) {
-            window.voiceflow.chat.destroy();
-          }
-          
-          // Remove widget DOM elements as fallback
-          setTimeout(() => {
-            const widgetElements = document.querySelectorAll('[data-testid="chat"], .vfrc-widget, #voiceflow-chat, iframe[src*="voiceflow"]');
-            widgetElements.forEach(element => {
-              if (element && element.parentNode) {
-                element.parentNode.removeChild(element);
-              }
-            });
-          }, 100);
-          
-        } catch (error) {
-          console.error('❌ Error during FSP widget cleanup:', error);
         }
-      }
+        
+        // Method 2: DOM removal - more aggressive selectors
+        const selectors = [
+          '[data-testid="chat"]',
+          '.vfrc-widget',
+          '.vfrc-chat',
+          '#voiceflow-chat',
+          'iframe[src*="voiceflow"]',
+          'iframe[src*="general-runtime"]',
+          '[id*="voiceflow"]',
+          '[class*="voiceflow"]',
+          '[class*="vfrc"]',
+          '.widget-container',
+          'div[style*="z-index: 1000"]', // Common widget z-index
+          'div[style*="position: fixed"]' // Fixed position widgets
+        ];
+        
+        selectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(element => {
+            if (element && element.parentNode) {
+              console.log(`🗑️ FSP Removing DOM element: ${selector}`);
+              element.style.display = 'none';
+              element.parentNode.removeChild(element);
+            }
+          });
+        });
+        
+        // Method 3: Find and remove any suspicious floating elements
+        const allDivs = document.querySelectorAll('div');
+        allDivs.forEach(div => {
+          const style = window.getComputedStyle(div);
+          if (style.position === 'fixed' && 
+              (style.zIndex > 999 || div.textContent.includes('Voiceflow') || div.innerHTML.includes('chat'))) {
+            console.log('🔍 FSP Removing suspicious floating element');
+            div.style.display = 'none';
+            if (div.parentNode) {
+              div.parentNode.removeChild(div);
+            }
+          }
+        });
+      };
+      
+      // Run cleanup immediately and with delays
+      forceRemoveWidget();
+      setTimeout(forceRemoveWidget, 100);
+      setTimeout(forceRemoveWidget, 500);
     };
   }, []);
 
