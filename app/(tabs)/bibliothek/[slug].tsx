@@ -264,9 +264,6 @@ const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Se
       </TouchableOpacity>
       
       <Text style={styles.subcategoryLabel} numberOfLines={2}>{childItem.title}</Text>
-      <View style={styles.subcategoryMeta}>
-        <Text style={styles.subcategoryType}>{childItem.type.toUpperCase()}</Text>
-      </View>
     </Animated.View>
   );
 };
@@ -433,11 +430,6 @@ export default function SectionDetailScreen() {
         
         <View style={styles.headerContent}>
           <Text style={styles.modernTitle}>{currentItem.title}</Text>
-          <View style={styles.headerMeta}>
-            <View style={styles.typeChip}>
-              <Text style={styles.modernTypeLabel}>{currentItem.type.toUpperCase()}</Text>
-            </View>
-          </View>
           {currentItem.description && (
             <Text style={styles.modernSubtitle}>{currentItem.description}</Text>
           )}
@@ -612,25 +604,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     lineHeight: 34,
   },
-  headerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  typeChip: {
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(102, 126, 234, 0.2)',
-  },
-  modernTypeLabel: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 10,
-    color: '#667eea',
-    letterSpacing: 1,
-  },
   modernSubtitle: {
     fontFamily: 'Inter-Regular',
     fontSize: 16,
@@ -794,19 +767,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#1e293b',
     textAlign: 'center',
-    marginBottom: 4,
     lineHeight: 16,
     minHeight: 32,
-  },
-  subcategoryMeta: {
-    alignItems: 'center',
-  },
-  subcategoryType: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 9,
-    color: '#64748b',
-    letterSpacing: 0.5,
-    textAlign: 'center',
+    marginTop: 4,
   },
 
   // Modern Empty State
