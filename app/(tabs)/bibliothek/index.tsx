@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import SplineComponent from '@/components/ui/SplineComponent';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -363,6 +364,26 @@ export default function BibliothekMainScreen() {
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+        {/* 3D Spline Hero Section */}
+        <View style={styles.splineHeroSection}>
+          <SplineComponent
+            scene="https://prod.spline.design/VnmRaIQjPhUrDlaa/scene.splinecode"
+            height={280}
+            width="100%"
+            style={styles.splineHeroContainer}
+          />
+          <View style={styles.splineOverlay}>
+            <Text style={styles.splineHeroTitle}>Interaktive 3D Medizin</Text>
+            <Text style={styles.splineHeroSubtitle}>Erleben Sie medizinische Inhalte in neuer Dimension</Text>
+          </View>
+        </View>
+
+        {/* Categories Section Header */}
+        <View style={styles.categoriesSectionHeader}>
+          <Text style={styles.categoriesSectionTitle}>Fachbereiche</Text>
+          <Text style={styles.categoriesSectionSubtitle}>Wählen Sie Ihr Spezialgebiet</Text>
+        </View>
+
         {/* 3D Circular Categories Grid */}
         <View style={styles.categoriesGrid}>
           {mainCategories.map((category) => (
@@ -515,6 +536,69 @@ const styles = StyleSheet.create({
   modernContent: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+
+  // Spline Hero Section
+  splineHeroSection: {
+    position: 'relative',
+    marginBottom: 32,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  splineHeroContainer: {
+    borderRadius: 20,
+  },
+  splineOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  splineHeroTitle: {
+    fontSize: 22,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  splineHeroSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 18,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+
+  // Categories Section Header
+  categoriesSectionHeader: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  categoriesSectionTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  categoriesSectionSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#64748b',
+    textAlign: 'center',
   },
 
   // 3D Circular Categories Grid
