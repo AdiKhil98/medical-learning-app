@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckCircle, User, Shield, BookOpen, X } from 'lucide-react-native';
+import { CheckCircle, User, Shield, BookOpen, X, ArrowRight, Stethoscope, GraduationCap, FileText, Sparkles } from 'lucide-react-native';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface WelcomeFlowProps {
   visible: boolean;
@@ -26,22 +29,43 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
   const steps = [
     {
-      title: 'Willkommen bei KP MED',
-      subtitle: 'Ihre medizinische Lernplattform',
-      icon: '🏥',
-      content: 'Bereiten Sie sich erfolgreich auf Ihre medizinischen Prüfungen vor mit professionellen Lehrmaterialien und interaktiven Simulationen.',
+      title: 'Willkommen bei MedLearn',
+      subtitle: 'Ihre moderne medizinische Lernplattform',
+      icon: Stethoscope,
+      iconColor: '#667eea',
+      bgGradient: ['#667eea', '#764ba2'],
+      content: 'Bereiten Sie sich mit KI-gestützten Simulationen und interaktiven Fallstudien optimal auf Ihre medizinischen Prüfungen vor.',
+      features: [
+        'Personalisierte Lernpfade',
+        'Realistische Patientensimulationen',
+        'Detailliertes Feedback & Analytics'
+      ]
     },
     {
-      title: 'Berufliche Qualifikation',
-      subtitle: 'Bestätigung der Berechtigung',
-      icon: '👨‍⚕️',
-      content: 'Diese Plattform ist ausschließlich für approbierte medizinische Fachkräfte und Studierende der Medizin bestimmt.',
+      title: 'Professionelle Qualifikation',
+      subtitle: 'Bestätigung Ihrer medizinischen Berechtigung',
+      icon: GraduationCap,
+      iconColor: '#f093fb',
+      bgGradient: ['#f093fb', '#f5576c'],
+      content: 'Diese Plattform ist ausschließlich für medizinische Fachkräfte und Studierende der Medizin konzipiert.',
+      features: [
+        'Approbierte Ärzte',
+        'Medizinstudierende',
+        'Medizinische Fachkräfte'
+      ]
     },
     {
-      title: 'Medizinischer Haftungsausschluss',
-      subtitle: 'Wichtige Nutzungsbedingungen',
-      icon: '⚕️',
-      content: 'Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.',
+      title: 'Rechtliche Hinweise',
+      subtitle: 'Medizinischer Haftungsausschluss',
+      icon: FileText,
+      iconColor: '#4facfe',
+      bgGradient: ['#4facfe', '#00f2fe'],
+      content: 'Die Inhalte dienen ausschließlich der Ausbildung und stellen keine medizinische Beratung oder Behandlungsempfehlung dar.',
+      features: [
+        'Nur für Bildungszwecke',
+        'Keine medizinische Beratung',
+        'Professionelle Verantwortung'
+      ]
     }
   ];
 
@@ -84,66 +108,101 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       transparent={false}
       statusBarTranslucent
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.modernContainer}>
         <LinearGradient
-          colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
+          colors={['#f8fafc', '#e2e8f0', '#ffffff']}
           style={styles.gradientBackground}
         />
 
-        {/* Header */}
-        <LinearGradient
-          colors={[MEDICAL_COLORS.primaryGradient[0], MEDICAL_COLORS.primaryGradient[1]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
+        {/* Modern Header */}
+        <View style={styles.modernHeader}>
           <TouchableOpacity
-            style={styles.closeButton}
+            style={styles.modernCloseButton}
             onPress={onDismiss}
           >
-            <X size={24} color={MEDICAL_COLORS.white} />
+            <X size={20} color="#6b7280" />
           </TouchableOpacity>
           
-          <View style={styles.progressContainer}>
-            {steps.map((_, index) => (
-              <View
-                key={index}
+          {/* Modern Progress Indicator */}
+          <View style={styles.modernProgressContainer}>
+            <View style={styles.progressTrack}>
+              <View 
                 style={[
-                  styles.progressDot,
-                  index === currentStep && styles.activeProgressDot,
-                  index < currentStep && styles.completedProgressDot,
-                ]}
+                  styles.progressFill, 
+                  { width: `${((currentStep + 1) / steps.length) * 100}%` }
+                ]} 
               />
-            ))}
+            </View>
+            <Text style={styles.progressText}>
+              {currentStep + 1} von {steps.length}
+            </Text>
           </View>
-        </LinearGradient>
+        </View>
 
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          {/* Step Content */}
-          <View style={styles.stepContainer}>
-            <Text style={styles.stepIcon}>{currentStepData.icon}</Text>
-            <Text style={styles.stepTitle}>{currentStepData.title}</Text>
-            <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
-            <Text style={styles.stepContent}>{currentStepData.content}</Text>
+        <ScrollView style={styles.modernContent} contentContainerStyle={styles.modernContentContainer}>
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <LinearGradient
+              colors={currentStepData.bgGradient}
+              style={styles.heroGradient}
+            >
+              <View style={styles.heroContent}>
+                <View style={styles.modernIconContainer}>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
+                    style={styles.iconBackground}
+                  >
+                    <currentStepData.icon size={32} color="white" />
+                  </LinearGradient>
+                  {/* Floating sparkles */}
+                  <View style={[styles.sparkle, styles.sparkle1]}>
+                    <Sparkles size={12} color="rgba(255,255,255,0.6)" />
+                  </View>
+                  <View style={[styles.sparkle, styles.sparkle2]}>
+                    <Sparkles size={8} color="rgba(255,255,255,0.4)" />
+                  </View>
+                </View>
+                
+                <Text style={styles.modernStepTitle}>{currentStepData.title}</Text>
+                <Text style={styles.modernStepSubtitle}>{currentStepData.subtitle}</Text>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Content Card */}
+          <View style={styles.contentCard}>
+            <Text style={styles.modernStepContent}>{currentStepData.content}</Text>
+            
+            {/* Features List */}
+            <View style={styles.featuresList}>
+              {currentStepData.features.map((feature, index) => (
+                <View key={index} style={styles.featureItem}>
+                  <View style={[styles.featureDot, { backgroundColor: currentStepData.iconColor }]} />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
+            </View>
           </View>
 
           {/* Professional Verification */}
           {currentStep === 1 && (
-            <View style={styles.verificationContainer}>
+            <View style={styles.modernVerificationContainer}>
               <TouchableOpacity
                 style={[
-                  styles.checkboxContainer,
-                  professionalVerified && styles.checkboxChecked
+                  styles.modernCheckboxContainer,
+                  professionalVerified && styles.modernCheckboxChecked
                 ]}
                 onPress={() => setProfessionalVerified(!professionalVerified)}
               >
-                <CheckCircle
-                  size={20}
-                  color={professionalVerified ? MEDICAL_COLORS.white : MEDICAL_COLORS.primary}
-                />
+                <View style={[styles.checkboxIcon, professionalVerified && styles.checkboxIconChecked]}>
+                  <CheckCircle
+                    size={20}
+                    color={professionalVerified ? 'white' : currentStepData.iconColor}
+                  />
+                </View>
                 <Text style={[
-                  styles.checkboxText,
-                  professionalVerified && styles.checkboxTextChecked
+                  styles.modernCheckboxText,
+                  professionalVerified && styles.modernCheckboxTextChecked
                 ]}>
                   Ich bestätige, dass ich eine approbierte medizinische Fachkraft oder Medizinstudent bin
                 </Text>
@@ -153,21 +212,23 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
           {/* Disclaimer Acceptance */}
           {currentStep === 2 && (
-            <View style={styles.verificationContainer}>
+            <View style={styles.modernVerificationContainer}>
               <TouchableOpacity
                 style={[
-                  styles.checkboxContainer,
-                  disclaimerAccepted && styles.checkboxChecked
+                  styles.modernCheckboxContainer,
+                  disclaimerAccepted && styles.modernCheckboxChecked
                 ]}
                 onPress={() => setDisclaimerAccepted(!disclaimerAccepted)}
               >
-                <CheckCircle
-                  size={20}
-                  color={disclaimerAccepted ? MEDICAL_COLORS.white : MEDICAL_COLORS.primary}
-                />
+                <View style={[styles.checkboxIcon, disclaimerAccepted && styles.checkboxIconChecked]}>
+                  <CheckCircle
+                    size={20}
+                    color={disclaimerAccepted ? 'white' : currentStepData.iconColor}
+                  />
+                </View>
                 <Text style={[
-                  styles.checkboxText,
-                  disclaimerAccepted && styles.checkboxTextChecked
+                  styles.modernCheckboxText,
+                  disclaimerAccepted && styles.modernCheckboxTextChecked
                 ]}>
                   Ich habe den medizinischen Haftungsausschluss gelesen und akzeptiert
                 </Text>
@@ -176,19 +237,20 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
           )}
         </ScrollView>
 
-        {/* Footer */}
-        <View style={styles.footer}>
+        {/* Modern Footer */}
+        <View style={styles.modernFooter}>
           <TouchableOpacity
-            style={styles.nextButton}
+            style={styles.modernNextButton}
             onPress={handleNext}
           >
             <LinearGradient
-              colors={[MEDICAL_COLORS.primaryGradient[0], MEDICAL_COLORS.primaryGradient[1]]}
-              style={styles.nextButtonGradient}
+              colors={currentStepData.bgGradient}
+              style={styles.modernNextButtonGradient}
             >
-              <Text style={styles.nextButtonText}>
-                {currentStep === steps.length - 1 ? 'Loslegen' : 'Weiter'}
+              <Text style={styles.modernNextButtonText}>
+                {currentStep === steps.length - 1 ? 'Jetzt starten' : 'Weiter'}
               </Text>
+              <ArrowRight size={18} color="white" style={styles.buttonArrow} />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -198,9 +260,9 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modernContainer: {
     flex: 1,
-    backgroundColor: MEDICAL_COLORS.white,
+    backgroundColor: '#ffffff',
   },
   gradientBackground: {
     position: 'absolute',
@@ -209,122 +271,227 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
   },
-  header: {
-    paddingTop: 40,
+  
+  // Modern Header
+  modernHeader: {
+    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
+  modernCloseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  progressContainer: {
+  modernProgressContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginLeft: 20,
+  },
+  progressTrack: {
+    width: '80%',
+    height: 6,
+    backgroundColor: 'rgba(107, 114, 128, 0.2)',
+    borderRadius: 3,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#667eea',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
+  },
+
+  // Modern Content
+  modernContent: {
+    flex: 1,
+  },
+  modernContentContainer: {
+    padding: 0,
+    paddingBottom: 40,
+  },
+  
+  // Hero Section
+  heroSection: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  heroGradient: {
+    paddingVertical: 48,
+    paddingHorizontal: 32,
+  },
+  heroContent: {
+    alignItems: 'center',
+  },
+  modernIconContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  iconBackground: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  sparkle: {
+    position: 'absolute',
+  },
+  sparkle1: {
+    top: -8,
+    right: -8,
+  },
+  sparkle2: {
+    bottom: -4,
+    left: -4,
+  },
+  modernStepTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  modernStepSubtitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Content Card
+  contentCard: {
+    marginHorizontal: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  modernStepContent: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#374151',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  featuresList: {
+    gap: 16,
+  },
+  featureItem: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    paddingVertical: 4,
   },
-  progressDot: {
+  featureDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginHorizontal: 4,
+    marginRight: 12,
   },
-  activeProgressDot: {
-    backgroundColor: MEDICAL_COLORS.white,
-    width: 24,
-  },
-  completedProgressDot: {
-    backgroundColor: MEDICAL_COLORS.white,
-  },
-  content: {
+  featureText: {
+    fontSize: 15,
+    fontFamily: 'Inter-Medium',
+    color: '#4b5563',
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
-  },
-  stepContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  stepIcon: {
-    fontSize: 60,
-    marginBottom: 24,
-  },
-  stepTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  stepSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: MEDICAL_COLORS.gray,
-    textAlign: 'center',
+
+  // Modern Verification
+  modernVerificationContainer: {
+    marginHorizontal: 20,
     marginBottom: 20,
   },
-  stepContent: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 10,
-  },
-  verificationContainer: {
-    marginTop: 20,
-  },
-  checkboxContainer: {
+  modernCheckboxContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: 'rgba(249, 250, 251, 1)',
     borderWidth: 2,
-    borderColor: MEDICAL_COLORS.primary,
-    backgroundColor: `${MEDICAL_COLORS.primary}08`,
+    borderColor: 'rgba(209, 213, 219, 0.5)',
   },
-  checkboxChecked: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    borderColor: MEDICAL_COLORS.primaryDark,
+  modernCheckboxChecked: {
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    borderColor: '#667eea',
   },
-  checkboxText: {
+  checkboxIcon: {
+    marginRight: 16,
+    marginTop: 2,
+  },
+  checkboxIconChecked: {
+    // Add any specific checked icon styles
+  },
+  modernCheckboxText: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Medium',
-    color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 20,
+    color: '#374151',
+    lineHeight: 22,
   },
-  checkboxTextChecked: {
-    color: MEDICAL_COLORS.white,
+  modernCheckboxTextChecked: {
+    color: '#1f2937',
   },
-  footer: {
+
+  // Modern Footer
+  modernFooter: {
     padding: 20,
     paddingBottom: 40,
   },
-  nextButton: {
-    borderRadius: 25,
+  modernNextButton: {
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  nextButtonGradient: {
-    paddingVertical: 16,
+  modernNextButtonGradient: {
+    flexDirection: 'row',
+    paddingVertical: 18,
     paddingHorizontal: 32,
-    borderRadius: 25,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  nextButtonText: {
+  modernNextButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.white,
+    color: 'white',
+  },
+  buttonArrow: {
+    marginLeft: 4,
   },
 });
