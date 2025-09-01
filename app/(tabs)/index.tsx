@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -11,6 +11,8 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface DailyTip {
   id?: string;
@@ -206,16 +208,16 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
+        colors={['#f8faff', '#e3f2fd', '#ffffff']}
         style={styles.gradientBackground}
       />
       
-      {/* Header */}
+      {/* Modern Header */}
       <LinearGradient
-        colors={[MEDICAL_COLORS.primaryGradient[0], MEDICAL_COLORS.primaryGradient[1]]}
+        colors={['#4A90E2', '#357ABD', '#2E5B9A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={styles.modernHeader}
       >
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -229,6 +231,62 @@ export default function DashboardScreen() {
         </View>
       </LinearGradient>
 
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroGradient}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.heroTextContainer}>
+              <Text style={styles.heroTitle}>
+                Baue eine KI-gestützte Zukunft
+              </Text>
+              <Text style={styles.heroSubtitle}>
+                für Deine medizinische Ausbildung
+              </Text>
+              <Text style={styles.heroDescription}>
+                Erweitere Dein medizinisches Wissen mit personalisierten Lerninhalten und KI-gestützter Prüfungsvorbereitung.
+              </Text>
+              
+              <View style={styles.heroButtons}>
+                <TouchableOpacity 
+                  style={styles.primaryHeroButton}
+                  onPress={() => router.push('/(tabs)/bibliothek')}
+                >
+                  <Text style={styles.primaryButtonText}>Jetzt lernen</Text>
+                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.secondaryHeroButton}
+                  onPress={() => router.push('/(tabs)/simulation')}
+                >
+                  <Text style={styles.secondaryButtonText}>Simulation starten</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* 3D-like floating elements */}
+            <View style={styles.floatingElements}>
+              <View style={[styles.floatingCube, styles.cube1]}>
+                <Sparkles size={24} color="#4A90E2" />
+              </View>
+              <View style={[styles.floatingCube, styles.cube2]}>
+                <Target size={20} color="#667eea" />
+              </View>
+              <View style={[styles.floatingCube, styles.cube3]}>
+                <TrendingUp size={22} color="#764ba2" />
+              </View>
+              <View style={[styles.floatingCube, styles.cube4]}>
+                <BookOpen size={18} color="#4A90E2" />
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentContainer}>
         
@@ -439,15 +497,15 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.textSecondary,
     fontFamily: 'Inter-Regular',
   },
-  header: {
+  modernHeader: {
     paddingTop: 8,
     paddingBottom: 16,
     paddingHorizontal: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   headerContent: {
     flexDirection: 'row',
@@ -489,14 +547,16 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 28,
-    borderRadius: 18,
+    borderRadius: 24,
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.08)',
   },
   cardGradient: {
     padding: 24,
@@ -528,16 +588,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   answerOption: {
-    backgroundColor: MEDICAL_COLORS.offWhite,
-    borderRadius: 14,
-    marginBottom: 10,
+    backgroundColor: '#f8faff',
+    borderRadius: 16,
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   selectedOption: {
     borderColor: MEDICAL_COLORS.primary,
@@ -707,13 +767,15 @@ const styles = StyleSheet.create({
   },
   contentsContainer: {
     backgroundColor: 'white',
-    borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
+    borderRadius: 24,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.08)',
   },
   contentItem: {
     flexDirection: 'row',
@@ -755,5 +817,146 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.textSecondary,
     marginLeft: 4,
     opacity: 0.8,
+  },
+  
+  // Hero Section Styles
+  heroSection: {
+    marginHorizontal: 0,
+    marginBottom: 0,
+    borderRadius: 0,
+    overflow: 'hidden',
+  },
+  heroGradient: {
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    minHeight: 280,
+  },
+  heroContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
+  heroTextContainer: {
+    flex: 1,
+    paddingRight: 20,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    lineHeight: 38,
+    marginBottom: 8,
+    letterSpacing: -0.8,
+  },
+  heroSubtitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 38,
+    marginBottom: 16,
+    letterSpacing: -0.8,
+  },
+  heroDescription: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 24,
+    marginBottom: 32,
+    maxWidth: '90%',
+  },
+  heroButtons: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  primaryHeroButton: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    backdropFilter: 'blur(10px)',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  secondaryHeroButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    marginRight: 8,
+  },
+  secondaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+  },
+  buttonIcon: {
+    marginLeft: 4,
+  },
+  
+  // Floating Elements
+  floatingElements: {
+    position: 'relative',
+    width: 150,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingCube: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  cube1: {
+    width: 60,
+    height: 60,
+    top: -10,
+    right: 20,
+    transform: [{ rotate: '15deg' }],
+  },
+  cube2: {
+    width: 50,
+    height: 50,
+    bottom: 40,
+    left: 0,
+    transform: [{ rotate: '-10deg' }],
+  },
+  cube3: {
+    width: 55,
+    height: 55,
+    top: 30,
+    left: 30,
+    transform: [{ rotate: '25deg' }],
+  },
+  cube4: {
+    width: 45,
+    height: 45,
+    bottom: 0,
+    right: 0,
+    transform: [{ rotate: '-20deg' }],
   },
 });
