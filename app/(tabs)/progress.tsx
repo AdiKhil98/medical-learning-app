@@ -416,10 +416,10 @@ export default function ProgressScreen() {
   const filteredEvaluations = getFilteredEvaluations();
 
   const averageScore = filteredEvaluations.length > 0 
-    ? Math.round(filteredEvaluations.reduce((sum, eval) => sum + eval.score, 0) / filteredEvaluations.length)
+    ? Math.round(filteredEvaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / filteredEvaluations.length)
     : 0;
     
-  const passedCount = filteredEvaluations.filter(eval => eval.score >= 60).length;
+  const passedCount = filteredEvaluations.filter(evaluation => evaluation.score >= 60).length;
   const totalAttempts = filteredEvaluations.length;
 
   return (
