@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface UserAvatarProps {
   size?: 'small' | 'medium' | 'large';
@@ -14,6 +15,7 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const { user, signOut } = useAuth();
   const { isDarkMode } = useTheme();
+  const { getSimulationStatusText } = useSubscription();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const getInitials = () => {
@@ -97,10 +99,10 @@ export default function UserAvatar({
               </View>
             </LinearGradient>
 
-            {/* Simple info note */}
+            {/* Simulation status */}
             <View style={styles.infoContainer}>
-              <Text style={styles.infoText}>
-                Für weitere Optionen verwenden Sie das Hauptmenü links.
+              <Text style={styles.simulationStatusText}>
+                {getSimulationStatusText()}
               </Text>
             </View>
           </View>
@@ -197,10 +199,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
-  infoText: {
-    fontSize: 13,
-    color: '#6B7280',
-    fontWeight: '500',
+  simulationStatusText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '600',
     textAlign: 'center',
     lineHeight: 18,
   },
