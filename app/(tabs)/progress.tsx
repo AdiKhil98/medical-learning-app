@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, Touchable
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
+import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight } from 'lucide-react-native';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -295,8 +297,9 @@ export default function ProgressScreen() {
     </View>
   );
 
-  const renderEvaluationCard = (evaluation: Evaluation) => {
-    const scoreColor = evaluation.score >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger;
+  const renderModernEvaluationCard = (evaluation: Evaluation) => {
+    const scoreColor = evaluation.score >= 60 ? '#10b981' : '#ef4444';
+    const scoreBgColor = evaluation.score >= 60 ? '#dcfce7' : '#fee2e2';
     const passStatus = evaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
     const isExpanded = expandedEvaluation === evaluation.id;
 
@@ -307,330 +310,605 @@ export default function ProgressScreen() {
     return (
       <TouchableOpacity 
         key={evaluation.id} 
-        style={styles.evaluationCard}
+        style={styles.modernEvaluationCard}
         onPress={toggleExpansion}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardDate}>
-            {format(new Date(evaluation.created_at), 'dd.MM.yyyy')}
-          </Text>
-          <View style={styles.cardScore}>
-            <Text style={[styles.scoreText, { color: scoreColor }]}>
-              {evaluation.score}/100
-            </Text>
-            <Text style={[styles.passText, { color: scoreColor }]}>
-              {passStatus}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.cardContent}>
-          <Text style={styles.cardType}>
-            {evaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
-          </Text>
-          
-          {/* Expansion indicator */}
-          <Text style={styles.expandIndicator}>
-            {isExpanded ? '▼ Details ausblenden' : '▶ Details anzeigen'}
-          </Text>
-        </View>
-
-        {/* Expanded evaluation details */}
-        {isExpanded && (
-          <View style={styles.evaluationDetails}>
-            {/* Score header */}
-            <View style={styles.scoreHeader}>
-              <Text style={[styles.finalScore, { color: scoreColor }]}>
-                ENDPUNKTZAHL: {evaluation.score}/100
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: scoreColor }]}>
-                <Text style={styles.statusText}>
-                  {evaluation.score >= 66 ? 'BESTANDEN ✓' : 'MEHR ÜBUNG NÖTIG ✗'}
+        <LinearGradient
+          colors={['#ffffff', '#fafbfc']}
+          style={styles.modernCardGradient}
+        >
+          <View style={styles.modernCardHeader}>
+            <View style={styles.modernCardLeft}>
+              <View style={styles.modernDateContainer}>
+                <Calendar size={16} color="#6b7280" />
+                <Text style={styles.modernCardDate}>
+                  {format(new Date(evaluation.created_at), 'dd.MM.yyyy')}
                 </Text>
               </View>
+              <Text style={styles.modernCardType}>
+                {evaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
+              </Text>
             </View>
-
-            {/* Evaluation content sections */}
-            {evaluation.patient_evaluation && (
-              <View style={styles.evaluationSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>📋 DETAILLIERTE BEWERTUNG</Text>
-                </View>
-                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
-                  <Text style={styles.evaluationContent}>{evaluation.patient_evaluation}</Text>
-                </ScrollView>
-              </View>
-            )}
             
-            {evaluation.examiner_evaluation && (
-              <View style={styles.evaluationSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>👨‍⚕️ PRÜFER-FEEDBACK</Text>
-                </View>
-                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
-                  <Text style={styles.evaluationContent}>{evaluation.examiner_evaluation}</Text>
-                </ScrollView>
+            <View style={styles.modernCardRight}>
+              <View style={[styles.modernScoreContainer, { backgroundColor: scoreBgColor }]}>
+                <Text style={[styles.modernScoreText, { color: scoreColor }]}>
+                  {evaluation.score}
+                </Text>
+                <Text style={styles.modernScoreMax}>/100</Text>
               </View>
-            )}
-            
-            {evaluation.evaluation && (
-              <View style={styles.evaluationSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>📊 ZUSAMMENFASSUNG</Text>
-                </View>
-                <ScrollView style={styles.evaluationScrollView} nestedScrollEnabled>
-                  <Text style={styles.evaluationContent}>{evaluation.evaluation}</Text>
-                </ScrollView>
-              </View>
-            )}
-
+              <Text style={[styles.modernPassStatus, { color: scoreColor }]}>
+                {passStatus}
+              </Text>
+            </View>
           </View>
-        )}
+          
+          <View style={styles.modernCardFooter}>
+            <View style={styles.modernCardProgress}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { 
+                      width: `${evaluation.score}%`,
+                      backgroundColor: scoreColor
+                    }
+                  ]} 
+                />
+              </View>
+              <Text style={styles.progressText}>{evaluation.score}% erreicht</Text>
+            </View>
+            
+            <TouchableOpacity style={styles.modernExpandButton}>
+              <Text style={styles.modernExpandText}>
+                {isExpanded ? 'Weniger' : 'Details'}
+              </Text>
+              <ChevronRight 
+                size={16} 
+                color="#6366f1" 
+                style={[styles.chevron, isExpanded && styles.chevronRotated]} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Expanded details with modern styling */}
+          {isExpanded && (
+            <View style={styles.modernEvaluationDetails}>
+              <LinearGradient
+                colors={['#f8fafc', '#f1f5f9']}
+                style={styles.detailsGradient}
+              >
+                <View style={styles.modernScoreSection}>
+                  <View style={[styles.modernScoreBadge, { backgroundColor: scoreColor }]}>
+                    <Award size={18} color="white" />
+                    <Text style={styles.modernScoreBadgeText}>
+                      {evaluation.score >= 60 ? 'BESTANDEN ✓' : 'NICHT BESTANDEN ✗'}
+                    </Text>
+                  </View>
+                </View>
+
+                {evaluation.patient_evaluation && (
+                  <View style={styles.modernEvaluationSection}>
+                    <Text style={styles.modernSectionTitle}>📋 Detaillierte Bewertung</Text>
+                    <Text style={styles.modernEvaluationText} numberOfLines={5}>
+                      {evaluation.patient_evaluation}
+                    </Text>
+                  </View>
+                )}
+                
+                {evaluation.examiner_evaluation && (
+                  <View style={styles.modernEvaluationSection}>
+                    <Text style={styles.modernSectionTitle}>👨‍⚕️ Prüfer-Feedback</Text>
+                    <Text style={styles.modernEvaluationText} numberOfLines={5}>
+                      {evaluation.examiner_evaluation}
+                    </Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </View>
+          )}
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
 
   const filteredEvaluations = getFilteredEvaluations();
 
+  const averageScore = filteredEvaluations.length > 0 
+    ? Math.round(filteredEvaluations.reduce((sum, eval) => sum + eval.score, 0) / filteredEvaluations.length)
+    : 0;
+    
+  const passedCount = filteredEvaluations.filter(eval => eval.score >= 60).length;
+  const totalAttempts = filteredEvaluations.length;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Fortschritt</Text>
-        <Text style={styles.subtitle}>Fortschritt Übersicht</Text>
-        
-        {/* Chart Section */}
-        <View style={styles.chartContainer}>
+    <SafeAreaView style={styles.modernContainer}>
+      <LinearGradient
+        colors={['#f8fafc', '#e2e8f0', '#ffffff']}
+        style={styles.gradientBackground}
+      />
+      
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+        {/* Modern Header */}
+        <View style={styles.modernHeader}>
+          <Text style={styles.modernTitle}>Lernfortschritt</Text>
+          <Text style={styles.modernSubtitle}>
+            Verfolgen Sie Ihre Entwicklung in der medizinischen Ausbildung
+          </Text>
+        </View>
+
+        {/* Stats Overview Cards */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.statIconContainer}
+            >
+              <Trophy size={20} color="white" />
+            </LinearGradient>
+            <Text style={styles.statValue}>{averageScore}%</Text>
+            <Text style={styles.statLabel}>Durchschnitt</Text>
+          </View>
+          
+          <View style={styles.statCard}>
+            <LinearGradient
+              colors={['#f093fb', '#f5576c']}
+              style={styles.statIconContainer}
+            >
+              <Target size={20} color="white" />
+            </LinearGradient>
+            <Text style={styles.statValue}>{passedCount}/{totalAttempts}</Text>
+            <Text style={styles.statLabel}>Bestanden</Text>
+          </View>
+          
+          <View style={styles.statCard}>
+            <LinearGradient
+              colors={['#4facfe', '#00f2fe']}
+              style={styles.statIconContainer}
+            >
+              <TrendingUp size={20} color="white" />
+            </LinearGradient>
+            <Text style={styles.statValue}>{chartData?.length || 0}</Text>
+            <Text style={styles.statLabel}>Versuche</Text>
+          </View>
+        </View>
+
+        {/* Modern Chart Section */}
+        <View style={styles.modernChartContainer}>
+          <View style={styles.chartHeader}>
+            <View style={styles.chartTitleContainer}>
+              <BarChart3 size={24} color="#4338ca" />
+              <Text style={styles.chartTitle}>Performance Verlauf</Text>
+            </View>
+            <View style={styles.chartLegend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: '#667eea' }]} />
+                <Text style={styles.legendText}>Score</Text>
+              </View>
+            </View>
+          </View>
           {renderChart()}
         </View>
 
-        {/* Tabs Section */}
-        {renderTabs()}
+        {/* Enhanced Tabs Section */}
+        <View style={styles.modernTabsContainer}>
+          <Text style={styles.sectionTitle}>Bewertungen nach Typ</Text>
+          {renderTabs()}
+        </View>
 
-        {/* Evaluation List */}
-        <View style={styles.cardsContainer}>
+        {/* Modern Evaluation Cards */}
+        <View style={styles.modernCardsContainer}>
           {filteredEvaluations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                Noch keine {activeTab}-Bewertungen vorhanden
-              </Text>
+            <View style={styles.modernEmptyState}>
+              <LinearGradient
+                colors={['#e3f2fd', '#f3e5f5']}
+                style={styles.emptyStateGradient}
+              >
+                <Calendar size={48} color="#9c27b0" />
+                <Text style={styles.emptyStateTitle}>Noch keine Daten</Text>
+                <Text style={styles.emptyStateText}>
+                  Starten Sie eine {activeTab}-Simulation, um Ihren Fortschritt zu verfolgen
+                </Text>
+              </LinearGradient>
             </View>
           ) : (
-            filteredEvaluations.map(renderEvaluationCard)
+            filteredEvaluations.map(renderModernEvaluationCard)
           )}
         </View>
+        
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modernContainer: {
     flex: 1,
-    backgroundColor: MEDICAL_COLORS.background,
+    backgroundColor: '#f8fafc',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: MEDICAL_COLORS.textPrimary,
-    textAlign: 'center',
-    marginTop: 20,
+  gradientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '100%',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  
+  // Modern Header
+  modernHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 32,
+  },
+  modernTitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
-  subtitle: {
+  modernSubtitle: {
     fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
+    lineHeight: 24,
   },
-  chartContainer: {
-    backgroundColor: MEDICAL_COLORS.background,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: MEDICAL_COLORS.border,
+
+  // Stats Grid
+  statsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 32,
+    gap: 12,
   },
-  chartWrapper: {
+  statCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
     alignItems: 'center',
-    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
-  emptyChart: {
-    height: 220,
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
+    marginBottom: 12,
+  },
+  statValue: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+
+  // Modern Chart
+  modernChartContainer: {
+    marginHorizontal: 20,
+    marginBottom: 32,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 12,
     borderWidth: 1,
-    borderColor: MEDICAL_COLORS.border,
-    borderStyle: 'dashed',
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    paddingBottom: 16,
+  },
+  chartTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
+  },
+
+  // Enhanced Chart Styles
+  chartWrapper: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingBottom: 16,
+  },
+  emptyChart: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 16,
   },
   emptyChartText: {
     fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
   },
-  chart: {
-    borderRadius: 8,
+
+  // Modern Tabs
+  modernTabsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+    marginBottom: 16,
+    letterSpacing: -0.3,
   },
   tabContainer: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 20,
-    borderRadius: 8,
-    backgroundColor: MEDICAL_COLORS.lightGray,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 16,
     padding: 4,
   },
   tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 12,
   },
   activeTab: {
-    backgroundColor: MEDICAL_COLORS.primary,
+    backgroundColor: '#6366f1',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: MEDICAL_COLORS.textSecondary,
+    fontFamily: 'Inter-SemiBold',
+    color: '#6b7280',
   },
   activeTabText: {
-    color: MEDICAL_COLORS.background,
+    color: 'white',
   },
-  cardsContainer: {
-    marginHorizontal: 16,
-    marginBottom: 20,
+
+  // Modern Cards
+  modernCardsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
   },
-  evaluationCard: {
-    backgroundColor: MEDICAL_COLORS.background,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: MEDICAL_COLORS.border,
+  modernEvaluationCard: {
+    marginBottom: 16,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  cardHeader: {
+  modernCardGradient: {
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  modernCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
-  cardDate: {
-    fontSize: 14,
-    color: MEDICAL_COLORS.textSecondary,
-  },
-  cardScore: {
-    alignItems: 'flex-end',
-  },
-  scoreText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  passText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardType: {
-    fontSize: 14,
-    color: MEDICAL_COLORS.textPrimary,
-    fontWeight: '500',
+  modernCardLeft: {
     flex: 1,
   },
-  expandIndicator: {
-    fontSize: 12,
-    color: MEDICAL_COLORS.primary,
-    fontWeight: '600',
-  },
-  evaluationDetails: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: MEDICAL_COLORS.border,
-  },
-  scoreHeader: {
-    backgroundColor: MEDICAL_COLORS.lightBackground,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+  modernDateContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  finalScore: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 8,
+    gap: 6,
   },
-  statusBadge: {
+  modernCardDate: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
+  },
+  modernCardType: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1f2937',
+  },
+  modernCardRight: {
+    alignItems: 'flex-end',
+  },
+  modernScoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 12,
+    marginBottom: 4,
   },
-  statusText: {
-    color: '#FFFFFF',
+  modernScoreText: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+  },
+  modernScoreMax: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
+  },
+  modernPassStatus: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  evaluationSection: {
-    marginBottom: 20,
-    backgroundColor: MEDICAL_COLORS.background,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: MEDICAL_COLORS.border,
+
+  // Progress and Footer
+  modernCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modernCardProgress: {
+    flex: 1,
+    marginRight: 16,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 3,
+    marginBottom: 6,
     overflow: 'hidden',
   },
-  sectionHeader: {
-    backgroundColor: MEDICAL_COLORS.lightGray,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.border,
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: MEDICAL_COLORS.textPrimary,
+  progressText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
   },
-  evaluationScrollView: {
-    maxHeight: 200,
+  modernExpandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#f0f4ff',
+    gap: 4,
+  },
+  modernExpandText: {
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+    color: '#6366f1',
+  },
+  chevron: {
+    transform: [{ rotate: '90deg' }],
+  },
+  chevronRotated: {
+    transform: [{ rotate: '-90deg' }],
+  },
+
+  // Expanded Details
+  modernEvaluationDetails: {
+    marginTop: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  detailsGradient: {
     padding: 16,
   },
-  evaluationContent: {
-    fontSize: 13,
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 20,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  emptyState: {
+  modernScoreSection: {
     alignItems: 'center',
-    paddingVertical: 40,
+    marginBottom: 16,
   },
-  emptyText: {
-    fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
+  modernScoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  modernScoreBadgeText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modernEvaluationSection: {
+    marginBottom: 16,
+  },
+  modernSectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  modernEvaluationText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+
+  // Empty State
+  modernEmptyState: {
+    marginTop: 20,
+  },
+  emptyStateGradient: {
+    alignItems: 'center',
+    padding: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(156, 39, 176, 0.1)',
+    borderStyle: 'dashed',
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: '#9c27b0',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
     textAlign: 'center',
+    lineHeight: 20,
   },
-  // Fallback chart styles
+
+  bottomSpacer: {
+    height: 32,
+  },
+
+  // Legacy styles for fallback chart
   simpleChart: {
     height: 250,
     padding: 16,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: MEDICAL_COLORS.textPrimary,
-    textAlign: 'center',
-    marginBottom: 20,
   },
   chartBars: {
     flexDirection: 'row',
@@ -652,12 +930,12 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     fontSize: 10,
-    color: MEDICAL_COLORS.textSecondary,
+    color: '#6b7280',
     marginBottom: 4,
   },
   chartValue: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: MEDICAL_COLORS.textPrimary,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
   },
 });
