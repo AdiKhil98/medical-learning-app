@@ -232,6 +232,37 @@ export default function DashboardScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentContainer}>
         
+        {/* Last Medical Contents */}
+        {recentMedicalContents.length > 0 && (
+          <View style={styles.medicalContentsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
+            </View>
+            <View style={styles.contentsContainer}>
+              {recentMedicalContents.map((content, index) => (
+                <TouchableOpacity 
+                  key={content.id} 
+                  style={[
+                    styles.contentItem,
+                    index === recentMedicalContents.length - 1 && styles.lastContentItem
+                  ]}
+                >
+                  <View style={styles.contentIcon}>
+                    <BookOpen size={18} color={MEDICAL_COLORS.primary} />
+                  </View>
+                  <View style={styles.contentInfo}>
+                    <Text style={styles.contentTitle}>{content.title}</Text>
+                    <View style={styles.contentMeta}>
+                      <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
+                      <Text style={styles.contentTime}>{content.lastViewed}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Daily Tip - Always show section */}
         <View style={styles.card}>
           <LinearGradient
@@ -266,37 +297,6 @@ export default function DashboardScreen() {
             )}
           </LinearGradient>
         </View>
-
-        {/* Last Medical Contents */}
-        {recentMedicalContents.length > 0 && (
-          <View style={styles.medicalContentsSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
-            </View>
-            <View style={styles.contentsContainer}>
-              {recentMedicalContents.map((content, index) => (
-                <TouchableOpacity 
-                  key={content.id} 
-                  style={[
-                    styles.contentItem,
-                    index === recentMedicalContents.length - 1 && styles.lastContentItem
-                  ]}
-                >
-                  <View style={styles.contentIcon}>
-                    <BookOpen size={18} color={MEDICAL_COLORS.primary} />
-                  </View>
-                  <View style={styles.contentInfo}>
-                    <Text style={styles.contentTitle}>{content.title}</Text>
-                    <View style={styles.contentMeta}>
-                      <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
-                      <Text style={styles.contentTime}>{content.lastViewed}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
 
         {/* Daily Question Card */}
         {dailyQuestion && (
