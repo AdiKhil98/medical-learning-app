@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 // Platform-specific Victory imports
-let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any;
+let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
 if (Platform.OS === 'web') {
   try {
@@ -14,6 +14,7 @@ if (Platform.OS === 'web') {
     VictoryAxis = Victory.VictoryAxis;
     VictoryTheme = Victory.VictoryTheme;
     VictoryScatter = Victory.VictoryScatter;
+    VictoryLine = Victory.VictoryLine;
   } catch (error) {
     console.log('Victory not available on web');
   }
@@ -25,6 +26,7 @@ if (Platform.OS === 'web') {
     VictoryAxis = VictoryNative.VictoryAxis;
     VictoryTheme = VictoryNative.VictoryTheme;
     VictoryScatter = VictoryNative.VictoryScatter;
+    VictoryLine = VictoryNative.VictoryLine;
   } catch (error) {
     console.log('Victory Native not available');
   }
@@ -143,7 +145,7 @@ export default function ProgressScreen() {
     }
 
     // Check if Victory components are available
-    if (!VictoryChart || !VictoryArea || !VictoryAxis || !VictoryScatter) {
+    if (!VictoryChart || !VictoryArea || !VictoryAxis || !VictoryScatter || !VictoryLine) {
       // Fallback simple chart visualization
       return (
         <View style={styles.simpleChart}>
@@ -230,6 +232,28 @@ export default function ProgressScreen() {
               onLoad: { duration: 600 }
             }}
             interpolation="cardinal"
+          />
+          
+          {/* Goal lines at 60% and 80% thresholds */}
+          <VictoryLine
+            data={[{x: 1, y: 60}, {x: chartData.length, y: 60}]}
+            style={{
+              data: {
+                stroke: '#FFA726', // Orange color for 60% threshold
+                strokeWidth: 2,
+                strokeDasharray: '5,5'
+              }
+            }}
+          />
+          <VictoryLine
+            data={[{x: 1, y: 80}, {x: chartData.length, y: 80}]}
+            style={{
+              data: {
+                stroke: '#66BB6A', // Green color for 80% threshold
+                strokeWidth: 2,
+                strokeDasharray: '5,5'
+              }
+            }}
           />
           
           {/* Data point circles */}
