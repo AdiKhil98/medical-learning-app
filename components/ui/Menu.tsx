@@ -58,11 +58,11 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   const submenuItems = [
     { label: 'Hilfe & Support', route: '/help' },
-    { label: 'AGB', route: '/terms' },
-    { label: 'Haftung', route: '/liability' },
-    { label: 'Datenschutz', route: '/privacy' },
-    { label: 'Impressum', route: '/imprint' },
-    { label: 'Datenschutzeinstellungen', route: '/privacy-settings' },
+    { label: 'AGB', route: '/konto/datenschutz-agb' },
+    { label: 'Haftung', route: '/haftung' },
+    { label: 'Datenschutz', route: '/konto/datenschutz-agb' },
+    { label: 'Impressum', route: '/impressum' },
+    { label: 'Datenschutzeinstellungen', route: '/datenschutz-einstellungen' },
   ];
 
   const handleMenuItemPress = (route: string) => {
