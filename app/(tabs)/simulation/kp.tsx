@@ -16,85 +16,6 @@ import { Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-// Floating particles component
-function FloatingParticles() {
-  const particles = Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    x: Math.random() * width,
-    y: Math.random() * height,
-    delay: Math.random() * 5000,
-    duration: 3000 + Math.random() * 4000,
-  }));
-
-  return (
-    <View style={styles.particlesContainer}>
-      {particles.map((particle) => (
-        <FloatingParticle key={particle.id} particle={particle} />
-      ))}
-    </View>
-  );
-}
-
-function FloatingParticle({ particle }) {
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(0.2);
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    const animate = () => {
-      translateY.value = withRepeat(
-        withSequence(
-          withTiming(-20, { duration: particle.duration / 2 }),
-          withTiming(0, { duration: particle.duration / 2 })
-        ),
-        -1,
-        false
-      );
-      
-      opacity.value = withRepeat(
-        withSequence(
-          withTiming(0.8, { duration: particle.duration / 2 }),
-          withTiming(0.2, { duration: particle.duration / 2 })
-        ),
-        -1,
-        false
-      );
-      
-      scale.value = withRepeat(
-        withSequence(
-          withTiming(1.5, { duration: particle.duration / 2 }),
-          withTiming(1, { duration: particle.duration / 2 })
-        ),
-        -1,
-        false
-      );
-    };
-
-    const timeout = setTimeout(animate, particle.delay);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        styles.particle,
-        {
-          left: particle.x,
-          top: particle.y,
-        },
-        animatedStyle,
-      ]}
-    />
-  );
-}
 
 export default function KPSimulationScreen() {
   const router = useRouter();
@@ -458,9 +379,6 @@ export default function KPSimulationScreen() {
           style={styles.gradientBackground}
         />
         
-        {/* Floating particles */}
-        <FloatingParticles />
-        
         {/* Subtle pattern overlay */}
         <View style={styles.patternOverlay} />
         
@@ -592,22 +510,6 @@ const styles = StyleSheet.create({
     height: '100%',
     opacity: 0.1,
     backgroundColor: 'transparent',
-  },
-  particlesContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    pointerEvents: 'none',
-  },
-  particle: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: '#cbd5e1',
-    borderRadius: 2,
-    opacity: 0.4,
   },
   scrollView: {
     flex: 1,

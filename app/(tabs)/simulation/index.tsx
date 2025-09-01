@@ -83,57 +83,7 @@ export default function SimulationScreen() {
         </View>
 
         <View style={styles.modernCardsContainer}>
-          {/* FSP Simulation Card */}
-          <View style={styles.modernCardWrapper}>
-            <TouchableOpacity
-              onPress={() => router.push('/simulation/fsp')}
-              activeOpacity={0.8}
-              style={styles.modernCard}
-            >
-              <LinearGradient
-                colors={['#ffffff', '#fef7f7']}
-                style={styles.cardGradient}
-              >
-                <View style={styles.cardHeader}>
-                  <LinearGradient
-                    colors={['#ef4444', '#dc2626']}
-                    style={styles.modernIconContainer}
-                  >
-                    <Mic size={24} color="white" />
-                  </LinearGradient>
-                  <View style={styles.cardBadge}>
-                    <Text style={styles.badgeText}>Kommunikation</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.cardContent}>
-                  <Text style={styles.modernCardTitle}>FSP-Simulation</Text>
-                  <Text style={styles.modernCardSubtitle}>Sprache & Kommunikation</Text>
-                  <Text style={styles.modernCardDescription}>
-                    Interaktive Patientengespräche mit KI-gestütztem Feedback und realitätsnahen Szenarien
-                  </Text>
-                </View>
-
-                <View style={styles.cardFeatures}>
-                  <View style={styles.featureItem}>
-                    <Play size={14} color="#ef4444" />
-                    <Text style={styles.featureText}>Interaktiv</Text>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <Clock size={14} color="#ef4444" />
-                    <Text style={styles.featureText}>20-30 Min</Text>
-                  </View>
-                </View>
-                
-                <TouchableOpacity style={styles.modernCardButton}>
-                  <Text style={styles.modernButtonText}>Simulation starten</Text>
-                  <ChevronRight size={16} color="white" />
-                </TouchableOpacity>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          {/* KP Simulation Card */}
+          {/* KP Simulation Card - Now First */}
           <View style={styles.modernCardWrapper}>
             <TouchableOpacity
               onPress={() => router.push('/simulation/kp')}
@@ -151,14 +101,10 @@ export default function SimulationScreen() {
                   >
                     <Brain size={24} color="white" />
                   </LinearGradient>
-                  <View style={[styles.cardBadge, styles.knowledgeBadge]}>
-                    <Text style={styles.badgeText}>Wissen</Text>
-                  </View>
                 </View>
                 
                 <View style={styles.cardContent}>
                   <Text style={styles.modernCardTitle}>KP-Simulation</Text>
-                  <Text style={styles.modernCardSubtitle}>Medizinisches Wissen</Text>
                   <Text style={styles.modernCardDescription}>
                     Umfassende Fallsimulationen mit diagnostischen Herausforderungen und Therapieentscheidungen
                   </Text>
@@ -176,6 +122,52 @@ export default function SimulationScreen() {
                 </View>
                 
                 <TouchableOpacity style={[styles.modernCardButton, styles.knowledgeButton]}>
+                  <Text style={styles.modernButtonText}>Simulation starten</Text>
+                  <ChevronRight size={16} color="white" />
+                </TouchableOpacity>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* FSP Simulation Card - Now Second */}
+          <View style={styles.modernCardWrapper}>
+            <TouchableOpacity
+              onPress={() => router.push('/simulation/fsp')}
+              activeOpacity={0.8}
+              style={styles.modernCard}
+            >
+              <LinearGradient
+                colors={['#ffffff', '#fef7f7']}
+                style={styles.cardGradient}
+              >
+                <View style={styles.cardHeader}>
+                  <LinearGradient
+                    colors={['#ef4444', '#dc2626']}
+                    style={styles.modernIconContainer}
+                  >
+                    <Mic size={24} color="white" />
+                  </LinearGradient>
+                </View>
+                
+                <View style={styles.cardContent}>
+                  <Text style={styles.modernCardTitle}>FSP-Simulation</Text>
+                  <Text style={styles.modernCardDescription}>
+                    Interaktive Patientengespräche mit KI-gestütztem Feedback und realitätsnahen Szenarien
+                  </Text>
+                </View>
+
+                <View style={styles.cardFeatures}>
+                  <View style={styles.featureItem}>
+                    <Play size={14} color="#ef4444" />
+                    <Text style={styles.featureText}>Interaktiv</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <Clock size={14} color="#ef4444" />
+                    <Text style={styles.featureText}>20-30 Min</Text>
+                  </View>
+                </View>
+                
+                <TouchableOpacity style={styles.modernCardButton}>
                   <Text style={styles.modernButtonText}>Simulation starten</Text>
                   <ChevronRight size={16} color="white" />
                 </TouchableOpacity>
