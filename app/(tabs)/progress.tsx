@@ -308,11 +308,9 @@ export default function ProgressScreen() {
     };
 
     return (
-      <TouchableOpacity 
+      <View 
         key={evaluation.id} 
         style={styles.modernEvaluationCard}
-        onPress={toggleExpansion}
-        activeOpacity={0.8}
       >
         <LinearGradient
           colors={['#ffffff', '#fafbfc']}
@@ -360,7 +358,10 @@ export default function ProgressScreen() {
               <Text style={styles.progressText}>{evaluation.score}% erreicht</Text>
             </View>
             
-            <TouchableOpacity style={styles.modernExpandButton}>
+            <TouchableOpacity 
+              style={styles.modernExpandButton}
+              onPress={toggleExpansion}
+            >
               <Text style={styles.modernExpandText}>
                 {isExpanded ? 'Weniger' : 'Details'}
               </Text>
@@ -391,25 +392,40 @@ export default function ProgressScreen() {
                 {evaluation.patient_evaluation && (
                   <View style={styles.modernEvaluationSection}>
                     <Text style={styles.modernSectionTitle}>📋 Detaillierte Bewertung</Text>
-                    <Text style={styles.modernEvaluationText} numberOfLines={5}>
-                      {evaluation.patient_evaluation}
-                    </Text>
+                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                      <Text style={styles.modernEvaluationText}>
+                        {evaluation.patient_evaluation}
+                      </Text>
+                    </ScrollView>
                   </View>
                 )}
                 
                 {evaluation.examiner_evaluation && (
                   <View style={styles.modernEvaluationSection}>
                     <Text style={styles.modernSectionTitle}>👨‍⚕️ Prüfer-Feedback</Text>
-                    <Text style={styles.modernEvaluationText} numberOfLines={5}>
-                      {evaluation.examiner_evaluation}
-                    </Text>
+                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                      <Text style={styles.modernEvaluationText}>
+                        {evaluation.examiner_evaluation}
+                      </Text>
+                    </ScrollView>
+                  </View>
+                )}
+
+                {evaluation.evaluation && (
+                  <View style={styles.modernEvaluationSection}>
+                    <Text style={styles.modernSectionTitle}>📊 Zusammenfassung</Text>
+                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                      <Text style={styles.modernEvaluationText}>
+                        {evaluation.evaluation}
+                      </Text>
+                    </ScrollView>
                   </View>
                 )}
               </LinearGradient>
             </View>
           )}
         </LinearGradient>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -872,6 +888,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#6b7280',
     lineHeight: 20,
+  },
+  modernEvaluationScrollView: {
+    maxHeight: 200,
+    marginTop: 4,
   },
 
   // Empty State
