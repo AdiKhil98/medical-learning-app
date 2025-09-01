@@ -232,24 +232,40 @@ export default function DashboardScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentContainer}>
         
-        {/* Daily Tip */}
-        {dailyTip && (
-          <View style={styles.tipContainer}>
-            {dailyTip.title && (
-              <Text style={styles.tipTitle}>{dailyTip.title}</Text>
-            )}
+        {/* Daily Tip - Always show section */}
+        <View style={styles.card}>
+          <LinearGradient
+            colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
+            style={styles.cardGradient}
+          >
+            <View style={styles.cardHeader}>
+              <Lightbulb size={24} color={MEDICAL_COLORS.primary} />
+              <Text style={styles.cardTitle}>Tipp des Tages</Text>
+            </View>
             
-            <Text style={styles.tipContent}>
-              {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
-            </Text>
-            
-            {dailyTip.category && (
-              <View style={styles.tipCategoryBadge}>
-                <Text style={styles.tipCategoryText}>{dailyTip.category}</Text>
-              </View>
+            {dailyTip ? (
+              <>
+                {dailyTip.title && (
+                  <Text style={styles.tipTitleCard}>{dailyTip.title}</Text>
+                )}
+                
+                <Text style={styles.tipContentCard}>
+                  {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
+                </Text>
+                
+                {dailyTip.category && (
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryText}>{dailyTip.category}</Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <Text style={styles.noContentText}>
+                Heute gibt es noch keinen Tipp. Schauen Sie später wieder vorbei!
+              </Text>
             )}
-          </View>
-        )}
+          </LinearGradient>
+        </View>
 
         {/* Last Medical Contents */}
         {recentMedicalContents.length > 0 && (
@@ -356,11 +372,11 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Empty State */}
-        {!dailyTip && !dailyQuestion && (
+        {/* Empty State - only show if no daily question */}
+        {!dailyQuestion && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              Heute gibt es noch keine täglichen Inhalte. Schauen Sie später wieder vorbei!
+              Heute gibt es noch keine Frage. Schauen Sie später wieder vorbei!
             </Text>
           </View>
         )}
@@ -485,45 +501,6 @@ const styles = StyleSheet.create({
   cardGradient: {
     padding: 24,
   },
-  // Lightweight Tip Styles
-  tipContainer: {
-    marginBottom: 32,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  tipTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 16,
-    textAlign: 'center',
-    letterSpacing: -0.2,
-  },
-  tipContent: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 26,
-    textAlign: 'center',
-    opacity: 0.85,
-    marginBottom: 20,
-    paddingHorizontal: 4,
-  },
-  tipCategoryBadge: {
-    alignSelf: 'center',
-    backgroundColor: MEDICAL_COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  tipCategoryText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: 'white',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -537,19 +514,6 @@ const styles = StyleSheet.create({
     marginLeft: 14,
     letterSpacing: -0.4,
     lineHeight: 24,
-  },
-  tipTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 12,
-  },
-  tipContent: {
-    fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 22,
-    marginBottom: 12,
   },
   questionText: {
     fontSize: 17,
@@ -647,6 +611,28 @@ const styles = StyleSheet.create({
     color: 'white',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  tipTitleCard: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  tipContentCard: {
+    fontSize: 15,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  noContentText: {
+    fontSize: 15,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 22,
+    opacity: 0.7,
+    fontStyle: 'italic',
   },
   emptyState: {
     padding: 48,
