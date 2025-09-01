@@ -16,9 +16,6 @@ import {
   ChevronDown,
   Mail,
   MessageCircle,
-  BookOpen,
-  Play,
-  FileText,
   HelpCircle,
   Lock,
   BarChart,
@@ -165,19 +162,6 @@ export default function HelpSupportScreen() {
     }
   };
 
-  const handleTutorialLink = (type: string) => {
-    switch (type) {
-      case 'getting-started':
-        Alert.alert('Erste Schritte', 'Tutorial wird geladen...');
-        break;
-      case 'video-tutorials':
-        Alert.alert('Video Tutorials', 'Video-Bibliothek wird geladen...');
-        break;
-      case 'release-notes':
-        Alert.alert('Release Notes', 'Aktuelle Versionshinweise werden geladen...');
-        break;
-    }
-  };
 
   const gradientColors = isDarkMode 
     ? ['#1F2937', '#111827', '#0F172A']
@@ -344,45 +328,6 @@ export default function HelpSupportScreen() {
       fontSize: fontScale(16),
       color: colors.text,
     },
-    tutorialsGrid: {
-      gap: 16,
-    },
-    tutorialCard: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    tutorialContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 20,
-    },
-    tutorialIconContainer: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 16,
-    },
-    tutorialTextContainer: {
-      flex: 1,
-    },
-    tutorialTitle: {
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
-      color: colors.text,
-      marginBottom: 4,
-    },
-    tutorialDescription: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
-      color: colors.textSecondary,
-    },
     chatButton: {
       backgroundColor: colors.primary,
       borderRadius: 12,
@@ -501,75 +446,6 @@ export default function HelpSupportScreen() {
           </View>
         </Card>
 
-        {/* Tutorials & Guides Section */}
-        <Text style={dynamicStyles.sectionTitle}>📚 Tutorials & Anleitungen</Text>
-        <View style={dynamicStyles.tutorialsGrid}>
-          <TouchableOpacity 
-            onPress={() => handleTutorialLink('getting-started')}
-            activeOpacity={0.7}
-          >
-            <Card style={dynamicStyles.tutorialCard}>
-              <View style={dynamicStyles.tutorialContent}>
-                <View style={[
-                  dynamicStyles.tutorialIconContainer,
-                  { backgroundColor: '#22C55E20' }
-                ]}>
-                  <BookOpen size={24} color="#22C55E" />
-                </View>
-                <View style={dynamicStyles.tutorialTextContainer}>
-                  <Text style={dynamicStyles.tutorialTitle}>Erste Schritte</Text>
-                  <Text style={dynamicStyles.tutorialDescription}>
-                    Lernen Sie die Grundlagen der App kennen
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => handleTutorialLink('video-tutorials')}
-            activeOpacity={0.7}
-          >
-            <Card style={dynamicStyles.tutorialCard}>
-              <View style={dynamicStyles.tutorialContent}>
-                <View style={[
-                  dynamicStyles.tutorialIconContainer,
-                  { backgroundColor: '#EF444420' }
-                ]}>
-                  <Play size={24} color="#EF4444" />
-                </View>
-                <View style={dynamicStyles.tutorialTextContainer}>
-                  <Text style={dynamicStyles.tutorialTitle}>Video Tutorials</Text>
-                  <Text style={dynamicStyles.tutorialDescription}>
-                    Schritt-für-Schritt Videoanleitungen
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => handleTutorialLink('release-notes')}
-            activeOpacity={0.7}
-          >
-            <Card style={dynamicStyles.tutorialCard}>
-              <View style={dynamicStyles.tutorialContent}>
-                <View style={[
-                  dynamicStyles.tutorialIconContainer,
-                  { backgroundColor: '#8B5CF620' }
-                ]}>
-                  <FileText size={24} color="#8B5CF6" />
-                </View>
-                <View style={dynamicStyles.tutorialTextContainer}>
-                  <Text style={dynamicStyles.tutorialTitle}>Release Notes</Text>
-                  <Text style={dynamicStyles.tutorialDescription}>
-                    Neue Features und Verbesserungen
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        </View>
 
         {/* Bottom spacing */}
         <View style={{ height: 32 }} />
