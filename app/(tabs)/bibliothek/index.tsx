@@ -183,6 +183,149 @@ const CircularCategory = ({ category, onPress }: { category: MainCategory, onPre
   );
 };
 
+// Animated Hexagon Component
+const AnimatedHexagon = ({ delay = 0, size = 40, opacity = 0.05, duration = 8000 }: {
+  delay?: number;
+  size?: number;
+  opacity?: number;
+  duration?: number;
+}) => {
+  const rotateAnim = useState(new Animated.Value(0))[0];
+  const translateYAnim = useState(new Animated.Value(0))[0];
+  const scaleAnim = useState(new Animated.Value(0.8))[0];
+
+  React.useEffect(() => {
+    const rotateAnimation = Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: duration,
+        useNativeDriver: true,
+      })
+    );
+
+    const floatAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateYAnim, {
+          toValue: -20,
+          duration: duration / 2,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: 0,
+          duration: duration / 2,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const scaleAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: duration / 3,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: duration / 3,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    setTimeout(() => {
+      rotateAnimation.start();
+      floatAnimation.start();
+      scaleAnimation.start();
+    }, delay);
+
+    return () => {
+      rotateAnimation.stop();
+      floatAnimation.stop();
+      scaleAnimation.stop();
+    };
+  }, [rotateAnim, translateYAnim, scaleAnim, delay, duration]);
+
+  const rotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.hexagon,
+        {
+          width: size,
+          height: size,
+          opacity: opacity,
+          transform: [
+            { rotate },
+            { translateY: translateYAnim },
+            { scale: scaleAnim },
+          ],
+        },
+      ]}
+    >
+      <LinearGradient
+        colors={['#667eea', '#764ba2', '#667eea']}
+        style={styles.hexagonGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+    </Animated.View>
+  );
+};
+
+// Hexagonal Background Component
+const HexagonalBackground = () => {
+  return (
+    <View style={styles.hexagonalBackground}>
+      {/* Large hexagons */}
+      <View style={[styles.hexagonContainer, { top: 50, left: 30 }]}>
+        <AnimatedHexagon size={60} opacity={0.03} delay={0} duration={12000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 150, right: 20 }]}>
+        <AnimatedHexagon size={45} opacity={0.04} delay={2000} duration={10000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 300, left: 50 }]}>
+        <AnimatedHexagon size={35} opacity={0.06} delay={1000} duration={9000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 450, right: 60 }]}>
+        <AnimatedHexagon size={50} opacity={0.03} delay={3000} duration={11000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 200, left: '50%' }]}>
+        <AnimatedHexagon size={25} opacity={0.08} delay={1500} duration={7000} />
+      </View>
+      
+      {/* Medium hexagons */}
+      <View style={[styles.hexagonContainer, { top: 100, right: 100 }]}>
+        <AnimatedHexagon size={30} opacity={0.05} delay={4000} duration={8000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 350, left: 20 }]}>
+        <AnimatedHexagon size={35} opacity={0.04} delay={2500} duration={9500} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 500, left: '40%' }]}>
+        <AnimatedHexagon size={40} opacity={0.03} delay={3500} duration={10500} />
+      </View>
+      
+      {/* Small hexagons */}
+      <View style={[styles.hexagonContainer, { top: 80, left: '70%' }]}>
+        <AnimatedHexagon size={20} opacity={0.07} delay={5000} duration={6000} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 250, right: 40 }]}>
+        <AnimatedHexagon size={25} opacity={0.05} delay={1200} duration={7500} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 400, left: '25%' }]}>
+        <AnimatedHexagon size={18} opacity={0.09} delay={4500} duration={5500} />
+      </View>
+      <View style={[styles.hexagonContainer, { top: 120, left: 120 }]}>
+        <AnimatedHexagon size={22} opacity={0.06} delay={6000} duration={8500} />
+      </View>
+    </View>
+  );
+};
+
 export default function BibliothekMainScreen() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
@@ -264,6 +407,9 @@ export default function BibliothekMainScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
+      
+      {/* Animated Hexagonal Background */}
+      <HexagonalBackground />
       
       {/* Modern Header */}
       <View style={styles.modernHeader}>
@@ -575,5 +721,28 @@ const styles = StyleSheet.create({
 
   bottomPadding: {
     height: 40,
+  },
+
+  // Hexagonal Background Styles
+  hexagonalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  hexagonContainer: {
+    position: 'absolute',
+  },
+  hexagon: {
+    backgroundColor: 'transparent',
+    transform: [{ rotate: '30deg' }],
+  },
+  hexagonGradient: {
+    width: '100%',
+    height: '100%',
+    transform: [{ rotate: '30deg' }],
+    borderRadius: 6,
   },
 });
