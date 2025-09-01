@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronDown, Shield, FileText } from 'lucide-react-native';
+import { ChevronLeft, ChevronDown, Shield, FileText, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import Card from '@/components/ui/Card';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -228,6 +228,46 @@ export default function DatenschutzAGBScreen() {
     </>
   );
 
+  const medicalDisclaimer = (
+    <>
+      <Text style={stylesD.heading}>Medizinischer Haftungsausschluss</Text>
+      <Text style={stylesD.text}>
+        Diese Plattform richtet sich ausschließlich an approbierte medizinische Fachkräfte und Studierende der Medizin. Die bereitgestellten Inhalte dienen der Prüfungsvorbereitung und Fortbildung.
+      </Text>
+
+      <Text style={stylesD.heading}>Keine medizinische Beratung</Text>
+      <Text style={stylesD.text}>
+        Die Inhalte dieser Plattform stellen keine medizinische, rechtliche oder sonstige professionelle Beratung dar. Sie ersetzen nicht die persönliche Beratung, Untersuchung oder Behandlung durch qualifizierte medizinische Fachkräfte.
+      </Text>
+
+      <Text style={stylesD.heading}>Verwendung der Inhalte</Text>
+      <Text style={stylesD.text}>
+        • Die Materialien sind für Lehr- und Lernzwecke bestimmt{'\n'}
+        • Keine Anwendung am Patienten ohne zusätzliche Verifikation{'\n'}
+        • Klinische Entscheidungen bedürfen immer professioneller Bewertung{'\n'}
+        • Bei Unsicherheiten konsultieren Sie erfahrene Kollegen oder Fachliteratur
+      </Text>
+
+      <Text style={stylesD.heading}>Zielgruppe</Text>
+      <Text style={stylesD.text}>
+        Diese Plattform ist ausschließlich für:{'\n'}
+        • Approbierte Ärzte und Zahnärzte{'\n'}
+        • Studierende der Human- und Zahnmedizin{'\n'}
+        • Andere medizinische Fachkräfte mit entsprechender Ausbildung
+      </Text>
+
+      <Text style={stylesD.heading}>Haftungsausschluss</Text>
+      <Text style={stylesD.text}>
+        KP Med GmbH übernimmt keine Haftung für Schäden, die durch die Verwendung der bereitgestellten Informationen entstehen. Die Nutzung erfolgt auf eigene Verantwortung.
+      </Text>
+
+      <Text style={stylesD.heading}>Aktualität der Inhalte</Text>
+      <Text style={stylesD.text}>
+        Medizinische Erkenntnisse entwickeln sich ständig weiter. Trotz sorgfältiger Erstellung können die Inhalte nicht immer dem neuesten Stand entsprechen. Prüfen Sie wichtige Informationen stets anhand aktueller Fachliteratur.
+      </Text>
+    </>
+  );
+
   return (
     <SafeAreaView style={stylesD.container}>
       <LinearGradient colors={gradient} style={styles.gradientBackground} />
@@ -285,6 +325,27 @@ export default function DatenschutzAGBScreen() {
           </TouchableOpacity>
           {expanded['terms'] && (
             <View style={stylesD.sectionContent}>{agb}</View>
+          )}
+        </Card>
+
+        <Card style={stylesD.card}>
+          <TouchableOpacity
+            style={stylesD.headerSection}
+            onPress={() => toggle('medical')}
+            activeOpacity={0.7}
+          >
+            <View style={[stylesD.iconWrap, { backgroundColor: '#EF444420' }]}>
+              <AlertTriangle size={20} color="#EF4444" />
+            </View>
+            <Text style={stylesD.sectionTitle}>Medizinischer Haftungsausschluss</Text>
+            <ChevronDown
+              size={20}
+              color={colors.textSecondary}
+              style={expanded['medical'] ? stylesD.chevronOpen : stylesD.chevron}
+            />
+          </TouchableOpacity>
+          {expanded['medical'] && (
+            <View style={stylesD.sectionContent}>{medicalDisclaimer}</View>
           )}
         </Card>
       </ScrollView>
