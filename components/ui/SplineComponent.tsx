@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface SplineComponentProps {
   scene: string;
@@ -15,6 +16,33 @@ export default function SplineComponent({
   height = 300,
   style 
 }: SplineComponentProps) {
+  // Check if WebView is supported on current platform
+  const isWebViewSupported = Platform.OS === 'ios' || Platform.OS === 'android';
+  
+  if (!isWebViewSupported) {
+    // Fallback for web/unsupported platforms
+    return (
+      <View style={[styles.container, { width, height }, style]}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.fallbackContainer}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.fallbackContent}>
+            <View style={styles.fallbackIcon}>
+              <Text style={styles.fallbackEmoji}>🏥</Text>
+            </View>
+            <Text style={styles.fallbackTitle}>3D Medizin Vorschau</Text>
+            <Text style={styles.fallbackSubtitle}>
+              Interaktive 3D-Szenen sind in der mobilen App verfügbar
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+
   const splineHTML = `
     <!DOCTYPE html>
     <html>
@@ -104,5 +132,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     fontFamily: 'Inter-Regular',
+  },
+  
+  // Fallback styles for unsupported platforms
+  fallbackContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  fallbackContent: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  fallbackIcon: {
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  fallbackEmoji: {
+    fontSize: 24,
+  },
+  fallbackTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  fallbackSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
