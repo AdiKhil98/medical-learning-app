@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Scissors, Stethoscope, AlertTriangle, Shield, Droplets, Scan } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface MainCategory {
   id: string;
@@ -16,25 +18,60 @@ interface MainCategory {
   description?: string;
 }
 
-// Map main categories to appropriate icons and colors
+// Map main categories to appropriate icons and colors with enhanced 3D gradients
 const getMainCategoryDetails = (title: string) => {
   const normalizedTitle = title.toLowerCase();
   
   switch (true) {
     case normalizedTitle.includes('chirurgie'):
-      return { icon: 'Scissors', color: '#EF4444' };
+      return { 
+        icon: 'Scissors', 
+        color: '#EF4444',
+        gradient: ['#EF4444', '#DC2626', '#B91C1C'],
+        hoverGradient: ['#F87171', '#EF4444', '#DC2626']
+      };
     case normalizedTitle.includes('innere medizin'):
-      return { icon: 'Stethoscope', color: '#0077B6' };
+      return { 
+        icon: 'Stethoscope', 
+        color: '#0077B6',
+        gradient: ['#0EA5E9', '#0284C7', '#0369A1'],
+        hoverGradient: ['#38BDF8', '#0EA5E9', '#0284C7']
+      };
     case normalizedTitle.includes('notfall'):
-      return { icon: 'AlertTriangle', color: '#F59E0B' };
+      return { 
+        icon: 'AlertTriangle', 
+        color: '#F59E0B',
+        gradient: ['#F59E0B', '#D97706', '#B45309'],
+        hoverGradient: ['#FCD34D', '#F59E0B', '#D97706']
+      };
     case normalizedTitle.includes('infektio'):
-      return { icon: 'Shield', color: '#10B981' };
+      return { 
+        icon: 'Shield', 
+        color: '#10B981',
+        gradient: ['#10B981', '#059669', '#047857'],
+        hoverGradient: ['#34D399', '#10B981', '#059669']
+      };
     case normalizedTitle.includes('urologie'):
-      return { icon: 'Droplets', color: '#8B5CF6' };
+      return { 
+        icon: 'Droplets', 
+        color: '#8B5CF6',
+        gradient: ['#8B5CF6', '#7C3AED', '#6D28D9'],
+        hoverGradient: ['#A78BFA', '#8B5CF6', '#7C3AED']
+      };
     case normalizedTitle.includes('radiologie'):
-      return { icon: 'Scan', color: '#6366F1' };
+      return { 
+        icon: 'Scan', 
+        color: '#6366F1',
+        gradient: ['#6366F1', '#4F46E5', '#4338CA'],
+        hoverGradient: ['#818CF8', '#6366F1', '#4F46E5']
+      };
     default:
-      return { icon: 'Stethoscope', color: MEDICAL_COLORS.primary };
+      return { 
+        icon: 'Stethoscope', 
+        color: MEDICAL_COLORS.primary,
+        gradient: [MEDICAL_COLORS.primary, '#0284C7', '#0369A1'],
+        hoverGradient: ['#38BDF8', MEDICAL_COLORS.primary, '#0284C7']
+      };
   }
 };
 
@@ -48,6 +85,102 @@ const getIconComponent = (iconName: string) => {
     case 'Scan': return Scan;
     default: return Stethoscope;
   }
+};
+
+// 3D Circular Category Component
+const CircularCategory = ({ category, onPress }: { category: MainCategory, onPress: () => void }) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const scaleAnim = useState(new Animated.Value(1))[0];
+  const elevationAnim = useState(new Animated.Value(0))[0];
+  
+  const { icon, gradient, hoverGradient } = getMainCategoryDetails(category.title);
+  const IconComponent = getIconComponent(icon);
+  
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1.05,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 8,
+      }),
+      Animated.timing(elevationAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+  
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 8,
+      }),
+      Animated.timing(elevationAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+  
+  const shadowOpacity = elevationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.15, 0.35],
+  });
+  
+  const shadowRadius = elevationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 20],
+  });
+  
+  return (
+    <Animated.View
+      style={[
+        styles.circularCategoryContainer,
+        {
+          transform: [{ scale: scaleAnim }],
+          shadowOpacity,
+          shadowRadius,
+        },
+      ]}
+    >
+      <TouchableOpacity
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        activeOpacity={1}
+        style={styles.circularCategoryButton}
+      >
+        <LinearGradient
+          colors={isPressed ? hoverGradient : gradient}
+          style={styles.circularCategoryGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* 3D Ring Effect */}
+          <View style={styles.outerRing}>
+            <View style={styles.innerRing}>
+              <View style={styles.centerCircle}>
+                <IconComponent size={32} color="white" />
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+      
+      <Text style={styles.categoryLabel}>{category.title}</Text>
+      {category.description && (
+        <Text style={styles.categoryDescription}>{category.description}</Text>
+      )}
+    </Animated.View>
+  );
 };
 
 export default function BibliothekMainScreen() {
@@ -123,65 +256,67 @@ export default function BibliothekMainScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.modernContainer}>
+      {/* Enhanced Background with Subtle Pattern */}
       <LinearGradient
-        colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
-        style={styles.gradientBackground}
+        colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
+        style={styles.modernGradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
       
-      <View style={styles.header}>
-        <Text style={styles.title}>Medizinische Bibliothek</Text>
-        <Text style={styles.subtitle}>Wählen Sie eine Hauptkategorie</Text>
+      {/* Modern Header */}
+      <View style={styles.modernHeader}>
+        <View style={styles.headerContent}>
+          <Text style={styles.modernTitle}>Bibliothek</Text>
+          <Text style={styles.modernSubtitle}>Wählen Sie Ihr Fachgebiet</Text>
+        </View>
+        
+        {/* Decorative Element */}
+        <View style={styles.headerDecorator}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.decoratorGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {mainCategories.map((category) => {
-          const { icon, color } = getMainCategoryDetails(category.title);
-          const IconComponent = getIconComponent(icon);
-          
-          return (
-            <TouchableOpacity
+      <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+        {/* 3D Circular Categories Grid */}
+        <View style={styles.categoriesGrid}>
+          {mainCategories.map((category) => (
+            <CircularCategory
               key={category.slug}
-              style={styles.categoryCard}
+              category={category}
               onPress={() => navigateToCategory(category.slug)}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={[`${color}20`, `${color}05`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.categoryGradient}
-              >
-                <View style={[styles.categoryIcon, { backgroundColor: color }]}>
-                  <IconComponent size={28} color="white" />
-                </View>
-                
-                <View style={styles.categoryContent}>
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                  {category.description && (
-                    <Text style={styles.categoryDescription}>{category.description}</Text>
-                  )}
-                </View>
-                
-                <ChevronRight size={24} color={color} />
-              </LinearGradient>
-            </TouchableOpacity>
-          );
-        })}
+            />
+          ))}
+        </View>
         
-        {/* Medical Disclaimer */}
-        <View style={styles.disclaimerContainer}>
+        {/* Enhanced Medical Disclaimer */}
+        <View style={styles.modernDisclaimerContainer}>
           <LinearGradient
-            colors={[`${MEDICAL_COLORS.primary}08`, `${MEDICAL_COLORS.primary}05`]}
-            style={styles.disclaimerGradient}
+            colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
+            style={styles.modernDisclaimerGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
-            <View style={styles.disclaimerContent}>
-              <View style={styles.disclaimerIcon}>
-                <Text style={styles.disclaimerEmoji}>⚕️</Text>
+            <View style={styles.modernDisclaimerContent}>
+              <View style={styles.modernDisclaimerIcon}>
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  style={styles.disclaimerIconGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.disclaimerEmoji}>⚕️</Text>
+                </LinearGradient>
               </View>
-              <View style={styles.disclaimerTextContainer}>
-                <Text style={styles.disclaimerTitle}>Medizinischer Haftungsausschluss</Text>
-                <Text style={styles.disclaimerText}>
+              <View style={styles.modernDisclaimerTextContainer}>
+                <Text style={styles.modernDisclaimerTitle}>Medizinischer Haftungsausschluss</Text>
+                <Text style={styles.modernDisclaimerText}>
                   Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
                 </Text>
               </View>
@@ -196,160 +331,249 @@ export default function BibliothekMainScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  // Modern Container Styles
+  modernContainer: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
   },
-  gradientBackground: {
+  modernGradientBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: '100%',
   },
+  
+  // Loading & Error States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#4B5563',
+    color: '#64748b',
     fontFamily: 'Inter-Regular',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
     padding: 20,
   },
   errorTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: '#EF4444',
+    color: '#ef4444',
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: '#4B5563',
+    color: '#64748b',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     fontFamily: 'Inter-Regular',
+    lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#667eea',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   retryButtonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-SemiBold',
   },
-  header: {
-    padding: 20,
-    paddingBottom: 16,
+
+  // Modern Header
+  modernHeader: {
+    padding: 24,
+    paddingBottom: 32,
+    position: 'relative',
   },
-  title: {
+  headerContent: {
+    zIndex: 2,
+  },
+  modernTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 28,
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 4,
+    fontSize: 32,
+    color: '#1e293b',
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
-  subtitle: {
+  modernSubtitle: {
     fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
+    color: '#64748b',
+    lineHeight: 24,
   },
-  content: {
-    paddingHorizontal: 16,
+  headerDecorator: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    opacity: 0.1,
   },
-  categoryCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-    overflow: 'hidden',
+  decoratorGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
   },
-  categoryGradient: {
+
+  // Modern Content
+  modernContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+
+  // 3D Circular Categories Grid
+  categoriesGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingBottom: 32,
   },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+
+  // 3D Circular Category Styles
+  circularCategoryContainer: {
+    width: (SCREEN_WIDTH - 60) / 2,
+    alignItems: 'center',
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  circularCategoryButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 16,
+  },
+  circularCategoryGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    position: 'relative',
   },
-  categoryContent: {
-    flex: 1,
+
+  // 3D Ring Effects
+  outerRing: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  categoryTitle: {
+  innerRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  centerCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+
+  // Category Labels
+  categoryLabel: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#1F2937',
+    fontSize: 16,
+    color: '#1e293b',
+    textAlign: 'center',
     marginBottom: 4,
+    lineHeight: 20,
   },
   categoryDescription: {
     fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: MEDICAL_COLORS.gray,
-    marginTop: 4,
-    lineHeight: 18,
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 8,
   },
-  bottomPadding: {
-    height: 60,
-  },
-  
-  // Medical Disclaimer Styles
-  disclaimerContainer: {
-    marginHorizontal: 16,
-    marginTop: 24,
+
+  // Modern Disclaimer
+  modernDisclaimerContainer: {
+    marginTop: 16,
     marginBottom: 8,
   },
-  disclaimerGradient: {
-    borderRadius: 16,
-    padding: 1,
+  modernDisclaimerGradient: {
+    borderRadius: 20,
+    padding: 2,
   },
-  disclaimerContent: {
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: 15,
-    padding: 20,
+  modernDisclaimerContent: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 18,
+    padding: 24,
     flexDirection: 'row',
     alignItems: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  disclaimerIcon: {
-    marginRight: 12,
+  modernDisclaimerIcon: {
+    marginRight: 16,
     marginTop: 2,
   },
-  disclaimerEmoji: {
-    fontSize: 24,
+  disclaimerIconGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  disclaimerTextContainer: {
+  disclaimerEmoji: {
+    fontSize: 20,
+  },
+  modernDisclaimerTextContainer: {
     flex: 1,
   },
-  disclaimerTitle: {
+  modernDisclaimerTitle: {
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 6,
+    fontFamily: 'Inter-Bold',
+    color: '#1e293b',
+    marginBottom: 8,
+    lineHeight: 22,
   },
-  disclaimerText: {
-    fontSize: 13,
+  modernDisclaimerText: {
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 18,
-    opacity: 0.9,
+    color: '#64748b',
+    lineHeight: 20,
+  },
+
+  bottomPadding: {
+    height: 40,
   },
 });

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface Section {
   id: string;
@@ -18,21 +20,47 @@ interface Section {
   content_improved?: string;
 }
 
-// Get icon and color for items based on their title/type
+// Enhanced item details with 3D gradients for child items
 const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   const normalizedTitle = title.toLowerCase();
   
-  // Base color logic
+  // Base color and gradient logic
   let baseColor = MEDICAL_COLORS.primary;
+  let gradient = ['#0EA5E9', '#0284C7', '#0369A1'];
+  let hoverGradient = ['#38BDF8', '#0EA5E9', '#0284C7'];
+  
   if (parentSlug) {
     switch (parentSlug) {
-      case 'chirurgie': baseColor = '#EF4444'; break;
+      case 'chirurgie': 
+        baseColor = '#EF4444';
+        gradient = ['#EF4444', '#DC2626', '#B91C1C'];
+        hoverGradient = ['#F87171', '#EF4444', '#DC2626'];
+        break;
       case 'innere-medizin': case 'kardiologie': case 'pneumologie': case 'gastroenterologie': case 'nephrologie': case 'endokrinologie-und-stoffwechsel':
-        baseColor = '#0077B6'; break;
-      case 'notfallmedizin': baseColor = '#F59E0B'; break;
-      case 'infektiologie': baseColor = '#10B981'; break;
-      case 'urologie': baseColor = '#8B5CF6'; break;
-      case 'radiologie': baseColor = '#6366F1'; break;
+        baseColor = '#0077B6';
+        gradient = ['#0EA5E9', '#0284C7', '#0369A1'];
+        hoverGradient = ['#38BDF8', '#0EA5E9', '#0284C7'];
+        break;
+      case 'notfallmedizin': 
+        baseColor = '#F59E0B';
+        gradient = ['#F59E0B', '#D97706', '#B45309'];
+        hoverGradient = ['#FCD34D', '#F59E0B', '#D97706'];
+        break;
+      case 'infektiologie': 
+        baseColor = '#10B981';
+        gradient = ['#10B981', '#059669', '#047857'];
+        hoverGradient = ['#34D399', '#10B981', '#059669'];
+        break;
+      case 'urologie': 
+        baseColor = '#8B5CF6';
+        gradient = ['#8B5CF6', '#7C3AED', '#6D28D9'];
+        hoverGradient = ['#A78BFA', '#8B5CF6', '#7C3AED'];
+        break;
+      case 'radiologie': 
+        baseColor = '#6366F1';
+        gradient = ['#6366F1', '#4F46E5', '#4338CA'];
+        hoverGradient = ['#818CF8', '#6366F1', '#4F46E5'];
+        break;
     }
   }
   
@@ -58,7 +86,7 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
     icon = 'Stethoscope';
   }
   
-  return { icon, color: baseColor };
+  return { icon, color: baseColor, gradient, hoverGradient };
 };
 
 const getIconComponent = (iconName: string) => {
@@ -136,6 +164,119 @@ const renderContentImproved = (contentData: any) => {
     console.error('Error parsing content_improved:', error);
     return <Text style={styles.contentText}>Fehler beim Laden des Inhalts.</Text>;
   }
+};
+
+// Modern 3D Child Card Component
+const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const scaleAnim = useState(new Animated.Value(1))[0];
+  const elevationAnim = useState(new Animated.Value(0))[0];
+  
+  const { icon, gradient, hoverGradient } = getItemDetails(childItem.title, childItem.type, parentSlug);
+  const IconComponent = getIconComponent(icon);
+  const hasContent = childItem.content_improved && 
+                    (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
+  
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        tension: 400,
+        friction: 10,
+      }),
+      Animated.timing(elevationAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+  
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 400,
+        friction: 10,
+      }),
+      Animated.timing(elevationAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+  
+  const shadowOpacity = elevationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.08, 0.25],
+  });
+  
+  const shadowRadius = elevationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 16],
+  });
+  
+  return (
+    <Animated.View
+      style={[
+        styles.modernChildCard,
+        {
+          transform: [{ scale: scaleAnim }],
+          shadowOpacity,
+          shadowRadius,
+        },
+      ]}
+    >
+      <TouchableOpacity
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        activeOpacity={1}
+        style={styles.modernChildButton}
+      >
+        <LinearGradient
+          colors={isPressed ? hoverGradient : gradient}
+          style={styles.modernChildGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Modern Icon Container */}
+          <View style={styles.modernChildIcon}>
+            <View style={styles.childIconBackground}>
+              <IconComponent size={24} color="white" />
+            </View>
+          </View>
+          
+          {/* Content */}
+          <View style={styles.modernChildContent}>
+            <Text style={styles.modernChildTitle}>{childItem.title}</Text>
+            <View style={styles.modernChildMeta}>
+              <Text style={styles.modernChildType}>{childItem.type.toUpperCase()}</Text>
+              {hasContent && (
+                <View style={styles.modernContentIndicator}>
+                  <View style={styles.contentDot} />
+                  <Text style={styles.modernContentIndicatorText}>INHALT</Text>
+                </View>
+              )}
+            </View>
+            {childItem.description && (
+              <Text style={styles.modernChildDescription}>{childItem.description}</Text>
+            )}
+          </View>
+          
+          {/* Arrow */}
+          <View style={styles.modernChildArrow}>
+            <ChevronRight size={20} color="rgba(255, 255, 255, 0.8)" />
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
 };
 
 export default function SectionDetailScreen() {
@@ -272,94 +413,101 @@ export default function SectionDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.modernContainer}>
+      {/* Modern Background */}
       <LinearGradient
-        colors={[MEDICAL_COLORS.lightGradient[0], MEDICAL_COLORS.lightGradient[1], '#ffffff']}
-        style={styles.gradientBackground}
+        colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
+        style={styles.modernGradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
       
-      <View style={styles.header}>
+      {/* Modern Header */}
+      <View style={styles.modernHeader}>
         <TouchableOpacity 
           onPress={handleBackPress}
-          style={styles.backButton}
+          style={styles.modernBackButton}
         >
-          <ChevronLeft size={24} color={MEDICAL_COLORS.primary} />
-          <Text style={styles.backText}>Zurück</Text>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.backButtonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <ChevronLeft size={20} color="white" />
+          </LinearGradient>
+          <Text style={styles.modernBackText}>Zurück</Text>
         </TouchableOpacity>
         
-        <Text style={styles.title}>{currentItem.title}</Text>
-        <Text style={styles.typeLabel}>{currentItem.type}</Text>
-        {currentItem.description && (
-          <Text style={styles.subtitle}>{currentItem.description}</Text>
-        )}
+        <View style={styles.headerContent}>
+          <Text style={styles.modernTitle}>{currentItem.title}</Text>
+          <View style={styles.headerMeta}>
+            <View style={styles.typeChip}>
+              <Text style={styles.modernTypeLabel}>{currentItem.type.toUpperCase()}</Text>
+            </View>
+          </View>
+          {currentItem.description && (
+            <Text style={styles.modernSubtitle}>{currentItem.description}</Text>
+          )}
+        </View>
       </View>
 
       {showContent ? (
-        // Show the final content
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.contentCard}>
-            <View style={styles.contentHeader}>
-              <FileText size={24} color={MEDICAL_COLORS.primary} />
-              <Text style={styles.contentTitle}>Medizinischer Inhalt</Text>
-            </View>
-{renderContentImproved(currentItem.content_improved)}
+        // Modern Content Display
+        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.modernContentCard}>
+            <LinearGradient
+              colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
+              style={styles.contentCardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.modernContentHeader}>
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  style={styles.contentHeaderIcon}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <FileText size={20} color="white" />
+                </LinearGradient>
+                <Text style={styles.modernContentTitle}>Medizinischer Inhalt</Text>
+              </View>
+              <View style={styles.contentBody}>
+                {renderContentImproved(currentItem.content_improved)}
+              </View>
+            </LinearGradient>
           </View>
           <View style={styles.bottomPadding} />
         </ScrollView>
       ) : childItems.length === 0 ? (
-        // Empty state
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>
-            Keine weiteren Inhalte oder Unterkategorien verfügbar.
-          </Text>
+        // Modern Empty State
+        <View style={styles.modernEmptyState}>
+          <LinearGradient
+            colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
+            style={styles.emptyStateGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <BookOpen size={48} color="#94a3b8" />
+            <Text style={styles.modernEmptyStateText}>
+              Keine weiteren Inhalte oder Unterkategorien verfügbar.
+            </Text>
+          </LinearGradient>
         </View>
       ) : (
-        // Show child navigation
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {childItems.map((childItem) => {
-            const { icon, color } = getItemDetails(childItem.title, childItem.type, slug as string);
-            const IconComponent = getIconComponent(icon);
-            const hasContent = childItem.content_improved && 
-                              (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
-            
-            return (
-              <TouchableOpacity
+        // Modern Child Items Grid
+        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.childItemsGrid}>
+            {childItems.map((childItem) => (
+              <ModernChildCard
                 key={childItem.slug}
-                style={styles.childCard}
+                childItem={childItem}
+                parentSlug={slug as string}
                 onPress={() => navigateToChild(childItem.slug)}
-                activeOpacity={0.7}
-              >
-                <LinearGradient
-                  colors={[`${color}12`, `${color}05`]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.childGradient}
-                >
-                  <View style={[styles.childIcon, { backgroundColor: color }]}>
-                    <IconComponent size={22} color="white" />
-                  </View>
-                  
-                  <View style={styles.childContent}>
-                    <Text style={styles.childTitle}>{childItem.title}</Text>
-                    <View style={styles.childMeta}>
-                      <Text style={styles.childType}>{childItem.type}</Text>
-                      {hasContent && (
-                        <View style={styles.contentIndicator}>
-                          <FileText size={12} color={MEDICAL_COLORS.success} />
-                          <Text style={styles.contentIndicatorText}>Inhalt</Text>
-                        </View>
-                      )}
-                    </View>
-                    {childItem.description && (
-                      <Text style={styles.childDescription}>{childItem.description}</Text>
-                    )}
-                  </View>
-                  
-                  <ChevronRight size={18} color={color} />
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          })}
+              />
+            ))}
+          </View>
           
           <View style={styles.bottomPadding} />
         </ScrollView>
@@ -369,225 +517,315 @@ export default function SectionDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  // Modern Container
+  modernContainer: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
   },
-  gradientBackground: {
+  modernGradientBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: '100%',
   },
+  
+  // Loading & Error States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#4B5563',
+    color: '#64748b',
     fontFamily: 'Inter-Regular',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#ffffff',
     padding: 20,
   },
   errorTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: '#EF4444',
+    color: '#ef4444',
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: '#4B5563',
+    color: '#64748b',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     fontFamily: 'Inter-Regular',
+    lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#667eea',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   retryButtonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-SemiBold',
   },
-  header: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  backText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
-    color: MEDICAL_COLORS.primary,
-    marginLeft: 4,
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 22,
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 2,
-  },
-  typeLabel: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
-    color: MEDICAL_COLORS.secondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 15,
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 20,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  // Content display styles
-  contentCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
+
+  // Modern Header
+  modernHeader: {
     padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
+    paddingBottom: 24,
   },
-  contentHeader: {
+  modernBackButton: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.lightGray,
   },
-  contentTitle: {
+  backButtonGradient: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  modernBackText: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  headerContent: {
+    zIndex: 1,
+  },
+  modernTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: MEDICAL_COLORS.textPrimary,
-    marginLeft: 8,
+    fontSize: 28,
+    color: '#1e293b',
+    marginBottom: 8,
+    letterSpacing: -0.3,
+    lineHeight: 34,
   },
-  contentText: {
+  headerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  typeChip: {
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.2)',
+  },
+  modernTypeLabel: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 10,
+    color: '#667eea',
+    letterSpacing: 1,
+  },
+  modernSubtitle: {
     fontFamily: 'Inter-Regular',
     fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 24,
+    color: '#64748b',
+    lineHeight: 22,
   },
-  contentSection: {
+
+  // Modern Content
+  modernContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+
+  // Modern Content Card
+  modernContentCard: {
     marginBottom: 20,
   },
-  contentSectionTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.lightGray,
+  contentCardGradient: {
+    borderRadius: 20,
+    padding: 2,
   },
-  // Child navigation styles
-  childCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  childGradient: {
+  modernContentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 20,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
-  childIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+  contentHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  childContent: {
-    flex: 1,
-  },
-  childTitle: {
+  modernContentTitle: {
     fontFamily: 'Inter-Bold',
-    fontSize: 15,
-    color: '#1F2937',
+    fontSize: 18,
+    color: '#1e293b',
+  },
+  contentBody: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+  },
+  contentText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 16,
+    color: '#475569',
+    lineHeight: 26,
+  },
+  contentSection: {
+    marginBottom: 24,
+  },
+  contentSectionTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    color: '#1e293b',
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(102, 126, 234, 0.2)',
+  },
+
+  // Child Items Grid
+  childItemsGrid: {
+    gap: 16,
+    paddingBottom: 20,
+  },
+
+  // Modern Child Card
+  modernChildCard: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 8,
     marginBottom: 4,
   },
-  childMeta: {
+  modernChildButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modernChildGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    padding: 20,
+    minHeight: 80,
   },
-  childType: {
-    fontFamily: 'Inter-Medium',
+  modernChildIcon: {
+    marginRight: 16,
+  },
+  childIconBackground: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  modernChildContent: {
+    flex: 1,
+  },
+  modernChildTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 16,
+    color: 'white',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  modernChildMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    flexWrap: 'wrap',
+  },
+  modernChildType: {
+    fontFamily: 'Inter-SemiBold',
     fontSize: 10,
-    color: MEDICAL_COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginRight: 8,
+    color: 'rgba(255, 255, 255, 0.7)',
+    letterSpacing: 1,
+    marginRight: 12,
   },
-  contentIndicator: {
+  modernContentIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${MEDICAL_COLORS.success}15`,
-    paddingHorizontal: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  contentIndicatorText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 10,
-    color: MEDICAL_COLORS.success,
-    marginLeft: 3,
+  contentDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    marginRight: 6,
   },
-  childDescription: {
+  modernContentIndicatorText: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 9,
+    color: 'rgba(255, 255, 255, 0.8)',
+    letterSpacing: 0.5,
+  },
+  modernChildDescription: {
     fontFamily: 'Inter-Regular',
-    fontSize: 12,
-    color: MEDICAL_COLORS.gray,
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+    lineHeight: 18,
     marginTop: 2,
-    lineHeight: 15,
   },
-  emptyState: {
+  modernChildArrow: {
+    marginLeft: 12,
+  },
+
+  // Modern Empty State
+  modernEmptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    paddingHorizontal: 40,
   },
-  emptyStateText: {
+  emptyStateGradient: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    width: '100%',
+  },
+  modernEmptyStateText: {
     fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
+    color: '#64748b',
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    marginTop: 16,
   },
+
   bottomPadding: {
-    height: 60,
+    height: 40,
   },
 });
