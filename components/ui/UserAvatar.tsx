@@ -7,20 +7,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 interface UserAvatarProps {
   size?: 'small' | 'medium' | 'large';
-  showLevel?: boolean;
-  showXP?: boolean;
-  userStats?: {
-    totalXP: number;
-    level: number;
-    rank: string;
-  };
 }
 
 export default function UserAvatar({ 
-  size = 'medium', 
-  showLevel = true,
-  showXP = true,
-  userStats = { totalXP: 2450, level: 5, rank: 'Medizinstudent' }
+  size = 'medium'
 }: UserAvatarProps) {
   const { user, signOut } = useAuth();
   const { isDarkMode } = useTheme();
@@ -68,19 +58,7 @@ export default function UserAvatar({
           <Text style={[styles.initials, { fontSize: avatarSize * 0.35 }]}>
             {getInitials()}
           </Text>
-          {showLevel && (
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>{userStats.level}</Text>
-            </View>
-          )}
         </LinearGradient>
-        
-        {showXP && (
-          <View style={styles.xpContainer}>
-            <Text style={styles.xpText}>{userStats.totalXP}</Text>
-            <Text style={styles.xpLabel}>XP</Text>
-          </View>
-        )}
       </TouchableOpacity>
 
       {/* Dropdown Modal */}
@@ -112,18 +90,10 @@ export default function UserAvatar({
                 <Text style={styles.initialsLarge}>{getInitials()}</Text>
               </LinearGradient>
               <View style={styles.userInfo}>
-                <Text style={styles.userEmail}>{user?.email || 'Zaid57@example.com'}</Text>
-                <Text style={styles.userRank}>{userStats.rank}</Text>
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>Level {userStats.level}</Text>
-                    <Text style={styles.statLabel}>Aktuell</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{userStats.totalXP}</Text>
-                    <Text style={styles.statLabel}>Gesamt XP</Text>
-                  </View>
-                </View>
+                <Text style={styles.userName}>
+                  {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Nutzer'}
+                </Text>
+                <Text style={styles.userEmail}>{user?.email || 'nutzer@example.com'}</Text>
               </View>
             </LinearGradient>
 
@@ -164,45 +134,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '800',
     letterSpacing: 0.5,
-  },
-  levelBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#EAB308',
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  levelText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  xpContainer: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 50,
-  },
-  xpText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 14,
-  },
-  xpLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 9,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-    marginTop: -1,
   },
   
   // Modal Styles
@@ -248,36 +179,18 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
-  userEmail: {
+  userName: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  userRank: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  statItem: {
-    alignItems: 'flex-start',
-  },
-  statValue: {
-    color: 'white',
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 16,
+    marginBottom: 4,
   },
-  statLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 10,
+  userEmail: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
     fontWeight: '500',
-    marginTop: 1,
+    numberOfLines: 1,
+    ellipsizeMode: 'tail',
   },
   infoContainer: {
     padding: 16,
