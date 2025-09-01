@@ -117,10 +117,10 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
         {/* Modern Header */}
         <View style={styles.modernHeader}>
           <TouchableOpacity
-            style={styles.modernCloseButton}
+            style={styles.modernSkipButton}
             onPress={onDismiss}
           >
-            <X size={20} color="#6b7280" />
+            <Text style={styles.skipButtonText}>Überspringen</Text>
           </TouchableOpacity>
           
           {/* Modern Progress Indicator */}
@@ -133,9 +133,6 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
                 ]} 
               />
             </View>
-            <Text style={styles.progressText}>
-              {currentStep + 1} von {steps.length}
-            </Text>
           </View>
         </View>
 
@@ -242,6 +239,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
           <TouchableOpacity
             style={styles.modernNextButton}
             onPress={handleNext}
+            activeOpacity={0.8}
           >
             <LinearGradient
               colors={currentStepData.bgGradient}
@@ -281,13 +279,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  modernCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  modernSkipButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
     backgroundColor: 'rgba(107, 114, 128, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  skipButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6b7280',
   },
   modernProgressContainer: {
     flex: 1,
@@ -299,18 +302,12 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: 'rgba(107, 114, 128, 0.2)',
     borderRadius: 3,
-    marginBottom: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#667eea',
     borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#6b7280',
   },
 
   // Modern Content
