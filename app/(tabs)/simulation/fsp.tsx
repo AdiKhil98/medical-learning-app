@@ -4,6 +4,7 @@ import SimulationDisclaimerModal from '@/components/simulation/SimulationDisclai
 import { ChevronLeft, Mic } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
+import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -130,6 +131,8 @@ export default function FSPSimulationScreen() {
     }
   });
 
+  const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
+
   // Load Voiceflow script and set up event listeners
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -159,11 +162,34 @@ export default function FSPSimulationScreen() {
             });
             
             // Set up multiple detection methods for widget interaction
-            const startSimulationTimer = () => {
+            const startSimulationTimer = async () => {
               if (!simulationStarted) {
-                console.log('🚀 Starting FSP simulation timer');
-                setSimulationStarted(true);
-                resetTimer();
+                // Check if user can use simulation
+                if (!canUseSimulation()) {
+                  Alert.alert(
+                    'Simulationslimit erreicht',
+                    `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
+                    [{ text: 'OK' }]
+                  );
+                  return;
+                }
+
+                try {
+                  console.log('🚀 Starting FSP simulation timer');
+                  
+                  // Track simulation usage
+                  await useSimulation('fsp');
+                  
+                  setSimulationStarted(true);
+                  resetTimer();
+                } catch (error) {
+                  console.error('Error starting simulation:', error);
+                  Alert.alert(
+                    'Fehler',
+                    'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+                    [{ text: 'OK' }]
+                  );
+                }
               }
             };
             
