@@ -166,8 +166,8 @@ const renderContentImproved = (contentData: any) => {
   }
 };
 
-// Modern 3D Child Card Component
-const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
+// Modern 3D Circular Subcategory Component
+const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
   const [isPressed, setIsPressed] = useState(false);
   const scaleAnim = useState(new Animated.Value(1))[0];
   const elevationAnim = useState(new Animated.Value(0))[0];
@@ -181,14 +181,14 @@ const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Sectio
     setIsPressed(true);
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 0.98,
+        toValue: 1.03,
         useNativeDriver: true,
-        tension: 400,
-        friction: 10,
+        tension: 300,
+        friction: 8,
       }),
       Animated.timing(elevationAnim, {
         toValue: 1,
-        duration: 150,
+        duration: 200,
         useNativeDriver: false,
       }),
     ]).start();
@@ -200,12 +200,12 @@ const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Sectio
       Animated.spring(scaleAnim, {
         toValue: 1,
         useNativeDriver: true,
-        tension: 400,
-        friction: 10,
+        tension: 300,
+        friction: 8,
       }),
       Animated.timing(elevationAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 200,
         useNativeDriver: false,
       }),
     ]).start();
@@ -213,18 +213,18 @@ const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Sectio
   
   const shadowOpacity = elevationAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.08, 0.25],
+    outputRange: [0.12, 0.3],
   });
   
   const shadowRadius = elevationAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [8, 16],
+    outputRange: [6, 16],
   });
   
   return (
     <Animated.View
       style={[
-        styles.modernChildCard,
+        styles.circularSubcategoryContainer,
         {
           transform: [{ scale: scaleAnim }],
           shadowOpacity,
@@ -237,44 +237,36 @@ const ModernChildCard = ({ childItem, parentSlug, onPress }: { childItem: Sectio
         onPressOut={handlePressOut}
         onPress={onPress}
         activeOpacity={1}
-        style={styles.modernChildButton}
+        style={styles.circularSubcategoryButton}
       >
         <LinearGradient
           colors={isPressed ? hoverGradient : gradient}
-          style={styles.modernChildGradient}
+          style={styles.circularSubcategoryGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* Modern Icon Container */}
-          <View style={styles.modernChildIcon}>
-            <View style={styles.childIconBackground}>
-              <IconComponent size={24} color="white" />
+          {/* 3D Ring Effect for Subcategories */}
+          <View style={styles.subOuterRing}>
+            <View style={styles.subInnerRing}>
+              <View style={styles.subCenterCircle}>
+                <IconComponent size={22} color="white" />
+              </View>
             </View>
           </View>
           
-          {/* Content */}
-          <View style={styles.modernChildContent}>
-            <Text style={styles.modernChildTitle}>{childItem.title}</Text>
-            <View style={styles.modernChildMeta}>
-              <Text style={styles.modernChildType}>{childItem.type.toUpperCase()}</Text>
-              {hasContent && (
-                <View style={styles.modernContentIndicator}>
-                  <View style={styles.contentDot} />
-                  <Text style={styles.modernContentIndicatorText}>INHALT</Text>
-                </View>
-              )}
+          {/* Content Indicator Badge */}
+          {hasContent && (
+            <View style={styles.subContentBadge}>
+              <View style={styles.contentBadgeDot} />
             </View>
-            {childItem.description && (
-              <Text style={styles.modernChildDescription}>{childItem.description}</Text>
-            )}
-          </View>
-          
-          {/* Arrow */}
-          <View style={styles.modernChildArrow}>
-            <ChevronRight size={20} color="rgba(255, 255, 255, 0.8)" />
-          </View>
+          )}
         </LinearGradient>
       </TouchableOpacity>
+      
+      <Text style={styles.subcategoryLabel} numberOfLines={2}>{childItem.title}</Text>
+      <View style={styles.subcategoryMeta}>
+        <Text style={styles.subcategoryType}>{childItem.type.toUpperCase()}</Text>
+      </View>
     </Animated.View>
   );
 };
@@ -496,11 +488,11 @@ export default function SectionDetailScreen() {
           </LinearGradient>
         </View>
       ) : (
-        // Modern Child Items Grid
+        // Modern 3D Circular Subcategories Grid
         <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.childItemsGrid}>
+          <View style={styles.subcategoriesGrid}>
             {childItems.map((childItem) => (
-              <ModernChildCard
+              <CircularSubcategory
                 key={childItem.slug}
                 childItem={childItem}
                 parentSlug={slug as string}
@@ -708,98 +700,113 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(102, 126, 234, 0.2)',
   },
 
-  // Child Items Grid
-  childItemsGrid: {
+  // 3D Circular Subcategories Grid
+  subcategoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingBottom: 32,
     gap: 16,
-    paddingBottom: 20,
   },
 
-  // Modern Child Card
-  modernChildCard: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 16,
-    elevation: 8,
-    marginBottom: 4,
-  },
-  modernChildButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  modernChildGradient: {
-    flexDirection: 'row',
+  // 3D Circular Subcategory Styles
+  circularSubcategoryContainer: {
+    width: (SCREEN_WIDTH - 80) / 3,
     alignItems: 'center',
-    padding: 20,
-    minHeight: 80,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+    elevation: 6,
   },
-  modernChildIcon: {
-    marginRight: 16,
+  circularSubcategoryButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 12,
+    position: 'relative',
   },
-  childIconBackground: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  circularSubcategoryGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  // 3D Ring Effects for Subcategories
+  subOuterRing: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  modernChildContent: {
-    flex: 1,
-  },
-  modernChildTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 16,
-    color: 'white',
-    marginBottom: 6,
-    lineHeight: 20,
-  },
-  modernChildMeta: {
-    flexDirection: 'row',
+  subInnerRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
-  modernChildType: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
-    letterSpacing: 1,
-    marginRight: 12,
-  },
-  modernContentIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  contentDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    marginRight: 6,
+  subCenterCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
-  modernContentIndicatorText: {
+
+  // Content Badge for Subcategories
+  subContentBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  contentBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+
+  // Subcategory Labels
+  subcategoryLabel: {
     fontFamily: 'Inter-Bold',
-    fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.8)',
-    letterSpacing: 0.5,
-  },
-  modernChildDescription: {
-    fontFamily: 'Inter-Regular',
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 18,
-    marginTop: 2,
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+    minHeight: 32,
   },
-  modernChildArrow: {
-    marginLeft: 12,
+  subcategoryMeta: {
+    alignItems: 'center',
+  },
+  subcategoryType: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 9,
+    color: '#64748b',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
 
   // Modern Empty State
