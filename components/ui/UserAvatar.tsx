@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Settings, LogOut, Trophy, BarChart3, Book } from 'lucide-react-native';
+import { User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -50,54 +50,7 @@ export default function UserAvatar({
 
   const avatarSize = getAvatarSize();
 
-  const menuItems = [
-    {
-      icon: User,
-      title: 'Profil',
-      subtitle: 'Persönliche Daten',
-      action: () => {
-        setShowDropdown(false);
-        // Navigate to profile
-      }
-    },
-    {
-      icon: BarChart3,
-      title: 'Fortschritt',
-      subtitle: 'Statistiken & Erfolge',
-      action: () => {
-        setShowDropdown(false);
-        // Navigate to progress
-      }
-    },
-    {
-      icon: Book,
-      title: 'Meine Kurse',
-      subtitle: 'Lernmaterialien',
-      action: () => {
-        setShowDropdown(false);
-        // Navigate to courses
-      }
-    },
-    {
-      icon: Settings,
-      title: 'Einstellungen',
-      subtitle: 'App-Konfiguration',
-      action: () => {
-        setShowDropdown(false);
-        // Navigate to settings
-      }
-    },
-    {
-      icon: LogOut,
-      title: 'Abmelden',
-      subtitle: 'Sitzung beenden',
-      action: () => {
-        setShowDropdown(false);
-        signOut();
-      },
-      isDestructive: true
-    }
-  ];
+  // Removed menu items - only show user info in dropdown
 
   return (
     <View style={styles.container}>
@@ -174,38 +127,11 @@ export default function UserAvatar({
               </View>
             </LinearGradient>
 
-            {/* Menu Items */}
-            <View style={styles.menuContainer}>
-              {menuItems.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.menuItem,
-                    item.isDestructive && styles.destructiveMenuItem
-                  ]}
-                  onPress={item.action}
-                  activeOpacity={0.7}
-                >
-                  <View style={[
-                    styles.menuIcon,
-                    item.isDestructive && styles.destructiveIcon
-                  ]}>
-                    <item.icon 
-                      size={20} 
-                      color={item.isDestructive ? '#EF5350' : '#4CAF50'} 
-                    />
-                  </View>
-                  <View style={styles.menuText}>
-                    <Text style={[
-                      styles.menuTitle,
-                      item.isDestructive && styles.destructiveText
-                    ]}>
-                      {item.title}
-                    </Text>
-                    <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+            {/* Simple info note */}
+            <View style={styles.infoContainer}>
+              <Text style={styles.infoText}>
+                Für weitere Optionen verwenden Sie das Hauptmenü links.
+              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -353,46 +279,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 1,
   },
-  menuContainer: {
-    padding: 8,
+  infoContainer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 4,
-  },
-  destructiveMenuItem: {
-    backgroundColor: 'rgba(239, 83, 80, 0.05)',
-  },
-  menuIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  destructiveIcon: {
-    backgroundColor: 'rgba(239, 83, 80, 0.1)',
-  },
-  menuText: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  destructiveText: {
-    color: '#EF5350',
-  },
-  menuSubtitle: {
+  infoText: {
     fontSize: 13,
     color: '#6B7280',
     fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
