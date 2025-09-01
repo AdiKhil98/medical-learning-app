@@ -543,11 +543,6 @@ export default function ProfileScreen() {
             icon={Lock}
             title="Passwort ändern"
             onPress={() => navigateTo('/konto/passwort-aendern')}
-          />
-          <SettingItem
-            icon={Shield}
-            title="Zwei-Faktor-Authentifizierung"
-            onPress={() => navigateTo('/settings/2fa')}
             showArrow={false}
             rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
           />
