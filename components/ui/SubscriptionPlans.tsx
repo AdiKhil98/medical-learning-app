@@ -38,26 +38,49 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
 
   const plans: SubscriptionPlan[] = [
     {
+      id: 'free',
+      name: 'Kostenlos',
+      price: 0,
+      yearlyPrice: 0,
+      currency: '€',
+      period: 'Einmalig',
+      simulations: '3',
+      badge: '3',
+      costPerSimulation: 'Kostenlos für immer',
+      icon: Star,
+      gradient: ['#6b7280', '#4b5563'],
+      features: [
+        { text: '3 Medizinische Simulationen (einmalig)', included: true },
+        { text: 'Grundlegende Funktionen', included: true },
+        { text: 'Standard Bibliothek', included: true },
+        { text: 'E-Mail Support', included: false },
+        { text: 'Erweiterte Analysen', included: false },
+        { text: 'Premium Bibliothek', included: false },
+        { text: 'Prioritäts-Support', included: false },
+        { text: 'Export Funktionen', included: false },
+      ],
+    },
+    {
       id: 'basic',
       name: 'Basis-Plan',
       price: 50,
       yearlyPrice: 35,
       currency: '€',
       period: 'Monat',
-      simulations: '30K',
-      badge: '30K',
+      simulations: '30',
+      badge: '30',
       costPerSimulation: 'Nur 1,67€ pro Simulation',
       icon: Star,
       gradient: ['#3b82f6', '#1e40af'],
       features: [
-        { text: '30 Medizinische Simulationen', included: true },
+        { text: '30 Medizinische Simulationen pro Monat', included: true },
+        { text: '14-Tage kostenlose Testversion', included: true },
         { text: 'Grundlegende Analysen', included: true },
         { text: 'E-Mail Support', included: true },
         { text: 'Mobile App Zugang', included: true },
         { text: 'Standard Bibliothek', included: true },
         { text: 'Prioritäts-Support', included: false },
         { text: 'Erweiterte Analysen', included: false },
-        { text: 'Team Management', included: false },
       ],
     },
     {
@@ -67,21 +90,21 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       yearlyPrice: 52,
       currency: '€',
       period: 'Monat',
-      simulations: '60K',
-      badge: '60K',
+      simulations: '60',
+      badge: '60',
       costPerSimulation: 'Nur 1,25€ pro Simulation',
       recommended: true,
       icon: Crown,
       gradient: ['#3b82f6', '#1e40af'],
       features: [
-        { text: '60 Medizinische Simulationen', included: true },
+        { text: '60 Medizinische Simulationen pro Monat', included: true },
+        { text: '14-Tage kostenlose Testversion', included: true },
         { text: 'Erweiterte Analysen & Berichte', included: true },
         { text: 'Prioritäts-Support (24h)', included: true },
         { text: 'Mobile & Web App', included: true },
         { text: 'Premium Bibliothek', included: true },
         { text: 'Export Funktionen', included: true },
         { text: 'Personalisierte Lernpfade', included: true },
-        { text: 'Team Management', included: false },
       ],
     },
     {
@@ -98,13 +121,13 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       gradient: ['#3b82f6', '#1e40af'],
       features: [
         { text: 'Unbegrenzte Simulationen', included: true },
+        { text: '14-Tage kostenlose Testversion', included: true },
         { text: 'Vollständige Analytics Suite', included: true },
         { text: 'VIP Support & Account Manager', included: true },
         { text: 'Alle Plattformen', included: true },
         { text: 'Komplette Bibliothek', included: true },
         { text: 'Erweiterte Exports', included: true },
         { text: 'KI-Powered Insights', included: true },
-        { text: 'Team Management Pro', included: true },
       ],
     },
   ];
@@ -429,8 +452,10 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
               <Text style={dynamicStyles.planName}>{plan.name}</Text>
               <View style={dynamicStyles.priceContainer}>
                 <Text style={dynamicStyles.planPrice}>
-                  {plan.currency}{getPrice(plan)}
-                  <Text style={dynamicStyles.planPeriod}>/Monat</Text>
+                  {plan.id === 'free' ? 'Kostenlos' : `${plan.currency}${getPrice(plan)}`}
+                  {plan.id !== 'free' && (
+                    <Text style={dynamicStyles.planPeriod}>/Monat</Text>
+                  )}
                 </Text>
               </View>
               {plan.costPerSimulation && (
