@@ -9,6 +9,8 @@ import Menu from '@/components/ui/Menu';
 import { LinearGradient } from 'expo-linear-gradient';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
+import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface DailyTip {
   id?: string;
@@ -48,6 +50,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
+  const [showWelcomeFlow, setShowWelcomeFlow] = useState(false);
   const [dailyQuestion, setDailyQuestion] = useState<DailyQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -57,7 +60,33 @@ export default function DashboardScreen() {
   useEffect(() => {
     fetchDailyContent();
     loadRecentMedicalContents();
-  }, []);
+    checkOnboardingStatus();
+  }, [user]);
+  
+  const checkOnboardingStatus = async () => {
+    try {
+      if (user) {
+        const onboardingCompleted = await AsyncStorage.getItem(`onboarding_completed_${user.id}`);
+        if (!onboardingCompleted) {
+          setShowWelcomeFlow(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+    }
+  };
+  
+  const handleOnboardingComplete = async () => {
+    try {
+      if (user) {
+        await AsyncStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      }
+      setShowWelcomeFlow(false);
+    } catch (error) {
+      console.error('Error saving onboarding completion:', error);
+      setShowWelcomeFlow(false);
+    }
+  };
 
   const loadRecentMedicalContents = () => {
     // Sample data - replace with actual data from database
@@ -336,11 +365,38 @@ export default function DashboardScreen() {
           </View>
         )}
 
+        {/* Medical Disclaimer */}
+        <View style={styles.disclaimerContainer}>
+          <LinearGradient
+            colors={[`${MEDICAL_COLORS.primary}08`, `${MEDICAL_COLORS.primary}05`]}
+            style={styles.disclaimerGradient}
+          >
+            <View style={styles.disclaimerContent}>
+              <View style={styles.disclaimerIcon}>
+                <Text style={styles.disclaimerEmoji}>⚕️</Text>
+              </View>
+              <View style={styles.disclaimerTextContainer}>
+                <Text style={styles.disclaimerTitle}>Medizinischer Haftungsausschluss</Text>
+                <Text style={styles.disclaimerText}>
+                  Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+        
         <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      
+      {/* Welcome Flow for new users */}
+      <WelcomeFlow
+        visible={showWelcomeFlow}
+        onComplete={handleOnboardingComplete}
+        onDismiss={() => setShowWelcomeFlow(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -607,6 +663,47 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 24,
+  },
+  
+  // Medical Disclaimer Styles
+  disclaimerContainer: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  disclaimerGradient: {
+    borderRadius: 16,
+    padding: 1,
+  },
+  disclaimerContent: {
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: 15,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  disclaimerIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  disclaimerEmoji: {
+    fontSize: 24,
+  },
+  disclaimerTextContainer: {
+    flex: 1,
+  },
+  disclaimerTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 6,
+  },
+  disclaimerText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 18,
+    opacity: 0.9,
   },
   
   // Medical Contents Section

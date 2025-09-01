@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Platform, ScrollView, Alert, Linking } from 'react-native';
+import SimulationDisclaimerModal from '@/components/simulation/SimulationDisclaimerModal';
 import { ChevronLeft, Mic } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
@@ -198,6 +199,7 @@ export default function FSPSimulationScreen() {
   const router = useRouter();
   const [simulationStarted, setSimulationStarted] = useState(false);
   const [voiceflowLoaded, setVoiceflowLoaded] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const scrollViewRef = useRef(null);
   
   const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
@@ -410,9 +412,17 @@ export default function FSPSimulationScreen() {
     }
   };
   
-  // Auto-open Voiceflow widget when component mounts and voiceflow is loaded
+  // Show disclaimer when Voiceflow is loaded
   useEffect(() => {
-    if (voiceflowLoaded && Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+    if (voiceflowLoaded && !simulationStarted) {
+      setShowDisclaimer(true);
+    }
+  }, [voiceflowLoaded, simulationStarted]);
+  
+  const handleDisclaimerAccept = () => {
+    setShowDisclaimer(false);
+    
+    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
       try {
         setTimeout(() => {
           if (window.voiceflow.chat.open) {
@@ -420,12 +430,12 @@ export default function FSPSimulationScreen() {
           } else if (window.voiceflow.chat.show) {
             window.voiceflow.chat.show();
           }
-          console.log('✅ FSP Voiceflow chat widget auto-opened');
-        }, 1000);
+          console.log('✅ FSP Voiceflow chat widget opened after disclaimer');
+        }, 500);
       } catch (error) {
-        console.error('❌ Error auto-opening FSP Voiceflow chat:', error);
+        console.error('❌ Error opening FSP Voiceflow chat:', error);
       }
-    } else if (voiceflowLoaded && Platform.OS !== 'web') {
+    } else if (Platform.OS !== 'web') {
       // Mobile: Open in external browser
       const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab94a5a50553729c86b`;
       Linking.canOpenURL(voiceflowUrl).then(supported => {
@@ -448,7 +458,12 @@ export default function FSPSimulationScreen() {
         );
       });
     }
-  }, [voiceflowLoaded]);
+  };
+  
+  const handleDisclaimerDecline = () => {
+    setShowDisclaimer(false);
+    router.back();
+  };
   
   // Cleanup widget when component unmounts or navigating away
   useEffect(() => {
@@ -645,6 +660,14 @@ export default function FSPSimulationScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+      
+      {/* Disclaimer Modal */}
+      <SimulationDisclaimerModal
+        visible={showDisclaimer}
+        onAccept={handleDisclaimerAccept}
+        onDecline={handleDisclaimerDecline}
+        simulationType="FSP"
+      />
     </View>
   );
 }
