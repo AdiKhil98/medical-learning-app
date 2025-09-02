@@ -212,7 +212,7 @@ const FloatingMedicalIcons = () => {
   }, []);
 
   return (
-    <View style={styles.floatingBackground}>
+    <View style={styles.floatingBackground} pointerEvents="none">
       {icons.map((icon, index) => {
         const translateY = animValues[index].interpolate({
           inputRange: [0, 1],
@@ -273,6 +273,7 @@ const RadialCategory = ({
   const y = radius * Math.sin(radian);
 
   const handlePressIn = () => {
+    console.log('Press In detected for category:', category.title);
     setIsPressed(true);
     setShowGlow(true);
     Animated.parallel([
@@ -291,6 +292,7 @@ const RadialCategory = ({
   };
   
   const handlePressOut = () => {
+    console.log('Press Out detected for category:', category.title);
     setIsPressed(false);
     setTimeout(() => setShowGlow(false), 300);
     Animated.parallel([
@@ -307,6 +309,11 @@ const RadialCategory = ({
       }),
     ]).start();
   };
+  
+  const handlePress = () => {
+    console.log('Press detected for category:', category.title, 'slug:', category.slug);
+    onPress();
+  };
 
   return (
     <View
@@ -317,6 +324,7 @@ const RadialCategory = ({
           top: 180 + y - 55,
         },
       ]}
+      pointerEvents="box-none"
     >
       {showGlow && (
         <Animated.View
@@ -330,11 +338,14 @@ const RadialCategory = ({
         />
       )}
       
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Animated.View 
+        style={{ transform: [{ scale: scaleAnim }] }}
+        pointerEvents="box-none"
+      >
         <TouchableOpacity
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onPress={onPress}
+          onPress={handlePress}
           activeOpacity={0.8}
           style={styles.radialCategoryButton}
         >
@@ -483,6 +494,7 @@ export default function BibliothekMainScreen() {
 
   const navigateToCategory = (categorySlug: string) => {
     console.log('Navigating to category:', categorySlug);
+    console.log('Router push to:', `/bibliothek/${categorySlug}`);
     router.push(`/bibliothek/${categorySlug}`);
   };
 
@@ -540,12 +552,12 @@ export default function BibliothekMainScreen() {
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
         {/* Radial Categories Layout */}
-        <View style={styles.radialContainer}>
+        <View style={styles.radialContainer} pointerEvents="box-none">
           {/* Background Floating Elements */}
           <FloatingMedicalIcons />
           
           {/* Radial Categories */}
-          <View style={styles.staticContainer}>
+          <View style={styles.staticContainer} pointerEvents="box-none">
             {mainCategories.map((category, index) => (
               <RadialCategory
                 key={category.slug}
