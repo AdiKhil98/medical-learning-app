@@ -184,60 +184,157 @@ const CircularCategory = ({ category, onPress }: { category: MainCategory, onPre
 };
 
 // Diamond Grid Background Component
-// Enhanced Background with Floating Medical Icons
-const FloatingMedicalIcons = () => {
-  const icons = ['🩺', '💊', '🏥', '⚕️', '🧬', '🫀'];
-  const animValues = icons.map(() => useState(new Animated.Value(0))[0]);
+// Celestial Flow Background Component
+const CelestialBackground = () => {
+  const particles = Array.from({ length: 12 }, (_, i) => useState(new Animated.Value(0))[0]);
+  const orbs = Array.from({ length: 6 }, (_, i) => useState(new Animated.Value(0))[0]);
+  const flowAnimValue = useState(new Animated.Value(0))[0];
 
   React.useEffect(() => {
-    const animations = animValues.map((animValue, index) =>
+    // Particle animations with staggered timing
+    const particleAnimations = particles.map((animValue, index) =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(animValue, {
             toValue: 1,
-            duration: 3000 + index * 500,
+            duration: 4000 + index * 200,
             useNativeDriver: true,
           }),
           Animated.timing(animValue, {
             toValue: 0,
-            duration: 3000 + index * 500,
+            duration: 4000 + index * 200,
             useNativeDriver: true,
           }),
         ])
       )
     );
 
-    animations.forEach(animation => animation.start());
-    return () => animations.forEach(animation => animation.stop());
+    // Floating orb animations
+    const orbAnimations = orbs.map((animValue, index) =>
+      Animated.loop(
+        Animated.timing(animValue, {
+          toValue: 1,
+          duration: 8000 + index * 1000,
+          useNativeDriver: true,
+        })
+      )
+    );
+
+    // Background flow animation
+    const flowAnimation = Animated.loop(
+      Animated.timing(flowAnimValue, {
+        toValue: 1,
+        duration: 15000,
+        useNativeDriver: false,
+      })
+    );
+
+    // Start all animations
+    particleAnimations.forEach(animation => animation.start());
+    orbAnimations.forEach(animation => animation.start());
+    flowAnimation.start();
+
+    return () => {
+      particleAnimations.forEach(animation => animation.stop());
+      orbAnimations.forEach(animation => animation.stop());
+      flowAnimation.stop();
+    };
   }, []);
 
+  const backgroundOpacity = flowAnimValue.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.3, 0.6, 0.3],
+  });
+
   return (
-    <View style={styles.floatingBackground} pointerEvents="none">
-      {icons.map((icon, index) => {
-        const translateY = animValues[index].interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -20],
-        });
-        const opacity = animValues[index].interpolate({
+    <View style={styles.celestialBackground} pointerEvents="none">
+      {/* Animated gradient background */}
+      <Animated.View style={[styles.celestialGradient, { opacity: backgroundOpacity }]}>
+        <LinearGradient
+          colors={['rgba(201, 225, 255, 0.4)', 'rgba(147, 197, 253, 0.3)', 'rgba(196, 181, 253, 0.2)', 'rgba(255, 255, 255, 0.1)']}
+          style={styles.celestialGradientInner}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+      </Animated.View>
+
+      {/* Floating particles */}
+      {particles.map((animValue, index) => {
+        const translateX = animValue.interpolate({
           inputRange: [0, 0.5, 1],
-          outputRange: [0.03, 0.08, 0.03],
+          outputRange: [0, Math.sin(index) * 30, Math.cos(index) * 40],
+        });
+        const translateY = animValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -60 - index * 10],
+        });
+        const opacity = animValue.interpolate({
+          inputRange: [0, 0.3, 0.7, 1],
+          outputRange: [0, 0.8, 0.6, 0],
+        });
+        const scale = animValue.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.5, 1.2, 0.8],
         });
 
         return (
-          <Animated.Text
-            key={index}
+          <Animated.View
+            key={`particle-${index}`}
             style={[
-              styles.floatingIcon,
+              styles.celestialParticle,
+              {
+                left: `${10 + (index * 7) % 80}%`,
+                top: `${20 + (index * 13) % 60}%`,
+                transform: [
+                  { translateX },
+                  { translateY },
+                  { scale },
+                ],
+                opacity,
+              },
+            ]}
+          />
+        );
+      })}
+
+      {/* Floating ethereal orbs */}
+      {orbs.map((animValue, index) => {
+        const rotate = animValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['0deg', '360deg'],
+        });
+        const translateY = animValue.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0, -20, 0],
+        });
+        const opacity = animValue.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.1, 0.3, 0.1],
+        });
+
+        return (
+          <Animated.View
+            key={`orb-${index}`}
+            style={[
+              styles.celestialOrb,
               {
                 left: `${15 + index * 15}%`,
-                top: `${20 + (index % 3) * 25}%`,
-                transform: [{ translateY }],
+                top: `${10 + (index % 3) * 30}%`,
+                transform: [
+                  { rotate },
+                  { translateY },
+                ],
                 opacity,
               },
             ]}
           >
-            {icon}
-          </Animated.Text>
+            <LinearGradient
+              colors={['rgba(147, 197, 253, 0.4)', 'rgba(196, 181, 253, 0.2)', 'rgba(255, 255, 255, 0.1)']}
+              style={styles.orbGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            />
+          </Animated.View>
         );
       })}
     </View>
@@ -521,16 +618,13 @@ export default function BibliothekMainScreen() {
 
   return (
     <SafeAreaView style={styles.modernContainer}>
-      {/* Enhanced Background with Subtle Pattern */}
+      {/* Enhanced Celestial Background */}
       <LinearGradient
-        colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
+        colors={['#f0f9ff', '#e0f2fe', '#f8fafc', '#ffffff']}
         style={styles.modernGradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
-      
-      {/* Animated Diamond Grid Background */}
-      <DiamondGridBackground />
       
       {/* Modern Header */}
       <View style={styles.modernHeader}>
@@ -553,8 +647,8 @@ export default function BibliothekMainScreen() {
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
         {/* Radial Categories Layout */}
         <View style={styles.radialContainer} pointerEvents="box-none">
-          {/* Background Floating Elements */}
-          <FloatingMedicalIcons />
+          {/* Celestial Flow Background */}
+          <CelestialBackground />
           
           {/* Radial Categories */}
           <View style={styles.staticContainer} pointerEvents="box-none">
@@ -699,8 +793,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   
-  // Floating Medical Icons Background
-  floatingBackground: {
+  // Celestial Flow Background Styles
+  celestialBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -708,9 +802,38 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1,
   },
-  floatingIcon: {
+  celestialGradient: {
     position: 'absolute',
-    fontSize: 20,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  celestialGradientInner: {
+    flex: 1,
+  },
+  celestialParticle: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(147, 197, 253, 0.6)',
+    shadowColor: 'rgba(147, 197, 253, 0.8)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  celestialOrb: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  orbGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   
   
