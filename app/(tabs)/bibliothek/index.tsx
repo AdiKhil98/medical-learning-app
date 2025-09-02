@@ -184,6 +184,219 @@ const CircularCategory = ({ category, onPress }: { category: MainCategory, onPre
 };
 
 // Diamond Grid Background Component
+// Enhanced Background with Floating Medical Icons
+const FloatingMedicalIcons = () => {
+  const icons = ['🩺', '💊', '🏥', '⚕️', '🧬', '🫀'];
+  const animValues = icons.map(() => useState(new Animated.Value(0))[0]);
+
+  React.useEffect(() => {
+    const animations = animValues.map((animValue, index) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(animValue, {
+            toValue: 1,
+            duration: 3000 + index * 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animValue, {
+            toValue: 0,
+            duration: 3000 + index * 500,
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    );
+
+    animations.forEach(animation => animation.start());
+    return () => animations.forEach(animation => animation.stop());
+  }, []);
+
+  return (
+    <View style={styles.floatingBackground}>
+      {icons.map((icon, index) => {
+        const translateY = animValues[index].interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -20],
+        });
+        const opacity = animValues[index].interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.03, 0.08, 0.03],
+        });
+
+        return (
+          <Animated.Text
+            key={index}
+            style={[
+              styles.floatingIcon,
+              {
+                left: `${15 + index * 15}%`,
+                top: `${20 + (index % 3) * 25}%`,
+                transform: [{ translateY }],
+                opacity,
+              },
+            ]}
+          >
+            {icon}
+          </Animated.Text>
+        );
+      })}
+    </View>
+  );
+};
+
+// Connection Lines Component
+const ConnectionLines = ({ categoryCount }: { categoryCount: number }) => {
+  return (
+    <View style={styles.connectionLines}>
+      {Array.from({ length: categoryCount }).map((_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.connectionLine,
+            {
+              transform: [{ rotate: `${(360 / categoryCount) * index}deg` }],
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+};
+
+// Radial Category Component
+const RadialCategory = ({ 
+  category, 
+  index, 
+  total, 
+  onPress 
+}: { 
+  category: MainCategory; 
+  index: number; 
+  total: number; 
+  onPress: () => void;
+}) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const [showGlow, setShowGlow] = useState(false);
+  const scaleAnim = useState(new Animated.Value(1))[0];
+  const glowAnim = useState(new Animated.Value(0))[0];
+  const counterRotationAnim = useState(new Animated.Value(0))[0];
+  
+  const { icon, gradient, hoverGradient } = getMainCategoryDetails(category.title);
+  const IconComponent = getIconComponent(icon);
+  
+  // Calculate radial position
+  const radius = 140;
+  const angle = (360 / total) * index - 90; // Start from top
+  const radian = (angle * Math.PI) / 180;
+  const x = radius * Math.cos(radian);
+  const y = radius * Math.sin(radian);
+
+  React.useEffect(() => {
+    // Counter-rotation to keep text upright
+    Animated.loop(
+      Animated.timing(counterRotationAnim, {
+        toValue: 1,
+        duration: 60000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const counterRotation = counterRotationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  });
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    setShowGlow(true);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1.15,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 8,
+      }),
+      Animated.timing(glowAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+  
+  const handlePressOut = () => {
+    setIsPressed(false);
+    setTimeout(() => setShowGlow(false), 300);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 8,
+      }),
+      Animated.timing(glowAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.radialCategoryContainer,
+        {
+          left: SCREEN_WIDTH / 2 + x - 60,
+          top: 200 + y - 60,
+          transform: [
+            { scale: scaleAnim },
+            { rotate: counterRotation }
+          ],
+        },
+      ]}
+    >
+      {showGlow && (
+        <Animated.View
+          style={[
+            styles.glowEffect,
+            {
+              opacity: glowAnim,
+              shadowColor: getMainCategoryDetails(category.title).color,
+            },
+          ]}
+        />
+      )}
+      
+      <TouchableOpacity
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        activeOpacity={1}
+        style={styles.radialCategoryButton}
+      >
+        <LinearGradient
+          colors={isPressed ? hoverGradient : gradient}
+          style={styles.radialCategoryGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.radialOuterRing}>
+            <View style={styles.radialInnerRing}>
+              <View style={styles.radialCenterCircle}>
+                <IconComponent size={28} color="white" />
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+      
+      <Text style={styles.radialCategoryLabel}>{category.title}</Text>
+    </Animated.View>
+  );
+};
+
 const DiamondGridBackground = () => {
   const animationValue = useState(new Animated.Value(0))[0];
 
@@ -265,6 +478,13 @@ export default function BibliothekMainScreen() {
   const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Rotation animation for radial layout
+  const rotationValue = useState(new Animated.Value(0))[0];
+  const rotationAnim = rotationValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   // Fetch ONLY main categories (no parent_slug)
   const fetchMainCategories = async () => {
@@ -303,6 +523,19 @@ export default function BibliothekMainScreen() {
     if (!authLoading) {
       fetchMainCategories();
     }
+    
+    // Start slow rotation animation
+    const startRotation = () => {
+      Animated.loop(
+        Animated.timing(rotationValue, {
+          toValue: 1,
+          duration: 60000, // 60 seconds for full rotation
+          useNativeDriver: true,
+        })
+      ).start();
+    };
+    
+    startRotation();
   }, [session, authLoading]);
 
   const navigateToCategory = (categorySlug: string) => {
@@ -363,15 +596,36 @@ export default function BibliothekMainScreen() {
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-        {/* 3D Circular Categories Grid */}
-        <View style={styles.categoriesGrid}>
-          {mainCategories.map((category) => (
-            <CircularCategory
-              key={category.slug}
-              category={category}
-              onPress={() => navigateToCategory(category.slug)}
-            />
-          ))}
+        {/* Radial Categories Layout */}
+        <View style={styles.radialContainer}>
+          {/* Background Floating Elements */}
+          <FloatingMedicalIcons />
+          
+          {/* Connection Lines */}
+          <ConnectionLines categoryCount={mainCategories.length} />
+          
+          {/* Center Decorative Element */}
+          <View style={styles.centerElement}>
+            <LinearGradient
+              colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
+              style={styles.centerGradient}
+            >
+              <Text style={styles.centerIcon}>⚕️</Text>
+            </LinearGradient>
+          </View>
+          
+          {/* Radial Categories */}
+          <Animated.View style={[styles.rotatingContainer, { transform: [{ rotate: rotationAnim }] }]}>
+            {mainCategories.map((category, index) => (
+              <RadialCategory
+                key={category.slug}
+                category={category}
+                index={index}
+                total={mainCategories.length}
+                onPress={() => navigateToCategory(category.slug)}
+              />
+            ))}
+          </Animated.View>
         </View>
         
         {/* Enhanced Medical Disclaimer */}
@@ -517,8 +771,149 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
+  // Radial Layout Styles
+  radialContainer: {
+    height: 500,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  
+  rotatingContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  
+  // Center Element
+  centerElement: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  centerGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(102, 126, 234, 0.2)',
+  },
+  centerIcon: {
+    fontSize: 24,
+  },
+  
+  // Floating Medical Icons Background
+  floatingBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    fontSize: 20,
+  },
+  
+  // Connection Lines
+  connectionLines: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 2,
+  },
+  connectionLine: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: 140,
+    height: 1,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    transformOrigin: '0 50%',
+  },
+  
+  // Radial Categories
+  radialCategoryContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  
+  radialCategoryButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 12,
+  },
+  
+  radialCategoryGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  
+  radialOuterRing: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  radialInnerRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  radialCenterCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  
+  radialCategoryLabel: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 14,
+    color: '#1e293b',
+    textAlign: 'center',
+    width: 120,
+    lineHeight: 18,
+  },
+  
+  // Glow Effect
+  glowEffect: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 15,
+    top: -10,
+    left: -10,
+  },
 
-  // 3D Circular Categories Grid
+  // 3D Circular Categories Grid (Legacy - keeping for reference)
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
