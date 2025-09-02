@@ -266,7 +266,7 @@ const RadialCategory = ({
   const IconComponent = getIconComponent(icon);
   
   // Calculate radial position with better spacing
-  const radius = 120;
+  const radius = 140;
   const angle = (360 / total) * index - 90; // Start from top
   const radian = (angle * Math.PI) / 180;
   const x = radius * Math.cos(radian);
@@ -313,8 +313,8 @@ const RadialCategory = ({
       style={[
         styles.radialCategoryContainer,
         {
-          left: SCREEN_WIDTH / 2 + x - 50,
-          top: 180 + y - 50,
+          left: SCREEN_WIDTH / 2 + x - 55,
+          top: 180 + y - 55,
         },
       ]}
     >
@@ -558,35 +558,6 @@ export default function BibliothekMainScreen() {
           </View>
         </View>
         
-        {/* Enhanced Medical Disclaimer */}
-        <View style={styles.modernDisclaimerContainer}>
-          <LinearGradient
-            colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
-            style={styles.modernDisclaimerGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.modernDisclaimerContent}>
-              <View style={styles.modernDisclaimerIcon}>
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.disclaimerIconGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.disclaimerEmoji}>⚕️</Text>
-                </LinearGradient>
-              </View>
-              <View style={styles.modernDisclaimerTextContainer}>
-                <Text style={styles.modernDisclaimerTitle}>Medizinischer Haftungsausschluss</Text>
-                <Text style={styles.modernDisclaimerText}>
-                  Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-        
         <View style={styles.bottomPadding} />
       </ScrollView>
     </SafeAreaView>
@@ -739,25 +710,25 @@ const styles = StyleSheet.create({
   },
   
   radialCategoryButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 8,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    marginBottom: 10,
   },
   
   radialCategoryGradient: {
     width: '100%',
     height: '100%',
-    borderRadius: 50,
+    borderRadius: 55,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   
   radialOuterRing: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+    width: 102,
+    height: 102,
+    borderRadius: 51,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -765,9 +736,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   radialInnerRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -775,9 +746,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   radialCenterCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -787,19 +758,19 @@ const styles = StyleSheet.create({
   
   radialCategoryLabel: {
     fontFamily: 'Inter-Bold',
-    fontSize: 12,
+    fontSize: 13,
     color: '#1e293b',
     textAlign: 'center',
-    width: 100,
-    lineHeight: 14,
+    width: 110,
+    lineHeight: 16,
   },
   
   // Glow Effect
   glowEffect: {
     position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     backgroundColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
@@ -892,57 +863,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
 
-  // Modern Disclaimer
-  modernDisclaimerContainer: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  modernDisclaimerGradient: {
-    borderRadius: 20,
-    padding: 2,
-  },
-  modernDisclaimerContent: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 18,
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  modernDisclaimerIcon: {
-    marginRight: 16,
-    marginTop: 2,
-  },
-  disclaimerIconGradient: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  disclaimerEmoji: {
-    fontSize: 20,
-  },
-  modernDisclaimerTextContainer: {
-    flex: 1,
-  },
-  modernDisclaimerTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: '#1e293b',
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  modernDisclaimerText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#64748b',
-    lineHeight: 20,
-  },
 
   bottomPadding: {
     height: 40,
