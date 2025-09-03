@@ -84,28 +84,24 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, []);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    console.log('🎯 Scrolling to section:', sectionId);
     setActivePill(sectionId);
     setExpandedSections(prev => ({
       ...prev,
       [sectionId]: true, // Auto-expand when navigating to section
     }));
 
-    const targetRef = sectionRefs.current[sectionId];
-    if (targetRef && scrollViewRef.current) {
-      targetRef.measureLayout(
-        scrollViewRef.current as any,
-        (x, y) => {
-          scrollViewRef.current?.scrollTo({
-            y: y - 100, // Offset for header
-            animated: true,
-          });
-        },
-        () => {
-          console.log('Failed to measure section layout');
-        }
-      );
+    // Simple scroll approach - find section index and scroll to approximate position
+    const sectionIndex = medicalSections.findIndex(s => s.id === sectionId);
+    if (sectionIndex >= 0 && scrollViewRef.current) {
+      const approximateY = 400 + (sectionIndex * 200); // Header + pills + approximate section height
+      scrollViewRef.current.scrollTo({
+        y: approximateY,
+        animated: true,
+      });
+      console.log('📍 Scrolled to approximate position:', approximateY);
     }
-  }, []);
+  }, [medicalSections]);
 
   const getIconForSection = useCallback((type: string) => {
     const iconProps = { size: 24, color: colors.primary };
@@ -612,7 +608,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   console.log('🎯 Rendering MedicalContentRenderer with', medicalSections.length, 'sections');
 
   return (
-    <View style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header with gradient */}
       <LinearGradient
         colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
@@ -632,28 +628,19 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       {/* Navigation Pills */}
       {renderNavigationPills()}
 
-      {/* Scrollable Content Sections */}
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentContainer}>
-          {medicalSections.map((section, index) => {
-            console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
-            return renderSection(section, index);
-          })}
-        </View>
-      </ScrollView>
-    </View>
+      {/* Content Sections */}
+      <View style={styles.contentContainer}>
+        {medicalSections.map((section, index) => {
+          console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
+          return renderSection(section, index);
+        })}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  scrollContainer: {
     flex: 1,
   },
   header: {
