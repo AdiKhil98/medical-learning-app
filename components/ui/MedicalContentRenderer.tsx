@@ -441,9 +441,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         style={styles.header}
       >
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>💧 {title}</Text>
           <Text style={styles.headerSubtitle}>
-            Vollständiger medizinischer Leitfaden
+            Medizinischer Leitfaden
           </Text>
         </View>
       </LinearGradient>
