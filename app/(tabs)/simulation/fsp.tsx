@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
+import SplineOrb from '@/components/ui/SplineOrb';
+import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -123,6 +125,7 @@ export default function FSPSimulationScreen() {
   const [voiceflowLoaded, setVoiceflowLoaded] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const scrollViewRef = useRef(null);
+  const voiceflowController = useRef<VoiceflowController | null>(null);
   
   const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
     isActive: simulationStarted,
@@ -132,6 +135,50 @@ export default function FSPSimulationScreen() {
   });
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
+
+  // Handle orb click - start simulation programmatically
+  const handleOrbPress = async () => {
+    if (simulationStarted) return;
+    
+    // Check if user can use simulation
+    if (!canUseSimulation()) {
+      Alert.alert(
+        'Simulationslimit erreicht',
+        `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      console.log('🚀 Starting FSP simulation via orb click');
+      
+      // Track simulation usage
+      await useSimulation('fsp');
+      
+      // Start simulation timer
+      setSimulationStarted(true);
+      resetTimer();
+      
+      // Programmatically start the hidden Voiceflow widget
+      if (Platform.OS === 'web' && voiceflowController.current?.isReady()) {
+        const started = await voiceflowController.current.startSimulation();
+        if (started) {
+          console.log('✅ Hidden Voiceflow simulation started successfully');
+        } else {
+          console.warn('⚠️ Failed to start hidden Voiceflow simulation');
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error starting simulation:', error);
+      Alert.alert(
+        'Fehler',
+        'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
 
   // Load Voiceflow script and set up event listeners
   useEffect(() => {
@@ -299,6 +346,38 @@ export default function FSPSimulationScreen() {
       };
     }
   }, [simulationStarted, resetTimer]);
+
+  // Initialize hidden Voiceflow controller
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      console.log('🔄 Initializing hidden FSP Voiceflow controller...');
+      
+      voiceflowController.current = createFSPController();
+      
+      voiceflowController.current.loadWidget()
+        .then((loaded) => {
+          if (loaded) {
+            console.log('✅ Hidden FSP Voiceflow widget loaded successfully');
+            setVoiceflowLoaded(true);
+          } else {
+            console.error('❌ Failed to load FSP Voiceflow widget');
+          }
+        })
+        .catch((error) => {
+          console.error('❌ Error loading FSP Voiceflow widget:', error);
+        });
+      
+      return () => {
+        // Cleanup on unmount
+        if (voiceflowController.current) {
+          voiceflowController.current.destroy();
+        }
+      };
+    } else {
+      // Mobile handling
+      setVoiceflowLoaded(true);
+    }
+  }, []);
 
   // Handle back button and navigation prevention
   useEffect(() => {
@@ -547,36 +626,38 @@ export default function FSPSimulationScreen() {
             
             {/* Main content */}
             <View style={styles.mainContent}>
-              <MicrophoneButton 
-                onPress={() => {}}
-                isActive={simulationStarted}
-              />
+              {/* Spline-inspired Orb Interface */}
+              <View style={styles.orbContainer}>
+                <SplineOrb
+                  onPress={handleOrbPress}
+                  isActive={simulationStarted}
+                  size={140}
+                  activeColor={['#3b82f6', '#6366f1', '#8b5cf6']}
+                  inactiveColor={['#e0e7ff', '#c7d2fe', '#a5b4fc']}
+                />
+              </View>
               
               <View style={styles.textContent}>
                 <Text style={styles.heading}>FSP Simulation</Text>
                 <Text style={styles.description}>
                   {simulationStarted 
-                    ? (Platform.OS === 'web' 
-                        ? "Die Sprach-Simulation läuft - der Voiceflow Chat sollte sich automatisch öffnen" 
-                        : "Die Simulation läuft - der KI-Chat wurde im Browser geöffnet"
-                      )
-                    : "Bereit für Ihre medizinische Sprach-Simulation? Klicken Sie das Mikrofon, um mit dem KI-Assistenten zu sprechen."
+                    ? "Die Sprach-Simulation ist aktiv! Sprechen Sie mit dem virtuellen Assistenten."
+                    : "Bereit für Ihre medizinische Sprach-Simulation? Klicken Sie auf den Orb, um zu beginnen."
                   }
                 </Text>
                 
-                {Platform.OS === 'web' ? (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: voiceflowLoaded ? '#22c55e' : '#f59e0b' }]}>
-                      {voiceflowLoaded ? '✅ Voiceflow bereit' : '⏳ Voiceflow lädt...'}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: '#3b82f6' }]}>
-                      📱 Mobile: Chat öffnet im Browser
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.voiceflowStatus}>
+                  <Text style={[styles.statusText, { 
+                    color: simulationStarted 
+                      ? '#3b82f6' 
+                      : (voiceflowLoaded ? '#6366f1' : '#f59e0b') 
+                  }]}>
+                    {simulationStarted 
+                      ? '🎙️ Sprach-Simulation läuft!'
+                      : (voiceflowLoaded ? '✅ Bereit zum Starten' : '⏳ Initialisierung...')
+                    }
+                  </Text>
+                </View>
                 
                 {simulationStarted && (
                   <TouchableOpacity
@@ -595,7 +676,7 @@ export default function FSPSimulationScreen() {
               {simulationStarted && (
                 <View style={styles.statusIndicator}>
                   <View style={styles.recordingDot} />
-                  <Text style={styles.statusText}>Simulation aktiv</Text>
+                  <Text style={[styles.statusText, { color: '#3b82f6' }]}>Aufnahme</Text>
                 </View>
               )}
             </View>
@@ -695,6 +776,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+  },
+  orbContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 40,
+    zIndex: 5,
   },
   microphoneContainer: {
     position: 'relative',

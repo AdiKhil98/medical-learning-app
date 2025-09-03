@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
+import SplineOrb from '@/components/ui/SplineOrb';
+import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,6 +26,7 @@ export default function KPSimulationScreen() {
   const [voiceflowLoaded, setVoiceflowLoaded] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const scrollViewRef = useRef(null);
+  const voiceflowController = useRef<VoiceflowController | null>(null);
   
   const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
     isActive: simulationStarted,
@@ -33,6 +36,55 @@ export default function KPSimulationScreen() {
   });
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
+
+  // Handle orb click - start simulation programmatically
+  const handleOrbPress = async () => {
+    if (simulationStarted) return;
+    
+    // Check if user can use simulation
+    if (!canUseSimulation()) {
+      Alert.alert(
+        'Simulationslimit erreicht',
+        `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      console.log('🚀 Starting KP simulation via orb click');
+      
+      // Track simulation usage
+      await useSimulation('kp');
+      
+      // Start simulation timer
+      setSimulationStarted(true);
+      resetTimer();
+      
+      // Programmatically start the hidden Voiceflow widget
+      if (Platform.OS === 'web' && voiceflowController.current?.isReady()) {
+        const started = await voiceflowController.current.startSimulation();
+        if (started) {
+          console.log('✅ Hidden Voiceflow simulation started successfully');
+        } else {
+          console.warn('⚠️ Failed to start hidden Voiceflow simulation');
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error starting simulation:', error);
+      Alert.alert(
+        'Fehler',
+        'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleEndSimulation = () => {
+    setSimulationStarted(false);
+    resetTimer();
+  };
 
   // Load Voiceflow script and set up event listeners
   useEffect(() => {
@@ -204,6 +256,38 @@ export default function KPSimulationScreen() {
       };
     }
   }, [simulationStarted, resetTimer]);
+
+  // Initialize hidden Voiceflow controller
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      console.log('🔄 Initializing hidden Voiceflow controller...');
+      
+      voiceflowController.current = createKPController();
+      
+      voiceflowController.current.loadWidget()
+        .then((loaded) => {
+          if (loaded) {
+            console.log('✅ Hidden Voiceflow widget loaded successfully');
+            setVoiceflowLoaded(true);
+          } else {
+            console.error('❌ Failed to load Voiceflow widget');
+          }
+        })
+        .catch((error) => {
+          console.error('❌ Error loading Voiceflow widget:', error);
+        });
+      
+      return () => {
+        // Cleanup on unmount
+        if (voiceflowController.current) {
+          voiceflowController.current.destroy();
+        }
+      };
+    } else {
+      // Mobile handling
+      setVoiceflowLoaded(true);
+    }
+  }, []);
 
   // Handle back button and navigation prevention
   useEffect(() => {
@@ -578,46 +662,54 @@ export default function KPSimulationScreen() {
                 <Text style={styles.heading}>KP Simulation</Text>
                 <Text style={styles.description}>
                   {simulationStarted 
-                    ? (Platform.OS === 'web' 
-                        ? "Die KI-Simulation läuft! Interagieren Sie mit dem Chat-Widget, um zu beginnen." 
-                        : "Die Simulation läuft - der KI-Chat wurde im Browser geöffnet."
-                      )
-                    : "Bereit für Ihre medizinische KI-Simulation? Das Chat-Widget öffnet sich automatisch. Klicken Sie darauf, um die Simulation zu starten."
+                    ? "Die KI-Simulation ist aktiv! Sprechen Sie mit dem virtuellen Assistenten."
+                    : "Bereit für Ihre medizinische KI-Simulation? Klicken Sie auf den Orb, um zu beginnen."
                   }
                 </Text>
-                
-                {Platform.OS === 'web' ? (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: voiceflowLoaded ? '#22c55e' : '#f59e0b' }]}>
-                      {voiceflowLoaded ? '✅ Voiceflow bereit' : '⏳ Voiceflow lädt...'}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: '#3b82f6' }]}>
-                      📱 Mobile: Chat öffnet im Browser
-                    </Text>
-                  </View>
-                )}
-                
-                {simulationStarted && (
-                  <TouchableOpacity
-                    style={styles.endSimulationButton}
-                    onPress={handleEndSimulation}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.endSimulationButtonText}>
-                      Simulation beenden
-                    </Text>
-                  </TouchableOpacity>
-                )}
+              </View>
+
+              {/* Spline-inspired Orb Interface */}
+              <View style={styles.orbContainer}>
+                <SplineOrb
+                  onPress={handleOrbPress}
+                  isActive={simulationStarted}
+                  size={140}
+                  activeColor={['#4CAF50', '#66BB6A', '#81C784']}
+                  inactiveColor={['#E8F5E8', '#C8E6C9', '#A5D6A7']}
+                />
               </View>
 
               {/* Status indicator */}
+              <View style={styles.voiceflowStatus}>
+                <Text style={[styles.statusText, { 
+                  color: simulationStarted 
+                    ? '#22c55e' 
+                    : (voiceflowLoaded ? '#4CAF50' : '#f59e0b') 
+                }]}>
+                  {simulationStarted 
+                    ? '🎙️ Simulation läuft - Sprechen Sie!'
+                    : (voiceflowLoaded ? '✅ Bereit zum Starten' : '⏳ Initialisierung...')
+                  }
+                </Text>
+              </View>
+
+              {simulationStarted && (
+                <TouchableOpacity
+                  style={styles.endSimulationButton}
+                  onPress={handleEndSimulation}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.endSimulationButtonText}>
+                    Simulation beenden
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Recording indicator */}
               {simulationStarted && (
                 <View style={styles.statusIndicator}>
                   <View style={styles.recordingDot} />
-                  <Text style={styles.statusText}>Simulation aktiv</Text>
+                  <Text style={[styles.statusText, { color: '#22c55e' }]}>Aktiv</Text>
                 </View>
               )}
             </View>
@@ -796,6 +888,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+  },
+  orbContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 40,
+    zIndex: 5,
   },
   voiceflowStatus: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
