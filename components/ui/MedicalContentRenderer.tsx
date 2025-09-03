@@ -360,7 +360,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, [colors, expandedSections, toggleSection, getIconForSection, renderStyledText]);
 
   const medicalSections = useMemo(() => {
-    console.log('Computing medicalSections with:', {
+    console.log('🔍 Computing medicalSections with:', {
       hasHtml: !!htmlContent,
       htmlContent: htmlContent?.substring(0, 100) + '...',
       hasJson: !!jsonContent,
@@ -371,9 +371,36 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       plainTextContent: plainTextContent?.substring(0, 100) + '...'
     });
 
-    // Handle HTML content by extracting text first
+    // PRIORITY 1: Use structured JSON content if available and properly formatted
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      console.log('✅ Using existing JSON content sections');
+      
+      // Validate and ensure JSON content has proper structure
+      const validSections = jsonContent.filter(section => 
+        section && 
+        typeof section === 'object' && 
+        section.title && 
+        section.content
+      );
+      
+      if (validSections.length > 0) {
+        console.log('✅ Found', validSections.length, 'valid JSON sections');
+        return validSections.map((section, index) => ({
+          id: section.id || `json_${index}`,
+          title: section.title,
+          icon: section.type || 'definition',
+          content: section.content,
+          type: section.type || 'definition',
+          stats: section.stats,
+          highlights: section.highlights,
+          importantBox: section.importantBox
+        }));
+      }
+    }
+
+    // PRIORITY 2: Handle HTML content by extracting text first
     if (htmlContent) {
-      console.log('Processing HTML content');
+      console.log('🔄 Processing HTML content');
       const cleanText = htmlContent
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
@@ -382,26 +409,30 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         .trim();
       
       if (cleanText && cleanText.length > 50) {
-        console.log('Extracted clean text from HTML, parsing as text');
+        console.log('🔄 Extracted clean text from HTML, parsing as text');
         const sections = parseTextToMedicalSections(cleanText);
-        console.log('Parsed sections from HTML:', sections.length);
+        console.log('✅ Parsed', sections.length, 'sections from HTML');
         return sections;
       }
     }
     
-    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      console.log('Using JSON content');
-      return jsonContent;
-    }
-    
+    // PRIORITY 3: Handle plain text content
     if (plainTextContent) {
-      console.log('Using plain text content');
+      console.log('🔄 Using plain text content');
       const sections = parseTextToMedicalSections(plainTextContent);
-      console.log('Parsed sections from plain text:', sections);
+      console.log('✅ Parsed', sections.length, 'sections from plain text');
       return sections;
     }
     
-    console.log('No content found, returning empty array');
+    // PRIORITY 4: Handle malformed JSON content as string
+    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 50) {
+      console.log('🔄 JSON content is string, parsing as text');
+      const sections = parseTextToMedicalSections(jsonContent);
+      console.log('✅ Parsed', sections.length, 'sections from JSON string');
+      return sections;
+    }
+    
+    console.log('❌ No usable content found, returning empty array');
     return [];
   }, [htmlContent, jsonContent, plainTextContent, parseTextToMedicalSections]);
 
