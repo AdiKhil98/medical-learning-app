@@ -432,29 +432,31 @@ export default function KPSimulationScreen() {
   // Animated styles
   const orb1Style = useAnimatedStyle(() => ({
     transform: [
-      { translateX: floatingOrb1.value * 30 - 15 },
-      { translateY: floatingOrb1.value * 40 - 20 },
+      { translateX: floatingOrb1.value * 20 - 10 },
+      { translateY: floatingOrb1.value * 25 - 12.5 },
       { rotate: `${floatingOrb1.value * 360}deg` },
+      { scale: 0.9 + floatingOrb1.value * 0.2 },
     ],
-    opacity: 0.1 + floatingOrb1.value * 0.05,
+    opacity: 0.7 + floatingOrb1.value * 0.3,
   }));
 
   const orb2Style = useAnimatedStyle(() => ({
     transform: [
-      { translateX: floatingOrb2.value * -25 + 12.5 },
-      { translateY: floatingOrb2.value * -35 + 17.5 },
+      { translateX: floatingOrb2.value * -20 + 10 },
+      { translateY: floatingOrb2.value * -25 + 12.5 },
       { rotate: `${floatingOrb2.value * -270}deg` },
+      { scale: 0.8 + floatingOrb2.value * 0.4 },
     ],
-    opacity: 0.08 + floatingOrb2.value * 0.04,
+    opacity: 0.6 + floatingOrb2.value * 0.4,
   }));
 
   const orb3Style = useAnimatedStyle(() => ({
     transform: [
-      { translateX: floatingOrb3.value * 20 - 10 },
-      { translateY: floatingOrb3.value * -30 + 15 },
-      { scale: 0.8 + floatingOrb3.value * 0.4 },
+      { translateX: floatingOrb3.value * 15 - 7.5 },
+      { translateY: floatingOrb3.value * -20 + 10 },
+      { scale: 0.7 + floatingOrb3.value * 0.6 },
     ],
-    opacity: 0.06 + floatingOrb3.value * 0.03,
+    opacity: 0.5 + floatingOrb3.value * 0.5,
   }));
 
   const backgroundScaleStyle = useAnimatedStyle(() => ({
@@ -481,9 +483,30 @@ export default function KPSimulationScreen() {
         </Animated.View>
         
         {/* Floating animated orbs */}
-        <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]} />
-        <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]} />
-        <Animated.View style={[styles.floatingOrb, styles.orb3, orb3Style]} />
+        <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]}>
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.1)']}
+            style={styles.orbGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </Animated.View>
+        <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]}>
+          <LinearGradient
+            colors={['rgba(240, 147, 251, 0.6)', 'rgba(240, 147, 251, 0.2)']}
+            style={styles.orbGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </Animated.View>
+        <Animated.View style={[styles.floatingOrb, styles.orb3, orb3Style]}>
+          <LinearGradient
+            colors={['rgba(102, 126, 234, 0.5)', 'rgba(102, 126, 234, 0.1)']}
+            style={styles.orbGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </Animated.View>
         
         {/* Glass morphism overlay */}
         <View style={styles.glassOverlay} />
@@ -637,28 +660,32 @@ const styles = StyleSheet.create({
   floatingOrb: {
     position: 'absolute',
     borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: 'rgba(102, 126, 234, 0.5)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
+    shadowColor: '#ffffff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
     elevation: 8,
   },
+  orbGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 100,
+  },
   orb1: {
-    width: 120,
-    height: 120,
+    width: 140,
+    height: 140,
     top: '15%',
-    left: '10%',
+    left: '8%',
   },
   orb2: {
-    width: 80,
-    height: 80,
-    top: '60%',
-    right: '15%',
-  },
-  orb3: {
     width: 100,
     height: 100,
+    top: '65%',
+    right: '12%',
+  },
+  orb3: {
+    width: 120,
+    height: 120,
     top: '35%',
     right: '5%',
   },
