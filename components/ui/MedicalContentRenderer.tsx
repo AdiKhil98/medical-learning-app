@@ -435,7 +435,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   // Clean rendering with working functionality
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
+      {/* Header - moved to top and enhanced */}
       <LinearGradient
         colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
         style={styles.header}
@@ -447,9 +447,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
           </Text>
         </View>
       </LinearGradient>
-
-      {/* Quick Stats */}
-      {renderQuickStats()}
 
       {/* Navigation Pills */}
       {renderNavigationPills()}
