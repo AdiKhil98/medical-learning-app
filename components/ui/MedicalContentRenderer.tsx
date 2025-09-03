@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -46,6 +46,9 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     '0': true,
   });
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<Record<string, View | null>>({});
+  const [visibleSections, setVisibleSections] = useState<string[]>([]);
 
   // Error handling - return early if no title
   if (!title) {
@@ -62,6 +65,36 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       [sectionId]: !prev[sectionId],
     }));
   }, []);
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    const sectionRef = sectionRefs.current[sectionId];
+    if (sectionRef && scrollViewRef.current) {
+      sectionRef.measureLayout(
+        scrollViewRef.current as any,
+        (x, y) => {
+          scrollViewRef.current?.scrollTo({
+            y: y - 100, // Offset for header
+            animated: true,
+          });
+        },
+        () => {}
+      );
+    }
+  }, []);
+
+  // Enhanced navigation with better visual feedback
+  const handleNavPillPress = useCallback((section: MedicalSection) => {
+    const isCurrentlyExpanded = expandedSections[section.id];
+    
+    if (isCurrentlyExpanded) {
+      // If already expanded, scroll to it
+      scrollToSection(section.id);
+    } else {
+      // If not expanded, expand it first, then scroll
+      toggleSection(section.id);
+      setTimeout(() => scrollToSection(section.id), 150);
+    }
+  }, [expandedSections, toggleSection, scrollToSection]);
 
   const getIconForSection = useCallback((type: string) => {
     const iconProps = { size: 24, color: colors.primary || '#4CAF50' };
@@ -283,7 +316,13 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     const isExpanded = expandedSections[section.id];
     
     return (
-      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}>
+      <View 
+        key={section.id} 
+        ref={(ref) => {
+          sectionRefs.current[section.id] = ref;
+        }}
+        style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}
+      >
         <TouchableOpacity
           style={styles.sectionHeader}
           onPress={() => toggleSection(section.id)}
@@ -390,6 +429,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         >
           {medicalSections.map((section) => {
             const isActive = expandedSections[section.id];
+            const isVisible = visibleSections.includes(section.id);
+            
             return (
               <TouchableOpacity
                 key={section.id}
@@ -399,29 +440,33 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
                     backgroundColor: isActive ? (colors.primary || '#4CAF50') : (colors.card || '#f0f0f0'),
                     borderColor: colors.primary || '#4CAF50',
                     borderWidth: isActive ? 0 : 1,
+                    transform: [{ scale: isVisible ? 1.05 : 1 }],
                   }
                 ]}
-                onPress={() => {
-                  // Toggle section expansion and scroll to it
-                  toggleSection(section.id);
-                }}
+                onPress={() => handleNavPillPress(section)}
                 activeOpacity={0.7}
               >
-                <Text style={[
-                  styles.navPillText,
-                  { 
-                    color: isActive ? 'white' : (colors.primary || '#4CAF50')
-                  }
-                ]}>
-                  {section.title}
-                </Text>
+                <View style={styles.navPillContent}>
+                  {isVisible && (
+                    <View style={[styles.visibilityIndicator, { backgroundColor: colors.primary || '#4CAF50' }]} />
+                  )}
+                  <Text style={[
+                    styles.navPillText,
+                    { 
+                      color: isActive ? 'white' : (colors.primary || '#4CAF50'),
+                      fontWeight: isVisible ? '700' : '600',
+                    }
+                  ]}>
+                    {section.title}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
     );
-  }, [medicalSections, expandedSections, colors.primary, colors.card, toggleSection]);
+  }, [medicalSections, expandedSections, visibleSections, colors.primary, colors.card, handleNavPillPress]);
 
   // Simple error state if no content
   if (medicalSections.length === 0) {
@@ -437,7 +482,11 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Enhanced rendering with rich formatting
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      ref={scrollViewRef}
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
       <LinearGradient
         colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
@@ -570,6 +619,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  navPillContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  visibilityIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.8,
   },
   // Content Styles
   contentContainer: {
