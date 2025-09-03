@@ -32,6 +32,23 @@ export default function SplineViewer({ onPress, isActive, size = 160 }: SplineVi
           splineViewer.style.cursor = 'pointer';
           splineViewer.style.transition = 'all 0.3s ease';
           
+          // Hide Spline watermark (Note: May violate Spline ToS - consider Pro subscription)
+          setTimeout(() => {
+            const hideWatermark = () => {
+              const watermarks = document.querySelectorAll(
+                '[class*="watermark"], [class*="logo"], [aria-label*="spline"], [title*="spline"], [href*="spline.design"]'
+              );
+              watermarks.forEach(el => {
+                (el as HTMLElement).style.display = 'none';
+                (el as HTMLElement).remove();
+              });
+            };
+            
+            hideWatermark();
+            setTimeout(hideWatermark, 1000);
+            setTimeout(hideWatermark, 3000);
+          }, 500);
+          
           // Add hover effects
           splineViewer.addEventListener('mouseenter', () => {
             splineViewer.style.transform = 'scale(1.05)';

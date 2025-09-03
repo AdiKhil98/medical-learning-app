@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
-import SplineViewer from '@/components/ui/SplineViewer';
+import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
@@ -626,12 +626,12 @@ export default function FSPSimulationScreen() {
             
             {/* Main content */}
             <View style={styles.mainContent}>
-              {/* Spline 3D Interactive Orb */}
+              {/* Animated Celestial Orb */}
               <View style={styles.orbContainer}>
-                <SplineViewer
+                <AnimatedOrb
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
-                  size={180}
+                  size={160}
                 />
               </View>
               
