@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
-import AnimatedOrb from '@/components/ui/AnimatedOrb';
+import CelestialOrb from '@/components/ui/CelestialOrb';
 import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
@@ -665,10 +665,11 @@ export default function KPSimulationScreen() {
 
               {/* Animated Celestial Orb */}
               <View style={styles.orbContainer}>
-                <AnimatedOrb
+                <CelestialOrb
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
                   size={160}
+                  theme="blue"
                 />
               </View>
 
