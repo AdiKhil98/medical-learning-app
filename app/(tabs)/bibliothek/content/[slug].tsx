@@ -462,16 +462,6 @@ const ContentDetailScreen = memo(() => {
         <Text style={dynamicStyles.backText}>Zurück</Text>
       </TouchableOpacity>
 
-      <View style={styles.header}>
-        <Text style={dynamicStyles.headerTitle}>{currentSection.title}</Text>
-        {currentSection.description && (
-          <Text style={dynamicStyles.headerDescription}>{currentSection.description}</Text>
-        )}
-        <Text style={[dynamicStyles.headerDescription, { color: colors.primary, fontStyle: 'italic' }]}>
-          ✨ Enhanced Medical Content
-        </Text>
-      </View>
-
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Universal Enhanced Medical Content Renderer */}
         <MedicalContentRenderer
