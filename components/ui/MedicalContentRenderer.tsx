@@ -219,6 +219,66 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     }
   }, [colors.text]);
 
+  // Render important warning boxes based on content analysis
+  const renderImportantBoxes = useCallback((content: string, sectionType: string) => {
+    const boxes = [];
+    const lowerContent = content.toLowerCase();
+    
+    // Emergency/Critical information boxes
+    if (sectionType === 'emergency' || lowerContent.includes('lebensbedrohlich') || 
+        lowerContent.includes('sofort') || lowerContent.includes('notfall')) {
+      boxes.push(
+        <View key="emergency" style={styles.emergencyBox}>
+          <View style={styles.importantBoxHeader}>
+            <AlertTriangle size={16} color="#EF4444" />
+            <Text style={styles.emergencyBoxTitle}>⚠️ Lebensbedrohliche Komplikationen</Text>
+          </View>
+          <Text style={[styles.importantBoxText, { color: colors.text || '#333' }]}>
+            Sofortige medizinische Intervention erforderlich bei Hyperkaliämie, Lungenödem oder schwerer Azidose.
+          </Text>
+        </View>
+      );
+    }
+    
+    // Therapy/Treatment boxes
+    if (sectionType === 'therapy' || lowerContent.includes('nierenersatztherapie') || 
+        lowerContent.includes('dialyse') || lowerContent.includes('indikationen')) {
+      boxes.push(
+        <View key="therapy" style={styles.therapyBox}>
+          <View style={styles.importantBoxHeader}>
+            <Heart size={16} color="#F57C00" />
+            <Text style={styles.therapyBoxTitle}>🎯 Indikationen zur Nierenersatztherapie</Text>
+          </View>
+          <View style={styles.bulletPoints}>
+            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Therapierefraktäre Hyperkaliämie über 6,5 mmol/l</Text>
+            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Schwere Azidose mit pH unter 7,1</Text>
+            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Lungenödem bei Flüssigkeitsretention</Text>
+            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Urämische Komplikationen</Text>
+          </View>
+        </View>
+      );
+    }
+    
+    // Diagnostic boxes
+    if (sectionType === 'diagnosis' || lowerContent.includes('kdigo') || lowerContent.includes('stadien')) {
+      boxes.push(
+        <View key="diagnostic" style={styles.diagnosticBox}>
+          <View style={styles.importantBoxHeader}>
+            <Activity size={16} color="#2196F3" />
+            <Text style={styles.diagnosticBoxTitle}>📊 KDIGO-Klassifikation</Text>
+          </View>
+          <Text style={[styles.importantBoxText, { color: colors.text || '#333' }]}>
+            Stadium 1: Kreatinin-Anstieg ≥0,3 mg/dl oder 1,5-1,9x Baseline{'\n'}
+            Stadium 2: Kreatinin-Anstieg 2,0-2,9x Baseline{'\n'}
+            Stadium 3: Kreatinin-Anstieg ≥3,0x Baseline oder Dialysepflichtigkeit
+          </Text>
+        </View>
+      );
+    }
+    
+    return boxes;
+  }, [colors.text]);
+
   const renderSection = useCallback((section: MedicalSection) => {
     const isExpanded = expandedSections[section.id];
     
@@ -247,11 +307,12 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         {isExpanded && (
           <View style={styles.sectionContent}>
             {renderContent(section.content)}
+            {renderImportantBoxes(section.content, section.type)}
           </View>
         )}
       </View>
     );
-  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent]);
+  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes]);
 
   // Enhanced content processing 
   const medicalSections = useMemo(() => {
@@ -608,6 +669,66 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     overflow: 'hidden',
     marginHorizontal: 1,
+  },
+  // Important Box Styles
+  emergencyBox: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderLeftWidth: 5,
+    borderLeftColor: '#EF4444',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 16,
+  },
+  therapyBox: {
+    backgroundColor: 'rgba(245, 124, 0, 0.1)',
+    borderLeftWidth: 5,
+    borderLeftColor: '#F57C00',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 16,
+  },
+  diagnosticBox: {
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    borderLeftWidth: 5,
+    borderLeftColor: '#2196F3',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 16,
+  },
+  importantBoxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emergencyBoxTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#EF4444',
+    marginLeft: 8,
+  },
+  therapyBoxTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F57C00',
+    marginLeft: 8,
+  },
+  diagnosticBoxTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2196F3',
+    marginLeft: 8,
+  },
+  importantBoxText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: 'Inter-Medium',
+  },
+  bulletPoints: {
+    gap: 4,
+  },
+  bulletPoint: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   emptyState: {
     padding: 40,
