@@ -455,55 +455,19 @@ const ContentDetailScreen = memo(() => {
         {currentSection.description && (
           <Text style={dynamicStyles.headerDescription}>{currentSection.description}</Text>
         )}
-        {currentSection.slug === 'av-block' && (
-          <Text style={[dynamicStyles.headerDescription, { color: colors.primary, fontStyle: 'italic' }]}>
-            🧪 Enhanced Medical Content Demo
-          </Text>
-        )}
+        <Text style={[dynamicStyles.headerDescription, { color: colors.primary, fontStyle: 'italic' }]}>
+          ✨ Enhanced Medical Content
+        </Text>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Enhanced Medical Content Renderer - Show demo for AV-Block */}
-        {currentSection.slug === 'av-block' ? (
-          <MedicalContentRenderer
-            htmlContent={demoAVBlockHTML}
-            jsonContent={demoAVBlockJSON}
-            title={currentSection.title}
-          />
-        ) : currentSection.content_html || (currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0) ? (
-          <MedicalContentRenderer
-            htmlContent={currentSection.content_html}
-            jsonContent={currentSection.content_improved}
-            title={currentSection.title}
-          />
-        ) : currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0 ? (
-          // Display structured content from content_improved JSON (fallback)
-          currentSection.content_improved.map((contentSection: ContentSection, index: number) => (
-            <ContentSectionComponent
-              key={index}
-              contentSection={contentSection}
-              index={index}
-              isExpanded={expandedSections[index.toString()]}
-              onToggle={() => toggleSection(index.toString())}
-              colors={colors}
-              currentSection={currentSection}
-            />
-          ))
-        ) : currentSection.content_details ? (
-          // Display content_details
-          <View style={dynamicStyles.fallbackContent}>
-            <Text style={dynamicStyles.fallbackTitle}>{currentSection.title}</Text>
-            <Text style={dynamicStyles.fallbackText}>{currentSection.content_details}</Text>
-          </View>
-        ) : (
-          // No content - show fallback message
-          <View style={dynamicStyles.fallbackContent}>
-            <Text style={dynamicStyles.fallbackTitle}>Kein Inhalt verfügbar</Text>
-            <Text style={dynamicStyles.fallbackText}>
-              Für diesen Abschnitt sind noch keine detaillierten Inhalte verfügbar.
-            </Text>
-          </View>
-        )}
+        {/* Universal Enhanced Medical Content Renderer */}
+        <MedicalContentRenderer
+          htmlContent={currentSection.slug === 'av-block' ? demoAVBlockHTML : currentSection.content_html}
+          jsonContent={currentSection.slug === 'av-block' ? demoAVBlockJSON : currentSection.content_improved}
+          plainTextContent={!currentSection.content_html && !currentSection.content_improved ? currentSection.content_details : undefined}
+          title={currentSection.title}
+        />
         
         <View style={{ height: 60 }} />
       </ScrollView>

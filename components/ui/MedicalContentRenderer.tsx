@@ -50,12 +50,14 @@ interface MedicalSection {
 interface MedicalContentRendererProps {
   htmlContent?: string;
   jsonContent?: any;
+  plainTextContent?: string;
   title: string;
 }
 
 const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   htmlContent,
   jsonContent,
+  plainTextContent,
   title,
 }) => {
   const { colors, isDarkMode } = useTheme();
@@ -137,6 +139,74 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             type,
           });
         }
+      });
+    }
+    
+    return sections;
+  }, []);
+
+  const parseTextToMedicalSections = useCallback((text: string): MedicalSection[] => {
+    if (!text) return [];
+    
+    const sections: MedicalSection[] = [];
+    
+    // Split by common medical section patterns
+    const paragraphs = text.split(/\n\s*\n|\. (?=[A-ZÄÖÜ])/);
+    
+    // Common medical section keywords
+    const sectionKeywords = [
+      { keywords: ['definition', 'klassifikation', 'begrif'], type: 'definition' as const },
+      { keywords: ['epidemiologie', 'häufigkeit', 'verteilung', 'prävalenz', 'inzidenz'], type: 'epidemiology' as const },
+      { keywords: ['ätiologie', 'ursache', 'pathophysiologie', 'entstehung'], type: 'etiology' as const },
+      { keywords: ['symptom', 'klinik', 'beschwerden', 'zeichen'], type: 'symptoms' as const },
+      { keywords: ['diagnostik', 'untersuchung', 'befund', 'labor'], type: 'diagnosis' as const },
+      { keywords: ['therapie', 'behandlung', 'medikament'], type: 'therapy' as const },
+      { keywords: ['prognose', 'verlauf', 'heilung'], type: 'prognosis' as const },
+      { keywords: ['alarm', 'notfall', 'komplikation', 'kritisch'], type: 'emergency' as const },
+    ];
+    
+    paragraphs.forEach((paragraph, index) => {
+      if (paragraph.trim().length < 20) return; // Skip very short paragraphs
+      
+      const lowerParagraph = paragraph.toLowerCase();
+      
+      // Try to detect section type
+      let sectionType: MedicalSection['type'] = 'definition';
+      let sectionTitle = `Abschnitt ${index + 1}`;
+      
+      for (const section of sectionKeywords) {
+        if (section.keywords.some(keyword => lowerParagraph.includes(keyword))) {
+          sectionType = section.type;
+          sectionTitle = section.type === 'definition' ? 'Definition und Klassifikation' :
+                       section.type === 'epidemiology' ? 'Epidemiologie' :
+                       section.type === 'etiology' ? 'Ätiologie und Pathophysiologie' :
+                       section.type === 'symptoms' ? 'Klinische Symptomatik' :
+                       section.type === 'diagnosis' ? 'Diagnostik' :
+                       section.type === 'therapy' ? 'Therapie' :
+                       section.type === 'prognosis' ? 'Prognose und Verlauf' :
+                       section.type === 'emergency' ? 'Alarmsymptome' :
+                       `Abschnitt ${index + 1}`;
+          break;
+        }
+      }
+      
+      sections.push({
+        id: index.toString(),
+        title: sectionTitle,
+        icon: sectionType,
+        content: paragraph.trim(),
+        type: sectionType,
+      });
+    });
+    
+    // If no sections found, create a single general section
+    if (sections.length === 0 && text.trim()) {
+      sections.push({
+        id: '0',
+        title: 'Medizinischer Inhalt',
+        icon: 'definition',
+        content: text.trim(),
+        type: 'definition',
       });
     }
     
@@ -253,12 +323,15 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const medicalSections = useMemo(() => {
     if (htmlContent) {
       return parseHTMLToSections(htmlContent);
-    } else if (jsonContent) {
-      // Handle JSON content structure
-      return Array.isArray(jsonContent) ? jsonContent : [];
+    } else if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      // Handle structured JSON content
+      return jsonContent;
+    } else if (plainTextContent) {
+      // Parse plain text into structured medical sections
+      return parseTextToMedicalSections(plainTextContent);
     }
     return [];
-  }, [htmlContent, jsonContent, parseHTMLToSections]);
+  }, [htmlContent, jsonContent, plainTextContent, parseHTMLToSections, parseTextToMedicalSections]);
 
   const renderNavigationPills = useCallback(() => {
     if (medicalSections.length === 0) return null;
@@ -291,7 +364,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [medicalSections, expandedSections, colors, toggleSection]);
 
-  if (!htmlContent && !jsonContent) {
+  if (!htmlContent && !jsonContent && !plainTextContent) {
     return (
       <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
         <BookOpen size={48} color={colors.textSecondary} />
