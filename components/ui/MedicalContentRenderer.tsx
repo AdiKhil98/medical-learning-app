@@ -49,6 +49,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<Record<string, View | null>>({});
   const [visibleSections, setVisibleSections] = useState<string[]>([]);
+  const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
 
   // Error handling - return early if no title
   if (!title) {
@@ -67,19 +68,22 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, []);
 
   const scrollToSection = useCallback((sectionId: string) => {
-    const sectionRef = sectionRefs.current[sectionId];
-    if (sectionRef && scrollViewRef.current) {
-      sectionRef.measureLayout(
-        scrollViewRef.current as any,
-        (x, y) => {
-          scrollViewRef.current?.scrollTo({
-            y: y - 100, // Offset for header
-            animated: true,
-          });
-        },
-        () => {}
-      );
+    const position = sectionPositions[sectionId];
+    if (position !== undefined && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        y: Math.max(0, position - 120), // Offset for header and navigation
+        animated: true,
+      });
     }
+  }, [sectionPositions]);
+
+  // Update section position when layout changes
+  const onSectionLayout = useCallback((sectionId: string, event: any) => {
+    const { y } = event.nativeEvent.layout;
+    setSectionPositions(prev => ({
+      ...prev,
+      [sectionId]: y
+    }));
   }, []);
 
   // Enhanced navigation with better visual feedback
@@ -92,9 +96,26 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     } else {
       // If not expanded, expand it first, then scroll
       toggleSection(section.id);
-      setTimeout(() => scrollToSection(section.id), 150);
+      setTimeout(() => scrollToSection(section.id), 200);
     }
   }, [expandedSections, toggleSection, scrollToSection]);
+
+  // Track scroll position to update visible sections
+  const handleScroll = useCallback((event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const viewHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    const visible: string[] = [];
+    Object.entries(sectionPositions).forEach(([sectionId, position]) => {
+      if (position >= scrollY - 100 && position <= scrollY + viewHeight + 100) {
+        visible.push(sectionId);
+      }
+    });
+    
+    if (visible.length !== visibleSections.length || !visible.every(id => visibleSections.includes(id))) {
+      setVisibleSections(visible);
+    }
+  }, [sectionPositions, visibleSections]);
 
   const getIconForSection = useCallback((type: string) => {
     const iconProps = { size: 24, color: colors.primary || '#4CAF50' };
@@ -321,6 +342,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         ref={(ref) => {
           sectionRefs.current[section.id] = ref;
         }}
+        onLayout={(event) => onSectionLayout(section.id, event)}
         style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}
       >
         <TouchableOpacity
@@ -351,7 +373,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         )}
       </View>
     );
-  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes]);
+  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes, onSectionLayout]);
 
   // Enhanced content processing 
   const medicalSections = useMemo(() => {
@@ -440,7 +462,9 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
                     backgroundColor: isActive ? (colors.primary || '#4CAF50') : (colors.card || '#f0f0f0'),
                     borderColor: colors.primary || '#4CAF50',
                     borderWidth: isActive ? 0 : 1,
-                    transform: [{ scale: isVisible ? 1.05 : 1 }],
+                    transform: [{ scale: isVisible ? 1.08 : 1 }],
+                    shadowOpacity: isVisible ? 0.15 : 0.1,
+                    shadowRadius: isVisible ? 4 : 2,
                   }
                 ]}
                 onPress={() => handleNavPillPress(section)}
@@ -486,6 +510,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       ref={scrollViewRef}
       style={styles.container} 
       showsVerticalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <LinearGradient
