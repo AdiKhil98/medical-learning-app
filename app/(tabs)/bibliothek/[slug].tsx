@@ -376,12 +376,6 @@ export default function SectionDetailScreen() {
           <Text style={styles.modernBackText}>Zurück</Text>
         </TouchableOpacity>
         
-        <View style={styles.headerContent}>
-          <Text style={styles.modernTitle}>{currentItem.title}</Text>
-          {currentItem.description && (
-            <Text style={styles.modernSubtitle}>{currentItem.description}</Text>
-          )}
-        </View>
       </View>
 
       {showContent ? (
