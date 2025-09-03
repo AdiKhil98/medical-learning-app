@@ -572,46 +572,33 @@ export default function KPSimulationScreen() {
               </View>
             )}
             
-            {/* Main content */}
-            <View style={styles.mainContent}>
-              <View style={styles.textContent}>
-                <Text style={styles.heading}>KP Simulation</Text>
-                <Text style={styles.description}>
-                  {simulationStarted 
-                    ? (Platform.OS === 'web' 
-                        ? "Die KI-Simulation läuft! Interagieren Sie mit dem Chat-Widget, um zu beginnen." 
-                        : "Die Simulation läuft - der KI-Chat wurde im Browser geöffnet."
-                      )
-                    : "Bereit für Ihre medizinische KI-Simulation? Das Chat-Widget öffnet sich automatisch. Klicken Sie darauf, um die Simulation zu starten."
-                  }
-                </Text>
-                
-                {Platform.OS === 'web' ? (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: voiceflowLoaded ? '#22c55e' : '#f59e0b' }]}>
-                      {voiceflowLoaded ? '✅ Voiceflow bereit' : '⏳ Voiceflow lädt...'}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.voiceflowStatus}>
-                    <Text style={[styles.statusText, { color: '#3b82f6' }]}>
-                      📱 Mobile: Chat öffnet im Browser
-                    </Text>
-                  </View>
-                )}
-                
-                {simulationStarted && (
-                  <TouchableOpacity
-                    style={styles.endSimulationButton}
-                    onPress={handleEndSimulation}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.endSimulationButtonText}>
-                      Simulation beenden
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+            {/* Minimal content positioned at bottom */}
+            <View style={styles.bottomContent}>
+              {Platform.OS === 'web' ? (
+                <View style={styles.voiceflowStatus}>
+                  <Text style={[styles.statusText, { color: voiceflowLoaded ? '#22c55e' : '#f59e0b' }]}>
+                    {voiceflowLoaded ? '✅ Voiceflow bereit' : '⏳ Voiceflow lädt...'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.voiceflowStatus}>
+                  <Text style={[styles.statusText, { color: '#3b82f6' }]}>
+                    📱 Mobile: Chat öffnet im Browser
+                  </Text>
+                </View>
+              )}
+              
+              {simulationStarted && (
+                <TouchableOpacity
+                  style={styles.endSimulationButton}
+                  onPress={handleEndSimulation}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.endSimulationButtonText}>
+                    Simulation beenden
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               {/* Status indicator */}
               {simulationStarted && (
@@ -792,10 +779,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
   },
-  mainContent: {
+  bottomContent: {
+    position: 'absolute',
+    bottom: 120,
+    left: 20,
+    right: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
+    zIndex: 5,
   },
   voiceflowStatus: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -862,25 +852,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  textContent: {
-    alignItems: 'center',
-    maxWidth: 350,
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 36,
-    fontFamily: 'Inter-Bold',
-    color: '#1e40af',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 18,
-    color: '#374151',
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 16,
   },
   statusIndicator: {
     flexDirection: 'row',
