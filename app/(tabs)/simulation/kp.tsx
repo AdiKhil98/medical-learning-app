@@ -466,26 +466,53 @@ export default function KPSimulationScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
-        {/* Animated gradient background */}
-        <Animated.View style={[styles.gradientBackground, backgroundScaleStyle]}>
+        {/* Sky blue gradient background */}
+        <LinearGradient
+          colors={['#e6f3ff', '#b3d9ff', '#80c7ff']}
+          style={styles.skyBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        
+        {/* Central organic sphere */}
+        <Animated.View style={[styles.centralSphere, backgroundScaleStyle]}>
           <LinearGradient
-            colors={['#667eea', '#764ba2', '#f093fb']}
-            style={styles.mainGradient}
+            colors={['rgba(0, 162, 255, 0.15)', 'rgba(255, 140, 70, 0.1)']}
+            style={styles.sphereGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-          <LinearGradient
-            colors={['rgba(102, 126, 234, 0.3)', 'rgba(240, 147, 251, 0.2)']}
-            style={styles.overlayGradient}
-            start={{ x: 1, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          />
+          {/* Inner core */}
+          <View style={styles.sphereCore}>
+            <LinearGradient
+              colors={['rgba(0, 162, 255, 0.8)', 'rgba(255, 140, 70, 0.6)']}
+              style={styles.coreGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            />
+          </View>
+          {/* Particle dots overlay */}
+          <View style={styles.particleLayer}>
+            {[...Array(50)].map((_, i) => (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.particle,
+                  {
+                    left: `${Math.random() * 90 + 5}%`,
+                    top: `${Math.random() * 90 + 5}%`,
+                    opacity: 0.3 + Math.random() * 0.7,
+                  }
+                ]}
+              />
+            ))}
+          </View>
         </Animated.View>
         
-        {/* Floating animated orbs */}
+        {/* Floating smaller orbs */}
         <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]}>
           <LinearGradient
-            colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.1)']}
+            colors={['rgba(255, 255, 255, 0.6)', 'rgba(0, 162, 255, 0.2)']}
             style={styles.orbGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -493,23 +520,15 @@ export default function KPSimulationScreen() {
         </Animated.View>
         <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]}>
           <LinearGradient
-            colors={['rgba(240, 147, 251, 0.6)', 'rgba(240, 147, 251, 0.2)']}
-            style={styles.orbGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </Animated.View>
-        <Animated.View style={[styles.floatingOrb, styles.orb3, orb3Style]}>
-          <LinearGradient
-            colors={['rgba(102, 126, 234, 0.5)', 'rgba(102, 126, 234, 0.1)']}
+            colors={['rgba(255, 140, 70, 0.4)', 'rgba(255, 255, 255, 0.1)']}
             style={styles.orbGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
         </Animated.View>
         
-        {/* Glass morphism overlay */}
-        <View style={styles.glassOverlay} />
+        {/* Light rays */}
+        <View style={styles.lightRay} />
         
         <ScrollView 
           ref={scrollViewRef}
@@ -542,7 +561,7 @@ export default function KPSimulationScreen() {
                 }
               }}
             >
-              <ChevronLeft size={24} color="#ffffff" />
+              <ChevronLeft size={24} color="#1e40af" />
               <Text style={styles.backButtonText}>Zurück</Text>
             </TouchableOpacity>
             
@@ -622,9 +641,9 @@ export default function KPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#667eea',
+    backgroundColor: '#e6f3ff',
   },
-  gradientBackground: {
+  skyBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -632,30 +651,64 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%',
   },
-  mainGradient: {
+  centralSphere: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    width: '100%',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    top: '25%',
+    left: '50%',
+    marginLeft: -150,
+    shadowColor: 'rgba(0, 162, 255, 0.4)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 25,
+    elevation: 15,
   },
-  overlayGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
+  sphereGradient: {
     width: '100%',
-  },
-  glassOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
     height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    backdropFilter: 'blur(20px)',
+    borderRadius: 150,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  sphereCore: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    top: '50%',
+    left: '50%',
+    marginTop: -60,
+    marginLeft: -60,
+  },
+  coreGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  particleLayer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 150,
+  },
+  particle: {
+    position: 'absolute',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  lightRay: {
+    position: 'absolute',
+    width: 2,
+    height: 200,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    top: '10%',
+    right: '20%',
+    transform: [{ rotate: '45deg' }],
+    opacity: 0.6,
   },
   floatingOrb: {
     position: 'absolute',
@@ -672,22 +725,16 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   orb1: {
-    width: 140,
-    height: 140,
+    width: 80,
+    height: 80,
     top: '15%',
-    left: '8%',
+    left: '10%',
   },
   orb2: {
-    width: 100,
-    height: 100,
-    top: '65%',
-    right: '12%',
-  },
-  orb3: {
-    width: 120,
-    height: 120,
-    top: '35%',
-    right: '5%',
+    width: 60,
+    height: 60,
+    top: '70%',
+    right: '15%',
   },
   scrollView: {
     flex: 1,
@@ -721,13 +768,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backButtonText: {
-    color: '#ffffff',
+    color: '#1e40af',
     fontFamily: 'Inter-Medium',
     fontSize: 16,
     marginLeft: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   timerContainer: {
     position: 'absolute',
@@ -743,13 +787,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   timerText: {
-    color: '#ffffff',
+    color: '#1e40af',
     fontFamily: 'Inter-Bold',
     fontSize: 16,
     letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   mainContent: {
     alignItems: 'center',
@@ -830,23 +871,16 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 36,
     fontFamily: 'Inter-Bold',
-    color: '#ffffff',
+    color: '#1e40af',
     marginBottom: 16,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   description: {
     fontSize: 18,
-    color: '#ffffff',
+    color: '#374151',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-    opacity: 0.9,
   },
   statusIndicator: {
     flexDirection: 'row',
