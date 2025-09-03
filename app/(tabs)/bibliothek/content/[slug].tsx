@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
+import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 // Removed MedicalContentViewer import - doesn't exist and causes WebView error
 // import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
@@ -406,8 +407,15 @@ const ContentDetailScreen = memo(() => {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0 ? (
-          // Display structured content from content_improved JSON
+        {/* Enhanced Medical Content Renderer */}
+        {currentSection.content_html || (currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0) ? (
+          <MedicalContentRenderer
+            htmlContent={currentSection.content_html}
+            jsonContent={currentSection.content_improved}
+            title={currentSection.title}
+          />
+        ) : currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0 ? (
+          // Display structured content from content_improved JSON (fallback)
           currentSection.content_improved.map((contentSection: ContentSection, index: number) => (
             <ContentSectionComponent
               key={index}
@@ -419,14 +427,6 @@ const ContentDetailScreen = memo(() => {
               currentSection={currentSection}
             />
           ))
-        ) : currentSection.content_html ? (
-          // Display HTML content as plain text (avoiding WebView)
-          <View style={dynamicStyles.fallbackContent}>
-            <Text style={dynamicStyles.fallbackTitle}>Medical Content</Text>
-            <Text style={dynamicStyles.fallbackText}>
-              {currentSection.content_html.replace(/<[^>]*>/g, '')}
-            </Text>
-          </View>
         ) : currentSection.content_details ? (
           // Display content_details
           <View style={dynamicStyles.fallbackContent}>
