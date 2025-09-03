@@ -465,7 +465,7 @@ const ContentDetailScreen = memo(() => {
         <MedicalContentRenderer
           htmlContent={currentSection.slug === 'av-block' ? demoAVBlockHTML : currentSection.content_html}
           jsonContent={currentSection.slug === 'av-block' ? demoAVBlockJSON : currentSection.content_improved}
-          plainTextContent={!currentSection.content_html && !currentSection.content_improved ? currentSection.content_details : undefined}
+          plainTextContent={currentSection.content_details}
           title={currentSection.title}
         />
         

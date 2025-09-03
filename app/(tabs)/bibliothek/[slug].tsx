@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -18,6 +19,7 @@ interface Section {
   type: string;
   display_order: number;
   content_improved?: string;
+  content_html?: string;
 }
 
 // Enhanced item details with 3D gradients for child items
@@ -105,66 +107,6 @@ const getIconComponent = (iconName: string) => {
   }
 };
 
-// Function to render JSONB content_improved with proper formatting
-const renderContentImproved = (contentData: any) => {
-  if (!contentData) {
-    return <Text style={styles.contentText}>Kein Inhalt verfügbar.</Text>;
-  }
-
-  // If it's a string, display as is
-  if (typeof contentData === 'string') {
-    return <Text style={styles.contentText}>{contentData}</Text>;
-  }
-
-  // If it's an object/array, parse and display with titles as headers
-  try {
-    let parsedContent = contentData;
-    
-    // If it's a JSON string, parse it
-    if (typeof contentData === 'string') {
-      parsedContent = JSON.parse(contentData);
-    }
-
-    // Handle array of content sections
-    if (Array.isArray(parsedContent)) {
-      return (
-        <View>
-          {parsedContent.map((section: any, index: number) => (
-            <View key={index} style={styles.contentSection}>
-              {section.title && (
-                <Text style={styles.contentSectionTitle}>{section.title}</Text>
-              )}
-              {section.content && (
-                <Text style={styles.contentText}>{section.content}</Text>
-              )}
-            </View>
-          ))}
-        </View>
-      );
-    }
-
-    // Handle single object with title and content
-    if (parsedContent.title || parsedContent.content) {
-      return (
-        <View style={styles.contentSection}>
-          {parsedContent.title && (
-            <Text style={styles.contentSectionTitle}>{parsedContent.title}</Text>
-          )}
-          {parsedContent.content && (
-            <Text style={styles.contentText}>{parsedContent.content}</Text>
-          )}
-        </View>
-      );
-    }
-
-    // Fallback: display JSON as formatted text
-    return <Text style={styles.contentText}>{JSON.stringify(parsedContent, null, 2)}</Text>;
-
-  } catch (error) {
-    console.error('Error parsing content_improved:', error);
-    return <Text style={styles.contentText}>Fehler beim Laden des Inhalts.</Text>;
-  }
-};
 
 // Modern 3D Circular Subcategory Component
 const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
@@ -296,7 +238,7 @@ export default function SectionDetailScreen() {
       // Fetch current item details
       const { data: itemData, error: itemError } = await supabase
         .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
         .eq('slug', slug)
         .maybeSingle();
 
@@ -315,7 +257,7 @@ export default function SectionDetailScreen() {
       // Fetch child items (items where parent_slug = current slug)
       const { data: childItemsData, error: childItemsError } = await supabase
         .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
         .eq('parent_slug', slug)
         .order('display_order', { ascending: true });
 
@@ -458,7 +400,12 @@ export default function SectionDetailScreen() {
                 <Text style={styles.modernContentTitle}>Medizinischer Inhalt</Text>
               </View>
               <View style={styles.contentBody}>
-                {renderContentImproved(currentItem.content_improved)}
+                <MedicalContentRenderer 
+                  htmlContent={currentItem.content_html}
+                  jsonContent={currentItem.content_improved}
+                  plainTextContent={typeof currentItem.content_improved === 'string' ? currentItem.content_improved : JSON.stringify(currentItem.content_improved, null, 2)}
+                  title={currentItem.title}
+                />
               </View>
             </LinearGradient>
           </View>

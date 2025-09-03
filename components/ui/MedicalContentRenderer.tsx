@@ -364,6 +364,14 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [medicalSections, expandedSections, colors, toggleSection]);
 
+  // Debug logging
+  console.log('MedicalContentRenderer received:', {
+    htmlContent: !!htmlContent,
+    jsonContent: !!jsonContent,
+    plainTextContent: !!plainTextContent,
+    title
+  });
+
   if (!htmlContent && !jsonContent && !plainTextContent) {
     return (
       <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
