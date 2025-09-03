@@ -321,15 +321,31 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, [colors, expandedSections, toggleSection, getIconForSection, renderStyledText]);
 
   const medicalSections = useMemo(() => {
+    console.log('Computing medicalSections with:', {
+      hasHtml: !!htmlContent,
+      htmlContent,
+      hasJson: !!jsonContent,
+      jsonContent,
+      jsonIsArray: Array.isArray(jsonContent),
+      jsonLength: Array.isArray(jsonContent) ? jsonContent.length : 'N/A',
+      hasPlainText: !!plainTextContent,
+      plainTextContent: plainTextContent?.substring(0, 100) + '...'
+    });
+
     if (htmlContent) {
+      console.log('Using HTML content');
       return parseHTMLToSections(htmlContent);
     } else if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      // Handle structured JSON content
+      console.log('Using JSON content');
       return jsonContent;
     } else if (plainTextContent) {
-      // Parse plain text into structured medical sections
-      return parseTextToMedicalSections(plainTextContent);
+      console.log('Using plain text content');
+      const sections = parseTextToMedicalSections(plainTextContent);
+      console.log('Parsed sections from plain text:', sections);
+      return sections;
     }
+    
+    console.log('No content found, returning empty array');
     return [];
   }, [htmlContent, jsonContent, plainTextContent, parseHTMLToSections, parseTextToMedicalSections]);
 
@@ -366,11 +382,17 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Debug logging
   console.log('MedicalContentRenderer received:', {
-    htmlContent: !!htmlContent,
-    jsonContent: !!jsonContent,
-    plainTextContent: !!plainTextContent,
-    title
+    htmlContent: htmlContent,
+    jsonContent: jsonContent,
+    plainTextContent: plainTextContent,
+    title,
+    htmlContentType: typeof htmlContent,
+    jsonContentType: typeof jsonContent,
+    plainTextContentType: typeof plainTextContent
   });
+
+  // Debug: show what we actually have
+  console.log('Final check - medicalSections.length:', medicalSections.length);
 
   if (!htmlContent && !jsonContent && !plainTextContent) {
     return (
@@ -379,6 +401,49 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
           Keine medizinischen Inhalte verfügbar
         </Text>
+      </View>
+    );
+  }
+
+  // If we have content but no sections were parsed, create a fallback section
+  if (medicalSections.length === 0 && (htmlContent || jsonContent || plainTextContent)) {
+    const fallbackContent = htmlContent || 
+      (typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent, null, 2)) || 
+      plainTextContent || 
+      'Inhalt konnte nicht geladen werden';
+    
+    const fallbackSections = [{
+      id: 'fallback',
+      title: 'Medizinischer Inhalt',
+      icon: 'definition',
+      content: fallbackContent,
+      type: 'definition' as const,
+    }];
+    
+    console.log('Using fallback sections:', fallbackSections);
+    
+    return (
+      <View style={styles.container}>
+        {/* Header with gradient */}
+        <LinearGradient
+          colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>💧 {title}</Text>
+            <Text style={styles.headerSubtitle}>
+              Vollständiger medizinischer Leitfaden
+            </Text>
+          </View>
+        </LinearGradient>
+
+        {/* Quick Stats */}
+        {renderProgressStats()}
+
+        {/* Content Sections */}
+        <View style={styles.contentContainer}>
+          {fallbackSections.map((section, index) => renderSection(section, index))}
+        </View>
       </View>
     );
   }
