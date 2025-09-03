@@ -67,6 +67,43 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     }));
   }, []);
 
+  // Enhanced content processing - MOVED UP to fix declaration order
+  const medicalSections = useMemo(() => {
+    // Priority 1: Use JSON if it's properly structured
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      const validSections = jsonContent.filter(section => 
+        section && section.title && section.content
+      );
+      
+      if (validSections.length > 0) {
+        return validSections.map((section, index) => ({
+          id: section.id || `json_${index}`,
+          title: section.title,
+          icon: section.type || 'definition',
+          content: section.content,
+          type: section.type || 'definition',
+        }));
+      }
+    }
+
+    // Priority 2: Use HTML content
+    if (htmlContent && htmlContent.length > 10) {
+      return createContentSections(htmlContent);
+    }
+    
+    // Priority 3: Use plain text content
+    if (plainTextContent && plainTextContent.length > 10) {
+      return createContentSections(plainTextContent);
+    }
+    
+    // Priority 4: Use JSON as string if necessary
+    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
+      return createContentSections(jsonContent);
+    }
+    
+    return [];
+  }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
+
   const scrollToSection = useCallback((sectionId: string) => {
     console.log('Attempting to scroll to section:', sectionId);
     
@@ -427,42 +464,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes, onSectionLayout]);
 
-  // Enhanced content processing 
-  const medicalSections = useMemo(() => {
-    // Priority 1: Use JSON if it's properly structured
-    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      const validSections = jsonContent.filter(section => 
-        section && section.title && section.content
-      );
-      
-      if (validSections.length > 0) {
-        return validSections.map((section, index) => ({
-          id: section.id || `json_${index}`,
-          title: section.title,
-          icon: section.type || 'definition',
-          content: section.content,
-          type: section.type || 'definition',
-        }));
-      }
-    }
-
-    // Priority 2: Use HTML content
-    if (htmlContent && htmlContent.length > 10) {
-      return createContentSections(htmlContent);
-    }
-    
-    // Priority 3: Use plain text content
-    if (plainTextContent && plainTextContent.length > 10) {
-      return createContentSections(plainTextContent);
-    }
-    
-    // Priority 4: Use JSON as string if necessary
-    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
-      return createContentSections(jsonContent);
-    }
-    
-    return [];
-  }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
 
   // Quick stats component
   const renderQuickStats = useCallback(() => {
