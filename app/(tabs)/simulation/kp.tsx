@@ -396,17 +396,97 @@ export default function KPSimulationScreen() {
     };
   }, []);
 
+  // Animated values for the background elements
+  const floatingOrb1 = useSharedValue(0);
+  const floatingOrb2 = useSharedValue(0);
+  const floatingOrb3 = useSharedValue(0);
+  const backgroundScale = useSharedValue(1);
+
+  // Initialize animations
+  useEffect(() => {
+    floatingOrb1.value = withRepeat(
+      withTiming(1, { duration: 4000 }),
+      -1,
+      true
+    );
+    floatingOrb2.value = withRepeat(
+      withTiming(1, { duration: 6000 }),
+      -1,
+      true
+    );
+    floatingOrb3.value = withRepeat(
+      withTiming(1, { duration: 5000 }),
+      -1,
+      true
+    );
+    backgroundScale.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 8000 }),
+        withTiming(1, { duration: 8000 })
+      ),
+      -1,
+      false
+    );
+  }, []);
+
+  // Animated styles
+  const orb1Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: floatingOrb1.value * 30 - 15 },
+      { translateY: floatingOrb1.value * 40 - 20 },
+      { rotate: `${floatingOrb1.value * 360}deg` },
+    ],
+    opacity: 0.1 + floatingOrb1.value * 0.05,
+  }));
+
+  const orb2Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: floatingOrb2.value * -25 + 12.5 },
+      { translateY: floatingOrb2.value * -35 + 17.5 },
+      { rotate: `${floatingOrb2.value * -270}deg` },
+    ],
+    opacity: 0.08 + floatingOrb2.value * 0.04,
+  }));
+
+  const orb3Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: floatingOrb3.value * 20 - 10 },
+      { translateY: floatingOrb3.value * -30 + 15 },
+      { scale: 0.8 + floatingOrb3.value * 0.4 },
+    ],
+    opacity: 0.06 + floatingOrb3.value * 0.03,
+  }));
+
+  const backgroundScaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: backgroundScale.value }],
+  }));
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
-        {/* Calm gradient background */}
-        <LinearGradient
-          colors={['#f8fafc', '#e2e8f0']}
-          style={styles.gradientBackground}
-        />
+        {/* Animated gradient background */}
+        <Animated.View style={[styles.gradientBackground, backgroundScaleStyle]}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2', '#f093fb']}
+            style={styles.mainGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+          <LinearGradient
+            colors={['rgba(102, 126, 234, 0.3)', 'rgba(240, 147, 251, 0.2)']}
+            style={styles.overlayGradient}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          />
+        </Animated.View>
         
-        {/* Subtle pattern overlay */}
-        <View style={styles.patternOverlay} />
+        {/* Floating animated orbs */}
+        <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]} />
+        <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]} />
+        <Animated.View style={[styles.floatingOrb, styles.orb3, orb3Style]} />
+        
+        {/* Glass morphism overlay */}
+        <View style={styles.glassOverlay} />
         
         <ScrollView 
           ref={scrollViewRef}
@@ -439,7 +519,7 @@ export default function KPSimulationScreen() {
                 }
               }}
             >
-              <ChevronLeft size={24} color="#1e40af" />
+              <ChevronLeft size={24} color="#ffffff" />
               <Text style={styles.backButtonText}>Zurück</Text>
             </TouchableOpacity>
             
@@ -519,7 +599,7 @@ export default function KPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#667eea',
   },
   gradientBackground: {
     position: 'absolute',
@@ -527,15 +607,60 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: '100%',
+    width: '100%',
   },
-  patternOverlay: {
+  mainGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: '100%',
-    opacity: 0.1,
-    backgroundColor: 'transparent',
+    width: '100%',
+  },
+  overlayGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '100%',
+    width: '100%',
+  },
+  glassOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backdropFilter: 'blur(20px)',
+  },
+  floatingOrb: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: 'rgba(102, 126, 234, 0.5)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  orb1: {
+    width: 120,
+    height: 120,
+    top: '15%',
+    left: '10%',
+  },
+  orb2: {
+    width: 80,
+    height: 80,
+    top: '60%',
+    right: '15%',
+  },
+  orb3: {
+    width: 100,
+    height: 100,
+    top: '35%',
+    right: '5%',
   },
   scrollView: {
     flex: 1,
@@ -559,37 +684,45 @@ const styles = StyleSheet.create({
     left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backdropFilter: 'blur(10px)',
     zIndex: 10,
   },
   backButtonText: {
-    color: '#1e40af',
+    color: '#ffffff',
     fontFamily: 'Inter-Medium',
     fontSize: 16,
     marginLeft: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   timerContainer: {
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backdropFilter: 'blur(10px)',
     zIndex: 10,
   },
   timerText: {
-    color: '#1e40af',
+    color: '#ffffff',
     fontFamily: 'Inter-Bold',
     fontSize: 16,
     letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   mainContent: {
     alignItems: 'center',
@@ -597,15 +730,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   voiceflowStatus: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     padding: 12,
     marginTop: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backdropFilter: 'blur(10px)',
   },
   statusText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   simulationButton: {
     flexDirection: 'row',
@@ -633,22 +772,28 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   endSimulationButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
     marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+    backdropFilter: 'blur(10px)',
   },
   endSimulationButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#ffffff',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   textContent: {
     alignItems: 'center',
@@ -658,16 +803,23 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 36,
     fontFamily: 'Inter-Bold',
-    color: '#1e293b',
+    color: '#ffffff',
     marginBottom: 16,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   description: {
     fontSize: 18,
-    color: '#475569',
+    color: '#ffffff',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    opacity: 0.9,
   },
   statusIndicator: {
     flexDirection: 'row',
@@ -675,10 +827,11 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: 'rgba(34, 197, 94, 0.3)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    borderColor: 'rgba(34, 197, 94, 0.5)',
+    backdropFilter: 'blur(10px)',
     marginTop: 16,
   },
   recordingDot: {
@@ -686,6 +839,10 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: '#22c55e',
     borderRadius: 4,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
   spacer: {
     height: 100,
