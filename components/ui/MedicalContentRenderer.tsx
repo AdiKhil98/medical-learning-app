@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -42,24 +42,10 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   plainTextContent,
   title,
 }) => {
-  console.log('🔍 MedicalContentRenderer props:', {
-    title,
-    hasHtmlContent: !!htmlContent,
-    hasJsonContent: !!jsonContent,
-    hasPlainTextContent: !!plainTextContent,
-    htmlContentLength: htmlContent?.length,
-    jsonContentType: typeof jsonContent,
-    plainTextLength: plainTextContent?.length
-  });
-  
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     '0': true,
   });
-  const scrollViewRef = useRef<ScrollView>(null);
-  const sectionRefs = useRef<Record<string, View | null>>({});
-  const [visibleSections, setVisibleSections] = useState<string[]>([]);
-  const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
 
   // Error handling - return early if no title
   if (!title) {
@@ -76,173 +62,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       [sectionId]: !prev[sectionId],
     }));
   }, []);
-
-  // Enhanced content processing - MOVED UP to fix declaration order
-  const medicalSections = useMemo(() => {
-    console.log('=== DEBUGGING MEDICAL CONTENT ===');
-    console.log('htmlContent:', htmlContent ? `${htmlContent.length} characters` : 'null/undefined');
-    console.log('jsonContent:', jsonContent ? (Array.isArray(jsonContent) ? `array with ${jsonContent.length} items` : typeof jsonContent) : 'null/undefined');
-    console.log('plainTextContent:', plainTextContent ? `${plainTextContent.length} characters` : 'null/undefined');
-    
-    // Priority 1: Use JSON if it's properly structured
-    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      console.log('Using JSON content (array)', jsonContent);
-      const validSections = jsonContent.filter(section => 
-        section && section.title && section.content
-      );
-      
-      if (validSections.length > 0) {
-        console.log('Returning JSON sections:', validSections.length);
-        return validSections.map((section, index) => ({
-          id: section.id || `json_${index}`,
-          title: section.title,
-          icon: section.type || 'definition',
-          content: section.content,
-          type: section.type || 'definition',
-        }));
-      }
-      console.log('JSON sections found but none valid');
-    }
-
-    // Priority 2: Use HTML content
-    if (htmlContent && htmlContent.length > 10) {
-      console.log('Using HTML content');
-      const sections = createContentSections(htmlContent);
-      console.log('HTML sections created:', sections.length);
-      return sections;
-    }
-    
-    // Priority 3: Use plain text content
-    if (plainTextContent && plainTextContent.length > 10) {
-      console.log('Using plain text content');
-      const sections = createContentSections(plainTextContent);
-      console.log('Plain text sections created:', sections.length);
-      return sections;
-    }
-    
-    // Priority 4: Use JSON as string if necessary
-    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
-      console.log('Using JSON as string');
-      const sections = createContentSections(jsonContent);
-      console.log('JSON string sections created:', sections.length);
-      return sections;
-    }
-    
-    console.log('❌ NO CONTENT FOUND - creating fallback content');
-    // Fallback: Create at least one section with the title if we have a title
-    if (title && title.length > 0) {
-      return [{
-        id: 'fallback',
-        title: 'Medizinischer Inhalt',
-        icon: 'definition',
-        content: `Dies ist der medizinische Leitfaden für ${title}. Der Inhalt wird geladen...`,
-        type: 'definition' as const,
-      }];
-    }
-    return [];
-  }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
-
-  const scrollToSection = useCallback((sectionId: string) => {
-    console.log('Attempting to scroll to section:', sectionId);
-    
-    // Try using the stored position first
-    const position = sectionPositions[sectionId];
-    if (position !== undefined && scrollViewRef.current) {
-      console.log('Scrolling to position:', position);
-      scrollViewRef.current.scrollTo({
-        y: Math.max(0, position - 120),
-        animated: true,
-      });
-      return;
-    }
-    
-    // Fallback: try to find the section by index
-    const sectionIndex = medicalSections.findIndex(s => s.id === sectionId);
-    if (sectionIndex >= 0 && scrollViewRef.current) {
-      const estimatedPosition = 300 + (sectionIndex * 400); // Rough estimate
-      console.log('Using estimated position:', estimatedPosition, 'for section index:', sectionIndex);
-      scrollViewRef.current.scrollTo({
-        y: estimatedPosition,
-        animated: true,
-      });
-    }
-  }, [sectionPositions, medicalSections]);
-
-  // Update section position when layout changes
-  const onSectionLayout = useCallback((sectionId: string, event: any) => {
-    const { y } = event.nativeEvent.layout;
-    console.log('Section layout updated:', sectionId, 'at position:', y);
-    setSectionPositions(prev => ({
-      ...prev,
-      [sectionId]: y
-    }));
-  }, []);
-
-  // Alternative simple scroll method
-  const simpleScrollToSection = useCallback((sectionId: string) => {
-    console.log('Using simple scroll method for:', sectionId);
-    if (!scrollViewRef.current) return;
-    
-    // Find the section index
-    const sectionIndex = medicalSections.findIndex(s => s.id === sectionId);
-    if (sectionIndex === -1) return;
-    
-    // Calculate rough position based on typical section heights
-    // Header (~150px) + Stats (~120px) + Navigation (~80px) = ~350px base
-    // Each section is roughly 300-500px depending on content
-    const baseOffset = 350;
-    const avgSectionHeight = 400;
-    const targetY = baseOffset + (sectionIndex * avgSectionHeight);
-    
-    console.log('Simple scroll to position:', targetY, 'for section index:', sectionIndex);
-    
-    scrollViewRef.current.scrollTo({
-      y: targetY,
-      animated: true,
-    });
-  }, [medicalSections]);
-
-  // Enhanced navigation with better visual feedback
-  const handleNavPillPress = useCallback((section: MedicalSection) => {
-    console.log('Navigation pill pressed:', section.id, section.title);
-    const isCurrentlyExpanded = expandedSections[section.id];
-    console.log('Section expanded state:', isCurrentlyExpanded);
-    
-    if (isCurrentlyExpanded) {
-      // If already expanded, scroll to it
-      console.log('Section is expanded, scrolling immediately');
-      // Try both methods
-      scrollToSection(section.id);
-      setTimeout(() => simpleScrollToSection(section.id), 100);
-    } else {
-      // If not expanded, expand it first, then scroll
-      console.log('Section is collapsed, expanding first then scrolling');
-      toggleSection(section.id);
-      setTimeout(() => {
-        console.log('Delayed scroll after expansion');
-        scrollToSection(section.id);
-        // Fallback with simple method
-        setTimeout(() => simpleScrollToSection(section.id), 200);
-      }, 400); // Increased timeout for expansion animation
-    }
-  }, [expandedSections, toggleSection, scrollToSection, simpleScrollToSection]);
-
-  // Track scroll position to update visible sections
-  const handleScroll = useCallback((event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const viewHeight = event.nativeEvent.layoutMeasurement.height;
-    
-    const visible: string[] = [];
-    Object.entries(sectionPositions).forEach(([sectionId, position]) => {
-      if (position >= scrollY - 100 && position <= scrollY + viewHeight + 100) {
-        visible.push(sectionId);
-      }
-    });
-    
-    if (visible.length !== visibleSections.length || !visible.every(id => visibleSections.includes(id))) {
-      setVisibleSections(visible);
-    }
-  }, [sectionPositions, visibleSections]);
 
   const getIconForSection = useCallback((type: string) => {
     const iconProps = { size: 24, color: colors.primary || '#4CAF50' };
@@ -325,6 +144,43 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       }];
     }
   }, []);
+
+  // Enhanced content processing 
+  const medicalSections = useMemo(() => {
+    // Priority 1: Use JSON if it's properly structured
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      const validSections = jsonContent.filter(section => 
+        section && section.title && section.content
+      );
+      
+      if (validSections.length > 0) {
+        return validSections.map((section, index) => ({
+          id: section.id || `json_${index}`,
+          title: section.title,
+          icon: section.type || 'definition',
+          content: section.content,
+          type: section.type || 'definition',
+        }));
+      }
+    }
+
+    // Priority 2: Use HTML content
+    if (htmlContent && htmlContent.length > 10) {
+      return createContentSections(htmlContent);
+    }
+    
+    // Priority 3: Use plain text content
+    if (plainTextContent && plainTextContent.length > 10) {
+      return createContentSections(plainTextContent);
+    }
+    
+    // Priority 4: Use JSON as string if necessary
+    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
+      return createContentSections(jsonContent);
+    }
+    
+    return [];
+  }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
 
   // Enhanced medical text rendering with rich highlighting
   const renderContent = useCallback((text: string) => {
@@ -464,14 +320,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     const isExpanded = expandedSections[section.id];
     
     return (
-      <View 
-        key={section.id} 
-        ref={(ref) => {
-          sectionRefs.current[section.id] = ref;
-        }}
-        onLayout={(event) => onSectionLayout(section.id, event)}
-        style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}
-      >
+      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}>
         <TouchableOpacity
           style={styles.sectionHeader}
           onPress={() => toggleSection(section.id)}
@@ -500,8 +349,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         )}
       </View>
     );
-  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes, onSectionLayout]);
-
+  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes]);
 
   // Quick stats component
   const renderQuickStats = useCallback(() => {
@@ -528,7 +376,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [medicalSections, colors]);
 
-  // Interactive navigation pills with scroll-to functionality
+  // Simple working navigation pills
   const renderNavigationPills = useCallback(() => {
     if (medicalSections.length <= 1) return null;
     
@@ -542,8 +390,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         >
           {medicalSections.map((section) => {
             const isActive = expandedSections[section.id];
-            const isVisible = visibleSections.includes(section.id);
-            
             return (
               <TouchableOpacity
                 key={section.id}
@@ -553,68 +399,42 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
                     backgroundColor: isActive ? (colors.primary || '#4CAF50') : (colors.card || '#f0f0f0'),
                     borderColor: colors.primary || '#4CAF50',
                     borderWidth: isActive ? 0 : 1,
-                    transform: [{ scale: isVisible ? 1.08 : 1 }],
-                    shadowOpacity: isVisible ? 0.15 : 0.1,
-                    shadowRadius: isVisible ? 4 : 2,
                   }
                 ]}
-                onPress={() => handleNavPillPress(section)}
+                onPress={() => toggleSection(section.id)}
                 activeOpacity={0.7}
               >
-                <View style={styles.navPillContent}>
-                  {isVisible && (
-                    <View style={[styles.visibilityIndicator, { backgroundColor: colors.primary || '#4CAF50' }]} />
-                  )}
-                  <Text style={[
-                    styles.navPillText,
-                    { 
-                      color: isActive ? 'white' : (colors.primary || '#4CAF50'),
-                      fontWeight: isVisible ? '700' : '600',
-                    }
-                  ]}>
-                    {section.title}
-                  </Text>
-                </View>
+                <Text style={[
+                  styles.navPillText,
+                  { 
+                    color: isActive ? 'white' : (colors.primary || '#4CAF50')
+                  }
+                ]}>
+                  {section.title}
+                </Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
     );
-  }, [medicalSections, expandedSections, visibleSections, colors.primary, colors.card, handleNavPillPress]);
-
-  console.log('📦 Final medicalSections for rendering:', medicalSections.length, 'sections');
-  medicalSections.forEach((section, idx) => {
-    console.log(`Section ${idx}:`, { id: section.id, title: section.title, contentLength: section.content?.length });
-  });
-  
-  console.log('🎨 About to render component with', medicalSections.length, 'sections');
+  }, [medicalSections, expandedSections, colors.primary, colors.card, toggleSection]);
 
   // Simple error state if no content
   if (medicalSections.length === 0) {
-    console.log('⚠️ Rendering empty state - no medical sections found');
     return (
       <View style={[styles.emptyState, { backgroundColor: colors.card || '#fff' }]}>
         <BookOpen size={48} color={colors.textSecondary || '#666'} />
         <Text style={[styles.emptyStateText, { color: colors.textSecondary || '#666' }]}>
           Keine medizinischen Inhalte verfügbar
         </Text>
-        <Text style={[styles.emptyStateText, { color: colors.textSecondary || '#666', fontSize: 12, marginTop: 8 }]}>
-          Debug: htmlContent={htmlContent ? 'present' : 'missing'}, jsonContent={jsonContent ? 'present' : 'missing'}, plainText={plainTextContent ? 'present' : 'missing'}
-        </Text>
       </View>
     );
   }
 
-  // Enhanced rendering with rich formatting
+  // Clean rendering with working functionality
   return (
-    <ScrollView 
-      ref={scrollViewRef}
-      style={styles.container} 
-      showsVerticalScrollIndicator={false}
-      onScroll={handleScroll}
-      scrollEventThrottle={16}
-    >
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <LinearGradient
         colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
@@ -747,17 +567,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  navPillContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  visibilityIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    opacity: 0.8,
   },
   // Content Styles
   contentContainer: {
