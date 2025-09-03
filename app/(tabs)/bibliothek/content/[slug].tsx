@@ -386,6 +386,57 @@ const ContentDetailScreen = memo(() => {
 
   const contentSections = currentSection.content_improved || [];
 
+  // Demo content for AV-Block to test the enhanced renderer
+  const demoAVBlockHTML = `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><style>
+.section-card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; }
+.section-title { font-size: 1.5rem; color: #2c3e50; margin-bottom: 20px; }
+.content-text { color: #4a5568; line-height: 1.8; }
+.number { background: #2196F3; color: white; padding: 2px 8px; border-radius: 12px; }
+.medical-term { color: #9C27B0; font-weight: 600; }
+</style></head>
+<body>
+<div class="section-card">
+<h2 class="section-title"><span class="section-icon">💓</span>Definition und Klassifikation</h2>
+<div class="content-text">
+<p>Der <span class="medical-term">AV-Block</span> ist eine Störung der Erregungsleitung zwischen Vorhof und Ventrikel im Herzen, die nach ICD-10 unter I44.0-I44.3 klassifiziert wird.</p>
+<p>Grad I zeigt eine verlängerte PQ-Zeit über <span class="number">200 ms</span> ohne Blockierung der Überleitung. Grad II Typ 1 (Mobitz I oder Wenckebach) ist durch eine progressive Verlängerung der PQ-Zeit charakterisiert, bis ein QRS-Komplex ausfällt.</p>
+</div>
+</div>
+<div class="section-card">
+<h2 class="section-title"><span class="section-icon">📊</span>Epidemiologie</h2>
+<div class="content-text">
+<p>Die epidemiologische Verteilung zeigt: Die Prävalenz des AV-Blocks steigt mit dem Alter und beträgt bei über 65-Jährigen etwa <span class="number">1-3 Prozent</span> in Deutschland. Der AV-Block I tritt bei etwa <span class="number">5 Prozent</span> der gesunden Erwachsenen auf.</p>
+</div>
+</div>
+<div class="section-card">
+<h2 class="section-title"><span class="section-icon">🚨</span>Alarmsymptome</h2>
+<div class="content-text">
+<p><strong>Kritische Situationen erfordern sofortige Intervention:</strong></p>
+<p>Kompletter AV-Block mit <span class="critical">Asystolie</span> oder <span class="number">Herzfrequenz unter 40/min</span> mit hämodynamischer Instabilität erfordert umgehende Schrittmacherimplantation.</p>
+</div>
+</div>
+</body></html>`;
+
+  const demoAVBlockJSON = [
+    {
+      type: "definition",
+      title: "Definition und Klassifikation", 
+      content: "Der AV-Block ist eine Störung der Erregungsleitung zwischen Vorhof und Ventrikel im Herzen, die nach ICD-10 unter I44.0-I44.3 klassifiziert wird. Grad I zeigt eine verlängerte PQ-Zeit über 200 ms ohne Blockierung der Überleitung."
+    },
+    {
+      type: "epidemiology",
+      title: "Epidemiologie",
+      content: "Die Prävalenz des AV-Blocks steigt mit dem Alter und beträgt bei über 65-Jährigen etwa 1-3 Prozent in Deutschland. Der AV-Block I tritt bei etwa 5 Prozent der gesunden Erwachsenen auf."
+    },
+    {
+      type: "emergency",
+      title: "Alarmsymptome", 
+      content: "Kompletter AV-Block mit Asystolie oder Herzfrequenz unter 40/min mit hämodynamischer Instabilität erfordert umgehende Schrittmacherimplantation."
+    }
+  ];
+
   return (
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
@@ -404,11 +455,22 @@ const ContentDetailScreen = memo(() => {
         {currentSection.description && (
           <Text style={dynamicStyles.headerDescription}>{currentSection.description}</Text>
         )}
+        {currentSection.slug === 'av-block' && (
+          <Text style={[dynamicStyles.headerDescription, { color: colors.primary, fontStyle: 'italic' }]}>
+            🧪 Enhanced Medical Content Demo
+          </Text>
+        )}
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Enhanced Medical Content Renderer */}
-        {currentSection.content_html || (currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0) ? (
+        {/* Enhanced Medical Content Renderer - Show demo for AV-Block */}
+        {currentSection.slug === 'av-block' ? (
+          <MedicalContentRenderer
+            htmlContent={demoAVBlockHTML}
+            jsonContent={demoAVBlockJSON}
+            title={currentSection.title}
+          />
+        ) : currentSection.content_html || (currentSection.content_improved && Array.isArray(currentSection.content_improved) && currentSection.content_improved.length > 0) ? (
           <MedicalContentRenderer
             htmlContent={currentSection.content_html}
             jsonContent={currentSection.content_improved}
