@@ -118,142 +118,137 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const parseTextToMedicalSections = useCallback((text: string): MedicalSection[] => {
     if (!text) return [];
     
-    console.log('Parsing medical text, length:', text.length);
-    console.log('First 300 chars:', text.substring(0, 300));
+    console.log('🔬 PARSING MEDICAL TEXT - Length:', text.length);
+    console.log('🔍 First 500 chars:', text.substring(0, 500));
     
+    // UNIVERSAL MEDICAL SECTION CREATION - WORKS FOR ALL CONTENT
     const sections: MedicalSection[] = [];
     
-    // Medical section patterns with better recognition
-    const medicalSectionPatterns = [
-      {
-        pattern: /(?:^|\n)\s*(?:1\.|I\.|\*\*|#)?\s*(Definition|Klassifikation|Begriff|Was ist|Allgemeines?)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Definition und Klassifikation',
-        type: 'definition' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:2\.|II\.|\*\*|#)?\s*(Epidemiologie|Häufigkeit|Inzidenz|Prävalenz|Verteilung|Statistik)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Epidemiologie',
-        type: 'epidemiology' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:3\.|III\.|\*\*|#)?\s*(Ätiologie|Ursache|Pathophysiologie|Entstehung|Pathogenese)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Ätiologie und Pathophysiologie',
-        type: 'etiology' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:4\.|IV\.|\*\*|#)?\s*(Symptom|Klinik|Beschwerden|Zeichen|Symptomatik|Klinisches?\s*Bild)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Klinische Symptomatik',
-        type: 'symptoms' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:5\.|V\.|\*\*|#)?\s*(Diagnostik|Untersuchung|Befund|Labor|Bildgebung|Test)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Diagnostik',
-        type: 'diagnosis' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:6\.|VI\.|\*\*|#)?\s*(Therapie|Behandlung|Medikament|Management|Intervention)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Therapie',
-        type: 'therapy' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:7\.|VII\.|\*\*|#)?\s*(Prognose|Verlauf|Heilung|Outcome|Komplikation)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Prognose und Verlauf',
-        type: 'prognosis' as const
-      },
-      {
-        pattern: /(?:^|\n)\s*(?:8\.|VIII\.|\*\*|#)?\s*(Alarm|Notfall|Kritisch|Red\s*Flags?|Warnsignal)[\s:]*([^\n]*(?:\n(?!\s*(?:\d+\.|[IVX]+\.|[\*#]|[A-ZÄÖÜ][a-zäöüß]+:))[^\n]*)*)/gim,
-        title: 'Alarmsymptome',
-        type: 'emergency' as const
-      }
-    ];
-
-    // Try to find structured medical sections
-    let usedText = '';
-    medicalSectionPatterns.forEach((pattern, index) => {
-      const matches = text.matchAll(pattern.pattern);
+    // Create intelligent sections by analyzing content semantically
+    const textWords = text.toLowerCase();
+    const textLength = text.length;
+    
+    // Determine the best way to split this specific content
+    let contentChunks: string[] = [];
+    
+    // Try multiple splitting strategies to find the best one
+    if (text.includes('\n\n')) {
+      // Split by double line breaks (common in formatted medical content)
+      contentChunks = text.split(/\n\s*\n/).filter(chunk => chunk.trim().length > 50);
+      console.log('📝 Using paragraph splitting, found', contentChunks.length, 'chunks');
+    } else if (text.includes('. ') && textLength > 1000) {
+      // For long content, split by sentences that start with capital letters
+      contentChunks = text.split(/\. (?=[A-ZÄÖÜ])/).filter(chunk => chunk.trim().length > 100);
+      console.log('📝 Using sentence splitting, found', contentChunks.length, 'chunks');
+    } else {
+      // For shorter content, create logical sections based on length
+      const wordsPerSection = Math.min(200, Math.max(50, Math.floor(text.split(' ').length / 4)));
+      const words = text.split(' ');
       
-      for (const match of matches) {
-        const content = match[2]?.trim();
-        if (content && content.length > 30 && !usedText.includes(content.substring(0, 50))) {
-          console.log(`Found section: ${pattern.title}, content length: ${content.length}`);
-          
-          sections.push({
-            id: `medical_${index}_${sections.length}`,
-            title: pattern.title,
-            icon: pattern.type,
-            content: content,
-            type: pattern.type,
-          });
-          
-          usedText += content;
+      for (let i = 0; i < words.length; i += wordsPerSection) {
+        const chunk = words.slice(i, i + wordsPerSection).join(' ');
+        if (chunk.trim().length > 50) {
+          contentChunks.push(chunk);
         }
       }
-    });
-
-    // If no structured sections found, create intelligent sections based on content analysis
-    if (sections.length === 0) {
-      console.log('No structured sections found, using intelligent fallback parsing');
-      
-      // Split by major content breaks, but more intelligently
-      const chunks = text.split(/(?:\n\s*\n|\.\s*(?=[A-ZÄÖÜ])|;\s*(?=[A-ZÄÖÜ]))/);
-      const meaningfulChunks = chunks.filter(chunk => chunk.trim().length > 100);
-      
-      if (meaningfulChunks.length > 1) {
-        meaningfulChunks.forEach((chunk, index) => {
-          const cleanChunk = chunk.trim();
-          
-          // Analyze content to determine section type
-          const lowerChunk = cleanChunk.toLowerCase();
-          let sectionType: MedicalSection['type'] = 'definition';
-          let sectionTitle = 'Medizinischer Inhalt';
-
-          // More sophisticated content analysis
-          if (lowerChunk.includes('definition') || lowerChunk.includes('klassifikation') || index === 0) {
-            sectionType = 'definition';
-            sectionTitle = 'Definition und Klassifikation';
-          } else if (lowerChunk.includes('häufig') || lowerChunk.includes('prozent') || lowerChunk.includes('%')) {
-            sectionType = 'epidemiology';
-            sectionTitle = 'Epidemiologie';
-          } else if (lowerChunk.includes('ursache') || lowerChunk.includes('pathophysiologie')) {
-            sectionType = 'etiology';
-            sectionTitle = 'Ätiologie und Pathophysiologie';
-          } else if (lowerChunk.includes('symptom') || lowerChunk.includes('zeichen') || lowerChunk.includes('klinik')) {
-            sectionType = 'symptoms';
-            sectionTitle = 'Klinische Symptomatik';
-          } else if (lowerChunk.includes('diagnos') || lowerChunk.includes('untersuch') || lowerChunk.includes('labor')) {
-            sectionType = 'diagnosis';
-            sectionTitle = 'Diagnostik';
-          } else if (lowerChunk.includes('therap') || lowerChunk.includes('behandl') || lowerChunk.includes('medikament')) {
-            sectionType = 'therapy';
-            sectionTitle = 'Therapie';
-          } else if (lowerChunk.includes('prognose') || lowerChunk.includes('verlauf')) {
-            sectionType = 'prognosis';
-            sectionTitle = 'Prognose und Verlauf';
-          } else {
-            sectionTitle = `Klinische Information ${index + 1}`;
-          }
-          
-          sections.push({
-            id: `fallback_${index}`,
-            title: sectionTitle,
-            icon: sectionType,
-            content: cleanChunk,
-            type: sectionType,
-          });
-        });
-      } else {
-        // Single large content block - create one comprehensive section
-        sections.push({
-          id: '0',
-          title: 'Vollständiger medizinischer Inhalt',
-          icon: 'definition',
-          content: text.trim(),
-          type: 'definition',
-        });
-      }
+      console.log('📝 Using word-based splitting, found', contentChunks.length, 'chunks');
     }
     
-    console.log(`Created ${sections.length} medical sections:`, sections.map(s => s.title));
+    // SMART SECTION ASSIGNMENT - Analyze each chunk for medical content
+    contentChunks.forEach((chunk, index) => {
+      const lowerChunk = chunk.toLowerCase();
+      const chunkLength = chunk.length;
+      
+      // Determine section based on content analysis and position
+      let sectionType: MedicalSection['type'] = 'definition';
+      let sectionTitle = 'Medizinischer Inhalt';
+      
+      // COMPREHENSIVE MEDICAL KEYWORD ANALYSIS
+      if (index === 0 || lowerChunk.includes('definition') || lowerChunk.includes('ist eine') || 
+          lowerChunk.includes('bezeichnet') || lowerChunk.includes('versteht man')) {
+        sectionType = 'definition';
+        sectionTitle = 'Definition und Klassifikation';
+      } 
+      else if (lowerChunk.includes('häufig') || lowerChunk.includes('prozent') || lowerChunk.includes('%') ||
+               lowerChunk.includes('epidemiologie') || lowerChunk.includes('inzidenz') || lowerChunk.includes('prävalenz') ||
+               lowerChunk.includes('betrifft') || lowerChunk.includes('erkranken')) {
+        sectionType = 'epidemiology';
+        sectionTitle = 'Epidemiologie und Häufigkeit';
+      }
+      else if (lowerChunk.includes('ursache') || lowerChunk.includes('entsteh') || lowerChunk.includes('pathophysiologie') ||
+               lowerChunk.includes('mechanismus') || lowerChunk.includes('führt zu') || lowerChunk.includes('verursacht')) {
+        sectionType = 'etiology';
+        sectionTitle = 'Ätiologie und Pathophysiologie';
+      }
+      else if (lowerChunk.includes('symptom') || lowerChunk.includes('zeichen') || lowerChunk.includes('klinik') ||
+               lowerChunk.includes('beschwerden') || lowerChunk.includes('äußert sich') || lowerChunk.includes('manifestiert')) {
+        sectionType = 'symptoms';
+        sectionTitle = 'Klinische Symptomatik';
+      }
+      else if (lowerChunk.includes('diagnos') || lowerChunk.includes('untersuch') || lowerChunk.includes('test') ||
+               lowerChunk.includes('labor') || lowerChunk.includes('bildgebung') || lowerChunk.includes('nachweis')) {
+        sectionType = 'diagnosis';
+        sectionTitle = 'Diagnostik und Untersuchungen';
+      }
+      else if (lowerChunk.includes('therap') || lowerChunk.includes('behandl') || lowerChunk.includes('medikament') ||
+               lowerChunk.includes('management') || lowerChunk.includes('gabe von') || lowerChunk.includes('verabreich')) {
+        sectionType = 'therapy';
+        sectionTitle = 'Therapie und Management';
+      }
+      else if (lowerChunk.includes('prognose') || lowerChunk.includes('verlauf') || lowerChunk.includes('heilung') ||
+               lowerChunk.includes('komplikation') || lowerChunk.includes('outcome') || lowerChunk.includes('folge')) {
+        sectionType = 'prognosis';
+        sectionTitle = 'Prognose und Verlauf';
+      }
+      else if (lowerChunk.includes('notfall') || lowerChunk.includes('alarm') || lowerChunk.includes('kritisch') ||
+               lowerChunk.includes('gefahr') || lowerChunk.includes('warnsignal') || lowerChunk.includes('sofort')) {
+        sectionType = 'emergency';
+        sectionTitle = 'Alarmsymptome und Notfälle';
+      }
+      else {
+        // Create descriptive titles based on content analysis
+        if (lowerChunk.includes('klassifizierung') || lowerChunk.includes('einteilung')) {
+          sectionTitle = 'Klassifikation und Einteilung';
+        } else if (lowerChunk.includes('stadien') || lowerChunk.includes('grade') || lowerChunk.includes('schweregrad')) {
+          sectionTitle = 'Stadien und Schweregrade';
+        } else if (lowerChunk.includes('risikofaktoren') || lowerChunk.includes('risiko')) {
+          sectionTitle = 'Risikofaktoren';
+          sectionType = 'etiology';
+        } else if (lowerChunk.includes('monitoring') || lowerChunk.includes('überwachung')) {
+          sectionTitle = 'Monitoring und Überwachung';
+          sectionType = 'diagnosis';
+        } else if (lowerChunk.includes('prävention') || lowerChunk.includes('vorbeugung')) {
+          sectionTitle = 'Prävention';
+          sectionType = 'therapy';
+        } else {
+          sectionTitle = `Klinische Information ${index + 1}`;
+        }
+      }
+      
+      console.log(`✅ Section ${index + 1}: ${sectionTitle} (${sectionType}) - ${chunkLength} chars`);
+      
+      sections.push({
+        id: `smart_${index}`,
+        title: sectionTitle,
+        icon: sectionType,
+        content: chunk.trim(),
+        type: sectionType,
+      });
+    });
+    
+    // Ensure we always have at least one section
+    if (sections.length === 0) {
+      console.log('⚠️  No sections created, adding fallback section');
+      sections.push({
+        id: 'fallback',
+        title: 'Medizinischer Inhalt',
+        icon: 'definition',
+        content: text.trim(),
+        type: 'definition',
+      });
+    }
+    
+    console.log('🎯 FINAL RESULT: Created', sections.length, 'sections:', sections.map(s => s.title));
     return sections;
   }, []);
 
