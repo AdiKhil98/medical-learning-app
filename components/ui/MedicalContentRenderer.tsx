@@ -630,10 +630,18 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
       {/* Content Sections */}
       <View style={styles.contentContainer}>
-        {medicalSections.map((section, index) => {
-          console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
-          return renderSection(section, index);
-        })}
+        {medicalSections.length > 0 ? (
+          medicalSections.map((section, index) => {
+            console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
+            return renderSection(section, index);
+          })
+        ) : (
+          <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+              Keine medizinischen Inhalte verfügbar
+            </Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -705,6 +713,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     gap: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   sectionCard: {
     borderRadius: 16,
