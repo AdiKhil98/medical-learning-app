@@ -64,7 +64,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, []);
 
   const getIconForSection = useCallback((type: string) => {
-    const iconProps = { size: 24, color: colors.primary };
+    const iconProps = { size: 24, color: colors.primary || '#4CAF50' };
     
     switch (type) {
       case 'definition':
@@ -82,173 +82,105 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     }
   }, [colors.primary]);
 
-  // Smart medical content parsing with better section detection
-  const createSmartMedicalSections = useCallback((content: string): MedicalSection[] => {
-    if (!content || content.length < 10) return [];
-    
-    // Clean HTML if present
-    const cleanContent = content
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    const sections: MedicalSection[] = [];
-    const lowerContent = cleanContent.toLowerCase();
-    
-    // Enhanced section detection patterns
-    const sectionPatterns = [
-      { key: 'definition', title: 'Definition und Klassifikation', keywords: ['definition', 'ist definiert', 'versteht man', 'klassifikation'], type: 'definition' as const },
-      { key: 'epidemiology', title: 'Epidemiologie', keywords: ['epidemiologie', 'häufigkeit', 'prozent', '%', 'inzidenz', 'prävalenz'], type: 'epidemiology' as const },
-      { key: 'etiology', title: 'Ätiologie und Pathophysiologie', keywords: ['ätiologie', 'pathophysiologie', 'ursache', 'entstehung', 'mechanismus'], type: 'etiology' as const },
-      { key: 'symptoms', title: 'Klinische Symptomatik', keywords: ['symptom', 'klinik', 'zeichen', 'beschwerden', 'manifestiert'], type: 'symptoms' as const },
-      { key: 'diagnosis', title: 'Diagnostik', keywords: ['diagnos', 'untersuch', 'test', 'labor', 'bildgebung'], type: 'diagnosis' as const },
-      { key: 'therapy', title: 'Therapie', keywords: ['therap', 'behandl', 'management', 'medikament', 'intervention'], type: 'therapy' as const },
-    ];
-    
-    // Try to split content into logical sections
-    const paragraphs = cleanContent.split(/\n\s*\n|\. (?=[A-ZÄÖÜ])/).filter(p => p.trim().length > 50);
-    
-    if (paragraphs.length > 1) {
-      paragraphs.forEach((paragraph, index) => {
-        const lowerPara = paragraph.toLowerCase();
-        
-        // Find matching section type
-        let matchedSection = sectionPatterns.find(pattern => 
-          pattern.keywords.some(keyword => lowerPara.includes(keyword))
-        );
-        
-        if (!matchedSection) {
-          // Default based on position
-          if (index === 0) matchedSection = sectionPatterns[0]; // Definition
-          else matchedSection = { key: 'info', title: `Klinische Information ${index + 1}`, keywords: [], type: 'definition' as const };
+  // Simple content parsing that won't crash
+  const createContentSections = useCallback((content: string): MedicalSection[] => {
+    try {
+      if (!content || content.length < 10) return [];
+      
+      // Clean HTML if present
+      const cleanContent = content
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Simple splitting approach
+      const words = cleanContent.split(' ');
+      const sections: MedicalSection[] = [];
+      const wordsPerSection = Math.max(100, Math.floor(words.length / 3));
+      
+      if (words.length > 100) {
+        // Multiple sections
+        for (let i = 0; i < words.length; i += wordsPerSection) {
+          const sectionWords = words.slice(i, i + wordsPerSection);
+          const sectionContent = sectionWords.join(' ');
+          
+          if (sectionContent.length > 50) {
+            const sectionIndex = Math.floor(i / wordsPerSection);
+            sections.push({
+              id: `section_${sectionIndex}`,
+              title: sectionIndex === 0 ? 'Definition' : `Bereich ${sectionIndex + 1}`,
+              icon: 'definition',
+              content: sectionContent,
+              type: 'definition',
+            });
+          }
         }
-        
+      } else {
+        // Single section
         sections.push({
-          id: `smart_${index}`,
-          title: matchedSection.title,
-          icon: matchedSection.type,
-          content: paragraph.trim(),
-          type: matchedSection.type,
+          id: 'single',
+          title: 'Medizinischer Inhalt',
+          icon: 'definition',
+          content: cleanContent,
+          type: 'definition',
         });
-      });
-    } else {
-      // Single section fallback
-      sections.push({
-        id: 'single',
-        title: 'Medizinischer Inhalt',
+      }
+      
+      return sections.length > 0 ? sections : [{
+        id: 'fallback',
+        title: 'Inhalt',
         icon: 'definition',
         content: cleanContent,
         type: 'definition',
-      });
+      }];
+    } catch (error) {
+      // Fallback section
+      return [{
+        id: 'error',
+        title: 'Medizinischer Inhalt',
+        icon: 'definition',
+        content: content || 'Fehler beim Laden des Inhalts',
+        type: 'definition',
+      }];
     }
-    
-    return sections;
   }, []);
-  
-  // Navigation pills component
-  const renderNavigationPills = useCallback(() => {
-    if (medicalSections.length <= 1) return null;
-    
-    return (
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.navigationContainer}
-        contentContainerStyle={styles.navigationContent}
-      >
-        {medicalSections.map((section) => (
-          <TouchableOpacity
-            key={section.id}
-            style={[
-              styles.navPill,
-              { 
-                backgroundColor: expandedSections[section.id] ? colors.primary : colors.card || '#f0f0f0',
-              }
-            ]}
-            onPress={() => toggleSection(section.id)}
-          >
-            <Text style={[
-              styles.navPillText,
-              { 
-                color: expandedSections[section.id] ? 'white' : colors.text || '#333'
-              }
-            ]}>
-              {section.title}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    );
-  }, [medicalSections, expandedSections, colors, toggleSection]);
-  
-  // Quick stats component
-  const renderQuickStats = useCallback(() => {
-    const stats = [
-      { number: medicalSections.length.toString(), label: 'Themenbereiche' },
-      { number: '3', label: 'Klassifikationen' },
-      { number: '60-70%', label: 'Prävalenz' },
-    ];
 
-    return (
-      <View style={styles.statsContainer}>
-        {stats.map((stat, index) => (
-          <View key={index} style={[styles.statCard, { backgroundColor: colors.card || '#fff' }]}>
-            <LinearGradient
-              colors={['#ffffff', '#f8fafc']}
-              style={styles.statCardGradient}
-            >
-              <Text style={[styles.statNumber, { color: colors.primary }]}>{stat.number}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary || '#666' }]}>{stat.label}</Text>
-            </LinearGradient>
-          </View>
-        ))}
-      </View>
-    );
-  }, [medicalSections, colors]);
-
-  // Enhanced text rendering with medical highlighting
+  // Safe text rendering with basic highlighting
   const renderContent = useCallback((text: string) => {
-    // Split text by patterns we want to highlight
-    const parts = text.split(/(\b\d+[.,]?\d*%?\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|Stadium|Grad|Stufe)\b|\b(?:Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung)\b)/g);
-    
-    return (
-      <Text style={[styles.contentText, { color: colors.text }]}>
-        {parts.map((part, index) => {
-          // Number highlighting (blue badges)
-          if (/^\d+[.,]?\d*%?$/.test(part)) {
-            return (
-              <Text key={index} style={styles.numberBadge}>
-                {part}
-              </Text>
-            );
-          }
-          // Medical terms (purple with dotted underline)
-          else if (/^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung)$/.test(part)) {
-            return (
-              <Text key={index} style={[styles.medicalTerm, { color: colors.primary }]}>
-                {part}
-              </Text>
-            );
-          }
-          // Classifications (gradient badges)
-          else if (/^(?:Stadium|Grad|Stufe)$/.test(part)) {
-            return (
-              <Text key={index} style={styles.classificationBadge}>
-                {part}
-              </Text>
-            );
-          }
-          return part;
-        })}
-      </Text>
-    );
-  }, [colors.text, colors.primary]);
+    try {
+      // Simple highlighting that won't crash
+      const parts = text.split(/(\d+)/g);
+      
+      return (
+        <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
+          {parts.map((part, index) => {
+            // Highlight numbers
+            if (/^\d+$/.test(part)) {
+              return (
+                <Text key={index} style={styles.numberBadge}>
+                  {part}
+                </Text>
+              );
+            }
+            return part;
+          })}
+        </Text>
+      );
+    } catch (error) {
+      // Fallback to plain text
+      return (
+        <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
+          {text}
+        </Text>
+      );
+    }
+  }, [colors.text]);
 
   const renderSection = useCallback((section: MedicalSection) => {
     const isExpanded = expandedSections[section.id];
     
     return (
-      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
+      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}>
         <TouchableOpacity
           style={styles.sectionHeader}
           onPress={() => toggleSection(section.id)}
@@ -256,7 +188,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         >
           <View style={styles.sectionHeaderLeft}>
             {getIconForSection(section.type)}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text || '#333' }]}>
               {section.title}
             </Text>
           </View>
@@ -278,7 +210,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [colors, expandedSections, toggleSection, getIconForSection, renderContent]);
 
-  // Enhanced content processing with better medical section detection
+  // Enhanced content processing 
   const medicalSections = useMemo(() => {
     // Priority 1: Use JSON if it's properly structured
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
@@ -297,23 +229,48 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       }
     }
 
-    // Priority 2: Use HTML content with smart parsing
+    // Priority 2: Use HTML content
     if (htmlContent && htmlContent.length > 10) {
-      return createSmartMedicalSections(htmlContent);
+      return createContentSections(htmlContent);
     }
     
-    // Priority 3: Use plain text content with smart parsing
+    // Priority 3: Use plain text content
     if (plainTextContent && plainTextContent.length > 10) {
-      return createSmartMedicalSections(plainTextContent);
+      return createContentSections(plainTextContent);
     }
     
     // Priority 4: Use JSON as string if necessary
     if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
-      return createSmartMedicalSections(jsonContent);
+      return createContentSections(jsonContent);
     }
     
     return [];
-  }, [htmlContent, jsonContent, plainTextContent, createSmartMedicalSections]);
+  }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
+
+  // Quick stats component
+  const renderQuickStats = useCallback(() => {
+    const stats = [
+      { number: medicalSections.length.toString(), label: 'Themenbereiche' },
+      { number: '3', label: 'Klassifikationen' },
+      { number: '60-70%', label: 'Prävalenz' },
+    ];
+
+    return (
+      <View style={styles.statsContainer}>
+        {stats.map((stat, index) => (
+          <View key={index} style={[styles.statCard, { backgroundColor: colors.card || '#fff' }]}>
+            <LinearGradient
+              colors={['#ffffff', '#f8fafc']}
+              style={styles.statCardGradient}
+            >
+              <Text style={[styles.statNumber, { color: colors.primary || '#4CAF50' }]}>{stat.number}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary || '#666' }]}>{stat.label}</Text>
+            </LinearGradient>
+          </View>
+        ))}
+      </View>
+    );
+  }, [medicalSections, colors]);
 
   // Simple error state if no content
   if (medicalSections.length === 0) {
@@ -345,9 +302,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
       {/* Quick Stats */}
       {renderQuickStats()}
-
-      {/* Navigation Pills */}
-      {renderNavigationPills()}
 
       {/* Content Sections */}
       <View style={styles.contentContainer}>
@@ -426,30 +380,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  // Navigation Styles
-  navigationContainer: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-  },
-  navigationContent: {
-    paddingHorizontal: 4,
-    gap: 8,
-  },
-  navPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  navPillText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   // Content Styles
   contentContainer: {
     padding: 16,
@@ -505,22 +435,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-  },
-  medicalTerm: {
-    fontWeight: '600',
-    borderBottomWidth: 2,
-    borderBottomColor: 'currentColor',
-    borderStyle: 'dotted',
-  },
-  classificationBadge: {
-    backgroundColor: '#6366f1',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 15,
     fontSize: 14,
     fontWeight: '600',
     overflow: 'hidden',
