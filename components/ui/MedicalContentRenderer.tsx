@@ -68,37 +68,89 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, []);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    console.log('Attempting to scroll to section:', sectionId);
+    
+    // Try using the stored position first
     const position = sectionPositions[sectionId];
     if (position !== undefined && scrollViewRef.current) {
+      console.log('Scrolling to position:', position);
       scrollViewRef.current.scrollTo({
-        y: Math.max(0, position - 120), // Offset for header and navigation
+        y: Math.max(0, position - 120),
+        animated: true,
+      });
+      return;
+    }
+    
+    // Fallback: try to find the section by index
+    const sectionIndex = medicalSections.findIndex(s => s.id === sectionId);
+    if (sectionIndex >= 0 && scrollViewRef.current) {
+      const estimatedPosition = 300 + (sectionIndex * 400); // Rough estimate
+      console.log('Using estimated position:', estimatedPosition, 'for section index:', sectionIndex);
+      scrollViewRef.current.scrollTo({
+        y: estimatedPosition,
         animated: true,
       });
     }
-  }, [sectionPositions]);
+  }, [sectionPositions, medicalSections]);
 
   // Update section position when layout changes
   const onSectionLayout = useCallback((sectionId: string, event: any) => {
     const { y } = event.nativeEvent.layout;
+    console.log('Section layout updated:', sectionId, 'at position:', y);
     setSectionPositions(prev => ({
       ...prev,
       [sectionId]: y
     }));
   }, []);
 
+  // Alternative simple scroll method
+  const simpleScrollToSection = useCallback((sectionId: string) => {
+    console.log('Using simple scroll method for:', sectionId);
+    if (!scrollViewRef.current) return;
+    
+    // Find the section index
+    const sectionIndex = medicalSections.findIndex(s => s.id === sectionId);
+    if (sectionIndex === -1) return;
+    
+    // Calculate rough position based on typical section heights
+    // Header (~150px) + Stats (~120px) + Navigation (~80px) = ~350px base
+    // Each section is roughly 300-500px depending on content
+    const baseOffset = 350;
+    const avgSectionHeight = 400;
+    const targetY = baseOffset + (sectionIndex * avgSectionHeight);
+    
+    console.log('Simple scroll to position:', targetY, 'for section index:', sectionIndex);
+    
+    scrollViewRef.current.scrollTo({
+      y: targetY,
+      animated: true,
+    });
+  }, [medicalSections]);
+
   // Enhanced navigation with better visual feedback
   const handleNavPillPress = useCallback((section: MedicalSection) => {
+    console.log('Navigation pill pressed:', section.id, section.title);
     const isCurrentlyExpanded = expandedSections[section.id];
+    console.log('Section expanded state:', isCurrentlyExpanded);
     
     if (isCurrentlyExpanded) {
       // If already expanded, scroll to it
+      console.log('Section is expanded, scrolling immediately');
+      // Try both methods
       scrollToSection(section.id);
+      setTimeout(() => simpleScrollToSection(section.id), 100);
     } else {
       // If not expanded, expand it first, then scroll
+      console.log('Section is collapsed, expanding first then scrolling');
       toggleSection(section.id);
-      setTimeout(() => scrollToSection(section.id), 200);
+      setTimeout(() => {
+        console.log('Delayed scroll after expansion');
+        scrollToSection(section.id);
+        // Fallback with simple method
+        setTimeout(() => simpleScrollToSection(section.id), 200);
+      }, 400); // Increased timeout for expansion animation
     }
-  }, [expandedSections, toggleSection, scrollToSection]);
+  }, [expandedSections, toggleSection, scrollToSection, simpleScrollToSection]);
 
   // Track scroll position to update visible sections
   const handleScroll = useCallback((event: any) => {
