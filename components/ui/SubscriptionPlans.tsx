@@ -148,6 +148,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: 'transparent',
     },
     heroSection: {
       paddingHorizontal: 24,
@@ -157,7 +158,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     heroTitle: {
       fontSize: isTablet ? 36 : 28,
       fontWeight: '800',
-      color: '#1e40af',
+      color: '#15803d',
       textAlign: 'center',
       marginBottom: 12,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -166,7 +167,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     heroSubtitle: {
       fontSize: 18,
       fontWeight: '600',
-      color: '#3b82f6',
+      color: '#16a34a',
       textAlign: 'center',
       marginBottom: 32,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -178,7 +179,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       borderRadius: 16,
       padding: 6,
       marginBottom: 24,
-      shadowColor: '#3b82f6',
+      shadowColor: '#16a34a',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.15,
       shadowRadius: 12,
@@ -191,7 +192,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       minWidth: 100,
     },
     toggleOptionActive: {
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#16a34a',
     },
     toggleText: {
       fontSize: 16,
@@ -209,17 +210,17 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       gap: 12,
     },
     badge: {
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      backgroundColor: 'rgba(22, 163, 74, 0.1)',
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderWidth: 1,
-      borderColor: '#3b82f6',
+      borderColor: '#16a34a',
     },
     badgeText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#1e40af',
+      color: '#15803d',
     },
     savingsBadge: {
       backgroundColor: '#10b981',
@@ -229,31 +230,36 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       color: '#ffffff',
     },
     cardsContainer: {
-      flexDirection: isTablet ? 'row' : 'column',
-      paddingHorizontal: isTablet ? 24 : 16,
-      gap: isTablet ? 24 : 16,
-      alignItems: isTablet ? 'flex-start' : 'center',
+      paddingHorizontal: 16,
+      alignItems: 'center',
       justifyContent: 'center',
+    },
+    cardsRow: {
+      flexDirection: isTablet ? 'row' : 'column',
+      gap: 16,
+      marginBottom: 16,
+      justifyContent: 'center',
+      alignItems: isTablet ? 'flex-start' : 'center',
     },
     planCard: {
       backgroundColor: '#ffffff',
       borderRadius: 24,
-      padding: 32,
-      width: isTablet ? (width - 120) / 3 : width - 32,
-      maxWidth: 400,
-      shadowColor: '#3b82f6',
+      padding: 24,
+      width: isTablet ? (width - 80) / 2 : width - 32,
+      maxWidth: isTablet ? 360 : 400,
+      shadowColor: '#16a34a',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
       shadowRadius: 24,
       elevation: 8,
       borderWidth: 1,
-      borderColor: 'rgba(59, 130, 246, 0.1)',
+      borderColor: 'rgba(22, 163, 74, 0.1)',
       position: 'relative',
     },
     recommendedCard: {
-      borderColor: '#3b82f6',
+      borderColor: '#16a34a',
       borderWidth: 2,
-      transform: isTablet ? [{ scale: 1.05 }] : [{ scale: 1 }],
+      transform: isTablet ? [{ scale: 1.02 }] : [{ scale: 1 }],
       shadowOpacity: 0.2,
       shadowRadius: 32,
     },
@@ -261,7 +267,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       position: 'absolute',
       top: 24,
       right: 24,
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#16a34a',
       borderRadius: 20,
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -291,7 +297,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     planPrice: {
       fontSize: 48,
       fontWeight: '800',
-      color: '#1e40af',
+      color: '#15803d',
       lineHeight: 56,
     },
     planPeriod: {
@@ -324,7 +330,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       width: 20,
       height: 20,
       borderRadius: 10,
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#16a34a',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
@@ -345,12 +351,12 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       color: '#9ca3af',
     },
     selectButton: {
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#16a34a',
       borderRadius: 16,
       paddingVertical: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#3b82f6',
+      shadowColor: '#16a34a',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 8,
@@ -370,7 +376,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       alignItems: 'center',
     },
     recommendedBadgeInner: {
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#16a34a',
       paddingHorizontal: 20,
       paddingVertical: 8,
       borderRadius: 20,
@@ -387,7 +393,13 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
   });
 
   return (
-    <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
+    <LinearGradient
+      colors={['#f0fdf4', '#dcfce7', '#bbf7d0']}
+      style={{ flex: 1 }}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <View style={dynamicStyles.heroSection}>
         <Text style={dynamicStyles.heroTitle}>MEISTERN SIE IHRE{"\n"}KENNTNISPRÜFUNG</Text>
@@ -433,7 +445,9 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
 
       {/* Pricing Cards */}
       <View style={dynamicStyles.cardsContainer}>
-        {plans.map((plan) => (
+        {/* First Row - Free and Basic */}
+        <View style={dynamicStyles.cardsRow}>
+          {plans.slice(0, 2).map((plan) => (
           <View key={plan.id} style={[dynamicStyles.planCard, plan.recommended && dynamicStyles.recommendedCard]}>
             {plan.recommended && (
               <View style={dynamicStyles.recommendedBadge}>
@@ -488,10 +502,72 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
               <Text style={dynamicStyles.selectButtonText}>Abonnieren</Text>
             </TouchableOpacity>
           </View>
-        ))}
+          ))}
+        </View>
+        
+        {/* Second Row - Professional and Unlimited */}
+        <View style={dynamicStyles.cardsRow}>
+          {plans.slice(2, 4).map((plan) => (
+          <View key={plan.id} style={[dynamicStyles.planCard, plan.recommended && dynamicStyles.recommendedCard]}>
+            {plan.recommended && (
+              <View style={dynamicStyles.recommendedBadge}>
+                <View style={dynamicStyles.recommendedBadgeInner}>
+                  <Text style={dynamicStyles.recommendedText}>BELIEBTESTE WAHL</Text>
+                </View>
+              </View>
+            )}
+            
+            {/* Badge */}
+            <View style={dynamicStyles.planBadge}>
+              <Text style={dynamicStyles.planBadgeText}>{plan.badge}</Text>
+            </View>
+            
+            <View style={dynamicStyles.planHeader}>
+              <Text style={dynamicStyles.planName}>{plan.name}</Text>
+              <View style={dynamicStyles.priceContainer}>
+                <Text style={dynamicStyles.planPrice}>
+                  {plan.id === 'free' ? 'Kostenlos' : `${plan.currency}${getPrice(plan)}`}
+                  {plan.id !== 'free' && (
+                    <Text style={dynamicStyles.planPeriod}>/Monat</Text>
+                  )}
+                </Text>
+              </View>
+              {plan.costPerSimulation && (
+                <Text style={dynamicStyles.costPerSimulation}>{plan.costPerSimulation}</Text>
+              )}
+            </View>
+
+            <Text style={dynamicStyles.featuresTitle}>Was ist enthalten</Text>
+            
+            <View style={dynamicStyles.featuresList}>
+              {plan.features.map((feature, index) => (
+                <View key={index} style={dynamicStyles.featureItem}>
+                  <View style={[dynamicStyles.checkIcon, !feature.included && dynamicStyles.checkIconDisabled]}>
+                    {feature.included && <Check size={12} color="#ffffff" />}
+                  </View>
+                  <Text style={[
+                    dynamicStyles.featureText,
+                    feature.included ? dynamicStyles.featureIncluded : dynamicStyles.featureNotIncluded
+                  ]}>
+                    {feature.text}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={dynamicStyles.selectButton}
+              onPress={() => handleSelectPlan(plan.id)}
+            >
+              <Text style={dynamicStyles.selectButtonText}>Abonnieren</Text>
+            </TouchableOpacity>
+          </View>
+          ))}
+        </View>
       </View>
       
       <View style={dynamicStyles.spacer} />
-    </ScrollView>
+      </ScrollView>
+    </LinearGradient>
   );
 }
