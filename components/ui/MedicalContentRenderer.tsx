@@ -145,24 +145,67 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     }
   }, []);
 
-  // Safe text rendering with basic highlighting
+  // Enhanced medical text rendering with rich highlighting
   const renderContent = useCallback((text: string) => {
     try {
-      // Simple highlighting that won't crash
-      const parts = text.split(/(\d+)/g);
+      // Enhanced pattern matching for medical content (JavaScript-compatible)
+      const medicalPattern = /(\b\d+[.,]?\d*\s*(?:mg\/dl|mmol\/l|Jahre?|Stunden?|Tagen?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?)\b|\b\d+[.,]?\d*%?\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID)\b|\b(?:Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien)\b|\b(?:Stadium|Grad|Stufe)\s+[IVXLC0-9]+\b|\b(?:AKI-Stadium)\s+\d+\b|\bICD-10\s+unter\s+[A-Z]\d+\b)/gi;
+      
+      const parts = text.split(medicalPattern).filter(part => part != null);
       
       return (
         <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
           {parts.map((part, index) => {
-            // Highlight numbers
-            if (/^\d+$/.test(part)) {
+            if (!part) return null;
+            
+            const trimmedPart = part.trim();
+            
+            // Medical numbers with units (blue badges)
+            if (/^\d+[.,]?\d*\s*(mg\/dl|mmol\/l|Jahre?|Stunden?|Tagen?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?)$/i.test(trimmedPart)) {
               return (
-                <Text key={index} style={styles.numberBadge}>
-                  {part}
+                <Text key={index} style={styles.numberBadgeWithUnit}>
+                  {trimmedPart}
                 </Text>
               );
             }
-            return part;
+            
+            // Simple numbers (smaller blue badges)
+            if (/^\d+[.,]?\d*%?$/.test(trimmedPart)) {
+              return (
+                <Text key={index} style={styles.numberBadge}>
+                  {trimmedPart}
+                </Text>
+              );
+            }
+            
+            // Medical terms (purple with dotted underline)
+            if (/^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien)$/i.test(trimmedPart)) {
+              return (
+                <Text key={index} style={styles.medicalTerm}>
+                  {trimmedPart}
+                </Text>
+              );
+            }
+            
+            // Medical stages and classifications (gradient purple badges)
+            if (/^(?:Stadium|Grad|Stufe)\s+[IVXLC0-9]+$|^AKI-Stadium\s+\d+$/i.test(trimmedPart)) {
+              return (
+                <Text key={index} style={styles.classificationBadge}>
+                  {trimmedPart}
+                </Text>
+              );
+            }
+            
+            // ICD codes (special classification)
+            if (/^ICD-10\s+unter\s+[A-Z]\d+$/i.test(trimmedPart)) {
+              return (
+                <Text key={index} style={styles.icdCodeBadge}>
+                  {trimmedPart}
+                </Text>
+              );
+            }
+            
+            return trimmedPart;
           })}
         </Text>
       );
@@ -272,6 +315,53 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [medicalSections, colors]);
 
+  // Interactive navigation pills with scroll-to functionality
+  const renderNavigationPills = useCallback(() => {
+    if (medicalSections.length <= 1) return null;
+    
+    return (
+      <View style={styles.navigationWrapper}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.navigationContainer}
+          contentContainerStyle={styles.navigationContent}
+        >
+          {medicalSections.map((section) => {
+            const isActive = expandedSections[section.id];
+            return (
+              <TouchableOpacity
+                key={section.id}
+                style={[
+                  styles.navPill,
+                  { 
+                    backgroundColor: isActive ? (colors.primary || '#4CAF50') : (colors.card || '#f0f0f0'),
+                    borderColor: colors.primary || '#4CAF50',
+                    borderWidth: isActive ? 0 : 1,
+                  }
+                ]}
+                onPress={() => {
+                  // Toggle section expansion and scroll to it
+                  toggleSection(section.id);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.navPillText,
+                  { 
+                    color: isActive ? 'white' : (colors.primary || '#4CAF50')
+                  }
+                ]}>
+                  {section.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  }, [medicalSections, expandedSections, colors.primary, colors.card, toggleSection]);
+
   // Simple error state if no content
   if (medicalSections.length === 0) {
     return (
@@ -302,6 +392,9 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
       {/* Quick Stats */}
       {renderQuickStats()}
+
+      {/* Navigation Pills */}
+      {renderNavigationPills()}
 
       {/* Content Sections */}
       <View style={styles.contentContainer}>
@@ -380,6 +473,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  // Navigation Styles
+  navigationWrapper: {
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  navigationContainer: {
+    paddingVertical: 15,
+  },
+  navigationContent: {
+    paddingHorizontal: 15,
+    gap: 10,
+  },
+  navPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  navPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   // Content Styles
   contentContainer: {
     padding: 16,
@@ -438,6 +568,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     overflow: 'hidden',
+  },
+  numberBadgeWithUnit: {
+    backgroundColor: '#2196F3',
+    color: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    overflow: 'hidden',
+    marginHorizontal: 1,
+  },
+  medicalTerm: {
+    color: '#9C27B0',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'dotted',
+    textDecorationColor: '#9C27B0',
+  },
+  classificationBadge: {
+    backgroundColor: '#6366f1',
+    color: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 15,
+    fontSize: 14,
+    fontWeight: '600',
+    overflow: 'hidden',
+    marginHorizontal: 1,
+  },
+  icdCodeBadge: {
+    backgroundColor: '#4834d4',
+    color: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 15,
+    fontSize: 14,
+    fontWeight: '600',
+    overflow: 'hidden',
+    marginHorizontal: 1,
   },
   emptyState: {
     padding: 40,
