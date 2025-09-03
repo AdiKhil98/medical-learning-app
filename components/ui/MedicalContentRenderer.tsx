@@ -110,16 +110,10 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     
     console.log('Cleaned text from HTML:', cleanText.substring(0, 200) + '...');
     
-    // If we got clean text, parse it using the text parser
-    if (cleanText && cleanText.length > 50) {
-      console.log('Using text parser on cleaned HTML content');
-      return parseTextToMedicalSections(cleanText);
-    }
-    
     // If HTML parsing failed, return empty to trigger fallback
-    console.log('HTML parsing failed, returning empty array to trigger fallback');
+    console.log('HTML parsing cleaned text, returning empty to let medicalSections logic handle it');
     return [];
-  }, [parseTextToMedicalSections]);
+  }, []);
 
   const parseTextToMedicalSections = useCallback((text: string): MedicalSection[] => {
     if (!text) return [];
@@ -299,7 +293,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const medicalSections = useMemo(() => {
     console.log('Computing medicalSections with:', {
       hasHtml: !!htmlContent,
-      htmlContent,
+      htmlContent: htmlContent?.substring(0, 100) + '...',
       hasJson: !!jsonContent,
       jsonContent,
       jsonIsArray: Array.isArray(jsonContent),
@@ -308,13 +302,30 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       plainTextContent: plainTextContent?.substring(0, 100) + '...'
     });
 
+    // Handle HTML content by extracting text first
     if (htmlContent) {
-      console.log('Using HTML content');
-      return parseHTMLToSections(htmlContent);
-    } else if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      console.log('Processing HTML content');
+      const cleanText = htmlContent
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+        .replace(/<[^>]*>/g, ' ') // Replace HTML tags with spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+      
+      if (cleanText && cleanText.length > 50) {
+        console.log('Extracted clean text from HTML, parsing as text');
+        const sections = parseTextToMedicalSections(cleanText);
+        console.log('Parsed sections from HTML:', sections.length);
+        return sections;
+      }
+    }
+    
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
       console.log('Using JSON content');
       return jsonContent;
-    } else if (plainTextContent) {
+    }
+    
+    if (plainTextContent) {
       console.log('Using plain text content');
       const sections = parseTextToMedicalSections(plainTextContent);
       console.log('Parsed sections from plain text:', sections);
@@ -323,7 +334,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     
     console.log('No content found, returning empty array');
     return [];
-  }, [htmlContent, jsonContent, plainTextContent, parseHTMLToSections, parseTextToMedicalSections]);
+  }, [htmlContent, jsonContent, plainTextContent, parseTextToMedicalSections]);
 
   const renderNavigationPills = useCallback(() => {
     if (medicalSections.length === 0) return null;
