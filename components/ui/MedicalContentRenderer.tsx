@@ -98,52 +98,28 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, [colors.primary]);
 
   const parseHTMLToSections = useCallback((html: string): MedicalSection[] => {
-    // Extract structured content from HTML
-    const sections: MedicalSection[] = [];
+    console.log('Parsing HTML content:', html.substring(0, 200) + '...');
     
-    // Parse title and content sections
-    const sectionRegex = /<div class="section-card"[^>]*>(.*?)<\/div>/gs;
-    const matches = html.match(sectionRegex);
+    // First, try to extract clean text content from HTML
+    const cleanText = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+      .replace(/<[^>]*>/g, ' ') // Replace HTML tags with spaces
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
     
-    if (matches) {
-      matches.forEach((match, index) => {
-        // Extract section title
-        const titleMatch = match.match(/<h2 class="section-title"[^>]*>.*?<span[^>]*>([^<]+)<\/span>\s*([^<]+)<\/h2>/s);
-        const contentMatch = match.match(/<div class="content-text"[^>]*>(.*?)<\/div>/s);
-        
-        if (titleMatch && contentMatch) {
-          const icon = titleMatch[1];
-          const sectionTitle = titleMatch[2].trim();
-          const content = contentMatch[1]
-            .replace(/<[^>]*>/g, '') // Strip HTML tags
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          // Determine section type
-          const normalizedTitle = sectionTitle.toLowerCase();
-          let type: MedicalSection['type'] = 'definition';
-          
-          if (normalizedTitle.includes('epidemiologie')) type = 'epidemiology';
-          else if (normalizedTitle.includes('ätiologie') || normalizedTitle.includes('pathophysiologie')) type = 'etiology';
-          else if (normalizedTitle.includes('symptom') || normalizedTitle.includes('klinik')) type = 'symptoms';
-          else if (normalizedTitle.includes('diagnostik')) type = 'diagnosis';
-          else if (normalizedTitle.includes('therapie') || normalizedTitle.includes('behandlung')) type = 'therapy';
-          else if (normalizedTitle.includes('prognose') || normalizedTitle.includes('verlauf')) type = 'prognosis';
-          else if (normalizedTitle.includes('alarm') || normalizedTitle.includes('notfall')) type = 'emergency';
-          
-          sections.push({
-            id: index.toString(),
-            title: sectionTitle,
-            icon,
-            content,
-            type,
-          });
-        }
-      });
+    console.log('Cleaned text from HTML:', cleanText.substring(0, 200) + '...');
+    
+    // If we got clean text, parse it using the text parser
+    if (cleanText && cleanText.length > 50) {
+      console.log('Using text parser on cleaned HTML content');
+      return parseTextToMedicalSections(cleanText);
     }
     
-    return sections;
-  }, []);
+    // If HTML parsing failed, return empty to trigger fallback
+    console.log('HTML parsing failed, returning empty array to trigger fallback');
+    return [];
+  }, [parseTextToMedicalSections]);
 
   const parseTextToMedicalSections = useCallback((text: string): MedicalSection[] => {
     if (!text) return [];
