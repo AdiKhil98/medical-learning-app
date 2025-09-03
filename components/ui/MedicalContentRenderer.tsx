@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -64,12 +64,39 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     '0': true, // Auto-expand first section
   });
+  const [activePill, setActivePill] = useState<string>('0');
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<Record<string, View | null>>({});
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections(prev => ({
       ...prev,
       [sectionId]: !prev[sectionId],
     }));
+  }, []);
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    setActivePill(sectionId);
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: true, // Auto-expand when navigating to section
+    }));
+
+    const targetRef = sectionRefs.current[sectionId];
+    if (targetRef && scrollViewRef.current) {
+      targetRef.measureLayout(
+        scrollViewRef.current as any,
+        (x, y) => {
+          scrollViewRef.current?.scrollTo({
+            y: y - 100, // Offset for header
+            animated: true,
+          });
+        },
+        () => {
+          console.log('Failed to measure section layout');
+        }
+      );
+    }
   }, []);
 
   const getIconForSection = useCallback((type: string) => {
@@ -311,7 +338,12 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     const isEmergency = section.type === 'emergency';
     
     return (
-      <View key={section.id} style={[
+      <View 
+        key={section.id} 
+        ref={(ref) => {
+          sectionRefs.current[section.id] = ref;
+        }}
+        style={[
         styles.sectionCard, 
         { 
           backgroundColor: colors.card,
@@ -451,13 +483,19 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             key={section.id}
             style={[
               styles.navPill,
-              { backgroundColor: expandedSections[section.id] ? colors.primary : colors.surface }
+              { 
+                backgroundColor: activePill === section.id ? colors.primary : 
+                                expandedSections[section.id] ? colors.primary + '80' : colors.surface 
+              }
             ]}
-            onPress={() => toggleSection(section.id)}
+            onPress={() => scrollToSection(section.id)}
           >
             <Text style={[
               styles.navPillText,
-              { color: expandedSections[section.id] ? 'white' : colors.text }
+              { 
+                color: activePill === section.id ? 'white' :
+                       expandedSections[section.id] ? colors.primary : colors.text 
+              }
             ]}>
               {section.title}
             </Text>
@@ -465,7 +503,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         ))}
       </ScrollView>
     );
-  }, [medicalSections, expandedSections, colors, toggleSection]);
+  }, [medicalSections, expandedSections, colors, activePill, scrollToSection]);
 
   // Debug logging
   console.log('MedicalContentRenderer received:', {
@@ -556,16 +594,25 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       {/* Navigation Pills */}
       {renderNavigationPills()}
 
-      {/* Content Sections */}
-      <View style={styles.contentContainer}>
-        {medicalSections.map((section, index) => renderSection(section, index))}
-      </View>
+      {/* Scrollable Content Sections */}
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentContainer}>
+          {medicalSections.map((section, index) => renderSection(section, index))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollContainer: {
     flex: 1,
   },
   header: {
