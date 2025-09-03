@@ -517,9 +517,15 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   });
 
   // Debug: show what we actually have
-  console.log('Final check - medicalSections.length:', medicalSections.length);
+  console.log('🔍 Final check - medicalSections.length:', medicalSections.length);
+  console.log('🔍 Content available:', {
+    html: !!htmlContent,
+    json: !!jsonContent, 
+    plain: !!plainTextContent
+  });
 
   if (!htmlContent && !jsonContent && !plainTextContent) {
+    console.log('❌ No content available at all');
     return (
       <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
         <BookOpen size={48} color={colors.textSecondary} />
@@ -573,6 +579,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }
 
+  console.log('🎯 Rendering MedicalContentRenderer with', medicalSections.length, 'sections');
+
   return (
     <View style={styles.container}>
       {/* Header with gradient */}
@@ -594,6 +602,18 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       {/* Navigation Pills */}
       {renderNavigationPills()}
 
+      {/* DEBUG: Show sections count */}
+      <View style={{ padding: 10, backgroundColor: '#FFE4E1' }}>
+        <Text style={{ color: '#000', fontWeight: 'bold' }}>
+          DEBUG: {medicalSections.length} sections found
+        </Text>
+        {medicalSections.map((section, i) => (
+          <Text key={i} style={{ color: '#000', fontSize: 12 }}>
+            {i + 1}. {section.title}
+          </Text>
+        ))}
+      </View>
+
       {/* Scrollable Content Sections */}
       <ScrollView 
         ref={scrollViewRef}
@@ -601,7 +621,18 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentContainer}>
-          {medicalSections.map((section, index) => renderSection(section, index))}
+          {medicalSections.map((section, index) => {
+            console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
+            return renderSection(section, index);
+          })}
+        </View>
+        
+        {/* DEBUG: Always show at least something */}
+        <View style={{ padding: 20, backgroundColor: '#E6FFE6' }}>
+          <Text style={{ color: '#000', fontWeight: 'bold' }}>DEBUG: ScrollView Content</Text>
+          <Text style={{ color: '#000' }}>
+            This should always be visible to confirm ScrollView works
+          </Text>
         </View>
       </ScrollView>
     </View>
