@@ -15,7 +15,8 @@ import {
   Settings,
   Database,
   MessageSquare,
-  Lightbulb
+  Lightbulb,
+  Wand2
 } from 'lucide-react-native';
 
 export default function AdminDashboard() {
@@ -93,6 +94,13 @@ export default function AdminDashboard() {
       route: '/admin/daily-tips',
       description: 'Tägliche Tipps verwalten',
       color: '#F59E0B'
+    },
+    {
+      title: 'Transform Medical Content',
+      icon: Wand2,
+      route: '/admin/transform-content',
+      description: 'Alle medizinischen Inhalte in erweiterte Formate umwandeln',
+      color: '#8B5CF6'
     },
     {
       title: 'Database',
