@@ -61,12 +61,20 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   title,
 }) => {
   const { colors, isDarkMode } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    '0': true, // Auto-expand first section
-  });
-  const [activePill, setActivePill] = useState<string>('0');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [activePill, setActivePill] = useState<string>('');
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<Record<string, View | null>>({});
+
+  // Auto-expand first section when sections are loaded
+  React.useEffect(() => {
+    if (medicalSections.length > 0 && Object.keys(expandedSections).length === 0) {
+      const firstSectionId = medicalSections[0].id;
+      setExpandedSections({ [firstSectionId]: true });
+      setActivePill(firstSectionId);
+      console.log('🔓 Auto-expanding first section:', firstSectionId);
+    }
+  }, [medicalSections, expandedSections]);
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections(prev => ({
@@ -280,31 +288,53 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   }, []);
 
   const renderStyledText = useCallback((text: string) => {
-    // Split text by highlighted elements
-    const parts = text.split(/(\b\d+[.,]?\d*%?\b|\b[A-Z]{2,}\b|\b(?:KDIGO|AKI|ICD-10)\b)/g);
+    // Enhanced text parsing with more medical terms and better formatting
+    const parts = text.split(/(\b\d+[.,]?\d*%?\b|\b[A-Z]{2,}\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ASS|ACE|ARB|NSAID)\b|\b(?:Stadium|Grad|Stufe)\s+[IVXLC0-9]+\b)/g);
     
     return (
-      <Text style={[styles.contentText, { color: colors.text }]}>
-        {parts.map((part, index) => {
-          // Check if part should be highlighted
-          if (/^\d+[.,]?\d*%?$/.test(part)) {
-            // Number
-            return (
-              <Text key={index} style={styles.numberHighlight}>
-                {part}
-              </Text>
-            );
-          } else if (/^[A-Z]{2,}$/.test(part) || /^(?:KDIGO|AKI|ICD-10)$/.test(part)) {
-            // Medical term or classification
-            return (
-              <Text key={index} style={[styles.medicalTermHighlight, { color: colors.primary }]}>
-                {part}
-              </Text>
-            );
-          }
-          return part;
-        })}
-      </Text>
+      <View style={styles.styledTextContainer}>
+        <Text style={[styles.contentText, { color: colors.text }]}>
+          {parts.map((part, index) => {
+            // Check if part should be highlighted
+            if (/^\d+[.,]?\d*%?$/.test(part)) {
+              // Number with badge
+              return (
+                <Text key={index} style={[styles.numberHighlight, { backgroundColor: colors.primary + '20', color: colors.primary }]}>
+                  {part}
+                </Text>
+              );
+            } else if (/^[A-Z]{2,}$/.test(part) || /^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ASS|ACE|ARB|NSAID)$/.test(part)) {
+              // Medical term or classification
+              return (
+                <Text key={index} style={[styles.medicalTermHighlight, { 
+                  color: colors.primary,
+                  backgroundColor: colors.primary + '15',
+                  borderRadius: 4,
+                  paddingHorizontal: 4,
+                  paddingVertical: 2
+                }]}>
+                  {part}
+                </Text>
+              );
+            } else if (/(?:Stadium|Grad|Stufe)\s+[IVXLC0-9]+/.test(part)) {
+              // Medical staging
+              return (
+                <Text key={index} style={[styles.stagingHighlight, { 
+                  color: '#F59E0B',
+                  backgroundColor: '#FEF3C7',
+                  borderRadius: 4,
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  fontWeight: 'bold'
+                }]}>
+                  {part}
+                </Text>
+              );
+            }
+            return part;
+          })}
+        </Text>
+      </View>
     );
   }, [colors.text, colors.primary]);
 
@@ -602,18 +632,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       {/* Navigation Pills */}
       {renderNavigationPills()}
 
-      {/* DEBUG: Show sections count */}
-      <View style={{ padding: 10, backgroundColor: '#FFE4E1' }}>
-        <Text style={{ color: '#000', fontWeight: 'bold' }}>
-          DEBUG: {medicalSections.length} sections found
-        </Text>
-        {medicalSections.map((section, i) => (
-          <Text key={i} style={{ color: '#000', fontSize: 12 }}>
-            {i + 1}. {section.title}
-          </Text>
-        ))}
-      </View>
-
       {/* Scrollable Content Sections */}
       <ScrollView 
         ref={scrollViewRef}
@@ -625,14 +643,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             console.log(`🔄 Rendering section ${index + 1}: ${section.title}`);
             return renderSection(section, index);
           })}
-        </View>
-        
-        {/* DEBUG: Always show at least something */}
-        <View style={{ padding: 20, backgroundColor: '#E6FFE6' }}>
-          <Text style={{ color: '#000', fontWeight: 'bold' }}>DEBUG: ScrollView Content</Text>
-          <Text style={{ color: '#000' }}>
-            This should always be visible to confirm ScrollView works
-          </Text>
         </View>
       </ScrollView>
     </View>
@@ -792,6 +802,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     textAlign: 'center',
+  },
+  styledTextContainer: {
+    marginVertical: 8,
+  },
+  stagingHighlight: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 14,
+    marginHorizontal: 1,
   },
 });
 
