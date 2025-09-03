@@ -251,7 +251,7 @@ import React, { useState, useCallback, useMemo, memo } from 'react';
 
       // Always show integrated view if we have structured or HTML content
       if ((Array.isArray(section.content_improved) && section.content_improved.length > 0) || section.content_html) {
-        modes.push({ key: 'integrated', label: 'Medizinischer Inhalt', icon: BookOpen });
+        modes.push({ key: 'integrated', label: 'Inhalt', icon: BookOpen });
       }
       if (Array.isArray(section.content_json) && section.content_json.length > 0) {
         modes.push({ key: 'json', label: 'Technische Daten', icon: Code });
@@ -432,7 +432,6 @@ import React, { useState, useCallback, useMemo, memo } from 'react';
             <Card style={[styles.overviewCard, { backgroundColor: colors.card }]}>
               <View style={styles.overviewHeader}>
                 <BookOpen size={20} color={colors.primary} />
-                <Text style={[styles.overviewTitle, { color: colors.text }]}>Medizinischer Inhalt</Text>
               </View>
               <View style={styles.htmlOverviewContainer}>
                 {renderCompactHTML(section.content_html!)}

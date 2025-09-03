@@ -119,7 +119,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         // Single section
         sections.push({
           id: 'single',
-          title: 'Medizinischer Inhalt',
+          title: 'Inhalt',
           icon: 'definition',
           content: cleanContent,
           type: 'definition',

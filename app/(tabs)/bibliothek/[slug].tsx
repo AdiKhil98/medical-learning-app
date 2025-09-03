@@ -403,7 +403,6 @@ export default function SectionDetailScreen() {
                 >
                   <FileText size={20} color="white" />
                 </LinearGradient>
-                <Text style={styles.modernContentTitle}>Medizinischer Inhalt</Text>
               </View>
               <View style={styles.contentBody}>
                 <MedicalContentRenderer 
