@@ -81,11 +81,6 @@ export default function KPSimulationScreen() {
     }
   };
 
-  const handleEndSimulation = () => {
-    setSimulationStarted(false);
-    resetTimer();
-  };
-
   // Load Voiceflow script and set up event listeners
   useEffect(() => {
     if (Platform.OS === 'web') {
