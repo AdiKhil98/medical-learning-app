@@ -42,6 +42,16 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   plainTextContent,
   title,
 }) => {
+  console.log('🔍 MedicalContentRenderer props:', {
+    title,
+    hasHtmlContent: !!htmlContent,
+    hasJsonContent: !!jsonContent,
+    hasPlainTextContent: !!plainTextContent,
+    htmlContentLength: htmlContent?.length,
+    jsonContentType: typeof jsonContent,
+    plainTextLength: plainTextContent?.length
+  });
+  
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     '0': true,
@@ -69,13 +79,20 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Enhanced content processing - MOVED UP to fix declaration order
   const medicalSections = useMemo(() => {
+    console.log('=== DEBUGGING MEDICAL CONTENT ===');
+    console.log('htmlContent:', htmlContent ? `${htmlContent.length} characters` : 'null/undefined');
+    console.log('jsonContent:', jsonContent ? (Array.isArray(jsonContent) ? `array with ${jsonContent.length} items` : typeof jsonContent) : 'null/undefined');
+    console.log('plainTextContent:', plainTextContent ? `${plainTextContent.length} characters` : 'null/undefined');
+    
     // Priority 1: Use JSON if it's properly structured
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      console.log('Using JSON content (array)', jsonContent);
       const validSections = jsonContent.filter(section => 
         section && section.title && section.content
       );
       
       if (validSections.length > 0) {
+        console.log('Returning JSON sections:', validSections.length);
         return validSections.map((section, index) => ({
           id: section.id || `json_${index}`,
           title: section.title,
@@ -84,23 +101,44 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
           type: section.type || 'definition',
         }));
       }
+      console.log('JSON sections found but none valid');
     }
 
     // Priority 2: Use HTML content
     if (htmlContent && htmlContent.length > 10) {
-      return createContentSections(htmlContent);
+      console.log('Using HTML content');
+      const sections = createContentSections(htmlContent);
+      console.log('HTML sections created:', sections.length);
+      return sections;
     }
     
     // Priority 3: Use plain text content
     if (plainTextContent && plainTextContent.length > 10) {
-      return createContentSections(plainTextContent);
+      console.log('Using plain text content');
+      const sections = createContentSections(plainTextContent);
+      console.log('Plain text sections created:', sections.length);
+      return sections;
     }
     
     // Priority 4: Use JSON as string if necessary
     if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
-      return createContentSections(jsonContent);
+      console.log('Using JSON as string');
+      const sections = createContentSections(jsonContent);
+      console.log('JSON string sections created:', sections.length);
+      return sections;
     }
     
+    console.log('❌ NO CONTENT FOUND - creating fallback content');
+    // Fallback: Create at least one section with the title if we have a title
+    if (title && title.length > 0) {
+      return [{
+        id: 'fallback',
+        title: 'Medizinischer Inhalt',
+        icon: 'definition',
+        content: `Dies ist der medizinische Leitfaden für ${title}. Der Inhalt wird geladen...`,
+        type: 'definition' as const,
+      }];
+    }
     return [];
   }, [htmlContent, jsonContent, plainTextContent, createContentSections]);
 
@@ -545,13 +583,24 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     );
   }, [medicalSections, expandedSections, visibleSections, colors.primary, colors.card, handleNavPillPress]);
 
+  console.log('📦 Final medicalSections for rendering:', medicalSections.length, 'sections');
+  medicalSections.forEach((section, idx) => {
+    console.log(`Section ${idx}:`, { id: section.id, title: section.title, contentLength: section.content?.length });
+  });
+  
+  console.log('🎨 About to render component with', medicalSections.length, 'sections');
+
   // Simple error state if no content
   if (medicalSections.length === 0) {
+    console.log('⚠️ Rendering empty state - no medical sections found');
     return (
       <View style={[styles.emptyState, { backgroundColor: colors.card || '#fff' }]}>
         <BookOpen size={48} color={colors.textSecondary || '#666'} />
         <Text style={[styles.emptyStateText, { color: colors.textSecondary || '#666' }]}>
           Keine medizinischen Inhalte verfügbar
+        </Text>
+        <Text style={[styles.emptyStateText, { color: colors.textSecondary || '#666', fontSize: 12, marginTop: 8 }]}>
+          Debug: htmlContent={htmlContent ? 'present' : 'missing'}, jsonContent={jsonContent ? 'present' : 'missing'}, plainText={plainTextContent ? 'present' : 'missing'}
         </Text>
       </View>
     );
