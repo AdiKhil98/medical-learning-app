@@ -96,39 +96,94 @@ export class VoiceflowController {
   // Ensure widget stays hidden
   private hideWidget(): void {
     if (typeof document !== 'undefined') {
-      // Hide by CSS selector
-      const widgets = document.querySelectorAll('[id*="voiceflow"], [class*="voiceflow"], [class*="vf-"], iframe[src*="voiceflow"]');
-      widgets.forEach((element: Element) => {
-        (element as HTMLElement).style.display = 'none';
-        (element as HTMLElement).style.visibility = 'hidden';
-        (element as HTMLElement).style.opacity = '0';
-        (element as HTMLElement).style.pointerEvents = 'none';
-      });
+      // More aggressive hiding approach
+      const hideAllWidgets = () => {
+        // Find and hide all possible Voiceflow elements
+        const selectors = [
+          '[id*="voiceflow"]',
+          '[class*="voiceflow"]', 
+          '[class*="vf-"]',
+          '[class*="VF"]',
+          '[data-testid*="chat"]',
+          '[aria-label*="chat"]',
+          'iframe[src*="voiceflow"]',
+          'div[style*="z-index: 1000"]',
+          'div[style*="position: fixed"]'
+        ];
 
-      // Inject CSS to ensure hiding
+        selectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach((element: Element) => {
+            const htmlEl = element as HTMLElement;
+            htmlEl.style.setProperty('display', 'none', 'important');
+            htmlEl.style.setProperty('visibility', 'hidden', 'important');
+            htmlEl.style.setProperty('opacity', '0', 'important');
+            htmlEl.style.setProperty('pointer-events', 'none', 'important');
+            htmlEl.style.setProperty('position', 'absolute', 'important');
+            htmlEl.style.setProperty('left', '-99999px', 'important');
+            htmlEl.style.setProperty('top', '-99999px', 'important');
+            htmlEl.style.setProperty('z-index', '-9999', 'important');
+            htmlEl.remove(); // More aggressive - completely remove
+          });
+        });
+      };
+
+      // Run immediately and repeatedly
+      hideAllWidgets();
+      setTimeout(hideAllWidgets, 100);
+      setTimeout(hideAllWidgets, 500);
+      setTimeout(hideAllWidgets, 1000);
+
+      // Inject comprehensive CSS
       const hideCSS = `
-        #voiceflow-chat,
+        /* Hide all Voiceflow elements */
         [id*="voiceflow"],
-        [class*="voiceflow"],
+        [class*="voiceflow"], 
         [class*="vf-"],
-        iframe[src*="voiceflow"] {
+        [class*="VF"],
+        [data-testid*="chat"],
+        [aria-label*="chat"],
+        iframe[src*="voiceflow"],
+        div[style*="z-index: 1000"],
+        div[style*="position: fixed"]:has(iframe[src*="voiceflow"]) {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
           pointer-events: none !important;
           position: absolute !important;
-          left: -9999px !important;
-          top: -9999px !important;
+          left: -99999px !important;
+          top: -99999px !important;
+          z-index: -9999 !important;
+          width: 0 !important;
+          height: 0 !important;
+          overflow: hidden !important;
+        }
+        
+        /* Target common chat widget containers */
+        body > div:last-child:has(iframe[src*="voiceflow"]) {
+          display: none !important;
+        }
+        
+        /* Hide any floating elements in bottom right */
+        div[style*="bottom"][style*="right"] {
+          display: none !important;
         }
       `;
 
-      let styleElement = document.getElementById('hide-voiceflow');
+      let styleElement = document.getElementById('hide-voiceflow-aggressive');
       if (!styleElement) {
         styleElement = document.createElement('style');
-        styleElement.id = 'hide-voiceflow';
+        styleElement.id = 'hide-voiceflow-aggressive';
         document.head.appendChild(styleElement);
       }
       styleElement.textContent = hideCSS;
+
+      // Set up mutation observer to catch dynamically added widgets
+      const observer = new MutationObserver(hideAllWidgets);
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
     }
   }
 

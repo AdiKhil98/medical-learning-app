@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
-import SplineOrb from '@/components/ui/SplineOrb';
+import SplineViewer from '@/components/ui/SplineViewer';
 import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
@@ -663,14 +663,12 @@ export default function KPSimulationScreen() {
                 </Text>
               </View>
 
-              {/* Spline-inspired Orb Interface */}
+              {/* Spline 3D Interactive Orb */}
               <View style={styles.orbContainer}>
-                <SplineOrb
+                <SplineViewer
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
-                  size={140}
-                  activeColor={['#4CAF50', '#66BB6A', '#81C784']}
-                  inactiveColor={['#E8F5E8', '#C8E6C9', '#A5D6A7']}
+                  size={180}
                 />
               </View>
 

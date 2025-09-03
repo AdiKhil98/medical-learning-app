@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
-import SplineOrb from '@/components/ui/SplineOrb';
+import SplineViewer from '@/components/ui/SplineViewer';
 import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
@@ -626,14 +626,12 @@ export default function FSPSimulationScreen() {
             
             {/* Main content */}
             <View style={styles.mainContent}>
-              {/* Spline-inspired Orb Interface */}
+              {/* Spline 3D Interactive Orb */}
               <View style={styles.orbContainer}>
-                <SplineOrb
+                <SplineViewer
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
-                  size={140}
-                  activeColor={['#3b82f6', '#6366f1', '#8b5cf6']}
-                  inactiveColor={['#e0e7ff', '#c7d2fe', '#a5b4fc']}
+                  size={180}
                 />
               </View>
               
