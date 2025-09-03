@@ -19,17 +19,17 @@ export default function BibliothekLayout() {
       />
       <Stack.Screen
         name="[slug]"
-        options={({ route }) => ({
-          headerTitle: route.params.slug as string,
+        options={{
+          headerTitle: '', // Will be set dynamically
           headerBackTitleVisible: false,
-        })}
+        }}
       />
       <Stack.Screen
         name="content/[slug]"
-        options={({ route }) => ({
-          headerTitle: route.params.slug as string,
+        options={{
+          headerTitle: '', // Will be set dynamically
           headerBackTitleVisible: false,
-        })}
+        }}
       />
     </Stack>
   );

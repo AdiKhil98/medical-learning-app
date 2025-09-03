@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import {
   ChevronLeft,
   ChevronDown,
@@ -201,6 +201,7 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 const ContentDetailScreen = memo(() => {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation();
   const { colors, isDarkMode } = useTheme();
   const { session, loading: authLoading } = useAuth();
 
@@ -224,6 +225,12 @@ const ContentDetailScreen = memo(() => {
     
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
       setCurrentSection(cached.data);
+      
+      // Update navigation title with the actual title
+      navigation.setOptions({
+        headerTitle: cached.data.title || slug,
+      });
+      
       // Auto-expand first section if content_improved exists
       if (Array.isArray(cached.data.content_improved) && cached.data.content_improved.length > 0) {
         setExpandedSections({ '0': true });
@@ -246,6 +253,11 @@ const ContentDetailScreen = memo(() => {
       if (!sectionData) throw new Error('Abschnitt nicht gefunden');
       
       setCurrentSection(sectionData);
+      
+      // Update navigation title with the actual title
+      navigation.setOptions({
+        headerTitle: sectionData.title || slug,
+      });
       
       // Cache the result
       contentCache.set(slug, { data: sectionData, timestamp: now });

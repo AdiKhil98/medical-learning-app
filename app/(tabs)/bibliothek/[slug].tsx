@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -213,6 +213,7 @@ const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Se
 export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation();
   const { session, loading: authLoading } = useAuth();
   
   const [currentItem, setCurrentItem] = useState<Section | null>(null);
@@ -253,6 +254,11 @@ export default function SectionDetailScreen() {
 
       setCurrentItem(itemData);
       console.log('Current item:', itemData.title, 'Type:', itemData.type);
+      
+      // Update navigation title with the actual title
+      navigation.setOptions({
+        headerTitle: itemData.title || slug,
+      });
 
       // Fetch child items (items where parent_slug = current slug)
       const { data: childItemsData, error: childItemsError } = await supabase
