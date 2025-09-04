@@ -1340,6 +1340,7 @@ const styles = StyleSheet.create({
   },
   heroContentGradient: {
     flex: 1,
+    flexDirection: 'column',
     padding: screenWidth > 768 ? 40 : 24,
     paddingTop: screenWidth > 768 ? 40 : 32,
     paddingBottom: screenWidth > 768 ? 40 : 28,
@@ -1349,25 +1350,30 @@ const styles = StyleSheet.create({
   heroTextContent: {
     maxWidth: screenWidth > 768 ? 480 : '100%',
     width: '100%',
+    flexDirection: 'column',
     alignItems: screenWidth > 768 ? 'flex-start' : 'center',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: screenWidth > 768 ? 0 : 16,
   },
   heroTitleContainer: {
     width: '100%',
     marginBottom: screenWidth > 768 ? 16 : 12,
+    flexDirection: 'column',
   },
   heroSubtitleContainer: {
     width: '100%',
     marginBottom: screenWidth > 768 ? 20 : 16,
+    flexDirection: 'column',
   },
   heroDescriptionContainer: {
     width: '100%',
     marginBottom: screenWidth > 768 ? 14 : 12,
+    flexDirection: 'column',
   },
   heroTaglineContainer: {
     width: '100%',
     marginBottom: screenWidth > 768 ? 28 : 24,
+    flexDirection: 'column',
   },
   heroBadge: {
     alignSelf: 'flex-start',
