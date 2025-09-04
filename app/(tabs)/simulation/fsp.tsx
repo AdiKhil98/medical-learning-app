@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LinearGradient } from 'expo-linear-gradient';
-import CelestialOrb from '@/components/ui/CelestialOrb';
+import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 import Animated, {
   useSharedValue,
@@ -628,11 +628,11 @@ export default function FSPSimulationScreen() {
             <View style={styles.mainContent}>
               {/* Animated Celestial Orb */}
               <View style={styles.orbContainer}>
-                <CelestialOrb
+                <AnimatedOrb
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
                   size={160}
-                  theme="green"
+                />
                   onPress={handleOrbPress}
                   isActive={simulationStarted}
                   size={160}
