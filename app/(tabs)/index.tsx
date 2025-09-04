@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,8 +59,6 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
   
-  // Scroll ref for section navigation
-  const scrollViewRef = useRef<ScrollView>(null);
   
   // Animation for bounce effect
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -217,94 +215,8 @@ export default function DashboardScreen() {
     return user.name || user.email?.split('@')[0] || 'Nutzer';
   };
 
-  // Advanced scroll tracking and momentum
-  const [currentSection, setCurrentSection] = useState(0);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  // Improved section positions for better content display (Hero=0, Lernkapital=1, Tipp=2, Frage=3)
-  const sectionPositions = [0, 480, 960, 1440]; 
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Scroll to specific section
-  const scrollToSection = (sectionIndex: number) => {
-    if (scrollViewRef.current && sectionIndex < sectionPositions.length) {
-      scrollViewRef.current.scrollTo({
-        y: sectionPositions[sectionIndex],
-        animated: true,
-      });
-      setCurrentSection(sectionIndex);
-    }
-  };
   
-  // Scroll to next section
-  const scrollToNextSection = () => {
-    const nextSection = currentSection + 1;
-    if (nextSection < sectionPositions.length) {
-      scrollToSection(nextSection);
-    }
-  };
-  
-  // Enhanced scroll handling with momentum and progress tracking
-  const handleScroll = (event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const contentHeight = event.nativeEvent.contentSize.height;
-    const containerHeight = event.nativeEvent.layoutMeasurement.height;
-    
-    // Calculate scroll progress (0 to 1)
-    const progress = Math.min(scrollY / (contentHeight - containerHeight), 1);
-    setScrollProgress(progress);
-    
-    // Set scrolling state
-    setIsScrolling(true);
-    
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    // Enhanced timeout for better momentum detection
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-      snapToNearestSection(scrollY);
-    }, 200);
-    
-    // Find which section we're closest to
-    let closestSection = 0;
-    let minDistance = Math.abs(scrollY - sectionPositions[0]);
-    
-    for (let i = 1; i < sectionPositions.length; i++) {
-      const distance = Math.abs(scrollY - sectionPositions[i]);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestSection = i;
-      }
-    }
-    
-    if (closestSection !== currentSection) {
-      setCurrentSection(closestSection);
-    }
-  };
-  
-  // Enhanced snap to nearest section with better detection
-  const snapToNearestSection = (scrollY: number) => {
-    let closestSection = 0;
-    let minDistance = Math.abs(scrollY - sectionPositions[0]);
-    
-    for (let i = 1; i < sectionPositions.length; i++) {
-      const distance = Math.abs(scrollY - sectionPositions[i]);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestSection = i;
-      }
-    }
-    
-    // More responsive snapping with improved threshold
-    if (minDistance > 80) {
-      setTimeout(() => {
-        scrollToSection(closestSection);
-      }, 150);
-    }
-  };
 
   if (loading) {
     return (
@@ -459,14 +371,7 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.content} 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={styles.contentContainer}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+      <View style={[styles.content, styles.contentContainer]}>
         
         {/* Modern Content Sections with Enhanced Spacing */}
         <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
@@ -759,12 +664,11 @@ export default function DashboardScreen() {
                     outputRange: [0, -8]
                   })
                 }],
-                opacity: isScrolling ? 0.4 : 1
+                opacity: 1
               }
             ]}
           >
             <TouchableOpacity 
-              onPress={() => scrollToSection(3)}
               style={styles.sectionArrowTouchable}
             >
               <View style={styles.sectionArrowContainer}>
@@ -904,58 +808,8 @@ export default function DashboardScreen() {
         </View>
         
         <View style={styles.bottomPadding} />
-      </ScrollView>
-
-      {/* Enhanced Section Indicators with Progress */}
-      <View style={styles.sectionIndicators}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <Animated.View 
-              style={[
-                styles.progressFill,
-                {
-                  height: `${scrollProgress * 100}%`,
-                  opacity: isScrolling ? 0.8 : 0.4
-                }
-              ]} 
-            />
-          </View>
-        </View>
-        
-        {/* Section Dots */}
-        <View style={styles.dotsContainer}>
-          {sectionPositions.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => scrollToSection(index)}
-              onPressIn={() => {
-                Animated.spring(scaleAnim, {
-                  toValue: 1.3,
-                  useNativeDriver: true,
-                }).start();
-              }}
-              onPressOut={() => {
-                Animated.spring(scaleAnim, {
-                  toValue: 1,
-                  useNativeDriver: true,
-                }).start();
-              }}
-            >
-              <Animated.View
-                style={[
-                  styles.sectionDot,
-                  currentSection === index && styles.activeSectionDot,
-                  { 
-                    transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }],
-                    opacity: isScrolling && currentSection !== index ? 0.6 : 1
-                  }
-                ]}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
+
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1912,18 +1766,6 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-20deg' }],
   },
   
-  // Simple scroll arrow
-  scrollArrow: {
-    position: 'absolute',
-    top: '50%',
-    right: 20,
-    transform: [{ translateY: -16 }],
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
   
   // Enhanced section styles
   sectionContainer: {
@@ -1957,82 +1799,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   
-  // Enhanced Section Indicators with Premium Design
-  sectionIndicators: {
-    position: 'absolute',
-    right: 20,
-    top: '50%',
-    transform: [{ translateY: -50 }],
-    zIndex: 1000,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    borderRadius: 28,
-    paddingVertical: 24,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(74, 144, 226, 0.25)',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 16,
-  },
-  
-  progressContainer: {
-    marginRight: 12,
-  },
-  
-  progressTrack: {
-    width: 4,
-    height: 90,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(74, 144, 226, 0.2)',
-  },
-  
-  progressFill: {
-    width: '100%',
-    backgroundColor: MEDICAL_COLORS.primary,
-    borderRadius: 3,
-    shadowColor: MEDICAL_COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-  },
-  
-  dotsContainer: {
-    gap: 16,
-  },
-  
-  sectionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderWidth: 2,
-    borderColor: 'rgba(74, 144, 226, 0.5)',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  
-  activeSectionDot: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    borderColor: MEDICAL_COLORS.primary,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    shadowColor: MEDICAL_COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
   
   // Enhanced Arrow Styles
   arrowTouchable: {
