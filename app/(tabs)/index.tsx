@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -371,7 +371,11 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <View style={[styles.content, styles.contentContainer]}>
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* Modern Content Sections with Enhanced Spacing */}
         <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
@@ -808,7 +812,7 @@ export default function DashboardScreen() {
         </View>
         
         <View style={styles.bottomPadding} />
-      </View>
+      </ScrollView>
 
 
       {/* Menu */}
