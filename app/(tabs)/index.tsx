@@ -258,18 +258,10 @@ export default function DashboardScreen() {
         </View>
       </LinearGradient>
 
-      {/* Modern Split-Screen Hero Section */}
-      <View style={styles.modernHeroSection}>
-        <View style={styles.heroSplitContainer}>
-          {/* Left Side - Content */}
-          <View style={styles.heroLeftSide}>
-            <LinearGradient
-              colors={['rgba(102, 126, 234, 0.05)', 'rgba(118, 75, 162, 0.08)', 'rgba(255, 255, 255, 0.95)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroContentGradient}
-            >
-              <View style={styles.heroTextContent}>
+      {/* Simplified Hero Section */}
+      <View style={styles.simplifiedHeroSection}>
+        <View style={styles.heroContainer}>
+          <View style={styles.heroContent}>
                 <View style={styles.heroTitleContainer}>
                   <Text style={styles.splitScreenHeroTitle}>
                     Nur bei KP Med: Die einzige KI-Simulation,
@@ -296,77 +288,22 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
                 
-                <View style={styles.splitScreenHeroButtons}>
+                <View style={styles.heroButtonsContainer}>
                   <TouchableOpacity 
-                    style={styles.primarySplitButton}
+                    style={styles.primaryButton}
                     onPress={() => router.push('/(tabs)/simulation')}
                   >
-                    <Text style={styles.primarySplitButtonText}>Simulation starten</Text>
+                    <Text style={styles.primaryButtonText}>Simulation starten</Text>
                     <ArrowRight size={18} color="white" style={styles.buttonIcon} />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={styles.secondarySplitButton}
+                    style={styles.secondaryButton}
                     onPress={() => router.push('/(tabs)/bibliothek')}
                   >
-                    <Text style={styles.secondarySplitButtonText}>Jetzt lernen</Text>
+                    <Text style={styles.secondaryButtonText}>Jetzt lernen</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </LinearGradient>
-          </View>
-          
-          {/* Right Side - Professional Illustration */}
-          <View style={styles.heroRightSide}>
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroImageGradient}
-            >
-              <View style={styles.heroIllustrationContainer}>
-                {/* Medical Education Illustration */}
-                <View style={styles.medicalIllustration}>
-                  <View style={styles.illustrationElement1}>
-                    <View style={styles.medicalIcon}>
-                      <Text style={styles.medicalEmoji}>⚕️</Text>
-                    </View>
-                    <View style={styles.progressRing}>
-                      <View style={styles.innerRing}></View>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.illustrationElement2}>
-                    <View style={styles.bookStack}>
-                      <View style={[styles.book, styles.book1]}>
-                        <Text style={styles.bookText}>FSP</Text>
-                      </View>
-                      <View style={[styles.book, styles.book2]}>
-                        <Text style={styles.bookText}>KP</Text>
-                      </View>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.illustrationElement3}>
-                    <View style={styles.aiChip}>
-                      <Sparkles size={20} color="white" />
-                      <Text style={styles.aiText}>KI</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.floatingStats}>
-                    <View style={styles.statBubble}>
-                      <Text style={styles.statNumber}>95%</Text>
-                      <Text style={styles.statLabel}>Erfolgsrate</Text>
-                    </View>
-                    <View style={styles.statBubble}>
-                      <Text style={styles.statNumber}>1000+</Text>
-                      <Text style={styles.statLabel}>Fragen</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </LinearGradient>
           </View>
         </View>
       </View>
@@ -1172,11 +1109,19 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   
-  // Modern Split-Screen Hero Section Styles
-  modernHeroSection: {
+  // Simplified Hero Section Styles
+  simplifiedHeroSection: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 0,
-    marginBottom: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+  },
+  heroContainer: {
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  heroContent: {
+    paddingVertical: 24,
   },
   heroSplitContainer: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
@@ -1206,12 +1151,11 @@ const styles = StyleSheet.create({
     alignItems: screenWidth > 768 ? 'flex-start' : 'center',
   },
   heroTextContent: {
-    maxWidth: screenWidth > 768 ? 480 : '100%',
+    maxWidth: '100%',
     width: '100%',
     flexDirection: 'column',
-    alignItems: screenWidth > 768 ? 'flex-start' : 'center',
+    alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: screenWidth > 768 ? 0 : 16,
   },
   heroTitleContainer: {
     width: '100%',
@@ -1232,6 +1176,46 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: screenWidth > 768 ? 32 : 28,
     flexDirection: 'column',
+  },
+  heroButtonsContainer: {
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: 'rgba(74, 144, 226, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+  },
+  secondaryButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -1333,34 +1317,36 @@ const styles = StyleSheet.create({
   
   // Enhanced Split-Screen Hero Text Styles with Mobile Optimization
   splitScreenHeroTitle: {
-    fontSize: screenWidth > 768 ? 38 : 28,
+    fontSize: screenWidth > 768 ? 36 : 28,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: screenWidth > 768 ? 1.3 : 1.4,
+    lineHeight: 1.3,
     letterSpacing: -0.8,
     fontWeight: '800',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
   },
   splitScreenHeroSubtitle: {
-    fontSize: screenWidth > 768 ? 22 : 19,
+    fontSize: screenWidth > 768 ? 20 : 18,
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.primary,
-    lineHeight: screenWidth > 768 ? 1.4 : 1.45,
+    lineHeight: 1.4,
     letterSpacing: -0.4,
     fontWeight: '600',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
   },
   splitScreenHeroDescription: {
     fontSize: screenWidth > 768 ? 16 : 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: screenWidth > 768 ? 1.7 : 1.75,
+    lineHeight: 1.6,
     opacity: 0.85,
     fontWeight: '400',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   splitScreenHeroTagline: {
     fontSize: screenWidth > 768 ? 17 : 16,
@@ -1370,7 +1356,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     opacity: 0.9,
     fontWeight: '500',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
   },
   splitScreenHeroButtons: {
