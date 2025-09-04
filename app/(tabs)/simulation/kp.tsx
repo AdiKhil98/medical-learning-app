@@ -61,13 +61,19 @@ export default function KPSimulationScreen() {
       setSimulationStarted(true);
       resetTimer();
       
-      // Programmatically start the hidden Voiceflow widget
-      if (Platform.OS === 'web' && voiceflowController.current?.isReady()) {
-        const started = await voiceflowController.current.startSimulation();
-        if (started) {
-          console.log('✅ Hidden Voiceflow simulation started successfully');
-        } else {
-          console.warn('⚠️ Failed to start hidden Voiceflow simulation');
+      // Open embedded Voiceflow widget
+      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+        try {
+          setTimeout(() => {
+            if (window.voiceflow.chat.open) {
+              window.voiceflow.chat.open();
+            } else if (window.voiceflow.chat.show) {
+              window.voiceflow.chat.show();
+            }
+            console.log('✅ Embedded Voiceflow chat opened');
+          }, 1000); // Small delay to ensure container is ready
+        } catch (error) {
+          console.error('❌ Error opening embedded Voiceflow chat:', error);
         }
       }
       
@@ -95,14 +101,24 @@ export default function KPSimulationScreen() {
         try {
           if (window.voiceflow && window.voiceflow.chat) {
             console.log('✅ Voiceflow object found, initializing...');
-            window.voiceflow.chat.load({
+            
+            // Ensure target container exists before loading
+            const targetContainer = document.getElementById('voiceflow-widget-container-kp');
+            console.log('🎯 Target container found:', targetContainer);
+            
+            const config = {
               verify: { projectID: '68b40ab270a53105f6701677' },
               url: 'https://general-runtime.voiceflow.com',
               versionID: 'production',
+              mode: 'embedded',
+              target: 'voiceflow-widget-container-kp',
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
-            });
+            };
+            
+            console.log('🔧 Loading Voiceflow with config:', config);
+            window.voiceflow.chat.load(config);
             setVoiceflowLoaded(true);
             console.log('🚀 Voiceflow chat loaded successfully with config:', {
               projectID: '68b40ab270a53105f6701677',
@@ -213,6 +229,8 @@ export default function KPSimulationScreen() {
                   verify: { projectID: '68b40ab270a53105f6701677' },
                   url: 'https://general-runtime.voiceflow.com',
                   versionID: 'production',
+                  mode: 'embedded',
+                  target: 'voiceflow-widget-container-kp',
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }
@@ -252,32 +270,12 @@ export default function KPSimulationScreen() {
     }
   }, [simulationStarted, resetTimer]);
 
-  // Initialize hidden Voiceflow controller
+  // Initialize hidden Voiceflow controller - DISABLED for embedded mode
   useEffect(() => {
     if (Platform.OS === 'web') {
-      console.log('🔄 Initializing hidden Voiceflow controller...');
-      
-      voiceflowController.current = createKPController();
-      
-      voiceflowController.current.loadWidget()
-        .then((loaded) => {
-          if (loaded) {
-            console.log('✅ Hidden Voiceflow widget loaded successfully');
-            setVoiceflowLoaded(true);
-          } else {
-            console.error('❌ Failed to load Voiceflow widget');
-          }
-        })
-        .catch((error) => {
-          console.error('❌ Error loading Voiceflow widget:', error);
-        });
-      
-      return () => {
-        // Cleanup on unmount
-        if (voiceflowController.current) {
-          voiceflowController.current.destroy();
-        }
-      };
+      console.log('🔄 Skipping hidden controller - using embedded mode');
+      // Skip the controller initialization to avoid conflicts with embedded mode
+      setVoiceflowLoaded(true);
     } else {
       // Mobile handling
       setVoiceflowLoaded(true);
@@ -670,6 +668,46 @@ export default function KPSimulationScreen() {
                   isActive={simulationStarted}
                   size={160}
                 />
+                
+                {/* Voiceflow Widget Container - Embedded inside orb */}
+                {Platform.OS === 'web' && (
+                  <div 
+                    id="voiceflow-widget-container-kp"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: simulationStarted ? '140px' : '0px',
+                      height: simulationStarted ? '140px' : '0px',
+                      borderRadius: '50%',
+                      overflow: simulationStarted ? 'visible' : 'hidden',
+                      zIndex: 25,
+                      background: simulationStarted ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
+                      backdropFilter: simulationStarted ? 'blur(10px)' : 'none',
+                      border: simulationStarted ? '2px solid rgba(255, 255, 255, 0.3)' : 'none',
+                      boxShadow: simulationStarted ? '0 8px 32px rgba(0, 0, 0, 0.1)' : 'none',
+                      transition: 'all 0.3s ease',
+                      display: 'block !important',
+                      opacity: simulationStarted ? 1 : 0
+                    }}
+                  >
+                    {simulationStarted && (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        color: '#666',
+                        background: 'transparent'
+                      }}>
+                        Chat Loading...
+                      </div>
+                    )}
+                  </div>
+                )}
               </View>
 
               {/* Status indicator */}
