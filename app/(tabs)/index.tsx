@@ -1342,6 +1342,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: screenWidth > 768 ? 'flex-start' : 'center',
     textAlign: screenWidth > 768 ? 'left' : 'center',
+    paddingHorizontal: screenWidth > 768 ? 0 : 16,
+    gap: screenWidth > 768 ? 8 : 12,
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -1443,44 +1445,44 @@ const styles = StyleSheet.create({
   
   // Enhanced Split-Screen Hero Text Styles with Mobile Optimization
   splitScreenHeroTitle: {
-    fontSize: screenWidth > 768 ? 42 : 32,
+    fontSize: screenWidth > 768 ? 38 : 28,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: screenWidth > 768 ? 1.15 : 1.2,
-    marginBottom: screenWidth > 768 ? 20 : 16,
-    letterSpacing: -1.0,
+    lineHeight: screenWidth > 768 ? 1.25 : 1.35,
+    marginBottom: screenWidth > 768 ? 18 : 14,
+    letterSpacing: -0.8,
     fontWeight: '800',
     textAlign: screenWidth > 768 ? 'left' : 'center',
     width: '100%',
   },
   splitScreenHeroSubtitle: {
-    fontSize: screenWidth > 768 ? 26 : 22,
+    fontSize: screenWidth > 768 ? 22 : 19,
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.primary,
-    lineHeight: screenWidth > 768 ? 1.25 : 1.3,
-    marginBottom: screenWidth > 768 ? 28 : 24,
-    letterSpacing: -0.6,
+    lineHeight: screenWidth > 768 ? 1.35 : 1.4,
+    marginBottom: screenWidth > 768 ? 22 : 18,
+    letterSpacing: -0.4,
     fontWeight: '600',
     textAlign: screenWidth > 768 ? 'left' : 'center',
     width: '100%',
   },
   splitScreenHeroDescription: {
-    fontSize: screenWidth > 768 ? 18 : 16,
+    fontSize: screenWidth > 768 ? 16 : 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 1.6,
-    marginBottom: screenWidth > 768 ? 20 : 18,
+    lineHeight: 1.65,
+    marginBottom: screenWidth > 768 ? 16 : 14,
     opacity: 0.85,
     fontWeight: '400',
     textAlign: screenWidth > 768 ? 'left' : 'center',
     width: '100%',
   },
   splitScreenHeroTagline: {
-    fontSize: screenWidth > 768 ? 20 : 18,
+    fontSize: screenWidth > 768 ? 17 : 16,
     fontFamily: 'Inter-Medium',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 1.4,
-    marginBottom: screenWidth > 768 ? 40 : 36,
+    lineHeight: 1.5,
+    marginBottom: screenWidth > 768 ? 32 : 28,
     fontStyle: 'italic',
     opacity: 0.9,
     fontWeight: '500',
@@ -1694,7 +1696,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   quickAccessSection: {
-    marginBottom: 60,
+    marginBottom: screenWidth > 768 ? 60 : 48,
+    paddingHorizontal: screenWidth > 768 ? 0 : 4,
   },
   modernSectionTitle: {
     fontSize: screenWidth > 768 ? 36 : 28,
@@ -1716,9 +1719,10 @@ const styles = StyleSheet.create({
   },
   quickAccessGrid: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    gap: screenWidth > 768 ? 20 : 12,
+    gap: screenWidth > 768 ? 20 : 14,
     justifyContent: screenWidth > 768 ? 'space-between' : 'flex-start',
     alignItems: screenWidth > 768 ? 'flex-start' : 'stretch',
+    marginTop: screenWidth > 768 ? 0 : 4,
   },
   quickAccessCard: {
     flex: 1,
@@ -2710,7 +2714,8 @@ const styles = StyleSheet.create({
 
   // Enhanced Quick Access Section Header
   quickAccessSectionHeader: {
-    marginBottom: screenWidth > 768 ? 20 : 18,
+    marginBottom: screenWidth > 768 ? 24 : 20,
+    paddingHorizontal: screenWidth > 768 ? 0 : 2,
   },
   quickAccessTitleRow: {
     flexDirection: 'row',
