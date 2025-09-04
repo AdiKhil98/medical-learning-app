@@ -42,16 +42,16 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       ]
     },
     {
-      title: 'Professionelle Qualifikation',
-      subtitle: 'Bestätigung Ihrer medizinischen Berechtigung',
+      title: 'Unsere Inhalte – Medizinisches Wissen, das zählt',
+      subtitle: 'Hochrelevant, klinisch fokussiert und prüfungsoptimiert',
       icon: GraduationCap,
       iconColor: '#f093fb',
       bgGradient: ['#f093fb', '#f5576c'],
-      content: 'Diese Plattform ist ausschließlich für medizinische Fachkräfte und Studierende der Medizin konzipiert.',
+      content: 'Die Inhalte von KP Med gehen weit über Standardwissen hinaus – sie sind hochrelevant, klinisch fokussiert und genau auf die Prüfungsanforderungen in Deutschland abgestimmt. Entwickelt von Ärztinnen und Ärzten mit echter Prüfungserfahrung, ist jedes Modul auf Präzision, Verstehen und Nachhaltigkeit ausgerichtet.\n\nKeine PDFs von gestern, keine zusammengewürfelten Notizen.\nBei KP Med finden Sie strukturierte, verständliche Inhalte, die auf das Wesentliche reduziert sind – perfekt zum gezielten Lernen und schnellen Fortschritt.\n\nUnsere Lernpfade fördern nicht nur das Verstehen, sondern auch das diagnostische Denken, das in deutschen Prüfungen erwartet wird. Sie lernen nicht nur – Sie werden klinisch denken und handeln.\n\nKP Med ist Ihr Partner für gezielte, effektive Prüfungsvorbereitung.',
       features: [
-        'Approbierte Ärzte',
-        'Medizinstudierende',
-        'Medizinische Fachkräfte'
+        'Von Ärzten für Ärzte entwickelt',
+        'Klinisch fokussierte Inhalte',
+        'Diagnostisches Denken fördern'
       ]
     },
     {
