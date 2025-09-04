@@ -1223,23 +1223,35 @@ const styles = StyleSheet.create({
   },
   heroSplitContainer: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    minHeight: screenWidth > 768 ? 312 : 384,
+    minHeight: screenWidth > 768 ? 312 : 420,
+    alignItems: screenWidth > 768 ? 'stretch' : 'center',
   },
   heroLeftSide: {
     flex: 1,
     backgroundColor: '#ffffff',
+    minHeight: screenWidth > 768 ? 'auto' : 280,
+    width: screenWidth > 768 ? 'auto' : '100%',
   },
   heroRightSide: {
-    flex: 1,
+    flex: screenWidth > 768 ? 1 : 0.8,
     backgroundColor: '#667eea',
+    minHeight: screenWidth > 768 ? 'auto' : 140,
+    width: screenWidth > 768 ? 'auto' : '100%',
+    marginTop: screenWidth > 768 ? 0 : -20,
   },
   heroContentGradient: {
     flex: 1,
-    padding: 40,
-    justifyContent: 'center',
+    padding: screenWidth > 768 ? 40 : 24,
+    paddingTop: screenWidth > 768 ? 40 : 32,
+    paddingBottom: screenWidth > 768 ? 40 : 28,
+    justifyContent: screenWidth > 768 ? 'center' : 'flex-start',
+    alignItems: screenWidth > 768 ? 'flex-start' : 'center',
   },
   heroTextContent: {
-    maxWidth: 480,
+    maxWidth: screenWidth > 768 ? 480 : '100%',
+    width: '100%',
+    alignItems: screenWidth > 768 ? 'flex-start' : 'center',
+    textAlign: screenWidth > 768 ? 'left' : 'center',
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -1339,7 +1351,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   
-  // Enhanced Split-Screen Hero Text Styles with Modern Typography
+  // Enhanced Split-Screen Hero Text Styles with Mobile Optimization
   splitScreenHeroTitle: {
     fontSize: screenWidth > 768 ? 42 : 32,
     fontFamily: 'Inter-Bold',
@@ -1348,6 +1360,8 @@ const styles = StyleSheet.create({
     marginBottom: screenWidth > 768 ? 20 : 16,
     letterSpacing: -1.0,
     fontWeight: '800',
+    textAlign: screenWidth > 768 ? 'left' : 'center',
+    width: '100%',
   },
   splitScreenHeroSubtitle: {
     fontSize: screenWidth > 768 ? 26 : 22,
@@ -1357,6 +1371,8 @@ const styles = StyleSheet.create({
     marginBottom: screenWidth > 768 ? 28 : 24,
     letterSpacing: -0.6,
     fontWeight: '600',
+    textAlign: screenWidth > 768 ? 'left' : 'center',
+    width: '100%',
   },
   splitScreenHeroDescription: {
     fontSize: screenWidth > 768 ? 18 : 16,
@@ -1366,6 +1382,8 @@ const styles = StyleSheet.create({
     marginBottom: screenWidth > 768 ? 20 : 18,
     opacity: 0.85,
     fontWeight: '400',
+    textAlign: screenWidth > 768 ? 'left' : 'center',
+    width: '100%',
   },
   splitScreenHeroTagline: {
     fontSize: screenWidth > 768 ? 20 : 18,
@@ -1376,11 +1394,16 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     opacity: 0.9,
     fontWeight: '500',
+    textAlign: screenWidth > 768 ? 'left' : 'center',
+    width: '100%',
   },
   splitScreenHeroButtons: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    gap: 16,
+    gap: screenWidth > 768 ? 16 : 12,
     flexWrap: 'wrap',
+    alignItems: screenWidth > 768 ? 'flex-start' : 'center',
+    justifyContent: screenWidth > 768 ? 'flex-start' : 'center',
+    width: '100%',
   },
   primarySplitButton: {
     backgroundColor: '#4A90E2',
@@ -1394,10 +1417,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 12,
-    minWidth: screenWidth > 768 ? 180 : 160,
+    minWidth: screenWidth > 768 ? 180 : '100%',
+    maxWidth: screenWidth > 768 ? 'auto' : 280,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+    minHeight: 56,
   },
   primarySplitButtonText: {
     color: 'white',
@@ -1414,13 +1439,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(74, 144, 226, 0.3)',
     flexDirection: 'row',
     alignItems: 'center',
-    minWidth: screenWidth > 768 ? 180 : 160,
+    minWidth: screenWidth > 768 ? 180 : '100%',
+    maxWidth: screenWidth > 768 ? 'auto' : 280,
     justifyContent: 'center',
     shadowColor: 'rgba(74, 144, 226, 0.2)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,
     elevation: 6,
+    minHeight: 56,
   },
   secondarySplitButtonText: {
     color: '#4A90E2',
@@ -1433,7 +1460,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: screenWidth > 768 ? 40 : 20,
+    paddingVertical: screenWidth > 768 ? 40 : 24,
   },
   heroIllustrationContainer: {
     position: 'relative',
@@ -1598,8 +1626,9 @@ const styles = StyleSheet.create({
   },
   quickAccessGrid: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    gap: 20,
-    justifyContent: 'space-between',
+    gap: screenWidth > 768 ? 20 : 12,
+    justifyContent: screenWidth > 768 ? 'space-between' : 'flex-start',
+    alignItems: screenWidth > 768 ? 'flex-start' : 'stretch',
   },
   quickAccessCard: {
     flex: 1,
@@ -2032,11 +2061,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   chapterCardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: screenWidth > 768 ? 20 : 16,
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    flexWrap: screenWidth > 768 ? 'wrap' : 'nowrap',
+    justifyContent: screenWidth > 768 ? 'space-between' : 'flex-start',
+    gap: screenWidth > 768 ? 20 : 14,
     marginTop: 4,
+    alignItems: screenWidth > 768 ? 'flex-start' : 'stretch',
   },
   chapterCard: {
     width: screenWidth > 768 ? '48%' : '100%',
@@ -2047,10 +2077,11 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 12,
     overflow: 'hidden',
-    marginBottom: screenWidth > 768 ? 12 : 8,
+    marginBottom: screenWidth > 768 ? 12 : 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.9)',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    minHeight: screenWidth > 768 ? 'auto' : 200,
   },
   chapterCardGradient: {
     flex: 1,
