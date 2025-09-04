@@ -242,13 +242,16 @@ export default function DashboardScreen() {
           <View style={styles.heroContent}>
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroTitle}>
-                Baue eine KI-gestützte Zukunft
+                Nur bei KP Med: Die einzige KI-Simulation,
               </Text>
               <Text style={styles.heroSubtitle}>
-                für Deine medizinische Ausbildung
+                die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
               </Text>
               <Text style={styles.heroDescription}>
-                Erweitere Dein medizinisches Wissen mit personalisierten Lerninhalten und KI-gestützter Prüfungsvorbereitung.
+                Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, personalisierte Lerninhalte und intelligente Auswertung – exklusiv entwickelt für internationale Ärzt:innen.
+              </Text>
+              <Text style={styles.heroTagline}>
+                Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
               </Text>
               
               <View style={styles.heroButtons}>
@@ -862,8 +865,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: 'rgba(255,255,255,0.85)',
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: 16,
     maxWidth: '90%',
+  },
+  heroTagline: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: 'rgba(255,255,255,0.95)',
+    lineHeight: 26,
+    marginBottom: 32,
+    letterSpacing: -0.5,
   },
   heroButtons: {
     flexDirection: 'row',
