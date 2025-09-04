@@ -12,7 +12,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface DailyTip {
   id?: string;
@@ -62,9 +62,6 @@ export default function DashboardScreen() {
   // Scroll refs for smooth navigation
   const scrollViewRef = useRef<ScrollView>(null);
   const bounceAnim = useRef(new Animated.Value(0)).current;
-  
-  // Screen height for full viewport sections
-  const { height: screenHeight } = Dimensions.get('window');
 
   useEffect(() => {
     fetchDailyContent();
