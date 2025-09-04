@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   heroSplitContainer: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    minHeight: screenWidth > 768 ? 312 : 420,
+    minHeight: screenWidth > 768 ? 320 : 480,
     alignItems: screenWidth > 768 ? 'stretch' : 'center',
   },
   heroLeftSide: {
@@ -1215,22 +1215,22 @@ const styles = StyleSheet.create({
   },
   heroTitleContainer: {
     width: '100%',
-    marginBottom: screenWidth > 768 ? 16 : 12,
+    marginBottom: screenWidth > 768 ? 20 : 16,
     flexDirection: 'column',
   },
   heroSubtitleContainer: {
     width: '100%',
-    marginBottom: screenWidth > 768 ? 20 : 16,
+    marginBottom: screenWidth > 768 ? 24 : 20,
     flexDirection: 'column',
   },
   heroDescriptionContainer: {
     width: '100%',
-    marginBottom: screenWidth > 768 ? 14 : 12,
+    marginBottom: screenWidth > 768 ? 20 : 16,
     flexDirection: 'column',
   },
   heroTaglineContainer: {
     width: '100%',
-    marginBottom: screenWidth > 768 ? 28 : 24,
+    marginBottom: screenWidth > 768 ? 32 : 28,
     flexDirection: 'column',
   },
   heroBadge: {
@@ -1336,7 +1336,7 @@ const styles = StyleSheet.create({
     fontSize: screenWidth > 768 ? 38 : 28,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: screenWidth > 768 ? 1.25 : 1.35,
+    lineHeight: screenWidth > 768 ? 1.3 : 1.4,
     letterSpacing: -0.8,
     fontWeight: '800',
     textAlign: screenWidth > 768 ? 'left' : 'center',
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
     fontSize: screenWidth > 768 ? 22 : 19,
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.primary,
-    lineHeight: screenWidth > 768 ? 1.35 : 1.4,
+    lineHeight: screenWidth > 768 ? 1.4 : 1.45,
     letterSpacing: -0.4,
     fontWeight: '600',
     textAlign: screenWidth > 768 ? 'left' : 'center',
@@ -1356,7 +1356,7 @@ const styles = StyleSheet.create({
     fontSize: screenWidth > 768 ? 16 : 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 1.65,
+    lineHeight: screenWidth > 768 ? 1.7 : 1.75,
     opacity: 0.85,
     fontWeight: '400',
     textAlign: screenWidth > 768 ? 'left' : 'center',
