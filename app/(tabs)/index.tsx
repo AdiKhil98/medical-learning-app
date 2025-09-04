@@ -64,6 +64,7 @@ export default function DashboardScreen() {
   
   // Animation for bounce effect
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     fetchDailyContent();
@@ -218,7 +219,8 @@ export default function DashboardScreen() {
 
   // Track current section and scroll positions
   const [currentSection, setCurrentSection] = useState(0);
-  const sectionPositions = [0, 350, 700, 1050]; // Approximate positions for each section
+  const screenHeight = Dimensions.get('window').height;
+  const sectionPositions = [0, 400, 800, 1200]; // Better spaced positions for each section
   
   // Scroll to specific section
   const scrollToSection = (sectionIndex: number) => {
@@ -236,6 +238,27 @@ export default function DashboardScreen() {
     const nextSection = currentSection + 1;
     if (nextSection < sectionPositions.length) {
       scrollToSection(nextSection);
+    }
+  };
+  
+  // Handle scroll events to update current section
+  const handleScroll = (event: any) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    
+    // Find which section we're closest to
+    let closestSection = 0;
+    let minDistance = Math.abs(scrollY - sectionPositions[0]);
+    
+    for (let i = 1; i < sectionPositions.length; i++) {
+      const distance = Math.abs(scrollY - sectionPositions[i]);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSection = i;
+      }
+    }
+    
+    if (closestSection !== currentSection) {
+      setCurrentSection(closestSection);
     }
   };
 
@@ -363,6 +386,8 @@ export default function DashboardScreen() {
         style={styles.content} 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.contentContainer}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         
         {/* Section 1: Last Medical Contents */}
@@ -557,6 +582,36 @@ export default function DashboardScreen() {
         
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Enhanced Section Indicators */}
+      <View style={styles.sectionIndicators}>
+        {sectionPositions.map((_, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => scrollToSection(index)}
+            onPressIn={() => {
+              Animated.spring(scaleAnim, {
+                toValue: 1.3,
+                useNativeDriver: true,
+              }).start();
+            }}
+            onPressOut={() => {
+              Animated.spring(scaleAnim, {
+                toValue: 1,
+                useNativeDriver: true,
+              }).start();
+            }}
+          >
+            <Animated.View
+              style={[
+                styles.sectionDot,
+                currentSection === index && styles.activeSectionDot,
+                { transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }] }
+              ]}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1076,19 +1131,79 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   
-  // Section styles
+  // Enhanced section styles
   sectionContainer: {
     position: 'relative',
-    paddingBottom: 40,
+    paddingBottom: 60,
+    paddingTop: 20,
+    minHeight: screenHeight * 0.6, // More spacious sections
+    backgroundColor: 'rgba(249, 250, 251, 0.8)',
+    marginVertical: 10,
+    borderRadius: 16,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
   },
   
   sectionArrow: {
     alignSelf: 'center',
-    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-    borderRadius: 16,
-    padding: 8,
-    marginTop: 16,
+    backgroundColor: 'rgba(74, 144, 226, 0.15)',
+    borderRadius: 20,
+    padding: 12,
+    marginTop: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 144, 226, 0.3)',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  
+  // Section Indicators
+  sectionIndicators: {
+    position: 'absolute',
+    right: 24,
+    top: '50%',
+    transform: [{ translateY: -50 }],
+    zIndex: 1000,
+    gap: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(74, 144, 226, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  
+  sectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 144, 226, 0.4)',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
+  activeSectionDot: {
+    backgroundColor: MEDICAL_COLORS.primary,
+    borderColor: MEDICAL_COLORS.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
 });
