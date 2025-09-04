@@ -29,12 +29,12 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
   const steps = [
     {
-      title: 'Willkommen bei MedLearn',
-      subtitle: 'Ihre moderne medizinische Lernplattform',
+      title: 'Über KP Med – Der Elite-Weg zum Erfolg',
+      subtitle: 'Die führende Plattform für Ärztinnen und Ärzte',
       icon: Stethoscope,
       iconColor: '#667eea',
       bgGradient: ['#667eea', '#764ba2'],
-      content: 'Bereiten Sie sich mit KI-gestützten Simulationen und interaktiven Fallstudien optimal auf Ihre medizinischen Prüfungen vor.',
+      content: 'KP Med ist nicht einfach eine weitere Lernplattform. Es ist eine exklusive, spezialisierte Umgebung, entwickelt für internationale Mediziner, die die Fachsprachprüfung, Kenntnisprüfung oder ähnliche Hürden erfolgreich meistern wollen.\n\nHochwertige medizinische Inhalte treffen auf KI-gestützte Lerntechnologie, die sich individuell an Ihre Stärken und Schwächen anpasst. Bei KP Med lernen Sie nicht einfach – Sie bereiten sich strategisch und effizient auf den echten Prüfungstag vor.\n\nMedizinerinnen und Mediziner, die sich gezielt für Exzellenz entschieden haben, haben mit KP Med den entscheidenden Schritt gemacht.\n\nJetzt ist es Ihre Gelegenheit, sich denselben Vorsprung zu verschaffen – mit einer Vorbereitung, die Sie konsequent an Ihr Ziel bringt.\n\nWenn Bestehen Ihr Ziel ist, ist KP Med Ihr Schlüssel. Wenn Exzellenz Ihr Anspruch ist, ist KP Med Ihr Zuhause.',
       features: [
         'Personalisierte Lernpfade',
         'Realistische Patientensimulationen',
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#374151',
     lineHeight: 24,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 24,
   },
   featuresList: {
