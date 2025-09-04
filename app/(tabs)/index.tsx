@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -58,6 +58,11 @@ export default function DashboardScreen() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
+  
+  // Horizontal scrolling state
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [currentSection, setCurrentSection] = useState(0);
+  const sections = ['Quick Access', 'Daily Tip', 'Daily Question', 'Recent Chapters'];
   
   
   // Animation for bounce effect
@@ -177,6 +182,31 @@ export default function DashboardScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Horizontal navigation functions
+  const scrollToPrevious = () => {
+    const previousSection = Math.max(0, currentSection - 1);
+    scrollViewRef.current?.scrollTo({
+      x: previousSection * screenWidth,
+      animated: true
+    });
+    setCurrentSection(previousSection);
+  };
+
+  const scrollToNext = () => {
+    const nextSection = Math.min(sections.length - 1, currentSection + 1);
+    scrollViewRef.current?.scrollTo({
+      x: nextSection * screenWidth,
+      animated: true
+    });
+    setCurrentSection(nextSection);
+  };
+
+  const handleHorizontalScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset;
+    const sectionIndex = Math.round(contentOffset.x / screenWidth);
+    setCurrentSection(sectionIndex);
   };
 
   const handleAnswerSelect = (answer: string) => {
@@ -308,15 +338,63 @@ export default function DashboardScreen() {
         </View>
       </View>
 
+      {/* Navigation Arrows */}
+      {currentSection > 0 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.leftArrow]}
+          onPress={scrollToPrevious}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={['rgba(67, 56, 202, 0.9)', 'rgba(99, 102, 241, 0.9)']}
+            style={styles.arrowGradient}
+          >
+            <ChevronLeft size={24} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {currentSection < sections.length - 1 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.rightArrow]}
+          onPress={scrollToNext}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={['rgba(67, 56, 202, 0.9)', 'rgba(99, 102, 241, 0.9)']}
+            style={styles.arrowGradient}
+          >
+            <ChevronRight size={24} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {/* Section Indicators */}
+      <View style={styles.sectionIndicators}>
+        {sections.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.indicator,
+              currentSection === index && styles.activeIndicator
+            ]}
+          />
+        ))}
+      </View>
+
       <ScrollView 
-        style={styles.content} 
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.horizontalScroll}
+        contentContainerStyle={styles.horizontalScrollContent}
+        onScroll={handleHorizontalScroll}
+        scrollEventThrottle={16}
       >
-        
-        {/* Modern Content Sections with Enhanced Spacing */}
-        <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
-          {/* Section 1: Quick Access Cards */}
+        {/* Section 1: Quick Access */}
+        <View style={[styles.section, { width: screenWidth }]}>
+          <View style={styles.sectionContent}>
           <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
               <View style={styles.quickAccessTitleRow}>
@@ -543,9 +621,12 @@ export default function DashboardScreen() {
               )}
             </View>
           )}
+          </View>
         </View>
-
-        {/* Section 3: Tipp des Tages - Enhanced Card Layout */}
+        
+        {/* Section 2: Daily Tip */}
+        <View style={[styles.section, { width: screenWidth }]}>
+          <View style={styles.sectionContent}>
         <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
             <View style={styles.sectionTitleContainer}>
@@ -616,9 +697,12 @@ export default function DashboardScreen() {
               </View>
             </TouchableOpacity>
           </Animated.View>
+          </View>
         </View>
-
-        {/* Section 4: Frage des Tages - Enhanced Card Layout */}
+        
+        {/* Section 3: Daily Question */}
+        <View style={[styles.section, { width: screenWidth }]}>
+          <View style={styles.sectionContent}>
         {dailyQuestion && (
           <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
@@ -723,30 +807,79 @@ export default function DashboardScreen() {
             </Text>
           </View>
         )}
-
-        {/* Section 5: Medical Disclaimer - Enhanced Card Layout */}
-        <View style={styles.structuredSection}>
-          <View style={styles.disclaimerCard}>
-            <LinearGradient
-              colors={['#F0F9FF', '#E0F2FE', '#0EA5E9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.disclaimerCardGradient}
-            >
-              <View style={styles.disclaimerCardHeader}>
-                <View style={styles.disclaimerIconBg}>
-                  <Text style={styles.disclaimerEmoji}>⚕️</Text>
-                </View>
-                <Text style={styles.disclaimerCardTitle}>Medizinischer Haftungsausschluss</Text>
-              </View>
-              <Text style={styles.disclaimerCardText}>
-                Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
-              </Text>
-            </LinearGradient>
           </View>
         </View>
         
-        <View style={styles.bottomPadding} />
+        {/* Section 4: Recent Chapters */}
+        <View style={[styles.section, { width: screenWidth }]}>
+          <View style={styles.sectionContent}>
+            {recentMedicalContents.length > 0 && (
+              <View style={styles.letzteKapitelSection}>
+                <View style={styles.modernStructuredSectionHeader}>
+                  <View style={styles.modernSectionTitleContainer}>
+                    <View style={styles.sectionIconWrapper}>
+                      <BookOpen size={26} color="#4A90E2" />
+                    </View>
+                    <View style={styles.titleAndBadgeContainer}>
+                      <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
+                      <View style={styles.chapterCountBadge}>
+                        <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={styles.modernStructuredSectionSubtitle}>Setze dort fort, wo du aufgehört hast</Text>
+                </View>
+                
+                <View style={styles.modernChapterCardsContainer}>
+                  {recentMedicalContents.map((content, index) => (
+                    <View key={content.id} style={styles.modernChapterCard}>
+                      <LinearGradient
+                        colors={['#ffffff', '#f8fafc', '#e2e8f0']}
+                        style={styles.modernChapterCardGradient}
+                      >
+                        <View style={styles.modernChapterCardHeader}>
+                          <View style={styles.modernChapterIconContainer}>
+                            <BookOpen size={20} color="#4A90E2" />
+                          </View>
+                          <View style={styles.chapterStatusRow}>
+                            <View style={styles.difficultyBadge}>
+                              <Text style={styles.difficultyText}>FSP</Text>
+                            </View>
+                            <View style={styles.modernProgressBadge}>
+                              <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
+                            </View>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.modernChapterCardBody}>
+                          <Text style={styles.modernChapterTitle}>{content.title}</Text>
+                          <View style={styles.modernChapterMetaContainer}>
+                            <View style={styles.modernChapterMeta}>
+                              <Clock size={14} color="#64748B" />
+                              <Text style={styles.modernChapterMetaText}>{content.lastViewed}</Text>
+                            </View>
+                            {content.category && (
+                              <View style={styles.modernChapterCategory}>
+                                <Text style={styles.modernChapterCategoryText}>{content.category}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                        
+                        <View style={styles.modernChapterCardFooter}>
+                          <TouchableOpacity style={styles.modernChapterButton}>
+                            <Text style={styles.modernChapterButtonText}>Fortsetzen</Text>
+                            <ArrowRight size={16} color="#4A90E2" />
+                          </TouchableOpacity>
+                        </View>
+                      </LinearGradient>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
 
@@ -803,6 +936,67 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 8,
     borderRadius: 8,
+  },
+  
+  // Horizontal scrolling styles
+  navigationArrow: {
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -25 }],
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  leftArrow: {
+    left: 20,
+  },
+  rightArrow: {
+    right: 20,
+  },
+  arrowGradient: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(67, 56, 202, 0.3)',
+    marginHorizontal: 4,
+  },
+  activeIndicator: {
+    backgroundColor: '#4338ca',
+    width: 12,
+  },
+  horizontalScroll: {
+    flex: 1,
+  },
+  horizontalScrollContent: {
+    flexDirection: 'row',
+  },
+  section: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  sectionContent: {
+    flex: 1,
+    paddingTop: 20,
   },
   welcomeSection: {
     padding: 20,
