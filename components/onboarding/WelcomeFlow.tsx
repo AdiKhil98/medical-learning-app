@@ -55,16 +55,16 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       ]
     },
     {
-      title: 'Rechtliche Hinweise',
-      subtitle: 'Medizinischer Haftungsausschluss',
+      title: 'Die Simulation – Die Prüfung vor der Prüfung',
+      subtitle: 'KI-basierte Prüfungssimulation für maximalen Erfolg',
       icon: FileText,
       iconColor: '#4facfe',
       bgGradient: ['#4facfe', '#00f2fe'],
-      content: 'Die Inhalte dienen ausschließlich der Ausbildung und stellen keine medizinische Beratung oder Behandlungsempfehlung dar.',
+      content: 'Mit KP Med erhalten Sie Zugang zur modernsten und realistischsten Prüfungssimulation, die es für internationale Ärzte in Deutschland gibt. Unsere KI-basierte Simulation repliziert die echte Prüfungssituation, bewertet Ihre Antworten intelligent und liefert eine detaillierte Analyse Ihrer individuellen Stärken und Schwächen.\n\nDas bedeutet: Sie testen nicht nur Ihr Wissen – Sie verbessern aktiv Ihre Strategie, Ihr Zeitmanagement und Ihre Prüfungskompetenz.\nJede Simulation bringt Sie messbar weiter – zielgerichtet, datenbasiert und personalisiert.\n\nÄrztinnen und Ärzte, die mit KP Med trainiert haben, gehen selbstsicher, fokussiert und mit echter Prüfungsroutine in die Prüfung.\n\nKP Med ist nicht einfach ein Test – es ist Ihre Generalprobe mit maximaler Wirkung.',
       features: [
-        'Nur für Bildungszwecke',
-        'Keine medizinische Beratung',
-        'Professionelle Verantwortung'
+        'Realistische KI-Prüfungssimulation',
+        'Intelligente Leistungsanalyse',
+        'Personalisierte Verbesserungsstrategien'
       ]
     }
   ];
