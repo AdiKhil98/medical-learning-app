@@ -221,7 +221,8 @@ export default function DashboardScreen() {
   const [currentSection, setCurrentSection] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const sectionPositions = [0, 450, 900, 1350]; // Optimized positions for smoother scroll
+  // Improved section positions for better content display (Hero=0, Lernkapital=1, Tipp=2, Frage=3)
+  const sectionPositions = [0, 480, 960, 1440]; 
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Scroll to specific section
@@ -261,11 +262,11 @@ export default function DashboardScreen() {
       clearTimeout(scrollTimeoutRef.current);
     }
     
-    // Set timeout to detect scroll end
+    // Enhanced timeout for better momentum detection
     scrollTimeoutRef.current = setTimeout(() => {
       setIsScrolling(false);
       snapToNearestSection(scrollY);
-    }, 150);
+    }, 200);
     
     // Find which section we're closest to
     let closestSection = 0;
@@ -284,7 +285,7 @@ export default function DashboardScreen() {
     }
   };
   
-  // Snap to nearest section after scroll ends
+  // Enhanced snap to nearest section with better detection
   const snapToNearestSection = (scrollY: number) => {
     let closestSection = 0;
     let minDistance = Math.abs(scrollY - sectionPositions[0]);
@@ -297,11 +298,11 @@ export default function DashboardScreen() {
       }
     }
     
-    // Only snap if we're not already close enough (within 50px)
-    if (minDistance > 50) {
+    // More responsive snapping with improved threshold
+    if (minDistance > 80) {
       setTimeout(() => {
         scrollToSection(closestSection);
-      }, 100);
+      }, 150);
     }
   };
 
@@ -499,112 +500,156 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Daily Tip - Always show section */}
-        <View style={styles.card}>
-          <LinearGradient
-            colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
-            style={styles.cardGradient}
-          >
-            <View style={styles.cardHeader}>
-              <Lightbulb size={24} color={MEDICAL_COLORS.primary} />
-              <Text style={styles.cardTitle}>Tipp des Tages</Text>
-            </View>
-            
-            {dailyTip ? (
-              <>
-                {dailyTip.title && (
-                  <Text style={styles.tipTitleCard}>{dailyTip.title}</Text>
-                )}
-                
-                <Text style={styles.tipContentCard}>
-                  {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
-                </Text>
-                
-                {dailyTip.category && (
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{dailyTip.category}</Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <Text style={styles.noContentText}>
-                Heute gibt es noch keinen Tipp. Schauen Sie später wieder vorbei!
-              </Text>
-            )}
-          </LinearGradient>
-        </View>
-
-        {/* Daily Question Card */}
-        {dailyQuestion && (
+        {/* Section 2: Tipp des Tages */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Tipp des Tages</Text>
+          </View>
+          
           <View style={styles.card}>
             <LinearGradient
               colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
               style={styles.cardGradient}
             >
               <View style={styles.cardHeader}>
-                <HelpCircle size={24} color={MEDICAL_COLORS.primary} />
-                <Text style={styles.cardTitle}>Frage des Tages</Text>
+                <Lightbulb size={24} color={MEDICAL_COLORS.primary} />
+                <Text style={styles.cardTitle}>Medizinisches Wissen</Text>
               </View>
               
-              <Text style={styles.questionText}>{dailyQuestion.question}</Text>
-              
-              <View style={styles.answersContainer}>
-                {['a', 'b', 'c'].map((option) => {
-                  const optionText = dailyQuestion[`choice_${option}` as keyof DailyQuestion] || 
-                                   dailyQuestion[`option_${option}` as keyof DailyQuestion];
+              {dailyTip ? (
+                <>
+                  {dailyTip.title && (
+                    <Text style={styles.tipTitleCard}>{dailyTip.title}</Text>
+                  )}
                   
-                  if (!optionText) return null;
+                  <Text style={styles.tipContentCard}>
+                    {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
+                  </Text>
                   
-                  const isSelected = selectedAnswer === option;
-                  const isCorrect = isCorrectAnswer(option);
-                  const showResult = showAnswer;
-                  
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      style={[
-                        styles.answerOption,
-                        isSelected && styles.selectedOption,
-                        showResult && isCorrect && styles.correctOption,
-                        showResult && isSelected && !isCorrect && styles.incorrectOption,
-                      ]}
-                      onPress={() => !showAnswer && handleAnswerSelect(option)}
-                      disabled={showAnswer}
-                    >
-                      <View style={styles.answerContent}>
-                        <Text style={styles.optionLetter}>{option.toUpperCase()})</Text>
-                        <Text style={[
-                          styles.answerText,
-                          showResult && isCorrect && styles.correctAnswerText,
-                          showResult && isSelected && !isCorrect && styles.incorrectAnswerText,
-                        ]}>
-                          {optionText}
-                        </Text>
-                        {showResult && isCorrect && (
-                          <CheckCircle size={20} color={MEDICAL_COLORS.success} />
-                        )}
-                        {showResult && isSelected && !isCorrect && (
-                          <XCircle size={20} color={MEDICAL_COLORS.danger} />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              
-              {showAnswer && dailyQuestion.explanation && (
-                <View style={styles.explanationContainer}>
-                  <Text style={styles.explanationTitle}>Erklärung:</Text>
-                  <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
-                </View>
-              )}
-              
-              {dailyQuestion.category && (
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryText}>{dailyQuestion.category}</Text>
-                </View>
+                  {dailyTip.category && (
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryText}>{dailyTip.category}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <Text style={styles.noContentText}>
+                  Heute gibt es noch keinen Tipp. Schauen Sie später wieder vorbei!
+                </Text>
               )}
             </LinearGradient>
+          </View>
+          
+          {/* Enhanced Navigation Arrow */}
+          <Animated.View 
+            style={[
+              styles.sectionArrow,
+              {
+                transform: [{
+                  translateY: bounceAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -8]
+                  })
+                }],
+                opacity: isScrolling ? 0.4 : 1
+              }
+            ]}
+          >
+            <TouchableOpacity 
+              onPress={() => scrollToSection(3)}
+              style={styles.sectionArrowTouchable}
+            >
+              <View style={styles.sectionArrowContainer}>
+                <ChevronDown size={18} color={MEDICAL_COLORS.primary} />
+                <View style={styles.arrowPulse} />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Section 3: Frage des Tages */}
+        {dailyQuestion && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Frage des Tages</Text>
+            </View>
+            
+            <View style={styles.card}>
+              <LinearGradient
+                colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
+                style={styles.cardGradient}
+              >
+                <View style={styles.cardHeader}>
+                  <HelpCircle size={24} color={MEDICAL_COLORS.primary} />
+                  <Text style={styles.cardTitle}>Prüfungssimulation</Text>
+                </View>
+                
+                <Text style={styles.questionText}>{dailyQuestion.question}</Text>
+                
+                <View style={styles.answersContainer}>
+                  {['a', 'b', 'c'].map((option) => {
+                    const optionText = dailyQuestion[`choice_${option}` as keyof DailyQuestion] || 
+                                     dailyQuestion[`option_${option}` as keyof DailyQuestion];
+                    
+                    if (!optionText) return null;
+                    
+                    const isSelected = selectedAnswer === option;
+                    const isCorrect = isCorrectAnswer(option);
+                    const showResult = showAnswer;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={option}
+                        style={[
+                          styles.answerOption,
+                          isSelected && styles.selectedOption,
+                          showResult && isCorrect && styles.correctOption,
+                          showResult && isSelected && !isCorrect && styles.incorrectOption,
+                        ]}
+                        onPress={() => !showAnswer && handleAnswerSelect(option)}
+                        disabled={showAnswer}
+                      >
+                        <View style={styles.answerContent}>
+                          <Text style={styles.optionLetter}>{option.toUpperCase()})</Text>
+                          <Text style={[
+                            styles.answerText,
+                            showResult && isCorrect && styles.correctAnswerText,
+                            showResult && isSelected && !isCorrect && styles.incorrectAnswerText,
+                          ]}>
+                            {optionText}
+                          </Text>
+                          {showResult && isCorrect && (
+                            <CheckCircle size={20} color={MEDICAL_COLORS.success} />
+                          )}
+                          {showResult && isSelected && !isCorrect && (
+                            <XCircle size={20} color={MEDICAL_COLORS.danger} />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                
+                {showAnswer && dailyQuestion.explanation && (
+                  <View style={styles.explanationContainer}>
+                    <Text style={styles.explanationTitle}>Erklärung:</Text>
+                    <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
+                  </View>
+                )}
+                
+                {dailyQuestion.category && (
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryText}>{dailyQuestion.category}</Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </View>
+            
+            {/* Section completed indicator */}
+            <View style={styles.sectionCompleteBadge}>
+              <CheckCircle size={16} color={MEDICAL_COLORS.success} />
+              <Text style={styles.sectionCompleteText}>Sektion abgeschlossen</Text>
+            </View>
           </View>
         )}
 
@@ -1212,17 +1257,18 @@ const styles = StyleSheet.create({
   // Enhanced section styles
   sectionContainer: {
     position: 'relative',
-    paddingBottom: 60,
-    paddingTop: 20,
-    minHeight: screenHeight * 0.6, // More spacious sections
-    backgroundColor: 'rgba(249, 250, 251, 0.8)',
-    marginVertical: 10,
-    borderRadius: 16,
+    paddingBottom: 80,
+    paddingTop: 32,
+    minHeight: screenHeight * 0.65, // More spacious sections for better content display
+    backgroundColor: 'rgba(249, 250, 251, 0.95)',
+    marginVertical: 12,
+    marginHorizontal: 8,
+    borderRadius: 20,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
   },
   
   sectionArrow: {
@@ -1240,26 +1286,26 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   
-  // Enhanced Section Indicators
+  // Enhanced Section Indicators with Premium Design
   sectionIndicators: {
     position: 'absolute',
-    right: 24,
+    right: 20,
     top: '50%',
     transform: [{ translateY: -50 }],
     zIndex: 1000,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 24,
-    paddingVertical: 20,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 28,
+    paddingVertical: 24,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 144, 226, 0.25)',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 16,
   },
   
   progressContainer: {
@@ -1267,21 +1313,23 @@ const styles = StyleSheet.create({
   },
   
   progressTrack: {
-    width: 3,
-    height: 80,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
+    width: 4,
+    height: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 3,
     overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(74, 144, 226, 0.2)',
   },
   
   progressFill: {
     width: '100%',
     backgroundColor: MEDICAL_COLORS.primary,
-    borderRadius: 2,
+    borderRadius: 3,
     shadowColor: MEDICAL_COLORS.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
   },
   
   dotsContainer: {
@@ -1289,27 +1337,30 @@ const styles = StyleSheet.create({
   },
   
   sectionDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(74, 144, 226, 0.4)',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 2,
+    borderColor: 'rgba(74, 144, 226, 0.5)',
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 4,
   },
   
   activeSectionDot: {
     backgroundColor: MEDICAL_COLORS.primary,
     borderColor: MEDICAL_COLORS.primary,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    shadowColor: MEDICAL_COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   
   // Enhanced Arrow Styles
@@ -1348,5 +1399,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(74, 144, 226, 0.2)',
     opacity: 0.6,
+  },
+  
+  // Section Completion Badge Styles
+  sectionCompleteBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${MEDICAL_COLORS.success}15`,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: `${MEDICAL_COLORS.success}30`,
+  },
+  
+  sectionCompleteText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.success,
+    marginLeft: 6,
+    letterSpacing: 0.3,
   },
 });
