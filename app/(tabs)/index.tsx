@@ -685,6 +685,56 @@ export default function DashboardScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
+      {/* Enhanced Section Indicators with Progress */}
+      <View style={styles.sectionIndicators}>
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <Animated.View 
+              style={[
+                styles.progressFill,
+                {
+                  height: `${scrollProgress * 100}%`,
+                  opacity: isScrolling ? 0.8 : 0.4
+                }
+              ]} 
+            />
+          </View>
+        </View>
+        
+        {/* Section Dots */}
+        <View style={styles.dotsContainer}>
+          {sectionPositions.map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => scrollToSection(index)}
+              onPressIn={() => {
+                Animated.spring(scaleAnim, {
+                  toValue: 1.3,
+                  useNativeDriver: true,
+                }).start();
+              }}
+              onPressOut={() => {
+                Animated.spring(scaleAnim, {
+                  toValue: 1,
+                  useNativeDriver: true,
+                }).start();
+              }}
+            >
+              <Animated.View
+                style={[
+                  styles.sectionDot,
+                  currentSection === index && styles.activeSectionDot,
+                  { 
+                    transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }],
+                    opacity: isScrolling && currentSection !== index ? 0.6 : 1
+                  }
+                ]}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1051,9 +1101,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroGradient: {
-    paddingVertical: 24,
+    paddingVertical: 40,
     paddingHorizontal: 20,
-    minHeight: 200,
+    minHeight: 280,
   },
   heroContent: {
     flexDirection: 'row',
@@ -1195,9 +1245,8 @@ const styles = StyleSheet.create({
   // Simple scroll arrow
   scrollArrow: {
     position: 'absolute',
-    right: 24,
-    top: '50%',
-    transform: [{ translateY: -16 }],
+    bottom: 20,
+    alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 20,
     padding: 8,
