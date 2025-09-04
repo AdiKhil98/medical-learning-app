@@ -217,9 +217,12 @@ export default function DashboardScreen() {
     return user.name || user.email?.split('@')[0] || 'Nutzer';
   };
 
-  // Track current section and scroll positions
+  // Advanced scroll tracking and momentum
   const [currentSection, setCurrentSection] = useState(0);
-  const sectionPositions = [0, 400, 800, 1200]; // Better spaced positions for each section
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const sectionPositions = [0, 450, 900, 1350]; // Optimized positions for smoother scroll
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Scroll to specific section
   const scrollToSection = (sectionIndex: number) => {
@@ -240,9 +243,29 @@ export default function DashboardScreen() {
     }
   };
   
-  // Handle scroll events to update current section
+  // Enhanced scroll handling with momentum and progress tracking
   const handleScroll = (event: any) => {
     const scrollY = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const containerHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    // Calculate scroll progress (0 to 1)
+    const progress = Math.min(scrollY / (contentHeight - containerHeight), 1);
+    setScrollProgress(progress);
+    
+    // Set scrolling state
+    setIsScrolling(true);
+    
+    // Clear existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    // Set timeout to detect scroll end
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsScrolling(false);
+      snapToNearestSection(scrollY);
+    }, 150);
     
     // Find which section we're closest to
     let closestSection = 0;
@@ -258,6 +281,27 @@ export default function DashboardScreen() {
     
     if (closestSection !== currentSection) {
       setCurrentSection(closestSection);
+    }
+  };
+  
+  // Snap to nearest section after scroll ends
+  const snapToNearestSection = (scrollY: number) => {
+    let closestSection = 0;
+    let minDistance = Math.abs(scrollY - sectionPositions[0]);
+    
+    for (let i = 1; i < sectionPositions.length; i++) {
+      const distance = Math.abs(scrollY - sectionPositions[i]);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSection = i;
+      }
+    }
+    
+    // Only snap if we're not already close enough (within 50px)
+    if (minDistance > 50) {
+      setTimeout(() => {
+        scrollToSection(closestSection);
+      }, 100);
     }
   };
 
@@ -358,7 +402,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             
-            {/* Animated scroll arrow */}
+            {/* Intelligent Scroll Arrow */}
             <Animated.View 
               style={[
                 styles.scrollArrow,
@@ -366,14 +410,21 @@ export default function DashboardScreen() {
                   transform: [{
                     translateY: bounceAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, -8]
+                      outputRange: [0, -12]
                     })
-                  }]
+                  }],
+                  opacity: isScrolling ? 0.3 : 1
                 }
               ]}
             >
-              <TouchableOpacity onPress={scrollToNextSection}>
-                <ChevronDown size={24} color="white" />
+              <TouchableOpacity 
+                onPress={scrollToNextSection}
+                style={styles.arrowTouchable}
+              >
+                <View style={styles.arrowContainer}>
+                  <ChevronDown size={24} color="white" />
+                  <Text style={styles.arrowText}>Weiter</Text>
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -420,7 +471,7 @@ export default function DashboardScreen() {
             </View>
             </View>
             
-            {/* Animated navigation arrow */}
+            {/* Enhanced Navigation Arrow */}
             <Animated.View 
               style={[
                 styles.sectionArrow,
@@ -428,14 +479,21 @@ export default function DashboardScreen() {
                   transform: [{
                     translateY: bounceAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, -6]
+                      outputRange: [0, -8]
                     })
-                  }]
+                  }],
+                  opacity: isScrolling ? 0.4 : 1
                 }
               ]}
             >
-              <TouchableOpacity onPress={() => scrollToSection(2)}>
-                <ChevronDown size={20} color={MEDICAL_COLORS.primary} />
+              <TouchableOpacity 
+                onPress={() => scrollToSection(2)}
+                style={styles.sectionArrowTouchable}
+              >
+                <View style={styles.sectionArrowContainer}>
+                  <ChevronDown size={18} color={MEDICAL_COLORS.primary} />
+                  <View style={styles.arrowPulse} />
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -582,34 +640,55 @@ export default function DashboardScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Enhanced Section Indicators */}
+      {/* Enhanced Section Indicators with Progress */}
       <View style={styles.sectionIndicators}>
-        {sectionPositions.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => scrollToSection(index)}
-            onPressIn={() => {
-              Animated.spring(scaleAnim, {
-                toValue: 1.3,
-                useNativeDriver: true,
-              }).start();
-            }}
-            onPressOut={() => {
-              Animated.spring(scaleAnim, {
-                toValue: 1,
-                useNativeDriver: true,
-              }).start();
-            }}
-          >
-            <Animated.View
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <Animated.View 
               style={[
-                styles.sectionDot,
-                currentSection === index && styles.activeSectionDot,
-                { transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }] }
-              ]}
+                styles.progressFill,
+                {
+                  height: `${scrollProgress * 100}%`,
+                  opacity: isScrolling ? 0.8 : 0.4
+                }
+              ]} 
             />
-          </TouchableOpacity>
-        ))}
+          </View>
+        </View>
+        
+        {/* Section Dots */}
+        <View style={styles.dotsContainer}>
+          {sectionPositions.map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => scrollToSection(index)}
+              onPressIn={() => {
+                Animated.spring(scaleAnim, {
+                  toValue: 1.3,
+                  useNativeDriver: true,
+                }).start();
+              }}
+              onPressOut={() => {
+                Animated.spring(scaleAnim, {
+                  toValue: 1,
+                  useNativeDriver: true,
+                }).start();
+              }}
+            >
+              <Animated.View
+                style={[
+                  styles.sectionDot,
+                  currentSection === index && styles.activeSectionDot,
+                  { 
+                    transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }],
+                    opacity: isScrolling && currentSection !== index ? 0.6 : 1
+                  }
+                ]}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Menu */}
@@ -1161,25 +1240,52 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   
-  // Section Indicators
+  // Enhanced Section Indicators
   sectionIndicators: {
     position: 'absolute',
     right: 24,
     top: '50%',
     transform: [{ translateY: -50 }],
     zIndex: 1000,
-    gap: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  
+  progressContainer: {
+    marginRight: 12,
+  },
+  
+  progressTrack: {
+    width: 3,
+    height: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  
+  progressFill: {
+    width: '100%',
+    backgroundColor: MEDICAL_COLORS.primary,
+    borderRadius: 2,
+    shadowColor: MEDICAL_COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+  },
+  
+  dotsContainer: {
+    gap: 16,
   },
   
   sectionDot: {
@@ -1204,5 +1310,43 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     shadowOpacity: 0.3,
     shadowRadius: 6,
+  },
+  
+  // Enhanced Arrow Styles
+  arrowTouchable: {
+    padding: 8,
+  },
+  
+  arrowContainer: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  
+  arrowText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    color: 'white',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.9,
+  },
+  
+  sectionArrowTouchable: {
+    padding: 6,
+  },
+  
+  sectionArrowContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  arrowPulse: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+    opacity: 0.6,
   },
 });
