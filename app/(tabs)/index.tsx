@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,12 +61,34 @@ export default function DashboardScreen() {
   
   // Scroll ref for section navigation
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Animation for bounce effect
+  const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchDailyContent();
     loadRecentMedicalContents();
     checkOnboardingStatus();
+    startBounceAnimation();
   }, [user]);
+  
+  // Start bounce animation for arrows
+  const startBounceAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
   
   const checkOnboardingStatus = async () => {
     try {
@@ -314,13 +336,24 @@ export default function DashboardScreen() {
               </View>
             </View>
             
-            {/* Simple scroll arrow */}
-            <TouchableOpacity 
-              style={styles.scrollArrow}
-              onPress={scrollToNextSection}
+            {/* Animated scroll arrow */}
+            <Animated.View 
+              style={[
+                styles.scrollArrow,
+                {
+                  transform: [{
+                    translateY: bounceAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -8]
+                    })
+                  }]
+                }
+              ]}
             >
-              <ChevronDown size={24} color="white" />
-            </TouchableOpacity>
+              <TouchableOpacity onPress={scrollToNextSection}>
+                <ChevronDown size={24} color="white" />
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </LinearGradient>
       </View>
@@ -363,13 +396,24 @@ export default function DashboardScreen() {
             </View>
             </View>
             
-            {/* Navigation arrow */}
-            <TouchableOpacity 
-              style={styles.sectionArrow}
-              onPress={() => scrollToSection(2)}
+            {/* Animated navigation arrow */}
+            <Animated.View 
+              style={[
+                styles.sectionArrow,
+                {
+                  transform: [{
+                    translateY: bounceAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -6]
+                    })
+                  }]
+                }
+              ]}
             >
-              <ChevronDown size={20} color={MEDICAL_COLORS.primary} />
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => scrollToSection(2)}>
+                <ChevronDown size={20} color={MEDICAL_COLORS.primary} />
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         )}
 
