@@ -358,55 +358,37 @@ export default function DashboardScreen() {
               style={styles.heroContentGradient}
             >
               <View style={styles.heroTextContent}>
-                <View style={styles.heroBadge}>
-                  <Text style={styles.badgeText}>🎯 Exklusiv für Ärzt:innen</Text>
-                </View>
-                
-                <Text style={styles.modernHeroTitle}>
-                  Die einzige KI-Simulation für die medizinische Prüfung in Deutschland
+                <Text style={styles.splitScreenHeroTitle}>
+                  Nur bei KP Med: Die einzige KI-Simulation,
+                </Text>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
                 </Text>
                 
-                <Text style={styles.modernHeroDescription}>
-                  Echte Prüfungssimulation mit personalisierten Lerninhalten und intelligenter Auswertung. 
-                  Keine Theorie, keine Spielerei – sondern gezieltes Training für internationalen Erfolg.
+                <Text style={styles.splitScreenHeroDescription}>
+                  Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, 
+                  personalisierte Lerninhalte und intelligente Auswertung – exklusiv 
+                  entwickelt für internationale Ärzt:innen.
                 </Text>
                 
-                <View style={styles.heroFeaturesList}>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIcon}>
-                      <Target size={16} color="#4A90E2" />
-                    </View>
-                    <Text style={styles.featureText}>Personalisierte KI-Simulation</Text>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIcon}>
-                      <BookOpen size={16} color="#4A90E2" />
-                    </View>
-                    <Text style={styles.featureText}>Deutsche Prüfungsstandards</Text>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIcon}>
-                      <TrendingUp size={16} color="#4A90E2" />
-                    </View>
-                    <Text style={styles.featureText}>Intelligente Auswertung</Text>
-                  </View>
-                </View>
+                <Text style={styles.splitScreenHeroTagline}>
+                  Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
+                </Text>
                 
-                <View style={styles.modernHeroButtons}>
+                <View style={styles.splitScreenHeroButtons}>
                   <TouchableOpacity 
-                    style={styles.primaryModernButton}
+                    style={styles.primarySplitButton}
                     onPress={() => router.push('/(tabs)/simulation')}
                   >
-                    <Text style={styles.primaryModernButtonText}>Simulation starten</Text>
+                    <Text style={styles.primarySplitButtonText}>Simulation starten</Text>
                     <ArrowRight size={18} color="white" style={styles.buttonIcon} />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={styles.secondaryModernButton}
+                    style={styles.secondarySplitButton}
                     onPress={() => router.push('/(tabs)/bibliothek')}
                   >
-                    <BookOpen size={18} color="#4A90E2" style={styles.buttonIcon} />
-                    <Text style={styles.secondaryModernButtonText}>Bibliothek</Text>
+                    <Text style={styles.secondarySplitButtonText}>Jetzt lernen</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1171,7 +1153,7 @@ const styles = StyleSheet.create({
   },
   heroSplitContainer: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    minHeight: screenWidth > 768 ? 520 : 640,
+    minHeight: screenWidth > 768 ? 312 : 384,
   },
   heroLeftSide: {
     flex: 1,
@@ -1285,6 +1267,84 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 4,
+  },
+  
+  // Split-Screen Hero Text Styles
+  splitScreenHeroTitle: {
+    fontSize: screenWidth > 768 ? 34 : 28,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: screenWidth > 768 ? 42 : 36,
+    marginBottom: 16,
+    letterSpacing: -0.8,
+  },
+  splitScreenHeroSubtitle: {
+    fontSize: screenWidth > 768 ? 22 : 18,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.primary,
+    lineHeight: screenWidth > 768 ? 30 : 26,
+    marginBottom: 20,
+    letterSpacing: -0.4,
+  },
+  splitScreenHeroDescription: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 24,
+    marginBottom: 16,
+    opacity: 0.9,
+  },
+  splitScreenHeroTagline: {
+    fontSize: 18,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: 26,
+    marginBottom: 32,
+    fontStyle: 'italic',
+    opacity: 0.8,
+  },
+  splitScreenHeroButtons: {
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  primarySplitButton: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    minWidth: 160,
+    justifyContent: 'center',
+  },
+  primarySplitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    marginRight: 8,
+  },
+  secondarySplitButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 160,
+    justifyContent: 'center',
+  },
+  secondarySplitButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
   },
   
   // Hero Right Side - Professional Illustration Styles
