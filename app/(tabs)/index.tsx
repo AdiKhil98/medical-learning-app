@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, CheckCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown, BarChart3, Users } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -58,12 +58,49 @@ export default function DashboardScreen() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
+  
+  // Scroll refs for smooth navigation
+  const scrollViewRef = useRef<ScrollView>(null);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+  
+  // Screen height for full viewport sections
+  const { height: screenHeight } = Dimensions.get('window');
 
   useEffect(() => {
     fetchDailyContent();
     loadRecentMedicalContents();
     checkOnboardingStatus();
+    startBounceAnimation();
   }, [user]);
+  
+  // Bounce animation for arrows
+  const startBounceAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+  
+  // Smooth scroll to sections
+  const scrollToSection = (sectionIndex: number) => {
+    if (scrollViewRef.current) {
+      const yPosition = sectionIndex * screenHeight;
+      scrollViewRef.current.scrollTo({
+        y: yPosition,
+        animated: true,
+      });
+    }
+  };
   
   const checkOnboardingStatus = async () => {
     try {
@@ -207,17 +244,12 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#f8faff', '#e3f2fd', '#ffffff']}
-        style={styles.gradientBackground}
-      />
-      
-      {/* Modern Header */}
+      {/* Fixed Header */}
       <LinearGradient
         colors={['#4A90E2', '#357ABD', '#2E5B9A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.modernHeader}
+        style={styles.fixedHeader}
       >
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -231,238 +263,299 @@ export default function DashboardScreen() {
         </View>
       </LinearGradient>
 
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <LinearGradient
-          colors={['#667eea', '#764ba2']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroGradient}
-        >
-          <View style={styles.heroContent}>
-            <View style={styles.heroTextContainer}>
-              <Text style={styles.heroTitle}>
-                Nur bei KP Med: Die einzige KI-Simulation,
-              </Text>
-              <Text style={styles.heroSubtitle}>
-                die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
-              </Text>
-              <Text style={styles.heroDescription}>
-                Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, personalisierte Lerninhalte und intelligente Auswertung – exklusiv entwickelt für internationale Ärzt:innen.
-              </Text>
-              <Text style={styles.heroTagline}>
-                Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
-              </Text>
-              
-              <View style={styles.heroButtons}>
-                <TouchableOpacity 
-                  style={styles.primaryHeroButton}
-                  onPress={() => router.push('/(tabs)/bibliothek')}
-                >
-                  <Text style={styles.primaryButtonText}>Jetzt lernen</Text>
-                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.secondaryHeroButton}
-                  onPress={() => router.push('/(tabs)/simulation')}
-                >
-                  <Text style={styles.secondaryButtonText}>Simulation starten</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* 3D-like floating elements */}
-            <View style={styles.floatingElements}>
-              <View style={[styles.floatingCube, styles.cube1]}>
-                <Sparkles size={24} color="#4A90E2" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube2]}>
-                <Target size={20} color="#667eea" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube3]}>
-                <TrendingUp size={22} color="#764ba2" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube4]}>
-                <BookOpen size={18} color="#4A90E2" />
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentContainer}>
-        
-        {/* Last Medical Contents */}
-        {recentMedicalContents.length > 0 && (
-          <View style={styles.medicalContentsSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
-            </View>
-            <View style={styles.contentsContainer}>
-              {recentMedicalContents.map((content, index) => (
-                <TouchableOpacity 
-                  key={content.id} 
-                  style={[
-                    styles.contentItem,
-                    index === recentMedicalContents.length - 1 && styles.lastContentItem
-                  ]}
-                >
-                  <View style={styles.contentIcon}>
-                    <BookOpen size={18} color={MEDICAL_COLORS.primary} />
-                  </View>
-                  <View style={styles.contentInfo}>
-                    <Text style={styles.contentTitle}>{content.title}</Text>
-                    <View style={styles.contentMeta}>
-                      <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
-                      <Text style={styles.contentTime}>{content.lastViewed}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Daily Tip - Always show section */}
-        <View style={styles.card}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollContainer} 
+        showsVerticalScrollIndicator={false}
+        pagingEnabled={false}
+        decelerationRate="fast"
+      >
+        {/* Section 1: Hero */}
+        <View style={[styles.section, styles.heroSection]}>
           <LinearGradient
-            colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
-            style={styles.cardGradient}
+            colors={['#667eea', '#764ba2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
           >
-            <View style={styles.cardHeader}>
-              <Lightbulb size={24} color={MEDICAL_COLORS.primary} />
-              <Text style={styles.cardTitle}>Tipp des Tages</Text>
-            </View>
-            
-            {dailyTip ? (
-              <>
-                {dailyTip.title && (
-                  <Text style={styles.tipTitleCard}>{dailyTip.title}</Text>
-                )}
-                
-                <Text style={styles.tipContentCard}>
-                  {dailyTip.content || dailyTip.tip_content || dailyTip.tip}
+            <View style={styles.heroContent}>
+              <View style={styles.heroTextContainer}>
+                <Text style={styles.heroTitle}>
+                  Nur bei KP Med: Die einzige KI-Simulation,
+                </Text>
+                <Text style={styles.heroSubtitle}>
+                  die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
+                </Text>
+                <Text style={styles.heroDescription}>
+                  Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, personalisierte Lerninhalte und intelligente Auswertung – exklusiv entwickelt für internationale Ärzt:innen.
+                </Text>
+                <Text style={styles.heroTagline}>
+                  Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
                 </Text>
                 
-                {dailyTip.category && (
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{dailyTip.category}</Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <Text style={styles.noContentText}>
-                Heute gibt es noch keinen Tipp. Schauen Sie später wieder vorbei!
-              </Text>
-            )}
-          </LinearGradient>
-        </View>
-
-        {/* Daily Question Card */}
-        {dailyQuestion && (
-          <View style={styles.card}>
-            <LinearGradient
-              colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
-              style={styles.cardGradient}
+                <View style={styles.heroButtons}>
+                  <TouchableOpacity 
+                    style={styles.primaryHeroButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <Text style={styles.primaryButtonText}>Jetzt lernen</Text>
+                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.secondaryHeroButton}
+                    onPress={() => router.push('/(tabs)/simulation')}
+                  >
+                    <Text style={styles.secondaryButtonText}>Simulation starten</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {/* Floating elements */}
+              <View style={styles.floatingElements}>
+                <View style={[styles.floatingCube, styles.cube1]}>
+                  <Sparkles size={24} color="#4A90E2" />
+                </View>
+                <View style={[styles.floatingCube, styles.cube2]}>
+                  <Target size={20} color="#667eea" />
+                </View>
+                <View style={[styles.floatingCube, styles.cube3]}>
+                  <TrendingUp size={22} color="#764ba2" />
+                </View>
+              </View>
+            </View>
+            
+            {/* Scroll Arrow */}
+            <Animated.View 
+              style={[
+                styles.scrollArrow, 
+                {
+                  transform: [{
+                    translateY: bounceAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -10]
+                    })
+                  }]
+                }
+              ]}
             >
-              <View style={styles.cardHeader}>
-                <HelpCircle size={24} color={MEDICAL_COLORS.primary} />
-                <Text style={styles.cardTitle}>Frage des Tages</Text>
-              </View>
-              
-              <Text style={styles.questionText}>{dailyQuestion.question}</Text>
-              
-              <View style={styles.answersContainer}>
-                {['a', 'b', 'c'].map((option) => {
-                  const optionText = dailyQuestion[`choice_${option}` as keyof DailyQuestion] || 
-                                   dailyQuestion[`option_${option}` as keyof DailyQuestion];
-                  
-                  if (!optionText) return null;
-                  
-                  const isSelected = selectedAnswer === option;
-                  const isCorrect = isCorrectAnswer(option);
-                  const showResult = showAnswer;
-                  
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      style={[
-                        styles.answerOption,
-                        isSelected && styles.selectedOption,
-                        showResult && isCorrect && styles.correctOption,
-                        showResult && isSelected && !isCorrect && styles.incorrectOption,
-                      ]}
-                      onPress={() => !showAnswer && handleAnswerSelect(option)}
-                      disabled={showAnswer}
-                    >
-                      <View style={styles.answerContent}>
-                        <Text style={styles.optionLetter}>{option.toUpperCase()})</Text>
-                        <Text style={[
-                          styles.answerText,
-                          showResult && isCorrect && styles.correctAnswerText,
-                          showResult && isSelected && !isCorrect && styles.incorrectAnswerText,
-                        ]}>
-                          {optionText}
-                        </Text>
-                        {showResult && isCorrect && (
-                          <CheckCircle size={20} color={MEDICAL_COLORS.success} />
-                        )}
-                        {showResult && isSelected && !isCorrect && (
-                          <XCircle size={20} color={MEDICAL_COLORS.danger} />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              
-              {showAnswer && dailyQuestion.explanation && (
-                <View style={styles.explanationContainer}>
-                  <Text style={styles.explanationTitle}>Erklärung:</Text>
-                  <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
-                </View>
-              )}
-              
-              {dailyQuestion.category && (
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryText}>{dailyQuestion.category}</Text>
-                </View>
-              )}
-            </LinearGradient>
-          </View>
-        )}
+              <TouchableOpacity 
+                style={styles.arrowButton}
+                onPress={() => scrollToSection(1)}
+              >
+                <ChevronDown size={24} color="white" />
+              </TouchableOpacity>
+            </Animated.View>
+          </LinearGradient>
+        </View>
 
-        {/* Empty State - only show if no daily question */}
-        {!dailyQuestion && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              Heute gibt es noch keine Frage. Schauen Sie später wieder vorbei!
-            </Text>
-          </View>
-        )}
-
-        {/* Medical Disclaimer */}
-        <View style={styles.disclaimerContainer}>
+        {/* Section 2: Lernkapital */}
+        <View style={[styles.section, styles.lernkapitalSection]}>
           <LinearGradient
-            colors={[`${MEDICAL_COLORS.primary}08`, `${MEDICAL_COLORS.primary}05`]}
-            style={styles.disclaimerGradient}
+            colors={['#f8faff', '#ffffff', '#f0f9ff']}
+            style={styles.sectionGradient}
           >
-            <View style={styles.disclaimerContent}>
-              <View style={styles.disclaimerIcon}>
-                <Text style={styles.disclaimerEmoji}>⚕️</Text>
+            <View style={styles.sectionContent}>
+              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
+              <View style={styles.chaptersContainer}>
+                {recentMedicalContents.map((content, index) => (
+                  <TouchableOpacity key={content.id} style={styles.chapterCard}>
+                    <View style={styles.chapterIcon}>
+                      <BookOpen size={20} color={MEDICAL_COLORS.primary} />
+                    </View>
+                    <View style={styles.chapterInfo}>
+                      <Text style={styles.chapterTitle}>{content.title}</Text>
+                      <Text style={styles.chapterCategory}>{content.category}</Text>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: `${Math.random() * 100}%` }]} />
+                      </View>
+                    </View>
+                    <View style={styles.chapterMeta}>
+                      <Clock size={14} color={MEDICAL_COLORS.textSecondary} />
+                      <Text style={styles.chapterTime}>{content.lastViewed}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
               </View>
-              <View style={styles.disclaimerTextContainer}>
-                <Text style={styles.disclaimerTitle}>Medizinischer Haftungsausschluss</Text>
-                <Text style={styles.disclaimerText}>
-                  Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
-                </Text>
+            </View>
+            
+            {/* Scroll Arrow */}
+            <Animated.View 
+              style={[
+                styles.scrollArrow, 
+                {
+                  transform: [{
+                    translateY: bounceAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -10]
+                    })
+                  }]
+                }
+              ]}
+            >
+              <TouchableOpacity 
+                style={[styles.arrowButton, styles.lightArrowButton]}
+                onPress={() => scrollToSection(2)}
+              >
+                <ChevronDown size={24} color={MEDICAL_COLORS.primary} />
+              </TouchableOpacity>
+            </Animated.View>
+          </LinearGradient>
+        </View>
+
+        {/* Section 3: Tipp des Tages */}
+        <View style={[styles.section, styles.tipSection]}>
+          <LinearGradient
+            colors={['#fef3c7', '#fde68a', '#fed7aa']}
+            style={styles.sectionGradient}
+          >
+            <View style={styles.sectionContent}>
+              <View style={styles.tipHeader}>
+                <Lightbulb size={28} color="#d97706" />
+                <Text style={styles.sectionTitle}>Tipp des Tages</Text>
               </View>
+              
+              {dailyQuestion ? (
+                <View style={styles.questionCard}>
+                  <Text style={styles.questionText}>{dailyQuestion.question}</Text>
+                  
+                  <View style={styles.answersContainer}>
+                    {['a', 'b', 'c'].map((option) => {
+                      const optionText = dailyQuestion[`choice_${option}` as keyof DailyQuestion] || 
+                                       dailyQuestion[`option_${option}` as keyof DailyQuestion];
+                      
+                      if (!optionText) return null;
+                      
+                      const isSelected = selectedAnswer === option;
+                      const isCorrect = isCorrectAnswer(option);
+                      const showResult = showAnswer;
+                      
+                      return (
+                        <TouchableOpacity
+                          key={option}
+                          style={[
+                            styles.answerOption,
+                            isSelected && styles.selectedOption,
+                            showResult && isCorrect && styles.correctOption,
+                            showResult && isSelected && !isCorrect && styles.incorrectOption,
+                          ]}
+                          onPress={() => !showAnswer && handleAnswerSelect(option)}
+                          disabled={showAnswer}
+                        >
+                          <Text style={styles.optionLetter}>{option.toUpperCase()})</Text>
+                          <Text style={styles.answerText}>{optionText}</Text>
+                          {showResult && isCorrect && (
+                            <CheckCircle size={20} color={MEDICAL_COLORS.success} />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  
+                  {showAnswer && dailyQuestion.explanation && (
+                    <View style={styles.explanationContainer}>
+                      <Text style={styles.explanationTitle}>Erklärung:</Text>
+                      <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.noContentCard}>
+                  <Text style={styles.noContentText}>
+                    Heute gibt es noch keine Frage. Schauen Sie später wieder vorbei!
+                  </Text>
+                </View>
+              )}
+            </View>
+            
+            {/* Scroll Arrow */}
+            <Animated.View 
+              style={[
+                styles.scrollArrow, 
+                {
+                  transform: [{
+                    translateY: bounceAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -10]
+                    })
+                  }]
+                }
+              ]}
+            >
+              <TouchableOpacity 
+                style={[styles.arrowButton, styles.yellowArrowButton]}
+                onPress={() => scrollToSection(3)}
+              >
+                <ChevronDown size={24} color="#d97706" />
+              </TouchableOpacity>
+            </Animated.View>
+          </LinearGradient>
+        </View>
+
+        {/* Section 4: Dashboard Stats */}
+        <View style={[styles.section, styles.dashboardSection]}>
+          <LinearGradient
+            colors={['#1f2937', '#374151', '#4b5563']}
+            style={styles.sectionGradient}
+          >
+            <View style={styles.sectionContent}>
+              <Text style={[styles.sectionTitle, styles.darkSectionTitle]}>Ihre Statistiken</Text>
+              
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <BarChart3 size={32} color="#10b981" />
+                  <Text style={styles.statNumber}>87%</Text>
+                  <Text style={styles.statLabel}>Fortschritt</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <Target size={32} color="#3b82f6" />
+                  <Text style={styles.statNumber}>142</Text>
+                  <Text style={styles.statLabel}>Gelernte Kapitel</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <Users size={32} color="#f59e0b" />
+                  <Text style={styles.statNumber}>23</Text>
+                  <Text style={styles.statLabel}>Simulationen</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <Sparkles size={32} color="#ec4899" />
+                  <Text style={styles.statNumber}>96%</Text>
+                  <Text style={styles.statLabel}>Erfolgsrate</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Navigation Icons */}
+            <View style={styles.bottomNavigation}>
+              <TouchableOpacity 
+                style={styles.navItem}
+                onPress={() => router.push('/(tabs)')}
+              >
+                <Target size={24} color="white" />
+                <Text style={styles.navLabel}>Dashboard</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.navItem}
+                onPress={() => router.push('/(tabs)/bibliothek')}
+              >
+                <BookOpen size={24} color="white" />
+                <Text style={styles.navLabel}>Bibliothek</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.navItem}
+                onPress={() => router.push('/(tabs)/simulation')}
+              >
+                <Sparkles size={24} color="white" />
+                <Text style={styles.navLabel}>Simulation</Text>
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </View>
-        
-        <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* Menu */}
@@ -483,13 +576,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  gradientBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -500,7 +586,7 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.textSecondary,
     fontFamily: 'Inter-Regular',
   },
-  modernHeader: {
+  fixedHeader: {
     paddingTop: 8,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -509,6 +595,70 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 100,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  section: {
+    height: screenHeight - 80, // Account for fixed header
+    position: 'relative',
+  },
+  sectionGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  sectionContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 40,
+  },
+  sectionTitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 32,
+    textAlign: 'center',
+    letterSpacing: -0.8,
+  },
+  darkSectionTitle: {
+    color: 'white',
+  },
+  
+  // Scroll Arrow Styles
+  scrollArrow: {
+    position: 'absolute',
+    bottom: 30,
+    left: '50%',
+    marginLeft: -30,
+    zIndex: 10,
+  },
+  arrowButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  lightArrowButton: {
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    borderColor: 'rgba(74, 144, 226, 0.3)',
+  },
+  yellowArrowButton: {
+    backgroundColor: 'rgba(217, 119, 6, 0.1)',
+    borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   headerContent: {
     flexDirection: 'row',
@@ -519,346 +669,42 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
   },
-  welcomeSection: {
-    padding: 20,
-    paddingBottom: 16,
-  },
-  welcomeText: {
-    fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 24,
-    color: MEDICAL_COLORS.textPrimary,
-    fontFamily: 'Inter-Bold',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: MEDICAL_COLORS.gray,
-    fontFamily: 'Inter-Regular',
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 32,
-  },
-  card: {
-    marginBottom: 28,
-    borderRadius: 24,
-    backgroundColor: 'white',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(74, 144, 226, 0.08)',
-  },
-  cardGradient: {
-    padding: 24,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 4,
-  },
-  cardTitle: {
-    fontSize: 19,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginLeft: 14,
-    letterSpacing: -0.4,
-    lineHeight: 24,
-  },
-  questionText: {
-    fontSize: 17,
-    fontFamily: 'Inter-Medium',
-    color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 26,
-    marginBottom: 24,
-    paddingHorizontal: 2,
-  },
-  answersContainer: {
-    marginBottom: 20,
-    gap: 4,
-  },
-  answerOption: {
-    backgroundColor: '#f8faff',
-    borderRadius: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  selectedOption: {
-    borderColor: MEDICAL_COLORS.primary,
-    backgroundColor: `${MEDICAL_COLORS.primary}10`,
-  },
-  correctOption: {
-    borderColor: MEDICAL_COLORS.success,
-    backgroundColor: `${MEDICAL_COLORS.success}15`,
-  },
-  incorrectOption: {
-    borderColor: MEDICAL_COLORS.danger,
-    backgroundColor: `${MEDICAL_COLORS.danger}15`,
-  },
-  answerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
-    paddingVertical: 16,
-  },
-  optionLetter: {
-    fontSize: 15,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginRight: 14,
-    minWidth: 26,
-  },
-  answerText: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 22,
-    paddingRight: 8,
-  },
-  correctAnswerText: {
-    color: MEDICAL_COLORS.success,
-    fontFamily: 'Inter-Medium',
-  },
-  incorrectAnswerText: {
-    color: MEDICAL_COLORS.danger,
-  },
-  explanationContainer: {
-    backgroundColor: `${MEDICAL_COLORS.primary}08`,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-  },
-  explanationTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 8,
-  },
-  explanationText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 20,
-  },
-  categoryBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: MEDICAL_COLORS.warning,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: 'white',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tipTitleCard: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 12,
-    marginTop: 4,
-  },
-  tipContentCard: {
-    fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  noContentText: {
-    fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 22,
-    opacity: 0.7,
-    fontStyle: 'italic',
-  },
-  emptyState: {
-    padding: 48,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: MEDICAL_COLORS.textSecondary,
-    fontFamily: 'Inter-Regular',
-    textAlign: 'center',
-    lineHeight: 24,
-    opacity: 0.8,
-  },
-  bottomPadding: {
-    height: 24,
-  },
-  
-  // Medical Disclaimer Styles
-  disclaimerContainer: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 8,
-  },
-  disclaimerGradient: {
-    borderRadius: 16,
-    padding: 1,
-  },
-  disclaimerContent: {
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: 15,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  disclaimerIcon: {
-    marginRight: 12,
-    marginTop: 2,
-  },
-  disclaimerEmoji: {
-    fontSize: 24,
-  },
-  disclaimerTextContainer: {
-    flex: 1,
-  },
-  disclaimerTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 6,
-  },
-  disclaimerText: {
-    fontSize: 13,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 18,
-    opacity: 0.9,
-  },
-  
-  // Medical Contents Section
-  medicalContentsSection: {
-    marginBottom: 28,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  contentsContainer: {
-    backgroundColor: 'white',
-    borderRadius: 24,
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(74, 144, 226, 0.08)',
-  },
-  contentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.lightGray,
-  },
-  lastContentItem: {
-    borderBottomWidth: 0,
-  },
-  contentIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: `${MEDICAL_COLORS.primary}10`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  contentInfo: {
-    flex: 1,
-  },
-  contentTitle: {
-    fontSize: 15,
-    fontFamily: 'Inter-Medium',
-    color: MEDICAL_COLORS.textPrimary,
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  contentMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contentTime: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.textSecondary,
-    marginLeft: 4,
-    opacity: 0.8,
-  },
   
   // Hero Section Styles
   heroSection: {
-    marginHorizontal: 0,
-    marginBottom: 0,
-    borderRadius: 0,
-    overflow: 'hidden',
+    backgroundColor: '#667eea',
   },
   heroGradient: {
-    paddingVertical: 40,
+    flex: 1,
     paddingHorizontal: 20,
-    minHeight: 280,
+    paddingVertical: 40,
   },
   heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     flex: 1,
+    paddingTop: 40,
   },
   heroTextContainer: {
     flex: 1,
     paddingRight: 20,
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: 'white',
-    lineHeight: 38,
+    lineHeight: 34,
     marginBottom: 8,
-    letterSpacing: -0.8,
+    letterSpacing: -0.6,
   },
   heroSubtitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: 'rgba(255,255,255,0.9)',
-    lineHeight: 38,
+    lineHeight: 34,
     marginBottom: 16,
-    letterSpacing: -0.8,
+    letterSpacing: -0.6,
   },
   heroDescription: {
     fontSize: 16,
@@ -883,7 +729,6 @@ const styles = StyleSheet.create({
   },
   primaryHeroButton: {
     backgroundColor: 'rgba(255,255,255,0.25)',
-    backdropFilter: 'blur(10px)',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 50,
@@ -919,19 +764,16 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginLeft: 4,
   },
-  
-  // Floating Elements
   floatingElements: {
     position: 'relative',
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
   floatingCube: {
     position: 'absolute',
     backgroundColor: 'rgba(255,255,255,0.15)',
-    backdropFilter: 'blur(10px)',
     borderRadius: 12,
     padding: 12,
     shadowColor: '#000',
@@ -943,31 +785,255 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   cube1: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     top: -10,
-    right: 20,
+    right: 10,
     transform: [{ rotate: '15deg' }],
   },
   cube2: {
-    width: 50,
-    height: 50,
-    bottom: 40,
+    width: 40,
+    height: 40,
+    bottom: 20,
     left: 0,
     transform: [{ rotate: '-10deg' }],
   },
   cube3: {
-    width: 55,
-    height: 55,
-    top: 30,
-    left: 30,
-    transform: [{ rotate: '25deg' }],
-  },
-  cube4: {
     width: 45,
     height: 45,
-    bottom: 0,
-    right: 0,
-    transform: [{ rotate: '-20deg' }],
+    top: 20,
+    left: 20,
+    transform: [{ rotate: '25deg' }],
+  },
+  
+  // Lernkapital Section Styles
+  lernkapitalSection: {
+    backgroundColor: '#f8faff',
+  },
+  chaptersContainer: {
+    width: '100%',
+    maxWidth: 600,
+  },
+  chapterCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.08)',
+  },
+  chapterIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: `${MEDICAL_COLORS.primary}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  chapterInfo: {
+    flex: 1,
+  },
+  chapterTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  chapterCategory: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: MEDICAL_COLORS.primary,
+    borderRadius: 2,
+  },
+  chapterMeta: {
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  chapterTime: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  
+  // Tip Section Styles
+  tipSection: {
+    backgroundColor: '#fef3c7',
+  },
+  tipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  questionCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 600,
+    shadowColor: '#d97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  noContentCard: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 16,
+    padding: 32,
+    width: '100%',
+    maxWidth: 500,
+    alignItems: 'center',
+  },
+  questionText: {
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: 26,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  answersContainer: {
+    marginBottom: 16,
+  },
+  answerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8faff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedOption: {
+    borderColor: MEDICAL_COLORS.primary,
+    backgroundColor: `${MEDICAL_COLORS.primary}10`,
+  },
+  correctOption: {
+    borderColor: MEDICAL_COLORS.success,
+    backgroundColor: `${MEDICAL_COLORS.success}15`,
+  },
+  incorrectOption: {
+    borderColor: MEDICAL_COLORS.danger,
+    backgroundColor: `${MEDICAL_COLORS.danger}15`,
+  },
+  optionLetter: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginRight: 12,
+    minWidth: 20,
+  },
+  answerText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  explanationContainer: {
+    backgroundColor: `${MEDICAL_COLORS.primary}08`,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+  },
+  explanationTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  explanationText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  noContentText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  
+  // Dashboard Section Styles
+  dashboardSection: {
+    backgroundColor: '#1f2937',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 600,
+    marginBottom: 40,
+  },
+  statCard: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    width: '48%',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+  },
+  bottomNavigation: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  navItem: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  navLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: 'white',
+    marginTop: 4,
   },
 });
