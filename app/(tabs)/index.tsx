@@ -346,90 +346,126 @@ export default function DashboardScreen() {
         </View>
       </LinearGradient>
 
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <LinearGradient
-          colors={['#667eea', '#764ba2']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroGradient}
-        >
-          <View style={styles.heroContent}>
-            <View style={styles.heroTextContainer}>
-              <Text style={styles.heroTitle}>
-                Nur bei KP Med: Die einzige KI-Simulation,
-              </Text>
-              <Text style={styles.heroSubtitle}>
-                die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
-              </Text>
-              <Text style={styles.heroDescription}>
-                Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, personalisierte Lerninhalte und intelligente Auswertung – exklusiv entwickelt für internationale Ärzt:innen.
-              </Text>
-              <Text style={styles.heroTagline}>
-                Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
-              </Text>
-              
-              <View style={styles.heroButtons}>
-                <TouchableOpacity 
-                  style={styles.primaryHeroButton}
-                  onPress={() => router.push('/(tabs)/bibliothek')}
-                >
-                  <Text style={styles.primaryButtonText}>Jetzt lernen</Text>
-                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.secondaryHeroButton}
-                  onPress={() => router.push('/(tabs)/simulation')}
-                >
-                  <Text style={styles.secondaryButtonText}>Simulation starten</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* 3D-like floating elements */}
-            <View style={styles.floatingElements}>
-              <View style={[styles.floatingCube, styles.cube1]}>
-                <Sparkles size={24} color="#4A90E2" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube2]}>
-                <Target size={20} color="#667eea" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube3]}>
-                <TrendingUp size={22} color="#764ba2" />
-              </View>
-              <View style={[styles.floatingCube, styles.cube4]}>
-                <BookOpen size={18} color="#4A90E2" />
-              </View>
-            </View>
-            
-            {/* Intelligent Scroll Arrow */}
-            <Animated.View 
-              style={[
-                styles.scrollArrow,
-                {
-                  transform: [{
-                    translateY: bounceAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -12]
-                    })
-                  }],
-                  opacity: isScrolling ? 0.3 : 1
-                }
-              ]}
+      {/* Modern Split-Screen Hero Section */}
+      <View style={styles.modernHeroSection}>
+        <View style={styles.heroSplitContainer}>
+          {/* Left Side - Content */}
+          <View style={styles.heroLeftSide}>
+            <LinearGradient
+              colors={['rgba(102, 126, 234, 0.05)', 'rgba(118, 75, 162, 0.08)', 'rgba(255, 255, 255, 0.95)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroContentGradient}
             >
-              <TouchableOpacity 
-                onPress={scrollToNextSection}
-                style={styles.arrowTouchable}
-              >
-                <View style={styles.arrowContainer}>
-                  <ChevronDown size={24} color="white" />
-                  <Text style={styles.arrowText}>Weiter</Text>
+              <View style={styles.heroTextContent}>
+                <View style={styles.heroBadge}>
+                  <Text style={styles.badgeText}>🎯 Exklusiv für Ärzt:innen</Text>
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
+                
+                <Text style={styles.modernHeroTitle}>
+                  Die einzige KI-Simulation für die medizinische Prüfung in Deutschland
+                </Text>
+                
+                <Text style={styles.modernHeroDescription}>
+                  Echte Prüfungssimulation mit personalisierten Lerninhalten und intelligenter Auswertung. 
+                  Keine Theorie, keine Spielerei – sondern gezieltes Training für internationalen Erfolg.
+                </Text>
+                
+                <View style={styles.heroFeaturesList}>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIcon}>
+                      <Target size={16} color="#4A90E2" />
+                    </View>
+                    <Text style={styles.featureText}>Personalisierte KI-Simulation</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIcon}>
+                      <BookOpen size={16} color="#4A90E2" />
+                    </View>
+                    <Text style={styles.featureText}>Deutsche Prüfungsstandards</Text>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIcon}>
+                      <TrendingUp size={16} color="#4A90E2" />
+                    </View>
+                    <Text style={styles.featureText}>Intelligente Auswertung</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.modernHeroButtons}>
+                  <TouchableOpacity 
+                    style={styles.primaryModernButton}
+                    onPress={() => router.push('/(tabs)/simulation')}
+                  >
+                    <Text style={styles.primaryModernButtonText}>Simulation starten</Text>
+                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.secondaryModernButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <BookOpen size={18} color="#4A90E2" style={styles.buttonIcon} />
+                    <Text style={styles.secondaryModernButtonText}>Bibliothek</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
           </View>
-        </LinearGradient>
+          
+          {/* Right Side - Professional Illustration */}
+          <View style={styles.heroRightSide}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroImageGradient}
+            >
+              <View style={styles.heroIllustrationContainer}>
+                {/* Medical Education Illustration */}
+                <View style={styles.medicalIllustration}>
+                  <View style={styles.illustrationElement1}>
+                    <View style={styles.medicalIcon}>
+                      <Text style={styles.medicalEmoji}>⚕️</Text>
+                    </View>
+                    <View style={styles.progressRing}>
+                      <View style={styles.innerRing}></View>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.illustrationElement2}>
+                    <View style={styles.bookStack}>
+                      <View style={[styles.book, styles.book1]}>
+                        <Text style={styles.bookText}>FSP</Text>
+                      </View>
+                      <View style={[styles.book, styles.book2]}>
+                        <Text style={styles.bookText}>KP</Text>
+                      </View>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.illustrationElement3}>
+                    <View style={styles.aiChip}>
+                      <Sparkles size={20} color="white" />
+                      <Text style={styles.aiText}>KI</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.floatingStats}>
+                    <View style={styles.statBubble}>
+                      <Text style={styles.statNumber}>95%</Text>
+                      <Text style={styles.statLabel}>Erfolgsrate</Text>
+                    </View>
+                    <View style={styles.statBubble}>
+                      <Text style={styles.statNumber}>1000+</Text>
+                      <Text style={styles.statLabel}>Fragen</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
       </View>
 
       <ScrollView 
@@ -441,64 +477,98 @@ export default function DashboardScreen() {
         scrollEventThrottle={16}
       >
         
-        {/* Section 1: Last Medical Contents */}
-        {recentMedicalContents.length > 0 && (
-          <View style={styles.sectionContainer}>
-            <View style={styles.medicalContentsSection}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
-              </View>
-            <View style={styles.contentsContainer}>
-              {recentMedicalContents.map((content, index) => (
-                <TouchableOpacity 
-                  key={content.id} 
-                  style={[
-                    styles.contentItem,
-                    index === recentMedicalContents.length - 1 && styles.lastContentItem
-                  ]}
-                >
-                  <View style={styles.contentIcon}>
-                    <BookOpen size={18} color={MEDICAL_COLORS.primary} />
-                  </View>
-                  <View style={styles.contentInfo}>
-                    <Text style={styles.contentTitle}>{content.title}</Text>
-                    <View style={styles.contentMeta}>
-                      <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
-                      <Text style={styles.contentTime}>{content.lastViewed}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-            </View>
+        {/* Modern Content Sections */}
+        <View style={styles.modernContentContainer}>
+          {/* Section 1: Quick Access Cards */}
+          <View style={styles.quickAccessSection}>
+            <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
+            <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
             
-            {/* Enhanced Navigation Arrow */}
-            <Animated.View 
-              style={[
-                styles.sectionArrow,
-                {
-                  transform: [{
-                    translateY: bounceAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -8]
-                    })
-                  }],
-                  opacity: isScrolling ? 0.4 : 1
-                }
-              ]}
-            >
+            <View style={styles.quickAccessGrid}>
               <TouchableOpacity 
-                onPress={() => scrollToSection(2)}
-                style={styles.sectionArrowTouchable}
+                style={styles.quickAccessCard}
+                onPress={() => router.push('/(tabs)/bibliothek')}
               >
-                <View style={styles.sectionArrowContainer}>
-                  <ChevronDown size={18} color={MEDICAL_COLORS.primary} />
-                  <View style={styles.arrowPulse} />
-                </View>
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.quickCardGradient}
+                >
+                  <BookOpen size={24} color="white" />
+                  <Text style={styles.quickCardTitle}>Bibliothek</Text>
+                  <Text style={styles.quickCardSubtitle}>Lernmaterialien</Text>
+                </LinearGradient>
               </TouchableOpacity>
-            </Animated.View>
+              
+              <TouchableOpacity 
+                style={styles.quickAccessCard}
+                onPress={() => router.push('/(tabs)/simulation')}
+              >
+                <LinearGradient
+                  colors={['#4A90E2', '#357ABD']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.quickCardGradient}
+                >
+                  <Target size={24} color="white" />
+                  <Text style={styles.quickCardTitle}>Simulation</Text>
+                  <Text style={styles.quickCardSubtitle}>Prüfungstraining</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickAccessCard}
+                onPress={() => router.push('/(tabs)/progress')}
+              >
+                <LinearGradient
+                  colors={['#52C41A', '#389E0D']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.quickCardGradient}
+                >
+                  <TrendingUp size={24} color="white" />
+                  <Text style={styles.quickCardTitle}>Fortschritt</Text>
+                  <Text style={styles.quickCardSubtitle}>Deine Statistiken</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
+          
+          {/* Section 2: Recent Content */}
+          {recentMedicalContents.length > 0 && (
+            <View style={styles.recentContentSection}>
+              <Text style={styles.modernSectionTitle}>Zuletzt bearbeitet</Text>
+              <Text style={styles.modernSectionSubtitle}>Deine letzten Lernkapitel</Text>
+              
+              <View style={styles.recentContentList}>
+                {recentMedicalContents.map((content, index) => (
+                  <TouchableOpacity 
+                    key={content.id} 
+                    style={styles.modernContentItem}
+                  >
+                    <View style={styles.modernContentIcon}>
+                      <BookOpen size={20} color="#4A90E2" />
+                    </View>
+                    <View style={styles.modernContentInfo}>
+                      <Text style={styles.modernContentTitle}>{content.title}</Text>
+                      <Text style={styles.modernContentCategory}>{content.category}</Text>
+                      <View style={styles.modernContentMeta}>
+                        <Clock size={14} color={MEDICAL_COLORS.textSecondary} />
+                        <Text style={styles.modernContentTime}>{content.lastViewed}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.contentProgress}>
+                      <View style={styles.progressBar}>
+                        <View style={[styles.progressFillBar, { width: `${Math.random() * 100}%` }]} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
 
         {/* Section 2: Tipp des Tages */}
         <View style={styles.sectionContainer}>
@@ -1093,102 +1163,402 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   
-  // Hero Section Styles
-  heroSection: {
+  // Modern Split-Screen Hero Section Styles
+  modernHeroSection: {
+    backgroundColor: '#ffffff',
     marginHorizontal: 0,
     marginBottom: 0,
-    borderRadius: 0,
-    overflow: 'hidden',
   },
-  heroGradient: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    minHeight: 180,
+  heroSplitContainer: {
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    minHeight: screenWidth > 768 ? 520 : 640,
   },
-  heroContent: {
+  heroLeftSide: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  heroRightSide: {
+    flex: 1,
+    backgroundColor: '#667eea',
+  },
+  heroContentGradient: {
+    flex: 1,
+    padding: 40,
+    justifyContent: 'center',
+  },
+  heroTextContent: {
+    maxWidth: 480,
+  },
+  heroBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.2)',
+  },
+  badgeText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+    letterSpacing: 0.3,
+  },
+  modernHeroTitle: {
+    fontSize: 36,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: 44,
+    marginBottom: 20,
+    letterSpacing: -0.8,
+  },
+  modernHeroDescription: {
+    fontSize: 18,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 28,
+    marginBottom: 32,
+    opacity: 0.9,
+  },
+  heroFeaturesList: {
+    marginBottom: 32,
+  },
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
+    marginBottom: 16,
   },
-  heroTextContainer: {
-    flex: 1,
-    paddingRight: 20,
+  featureIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  heroTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: 'white',
-    lineHeight: 34,
-    marginBottom: 6,
-    letterSpacing: -0.7,
-  },
-  heroSubtitle: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: 'rgba(255,255,255,0.9)',
-    lineHeight: 34,
-    marginBottom: 12,
-    letterSpacing: -0.7,
-  },
-  heroDescription: {
-    fontSize: 15,
-    fontFamily: 'Inter-Regular',
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 22,
-    marginBottom: 10,
-    maxWidth: '95%',
-  },
-  heroTagline: {
+  featureText: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: 'rgba(255,255,255,0.95)',
-    lineHeight: 22,
-    marginBottom: 20,
-    letterSpacing: -0.4,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textPrimary,
   },
-  heroButtons: {
+  modernHeroButtons: {
     flexDirection: 'row',
     gap: 16,
     flexWrap: 'wrap',
   },
-  primaryHeroButton: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    backdropFilter: 'blur(10px)',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 50,
+  primaryModernButton: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  secondaryHeroButton: {
+  secondaryModernButton: {
     backgroundColor: 'transparent',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 50,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: '#4A90E2',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  primaryButtonText: {
+  primaryModernButtonText: {
     color: 'white',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     marginRight: 8,
   },
-  secondaryButtonText: {
-    color: 'white',
+  secondaryModernButtonText: {
+    color: '#4A90E2',
     fontSize: 16,
     fontFamily: 'Inter-Medium',
+    marginLeft: 8,
   },
   buttonIcon: {
     marginLeft: 4,
+  },
+  
+  // Hero Right Side - Professional Illustration Styles
+  heroImageGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  heroIllustrationContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicalIllustration: {
+    position: 'relative',
+    width: 300,
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  // Illustration Elements
+  illustrationElement1: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    alignItems: 'center',
+  },
+  medicalIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  medicalEmoji: {
+    fontSize: 36,
+  },
+  progressRing: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderTopColor: 'white',
+    marginTop: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerRing: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  
+  illustrationElement2: {
+    position: 'absolute',
+    bottom: 60,
+    right: 30,
+  },
+  bookStack: {
+    alignItems: 'center',
+  },
+  book: {
+    width: 60,
+    height: 8,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  book1: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+  },
+  book2: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    marginLeft: 8,
+  },
+  bookText: {
+    fontSize: 8,
+    fontFamily: 'Inter-Bold',
+    color: '#667eea',
+  },
+  
+  illustrationElement3: {
+    position: 'absolute',
+    top: 80,
+    right: 60,
+  },
+  aiChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  aiText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    marginLeft: 6,
+  },
+  
+  floatingStats: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    gap: 12,
+  },
+  statBubble: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    marginBottom: 8,
+  },
+  statNumber: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  
+  // Modern Content Sections Styles
+  modernContentContainer: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  quickAccessSection: {
+    marginBottom: 60,
+  },
+  modernSectionTitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 8,
+    letterSpacing: -0.6,
+  },
+  modernSectionSubtitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginBottom: 32,
+    opacity: 0.8,
+  },
+  quickAccessGrid: {
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    gap: 20,
+    justifyContent: 'space-between',
+  },
+  quickAccessCard: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  quickCardGradient: {
+    padding: 24,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'center',
+  },
+  quickCardTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginTop: 12,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  quickCardSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+  },
+  
+  // Recent Content Section
+  recentContentSection: {
+    marginBottom: 40,
+  },
+  recentContentList: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  modernContentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f3f4',
+  },
+  modernContentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  modernContentInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  modernContentTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 4,
+    lineHeight: 22,
+  },
+  modernContentCategory: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+    marginBottom: 6,
+  },
+  modernContentMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modernContentTime: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginLeft: 6,
+    opacity: 0.7,
+  },
+  contentProgress: {
+    alignItems: 'flex-end',
+  },
+  progressBar: {
+    width: 60,
+    height: 4,
+    backgroundColor: '#e8ecef',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFillBar: {
+    height: '100%',
+    backgroundColor: '#4A90E2',
+    borderRadius: 2,
   },
   
   // Floating Elements
