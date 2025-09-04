@@ -12,7 +12,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface DailyTip {
   id?: string;
@@ -219,7 +219,6 @@ export default function DashboardScreen() {
 
   // Track current section and scroll positions
   const [currentSection, setCurrentSection] = useState(0);
-  const screenHeight = Dimensions.get('window').height;
   const sectionPositions = [0, 400, 800, 1200]; // Better spaced positions for each section
   
   // Scroll to specific section
