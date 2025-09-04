@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -115,33 +116,65 @@ export default function AnimatedOrb({ onPress, isActive, size = 180 }: AnimatedO
         activeOpacity={0.9}
         style={[styles.orbTouchable, { width: size, height: size }]}
       >
-        {/* Rotating outer layer */}
+        {/* Rotating outer layer - Main orb shell */}
         <Animated.View 
           style={[
             styles.orbLayer,
-            { width: size, height: size },
+            { width: size, height: size, borderRadius: size / 2 },
             mainOrbStyle
           ]}
         >
-          <Image
-            source={require('@/assets/images/celestial-orb.png')}
-            style={[styles.orbImage, { width: size, height: size }]}
-            resizeMode="contain"
+          <LinearGradient
+            colors={['rgba(135, 206, 250, 0.3)', 'rgba(176, 196, 222, 0.5)', 'rgba(255, 255, 255, 0.8)']}
+            style={[styles.orbGradient, { width: size, height: size, borderRadius: size / 2 }]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           />
+          
+          {/* Outer crystalline pattern */}
+          <View style={[styles.crystallinePattern, { width: size, height: size, borderRadius: size / 2 }]}>
+            {[...Array(8)].map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.crystallineEdge,
+                  {
+                    transform: [{ rotate: `${i * 45}deg` }],
+                    width: size * 0.9,
+                    height: 2,
+                  }
+                ]}
+              />
+            ))}
+          </View>
         </Animated.View>
 
-        {/* Counter-rotating inner layer for depth */}
+        {/* Counter-rotating inner core */}
         <Animated.View 
           style={[
-            styles.innerLayer,
+            styles.innerCore,
             { 
-              width: size * 0.8, 
-              height: size * 0.8,
-              borderRadius: size * 0.4 
+              width: size * 0.6, 
+              height: size * 0.6,
+              borderRadius: size * 0.3 
             },
             innerOrbStyle
           ]}
-        />
+        >
+          <LinearGradient
+            colors={['rgba(30, 144, 255, 0.8)', 'rgba(135, 206, 250, 0.6)', 'rgba(255, 255, 255, 0.9)']}
+            style={[styles.coreGradient, { width: '100%', height: '100%', borderRadius: size * 0.3 }]}
+            start={{ x: 0.2, y: 0.2 }}
+            end={{ x: 0.8, y: 0.8 }}
+          />
+          
+          {/* Central bright core */}
+          <View style={[styles.centralCore, { 
+            width: size * 0.2, 
+            height: size * 0.2, 
+            borderRadius: size * 0.1 
+          }]} />
+        </Animated.View>
       </TouchableOpacity>
 
       {/* Additional floating particles for active state */}
@@ -174,10 +207,10 @@ const styles = StyleSheet.create({
   },
   glow: {
     position: 'absolute',
-    backgroundColor: 'rgba(76, 175, 80, 0.3)',
-    shadowColor: '#4CAF50',
+    backgroundColor: 'rgba(135, 206, 250, 0.4)',
+    shadowColor: '#87CEEB',
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 30,
+    shadowRadius: 25,
     shadowOpacity: 0.8,
     elevation: 20,
   },
@@ -191,15 +224,47 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: 'rgba(255, 255, 255, 0.8)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 20,
+    shadowOpacity: 0.6,
+    elevation: 15,
   },
-  orbImage: {
-    borderRadius: 90, // Will be overridden by dynamic size
-  },
-  innerLayer: {
+  orbGradient: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  crystallinePattern: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  crystallineEdge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 1,
+  },
+  innerCore: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#1E90FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 15,
+    shadowOpacity: 0.7,
+    elevation: 10,
+  },
+  coreGradient: {
+    position: 'absolute',
+  },
+  centralCore: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 10,
+    shadowOpacity: 1,
+    elevation: 8,
   },
   particleContainer: {
     position: 'absolute',
@@ -209,13 +274,13 @@ const styles = StyleSheet.create({
   },
   particle: {
     position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#fff',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: '#87CEEB',
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 4,
-    shadowOpacity: 1,
+    shadowRadius: 3,
+    shadowOpacity: 0.8,
   },
 });
