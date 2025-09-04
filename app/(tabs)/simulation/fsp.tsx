@@ -198,6 +198,8 @@ export default function FSPSimulationScreen() {
               verify: { projectID: '68b40ab94a5a50553729c86b' },
               url: 'https://general-runtime.voiceflow.com',
               versionID: '68b40ab94a5a50553729c86c',
+              mode: 'embedded',
+              target: 'voiceflow-widget-container-fsp',
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
@@ -312,6 +314,8 @@ export default function FSPSimulationScreen() {
                   verify: { projectID: '68b40ab94a5a50553729c86b' },
                   url: 'https://general-runtime.voiceflow.com',
                   versionID: '68b40ab94a5a50553729c86c',
+                  mode: 'embedded',
+                  target: 'voiceflow-widget-container-fsp',
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }
@@ -633,10 +637,28 @@ export default function FSPSimulationScreen() {
                   isActive={simulationStarted}
                   size={160}
                 />
-                  onPress={handleOrbPress}
-                  isActive={simulationStarted}
-                  size={160}
-                />
+                
+                {/* Voiceflow Widget Container - Embedded inside orb */}
+                {Platform.OS === 'web' && simulationStarted && (
+                  <div 
+                    id="voiceflow-widget-container-fsp"
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '140px',
+                      height: '140px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      zIndex: 20,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(10px)',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                )}
               </View>
               
               <View style={styles.textContent}>
