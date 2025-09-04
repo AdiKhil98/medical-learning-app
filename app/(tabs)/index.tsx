@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -59,10 +59,6 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
   
-  // Horizontal scroll navigation
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [currentSection, setCurrentSection] = useState(0);
-  const sections = ['Quick Access', 'Daily Tip', 'Daily Question', 'Recent Chapters'];
   
   // Animation for bounce effect
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -219,34 +215,8 @@ export default function DashboardScreen() {
     return user.name || user.email?.split('@')[0] || 'Nutzer';
   };
 
-  // Horizontal scroll navigation functions
-  const handleHorizontalScroll = (event: any) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    const section = Math.round(scrollX / screenWidth);
-    setCurrentSection(section);
-  };
-
-  const scrollToSection = (sectionIndex: number) => {
-    if (scrollViewRef.current && sectionIndex >= 0 && sectionIndex < sections.length) {
-      scrollViewRef.current.scrollTo({
-        x: sectionIndex * screenWidth,
-        animated: true,
-      });
-      setCurrentSection(sectionIndex);
-    }
-  };
-
-  const scrollToPrevious = () => {
-    if (currentSection > 0) {
-      scrollToSection(currentSection - 1);
-    }
-  };
-
-  const scrollToNext = () => {
-    if (currentSection < sections.length - 1) {
-      scrollToSection(currentSection + 1);
-    }
-  };
+  
+  
 
   if (loading) {
     return (
@@ -284,7 +254,7 @@ export default function DashboardScreen() {
             <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
           <Logo size="medium" variant="medical" textColor="white" animated={true} />
-          <UserAvatar size={32} />
+          <UserAvatar size="medium" />
         </View>
       </LinearGradient>
 
@@ -338,20 +308,14 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* Horizontal Content Sections with Navigation */}
-      <View style={styles.horizontalContentContainer}>
-        <ScrollView 
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          style={styles.horizontalScroll}
-          contentContainerStyle={styles.horizontalScrollContent}
-          onScroll={handleHorizontalScroll}
-          scrollEventThrottle={16}
-        >
-          {/* Section 1: Quick Access Cards */}
-          <View style={[styles.contentSection, { width: screenWidth }]}>
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        
+        {/* Modern Content Sections with Enhanced Spacing */}
+        <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
           {/* Section 1: Quick Access Cards */}
           <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
@@ -417,10 +381,7 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
           </View>
-          </View>
           
-          {/* Section 2: Recent Chapters */}
-          <View style={[styles.contentSection, { width: screenWidth }]}>
           {/* Section 2: Letzte Kapitel - Enhanced Card Layout */}
           {recentMedicalContents.length > 0 && (
             <View style={styles.letzteKapitelSection}>
@@ -464,7 +425,6 @@ export default function DashboardScreen() {
                         // Scale down animation on press
                         Animated.spring(new Animated.Value(1), {
                           toValue: 0.97,
-                          duration: 150,
                           useNativeDriver: true,
                         }).start();
                       }}
@@ -472,7 +432,6 @@ export default function DashboardScreen() {
                         // Scale back up animation on release
                         Animated.spring(new Animated.Value(0.97), {
                           toValue: 1,
-                          duration: 150,
                           useNativeDriver: true,
                         }).start();
                       }}
@@ -585,10 +544,7 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
-        </View>
 
-        {/* Section 3: Daily Tip */}
-        <View style={[styles.contentSection, { width: screenWidth }]}>
         {/* Section 3: Tipp des Tages - Enhanced Card Layout */}
         <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
@@ -661,10 +617,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
-        </View>
 
-        {/* Section 4: Daily Question */}
-        <View style={[styles.contentSection, { width: screenWidth }]}>
         {/* Section 4: Frage des Tages - Enhanced Card Layout */}
         {dailyQuestion && (
           <View style={styles.structuredSection}>
@@ -770,10 +723,7 @@ export default function DashboardScreen() {
             </Text>
           </View>
         )}
-        </View>
 
-        {/* Section 5: Medical Disclaimer */}
-        <View style={[styles.contentSection, { width: screenWidth }]}>
         {/* Section 5: Medical Disclaimer - Enhanced Card Layout */}
         <View style={styles.structuredSection}>
           <View style={styles.disclaimerCard}>
@@ -795,45 +745,9 @@ export default function DashboardScreen() {
             </LinearGradient>
           </View>
         </View>
-        </View>
         
-        </ScrollView>
-        
-        {/* Navigation Arrows */}
-        {currentSection > 0 && (
-          <TouchableOpacity
-            style={[styles.navArrow, styles.leftArrow]}
-            onPress={scrollToPrevious}
-            activeOpacity={0.7}
-          >
-            <ChevronLeft size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        
-        {currentSection < sections.length - 1 && (
-          <TouchableOpacity
-            style={[styles.navArrow, styles.rightArrow]}
-            onPress={scrollToNext}
-            activeOpacity={0.7}
-          >
-            <ChevronRight size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        
-        {/* Section Indicators */}
-        <View style={styles.sectionIndicators}>
-          {sections.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.indicator,
-                currentSection === index && styles.activeIndicator
-              ]}
-              onPress={() => scrollToSection(index)}
-            />
-          ))}
-        </View>
-      </View>
+        <View style={styles.bottomPadding} />
+      </ScrollView>
 
 
       {/* Menu */}
@@ -1191,66 +1105,6 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.textSecondary,
     marginLeft: 4,
     opacity: 0.8,
-  },
-  
-  // Horizontal Content Styles
-  horizontalContentContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  horizontalScroll: {
-    flex: 1,
-  },
-  horizontalScrollContent: {
-    flexDirection: 'row',
-  },
-  contentSection: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-  },
-  
-  // Navigation Arrow Styles
-  navArrow: {
-    position: 'absolute',
-    top: '50%',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(74, 144, 226, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    transform: [{ translateY: -25 }],
-  },
-  leftArrow: {
-    left: 20,
-  },
-  rightArrow: {
-    right: 20,
-  },
-  
-  // Section Indicators
-  sectionIndicators: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(74, 144, 226, 0.3)',
-  },
-  activeIndicator: {
-    backgroundColor: '#4A90E2',
-    width: 16,
   },
   
   // Simplified Hero Section Styles
@@ -2394,14 +2248,12 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: screenWidth > 768 ? 16 : 15,
-    fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
     fontWeight: '700',
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    fontFamily: 'Inter-Medium',
     color: MEDICAL_COLORS.textSecondary,
     fontWeight: '500',
     textTransform: 'uppercase',
