@@ -517,55 +517,112 @@ export default function DashboardScreen() {
             </View>
           </View>
           
-          {/* Section 2: Recent Content */}
+          {/* Section 2: Letzte Kapitel - Enhanced Card Layout */}
           {recentMedicalContents.length > 0 && (
-            <View style={styles.recentContentSection}>
-              <Text style={styles.modernSectionTitle}>Zuletzt bearbeitet</Text>
-              <Text style={styles.modernSectionSubtitle}>Deine letzten Lernkapitel</Text>
+            <View style={styles.letzteKapitelSection}>
+              <View style={styles.structuredSectionHeader}>
+                <View style={styles.sectionTitleContainer}>
+                  <BookOpen size={24} color="#4A90E2" />
+                  <Text style={styles.structuredSectionTitle}>Letzte Kapitel</Text>
+                </View>
+                <Text style={styles.structuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
+                <TouchableOpacity style={styles.viewAllButton}>
+                  <Text style={styles.viewAllText}>Alle anzeigen</Text>
+                  <ArrowRight size={16} color="#4A90E2" />
+                </TouchableOpacity>
+              </View>
               
-              <View style={styles.recentContentList}>
-                {recentMedicalContents.map((content, index) => (
+              <View style={styles.chapterCardsGrid}>
+                {recentMedicalContents.slice(0, 4).map((content, index) => (
                   <TouchableOpacity 
                     key={content.id} 
-                    style={styles.modernContentItem}
+                    style={styles.chapterCard}
+                    activeOpacity={0.8}
                   >
-                    <View style={styles.modernContentIcon}>
-                      <BookOpen size={20} color="#4A90E2" />
-                    </View>
-                    <View style={styles.modernContentInfo}>
-                      <Text style={styles.modernContentTitle}>{content.title}</Text>
-                      <Text style={styles.modernContentCategory}>{content.category}</Text>
-                      <View style={styles.modernContentMeta}>
-                        <Clock size={14} color={MEDICAL_COLORS.textSecondary} />
-                        <Text style={styles.modernContentTime}>{content.lastViewed}</Text>
+                    <LinearGradient
+                      colors={['#ffffff', '#f8fafe']}
+                      style={styles.chapterCardGradient}
+                    >
+                      <View style={styles.chapterCardHeader}>
+                        <View style={styles.chapterIconContainer}>
+                          <BookOpen size={18} color="#4A90E2" />
+                        </View>
+                        <View style={styles.chapterProgressBadge}>
+                          <Text style={styles.chapterProgressText}>{Math.floor(Math.random() * 100)}%</Text>
+                        </View>
                       </View>
-                    </View>
-                    <View style={styles.contentProgress}>
-                      <View style={styles.progressBar}>
-                        <View style={[styles.progressFillBar, { width: `${Math.random() * 100}%` }]} />
+                      
+                      <View style={styles.chapterCardContent}>
+                        <Text style={styles.chapterCardTitle} numberOfLines={2}>
+                          {content.title}
+                        </Text>
+                        <Text style={styles.chapterCardCategory}>
+                          {content.category}
+                        </Text>
+                        
+                        <View style={styles.chapterCardMeta}>
+                          <View style={styles.chapterMetaItem}>
+                            <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
+                            <Text style={styles.chapterMetaText}>{content.lastViewed}</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.chapterProgressContainer}>
+                          <View style={styles.chapterProgressBar}>
+                            <View style={[styles.chapterProgressFill, { width: `${Math.random() * 100}%` }]} />
+                          </View>
+                        </View>
                       </View>
-                    </View>
+                      
+                      <View style={styles.chapterCardFooter}>
+                        <Text style={styles.continueText}>Weiter lernen</Text>
+                        <ArrowRight size={14} color="#4A90E2" />
+                      </View>
+                    </LinearGradient>
                   </TouchableOpacity>
                 ))}
               </View>
+              
+              {recentMedicalContents.length === 0 && (
+                <View style={styles.noChaptersContainer}>
+                  <View style={styles.noChaptersIcon}>
+                    <BookOpen size={32} color={MEDICAL_COLORS.textSecondary} opacity={0.5} />
+                  </View>
+                  <Text style={styles.noChaptersTitle}>Noch keine Kapitel begonnen</Text>
+                  <Text style={styles.noChaptersSubtitle}>Starte dein erstes Kapitel in der Bibliothek</Text>
+                  <TouchableOpacity 
+                    style={styles.startLearningButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <Text style={styles.startLearningText}>Jetzt starten</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           )}
         </View>
 
-        {/* Section 2: Tipp des Tages */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tipp des Tages</Text>
+        {/* Section 3: Tipp des Tages - Enhanced Card Layout */}
+        <View style={styles.structuredSection}>
+          <View style={styles.structuredSectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Lightbulb size={24} color="#F59E0B" />
+              <Text style={styles.structuredSectionTitle}>Tipp des Tages</Text>
+            </View>
+            <Text style={styles.structuredSectionSubtitle}>Erweitere dein medizinisches Wissen täglich</Text>
           </View>
           
-          <View style={styles.card}>
+          <View style={styles.tipCard}>
             <LinearGradient
-              colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
-              style={styles.cardGradient}
+              colors={['#FEF3C7', '#FDE68A', '#FBBF24']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.tipCardGradient}
             >
-              <View style={styles.cardHeader}>
-                <Lightbulb size={24} color={MEDICAL_COLORS.primary} />
-                <Text style={styles.cardTitle}>Medizinisches Wissen</Text>
+              <View style={styles.tipCardIcon}>
+                <View style={styles.tipIconBg}>
+                  <Lightbulb size={28} color="white" />
+                </View>
               </View>
               
               {dailyTip ? (
@@ -619,21 +676,32 @@ export default function DashboardScreen() {
           </Animated.View>
         </View>
 
-        {/* Section 3: Frage des Tages */}
+        {/* Section 4: Frage des Tages - Enhanced Card Layout */}
         {dailyQuestion && (
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Frage des Tages</Text>
+          <View style={styles.structuredSection}>
+            <View style={styles.structuredSectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <HelpCircle size={24} color="#8B5CF6" />
+                <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
+              </View>
+              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
             </View>
             
-            <View style={styles.card}>
+            <View style={styles.questionCard}>
               <LinearGradient
-                colors={[`${MEDICAL_COLORS.primary}15`, `${MEDICAL_COLORS.primary}08`]}
-                style={styles.cardGradient}
+                colors={['#EDE9FE', '#DDD6FE', '#8B5CF6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.questionCardGradient}
               >
-                <View style={styles.cardHeader}>
-                  <HelpCircle size={24} color={MEDICAL_COLORS.primary} />
-                  <Text style={styles.cardTitle}>Prüfungssimulation</Text>
+                <View style={styles.questionCardHeader}>
+                  <View style={styles.questionIconBg}>
+                    <HelpCircle size={28} color="white" />
+                  </View>
+                  <View style={styles.questionHeaderInfo}>
+                    <Text style={styles.questionCardTitle}>Prüfungssimulation</Text>
+                    <Text style={styles.questionCardSubtitle}>Bereite dich auf die echte Prüfung vor</Text>
+                  </View>
                 </View>
                 
                 <Text style={styles.questionText}>{dailyQuestion.question}</Text>
@@ -714,24 +782,26 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Medical Disclaimer */}
-        <View style={styles.disclaimerContainer}>
-          <LinearGradient
-            colors={[`${MEDICAL_COLORS.primary}08`, `${MEDICAL_COLORS.primary}05`]}
-            style={styles.disclaimerGradient}
-          >
-            <View style={styles.disclaimerContent}>
-              <View style={styles.disclaimerIcon}>
-                <Text style={styles.disclaimerEmoji}>⚕️</Text>
+        {/* Section 5: Medical Disclaimer - Enhanced Card Layout */}
+        <View style={styles.structuredSection}>
+          <View style={styles.disclaimerCard}>
+            <LinearGradient
+              colors={['#F0F9FF', '#E0F2FE', '#0EA5E9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.disclaimerCardGradient}
+            >
+              <View style={styles.disclaimerCardHeader}>
+                <View style={styles.disclaimerIconBg}>
+                  <Text style={styles.disclaimerEmoji}>⚕️</Text>
+                </View>
+                <Text style={styles.disclaimerCardTitle}>Medizinischer Haftungsausschluss</Text>
               </View>
-              <View style={styles.disclaimerTextContainer}>
-                <Text style={styles.disclaimerTitle}>Medizinischer Haftungsausschluss</Text>
-                <Text style={styles.disclaimerText}>
-                  Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
+              <Text style={styles.disclaimerCardText}>
+                Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
+              </Text>
+            </LinearGradient>
+          </View>
         </View>
         
         <View style={styles.bottomPadding} />
@@ -1852,5 +1922,318 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.success,
     marginLeft: 6,
     letterSpacing: 0.3,
+  },
+
+  // Enhanced Structured Content Section Styles
+  structuredSection: {
+    marginHorizontal: 20,
+    marginBottom: 32,
+  },
+  structuredSectionHeader: {
+    marginBottom: 20,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  structuredSectionTitle: {
+    fontSize: 22,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginLeft: 12,
+    letterSpacing: -0.5,
+  },
+  structuredSectionSubtitle: {
+    fontSize: 15,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 22,
+    opacity: 0.8,
+    marginLeft: 36,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    marginTop: 12,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+    marginRight: 6,
+  },
+
+  // Letzte Kapitel (Chapter Cards) Styles
+  letzteKapitelSection: {
+    marginHorizontal: 20,
+    marginBottom: 32,
+  },
+  chapterCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  chapterCard: {
+    width: screenWidth > 768 ? '48%' : '100%',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+  },
+  chapterCardGradient: {
+    flex: 1,
+    padding: 0,
+  },
+  chapterCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingBottom: 12,
+  },
+  chapterIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chapterProgressBadge: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  chapterProgressText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+  },
+  chapterCardContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  chapterCardTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  chapterCardCategory: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  chapterCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  chapterMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chapterMetaText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    marginLeft: 4,
+  },
+  chapterProgressContainer: {
+    marginBottom: 4,
+  },
+  chapterProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  chapterProgressFill: {
+    height: '100%',
+    backgroundColor: '#4A90E2',
+    borderRadius: 3,
+  },
+  chapterCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(74, 144, 226, 0.1)',
+  },
+  continueText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+  },
+
+  // No Chapters State
+  noChaptersContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+  },
+  noChaptersIcon: {
+    marginBottom: 16,
+    opacity: 0.5,
+  },
+  noChaptersTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noChaptersSubtitle: {
+    fontSize: 15,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  startLearningButton: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  startLearningText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: 'white',
+  },
+
+  // Enhanced Tip Card Styles
+  tipCard: {
+    borderRadius: 16,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  tipCardGradient: {
+    padding: 20,
+    position: 'relative',
+  },
+  tipCardIcon: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  tipIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+
+  // Enhanced Question Card Styles
+  questionCard: {
+    borderRadius: 16,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  questionCardGradient: {
+    padding: 20,
+    position: 'relative',
+  },
+  questionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  questionIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+    marginRight: 12,
+  },
+  questionHeaderInfo: {
+    flex: 1,
+  },
+  questionCardTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  questionCardSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+
+  // Enhanced Disclaimer Card Styles
+  disclaimerCard: {
+    borderRadius: 16,
+    shadowColor: '#0EA5E9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  disclaimerCardGradient: {
+    padding: 20,
+  },
+  disclaimerCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  disclaimerIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(14, 165, 233, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  disclaimerCardTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+  },
+  disclaimerCardText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: 'rgba(255, 255, 255, 0.95)',
+    lineHeight: 20,
   },
 });
