@@ -194,13 +194,26 @@ export default function DashboardScreen() {
     return user.name || user.email?.split('@')[0] || 'Nutzer';
   };
 
-  // Simple scroll to next section function
-  const scrollToNextSection = () => {
-    if (scrollViewRef.current) {
+  // Track current section and scroll positions
+  const [currentSection, setCurrentSection] = useState(0);
+  const sectionPositions = [0, 350, 700, 1050]; // Approximate positions for each section
+  
+  // Scroll to specific section
+  const scrollToSection = (sectionIndex: number) => {
+    if (scrollViewRef.current && sectionIndex < sectionPositions.length) {
       scrollViewRef.current.scrollTo({
-        y: 400, // Scroll down by 400px as a start
+        y: sectionPositions[sectionIndex],
         animated: true,
       });
+      setCurrentSection(sectionIndex);
+    }
+  };
+  
+  // Scroll to next section
+  const scrollToNextSection = () => {
+    const nextSection = currentSection + 1;
+    if (nextSection < sectionPositions.length) {
+      scrollToSection(nextSection);
     }
   };
 
@@ -319,12 +332,13 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.contentContainer}
       >
         
-        {/* Last Medical Contents */}
+        {/* Section 1: Last Medical Contents */}
         {recentMedicalContents.length > 0 && (
-          <View style={styles.medicalContentsSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
-            </View>
+          <View style={styles.sectionContainer}>
+            <View style={styles.medicalContentsSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Letzte Kapitel</Text>
+              </View>
             <View style={styles.contentsContainer}>
               {recentMedicalContents.map((content, index) => (
                 <TouchableOpacity 
@@ -347,6 +361,15 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+            </View>
+            
+            {/* Navigation arrow */}
+            <TouchableOpacity 
+              style={styles.sectionArrow}
+              onPress={() => scrollToSection(2)}
+            >
+              <ChevronDown size={20} color={MEDICAL_COLORS.primary} />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -1007,5 +1030,21 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+  },
+  
+  // Section styles
+  sectionContainer: {
+    position: 'relative',
+    paddingBottom: 40,
+  },
+  
+  sectionArrow: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    borderRadius: 16,
+    padding: 8,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.2)',
   },
 });
