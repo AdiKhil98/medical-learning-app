@@ -477,9 +477,10 @@ export default function DashboardScreen() {
               <TouchableOpacity 
                 style={styles.quickAccessCard}
                 onPress={() => router.push('/(tabs)/bibliothek')}
+                activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={['#667EEA', '#7C3AED', '#6366F1']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.quickCardGradient}
@@ -493,9 +494,10 @@ export default function DashboardScreen() {
               <TouchableOpacity 
                 style={styles.quickAccessCard}
                 onPress={() => router.push('/(tabs)/simulation')}
+                activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#4A90E2', '#357ABD']}
+                  colors={['#3B82F6', '#1D4ED8', '#1E40AF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.quickCardGradient}
@@ -509,9 +511,10 @@ export default function DashboardScreen() {
               <TouchableOpacity 
                 style={styles.quickAccessCard}
                 onPress={() => router.push('/(tabs)/progress')}
+                activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#52C41A', '#389E0D']}
+                  colors={['#10B981', '#059669', '#047857']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.quickCardGradient}
@@ -541,11 +544,17 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={styles.modernStructuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
                 <View style={styles.sectionActions}>
-                  <TouchableOpacity style={styles.modernViewAllButton}>
+                  <TouchableOpacity 
+                    style={styles.modernViewAllButton}
+                    activeOpacity={0.85}
+                  >
                     <Text style={styles.modernViewAllText}>Alle anzeigen</Text>
                     <ArrowRight size={18} color="#4A90E2" />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.filterButton}>
+                  <TouchableOpacity 
+                    style={styles.filterButton}
+                    activeOpacity={0.85}
+                  >
                     <Text style={styles.filterButtonText}>Filter</Text>
                   </TouchableOpacity>
                 </View>
@@ -553,13 +562,29 @@ export default function DashboardScreen() {
               
               <View style={styles.chapterCardsGrid}>
                 {recentMedicalContents.slice(0, 4).map((content, index) => (
-                  <TouchableOpacity 
-                    key={content.id} 
-                    style={styles.chapterCard}
-                    activeOpacity={0.8}
-                  >
+                  <Animated.View key={content.id}>
+                    <TouchableOpacity 
+                      style={styles.chapterCard}
+                      activeOpacity={0.95}
+                      onPressIn={() => {
+                        // Scale down animation on press
+                        Animated.spring(new Animated.Value(1), {
+                          toValue: 0.97,
+                          duration: 150,
+                          useNativeDriver: true,
+                        }).start();
+                      }}
+                      onPressOut={() => {
+                        // Scale back up animation on release
+                        Animated.spring(new Animated.Value(0.97), {
+                          toValue: 1,
+                          duration: 150,
+                          useNativeDriver: true,
+                        }).start();
+                      }}
+                    >
                     <LinearGradient
-                      colors={['#ffffff', '#f8fafe']}
+                      colors={['#ffffff', '#f8faff', '#f1f5f9']}
                       style={styles.chapterCardGradient}
                     >
                       <View style={styles.modernChapterCardHeader}>
@@ -633,14 +658,18 @@ export default function DashboardScreen() {
                           </View>
                         </View>
                         <View style={styles.footerRightSection}>
-                          <TouchableOpacity style={styles.modernContinueButton}>
+                          <TouchableOpacity 
+                            style={styles.modernContinueButton}
+                            activeOpacity={0.8}
+                          >
                             <Text style={styles.modernContinueText}>Fortsetzen</Text>
                             <ArrowRight size={16} color="#4A90E2" />
                           </TouchableOpacity>
                         </View>
                       </View>
                     </LinearGradient>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </Animated.View>
                 ))}
               </View>
               
@@ -1693,15 +1722,16 @@ const styles = StyleSheet.create({
   },
   quickAccessCard: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: 'rgba(0, 0, 0, 0.06)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: 'rgba(59, 130, 246, 0.2)',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 1,
-    shadowRadius: 24,
-    elevation: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowRadius: 28,
+    elevation: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    transform: [{ translateY: 0 }],
   },
   quickCardGradient: {
     padding: screenWidth > 768 ? 28 : 24,
@@ -2131,18 +2161,19 @@ const styles = StyleSheet.create({
   },
   chapterCard: {
     width: screenWidth > 768 ? '48%' : '100%',
-    borderRadius: 20,
-    shadowColor: 'rgba(74, 144, 226, 0.15)',
-    shadowOffset: { width: 0, height: 8 },
+    borderRadius: 22,
+    shadowColor: 'rgba(59, 130, 246, 0.25)',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowRadius: 24,
+    elevation: 16,
     overflow: 'hidden',
-    marginBottom: screenWidth > 768 ? 12 : 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    marginBottom: screenWidth > 768 ? 14 : 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     minHeight: screenWidth > 768 ? 'auto' : 200,
+    transform: [{ translateY: 0 }],
   },
   chapterCardGradient: {
     flex: 1,
