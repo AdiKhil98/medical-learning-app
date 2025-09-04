@@ -358,22 +358,31 @@ export default function DashboardScreen() {
               style={styles.heroContentGradient}
             >
               <View style={styles.heroTextContent}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Nur bei KP Med: Die einzige KI-Simulation,
-                </Text>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
-                </Text>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Nur bei KP Med: Die einzige KI-Simulation,
+                  </Text>
+                </View>
                 
-                <Text style={styles.splitScreenHeroDescription}>
-                  Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, 
-                  personalisierte Lerninhalte und intelligente Auswertung – exklusiv 
-                  entwickelt für internationale Ärzt:innen.
-                </Text>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
+                  </Text>
+                </View>
                 
-                <Text style={styles.splitScreenHeroTagline}>
-                  Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
-                </Text>
+                <View style={styles.heroDescriptionContainer}>
+                  <Text style={styles.splitScreenHeroDescription}>
+                    Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, 
+                    personalisierte Lerninhalte und intelligente Auswertung – exklusiv 
+                    entwickelt für internationale Ärzt:innen.
+                  </Text>
+                </View>
+                
+                <View style={styles.heroTaglineContainer}>
+                  <Text style={styles.splitScreenHeroTagline}>
+                    Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
+                  </Text>
+                </View>
                 
                 <View style={styles.splitScreenHeroButtons}>
                   <TouchableOpacity 
@@ -1344,6 +1353,22 @@ const styles = StyleSheet.create({
     textAlign: screenWidth > 768 ? 'left' : 'center',
     paddingHorizontal: screenWidth > 768 ? 0 : 16,
   },
+  heroTitleContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 16 : 12,
+  },
+  heroSubtitleContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 20 : 16,
+  },
+  heroDescriptionContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 14 : 12,
+  },
+  heroTaglineContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 28 : 24,
+  },
   heroBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(74, 144, 226, 0.1)',
@@ -1448,8 +1473,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
     lineHeight: screenWidth > 768 ? 1.25 : 1.35,
-    marginBottom: screenWidth > 768 ? 16 : 12,
-    marginTop: 0,
     letterSpacing: -0.8,
     fontWeight: '800',
     textAlign: screenWidth > 768 ? 'left' : 'center',
@@ -1460,8 +1483,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.primary,
     lineHeight: screenWidth > 768 ? 1.35 : 1.4,
-    marginBottom: screenWidth > 768 ? 20 : 16,
-    marginTop: 0,
     letterSpacing: -0.4,
     fontWeight: '600',
     textAlign: screenWidth > 768 ? 'left' : 'center',
@@ -1472,8 +1493,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
     lineHeight: 1.65,
-    marginBottom: screenWidth > 768 ? 14 : 12,
-    marginTop: 0,
     opacity: 0.85,
     fontWeight: '400',
     textAlign: screenWidth > 768 ? 'left' : 'center',
@@ -1484,8 +1503,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: MEDICAL_COLORS.textPrimary,
     lineHeight: 1.5,
-    marginBottom: screenWidth > 768 ? 28 : 24,
-    marginTop: 0,
     fontStyle: 'italic',
     opacity: 0.9,
     fontWeight: '500',
