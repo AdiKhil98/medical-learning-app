@@ -463,8 +463,15 @@ export default function DashboardScreen() {
         <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
           {/* Section 1: Quick Access Cards */}
           <View style={styles.quickAccessSection}>
-            <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
-            <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
+            <View style={styles.quickAccessSectionHeader}>
+              <View style={styles.quickAccessTitleRow}>
+                <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
+                <View style={styles.quickAccessBadge}>
+                  <Text style={styles.quickAccessBadgeText}>Neu</Text>
+                </View>
+              </View>
+              <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
+            </View>
             
             <View style={styles.quickAccessGrid}>
               <TouchableOpacity 
@@ -520,16 +527,28 @@ export default function DashboardScreen() {
           {/* Section 2: Letzte Kapitel - Enhanced Card Layout */}
           {recentMedicalContents.length > 0 && (
             <View style={styles.letzteKapitelSection}>
-              <View style={styles.structuredSectionHeader}>
-                <View style={styles.sectionTitleContainer}>
-                  <BookOpen size={24} color="#4A90E2" />
-                  <Text style={styles.structuredSectionTitle}>Letzte Kapitel</Text>
+              <View style={styles.modernStructuredSectionHeader}>
+                <View style={styles.modernSectionTitleContainer}>
+                  <View style={styles.sectionIconWrapper}>
+                    <BookOpen size={26} color="#4A90E2" />
+                  </View>
+                  <View style={styles.titleAndBadgeContainer}>
+                    <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
+                    <View style={styles.chapterCountBadge}>
+                      <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.structuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
-                <TouchableOpacity style={styles.viewAllButton}>
-                  <Text style={styles.viewAllText}>Alle anzeigen</Text>
-                  <ArrowRight size={16} color="#4A90E2" />
-                </TouchableOpacity>
+                <Text style={styles.modernStructuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
+                <View style={styles.sectionActions}>
+                  <TouchableOpacity style={styles.modernViewAllButton}>
+                    <Text style={styles.modernViewAllText}>Alle anzeigen</Text>
+                    <ArrowRight size={18} color="#4A90E2" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.filterButton}>
+                    <Text style={styles.filterButtonText}>Filter</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               
               <View style={styles.chapterCardsGrid}>
@@ -543,40 +562,82 @@ export default function DashboardScreen() {
                       colors={['#ffffff', '#f8fafe']}
                       style={styles.chapterCardGradient}
                     >
-                      <View style={styles.chapterCardHeader}>
-                        <View style={styles.chapterIconContainer}>
-                          <BookOpen size={18} color="#4A90E2" />
+                      <View style={styles.modernChapterCardHeader}>
+                        <View style={styles.modernChapterIconContainer}>
+                          <BookOpen size={20} color="#4A90E2" />
                         </View>
-                        <View style={styles.chapterProgressBadge}>
-                          <Text style={styles.chapterProgressText}>{Math.floor(Math.random() * 100)}%</Text>
-                        </View>
-                      </View>
-                      
-                      <View style={styles.chapterCardContent}>
-                        <Text style={styles.chapterCardTitle} numberOfLines={2}>
-                          {content.title}
-                        </Text>
-                        <Text style={styles.chapterCardCategory}>
-                          {content.category}
-                        </Text>
-                        
-                        <View style={styles.chapterCardMeta}>
-                          <View style={styles.chapterMetaItem}>
-                            <Clock size={12} color={MEDICAL_COLORS.textSecondary} />
-                            <Text style={styles.chapterMetaText}>{content.lastViewed}</Text>
+                        <View style={styles.chapterStatusRow}>
+                          <View style={styles.difficultyBadge}>
+                            <Text style={styles.difficultyText}>FSP</Text>
                           </View>
-                        </View>
-                        
-                        <View style={styles.chapterProgressContainer}>
-                          <View style={styles.chapterProgressBar}>
-                            <View style={[styles.chapterProgressFill, { width: `${Math.random() * 100}%` }]} />
+                          <View style={styles.modernProgressBadge}>
+                            <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
                           </View>
                         </View>
                       </View>
                       
-                      <View style={styles.chapterCardFooter}>
-                        <Text style={styles.continueText}>Weiter lernen</Text>
-                        <ArrowRight size={14} color="#4A90E2" />
+                      <View style={styles.modernChapterCardContent}>
+                        <View style={styles.chapterTitleRow}>
+                          <Text style={styles.modernChapterTitle} numberOfLines={2}>
+                            {content.title}
+                          </Text>
+                          <View style={styles.chapterTypeIndicator}>
+                            <Text style={styles.chapterTypeText}>Kapitel</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.chapterCategoryRow}>
+                          <Text style={styles.modernChapterCategory}>
+                            {content.category}
+                          </Text>
+                          <View style={styles.estimatedTimeContainer}>
+                            <Clock size={14} color="#10B981" />
+                            <Text style={styles.estimatedTimeText}>~15 min</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.chapterStatsRow}>
+                          <View style={styles.statItem}>
+                            <Text style={styles.statNumber}>24</Text>
+                            <Text style={styles.statLabel}>Fragen</Text>
+                          </View>
+                          <View style={styles.statDivider} />
+                          <View style={styles.statItem}>
+                            <Text style={styles.statNumber}>{Math.floor(Math.random() * 5) + 3}</Text>
+                            <Text style={styles.statLabel}>Versuche</Text>
+                          </View>
+                          <View style={styles.statDivider} />
+                          <View style={styles.statItem}>
+                            <Text style={styles.statNumber}>{content.lastViewed}</Text>
+                            <Text style={styles.statLabel}>Zuletzt</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.modernProgressContainer}>
+                          <View style={styles.progressLabelRow}>
+                            <Text style={styles.progressLabel}>Fortschritt</Text>
+                            <Text style={styles.progressPercentage}>{Math.floor(Math.random() * 100)}%</Text>
+                          </View>
+                          <View style={styles.modernProgressBar}>
+                            <View style={[styles.modernProgressFill, { width: `${Math.random() * 100}%` }]} />
+                            <View style={styles.progressGlow} />
+                          </View>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.modernChapterCardFooter}>
+                        <View style={styles.footerLeftSection}>
+                          <View style={styles.lastActivityIndicator}>
+                            <View style={styles.activityDot} />
+                            <Text style={styles.lastActivityText}>Vor 2 Stunden</Text>
+                          </View>
+                        </View>
+                        <View style={styles.footerRightSection}>
+                          <TouchableOpacity style={styles.modernContinueButton}>
+                            <Text style={styles.modernContinueText}>Fortsetzen</Text>
+                            <ArrowRight size={16} color="#4A90E2" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </LinearGradient>
                   </TouchableOpacity>
@@ -2206,6 +2267,444 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     fontWeight: '500',
     letterSpacing: -0.1,
+  },
+
+  // Modern Chapter Card Styles for Enhanced Scannability
+  modernChapterCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: screenWidth > 768 ? 24 : 20,
+    paddingBottom: screenWidth > 768 ? 16 : 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(74, 144, 226, 0.08)',
+  },
+  modernChapterIconContainer: {
+    width: screenWidth > 768 ? 52 : 48,
+    height: screenWidth > 768 ? 52 : 48,
+    borderRadius: screenWidth > 768 ? 26 : 24,
+    backgroundColor: 'rgba(74, 144, 226, 0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(74, 144, 226, 0.15)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 144, 226, 0.12)',
+  },
+  chapterStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: screenWidth > 768 ? 12 : 10,
+  },
+  difficultyBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: screenWidth > 768 ? 10 : 8,
+    paddingVertical: screenWidth > 768 ? 6 : 5,
+    borderRadius: 12,
+    shadowColor: 'rgba(245, 158, 11, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  difficultyText: {
+    fontSize: screenWidth > 768 ? 13 : 12,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  modernProgressBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: screenWidth > 768 ? 12 : 10,
+    paddingVertical: screenWidth > 768 ? 6 : 5,
+    borderRadius: 14,
+    shadowColor: 'rgba(16, 185, 129, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  modernProgressText: {
+    fontSize: screenWidth > 768 ? 13 : 12,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+
+  modernChapterCardContent: {
+    paddingHorizontal: screenWidth > 768 ? 24 : 20,
+    paddingVertical: screenWidth > 768 ? 20 : 18,
+    gap: screenWidth > 768 ? 16 : 14,
+  },
+  chapterTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  modernChapterTitle: {
+    fontSize: screenWidth > 768 ? 18 : 16,
+    fontFamily: 'Inter-SemiBold',
+    color: MEDICAL_COLORS.textPrimary,
+    lineHeight: 1.35,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    flex: 1,
+    marginRight: 12,
+  },
+  chapterTypeIndicator: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+  },
+  chapterTypeText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    color: '#8B5CF6',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+
+  chapterCategoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modernChapterCategory: {
+    fontSize: screenWidth > 768 ? 15 : 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  estimatedTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  estimatedTimeText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: '#10B981',
+    fontWeight: '500',
+  },
+
+  chapterStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(248, 250, 255, 0.8)',
+    paddingVertical: screenWidth > 768 ? 14 : 12,
+    paddingHorizontal: screenWidth > 768 ? 16 : 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.05)',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: screenWidth > 768 ? 16 : 15,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textSecondary,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.8,
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(74, 144, 226, 0.15)',
+    marginHorizontal: 8,
+  },
+
+  modernProgressContainer: {
+    marginTop: 4,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  progressLabel: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textSecondary,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  progressPercentage: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: '#10B981',
+    fontWeight: '700',
+  },
+  modernProgressBar: {
+    height: 8,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  modernProgressFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+    shadowColor: 'rgba(16, 185, 129, 0.3)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  progressGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 4,
+  },
+
+  modernChapterCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: screenWidth > 768 ? 24 : 20,
+    paddingVertical: screenWidth > 768 ? 18 : 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(74, 144, 226, 0.05)',
+    backgroundColor: 'rgba(244, 248, 255, 0.6)',
+  },
+  footerLeftSection: {
+    flex: 1,
+  },
+  lastActivityIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  activityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+    shadowColor: 'rgba(16, 185, 129, 0.4)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  lastActivityText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: MEDICAL_COLORS.textSecondary,
+    fontWeight: '500',
+    opacity: 0.8,
+  },
+  footerRightSection: {
+    alignItems: 'flex-end',
+  },
+  modernContinueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(74, 144, 226, 0.08)',
+    paddingHorizontal: screenWidth > 768 ? 16 : 14,
+    paddingVertical: screenWidth > 768 ? 10 : 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.15)',
+    shadowColor: 'rgba(74, 144, 226, 0.2)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+    gap: 6,
+  },
+  modernContinueText: {
+    fontSize: screenWidth > 768 ? 14 : 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#4A90E2',
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+
+  // Enhanced Section Header Styles for Better Scannability
+  modernStructuredSectionHeader: {
+    marginBottom: screenWidth > 768 ? 32 : 28,
+    paddingBottom: screenWidth > 768 ? 12 : 10,
+    paddingTop: screenWidth > 768 ? 28 : 24,
+    paddingHorizontal: screenWidth > 768 ? 20 : 16,
+    backgroundColor: 'rgba(248, 250, 255, 0.4)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.08)',
+  },
+  modernSectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: screenWidth > 768 ? 16 : 14,
+    gap: screenWidth > 768 ? 16 : 14,
+  },
+  sectionIconWrapper: {
+    width: screenWidth > 768 ? 56 : 52,
+    height: screenWidth > 768 ? 56 : 52,
+    borderRadius: screenWidth > 768 ? 28 : 26,
+    backgroundColor: 'rgba(74, 144, 226, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(74, 144, 226, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(74, 144, 226, 0.15)',
+  },
+  titleAndBadgeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modernStructuredSectionTitle: {
+    fontSize: screenWidth > 768 ? 30 : 26,
+    fontFamily: 'Inter-Bold',
+    color: MEDICAL_COLORS.textPrimary,
+    letterSpacing: -0.8,
+    fontWeight: '700',
+    lineHeight: 1.2,
+  },
+  chapterCountBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: screenWidth > 768 ? 12 : 10,
+    paddingVertical: screenWidth > 768 ? 6 : 5,
+    borderRadius: 12,
+    shadowColor: 'rgba(245, 158, 11, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  chapterCountText: {
+    fontSize: screenWidth > 768 ? 14 : 13,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  modernStructuredSectionSubtitle: {
+    fontSize: screenWidth > 768 ? 17 : 15,
+    fontFamily: 'Inter-Regular',
+    color: MEDICAL_COLORS.textSecondary,
+    lineHeight: 1.5,
+    opacity: 0.85,
+    fontWeight: '400',
+    marginBottom: screenWidth > 768 ? 16 : 14,
+  },
+  sectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: screenWidth > 768 ? 12 : 10,
+  },
+  modernViewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(74, 144, 226, 0.06)',
+    paddingVertical: screenWidth > 768 ? 12 : 10,
+    paddingHorizontal: screenWidth > 768 ? 20 : 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 144, 226, 0.12)',
+    shadowColor: 'rgba(74, 144, 226, 0.15)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 4,
+    gap: 8,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modernViewAllText: {
+    fontSize: screenWidth > 768 ? 15 : 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#4A90E2',
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  filterButton: {
+    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+    paddingVertical: screenWidth > 768 ? 12 : 10,
+    paddingHorizontal: screenWidth > 768 ? 16 : 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.15)',
+    shadowColor: 'rgba(139, 92, 246, 0.2)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  filterButtonText: {
+    fontSize: screenWidth > 768 ? 14 : 13,
+    fontFamily: 'Inter-Medium',
+    color: '#8B5CF6',
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+
+  // Enhanced Quick Access Section Header
+  quickAccessSectionHeader: {
+    marginBottom: screenWidth > 768 ? 20 : 18,
+  },
+  quickAccessTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  quickAccessBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    shadowColor: 'rgba(16, 185, 129, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  quickAccessBadgeText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 
   // No Chapters State
