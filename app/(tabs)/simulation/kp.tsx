@@ -37,59 +37,44 @@ export default function KPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
-  // Initialize Voiceflow function with complete container recreation
+  // Simple Voiceflow initialization that works with React
   const initializeVoiceflow = () => {
-    // Prevent multiple initializations
-    if (window.voiceflowKPInitialized) {
-      console.log('🔄 KP Voiceflow already initialized, skipping...');
+    console.log('✅ Voiceflow object found, initializing...');
+    
+    const targetContainer = document.getElementById('voiceflow-widget-container-kp');
+    if (!targetContainer) {
+      console.error('❌ KP target container not found');
       return;
     }
     
-    console.log('✅ Voiceflow object found, initializing...');
+    console.log('🎯 Found KP container:', targetContainer);
     
-    // Completely remove and recreate container to avoid shadow DOM conflicts
-    const oldContainer = document.getElementById('voiceflow-widget-container-kp');
-    if (oldContainer) {
-      console.log('🗑️ Removing old KP container');
-      oldContainer.remove();
+    const config = {
+      verify: { projectID: '68b40ab270a53105f6701677' },
+      url: 'https://general-runtime.voiceflow.com',
+      versionID: 'production',
+      render: {
+        mode: 'embedded',
+        target: targetContainer,
+      },
+      autostart: false,
+      voice: {
+        url: 'https://runtime-api.voiceflow.com'
+      }
+    };
+    
+    console.log('🔧 Loading Voiceflow with config:', config);
+    
+    try {
+      window.voiceflow.chat.load(config);
+      setVoiceflowLoaded(true);
+      console.log('🚀 Voiceflow chat loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading Voiceflow:', error);
+      // If it fails, it's likely due to shadow DOM conflict, but don't break React
+      console.log('🔄 Widget will fall back to default positioning');
+      setVoiceflowLoaded(true); // Still set as loaded so UI works
     }
-    
-    // Wait a moment then check if React recreated the container
-    setTimeout(() => {
-      const targetContainer = document.getElementById('voiceflow-widget-container-kp');
-      if (!targetContainer) {
-        console.error('❌ KP target container not found after cleanup');
-        return;
-      }
-      
-      console.log('🎯 Found fresh KP container:', targetContainer);
-      
-      const config = {
-        verify: { projectID: '68b40ab270a53105f6701677' },
-        url: 'https://general-runtime.voiceflow.com',
-        versionID: 'production',
-        render: {
-          mode: 'embedded',
-          target: targetContainer,
-        },
-        autostart: false,
-        voice: {
-          url: 'https://runtime-api.voiceflow.com'
-        }
-      };
-      
-      console.log('🔧 Loading Voiceflow with fresh config:', config);
-      
-      try {
-        window.voiceflow.chat.load(config);
-        window.voiceflowKPInitialized = true;
-        setVoiceflowLoaded(true);
-        console.log('🚀 Voiceflow chat loaded successfully');
-      } catch (error) {
-        console.error('❌ Error loading Voiceflow:', error);
-        window.voiceflowKPInitialized = false;
-      }
-    }, 100);
   };
 
   // Handle orb click - start simulation programmatically
@@ -144,39 +129,39 @@ export default function KPSimulationScreen() {
     }
   };
 
-  // Load Voiceflow script and set up event listeners - SINGLETON
+  // Load Voiceflow script - simplified approach
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // Global singleton check
-      if (window.voiceflowScriptLoading || window.voiceflowScriptLoaded) {
-        console.log('🔄 Voiceflow script already loaded/loading, using existing...');
-        if (window.voiceflowScriptLoaded && window.voiceflow && window.voiceflow.chat) {
-          initializeVoiceflow();
-        } else if (window.voiceflowScriptLoaded) {
-          // Script loaded but voiceflow object not ready, wait a bit
-          setTimeout(() => {
-            if (window.voiceflow && window.voiceflow.chat) {
-              initializeVoiceflow();
-            }
-          }, 1000);
-        }
+      // Check if already loaded
+      if (window.voiceflow && window.voiceflow.chat) {
+        console.log('🔄 Voiceflow already available, initializing...');
+        initializeVoiceflow();
         return;
       }
       
-      window.voiceflowScriptLoading = true;
-      console.log('🔄 Starting Voiceflow script load...');
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="voiceflow.com/widget-next/bundle.mjs"]');
+      if (existingScript) {
+        console.log('🔄 Voiceflow script exists, waiting for load...');
+        const checkReady = () => {
+          if (window.voiceflow && window.voiceflow.chat) {
+            initializeVoiceflow();
+          } else {
+            setTimeout(checkReady, 500);
+          }
+        };
+        checkReady();
+        return;
+      }
       
+      console.log('🔄 Loading Voiceflow script...');
       const script = document.createElement('script');
       script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
       script.type = 'text/javascript';
       script.onload = () => {
-        console.log('📦 Voiceflow script loaded from CDN');
-        window.voiceflowScriptLoaded = true;
-        window.voiceflowScriptLoading = false;
-        
-        try {
-          if (window.voiceflow && window.voiceflow.chat) {
-            initializeVoiceflow();
+        console.log('📦 Voiceflow script loaded');
+        if (window.voiceflow && window.voiceflow.chat) {
+          initializeVoiceflow();
             
             // Set up multiple detection methods for widget interaction
             const startSimulationTimer = async () => {
@@ -729,7 +714,6 @@ export default function KPSimulationScreen() {
                 {Platform.OS === 'web' && (
                   <div 
                     id="voiceflow-widget-container-kp"
-                    key={`kp-widget-${Date.now()}`}
                     style={{
                       position: 'absolute',
                       top: '50%',
@@ -740,31 +724,15 @@ export default function KPSimulationScreen() {
                       borderRadius: '50%',
                       overflow: 'visible',
                       zIndex: 25,
-                      background: simulationStarted ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
-                      backdropFilter: simulationStarted ? 'blur(10px)' : 'none',
-                      border: simulationStarted ? '2px solid rgba(255, 255, 255, 0.3)' : 'none',
-                      boxShadow: simulationStarted ? '0 8px 32px rgba(0, 0, 0, 0.1)' : 'none',
+                      background: simulationStarted ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+                      backdropFilter: simulationStarted ? 'blur(5px)' : 'none',
+                      border: simulationStarted ? '1px solid rgba(255, 255, 255, 0.5)' : 'none',
+                      boxShadow: simulationStarted ? '0 4px 16px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.3s ease',
                       display: 'block',
-                      opacity: simulationStarted ? 1 : 0.1,
-                      pointerEvents: simulationStarted ? 'auto' : 'none'
+                      opacity: simulationStarted ? 1 : 0
                     }}
-                  >
-                    {!simulationStarted && (
-                      <div style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        color: '#999',
-                        background: 'transparent'
-                      }}>
-                        Ready
-                      </div>
-                    )}
-                  </div>
+                  />
                 )}
               </View>
 
