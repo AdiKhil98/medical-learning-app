@@ -699,24 +699,26 @@ export default function DashboardScreen() {
         </View>
         
         {/* Section 3: Daily Question */}
-        <View style={[styles.section, { width: screenWidth }]}>
-          {/* Hero for Section 3 */}
-          <View style={styles.sectionHero}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroTitleContainer}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Frage des Tages
-                </Text>
-              </View>
-              <View style={styles.heroSubtitleContainer}>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  Teste dein Wissen mit einer täglichen Prüfungsfrage
-                </Text>
+        <View style={styles.section}>
+          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
+            {/* Hero for Section 3 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Frage des Tages
+                  </Text>
+                </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Teste dein Wissen mit einer täglichen Prüfungsfrage
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-          
-          <View style={styles.sectionContent}>
+            
+            {/* Section content */}
+            <View style={styles.sectionContentInner}>
             {dailyQuestion && (
               <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
@@ -821,37 +823,40 @@ export default function DashboardScreen() {
             </Text>
           </View>
         )}
-          </View>
+            </View>
+          </ScrollView>
         </View>
         
         {/* Section 4: Recent Chapters */}
-        <View style={[styles.section, { width: screenWidth }]}>
-          {/* Hero for Section 4 */}
-          <View style={styles.sectionHero}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroTitleContainer}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Letzte Kapitel
-                </Text>
-              </View>
-              <View style={styles.heroSubtitleContainer}>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  Setze dort fort, wo du aufgehört hast
-                </Text>
-              </View>
-              <View style={styles.heroButtonsContainer}>
-                <TouchableOpacity 
-                  style={styles.primaryButton}
-                  onPress={() => router.push('/(tabs)/bibliothek')}
-                >
-                  <Text style={styles.primaryButtonText}>Alle Kapitel</Text>
-                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                </TouchableOpacity>
+        <View style={styles.section}>
+          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
+            {/* Hero for Section 4 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Letzte Kapitel
+                  </Text>
+                </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Setze dort fort, wo du aufgehört hast
+                  </Text>
+                </View>
+                <View style={styles.heroButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.primaryButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <Text style={styles.primaryButtonText}>Alle Kapitel</Text>
+                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-          
-          <View style={styles.sectionContent}>
+            
+            {/* Section content */}
+            <View style={styles.sectionContentInner}>
             {recentMedicalContents.length > 0 && (
               <View style={styles.letzteKapitelSection}>
                 <View style={styles.modernStructuredSectionHeader}>
@@ -917,7 +922,8 @@ export default function DashboardScreen() {
                 </View>
               </View>
             )}
-          </View>
+            </View>
+          </ScrollView>
         </View>
       </ScrollView>
 
