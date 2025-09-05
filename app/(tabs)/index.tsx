@@ -288,56 +288,6 @@ export default function DashboardScreen() {
         </View>
       </LinearGradient>
 
-      {/* Simplified Hero Section */}
-      <View style={styles.simplifiedHeroSection}>
-        <View style={styles.heroContainer}>
-          <View style={styles.heroContent}>
-                <View style={styles.heroTitleContainer}>
-                  <Text style={styles.splitScreenHeroTitle}>
-                    Nur bei KP Med: Die einzige KI-Simulation,
-                  </Text>
-                </View>
-                
-                <View style={styles.heroSubtitleContainer}>
-                  <Text style={styles.splitScreenHeroSubtitle}>
-                    die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
-                  </Text>
-                </View>
-                
-                <View style={styles.heroDescriptionContainer}>
-                  <Text style={styles.splitScreenHeroDescription}>
-                    Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, 
-                    personalisierte Lerninhalte und intelligente Auswertung – exklusiv 
-                    entwickelt für internationale Ärzt:innen.
-                  </Text>
-                </View>
-                
-                <View style={styles.heroTaglineContainer}>
-                  <Text style={styles.splitScreenHeroTagline}>
-                    Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
-                  </Text>
-                </View>
-                
-                <View style={styles.heroButtonsContainer}>
-                  <TouchableOpacity 
-                    style={styles.primaryButton}
-                    onPress={() => router.push('/(tabs)/simulation')}
-                  >
-                    <Text style={styles.primaryButtonText}>Simulation starten</Text>
-                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.secondaryButton}
-                    onPress={() => router.push('/(tabs)/bibliothek')}
-                  >
-                    <Text style={styles.secondaryButtonText}>Jetzt lernen</Text>
-                  </TouchableOpacity>
-                </View>
-          </View>
-        </View>
-      </View>
-
       {/* Navigation Arrows */}
       {currentSection > 0 && (
         <TouchableOpacity
@@ -394,8 +344,33 @@ export default function DashboardScreen() {
       >
         {/* Section 1: Quick Access */}
         <View style={[styles.section, { width: screenWidth }]}>
+          {/* Hero for Section 1 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Schnellzugriff zu deinen Lernmaterialien
+                </Text>
+              </View>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Setze dein Lernen nahtlos fort
+                </Text>
+              </View>
+              <View style={styles.heroButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.primaryButton}
+                  onPress={() => router.push('/(tabs)/bibliothek')}
+                >
+                  <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
+                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          
           <View style={styles.sectionContent}>
-          <View style={styles.quickAccessSection}>
+            <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
               <View style={styles.quickAccessTitleRow}>
                 <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
@@ -626,6 +601,22 @@ export default function DashboardScreen() {
         
         {/* Section 2: Daily Tip */}
         <View style={[styles.section, { width: screenWidth }]}>
+          {/* Hero for Section 2 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Tipp des Tages
+                </Text>
+              </View>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Erweitere dein medizinisches Wissen täglich
+                </Text>
+              </View>
+            </View>
+          </View>
+          
           <View style={styles.sectionContent}>
             <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
@@ -703,6 +694,22 @@ export default function DashboardScreen() {
         
         {/* Section 3: Daily Question */}
         <View style={[styles.section, { width: screenWidth }]}>
+          {/* Hero for Section 3 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Frage des Tages
+                </Text>
+              </View>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Teste dein Wissen mit einer täglichen Prüfungsfrage
+                </Text>
+              </View>
+            </View>
+          </View>
+          
           <View style={styles.sectionContent}>
             {dailyQuestion && (
               <View style={styles.structuredSection}>
@@ -813,6 +820,31 @@ export default function DashboardScreen() {
         
         {/* Section 4: Recent Chapters */}
         <View style={[styles.section, { width: screenWidth }]}>
+          {/* Hero for Section 4 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Letzte Kapitel
+                </Text>
+              </View>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Setze dort fort, wo du aufgehört hast
+                </Text>
+              </View>
+              <View style={styles.heroButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.primaryButton}
+                  onPress={() => router.push('/(tabs)/bibliothek')}
+                >
+                  <Text style={styles.primaryButtonText}>Alle Kapitel</Text>
+                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          
           <View style={styles.sectionContent}>
             {recentMedicalContents.length > 0 && (
               <View style={styles.letzteKapitelSection}>
@@ -998,6 +1030,15 @@ const styles = StyleSheet.create({
   sectionContent: {
     flex: 1,
     paddingTop: 20,
+  },
+  sectionHero: {
+    minHeight: 200,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   welcomeSection: {
     padding: 20,
