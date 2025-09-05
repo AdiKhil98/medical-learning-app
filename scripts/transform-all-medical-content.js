@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { setTimeout } from 'timers/promises';
 
 const supabaseUrl = 'https://pavjavrijaihnwbydfrk.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhdmphdnJpamFpaG53YnlkZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNDM4NjYsImV4cCI6MjA2MDcxOTg2Nn0.4VrlhzIdV6F8cypZlVuYwE61GspATdFcjh0ebViOHIs';
@@ -381,7 +382,7 @@ async function transformAllMedicalContent() {
         }
         
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await setTimeout(100);
         
       } catch (sectionError) {
         console.error(`  ❌ Error processing ${section.slug}:`, sectionError.message);

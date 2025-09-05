@@ -186,9 +186,9 @@ const CircularCategory = ({ category, onPress }: { category: MainCategory, onPre
 // Diamond Grid Background Component
 // Celestial Flow Background Component
 const CelestialBackground = () => {
-  const particles = Array.from({ length: 12 }, (_, i) => useState(new Animated.Value(0))[0]);
-  const orbs = Array.from({ length: 6 }, (_, i) => useState(new Animated.Value(0))[0]);
-  const flowAnimValue = useState(new Animated.Value(0))[0];
+  const particles = Array.from({ length: 12 }, (_, i) => new Animated.Value(0));
+  const orbs = Array.from({ length: 6 }, (_, i) => new Animated.Value(0));
+  const flowAnimValue = new Animated.Value(0);
 
   React.useEffect(() => {
     // Particle animations with staggered timing
