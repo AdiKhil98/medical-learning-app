@@ -1046,10 +1046,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionHero: {
-    height: 120,
+    height: 80,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
     backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
@@ -2113,9 +2113,9 @@ const styles = StyleSheet.create({
 
   // Premium Structured Content Section Styles with Professional Design
   structuredSection: {
-    marginHorizontal: 12,
-    marginBottom: 20,
-    paddingTop: 8,
+    marginHorizontal: 8,
+    marginBottom: 12,
+    paddingTop: 6,
     paddingHorizontal: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 24,
@@ -2916,7 +2916,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   questionCardGradient: {
-    padding: screenWidth > 768 ? 32 : 28,
+    padding: screenWidth > 768 ? 24 : 20,
     position: 'relative',
     borderRadius: 20,
   },
