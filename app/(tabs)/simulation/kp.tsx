@@ -61,19 +61,21 @@ export default function KPSimulationScreen() {
       setSimulationStarted(true);
       resetTimer();
       
-      // Open embedded Voiceflow widget
+      // Start embedded Voiceflow widget
       if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
           setTimeout(() => {
-            if (window.voiceflow.chat.open) {
+            if (window.voiceflow.chat.start) {
+              window.voiceflow.chat.start();
+            } else if (window.voiceflow.chat.open) {
               window.voiceflow.chat.open();
             } else if (window.voiceflow.chat.show) {
               window.voiceflow.chat.show();
             }
-            console.log('✅ Embedded Voiceflow chat opened');
-          }, 1000); // Small delay to ensure container is ready
+            console.log('✅ Embedded Voiceflow chat started');
+          }, 1500); // Delay to ensure container and widget are ready
         } catch (error) {
-          console.error('❌ Error opening embedded Voiceflow chat:', error);
+          console.error('❌ Error starting embedded Voiceflow chat:', error);
         }
       }
       
@@ -110,8 +112,11 @@ export default function KPSimulationScreen() {
               verify: { projectID: '68b40ab270a53105f6701677' },
               url: 'https://general-runtime.voiceflow.com',
               versionID: 'production',
-              mode: 'embedded',
-              target: 'voiceflow-widget-container-kp',
+              render: {
+                mode: 'embedded',
+                target: document.getElementById('voiceflow-widget-container-kp'),
+              },
+              autostart: false,
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
@@ -229,8 +234,11 @@ export default function KPSimulationScreen() {
                   verify: { projectID: '68b40ab270a53105f6701677' },
                   url: 'https://general-runtime.voiceflow.com',
                   versionID: 'production',
-                  mode: 'embedded',
-                  target: 'voiceflow-widget-container-kp',
+                  render: {
+                    mode: 'embedded',
+                    target: document.getElementById('voiceflow-widget-container-kp'),
+                  },
+                  autostart: false,
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }

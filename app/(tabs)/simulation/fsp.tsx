@@ -160,19 +160,21 @@ export default function FSPSimulationScreen() {
       setSimulationStarted(true);
       resetTimer();
       
-      // Open embedded Voiceflow widget
+      // Start embedded Voiceflow widget
       if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
           setTimeout(() => {
-            if (window.voiceflow.chat.open) {
+            if (window.voiceflow.chat.start) {
+              window.voiceflow.chat.start();
+            } else if (window.voiceflow.chat.open) {
               window.voiceflow.chat.open();
             } else if (window.voiceflow.chat.show) {
               window.voiceflow.chat.show();
             }
-            console.log('✅ Embedded FSP Voiceflow chat opened');
-          }, 1000); // Small delay to ensure container is ready
+            console.log('✅ Embedded FSP Voiceflow chat started');
+          }, 1500); // Delay to ensure container and widget are ready
         } catch (error) {
-          console.error('❌ Error opening embedded FSP Voiceflow chat:', error);
+          console.error('❌ Error starting embedded FSP Voiceflow chat:', error);
         }
       }
       
@@ -200,16 +202,22 @@ export default function FSPSimulationScreen() {
         try {
           if (window.voiceflow && window.voiceflow.chat) {
             console.log('✅ FSP Voiceflow object found, initializing...');
-            window.voiceflow.chat.load({
+            const config = {
               verify: { projectID: '68b40ab94a5a50553729c86b' },
               url: 'https://general-runtime.voiceflow.com',
               versionID: '68b40ab94a5a50553729c86c',
-              mode: 'embedded',
-              target: 'voiceflow-widget-container-fsp',
+              render: {
+                mode: 'embedded',
+                target: document.getElementById('voiceflow-widget-container-fsp'),
+              },
+              autostart: false,
               voice: {
                 url: 'https://runtime-api.voiceflow.com'
               }
-            });
+            };
+            
+            console.log('🔧 Loading FSP Voiceflow with config:', config);
+            window.voiceflow.chat.load(config);
             setVoiceflowLoaded(true);
             console.log('🚀 FSP Voiceflow chat loaded successfully with config:', {
               projectID: '68b40ab94a5a50553729c86b',
@@ -320,8 +328,11 @@ export default function FSPSimulationScreen() {
                   verify: { projectID: '68b40ab94a5a50553729c86b' },
                   url: 'https://general-runtime.voiceflow.com',
                   versionID: '68b40ab94a5a50553729c86c',
-                  mode: 'embedded',
-                  target: 'voiceflow-widget-container-fsp',
+                  render: {
+                    mode: 'embedded',
+                    target: document.getElementById('voiceflow-widget-container-fsp'),
+                  },
+                  autostart: false,
                   voice: {
                     url: 'https://runtime-api.voiceflow.com'
                   }
