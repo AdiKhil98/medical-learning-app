@@ -627,7 +627,7 @@ export default function DashboardScreen() {
         {/* Section 2: Daily Tip */}
         <View style={[styles.section, { width: screenWidth }]}>
           <View style={styles.sectionContent}>
-        <View style={styles.structuredSection}>
+            <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
             <View style={styles.sectionTitleContainer}>
               <Lightbulb size={24} color="#F59E0B" />
@@ -697,14 +697,15 @@ export default function DashboardScreen() {
               </View>
             </TouchableOpacity>
           </Animated.View>
+            </View>
           </View>
         </View>
         
         {/* Section 3: Daily Question */}
         <View style={[styles.section, { width: screenWidth }]}>
           <View style={styles.sectionContent}>
-        {dailyQuestion && (
-          <View style={styles.structuredSection}>
+            {dailyQuestion && (
+              <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
               <View style={styles.sectionTitleContainer}>
                 <HelpCircle size={24} color="#8B5CF6" />
@@ -2294,6 +2295,70 @@ const styles = StyleSheet.create({
   },
 
   // Modern Chapter Card Styles for Enhanced Scannability
+  modernChapterCardsContainer: {
+    marginTop: 16,
+    gap: 16,
+  },
+  modernChapterCard: {
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 8,
+  },
+  modernChapterCardGradient: {
+    borderRadius: 16,
+    overflow: 'hidden' as const,
+  },
+  modernChapterCardBody: {
+    padding: 20,
+  },
+  modernChapterTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1f2937',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  modernChapterMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  modernChapterMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  modernChapterMetaText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+  },
+  modernChapterCategory: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  modernChapterCategoryText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    color: '#0891b2',
+  },
+  modernChapterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modernChapterButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+  },
   modernChapterCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2373,16 +2438,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 4,
   },
-  modernChapterTitle: {
-    fontSize: screenWidth > 768 ? 18 : 16,
-    fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 1.35,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    flex: 1,
-    marginRight: 12,
-  },
   chapterTypeIndicator: {
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
     paddingHorizontal: 8,
@@ -2405,13 +2460,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  modernChapterCategory: {
-    fontSize: screenWidth > 768 ? 15 : 14,
-    fontFamily: 'Inter-Medium',
-    color: '#4A90E2',
-    fontWeight: '500',
-    letterSpacing: -0.1,
   },
   estimatedTimeContainer: {
     flexDirection: 'row',
@@ -2439,20 +2487,6 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
     flex: 1,
-  },
-  statNumber: {
-    fontSize: screenWidth > 768 ? 16 : 15,
-    color: MEDICAL_COLORS.textPrimary,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: MEDICAL_COLORS.textSecondary,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    opacity: 0.8,
   },
   statDivider: {
     width: 1,
