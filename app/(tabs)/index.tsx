@@ -344,44 +344,43 @@ export default function DashboardScreen() {
       >
         {/* Section 1: Quick Access */}
         <View style={styles.section}>
-          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
-            {/* Hero for Section 1 */}
-            <View style={styles.sectionHero}>
-              <View style={styles.heroContent}>
-                <View style={styles.heroTitleContainer}>
-                  <Text style={styles.splitScreenHeroTitle}>
-                    Schnellzugriff zu deinen Lernmaterialien
-                  </Text>
-                </View>
-                <View style={styles.heroSubtitleContainer}>
-                  <Text style={styles.splitScreenHeroSubtitle}>
-                    Setze dein Lernen nahtlos fort
-                  </Text>
-                </View>
-                <View style={styles.heroButtonsContainer}>
-                  <TouchableOpacity 
-                    style={styles.primaryButton}
-                    onPress={() => router.push('/(tabs)/bibliothek')}
-                  >
-                    <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
-                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+          {/* Hero for Section 1 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Schnellzugriff zu deinen Lernmaterialien
+                </Text>
             </View>
-            
-            {/* Section content */}
-            <View style={styles.sectionContentInner}>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Setze dein Lernen nahtlos fort
+                </Text>
+            </View>
+              <View style={styles.heroButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.primaryButton}
+                  onPress={() => router.push('/(tabs)/bibliothek')}
+                >
+                  <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
+                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                </TouchableOpacity>
+            </View>
+          </View>
+          </View>
+          
+          {/* Section content */}
+          <View style={styles.sectionContentInner}>
             <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
               <View style={styles.quickAccessTitleRow}>
                 <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
                 <View style={styles.quickAccessBadge}>
                   <Text style={styles.quickAccessBadgeText}>Neu</Text>
-                </View>
               </View>
-              <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
             </View>
+              <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
+          </View>
             
             <View style={styles.quickAccessGrid}>
               <TouchableOpacity 
@@ -434,7 +433,7 @@ export default function DashboardScreen() {
                   <Text style={styles.quickCardSubtitle}>Deine Statistiken</Text>
                 </LinearGradient>
               </TouchableOpacity>
-            </View>
+          </View>
           </View>
           
           {/* Section 2: Letzte Kapitel - Enhanced Card Layout */}
@@ -444,14 +443,14 @@ export default function DashboardScreen() {
                 <View style={styles.modernSectionTitleContainer}>
                   <View style={styles.sectionIconWrapper}>
                     <BookOpen size={26} color="#4A90E2" />
-                  </View>
+                </View>
                   <View style={styles.titleAndBadgeContainer}>
                     <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
                     <View style={styles.chapterCountBadge}>
                       <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
-                    </View>
                   </View>
                 </View>
+              </View>
                 <Text style={styles.modernStructuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
                 <View style={styles.sectionActions}>
                   <TouchableOpacity 
@@ -467,8 +466,8 @@ export default function DashboardScreen() {
                   >
                     <Text style={styles.filterButtonText}>Filter</Text>
                   </TouchableOpacity>
-                </View>
               </View>
+            </View>
               
               <View style={styles.chapterCardsGrid}>
                 {recentMedicalContents.slice(0, 4).map((content, index) => (
@@ -498,16 +497,16 @@ export default function DashboardScreen() {
                       <View style={styles.modernChapterCardHeader}>
                         <View style={styles.modernChapterIconContainer}>
                           <BookOpen size={20} color="#4A90E2" />
-                        </View>
+                      </View>
                         <View style={styles.chapterStatusRow}>
                           <View style={styles.difficultyBadge}>
                             <Text style={styles.difficultyText}>FSP</Text>
-                          </View>
+                        </View>
                           <View style={styles.modernProgressBadge}>
                             <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
-                          </View>
                         </View>
                       </View>
+                    </View>
                       
                       <View style={styles.modernChapterCardContent}>
                         <View style={styles.chapterTitleRow}>
@@ -516,8 +515,8 @@ export default function DashboardScreen() {
                           </Text>
                           <View style={styles.chapterTypeIndicator}>
                             <Text style={styles.chapterTypeText}>Kapitel</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.chapterCategoryRow}>
                           <Text style={styles.modernChapterCategory}>
@@ -526,45 +525,45 @@ export default function DashboardScreen() {
                           <View style={styles.estimatedTimeContainer}>
                             <Clock size={14} color="#10B981" />
                             <Text style={styles.estimatedTimeText}>~15 min</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.chapterStatsRow}>
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>24</Text>
                             <Text style={styles.statLabel}>Fragen</Text>
-                          </View>
+                        </View>
                           <View style={styles.statDivider} />
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>{Math.floor(Math.random() * 5) + 3}</Text>
                             <Text style={styles.statLabel}>Versuche</Text>
-                          </View>
+                        </View>
                           <View style={styles.statDivider} />
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>{content.lastViewed}</Text>
                             <Text style={styles.statLabel}>Zuletzt</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.modernProgressContainer}>
                           <View style={styles.progressLabelRow}>
                             <Text style={styles.progressLabel}>Fortschritt</Text>
                             <Text style={styles.progressPercentage}>{Math.floor(Math.random() * 100)}%</Text>
-                          </View>
+                        </View>
                           <View style={styles.modernProgressBar}>
                             <View style={[styles.modernProgressFill, { width: `${Math.random() * 100}%` }]} />
                             <View style={styles.progressGlow} />
-                          </View>
                         </View>
                       </View>
+                    </View>
                       
                       <View style={styles.modernChapterCardFooter}>
                         <View style={styles.footerLeftSection}>
                           <View style={styles.lastActivityIndicator}>
                             <View style={styles.activityDot} />
                             <Text style={styles.lastActivityText}>Vor 2 Stunden</Text>
-                          </View>
                         </View>
+                      </View>
                         <View style={styles.footerRightSection}>
                           <TouchableOpacity 
                             style={styles.modernContinueButton}
@@ -573,19 +572,19 @@ export default function DashboardScreen() {
                             <Text style={styles.modernContinueText}>Fortsetzen</Text>
                             <ArrowRight size={16} color="#4A90E2" />
                           </TouchableOpacity>
-                        </View>
                       </View>
+                    </View>
                     </LinearGradient>
                     </TouchableOpacity>
                   </Animated.View>
                 ))}
-              </View>
+            </View>
               
               {recentMedicalContents.length === 0 && (
                 <View style={styles.noChaptersContainer}>
                   <View style={styles.noChaptersIcon}>
                     <BookOpen size={32} color={MEDICAL_COLORS.textSecondary} opacity={0.5} />
-                  </View>
+                </View>
                   <Text style={styles.noChaptersTitle}>Noch keine Kapitel begonnen</Text>
                   <Text style={styles.noChaptersSubtitle}>Starte dein erstes Kapitel in der Bibliothek</Text>
                   <TouchableOpacity 
@@ -594,41 +593,39 @@ export default function DashboardScreen() {
                   >
                     <Text style={styles.startLearningText}>Jetzt starten</Text>
                   </TouchableOpacity>
-                </View>
+              </View>
               )}
-            </View>
+          </View>
           )}
-            </View>
-          </ScrollView>
+          </View>
         </View>
         
         {/* Section 2: Daily Tip */}
         <View style={styles.section}>
-          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
-            {/* Hero for Section 2 */}
+          {/* Hero for Section 2 */}
             <View style={styles.sectionHero}>
               <View style={styles.heroContent}>
                 <View style={styles.heroTitleContainer}>
                   <Text style={styles.splitScreenHeroTitle}>
                     Tipp des Tages
                   </Text>
-                </View>
+              </View>
                 <View style={styles.heroSubtitleContainer}>
                   <Text style={styles.splitScreenHeroSubtitle}>
                     Erweitere dein medizinisches Wissen täglich
                   </Text>
-                </View>
               </View>
             </View>
+          </View>
             
-            {/* Section content */}
+          {/* Section content */}
             <View style={styles.sectionContentInner}>
             <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
             <View style={styles.sectionTitleContainer}>
               <Lightbulb size={24} color="#F59E0B" />
               <Text style={styles.structuredSectionTitle}>Tipp des Tages</Text>
-            </View>
+          </View>
             <Text style={styles.structuredSectionSubtitle}>Erweitere dein medizinisches Wissen täglich</Text>
           </View>
           
@@ -642,8 +639,8 @@ export default function DashboardScreen() {
               <View style={styles.tipCardIcon}>
                 <View style={styles.tipIconBg}>
                   <Lightbulb size={28} color="white" />
-                </View>
               </View>
+            </View>
               
               {dailyTip ? (
                 <>
@@ -658,7 +655,7 @@ export default function DashboardScreen() {
                   {dailyTip.category && (
                     <View style={styles.categoryBadge}>
                       <Text style={styles.categoryText}>{dailyTip.category}</Text>
-                    </View>
+                  </View>
                   )}
                 </>
               ) : (
@@ -690,34 +687,34 @@ export default function DashboardScreen() {
               <View style={styles.sectionArrowContainer}>
                 <ChevronDown size={18} color={MEDICAL_COLORS.primary} />
                 <View style={styles.arrowPulse} />
-              </View>
+            </View>
             </TouchableOpacity>
           </Animated.View>
-            </View>
-            </View>
-          </ScrollView>
+          </View>
+          </View>
+
         </View>
         
         {/* Section 3: Daily Question */}
         <View style={styles.section}>
-          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
-            {/* Hero for Section 3 */}
+          
+          {/* Hero for Section 3 */}
             <View style={styles.sectionHero}>
               <View style={styles.heroContent}>
                 <View style={styles.heroTitleContainer}>
                   <Text style={styles.splitScreenHeroTitle}>
                     Frage des Tages
                   </Text>
-                </View>
+              </View>
                 <View style={styles.heroSubtitleContainer}>
                   <Text style={styles.splitScreenHeroSubtitle}>
                     Teste dein Wissen mit einer täglichen Prüfungsfrage
                   </Text>
-                </View>
               </View>
             </View>
+          </View>
             
-            {/* Section content */}
+          {/* Section content */}
             <View style={styles.sectionContentInner}>
             {dailyQuestion && (
               <View style={styles.structuredSection}>
@@ -725,9 +722,9 @@ export default function DashboardScreen() {
               <View style={styles.sectionTitleContainer}>
                 <HelpCircle size={24} color="#8B5CF6" />
                 <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
-              </View>
-              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
             </View>
+              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
+          </View>
             
             <View style={styles.questionCard}>
               <LinearGradient
@@ -739,12 +736,12 @@ export default function DashboardScreen() {
                 <View style={styles.questionCardHeader}>
                   <View style={styles.questionIconBg}>
                     <HelpCircle size={28} color="white" />
-                  </View>
+                </View>
                   <View style={styles.questionHeaderInfo}>
                     <Text style={styles.questionCardTitle}>Prüfungssimulation</Text>
                     <Text style={styles.questionCardSubtitle}>Bereite dich auf die echte Prüfung vor</Text>
-                  </View>
                 </View>
+              </View>
                 
                 <Text style={styles.questionText}>{dailyQuestion.question}</Text>
                 
@@ -786,32 +783,32 @@ export default function DashboardScreen() {
                           {showResult && isSelected && !isCorrect && (
                             <XCircle size={20} color={MEDICAL_COLORS.danger} />
                           )}
-                        </View>
+                      </View>
                       </TouchableOpacity>
                     );
                   })}
-                </View>
+              </View>
                 
                 {showAnswer && dailyQuestion.explanation && (
                   <View style={styles.explanationContainer}>
                     <Text style={styles.explanationTitle}>Erklärung:</Text>
                     <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
-                  </View>
+                </View>
                 )}
                 
                 {dailyQuestion.category && (
                   <View style={styles.categoryBadge}>
                     <Text style={styles.categoryText}>{dailyQuestion.category}</Text>
-                  </View>
+                </View>
                 )}
               </LinearGradient>
-            </View>
+          </View>
             
             {/* Section completed indicator */}
             <View style={styles.sectionCompleteBadge}>
               <CheckCircle size={16} color={MEDICAL_COLORS.success} />
               <Text style={styles.sectionCompleteText}>Sektion abgeschlossen</Text>
-            </View>
+          </View>
           </View>
         )}
 
@@ -823,26 +820,26 @@ export default function DashboardScreen() {
             </Text>
           </View>
         )}
-            </View>
-          </ScrollView>
+          </View>
+
         </View>
         
         {/* Section 4: Recent Chapters */}
         <View style={styles.section}>
-          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
-            {/* Hero for Section 4 */}
+          
+          {/* Hero for Section 4 */}
             <View style={styles.sectionHero}>
               <View style={styles.heroContent}>
                 <View style={styles.heroTitleContainer}>
                   <Text style={styles.splitScreenHeroTitle}>
                     Letzte Kapitel
                   </Text>
-                </View>
+              </View>
                 <View style={styles.heroSubtitleContainer}>
                   <Text style={styles.splitScreenHeroSubtitle}>
                     Setze dort fort, wo du aufgehört hast
                   </Text>
-                </View>
+              </View>
                 <View style={styles.heroButtonsContainer}>
                   <TouchableOpacity 
                     style={styles.primaryButton}
@@ -851,11 +848,11 @@ export default function DashboardScreen() {
                     <Text style={styles.primaryButtonText}>Alle Kapitel</Text>
                     <ArrowRight size={18} color="white" style={styles.buttonIcon} />
                   </TouchableOpacity>
-                </View>
               </View>
             </View>
+          </View>
             
-            {/* Section content */}
+          {/* Section content */}
             <View style={styles.sectionContentInner}>
             {recentMedicalContents.length > 0 && (
               <View style={styles.letzteKapitelSection}>
@@ -863,16 +860,16 @@ export default function DashboardScreen() {
                   <View style={styles.modernSectionTitleContainer}>
                     <View style={styles.sectionIconWrapper}>
                       <BookOpen size={26} color="#4A90E2" />
-                    </View>
+                  </View>
                     <View style={styles.titleAndBadgeContainer}>
                       <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
                       <View style={styles.chapterCountBadge}>
                         <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
-                      </View>
                     </View>
                   </View>
-                  <Text style={styles.modernStructuredSectionSubtitle}>Setze dort fort, wo du aufgehört hast</Text>
                 </View>
+                  <Text style={styles.modernStructuredSectionSubtitle}>Setze dort fort, wo du aufgehört hast</Text>
+              </View>
                 
                 <View style={styles.modernChapterCardsContainer}>
                   {recentMedicalContents.map((content, index) => (
@@ -884,16 +881,16 @@ export default function DashboardScreen() {
                         <View style={styles.modernChapterCardHeader}>
                           <View style={styles.modernChapterIconContainer}>
                             <BookOpen size={20} color="#4A90E2" />
-                          </View>
+                        </View>
                           <View style={styles.chapterStatusRow}>
                             <View style={styles.difficultyBadge}>
                               <Text style={styles.difficultyText}>FSP</Text>
-                            </View>
+                          </View>
                             <View style={styles.modernProgressBadge}>
                               <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
-                            </View>
                           </View>
                         </View>
+                      </View>
                         
                         <View style={styles.modernChapterCardBody}>
                           <Text style={styles.modernChapterTitle}>{content.title}</Text>
@@ -901,29 +898,29 @@ export default function DashboardScreen() {
                             <View style={styles.modernChapterMeta}>
                               <Clock size={14} color="#64748B" />
                               <Text style={styles.modernChapterMetaText}>{content.lastViewed}</Text>
-                            </View>
+                          </View>
                             {content.category && (
                               <View style={styles.modernChapterCategory}>
                                 <Text style={styles.modernChapterCategoryText}>{content.category}</Text>
-                              </View>
+                            </View>
                             )}
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.modernChapterCardFooter}>
                           <TouchableOpacity style={styles.modernChapterButton}>
                             <Text style={styles.modernChapterButtonText}>Fortsetzen</Text>
                             <ArrowRight size={16} color="#4A90E2" />
                           </TouchableOpacity>
-                        </View>
+                      </View>
                       </LinearGradient>
-                    </View>
+                  </View>
                   ))}
-                </View>
               </View>
-            )}
             </View>
-          </ScrollView>
+            )}
+          </View>
+
         </View>
       </ScrollView>
 
@@ -1047,10 +1044,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionHero: {
-    minHeight: 200,
+    height: 180,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingVertical: 20,
     backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
