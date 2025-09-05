@@ -1040,14 +1040,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionContentInner: {
+    flex: 1,
     paddingHorizontal: 20,
+    paddingVertical: 10,
     paddingBottom: 20,
   },
   sectionHero: {
-    height: 180,
+    height: 120,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 10,
     backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
@@ -1827,7 +1829,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   quickAccessSection: {
-    marginBottom: screenWidth > 768 ? 60 : 48,
+    marginBottom: 20,
     paddingHorizontal: screenWidth > 768 ? 0 : 4,
   },
   modernSectionTitle: {
@@ -2111,10 +2113,10 @@ const styles = StyleSheet.create({
 
   // Premium Structured Content Section Styles with Professional Design
   structuredSection: {
-    marginHorizontal: screenWidth > 768 ? 32 : 24,
-    marginBottom: screenWidth > 768 ? 56 : 44,
-    paddingTop: screenWidth > 768 ? 12 : 8,
-    paddingHorizontal: screenWidth > 768 ? 8 : 4,
+    marginHorizontal: 12,
+    marginBottom: 20,
+    paddingTop: 8,
+    paddingHorizontal: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 24,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
