@@ -343,33 +343,35 @@ export default function DashboardScreen() {
         scrollEventThrottle={16}
       >
         {/* Section 1: Quick Access */}
-        <View style={[styles.section, { width: screenWidth }]}>
-          {/* Hero for Section 1 */}
-          <View style={styles.sectionHero}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroTitleContainer}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Schnellzugriff zu deinen Lernmaterialien
-                </Text>
-              </View>
-              <View style={styles.heroSubtitleContainer}>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  Setze dein Lernen nahtlos fort
-                </Text>
-              </View>
-              <View style={styles.heroButtonsContainer}>
-                <TouchableOpacity 
-                  style={styles.primaryButton}
-                  onPress={() => router.push('/(tabs)/bibliothek')}
-                >
-                  <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
-                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                </TouchableOpacity>
+        <View style={styles.section}>
+          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
+            {/* Hero for Section 1 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Schnellzugriff zu deinen Lernmaterialien
+                  </Text>
+                </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Setze dein Lernen nahtlos fort
+                  </Text>
+                </View>
+                <View style={styles.heroButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.primaryButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
+                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-          
-          <View style={styles.sectionContent}>
+            
+            {/* Section content */}
+            <View style={styles.sectionContentInner}>
             <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
               <View style={styles.quickAccessTitleRow}>
@@ -596,28 +598,31 @@ export default function DashboardScreen() {
               )}
             </View>
           )}
-          </View>
+            </View>
+          </ScrollView>
         </View>
         
         {/* Section 2: Daily Tip */}
-        <View style={[styles.section, { width: screenWidth }]}>
-          {/* Hero for Section 2 */}
-          <View style={styles.sectionHero}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroTitleContainer}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Tipp des Tages
-                </Text>
-              </View>
-              <View style={styles.heroSubtitleContainer}>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  Erweitere dein medizinisches Wissen täglich
-                </Text>
+        <View style={styles.section}>
+          <ScrollView style={styles.sectionContent} showsVerticalScrollIndicator={false}>
+            {/* Hero for Section 2 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Tipp des Tages
+                  </Text>
+                </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Erweitere dein medizinisches Wissen täglich
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-          
-          <View style={styles.sectionContent}>
+            
+            {/* Section content */}
+            <View style={styles.sectionContentInner}>
             <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
             <View style={styles.sectionTitleContainer}>
@@ -689,7 +694,8 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </Animated.View>
             </View>
-          </View>
+            </View>
+          </ScrollView>
         </View>
         
         {/* Section 3: Daily Question */}
@@ -1024,12 +1030,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   section: {
+    width: screenWidth,
     flex: 1,
-    paddingHorizontal: 20,
   },
   sectionContent: {
     flex: 1,
-    paddingTop: 20,
+  },
+  sectionContentInner: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   sectionHero: {
     minHeight: 200,
