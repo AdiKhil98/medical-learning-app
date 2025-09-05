@@ -136,6 +136,46 @@ export default function FSPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
+  // Initialize Voiceflow function
+  const initializeVoiceflow = () => {
+    console.log('✅ FSP Voiceflow object found, initializing...');
+    
+    // Clean up any existing container content to avoid shadow DOM conflicts
+    const targetContainer = document.getElementById('voiceflow-widget-container-fsp');
+    if (targetContainer) {
+      // Remove any existing shadow root or content
+      targetContainer.innerHTML = '';
+      if (targetContainer.shadowRoot) {
+        targetContainer.shadowRoot.innerHTML = '';
+      }
+      console.log('🧹 Cleaned FSP target container');
+    }
+    
+    const config = {
+      verify: { projectID: '68b40ab94a5a50553729c86b' },
+      url: 'https://general-runtime.voiceflow.com',
+      versionID: '68b40ab94a5a50553729c86c',
+      render: {
+        mode: 'embedded',
+        target: targetContainer,
+      },
+      autostart: false,
+      voice: {
+        url: 'https://runtime-api.voiceflow.com'
+      }
+    };
+    
+    console.log('🔧 Loading FSP Voiceflow with config:', config);
+    
+    try {
+      window.voiceflow.chat.load(config);
+      setVoiceflowLoaded(true);
+      console.log('🚀 FSP Voiceflow chat loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading FSP Voiceflow:', error);
+    }
+  };
+
   // Handle orb click - start simulation programmatically
   const handleOrbPress = async () => {
     if (simulationStarted) return;
@@ -191,6 +231,24 @@ export default function FSPSimulationScreen() {
   // Load Voiceflow script and set up event listeners
   useEffect(() => {
     if (Platform.OS === 'web') {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="voiceflow.com/widget-next/bundle.mjs"]');
+      if (existingScript) {
+        console.log('🔄 FSP Voiceflow script already loaded, initializing...');
+        // Initialize immediately if script exists
+        if (window.voiceflow && window.voiceflow.chat) {
+          initializeVoiceflow();
+        } else {
+          // Wait a bit for script to be ready
+          setTimeout(() => {
+            if (window.voiceflow && window.voiceflow.chat) {
+              initializeVoiceflow();
+            }
+          }, 1000);
+        }
+        return;
+      }
+      
       console.log('🔄 Starting FSP Voiceflow script load...');
       
       const script = document.createElement('script');
@@ -201,28 +259,7 @@ export default function FSPSimulationScreen() {
         
         try {
           if (window.voiceflow && window.voiceflow.chat) {
-            console.log('✅ FSP Voiceflow object found, initializing...');
-            const config = {
-              verify: { projectID: '68b40ab94a5a50553729c86b' },
-              url: 'https://general-runtime.voiceflow.com',
-              versionID: '68b40ab94a5a50553729c86c',
-              render: {
-                mode: 'embedded',
-                target: document.getElementById('voiceflow-widget-container-fsp'),
-              },
-              autostart: false,
-              voice: {
-                url: 'https://runtime-api.voiceflow.com'
-              }
-            };
-            
-            console.log('🔧 Loading FSP Voiceflow with config:', config);
-            window.voiceflow.chat.load(config);
-            setVoiceflowLoaded(true);
-            console.log('🚀 FSP Voiceflow chat loaded successfully with config:', {
-              projectID: '68b40ab94a5a50553729c86b',
-              versionID: '68b40ab94a5a50553729c86c'
-            });
+            initializeVoiceflow();
             
             // Set up multiple detection methods for widget interaction
             const startSimulationTimer = async () => {
@@ -324,21 +361,7 @@ export default function FSPSimulationScreen() {
             setTimeout(() => {
               if (window.voiceflow && window.voiceflow.chat) {
                 console.log('⏰ FSP Voiceflow found after delay, initializing...');
-                window.voiceflow.chat.load({
-                  verify: { projectID: '68b40ab94a5a50553729c86b' },
-                  url: 'https://general-runtime.voiceflow.com',
-                  versionID: '68b40ab94a5a50553729c86c',
-                  render: {
-                    mode: 'embedded',
-                    target: document.getElementById('voiceflow-widget-container-fsp'),
-                  },
-                  autostart: false,
-                  voice: {
-                    url: 'https://runtime-api.voiceflow.com'
-                  }
-                });
-                setVoiceflowLoaded(true);
-                console.log('🚀 FSP Voiceflow loaded after delay');
+                initializeVoiceflow();
               }
             }, 1000);
           }
@@ -639,37 +662,39 @@ export default function FSPSimulationScreen() {
                 {Platform.OS === 'web' && (
                   <div 
                     id="voiceflow-widget-container-fsp"
+                    key={`fsp-widget-${simulationStarted ? 'active' : 'inactive'}`}
                     style={{
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: simulationStarted ? '140px' : '0px',
-                      height: simulationStarted ? '140px' : '0px',
+                      width: '140px',
+                      height: '140px',
                       borderRadius: '50%',
-                      overflow: simulationStarted ? 'visible' : 'hidden',
+                      overflow: 'visible',
                       zIndex: 25,
                       background: simulationStarted ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
                       backdropFilter: simulationStarted ? 'blur(10px)' : 'none',
                       border: simulationStarted ? '2px solid rgba(255, 255, 255, 0.3)' : 'none',
                       boxShadow: simulationStarted ? '0 8px 32px rgba(0, 0, 0, 0.1)' : 'none',
                       transition: 'all 0.3s ease',
-                      display: 'block !important',
-                      opacity: simulationStarted ? 1 : 0
+                      display: 'block',
+                      opacity: simulationStarted ? 1 : 0.1,
+                      pointerEvents: simulationStarted ? 'auto' : 'none'
                     }}
                   >
-                    {simulationStarted && (
+                    {!simulationStarted && (
                       <div style={{ 
                         width: '100%', 
                         height: '100%', 
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
-                        color: '#666',
+                        fontSize: '10px',
+                        color: '#999',
                         background: 'transparent'
                       }}>
-                        Chat Loading...
+                        Ready
                       </div>
                     )}
                   </div>

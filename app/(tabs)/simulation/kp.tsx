@@ -37,6 +37,46 @@ export default function KPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
+  // Initialize Voiceflow function
+  const initializeVoiceflow = () => {
+    console.log('✅ Voiceflow object found, initializing...');
+    
+    // Clean up any existing container content to avoid shadow DOM conflicts
+    const targetContainer = document.getElementById('voiceflow-widget-container-kp');
+    if (targetContainer) {
+      // Remove any existing shadow root or content
+      targetContainer.innerHTML = '';
+      if (targetContainer.shadowRoot) {
+        targetContainer.shadowRoot.innerHTML = '';
+      }
+      console.log('🧹 Cleaned KP target container');
+    }
+    
+    const config = {
+      verify: { projectID: '68b40ab270a53105f6701677' },
+      url: 'https://general-runtime.voiceflow.com',
+      versionID: 'production',
+      render: {
+        mode: 'embedded',
+        target: targetContainer,
+      },
+      autostart: false,
+      voice: {
+        url: 'https://runtime-api.voiceflow.com'
+      }
+    };
+    
+    console.log('🔧 Loading Voiceflow with config:', config);
+    
+    try {
+      window.voiceflow.chat.load(config);
+      setVoiceflowLoaded(true);
+      console.log('🚀 Voiceflow chat loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading Voiceflow:', error);
+    }
+  };
+
   // Handle orb click - start simulation programmatically
   const handleOrbPress = async () => {
     if (simulationStarted) return;
