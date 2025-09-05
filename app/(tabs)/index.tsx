@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown } from 'lucide-react-native';
+import { Menu as MenuIcon, Lightbulb, HelpCircle, CheckCircle, XCircle, BookOpen, Clock, ArrowRight, Sparkles, Target, TrendingUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -59,8 +59,11 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [recentMedicalContents, setRecentMedicalContents] = useState<MedicalContent[]>([]);
   
-  // Scroll ref for section navigation
+  // Horizontal scrolling state
   const scrollViewRef = useRef<ScrollView>(null);
+  const [currentSection, setCurrentSection] = useState(0);
+  const sections = ['Quick Access', 'Daily Tip', 'Daily Question', 'Recent Chapters'];
+  
   
   // Animation for bounce effect
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -181,6 +184,31 @@ export default function DashboardScreen() {
     }
   };
 
+  // Horizontal navigation functions
+  const scrollToPrevious = () => {
+    const previousSection = Math.max(0, currentSection - 1);
+    scrollViewRef.current?.scrollTo({
+      x: previousSection * screenWidth,
+      animated: true
+    });
+    setCurrentSection(previousSection);
+  };
+
+  const scrollToNext = () => {
+    const nextSection = Math.min(sections.length - 1, currentSection + 1);
+    scrollViewRef.current?.scrollTo({
+      x: nextSection * screenWidth,
+      animated: true
+    });
+    setCurrentSection(nextSection);
+  };
+
+  const handleHorizontalScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset;
+    const sectionIndex = Math.round(contentOffset.x / screenWidth);
+    setCurrentSection(sectionIndex);
+  };
+
   const handleAnswerSelect = (answer: string) => {
     setSelectedAnswer(answer);
     setShowAnswer(true);
@@ -217,94 +245,8 @@ export default function DashboardScreen() {
     return user.name || user.email?.split('@')[0] || 'Nutzer';
   };
 
-  // Advanced scroll tracking and momentum
-  const [currentSection, setCurrentSection] = useState(0);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  // Improved section positions for better content display (Hero=0, Lernkapital=1, Tipp=2, Frage=3)
-  const sectionPositions = [0, 480, 960, 1440]; 
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Scroll to specific section
-  const scrollToSection = (sectionIndex: number) => {
-    if (scrollViewRef.current && sectionIndex < sectionPositions.length) {
-      scrollViewRef.current.scrollTo({
-        y: sectionPositions[sectionIndex],
-        animated: true,
-      });
-      setCurrentSection(sectionIndex);
-    }
-  };
   
-  // Scroll to next section
-  const scrollToNextSection = () => {
-    const nextSection = currentSection + 1;
-    if (nextSection < sectionPositions.length) {
-      scrollToSection(nextSection);
-    }
-  };
-  
-  // Enhanced scroll handling with momentum and progress tracking
-  const handleScroll = (event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const contentHeight = event.nativeEvent.contentSize.height;
-    const containerHeight = event.nativeEvent.layoutMeasurement.height;
-    
-    // Calculate scroll progress (0 to 1)
-    const progress = Math.min(scrollY / (contentHeight - containerHeight), 1);
-    setScrollProgress(progress);
-    
-    // Set scrolling state
-    setIsScrolling(true);
-    
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    // Enhanced timeout for better momentum detection
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-      snapToNearestSection(scrollY);
-    }, 200);
-    
-    // Find which section we're closest to
-    let closestSection = 0;
-    let minDistance = Math.abs(scrollY - sectionPositions[0]);
-    
-    for (let i = 1; i < sectionPositions.length; i++) {
-      const distance = Math.abs(scrollY - sectionPositions[i]);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestSection = i;
-      }
-    }
-    
-    if (closestSection !== currentSection) {
-      setCurrentSection(closestSection);
-    }
-  };
-  
-  // Enhanced snap to nearest section with better detection
-  const snapToNearestSection = (scrollY: number) => {
-    let closestSection = 0;
-    let minDistance = Math.abs(scrollY - sectionPositions[0]);
-    
-    for (let i = 1; i < sectionPositions.length; i++) {
-      const distance = Math.abs(scrollY - sectionPositions[i]);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestSection = i;
-      }
-    }
-    
-    // More responsive snapping with improved threshold
-    if (minDistance > 80) {
-      setTimeout(() => {
-        scrollToSection(closestSection);
-      }, 150);
-    }
-  };
 
   if (loading) {
     return (
@@ -342,136 +284,103 @@ export default function DashboardScreen() {
             <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
           <Logo size="medium" variant="medical" textColor="white" animated={true} />
-          <UserAvatar size={32} />
+          <UserAvatar size="medium" />
         </View>
       </LinearGradient>
 
-      {/* Modern Split-Screen Hero Section */}
-      <View style={styles.modernHeroSection}>
-        <View style={styles.heroSplitContainer}>
-          {/* Left Side - Content */}
-          <View style={styles.heroLeftSide}>
-            <LinearGradient
-              colors={['rgba(102, 126, 234, 0.05)', 'rgba(118, 75, 162, 0.08)', 'rgba(255, 255, 255, 0.95)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroContentGradient}
-            >
-              <View style={styles.heroTextContent}>
-                <Text style={styles.splitScreenHeroTitle}>
-                  Nur bei KP Med: Die einzige KI-Simulation,
-                </Text>
-                <Text style={styles.splitScreenHeroSubtitle}>
-                  die Dich wirklich auf die medizinische Prüfung in Deutschland vorbereitet
-                </Text>
-                
-                <Text style={styles.splitScreenHeroDescription}>
-                  Keine Theorie. Keine Spielerei. Sondern echte Prüfungssimulation, 
-                  personalisierte Lerninhalte und intelligente Auswertung – exklusiv 
-                  entwickelt für internationale Ärzt:innen.
-                </Text>
-                
-                <Text style={styles.splitScreenHeroTagline}>
-                  Starte nicht irgendwo. Starte da, wo Erfolg beginnt.
-                </Text>
-                
-                <View style={styles.splitScreenHeroButtons}>
-                  <TouchableOpacity 
-                    style={styles.primarySplitButton}
-                    onPress={() => router.push('/(tabs)/simulation')}
-                  >
-                    <Text style={styles.primarySplitButtonText}>Simulation starten</Text>
-                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.secondarySplitButton}
-                    onPress={() => router.push('/(tabs)/bibliothek')}
-                  >
-                    <Text style={styles.secondarySplitButtonText}>Jetzt lernen</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-          
-          {/* Right Side - Professional Illustration */}
-          <View style={styles.heroRightSide}>
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroImageGradient}
-            >
-              <View style={styles.heroIllustrationContainer}>
-                {/* Medical Education Illustration */}
-                <View style={styles.medicalIllustration}>
-                  <View style={styles.illustrationElement1}>
-                    <View style={styles.medicalIcon}>
-                      <Text style={styles.medicalEmoji}>⚕️</Text>
-                    </View>
-                    <View style={styles.progressRing}>
-                      <View style={styles.innerRing}></View>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.illustrationElement2}>
-                    <View style={styles.bookStack}>
-                      <View style={[styles.book, styles.book1]}>
-                        <Text style={styles.bookText}>FSP</Text>
-                      </View>
-                      <View style={[styles.book, styles.book2]}>
-                        <Text style={styles.bookText}>KP</Text>
-                      </View>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.illustrationElement3}>
-                    <View style={styles.aiChip}>
-                      <Sparkles size={20} color="white" />
-                      <Text style={styles.aiText}>KI</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.floatingStats}>
-                    <View style={styles.statBubble}>
-                      <Text style={styles.statNumber}>95%</Text>
-                      <Text style={styles.statLabel}>Erfolgsrate</Text>
-                    </View>
-                    <View style={styles.statBubble}>
-                      <Text style={styles.statNumber}>1000+</Text>
-                      <Text style={styles.statLabel}>Fragen</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </LinearGradient>
-          </View>
-        </View>
+      {/* Navigation Arrows */}
+      {currentSection > 0 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.leftArrow]}
+          onPress={scrollToPrevious}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={['rgba(67, 56, 202, 0.9)', 'rgba(99, 102, 241, 0.9)']}
+            style={styles.arrowGradient}
+          >
+            <ChevronLeft size={24} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {currentSection < sections.length - 1 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.rightArrow]}
+          onPress={scrollToNext}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={['rgba(67, 56, 202, 0.9)', 'rgba(99, 102, 241, 0.9)']}
+            style={styles.arrowGradient}
+          >
+            <ChevronRight size={24} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {/* Section Indicators */}
+      <View style={styles.sectionIndicators}>
+        {sections.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.indicator,
+              currentSection === index && styles.activeIndicator
+            ]}
+          />
+        ))}
       </View>
 
       <ScrollView 
         ref={scrollViewRef}
-        style={styles.content} 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={styles.contentContainer}
-        onScroll={handleScroll}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.horizontalScroll}
+        contentContainerStyle={styles.horizontalScrollContent}
+        onScroll={handleHorizontalScroll}
         scrollEventThrottle={16}
       >
-        
-        {/* Modern Content Sections with Enhanced Spacing */}
-        <View style={[styles.modernContentContainer, { paddingTop: screenWidth > 768 ? 24 : 16 }]}>
-          {/* Section 1: Quick Access Cards */}
-          <View style={styles.quickAccessSection}>
+        {/* Section 1: Quick Access */}
+        <View style={styles.section}>
+          {/* Hero for Section 1 */}
+          <View style={styles.sectionHero}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTitleContainer}>
+                <Text style={styles.splitScreenHeroTitle}>
+                  Schnellzugriff zu deinen Lernmaterialien
+                </Text>
+            </View>
+              <View style={styles.heroSubtitleContainer}>
+                <Text style={styles.splitScreenHeroSubtitle}>
+                  Setze dein Lernen nahtlos fort
+                </Text>
+            </View>
+              <View style={styles.heroButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.primaryButton}
+                  onPress={() => router.push('/(tabs)/bibliothek')}
+                >
+                  <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
+                  <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                </TouchableOpacity>
+            </View>
+          </View>
+          </View>
+          
+          {/* Section content */}
+          <View style={styles.sectionContentInner}>
+            <View style={styles.quickAccessSection}>
             <View style={styles.quickAccessSectionHeader}>
               <View style={styles.quickAccessTitleRow}>
                 <Text style={styles.modernSectionTitle}>Schnellzugriff</Text>
                 <View style={styles.quickAccessBadge}>
                   <Text style={styles.quickAccessBadgeText}>Neu</Text>
-                </View>
               </View>
-              <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
             </View>
+              <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
+          </View>
             
             <View style={styles.quickAccessGrid}>
               <TouchableOpacity 
@@ -524,7 +433,7 @@ export default function DashboardScreen() {
                   <Text style={styles.quickCardSubtitle}>Deine Statistiken</Text>
                 </LinearGradient>
               </TouchableOpacity>
-            </View>
+          </View>
           </View>
           
           {/* Section 2: Letzte Kapitel - Enhanced Card Layout */}
@@ -534,14 +443,14 @@ export default function DashboardScreen() {
                 <View style={styles.modernSectionTitleContainer}>
                   <View style={styles.sectionIconWrapper}>
                     <BookOpen size={26} color="#4A90E2" />
-                  </View>
+                </View>
                   <View style={styles.titleAndBadgeContainer}>
                     <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
                     <View style={styles.chapterCountBadge}>
                       <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
-                    </View>
                   </View>
                 </View>
+              </View>
                 <Text style={styles.modernStructuredSectionSubtitle}>Setze dein Lernen dort fort, wo du aufgehört hast</Text>
                 <View style={styles.sectionActions}>
                   <TouchableOpacity 
@@ -557,8 +466,8 @@ export default function DashboardScreen() {
                   >
                     <Text style={styles.filterButtonText}>Filter</Text>
                   </TouchableOpacity>
-                </View>
               </View>
+            </View>
               
               <View style={styles.chapterCardsGrid}>
                 {recentMedicalContents.slice(0, 4).map((content, index) => (
@@ -570,7 +479,6 @@ export default function DashboardScreen() {
                         // Scale down animation on press
                         Animated.spring(new Animated.Value(1), {
                           toValue: 0.97,
-                          duration: 150,
                           useNativeDriver: true,
                         }).start();
                       }}
@@ -578,7 +486,6 @@ export default function DashboardScreen() {
                         // Scale back up animation on release
                         Animated.spring(new Animated.Value(0.97), {
                           toValue: 1,
-                          duration: 150,
                           useNativeDriver: true,
                         }).start();
                       }}
@@ -590,16 +497,16 @@ export default function DashboardScreen() {
                       <View style={styles.modernChapterCardHeader}>
                         <View style={styles.modernChapterIconContainer}>
                           <BookOpen size={20} color="#4A90E2" />
-                        </View>
+                      </View>
                         <View style={styles.chapterStatusRow}>
                           <View style={styles.difficultyBadge}>
                             <Text style={styles.difficultyText}>FSP</Text>
-                          </View>
+                        </View>
                           <View style={styles.modernProgressBadge}>
                             <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
-                          </View>
                         </View>
                       </View>
+                    </View>
                       
                       <View style={styles.modernChapterCardContent}>
                         <View style={styles.chapterTitleRow}>
@@ -608,8 +515,8 @@ export default function DashboardScreen() {
                           </Text>
                           <View style={styles.chapterTypeIndicator}>
                             <Text style={styles.chapterTypeText}>Kapitel</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.chapterCategoryRow}>
                           <Text style={styles.modernChapterCategory}>
@@ -618,45 +525,45 @@ export default function DashboardScreen() {
                           <View style={styles.estimatedTimeContainer}>
                             <Clock size={14} color="#10B981" />
                             <Text style={styles.estimatedTimeText}>~15 min</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.chapterStatsRow}>
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>24</Text>
                             <Text style={styles.statLabel}>Fragen</Text>
-                          </View>
+                        </View>
                           <View style={styles.statDivider} />
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>{Math.floor(Math.random() * 5) + 3}</Text>
                             <Text style={styles.statLabel}>Versuche</Text>
-                          </View>
+                        </View>
                           <View style={styles.statDivider} />
                           <View style={styles.statItem}>
                             <Text style={styles.statNumber}>{content.lastViewed}</Text>
                             <Text style={styles.statLabel}>Zuletzt</Text>
-                          </View>
                         </View>
+                      </View>
                         
                         <View style={styles.modernProgressContainer}>
                           <View style={styles.progressLabelRow}>
                             <Text style={styles.progressLabel}>Fortschritt</Text>
                             <Text style={styles.progressPercentage}>{Math.floor(Math.random() * 100)}%</Text>
-                          </View>
+                        </View>
                           <View style={styles.modernProgressBar}>
                             <View style={[styles.modernProgressFill, { width: `${Math.random() * 100}%` }]} />
                             <View style={styles.progressGlow} />
-                          </View>
                         </View>
                       </View>
+                    </View>
                       
                       <View style={styles.modernChapterCardFooter}>
                         <View style={styles.footerLeftSection}>
                           <View style={styles.lastActivityIndicator}>
                             <View style={styles.activityDot} />
                             <Text style={styles.lastActivityText}>Vor 2 Stunden</Text>
-                          </View>
                         </View>
+                      </View>
                         <View style={styles.footerRightSection}>
                           <TouchableOpacity 
                             style={styles.modernContinueButton}
@@ -665,19 +572,19 @@ export default function DashboardScreen() {
                             <Text style={styles.modernContinueText}>Fortsetzen</Text>
                             <ArrowRight size={16} color="#4A90E2" />
                           </TouchableOpacity>
-                        </View>
                       </View>
+                    </View>
                     </LinearGradient>
                     </TouchableOpacity>
                   </Animated.View>
                 ))}
-              </View>
+            </View>
               
               {recentMedicalContents.length === 0 && (
                 <View style={styles.noChaptersContainer}>
                   <View style={styles.noChaptersIcon}>
                     <BookOpen size={32} color={MEDICAL_COLORS.textSecondary} opacity={0.5} />
-                  </View>
+                </View>
                   <Text style={styles.noChaptersTitle}>Noch keine Kapitel begonnen</Text>
                   <Text style={styles.noChaptersSubtitle}>Starte dein erstes Kapitel in der Bibliothek</Text>
                   <TouchableOpacity 
@@ -686,19 +593,39 @@ export default function DashboardScreen() {
                   >
                     <Text style={styles.startLearningText}>Jetzt starten</Text>
                   </TouchableOpacity>
-                </View>
+              </View>
               )}
-            </View>
+          </View>
           )}
+          </View>
         </View>
-
-        {/* Section 3: Tipp des Tages - Enhanced Card Layout */}
-        <View style={styles.structuredSection}>
+        
+        {/* Section 2: Daily Tip */}
+        <View style={styles.section}>
+          {/* Hero for Section 2 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Tipp des Tages
+                  </Text>
+              </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Erweitere dein medizinisches Wissen täglich
+                  </Text>
+              </View>
+            </View>
+          </View>
+            
+          {/* Section content */}
+            <View style={styles.sectionContentInner}>
+            <View style={styles.structuredSection}>
           <View style={styles.structuredSectionHeader}>
             <View style={styles.sectionTitleContainer}>
               <Lightbulb size={24} color="#F59E0B" />
               <Text style={styles.structuredSectionTitle}>Tipp des Tages</Text>
-            </View>
+          </View>
             <Text style={styles.structuredSectionSubtitle}>Erweitere dein medizinisches Wissen täglich</Text>
           </View>
           
@@ -712,8 +639,8 @@ export default function DashboardScreen() {
               <View style={styles.tipCardIcon}>
                 <View style={styles.tipIconBg}>
                   <Lightbulb size={28} color="white" />
-                </View>
               </View>
+            </View>
               
               {dailyTip ? (
                 <>
@@ -728,7 +655,7 @@ export default function DashboardScreen() {
                   {dailyTip.category && (
                     <View style={styles.categoryBadge}>
                       <Text style={styles.categoryText}>{dailyTip.category}</Text>
-                    </View>
+                  </View>
                   )}
                 </>
               ) : (
@@ -750,32 +677,54 @@ export default function DashboardScreen() {
                     outputRange: [0, -8]
                   })
                 }],
-                opacity: isScrolling ? 0.4 : 1
+                opacity: 1
               }
             ]}
           >
             <TouchableOpacity 
-              onPress={() => scrollToSection(3)}
               style={styles.sectionArrowTouchable}
             >
               <View style={styles.sectionArrowContainer}>
                 <ChevronDown size={18} color={MEDICAL_COLORS.primary} />
                 <View style={styles.arrowPulse} />
-              </View>
+            </View>
             </TouchableOpacity>
           </Animated.View>
-        </View>
+          </View>
+          </View>
 
-        {/* Section 4: Frage des Tages - Enhanced Card Layout */}
-        {dailyQuestion && (
-          <View style={styles.structuredSection}>
+        </View>
+        
+        {/* Section 3: Daily Question */}
+        <View style={styles.section}>
+          
+          {/* Hero for Section 3 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Frage des Tages
+                  </Text>
+              </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Teste dein Wissen mit einer täglichen Prüfungsfrage
+                  </Text>
+              </View>
+            </View>
+          </View>
+            
+          {/* Section content */}
+            <View style={styles.sectionContentInner}>
+            {dailyQuestion && (
+              <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
               <View style={styles.sectionTitleContainer}>
                 <HelpCircle size={24} color="#8B5CF6" />
                 <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
-              </View>
-              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
             </View>
+              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
+          </View>
             
             <View style={styles.questionCard}>
               <LinearGradient
@@ -787,12 +736,12 @@ export default function DashboardScreen() {
                 <View style={styles.questionCardHeader}>
                   <View style={styles.questionIconBg}>
                     <HelpCircle size={28} color="white" />
-                  </View>
+                </View>
                   <View style={styles.questionHeaderInfo}>
                     <Text style={styles.questionCardTitle}>Prüfungssimulation</Text>
                     <Text style={styles.questionCardSubtitle}>Bereite dich auf die echte Prüfung vor</Text>
-                  </View>
                 </View>
+              </View>
                 
                 <Text style={styles.questionText}>{dailyQuestion.question}</Text>
                 
@@ -834,32 +783,32 @@ export default function DashboardScreen() {
                           {showResult && isSelected && !isCorrect && (
                             <XCircle size={20} color={MEDICAL_COLORS.danger} />
                           )}
-                        </View>
+                      </View>
                       </TouchableOpacity>
                     );
                   })}
-                </View>
+              </View>
                 
                 {showAnswer && dailyQuestion.explanation && (
                   <View style={styles.explanationContainer}>
                     <Text style={styles.explanationTitle}>Erklärung:</Text>
                     <Text style={styles.explanationText}>{dailyQuestion.explanation}</Text>
-                  </View>
+                </View>
                 )}
                 
                 {dailyQuestion.category && (
                   <View style={styles.categoryBadge}>
                     <Text style={styles.categoryText}>{dailyQuestion.category}</Text>
-                  </View>
+                </View>
                 )}
               </LinearGradient>
-            </View>
+          </View>
             
             {/* Section completed indicator */}
             <View style={styles.sectionCompleteBadge}>
               <CheckCircle size={16} color={MEDICAL_COLORS.success} />
               <Text style={styles.sectionCompleteText}>Sektion abgeschlossen</Text>
-            </View>
+          </View>
           </View>
         )}
 
@@ -871,82 +820,110 @@ export default function DashboardScreen() {
             </Text>
           </View>
         )}
-
-        {/* Section 5: Medical Disclaimer - Enhanced Card Layout */}
-        <View style={styles.structuredSection}>
-          <View style={styles.disclaimerCard}>
-            <LinearGradient
-              colors={['#F0F9FF', '#E0F2FE', '#0EA5E9']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.disclaimerCardGradient}
-            >
-              <View style={styles.disclaimerCardHeader}>
-                <View style={styles.disclaimerIconBg}>
-                  <Text style={styles.disclaimerEmoji}>⚕️</Text>
-                </View>
-                <Text style={styles.disclaimerCardTitle}>Medizinischer Haftungsausschluss</Text>
-              </View>
-              <Text style={styles.disclaimerCardText}>
-                Diese Plattform stellt Lehrmaterialien ausschließlich für approbierte medizinische Fachkräfte zur Verfügung. Die Inhalte dienen der Prüfungsvorbereitung und stellen keine medizinische Beratung dar.
-              </Text>
-            </LinearGradient>
           </View>
+
         </View>
         
-        <View style={styles.bottomPadding} />
+        {/* Section 4: Recent Chapters */}
+        <View style={styles.section}>
+          
+          {/* Hero for Section 4 */}
+            <View style={styles.sectionHero}>
+              <View style={styles.heroContent}>
+                <View style={styles.heroTitleContainer}>
+                  <Text style={styles.splitScreenHeroTitle}>
+                    Letzte Kapitel
+                  </Text>
+              </View>
+                <View style={styles.heroSubtitleContainer}>
+                  <Text style={styles.splitScreenHeroSubtitle}>
+                    Setze dort fort, wo du aufgehört hast
+                  </Text>
+              </View>
+                <View style={styles.heroButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.primaryButton}
+                    onPress={() => router.push('/(tabs)/bibliothek')}
+                  >
+                    <Text style={styles.primaryButtonText}>Alle Kapitel</Text>
+                    <ArrowRight size={18} color="white" style={styles.buttonIcon} />
+                  </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+            
+          {/* Section content */}
+            <View style={styles.sectionContentInner}>
+            {recentMedicalContents.length > 0 && (
+              <View style={styles.letzteKapitelSection}>
+                <View style={styles.modernStructuredSectionHeader}>
+                  <View style={styles.modernSectionTitleContainer}>
+                    <View style={styles.sectionIconWrapper}>
+                      <BookOpen size={26} color="#4A90E2" />
+                  </View>
+                    <View style={styles.titleAndBadgeContainer}>
+                      <Text style={styles.modernStructuredSectionTitle}>Letzte Kapitel</Text>
+                      <View style={styles.chapterCountBadge}>
+                        <Text style={styles.chapterCountText}>{recentMedicalContents.length}</Text>
+                    </View>
+                  </View>
+                </View>
+                  <Text style={styles.modernStructuredSectionSubtitle}>Setze dort fort, wo du aufgehört hast</Text>
+              </View>
+                
+                <View style={styles.modernChapterCardsContainer}>
+                  {recentMedicalContents.map((content, index) => (
+                    <View key={content.id} style={styles.modernChapterCard}>
+                      <LinearGradient
+                        colors={['#ffffff', '#f8fafc', '#e2e8f0']}
+                        style={styles.modernChapterCardGradient}
+                      >
+                        <View style={styles.modernChapterCardHeader}>
+                          <View style={styles.modernChapterIconContainer}>
+                            <BookOpen size={20} color="#4A90E2" />
+                        </View>
+                          <View style={styles.chapterStatusRow}>
+                            <View style={styles.difficultyBadge}>
+                              <Text style={styles.difficultyText}>FSP</Text>
+                          </View>
+                            <View style={styles.modernProgressBadge}>
+                              <Text style={styles.modernProgressText}>{Math.floor(Math.random() * 100)}%</Text>
+                          </View>
+                        </View>
+                      </View>
+                        
+                        <View style={styles.modernChapterCardBody}>
+                          <Text style={styles.modernChapterTitle}>{content.title}</Text>
+                          <View style={styles.modernChapterMetaContainer}>
+                            <View style={styles.modernChapterMeta}>
+                              <Clock size={14} color="#64748B" />
+                              <Text style={styles.modernChapterMetaText}>{content.lastViewed}</Text>
+                          </View>
+                            {content.category && (
+                              <View style={styles.modernChapterCategory}>
+                                <Text style={styles.modernChapterCategoryText}>{content.category}</Text>
+                            </View>
+                            )}
+                        </View>
+                      </View>
+                        
+                        <View style={styles.modernChapterCardFooter}>
+                          <TouchableOpacity style={styles.modernChapterButton}>
+                            <Text style={styles.modernChapterButtonText}>Fortsetzen</Text>
+                            <ArrowRight size={16} color="#4A90E2" />
+                          </TouchableOpacity>
+                      </View>
+                      </LinearGradient>
+                  </View>
+                  ))}
+              </View>
+            </View>
+            )}
+          </View>
+
+        </View>
       </ScrollView>
 
-      {/* Enhanced Section Indicators with Progress */}
-      <View style={styles.sectionIndicators}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <Animated.View 
-              style={[
-                styles.progressFill,
-                {
-                  height: `${scrollProgress * 100}%`,
-                  opacity: isScrolling ? 0.8 : 0.4
-                }
-              ]} 
-            />
-          </View>
-        </View>
-        
-        {/* Section Dots */}
-        <View style={styles.dotsContainer}>
-          {sectionPositions.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => scrollToSection(index)}
-              onPressIn={() => {
-                Animated.spring(scaleAnim, {
-                  toValue: 1.3,
-                  useNativeDriver: true,
-                }).start();
-              }}
-              onPressOut={() => {
-                Animated.spring(scaleAnim, {
-                  toValue: 1,
-                  useNativeDriver: true,
-                }).start();
-              }}
-            >
-              <Animated.View
-                style={[
-                  styles.sectionDot,
-                  currentSection === index && styles.activeSectionDot,
-                  { 
-                    transform: [{ scale: currentSection === index ? 1.2 : scaleAnim }],
-                    opacity: isScrolling && currentSection !== index ? 0.6 : 1
-                  }
-                ]}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1001,6 +978,81 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 8,
     borderRadius: 8,
+  },
+  
+  // Horizontal scrolling styles
+  navigationArrow: {
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -25 }],
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  leftArrow: {
+    left: 20,
+  },
+  rightArrow: {
+    right: 20,
+  },
+  arrowGradient: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(67, 56, 202, 0.3)',
+    marginHorizontal: 4,
+  },
+  activeIndicator: {
+    backgroundColor: '#4338ca',
+    width: 12,
+  },
+  horizontalScroll: {
+    flex: 1,
+  },
+  horizontalScrollContent: {
+    flexDirection: 'row',
+  },
+  section: {
+    width: screenWidth,
+    flex: 1,
+  },
+  sectionContent: {
+    flex: 1,
+  },
+  sectionContentInner: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingBottom: 20,
+  },
+  sectionHero: {
+    height: 120,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   welcomeSection: {
     padding: 20,
@@ -1305,15 +1357,28 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   
-  // Modern Split-Screen Hero Section Styles
-  modernHeroSection: {
+  // Simplified Hero Section Styles
+  simplifiedHeroSection: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 0,
-    marginBottom: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+    minHeight: 400,
+  },
+  heroContainer: {
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%',
+    minHeight: 350,
+    justifyContent: 'center',
+  },
+  heroContent: {
+    paddingVertical: 24,
+    minHeight: 300,
+    justifyContent: 'space-evenly',
   },
   heroSplitContainer: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    minHeight: screenWidth > 768 ? 312 : 420,
+    minHeight: screenWidth > 768 ? 320 : 480,
     alignItems: screenWidth > 768 ? 'stretch' : 'center',
   },
   heroLeftSide: {
@@ -1331,6 +1396,7 @@ const styles = StyleSheet.create({
   },
   heroContentGradient: {
     flex: 1,
+    flexDirection: 'column',
     padding: screenWidth > 768 ? 40 : 24,
     paddingTop: screenWidth > 768 ? 40 : 32,
     paddingBottom: screenWidth > 768 ? 40 : 28,
@@ -1338,12 +1404,75 @@ const styles = StyleSheet.create({
     alignItems: screenWidth > 768 ? 'flex-start' : 'center',
   },
   heroTextContent: {
-    maxWidth: screenWidth > 768 ? 480 : '100%',
+    maxWidth: '100%',
     width: '100%',
-    alignItems: screenWidth > 768 ? 'flex-start' : 'center',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
-    paddingHorizontal: screenWidth > 768 ? 0 : 16,
-    gap: screenWidth > 768 ? 8 : 12,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  heroTitleContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 24 : 20,
+    flexDirection: 'column',
+    paddingVertical: 4,
+  },
+  heroSubtitleContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 20 : 18,
+    flexDirection: 'column',
+    paddingVertical: 4,
+  },
+  heroDescriptionContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 20 : 18,
+    flexDirection: 'column',
+    paddingVertical: 4,
+  },
+  heroTaglineContainer: {
+    width: '100%',
+    marginBottom: screenWidth > 768 ? 24 : 20,
+    flexDirection: 'column',
+    paddingVertical: 4,
+  },
+  heroButtonsContainer: {
+    flexDirection: screenWidth > 768 ? 'row' : 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: 'rgba(74, 144, 226, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+  },
+  secondaryButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -1445,57 +1574,59 @@ const styles = StyleSheet.create({
   
   // Enhanced Split-Screen Hero Text Styles with Mobile Optimization
   splitScreenHeroTitle: {
-    fontSize: screenWidth > 768 ? 38 : 28,
+    fontSize: screenWidth > 768 ? 36 : 28,
     fontFamily: 'Inter-Bold',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: screenWidth > 768 ? 1.25 : 1.35,
-    marginBottom: screenWidth > 768 ? 18 : 14,
+    lineHeight: screenWidth > 768 ? 1.5 : 1.6,
     letterSpacing: -0.8,
     fontWeight: '800',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
+    paddingVertical: 4,
   },
   splitScreenHeroSubtitle: {
-    fontSize: screenWidth > 768 ? 22 : 19,
+    fontSize: screenWidth > 768 ? 20 : 18,
     fontFamily: 'Inter-SemiBold',
     color: MEDICAL_COLORS.primary,
-    lineHeight: screenWidth > 768 ? 1.35 : 1.4,
-    marginBottom: screenWidth > 768 ? 22 : 18,
+    lineHeight: screenWidth > 768 ? 1.6 : 1.7,
     letterSpacing: -0.4,
     fontWeight: '600',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
+    paddingVertical: 4,
   },
   splitScreenHeroDescription: {
     fontSize: screenWidth > 768 ? 16 : 15,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.textSecondary,
-    lineHeight: 1.65,
-    marginBottom: screenWidth > 768 ? 16 : 14,
+    lineHeight: screenWidth > 768 ? 1.8 : 1.9,
     opacity: 0.85,
     fontWeight: '400',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
+    paddingVertical: 4,
   },
   splitScreenHeroTagline: {
     fontSize: screenWidth > 768 ? 17 : 16,
     fontFamily: 'Inter-Medium',
     color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 1.5,
-    marginBottom: screenWidth > 768 ? 32 : 28,
+    lineHeight: screenWidth > 768 ? 1.7 : 1.8,
     fontStyle: 'italic',
     opacity: 0.9,
     fontWeight: '500',
-    textAlign: screenWidth > 768 ? 'left' : 'center',
+    textAlign: 'center',
     width: '100%',
+    paddingVertical: 4,
   },
   splitScreenHeroButtons: {
     flexDirection: screenWidth > 768 ? 'row' : 'column',
-    gap: screenWidth > 768 ? 16 : 12,
     flexWrap: 'wrap',
     alignItems: screenWidth > 768 ? 'flex-start' : 'center',
     justifyContent: screenWidth > 768 ? 'flex-start' : 'center',
     width: '100%',
+    marginTop: screenWidth > 768 ? 4 : 8,
   },
   primarySplitButton: {
     backgroundColor: '#4A90E2',
@@ -1515,6 +1646,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     minHeight: 56,
+    marginRight: screenWidth > 768 ? 12 : 0,
+    marginBottom: screenWidth > 768 ? 0 : 10,
   },
   primarySplitButtonText: {
     color: 'white',
@@ -1696,7 +1829,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   quickAccessSection: {
-    marginBottom: screenWidth > 768 ? 60 : 48,
+    marginBottom: 20,
     paddingHorizontal: screenWidth > 768 ? 0 : 4,
   },
   modernSectionTitle: {
@@ -1884,18 +2017,6 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-20deg' }],
   },
   
-  // Simple scroll arrow
-  scrollArrow: {
-    position: 'absolute',
-    top: '50%',
-    right: 20,
-    transform: [{ translateY: -16 }],
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
   
   // Enhanced section styles
   sectionContainer: {
@@ -1929,82 +2050,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   
-  // Enhanced Section Indicators with Premium Design
-  sectionIndicators: {
-    position: 'absolute',
-    right: 20,
-    top: '50%',
-    transform: [{ translateY: -50 }],
-    zIndex: 1000,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    borderRadius: 28,
-    paddingVertical: 24,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(74, 144, 226, 0.25)',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 16,
-  },
-  
-  progressContainer: {
-    marginRight: 12,
-  },
-  
-  progressTrack: {
-    width: 4,
-    height: 90,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(74, 144, 226, 0.2)',
-  },
-  
-  progressFill: {
-    width: '100%',
-    backgroundColor: MEDICAL_COLORS.primary,
-    borderRadius: 3,
-    shadowColor: MEDICAL_COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-  },
-  
-  dotsContainer: {
-    gap: 16,
-  },
-  
-  sectionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderWidth: 2,
-    borderColor: 'rgba(74, 144, 226, 0.5)',
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  
-  activeSectionDot: {
-    backgroundColor: MEDICAL_COLORS.primary,
-    borderColor: MEDICAL_COLORS.primary,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    shadowColor: MEDICAL_COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
   
   // Enhanced Arrow Styles
   arrowTouchable: {
@@ -2068,10 +2113,10 @@ const styles = StyleSheet.create({
 
   // Premium Structured Content Section Styles with Professional Design
   structuredSection: {
-    marginHorizontal: screenWidth > 768 ? 32 : 24,
-    marginBottom: screenWidth > 768 ? 56 : 44,
-    paddingTop: screenWidth > 768 ? 12 : 8,
-    paddingHorizontal: screenWidth > 768 ? 8 : 4,
+    marginHorizontal: 12,
+    marginBottom: 20,
+    paddingTop: 8,
+    paddingHorizontal: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 24,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
@@ -2305,6 +2350,70 @@ const styles = StyleSheet.create({
   },
 
   // Modern Chapter Card Styles for Enhanced Scannability
+  modernChapterCardsContainer: {
+    marginTop: 16,
+    gap: 16,
+  },
+  modernChapterCard: {
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 8,
+  },
+  modernChapterCardGradient: {
+    borderRadius: 16,
+    overflow: 'hidden' as const,
+  },
+  modernChapterCardBody: {
+    padding: 20,
+  },
+  modernChapterTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1f2937',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  modernChapterMetaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  modernChapterMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  modernChapterMetaText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+  },
+  modernChapterCategory: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  modernChapterCategoryText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Medium',
+    color: '#0891b2',
+  },
+  modernChapterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modernChapterButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#4A90E2',
+  },
   modernChapterCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2384,16 +2493,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 4,
   },
-  modernChapterTitle: {
-    fontSize: screenWidth > 768 ? 18 : 16,
-    fontFamily: 'Inter-SemiBold',
-    color: MEDICAL_COLORS.textPrimary,
-    lineHeight: 1.35,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    flex: 1,
-    marginRight: 12,
-  },
   chapterTypeIndicator: {
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
     paddingHorizontal: 8,
@@ -2416,13 +2515,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  modernChapterCategory: {
-    fontSize: screenWidth > 768 ? 15 : 14,
-    fontFamily: 'Inter-Medium',
-    color: '#4A90E2',
-    fontWeight: '500',
-    letterSpacing: -0.1,
   },
   estimatedTimeContainer: {
     flexDirection: 'row',
@@ -2450,22 +2542,6 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
     flex: 1,
-  },
-  statNumber: {
-    fontSize: screenWidth > 768 ? 16 : 15,
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.textPrimary,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter-Medium',
-    color: MEDICAL_COLORS.textSecondary,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    opacity: 0.8,
   },
   statDivider: {
     width: 1,
