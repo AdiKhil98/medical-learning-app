@@ -723,7 +723,6 @@ export default function DashboardScreen() {
                 <HelpCircle size={24} color="#8B5CF6" />
                 <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
             </View>
-              <Text style={styles.structuredSectionSubtitle}>Teste dein Wissen mit einer täglichen Prüfungsfrage</Text>
           </View>
             
             <View style={styles.questionCard}>
@@ -2943,6 +2942,7 @@ const styles = StyleSheet.create({
   },
   questionHeaderInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   questionCardTitle: {
     fontSize: screenWidth > 768 ? 22 : 20,
