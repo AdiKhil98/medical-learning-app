@@ -70,6 +70,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
   ];
 
   const handleNext = () => {
+    console.log('WelcomeFlow: handleNext called, currentStep:', currentStep);
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -78,6 +79,10 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
   };
 
   const handleComplete = () => {
+    console.log('WelcomeFlow: handleComplete called');
+    console.log('Professional verified:', professionalVerified);
+    console.log('Disclaimer accepted:', disclaimerAccepted);
+    
     if (!professionalVerified) {
       Alert.alert(
         'Bestätigung erforderlich',
@@ -96,7 +101,13 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       return;
     }
 
+    console.log('WelcomeFlow: Calling onComplete');
     onComplete();
+  };
+
+  const handleSkip = () => {
+    console.log('WelcomeFlow: Skip button pressed');
+    onDismiss();
   };
 
   const currentStepData = steps[currentStep];
@@ -118,7 +129,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
         <View style={styles.modernHeader}>
           <TouchableOpacity
             style={styles.modernSkipButton}
-            onPress={onDismiss}
+            onPress={handleSkip}
           >
             <Text style={styles.skipButtonText}>Überspringen</Text>
           </TouchableOpacity>

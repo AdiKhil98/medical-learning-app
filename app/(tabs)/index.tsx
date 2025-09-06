@@ -35,6 +35,9 @@ export default function DashboardScreen() {
   const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
   const { showWelcome: showWelcomeFlow, loading: onboardingLoading, completeOnboarding } = useOnboarding();
   
+  // Debug: Add manual trigger for welcome flow
+  const [debugShowWelcome, setDebugShowWelcome] = useState(false);
+  
   // Local state
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -194,6 +197,12 @@ export default function DashboardScreen() {
             <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
           </TouchableOpacity>
           <Logo size="medium" variant="medical" textColor="white" animated={true} />
+          <TouchableOpacity
+            style={{ padding: 8 }}
+            onPress={() => setDebugShowWelcome(true)}
+          >
+            <Text style={{ color: 'white', fontSize: 12 }}>Test Welcome</Text>
+          </TouchableOpacity>
           <UserAvatar size="medium" />
         </View>
       </LinearGradient>
@@ -285,9 +294,15 @@ export default function DashboardScreen() {
       
       {/* Welcome Flow for new users */}
       <WelcomeFlow
-        visible={showWelcomeFlow}
-        onComplete={handleOnboardingComplete}
-        onDismiss={() => setShowWelcomeFlow(false)}
+        visible={showWelcomeFlow || debugShowWelcome}
+        onComplete={() => {
+          handleOnboardingComplete();
+          setDebugShowWelcome(false);
+        }}
+        onDismiss={() => {
+          completeOnboarding();
+          setDebugShowWelcome(false);
+        }}
       />
     </SafeAreaView>
   );
