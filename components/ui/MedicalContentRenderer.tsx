@@ -434,10 +434,14 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Clean rendering with working functionality
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <LinearGradient
+      colors={['#667eea', '#764ba2']}
+      style={styles.appContainer}
+    >
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header - moved to top and enhanced */}
       <LinearGradient
-        colors={isDarkMode ? ['#1F2937', '#111827'] : ['#66BB6A', '#81C784']}
+        colors={isDarkMode ? ['#1F2937', '#111827'] : ['#667eea', '#764ba2']}
         style={styles.header}
       >
         <View style={styles.headerContent}>
@@ -455,11 +459,15 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       <View style={styles.contentContainer}>
         {medicalSections.map((section) => renderSection(section))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  appContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -477,7 +485,7 @@ const styles = StyleSheet.create({
     padding: 30,
     borderRadius: 20,
     margin: 16,
-    shadowColor: '#4CAF50',
+    shadowColor: '#667eea',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -567,28 +575,29 @@ const styles = StyleSheet.create({
   },
   // Content Styles
   contentContainer: {
-    padding: 16,
+    padding: 20,
     gap: 20,
   },
   sectionCard: {
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: 20,
     borderLeftWidth: 5,
-    borderLeftColor: '#66BB6A',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    borderLeftColor: '#667eea',
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
     overflow: 'hidden',
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 25,
-    borderBottomWidth: 2,
-    borderBottomColor: '#e8f5e9',
+    borderBottomWidth: 3,
+    borderBottomColor: '#f0f0f0',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
@@ -603,14 +612,14 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
   },
   sectionContent: {
-    paddingHorizontal: 25,
-    paddingBottom: 25,
-    paddingTop: 20,
+    paddingHorizontal: 30,
+    paddingBottom: 30,
+    paddingTop: 25,
   },
   contentText: {
     fontSize: 16,
-    lineHeight: 26,
-    color: '#4a5568',
+    lineHeight: 28,
+    color: '#4a4a4a',
     textAlign: 'justify',
   },
   // Medical Highlighting Styles
