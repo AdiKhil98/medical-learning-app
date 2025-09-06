@@ -25,6 +25,7 @@ import {
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { useDailyContent } from '@/hooks/useDailyContent';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -38,6 +39,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [showQuestionAnswer, setShowQuestionAnswer] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Connect to Supabase data
+  const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
 
   const sections = [
     'Hero',
@@ -75,20 +79,20 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     setShowQuestionAnswer(true);
   };
 
-  const sampleTip = {
+  // Use real data from Supabase or fallback to sample data
+  const tipData = dailyTip || {
     title: "Effektive Lernstrategie",
     content: "Die Pomodoro-Technik kann deine Lerneffizienz um bis zu 40% steigern. Arbeite 25 Minuten konzentriert, dann mache 5 Minuten Pause.",
     category: "Lerntechnik"
   };
 
-  const sampleQuestion = {
+  // Use real question data from Supabase or fallback to sample data
+  const questionData = dailyQuestion || {
     question: "Welche Lernmethode ist am effektivsten für das Langzeitgedächtnis?",
-    options: {
-      a: "Mehrmaliges Lesen",
-      b: "Aktive Wiederholung",
-      c: "Passives Zuhören"
-    },
-    correctAnswer: "b",
+    choice_a: "Mehrmaliges Lesen",
+    choice_b: "Aktive Wiederholung", 
+    choice_c: "Passives Zuhören",
+    correct_choice: "b",
     explanation: "Aktive Wiederholung aktiviert mehrere Gehirnregionen und festigt das Wissen nachhaltig."
   };
 
@@ -264,27 +268,36 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         <View style={styles.section}>
           <View style={styles.tipSection}>
             <Text style={styles.sectionTitle}>Tipp des Tages</Text>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
-              style={styles.tipCard}
-            >
-              <View style={styles.tipHeader}>
-                <LinearGradient
-                  colors={['#ffecd2', '#fcb69f']}
-                  style={styles.tipIconBg}
-                >
-                  <Lightbulb size={24} color="#f39c12" />
-                </LinearGradient>
-                <View style={styles.tipHeaderText}>
-                  <Text style={styles.tipTitle}>{sampleTip.title}</Text>
-                  <Text style={styles.tipCategory}>{sampleTip.category}</Text>
+            {contentLoading ? (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                style={styles.tipCard}
+              >
+                <Text style={styles.loadingText}>Lade Tipp...</Text>
+              </LinearGradient>
+            ) : (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                style={styles.tipCard}
+              >
+                <View style={styles.tipHeader}>
+                  <LinearGradient
+                    colors={['#ffecd2', '#fcb69f']}
+                    style={styles.tipIconBg}
+                  >
+                    <Lightbulb size={24} color="#f39c12" />
+                  </LinearGradient>
+                  <View style={styles.tipHeaderText}>
+                    <Text style={styles.tipTitle}>{tipData.title}</Text>
+                    <Text style={styles.tipCategory}>{tipData.category || 'Lerntechnik'}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.tipContent}>{sampleTip.content}</Text>
-              <TouchableOpacity style={styles.tipButton} activeOpacity={0.8}>
-                <Text style={styles.tipButtonText}>Mehr erfahren</Text>
-              </TouchableOpacity>
-            </LinearGradient>
+                <Text style={styles.tipContent}>{tipData.content}</Text>
+                <TouchableOpacity style={styles.tipButton} activeOpacity={0.8}>
+                  <Text style={styles.tipButtonText}>Mehr erfahren</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            )}
           </View>
         </View>
 
@@ -292,64 +305,78 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         <View style={styles.section}>
           <View style={styles.questionSection}>
             <Text style={styles.sectionTitle}>Frage des Tages</Text>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
-              style={styles.questionCard}
-            >
-              <View style={styles.questionHeader}>
-                <HelpCircle size={28} color="#6366f1" />
-                <Text style={styles.questionTitle}>Wissensfrage</Text>
-              </View>
-              <Text style={styles.questionText}>{sampleQuestion.question}</Text>
-              
-              <View style={styles.questionOptions}>
-                {Object.entries(sampleQuestion.options).map(([key, value]) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.optionButton,
-                      selectedAnswer === key && styles.selectedOption,
-                      showQuestionAnswer && key === sampleQuestion.correctAnswer && styles.correctOption,
-                      showQuestionAnswer && selectedAnswer === key && key !== sampleQuestion.correctAnswer && styles.wrongOption
-                    ]}
-                    onPress={() => handleAnswerSelect(key)}
-                    disabled={showQuestionAnswer}
-                  >
-                    <View style={styles.optionContent}>
-                      <Text style={[
-                        styles.optionLetter,
-                        selectedAnswer === key && styles.selectedOptionText,
-                        showQuestionAnswer && key === sampleQuestion.correctAnswer && styles.correctOptionText,
-                        showQuestionAnswer && selectedAnswer === key && key !== sampleQuestion.correctAnswer && styles.wrongOptionText
-                      ]}>
-                        {key.toUpperCase()}.
-                      </Text>
-                      <Text style={[
-                        styles.optionText,
-                        selectedAnswer === key && styles.selectedOptionText,
-                        showQuestionAnswer && key === sampleQuestion.correctAnswer && styles.correctOptionText,
-                        showQuestionAnswer && selectedAnswer === key && key !== sampleQuestion.correctAnswer && styles.wrongOptionText
-                      ]}>
-                        {value}
-                      </Text>
-                      {showQuestionAnswer && key === sampleQuestion.correctAnswer && (
-                        <CheckCircle size={20} color="#10b981" />
-                      )}
-                      {showQuestionAnswer && selectedAnswer === key && key !== sampleQuestion.correctAnswer && (
-                        <XCircle size={20} color="#ef4444" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {showQuestionAnswer && (
-                <View style={styles.explanationContainer}>
-                  <Text style={styles.explanationTitle}>Erklärung:</Text>
-                  <Text style={styles.explanationText}>{sampleQuestion.explanation}</Text>
+            {contentLoading ? (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                style={styles.questionCard}
+              >
+                <Text style={styles.loadingText}>Lade Frage...</Text>
+              </LinearGradient>
+            ) : (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                style={styles.questionCard}
+              >
+                <View style={styles.questionHeader}>
+                  <HelpCircle size={28} color="#6366f1" />
+                  <Text style={styles.questionTitle}>Wissensfrage</Text>
                 </View>
-              )}
-            </LinearGradient>
+                <Text style={styles.questionText}>{questionData.question}</Text>
+                
+                <View style={styles.questionOptions}>
+                  {['a', 'b', 'c'].map((key) => {
+                    const optionText = questionData[`choice_${key}`] || questionData[`option_${key}`] || '';
+                    if (!optionText) return null;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={key}
+                        style={[
+                          styles.optionButton,
+                          selectedAnswer === key && styles.selectedOption,
+                          showQuestionAnswer && key === questionData.correct_choice?.toLowerCase() && styles.correctOption,
+                          showQuestionAnswer && selectedAnswer === key && key !== questionData.correct_choice?.toLowerCase() && styles.wrongOption
+                        ]}
+                        onPress={() => handleAnswerSelect(key)}
+                        disabled={showQuestionAnswer}
+                      >
+                        <View style={styles.optionContent}>
+                          <Text style={[
+                            styles.optionLetter,
+                            selectedAnswer === key && styles.selectedOptionText,
+                            showQuestionAnswer && key === questionData.correct_choice?.toLowerCase() && styles.correctOptionText,
+                            showQuestionAnswer && selectedAnswer === key && key !== questionData.correct_choice?.toLowerCase() && styles.wrongOptionText
+                          ]}>
+                            {key.toUpperCase()}.
+                          </Text>
+                          <Text style={[
+                            styles.optionText,
+                            selectedAnswer === key && styles.selectedOptionText,
+                            showQuestionAnswer && key === questionData.correct_choice?.toLowerCase() && styles.correctOptionText,
+                            showQuestionAnswer && selectedAnswer === key && key !== questionData.correct_choice?.toLowerCase() && styles.wrongOptionText
+                          ]}>
+                            {optionText}
+                          </Text>
+                          {showQuestionAnswer && key === questionData.correct_choice?.toLowerCase() && (
+                            <CheckCircle size={20} color="#10b981" />
+                          )}
+                          {showQuestionAnswer && selectedAnswer === key && key !== questionData.correct_choice?.toLowerCase() && (
+                            <XCircle size={20} color="#ef4444" />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {showQuestionAnswer && questionData.explanation && (
+                  <View style={styles.explanationContainer}>
+                    <Text style={styles.explanationTitle}>Erklärung:</Text>
+                    <Text style={styles.explanationText}>{questionData.explanation}</Text>
+                  </View>
+                )}
+              </LinearGradient>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -458,6 +485,12 @@ const styles = {
     padding: 8,
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center' as const,
+    padding: 20,
   },
   // Hero Section Styles
   heroSection: {
