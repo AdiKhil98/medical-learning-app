@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
@@ -244,20 +244,29 @@ const getIconComponent = (iconName: string) => {
 };
 
 
-// Simplified Folder Card Component using the reusable Card
-const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
-  const { icon, gradient, hoverGradient } = getItemDetails(childItem.title, childItem.type, parentSlug);
-  const IconComponent = getIconComponent(icon);
-  const hasContent = childItem.content_improved && 
-                    (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
+// Optimized Folder Card Component with memoized calculations
+const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
+  // Memoize expensive calculations
+  const itemDetails = useMemo(() => {
+    return getItemDetails(childItem.title, childItem.type, parentSlug);
+  }, [childItem.title, childItem.type, parentSlug]);
+  
+  const IconComponent = useMemo(() => {
+    return getIconComponent(itemDetails.icon);
+  }, [itemDetails.icon]);
+  
+  const hasContent = useMemo(() => {
+    return childItem.content_improved && 
+           (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
+  }, [childItem.content_improved]);
 
   return (
     <View style={{ width: CARD_WIDTH }}>
       <Card
         title={childItem.title}
         icon={IconComponent}
-        gradient={gradient}
-        hoverGradient={hoverGradient}
+        gradient={itemDetails.gradient}
+        hoverGradient={itemDetails.hoverGradient}
         hasContent={hasContent}
         onPress={onPress}
         size="medium"
@@ -265,7 +274,7 @@ const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, pa
       />
     </View>
   );
-};
+});
 
 export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams();
@@ -293,12 +302,22 @@ export default function SectionDetailScreen() {
 
       console.log('Fetching item data for:', slug);
 
-      // Fetch current item details
-      const { data: itemData, error: itemError } = await supabase
-        .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
-        .eq('slug', slug)
-        .maybeSingle();
+      // Optimized: Fetch both current item and children in parallel
+      const [itemResult, childrenResult] = await Promise.all([
+        supabase
+          .from('sections')
+          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
+          .eq('slug', slug)
+          .maybeSingle(),
+        supabase
+          .from('sections')
+          .select('id, slug, title, parent_slug, description, type, display_order')
+          .eq('parent_slug', slug)
+          .order('display_order', { ascending: true })
+      ]);
+
+      const { data: itemData, error: itemError } = itemResult;
+      const { data: childItemsData, error: childItemsError } = childrenResult;
 
       if (itemError) {
         throw itemError;
@@ -309,6 +328,10 @@ export default function SectionDetailScreen() {
         return;
       }
 
+      if (childItemsError) {
+        throw childItemsError;
+      }
+
       setCurrentItem(itemData);
       console.log('Current item:', itemData.title, 'Type:', itemData.type);
       
@@ -316,17 +339,6 @@ export default function SectionDetailScreen() {
       navigation.setOptions({
         headerTitle: itemData.title || slug,
       });
-
-      // Fetch child items (items where parent_slug = current slug)
-      const { data: childItemsData, error: childItemsError } = await supabase
-        .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
-        .eq('parent_slug', slug)
-        .order('display_order', { ascending: true });
-
-      if (childItemsError) {
-        throw childItemsError;
-      }
 
       const children = childItemsData || [];
       setChildItems(children);
@@ -375,9 +387,39 @@ export default function SectionDetailScreen() {
 
   if (authLoading || loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={MEDICAL_COLORS.primary} />
-        <Text style={styles.loadingText}>Lade Inhalt...</Text>
+      <SafeAreaView style={styles.modernContainer}>
+        <LinearGradient
+          colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
+          style={styles.modernGradientBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        
+        <View style={styles.modernHeader}>
+          <View style={styles.skeletonBackButton} />
+        </View>
+        
+        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.sectionPanel}>
+            <LinearGradient
+              colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
+              style={styles.sectionPanelGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.skeletonTitle} />
+              <View style={styles.foldersGrid}>
+                {[...Array(6)].map((_, index) => (
+                  <View key={index} style={[{ width: CARD_WIDTH }, styles.skeletonCard]}>
+                    <View style={styles.skeletonFolderTab} />
+                    <View style={styles.skeletonFolderBody} />
+                    <View style={styles.skeletonFolderLabel} />
+                  </View>
+                ))}
+              </View>
+            </LinearGradient>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -737,5 +779,46 @@ const styles = StyleSheet.create({
 
   bottomPadding: {
     height: 40,
+  },
+
+  // Skeleton Loading Styles
+  skeletonBackButton: {
+    width: 80,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e2e8f0',
+  },
+  skeletonTitle: {
+    width: 200,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
+  skeletonCard: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  skeletonFolderTab: {
+    width: '65%',
+    height: 16,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    backgroundColor: '#cbd5e1',
+    marginBottom: -2,
+  },
+  skeletonFolderBody: {
+    width: '100%',
+    height: 90,
+    borderRadius: 14,
+    backgroundColor: '#cbd5e1',
+    marginBottom: 12,
+  },
+  skeletonFolderLabel: {
+    width: '80%',
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#e2e8f0',
   },
 });
