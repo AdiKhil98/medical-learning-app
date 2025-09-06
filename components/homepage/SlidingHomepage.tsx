@@ -42,6 +42,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   
   // Connect to Supabase data
   const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Daily content loaded:', { dailyTip, dailyQuestion, loading: contentLoading, error: contentError });
+  }, [dailyTip, dailyQuestion, contentLoading, contentError]);
 
   const sections = [
     'Hero',
@@ -80,7 +85,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   };
 
   // Use real data from Supabase or fallback to sample data
-  const tipData = dailyTip || {
+  const tipData = dailyTip ? {
+    title: dailyTip.title || "Tipp des Tages",
+    content: dailyTip.content || dailyTip.tip_content || dailyTip.tip || "Kein Tipp verfügbar",
+    category: dailyTip.category || "Lerntechnik"
+  } : {
     title: "Effektive Lernstrategie",
     content: "Die Pomodoro-Technik kann deine Lerneffizienz um bis zu 40% steigern. Arbeite 25 Minuten konzentriert, dann mache 5 Minuten Pause.",
     category: "Lerntechnik"
@@ -274,6 +283,16 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 style={styles.tipCard}
               >
                 <Text style={styles.loadingText}>Lade Tipp...</Text>
+              </LinearGradient>
+            ) : contentError ? (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                style={styles.tipCard}
+              >
+                <Text style={styles.loadingText}>Fehler: {contentError}</Text>
+                <TouchableOpacity style={styles.tipButton} onPress={refetch}>
+                  <Text style={styles.tipButtonText}>Erneut versuchen</Text>
+                </TouchableOpacity>
               </LinearGradient>
             ) : (
               <LinearGradient
