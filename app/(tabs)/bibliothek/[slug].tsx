@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
+import Card from '@/components/ui/folder';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -121,154 +122,26 @@ const getIconComponent = (iconName: string) => {
 };
 
 
-// Modern Polished Folder Card Component
+// Simplified Folder Card Component using the reusable Card
 const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
-  const [isPressed, setIsPressed] = useState(false);
-  const scaleAnim = useState(new Animated.Value(1))[0];
-  const translateYAnim = useState(new Animated.Value(0))[0];
-  const shadowAnim = useState(new Animated.Value(0))[0];
-  
   const { icon, gradient, hoverGradient } = getItemDetails(childItem.title, childItem.type, parentSlug);
   const IconComponent = getIconComponent(icon);
   const hasContent = childItem.content_improved && 
                     (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
-  
-  const handlePressIn = () => {
-    setIsPressed(true);
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1.05,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 8,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: -8,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-  
-  const handlePressOut = () => {
-    setIsPressed(false);
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 8,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shadowAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-  
-  const shadowOpacity = shadowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.12, 0.25],
-  });
-  
-  const shadowRadius = shadowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [8, 20],
-  });
-  
-  const shadowOffset = shadowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [4, 12],
-  });
-  
+
   return (
-    <Animated.View
-      style={[
-        styles.folderCard,
-        {
-          transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
-          shadowOpacity,
-          shadowRadius,
-          shadowOffset: [{
-            width: 0,
-            height: shadowOffset,
-          }],
-        },
-      ]}
-    >
-      <TouchableOpacity
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+    <View style={{ width: CARD_WIDTH }}>
+      <Card
+        title={childItem.title}
+        icon={IconComponent}
+        gradient={gradient}
+        hoverGradient={hoverGradient}
+        hasContent={hasContent}
         onPress={onPress}
-        activeOpacity={1}
-        style={styles.folderCardButton}
-        accessibilityRole="button"
-        accessibilityLabel={`Navigate to ${childItem.title}`}
-        accessibilityHint="Double tap to open this category"
-        accessible={true}
-      >
-        {/* Enhanced Folder Tab with Depth */}
-        <View style={styles.modernFolderTab}>
-          <LinearGradient
-            colors={isPressed ? 
-              [hoverGradient[0], hoverGradient[1], hoverGradient[2]] : 
-              [gradient[0], gradient[1], gradient[2]]
-            }
-            style={styles.modernFolderTabGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-          {/* Highlight on top edge */}
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.1)']}
-            style={styles.folderTabHighlight}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-          />
-        </View>
-        
-        {/* Enhanced Folder Body with Modern Gradient */}
-        <LinearGradient
-          colors={isPressed ? 
-            [hoverGradient[0], hoverGradient[1], hoverGradient[2]] : 
-            [gradient[0], gradient[1], gradient[2]]
-          }
-          style={styles.modernFolderBody}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.modernFolderContent}>
-            {/* Translucent Glass Badge for Icon */}
-            <View style={styles.glassIconBadge}>
-              <View style={styles.glassIconRing}>
-                <IconComponent size={28} color="white" />
-              </View>
-            </View>
-            
-            {/* Modern READY Badge */}
-            {hasContent && (
-              <View style={styles.modernStatusBadge}>
-                <View style={styles.statusDot} />
-                <Text style={styles.modernStatusText}>READY</Text>
-              </View>
-            )}
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-      
-      <Text style={styles.modernFolderLabel} numberOfLines={2}>{childItem.title}</Text>
-    </Animated.View>
+        size="medium"
+        showBadge={true}
+      />
+    </View>
   );
 };
 
@@ -715,145 +588,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  // Modern Polished Folder Card Styles
-  folderCard: {
-    width: CARD_WIDTH,
-    alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  folderCardButton: {
-    width: '100%',
-    alignItems: 'center',
-    position: 'relative',
-  },
-
-  // Enhanced Folder Tab with Depth
-  modernFolderTab: {
-    width: '65%',
-    height: 16,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    overflow: 'hidden',
-    marginBottom: -2,
-    zIndex: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  modernFolderTabGradient: {
-    flex: 1,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  folderTabHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-
-  // Enhanced Folder Body with Modern Gradients
-  modernFolderBody: {
-    width: '100%',
-    height: 90,
-    borderRadius: 14,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  modernFolderContent: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-
-  // Translucent Glass Badge for Icon
-  glassIconBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backdropFilter: 'blur(10px)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: 'rgba(255, 255, 255, 0.5)',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
-  glassIconRing: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-
-  // Modern READY Badge as Rounded Pill
-  modernStatusBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    marginRight: 6,
-  },
-  modernStatusText: {
-    color: 'white',
-    fontSize: 9,
-    fontFamily: 'Inter-Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  // Modern Clear Folder Label
-  modernFolderLabel: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 13,
-    color: '#1e293b',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 12,
-    paddingHorizontal: 8,
-    letterSpacing: -0.2,
-  },
+  // Folder card styles are now handled by the reusable Card component
 
   // Modern Empty State
   modernEmptyState: {
