@@ -37,33 +37,20 @@ export default function KPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
-  // Simple Voiceflow initialization that works with React
+  // Standard Voiceflow initialization - shows widget in default position
   const initializeVoiceflow = () => {
     console.log('✅ Voiceflow object found, initializing...');
-    
-    const targetContainer = document.getElementById('voiceflow-widget-container-kp');
-    if (!targetContainer) {
-      console.error('❌ KP target container not found');
-      return;
-    }
-    
-    console.log('🎯 Found KP container:', targetContainer);
     
     const config = {
       verify: { projectID: '68b40ab270a53105f6701677' },
       url: 'https://general-runtime.voiceflow.com',
       versionID: 'production',
-      render: {
-        mode: 'embedded',
-        target: targetContainer,
-      },
-      autostart: false,
       voice: {
         url: 'https://runtime-api.voiceflow.com'
       }
     };
     
-    console.log('🔧 Loading Voiceflow with config:', config);
+    console.log('🔧 Loading Voiceflow with standard config:', config);
     
     try {
       window.voiceflow.chat.load(config);
@@ -71,9 +58,6 @@ export default function KPSimulationScreen() {
       console.log('🚀 Voiceflow chat loaded successfully');
     } catch (error) {
       console.error('❌ Error loading Voiceflow:', error);
-      // If it fails, it's likely due to shadow DOM conflict, but don't break React
-      console.log('🔄 Widget will fall back to default positioning');
-      setVoiceflowLoaded(true); // Still set as loaded so UI works
     }
   };
 
@@ -101,21 +85,19 @@ export default function KPSimulationScreen() {
       setSimulationStarted(true);
       resetTimer();
       
-      // Start embedded Voiceflow widget
+      // Show Voiceflow widget in default position
       if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
           setTimeout(() => {
-            if (window.voiceflow.chat.start) {
-              window.voiceflow.chat.start();
-            } else if (window.voiceflow.chat.open) {
+            if (window.voiceflow.chat.open) {
               window.voiceflow.chat.open();
             } else if (window.voiceflow.chat.show) {
               window.voiceflow.chat.show();
             }
-            console.log('✅ Embedded Voiceflow chat started');
-          }, 1500); // Delay to ensure container and widget are ready
+            console.log('✅ Voiceflow chat opened');
+          }, 1000);
         } catch (error) {
-          console.error('❌ Error starting embedded Voiceflow chat:', error);
+          console.error('❌ Error opening Voiceflow chat:', error);
         }
       }
       
@@ -191,16 +173,24 @@ export default function KPSimulationScreen() {
     }
   }, [simulationStarted, resetTimer]);
 
-  // Initialize hidden Voiceflow controller - DISABLED for embedded mode
+  // Component cleanup - hide widget when leaving page
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      console.log('🔄 Skipping hidden controller - using embedded mode');
-      // Skip the controller initialization to avoid conflicts with embedded mode
-      setVoiceflowLoaded(true);
-    } else {
-      // Mobile handling
-      setVoiceflowLoaded(true);
-    }
+    return () => {
+      console.log('🧹 KP Simulation cleanup - hiding widget');
+      
+      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
+        try {
+          if (window.voiceflow.chat.hide) {
+            window.voiceflow.chat.hide();
+          } else if (window.voiceflow.chat.close) {
+            window.voiceflow.chat.close();
+          }
+          console.log('✅ Voiceflow widget hidden on cleanup');
+        } catch (error) {
+          console.error('❌ Error hiding Voiceflow widget:', error);
+        }
+      }
+    };
   }, []);
 
   // Handle back button and navigation prevention
@@ -589,31 +579,6 @@ export default function KPSimulationScreen() {
                   isActive={simulationStarted}
                   size={160}
                 />
-                
-                {/* Voiceflow Widget Container - Embedded inside orb */}
-                {Platform.OS === 'web' && (
-                  <div 
-                    id="voiceflow-widget-container-kp"
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '140px',
-                      height: '140px',
-                      borderRadius: '50%',
-                      overflow: 'visible',
-                      zIndex: 25,
-                      background: simulationStarted ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
-                      backdropFilter: simulationStarted ? 'blur(5px)' : 'none',
-                      border: simulationStarted ? '1px solid rgba(255, 255, 255, 0.5)' : 'none',
-                      boxShadow: simulationStarted ? '0 4px 16px rgba(0, 0, 0, 0.1)' : 'none',
-                      transition: 'all 0.3s ease',
-                      display: 'block',
-                      opacity: simulationStarted ? 1 : 0
-                    }}
-                  />
-                )}
               </View>
 
               {/* Status indicator */}
