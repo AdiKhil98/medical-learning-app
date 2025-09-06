@@ -84,6 +84,43 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     setShowQuestionAnswer(true);
   };
 
+  // Function to format tip content with bold keywords
+  const formatTipContent = (content: string) => {
+    // Common keywords to make bold
+    const keywords = [
+      'regelmäßige Pausen', 'Erholung', 'Pomodoro-Technik', 'konzentriert',
+      'Lerneffizienz', '25 Minuten', '5 Minuten', 'Pause'
+    ];
+    
+    let formattedContent = content;
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`(${keyword})`, 'gi');
+      formattedContent = formattedContent.replace(regex, '**$1**');
+    });
+    
+    return formattedContent;
+  };
+
+  // Function to render formatted text with bold parts
+  const renderTipContent = (content: string) => {
+    const parts = formatTipContent(content).split(/(\*\*[^*]+\*\*)/g);
+    
+    return (
+      <Text style={styles.tipContentFocused}>
+        {parts.map((part, index) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <Text key={index} style={styles.tipContentBold}>
+                {part.slice(2, -2)}
+              </Text>
+            );
+          }
+          return <Text key={index}>{part}</Text>;
+        })}
+      </Text>
+    );
+  };
+
   // Use real data from Supabase or fallback to sample data
   const tipData = dailyTip ? {
     title: dailyTip.title || "Tipp des Tages",
@@ -131,7 +168,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
       </LinearGradient>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Visually Lighter */}
       {currentSection > 0 && (
         <TouchableOpacity
           style={[styles.navigationArrow, styles.leftArrow]}
@@ -139,10 +176,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)']}
+            colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.4)']}
             style={styles.arrowButton}
           >
-            <ArrowLeft size={24} color="#333" />
+            <ArrowLeft size={20} color="rgba(0,0,0,0.5)" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -154,10 +191,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)']}
+            colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.4)']}
             style={styles.arrowButton}
           >
-            <ArrowRight size={24} color="#333" />
+            <ArrowRight size={20} color="rgba(0,0,0,0.5)" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -276,7 +313,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         {/* Section 3: Tip of the Day */}
         <View style={styles.section}>
           <View style={styles.tipSection}>
-            <Text style={styles.sectionTitle}>Tipp des Tages</Text>
+            <Text style={styles.tipSectionTitle}>Tipp des Tages</Text>
             {contentLoading ? (
               <LinearGradient
                 colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
@@ -290,8 +327,8 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 style={styles.tipCard}
               >
                 <Text style={styles.loadingText}>Fehler: {contentError}</Text>
-                <TouchableOpacity style={styles.tipButton} onPress={refetch}>
-                  <Text style={styles.tipButtonText}>Erneut versuchen</Text>
+                <TouchableOpacity style={styles.tipRetryButton} onPress={refetch}>
+                  <Text style={styles.tipRetryButtonText}>Erneut versuchen</Text>
                 </TouchableOpacity>
               </LinearGradient>
             ) : (
@@ -304,17 +341,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     colors={['#ffecd2', '#fcb69f']}
                     style={styles.tipIconBg}
                   >
-                    <Lightbulb size={24} color="#f39c12" />
+                    <Lightbulb size={20} color="#f39c12" />
                   </LinearGradient>
-                  <View style={styles.tipHeaderText}>
-                    <Text style={styles.tipTitle}>{tipData.title}</Text>
-                    <Text style={styles.tipCategory}>{tipData.category || 'Lerntechnik'}</Text>
-                  </View>
+                  <Text style={styles.tipTitle}>{tipData.title}</Text>
                 </View>
-                <Text style={styles.tipContent}>{tipData.content}</Text>
-                <TouchableOpacity style={styles.tipButton} activeOpacity={0.8}>
-                  <Text style={styles.tipButtonText}>Mehr erfahren</Text>
-                </TouchableOpacity>
+                <View style={styles.tipContentContainer}>
+                  {renderTipContent(tipData.content)}
+                </View>
               </LinearGradient>
             )}
           </View>
@@ -483,6 +516,16 @@ const styles = {
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
+  tipSectionTitle: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 24,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
   // Header Styles
   modernHeader: {
     paddingVertical: 16,
@@ -637,45 +680,50 @@ const styles = {
   tipHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   tipIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  tipHeaderText: {
+  tipTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
     flex: 1,
   },
-  tipTitle: {
+  tipContentContainer: {
+    backgroundColor: '#fef9e7',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.2)',
+  },
+  tipContentFocused: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 2,
+    lineHeight: 28,
+    fontWeight: '400',
+    textAlign: 'center',
   },
-  tipCategory: {
-    fontSize: 12,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    fontWeight: '500',
+  tipContentBold: {
+    fontWeight: 'bold',
+    color: '#92400e',
   },
-  tipContent: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  tipButton: {
-    backgroundColor: '#6366f1',
+  tipRetryButton: {
+    backgroundColor: '#ef4444',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    marginTop: 12,
   },
-  tipButtonText: {
+  tipRetryButtonText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
