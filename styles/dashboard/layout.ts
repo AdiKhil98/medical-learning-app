@@ -32,6 +32,10 @@ export const layoutStyles = StyleSheet.create({
   sectionScrollView: {
     flex: 1,
   },
+  section: {
+    width: screenWidth,
+    flex: 1,
+  },
   sectionContainer: {
     width: screenWidth,
     flex: 1,
