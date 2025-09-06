@@ -121,11 +121,12 @@ const getIconComponent = (iconName: string) => {
 };
 
 
-// Modern Folder Card Component
+// Modern Polished Folder Card Component
 const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
   const [isPressed, setIsPressed] = useState(false);
   const scaleAnim = useState(new Animated.Value(1))[0];
   const translateYAnim = useState(new Animated.Value(0))[0];
+  const shadowAnim = useState(new Animated.Value(0))[0];
   
   const { icon, gradient, hoverGradient } = getItemDetails(childItem.title, childItem.type, parentSlug);
   const IconComponent = getIconComponent(icon);
@@ -136,15 +137,20 @@ const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, pa
     setIsPressed(true);
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 1.02,
+        toValue: 1.05,
         useNativeDriver: true,
         tension: 300,
         friction: 8,
       }),
       Animated.timing(translateYAnim, {
-        toValue: -2,
-        duration: 150,
+        toValue: -8,
+        duration: 200,
         useNativeDriver: true,
+      }),
+      Animated.timing(shadowAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
       }),
     ]).start();
   };
@@ -160,11 +166,31 @@ const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, pa
       }),
       Animated.timing(translateYAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 200,
         useNativeDriver: true,
+      }),
+      Animated.timing(shadowAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
       }),
     ]).start();
   };
+  
+  const shadowOpacity = shadowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.12, 0.25],
+  });
+  
+  const shadowRadius = shadowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 20],
+  });
+  
+  const shadowOffset = shadowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [4, 12],
+  });
   
   return (
     <Animated.View
@@ -172,6 +198,12 @@ const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, pa
         styles.folderCard,
         {
           transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
+          shadowOpacity,
+          shadowRadius,
+          shadowOffset: [{
+            width: 0,
+            height: shadowOffset,
+          }],
         },
       ]}
     >
@@ -186,39 +218,56 @@ const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, pa
         accessibilityHint="Double tap to open this category"
         accessible={true}
       >
-        {/* Folder Tab */}
-        <View style={styles.folderTab}>
+        {/* Enhanced Folder Tab with Depth */}
+        <View style={styles.modernFolderTab}>
           <LinearGradient
-            colors={isPressed ? hoverGradient : gradient}
-            style={styles.folderTabGradient}
+            colors={isPressed ? 
+              [hoverGradient[0], hoverGradient[1], hoverGradient[2]] : 
+              [gradient[0], gradient[1], gradient[2]]
+            }
+            style={styles.modernFolderTabGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
+          {/* Highlight on top edge */}
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.1)']}
+            style={styles.folderTabHighlight}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+          />
         </View>
         
-        {/* Folder Body */}
+        {/* Enhanced Folder Body with Modern Gradient */}
         <LinearGradient
-          colors={isPressed ? hoverGradient : gradient}
-          style={styles.folderBody}
+          colors={isPressed ? 
+            [hoverGradient[0], hoverGradient[1], hoverGradient[2]] : 
+            [gradient[0], gradient[1], gradient[2]]
+          }
+          style={styles.modernFolderBody}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <View style={styles.folderContent}>
-            <View style={styles.folderIconContainer}>
-              <IconComponent size={24} color="white" />
+          <View style={styles.modernFolderContent}>
+            {/* Translucent Glass Badge for Icon */}
+            <View style={styles.glassIconBadge}>
+              <View style={styles.glassIconRing}>
+                <IconComponent size={28} color="white" />
+              </View>
             </View>
             
-            {/* Status Badge */}
+            {/* Modern READY Badge */}
             {hasContent && (
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusBadgeText}>Ready</Text>
+              <View style={styles.modernStatusBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.modernStatusText}>READY</Text>
               </View>
             )}
           </View>
         </LinearGradient>
       </TouchableOpacity>
       
-      <Text style={styles.folderLabel} numberOfLines={2}>{childItem.title}</Text>
+      <Text style={styles.modernFolderLabel} numberOfLines={2}>{childItem.title}</Text>
     </Animated.View>
   );
 };
@@ -666,107 +715,144 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  // Folder Card Styles
+  // Modern Polished Folder Card Styles
   folderCard: {
     width: CARD_WIDTH,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    borderRadius: 12,
   },
   folderCardButton: {
     width: '100%',
     alignItems: 'center',
     position: 'relative',
-    borderRadius: 12,
-    overflow: 'hidden',
   },
 
-  // Folder Tab Design
-  folderTab: {
-    width: '60%',
-    height: 12,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+  // Enhanced Folder Tab with Depth
+  modernFolderTab: {
+    width: '65%',
+    height: 16,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     overflow: 'hidden',
-    marginBottom: -1,
+    marginBottom: -2,
     zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  folderTabGradient: {
+  modernFolderTabGradient: {
     flex: 1,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  folderTabHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
 
-  // Folder Body
-  folderBody: {
+  // Enhanced Folder Body with Modern Gradients
+  modernFolderBody: {
     width: '100%',
-    height: 80,
-    borderRadius: 12,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    height: 90,
+    borderRadius: 14,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  folderContent: {
+  modernFolderContent: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  folderIconContainer: {
+
+  // Translucent Glass Badge for Icon
+  glassIconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backdropFilter: 'blur(10px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: 'rgba(255, 255, 255, 0.5)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  glassIconRing: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
 
-  // Status Badge
-  statusBadge: {
+  // Modern READY Badge as Rounded Pill
+  modernStatusBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
     backgroundColor: '#10B981',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
-  statusBadgeText: {
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    marginRight: 6,
+  },
+  modernStatusText: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Inter-Bold',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
-  // Folder Label
-  folderLabel: {
+  // Modern Clear Folder Label
+  modernFolderLabel: {
     fontFamily: 'Inter-SemiBold',
-    fontSize: 12,
+    fontSize: 13,
     color: '#1e293b',
     textAlign: 'center',
-    lineHeight: 16,
-    marginTop: 8,
-    paddingHorizontal: 4,
+    lineHeight: 18,
+    marginTop: 12,
+    paddingHorizontal: 8,
+    letterSpacing: -0.2,
   },
 
   // Modern Empty State
