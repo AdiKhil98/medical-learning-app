@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Scissors, Stethoscope, AlertTriangle, Shield, Droplets, Scan } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Scissors, Stethoscope, AlertTriangle, Shield, Droplets, Scan } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface MainCategory {
   id: string;
@@ -87,101 +87,6 @@ const getIconComponent = (iconName: string) => {
   }
 };
 
-// 3D Circular Category Component
-const CircularCategory = ({ category, onPress }: { category: MainCategory, onPress: () => void }) => {
-  const [isPressed, setIsPressed] = useState(false);
-  const scaleAnim = useState(new Animated.Value(1))[0];
-  const elevationAnim = useState(new Animated.Value(0))[0];
-  
-  const { icon, gradient, hoverGradient } = getMainCategoryDetails(category.title);
-  const IconComponent = getIconComponent(icon);
-  
-  const handlePressIn = () => {
-    setIsPressed(true);
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1.05,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 8,
-      }),
-      Animated.timing(elevationAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-  
-  const handlePressOut = () => {
-    setIsPressed(false);
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 8,
-      }),
-      Animated.timing(elevationAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-  
-  const shadowOpacity = elevationAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.15, 0.35],
-  });
-  
-  const shadowRadius = elevationAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [8, 20],
-  });
-  
-  return (
-    <Animated.View
-      style={[
-        styles.circularCategoryContainer,
-        {
-          transform: [{ scale: scaleAnim }],
-          shadowOpacity,
-          shadowRadius,
-        },
-      ]}
-    >
-      <TouchableOpacity
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={onPress}
-        activeOpacity={1}
-        style={styles.circularCategoryButton}
-      >
-        <LinearGradient
-          colors={isPressed ? hoverGradient : gradient}
-          style={styles.circularCategoryGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          {/* 3D Ring Effect */}
-          <View style={styles.outerRing}>
-            <View style={styles.innerRing}>
-              <View style={styles.centerCircle}>
-                <IconComponent size={32} color="white" />
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-      
-      <Text style={styles.categoryLabel}>{category.title}</Text>
-      {category.description && (
-        <Text style={styles.categoryDescription}>{category.description}</Text>
-      )}
-    </Animated.View>
-  );
-};
 
 // Diamond Grid Background Component
 // Celestial Flow Background Component
@@ -549,6 +454,8 @@ export default function BibliothekMainScreen() {
   const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentSection, setCurrentSection] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Fetch ONLY main categories (no parent_slug)
   const fetchMainCategories = async () => {
@@ -591,8 +498,32 @@ export default function BibliothekMainScreen() {
 
   const navigateToCategory = (categorySlug: string) => {
     console.log('Navigating to category:', categorySlug);
-    console.log('Router push to:', `/bibliothek/${categorySlug}`);
     router.push(`/bibliothek/${categorySlug}`);
+  };
+
+  // Navigation functions
+  const scrollToSection = (index: number) => {
+    scrollViewRef.current?.scrollTo({
+      x: index * screenWidth,
+      animated: true
+    });
+    setCurrentSection(index);
+  };
+
+  const scrollToPrevious = () => {
+    const previousSection = Math.max(0, currentSection - 1);
+    scrollToSection(previousSection);
+  };
+
+  const scrollToNext = () => {
+    const nextSection = Math.min(mainCategories.length - 1, currentSection + 1);
+    scrollToSection(nextSection);
+  };
+
+  const handleScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset;
+    const sectionIndex = Math.round(contentOffset.x / screenWidth);
+    setCurrentSection(sectionIndex);
   };
 
   if (authLoading || loading) {
@@ -617,71 +548,247 @@ export default function BibliothekMainScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.modernContainer}>
-      {/* Enhanced Celestial Background */}
-      <LinearGradient
-        colors={['#f0f9ff', '#e0f2fe', '#f8fafc', '#ffffff']}
-        style={styles.modernGradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+    <SafeAreaView style={styles.slidingContainer}>
+      {/* White Background */}
+      <View style={styles.whiteBackground} />
       
-      {/* Modern Header */}
-      <View style={styles.modernHeader}>
-        <View style={styles.headerContent}>
-          <Text style={styles.modernTitle}>Bibliothek</Text>
-          <Text style={styles.modernSubtitle}>Wählen Sie Ihr Fachgebiet</Text>
-        </View>
-        
-        {/* Decorative Element */}
-        <View style={styles.headerDecorator}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            style={styles.decoratorGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </View>
+      {/* Header */}
+      <View style={styles.slidingHeader}>
+        <Text style={styles.slidingTitle}>Bibliothek</Text>
+        <Text style={styles.slidingSubtitle}>Wählen Sie Ihr Fachgebiet</Text>
       </View>
 
-      <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-        {/* Radial Categories Layout */}
-        <View style={styles.radialContainer} pointerEvents="box-none">
-          {/* Celestial Flow Background */}
-          <CelestialBackground />
-          
-          {/* Radial Categories */}
-          <View style={styles.staticContainer} pointerEvents="box-none">
-            {mainCategories.map((category, index) => (
-              <RadialCategory
-                key={category.slug}
-                category={category}
-                index={index}
-                total={mainCategories.length}
-                onPress={() => navigateToCategory(category.slug)}
-              />
-            ))}
+      {/* Navigation Arrows */}
+      {currentSection > 0 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.leftArrow]}
+          onPress={scrollToPrevious}
+          activeOpacity={0.8}
+        >
+          <View style={styles.arrowButton}>
+            <ArrowLeft size={24} color="#333" />
           </View>
-        </View>
-        
-        <View style={styles.bottomPadding} />
+        </TouchableOpacity>
+      )}
+
+      {currentSection < mainCategories.length - 1 && (
+        <TouchableOpacity
+          style={[styles.navigationArrow, styles.rightArrow]}
+          onPress={scrollToNext}
+          activeOpacity={0.8}
+        >
+          <View style={styles.arrowButton}>
+            <ArrowRight size={24} color="#333" />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Section Indicators */}
+      <View style={styles.sectionIndicators}>
+        {mainCategories.map((_, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.indicator,
+              currentSection === index && styles.activeIndicator
+            ]}
+            onPress={() => scrollToSection(index)}
+          />
+        ))}
+      </View>
+
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.scrollView}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {mainCategories.map((category, index) => {
+          const { icon, gradient } = getMainCategoryDetails(category.title);
+          const IconComponent = getIconComponent(icon);
+
+          return (
+            <View key={category.slug} style={styles.slideContainer}>
+              <View style={styles.categorySlide}>
+                <TouchableOpacity
+                  style={styles.categoryCircle}
+                  onPress={() => navigateToCategory(category.slug)}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={gradient}
+                    style={styles.circleGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.circleRing}>
+                      <View style={styles.circleInner}>
+                        <IconComponent size={40} color="white" />
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+                
+                <Text style={styles.categoryTitle}>{category.title}</Text>
+                {category.description && (
+                  <Text style={styles.categoryDescription}>{category.description}</Text>
+                )}
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // Modern Container Styles
-  modernContainer: {
+  // Sliding Container Styles
+  slidingContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  modernGradientBackground: {
+  whiteBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: '100%',
+    backgroundColor: '#ffffff',
+  },
+  slidingHeader: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  slidingTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  slidingSubtitle: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  slideContainer: {
+    width: screenWidth,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  categorySlide: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  categoryCircle: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  circleGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circleRing: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  circleInner: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  categoryTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  categoryDescription: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+  },
+  navigationArrow: {
+    position: 'absolute',
+    top: '50%',
+    zIndex: 10,
+    marginTop: -25,
+  },
+  leftArrow: {
+    left: 20,
+  },
+  rightArrow: {
+    right: 20,
+  },
+  arrowButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  sectionIndicators: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginHorizontal: 4,
+  },
+  activeIndicator: {
+    backgroundColor: '#667eea',
+    width: 24,
   },
   
   // Loading & Error States
