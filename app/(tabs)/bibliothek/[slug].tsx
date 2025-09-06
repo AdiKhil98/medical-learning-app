@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Animated, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,18 @@ import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Responsive grid calculation
+const getColumnsForScreen = () => {
+  if (SCREEN_WIDTH >= 1024) return 3; // xl: 3 columns
+  if (SCREEN_WIDTH >= 768) return 2;  // md: 2 columns
+  return 1; // sm: 1 column
+};
+
+const COLUMNS = getColumnsForScreen();
+const CARD_PADDING = 24;
+const CARD_GAP = 16;
+const CARD_WIDTH = (SCREEN_WIDTH - (CARD_PADDING * 2) - (CARD_GAP * (COLUMNS - 1))) / COLUMNS;
 
 interface Section {
   id: string;
@@ -22,52 +34,52 @@ interface Section {
   content_html?: string;
 }
 
-// Enhanced item details with 3D gradients for child items
+// Medical teal/indigo/sky color palette for folder cards
 const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   const normalizedTitle = title.toLowerCase();
   
-  // Base color and gradient logic
-  let baseColor = MEDICAL_COLORS.primary;
-  let gradient = ['#0EA5E9', '#0284C7', '#0369A1'];
-  let hoverGradient = ['#38BDF8', '#0EA5E9', '#0284C7'];
+  // Updated medical color palette - teal/indigo/sky instead of red
+  let baseColor = '#0891b2'; // Teal-600
+  let gradient = ['#0891b2', '#0e7490', '#155e75']; // Teal gradient
+  let hoverGradient = ['#22d3ee', '#0891b2', '#0e7490']; // Lighter teal hover
   
   if (parentSlug) {
     switch (parentSlug) {
       case 'chirurgie': 
-        baseColor = '#EF4444';
-        gradient = ['#EF4444', '#DC2626', '#B91C1C'];
-        hoverGradient = ['#F87171', '#EF4444', '#DC2626'];
+        baseColor = '#4f46e5'; // Indigo-600 instead of red
+        gradient = ['#4f46e5', '#4338ca', '#3730a3'];
+        hoverGradient = ['#6366f1', '#4f46e5', '#4338ca'];
         break;
       case 'innere-medizin': case 'kardiologie': case 'pneumologie': case 'gastroenterologie': case 'nephrologie': case 'endokrinologie-und-stoffwechsel':
-        baseColor = '#0077B6';
-        gradient = ['#0EA5E9', '#0284C7', '#0369A1'];
-        hoverGradient = ['#38BDF8', '#0EA5E9', '#0284C7'];
+        baseColor = '#0891b2'; // Teal-600
+        gradient = ['#0891b2', '#0e7490', '#155e75'];
+        hoverGradient = ['#22d3ee', '#0891b2', '#0e7490'];
         break;
       case 'notfallmedizin': 
-        baseColor = '#F59E0B';
-        gradient = ['#F59E0B', '#D97706', '#B45309'];
-        hoverGradient = ['#FCD34D', '#F59E0B', '#D97706'];
+        baseColor = '#0ea5e9'; // Sky-500
+        gradient = ['#0ea5e9', '#0284c7', '#0369a1'];
+        hoverGradient = ['#38bdf8', '#0ea5e9', '#0284c7'];
         break;
       case 'infektiologie': 
-        baseColor = '#10B981';
-        gradient = ['#10B981', '#059669', '#047857'];
-        hoverGradient = ['#34D399', '#10B981', '#059669'];
+        baseColor = '#059669'; // Emerald-600
+        gradient = ['#059669', '#047857', '#065f46'];
+        hoverGradient = ['#10b981', '#059669', '#047857'];
         break;
       case 'urologie': 
-        baseColor = '#8B5CF6';
-        gradient = ['#8B5CF6', '#7C3AED', '#6D28D9'];
-        hoverGradient = ['#A78BFA', '#8B5CF6', '#7C3AED'];
+        baseColor = '#7c3aed'; // Violet-600
+        gradient = ['#7c3aed', '#6d28d9', '#5b21b6'];
+        hoverGradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
         break;
       case 'radiologie': 
-        baseColor = '#6366F1';
-        gradient = ['#6366F1', '#4F46E5', '#4338CA'];
-        hoverGradient = ['#818CF8', '#6366F1', '#4F46E5'];
+        baseColor = '#4f46e5'; // Indigo-600
+        gradient = ['#4f46e5', '#4338ca', '#3730a3'];
+        hoverGradient = ['#6366f1', '#4f46e5', '#4338ca'];
         break;
     }
   }
   
   // Icon based on content and type
-  let icon = 'BookOpen';
+  let icon = 'Folder';
   if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz') || normalizedTitle.includes('koronar')) {
     icon = 'Heart';
   } else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation') || normalizedTitle.includes('trauma')) {
@@ -85,7 +97,7 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   } else if (type.toLowerCase().includes('content') || normalizedTitle.includes('content')) {
     icon = 'FileText';
   } else {
-    icon = 'Stethoscope';
+    icon = 'Folder';
   }
   
   return { icon, color: baseColor, gradient, hoverGradient };
@@ -102,17 +114,18 @@ const getIconComponent = (iconName: string) => {
     case 'Shield': return Shield;
     case 'Stethoscope': return Stethoscope;
     case 'FileText': return FileText;
-    case 'BookOpen':
-    default: return BookOpen;
+    case 'BookOpen': return BookOpen;
+    case 'Folder':
+    default: return Folder;
   }
 };
 
 
-// Modern 3D Circular Subcategory Component
-const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
+// Modern Folder Card Component
+const FolderCard = ({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
   const [isPressed, setIsPressed] = useState(false);
   const scaleAnim = useState(new Animated.Value(1))[0];
-  const elevationAnim = useState(new Animated.Value(0))[0];
+  const translateYAnim = useState(new Animated.Value(0))[0];
   
   const { icon, gradient, hoverGradient } = getItemDetails(childItem.title, childItem.type, parentSlug);
   const IconComponent = getIconComponent(icon);
@@ -123,15 +136,15 @@ const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Se
     setIsPressed(true);
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 1.03,
+        toValue: 1.02,
         useNativeDriver: true,
         tension: 300,
         friction: 8,
       }),
-      Animated.timing(elevationAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: false,
+      Animated.timing(translateYAnim, {
+        toValue: -2,
+        duration: 150,
+        useNativeDriver: true,
       }),
     ]).start();
   };
@@ -145,32 +158,20 @@ const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Se
         tension: 300,
         friction: 8,
       }),
-      Animated.timing(elevationAnim, {
+      Animated.timing(translateYAnim, {
         toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
+        duration: 150,
+        useNativeDriver: true,
       }),
     ]).start();
   };
   
-  const shadowOpacity = elevationAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.12, 0.3],
-  });
-  
-  const shadowRadius = elevationAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [6, 16],
-  });
-  
   return (
     <Animated.View
       style={[
-        styles.circularSubcategoryContainer,
+        styles.folderCard,
         {
-          transform: [{ scale: scaleAnim }],
-          shadowOpacity,
-          shadowRadius,
+          transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
         },
       ]}
     >
@@ -179,33 +180,45 @@ const CircularSubcategory = ({ childItem, parentSlug, onPress }: { childItem: Se
         onPressOut={handlePressOut}
         onPress={onPress}
         activeOpacity={1}
-        style={styles.circularSubcategoryButton}
+        style={styles.folderCardButton}
+        accessibilityRole="button"
+        accessibilityLabel={`Navigate to ${childItem.title}`}
+        accessibilityHint="Double tap to open this category"
+        accessible={true}
       >
+        {/* Folder Tab */}
+        <View style={styles.folderTab}>
+          <LinearGradient
+            colors={isPressed ? hoverGradient : gradient}
+            style={styles.folderTabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        </View>
+        
+        {/* Folder Body */}
         <LinearGradient
           colors={isPressed ? hoverGradient : gradient}
-          style={styles.circularSubcategoryGradient}
+          style={styles.folderBody}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* 3D Ring Effect for Subcategories */}
-          <View style={styles.subOuterRing}>
-            <View style={styles.subInnerRing}>
-              <View style={styles.subCenterCircle}>
-                <IconComponent size={22} color="white" />
+          <View style={styles.folderContent}>
+            <View style={styles.folderIconContainer}>
+              <IconComponent size={24} color="white" />
+            </View>
+            
+            {/* Status Badge */}
+            {hasContent && (
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusBadgeText}>Ready</Text>
               </View>
-            </View>
+            )}
           </View>
-          
-          {/* Content Indicator Badge */}
-          {hasContent && (
-            <View style={styles.subContentBadge}>
-              <View style={styles.contentBadgeDot} />
-            </View>
-          )}
         </LinearGradient>
       </TouchableOpacity>
       
-      <Text style={styles.subcategoryLabel} numberOfLines={2}>{childItem.title}</Text>
+      <Text style={styles.folderLabel} numberOfLines={2}>{childItem.title}</Text>
     </Animated.View>
   );
 };
@@ -366,7 +379,7 @@ export default function SectionDetailScreen() {
           style={styles.modernBackButton}
         >
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
+            colors={['#0891b2', '#0e7490']}
             style={styles.backButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -390,7 +403,7 @@ export default function SectionDetailScreen() {
             >
               <View style={styles.modernContentHeader}>
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={['#0891b2', '#0e7490']}
                   style={styles.contentHeaderIcon}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -426,17 +439,27 @@ export default function SectionDetailScreen() {
           </LinearGradient>
         </View>
       ) : (
-        // Modern 3D Circular Subcategories Grid
+        // Modern Folder Cards with Section Panel
         <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.subcategoriesGrid}>
-            {childItems.map((childItem) => (
-              <CircularSubcategory
-                key={childItem.slug}
-                childItem={childItem}
-                parentSlug={slug as string}
-                onPress={() => navigateToChild(childItem.slug)}
-              />
-            ))}
+          <View style={styles.sectionPanel}>
+            <LinearGradient
+              colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
+              style={styles.sectionPanelGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.sectionTitle}>{currentItem.title}</Text>
+              <View style={styles.foldersGrid}>
+                {childItems.map((childItem) => (
+                  <FolderCard
+                    key={childItem.slug}
+                    childItem={childItem}
+                    parentSlug={slug as string}
+                    onPress={() => navigateToChild(childItem.slug)}
+                  />
+                ))}
+              </View>
+            </LinearGradient>
           </View>
           
           <View style={styles.bottomPadding} />
@@ -495,11 +518,11 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: '#667eea',
+    backgroundColor: '#0891b2',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
-    shadowColor: '#667eea',
+    shadowColor: '#0891b2',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -528,7 +551,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    shadowColor: '#667eea',
+    shadowColor: '#0891b2',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -616,106 +639,134 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: 'rgba(102, 126, 234, 0.2)',
+    borderBottomColor: 'rgba(8, 145, 178, 0.2)',
   },
 
-  // 3D Circular Subcategories Grid
-  subcategoriesGrid: {
+  // Section Panel with Gradient Background
+  sectionPanel: {
+    marginBottom: 24,
+  },
+  sectionPanelGradient: {
+    borderRadius: 16,
+    padding: 24,
+  },
+  sectionTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 20,
+    color: '#1e293b',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+
+  // Responsive Folders Grid (3/2/1 columns)
+  foldersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingBottom: 32,
     gap: 16,
   },
 
-  // 3D Circular Subcategory Styles
-  circularSubcategoryContainer: {
-    width: (SCREEN_WIDTH - 80) / 3,
+  // Folder Card Styles
+  folderCard: {
+    width: CARD_WIDTH,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderRadius: 12,
   },
-  circularSubcategoryButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 12,
-    position: 'relative',
-  },
-  circularSubcategoryGradient: {
+  folderCardButton: {
     width: '100%',
-    height: '100%',
-    borderRadius: 45,
+    alignItems: 'center',
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+
+  // Folder Tab Design
+  folderTab: {
+    width: '60%',
+    height: 12,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    overflow: 'hidden',
+    marginBottom: -1,
+    zIndex: 2,
+  },
+  folderTabGradient: {
+    flex: 1,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+
+  // Folder Body
+  folderBody: {
+    width: '100%',
+    height: 80,
+    borderRadius: 12,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  folderContent: {
+    flex: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-
-  // 3D Ring Effects for Subcategories
-  subOuterRing: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+  folderIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  subInnerRing: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  subCenterCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
 
-  // Content Badge for Subcategories
-  subContentBadge: {
+  // Status Badge
+  statusBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  contentBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    top: 8,
+    right: 8,
     backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statusBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontFamily: 'Inter-Bold',
+    textTransform: 'uppercase',
   },
 
-  // Subcategory Labels
-  subcategoryLabel: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 13,
+  // Folder Label
+  folderLabel: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 12,
     color: '#1e293b',
     textAlign: 'center',
     lineHeight: 16,
-    minHeight: 32,
-    marginTop: 4,
+    marginTop: 8,
+    paddingHorizontal: 4,
   },
 
   // Modern Empty State
