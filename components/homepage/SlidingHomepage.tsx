@@ -19,8 +19,12 @@ import {
   CheckCircle,
   XCircle,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Menu as MenuIcon
 } from 'lucide-react-native';
+import Menu from '@/components/ui/Menu';
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -32,6 +36,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [currentSection, setCurrentSection] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showQuestionAnswer, setShowQuestionAnswer] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const sections = [
@@ -93,6 +98,25 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         colors={['#667eea', '#764ba2', '#f093fb']}
         style={styles.gradientBackground}
       />
+
+      {/* Header with Menu */}
+      <LinearGradient
+        colors={['#4A90E2', '#357ABD', '#2E5B9A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.modernHeader}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setMenuOpen(true)}
+          >
+            <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
+          </TouchableOpacity>
+          <Logo size="medium" variant="medical" textColor="white" animated={true} />
+          <UserAvatar size="medium" />
+        </View>
+      </LinearGradient>
 
       {/* Navigation Arrows */}
       {currentSection > 0 && (
@@ -329,6 +353,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           </View>
         </View>
       </ScrollView>
+
+      {/* Menu */}
+      <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -409,6 +436,28 @@ const styles = {
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+  // Header Styles
+  modernHeader: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  headerContent: {
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  menuButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   // Hero Section Styles
   heroSection: {
