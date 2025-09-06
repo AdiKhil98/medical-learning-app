@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, ArrowRight, Scissors, Stethoscope, AlertTriangle, Shield, Droplets, Scan } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,9 +95,24 @@ export default function BibliothekMainScreen() {
   const [error, setError] = useState<string | null>(null);
   const [currentSection, setCurrentSection] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Cache for main categories to prevent re-fetching
+  const categoriesCache = useRef<{ data: MainCategory[]; timestamp: number } | null>(null);
+  const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes cache for main categories
 
-  // Fetch ONLY main categories (no parent_slug)
-  const fetchMainCategories = async () => {
+  // Optimized fetch with caching for main categories
+  const fetchMainCategories = useCallback(async (forceRefresh = false) => {
+    // Check cache first
+    const cached = categoriesCache.current;
+    const now = Date.now();
+    
+    if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('Using cached main categories');
+      setMainCategories(cached.data);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -106,7 +121,7 @@ export default function BibliothekMainScreen() {
         return;
       }
 
-      console.log('Fetching main categories...');
+      console.log('Fetching fresh main categories...');
       
       const { data, error } = await supabase
         .from('sections')
@@ -119,7 +134,14 @@ export default function BibliothekMainScreen() {
       }
 
       console.log('Main categories fetched:', data?.length || 0);
-      setMainCategories(data || []);
+      const categories = data || [];
+      setMainCategories(categories);
+      
+      // Cache the results
+      categoriesCache.current = {
+        data: categories,
+        timestamp: now
+      };
       
     } catch (e) {
       console.error('Error fetching main categories:', e);
@@ -127,13 +149,23 @@ export default function BibliothekMainScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
+  // Use focus effect to handle tab switching properly
+  useFocusEffect(
+    useCallback(() => {
+      if (!authLoading && session) {
+        fetchMainCategories();
+      }
+    }, [fetchMainCategories, authLoading, session])
+  );
+
+  // Initial load effect
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && session) {
       fetchMainCategories();
     }
-  }, [session, authLoading]);
+  }, []); // Empty dependency array for initial load only
 
   const navigateToCategory = (categorySlug: string) => {
     console.log('Navigating to category:', categorySlug);

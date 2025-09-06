@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -287,10 +287,27 @@ export default function SectionDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showContent, setShowContent] = useState(false);
+  
+  // Cache to prevent re-fetching on tab switches
+  const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
-  // Fetch the current item and its children
-  const fetchItemData = async () => {
+  // Optimized fetch with caching
+  const fetchItemData = useCallback(async (forceRefresh = false) => {
     if (!slug || typeof slug !== 'string') return;
+
+    // Check cache first
+    const cacheKey = `${slug}-${session?.user?.id || 'anonymous'}`;
+    const cached = dataCache.current.get(cacheKey);
+    const now = Date.now();
+    
+    if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('Using cached data for:', slug);
+      setCurrentItem(cached.item);
+      setChildItems(cached.children);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -300,7 +317,7 @@ export default function SectionDetailScreen() {
         return;
       }
 
-      console.log('Fetching item data for:', slug);
+      console.log('Fetching fresh data for:', slug);
 
       // Optimized: Fetch both current item and children in parallel
       const [itemResult, childrenResult] = await Promise.all([
@@ -344,6 +361,13 @@ export default function SectionDetailScreen() {
       setChildItems(children);
       console.log(`Found ${children.length} child items`);
 
+      // Cache the results
+      dataCache.current.set(cacheKey, {
+        item: itemData,
+        children: children,
+        timestamp: now
+      });
+
       // Determine if we should show content or navigation
       const hasChildren = children.length > 0;
       // content_improved is JSONB - check if it exists and has content
@@ -362,13 +386,23 @@ export default function SectionDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug, session]);
 
+  // Use focus effect instead of useEffect to handle tab switching properly
+  useFocusEffect(
+    useCallback(() => {
+      if (!authLoading && session) {
+        fetchItemData();
+      }
+    }, [fetchItemData, authLoading, session])
+  );
+
+  // Initial load effect (only runs once)
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && session) {
       fetchItemData();
     }
-  }, [slug, session, authLoading]);
+  }, []); // Empty dependency array for initial load only
 
   const navigateToChild = (childSlug: string) => {
     console.log('Navigating to child:', childSlug);
