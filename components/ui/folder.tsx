@@ -17,8 +17,8 @@ interface FolderProps {
 export default function Card({
   title = "Folder",
   icon: IconComponent = Folder,
-  gradient = ['#0891b2', '#0e7490', '#155e75'],
-  hoverGradient = ['#22d3ee', '#0891b2', '#0e7490'],
+  gradient = ['#06b6d4', '#0891b2', '#0e7490'],
+  hoverGradient = ['#22d3ee', '#06b6d4', '#0891b2'],
   hasContent = false,
   onPress,
   size = 'medium',
@@ -75,17 +75,22 @@ export default function Card({
 
   const shadowOpacity = shadowAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.12, 0.25],
+    outputRange: [0.15, 0.35],
   });
 
   const shadowRadius = shadowAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [8, 20],
+    outputRange: [8, 24],
   });
 
   const shadowOffset = shadowAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [4, 12],
+    outputRange: [4, 16],
+  });
+
+  const glowOpacity = shadowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.6],
   });
 
   const sizeStyles = getSizeStyles(size);
@@ -141,6 +146,13 @@ export default function Card({
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
+          {/* Subtle overlay gradient for depth */}
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)', 'rgba(0, 0, 0, 0.05)']}
+            style={styles.overlayGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
           <View style={styles.modernFolderContent}>
             {/* Translucent Glass Badge for Icon */}
             <View style={[styles.glassIconBadge, sizeStyles.iconBadge]}>
@@ -204,15 +216,15 @@ const getSizeStyles = (size: 'small' | 'medium' | 'large') => {
 };
 
 const styles = StyleSheet.create({
-  // Modern Polished Folder Card Styles
+  // Modern Polished Folder Card Styles with Enhanced Shadows
   folderCard: {
     alignItems: 'center',
     marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   folderCardButton: {
     width: '100%',
@@ -249,7 +261,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
   },
 
-  // Enhanced Folder Body with Modern Gradients
+  // Enhanced Folder Body with Rich Gradients
   modernFolderBody: {
     width: '100%',
     borderRadius: 14,
@@ -257,10 +269,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+    position: 'relative',
+  },
+  overlayGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 14,
+    zIndex: 1,
   },
   modernFolderContent: {
     flex: 1,
@@ -268,6 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    zIndex: 2,
   },
 
   // Translucent Glass Badge for Icon

@@ -35,66 +35,188 @@ interface Section {
   content_html?: string;
 }
 
-// Medical teal/indigo/sky color palette for folder cards
+// Enhanced Medical Color Palette with Rich Gradients
 const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   const normalizedTitle = title.toLowerCase();
   
-  // Updated medical color palette - teal/indigo/sky instead of red
-  let baseColor = '#0891b2'; // Teal-600
-  let gradient = ['#0891b2', '#0e7490', '#155e75']; // Teal gradient
-  let hoverGradient = ['#22d3ee', '#0891b2', '#0e7490']; // Lighter teal hover
+  // Default vibrant medical teal
+  let baseColor = '#06b6d4'; // Cyan-500
+  let gradient = ['#06b6d4', '#0891b2', '#0e7490']; // Rich cyan gradient
+  let hoverGradient = ['#22d3ee', '#06b6d4', '#0891b2']; // Bright cyan hover
   
+  // Enhanced color distribution by medical specialty
   if (parentSlug) {
     switch (parentSlug) {
       case 'chirurgie': 
-        baseColor = '#4f46e5'; // Indigo-600 instead of red
-        gradient = ['#4f46e5', '#4338ca', '#3730a3'];
-        hoverGradient = ['#6366f1', '#4f46e5', '#4338ca'];
+        baseColor = '#dc2626'; // Surgical Red-600
+        gradient = ['#ef4444', '#dc2626', '#b91c1c']; // Vibrant red gradient
+        hoverGradient = ['#f87171', '#ef4444', '#dc2626'];
         break;
-      case 'innere-medizin': case 'kardiologie': case 'pneumologie': case 'gastroenterologie': case 'nephrologie': case 'endokrinologie-und-stoffwechsel':
-        baseColor = '#0891b2'; // Teal-600
-        gradient = ['#0891b2', '#0e7490', '#155e75'];
-        hoverGradient = ['#22d3ee', '#0891b2', '#0e7490'];
+      case 'innere-medizin': 
+        baseColor = '#2563eb'; // Blue-600 for internal medicine
+        gradient = ['#3b82f6', '#2563eb', '#1d4ed8'];
+        hoverGradient = ['#60a5fa', '#3b82f6', '#2563eb'];
         break;
-      case 'notfallmedizin': 
-        baseColor = '#0ea5e9'; // Sky-500
+      case 'kardiologie':
+        baseColor = '#e11d48'; // Rose-600 for cardiology
+        gradient = ['#f43f5e', '#e11d48', '#be185d'];
+        hoverGradient = ['#fb7185', '#f43f5e', '#e11d48'];
+        break;
+      case 'pneumologie':
+        baseColor = '#0ea5e9'; // Sky-500 for pulmonology
         gradient = ['#0ea5e9', '#0284c7', '#0369a1'];
         hoverGradient = ['#38bdf8', '#0ea5e9', '#0284c7'];
         break;
+      case 'gastroenterologie':
+        baseColor = '#ea580c'; // Orange-600 for gastroenterology
+        gradient = ['#f97316', '#ea580c', '#c2410c'];
+        hoverGradient = ['#fb923c', '#f97316', '#ea580c'];
+        break;
+      case 'nephrologie':
+        baseColor = '#0891b2'; // Teal-600 for nephrology
+        gradient = ['#14b8a6', '#0891b2', '#0e7490'];
+        hoverGradient = ['#2dd4bf', '#14b8a6', '#0891b2'];
+        break;
+      case 'endokrinologie-und-stoffwechsel':
+        baseColor = '#7c3aed'; // Violet-600 for endocrinology
+        gradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
+        hoverGradient = ['#a78bfa', '#8b5cf6', '#7c3aed'];
+        break;
+      case 'notfallmedizin': 
+        baseColor = '#dc2626'; // Emergency Red-600
+        gradient = ['#f59e0b', '#dc2626', '#b91c1c']; // Amber to red gradient
+        hoverGradient = ['#fbbf24', '#f59e0b', '#dc2626'];
+        break;
       case 'infektiologie': 
-        baseColor = '#059669'; // Emerald-600
-        gradient = ['#059669', '#047857', '#065f46'];
-        hoverGradient = ['#10b981', '#059669', '#047857'];
+        baseColor = '#059669'; // Emerald-600 for infectious diseases
+        gradient = ['#10b981', '#059669', '#047857'];
+        hoverGradient = ['#34d399', '#10b981', '#059669'];
         break;
       case 'urologie': 
-        baseColor = '#7c3aed'; // Violet-600
-        gradient = ['#7c3aed', '#6d28d9', '#5b21b6'];
-        hoverGradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
+        baseColor = '#7c2d12'; // Brown-800 for urology
+        gradient = ['#a16207', '#7c2d12', '#92400e'];
+        hoverGradient = ['#d97706', '#a16207', '#7c2d12'];
         break;
       case 'radiologie': 
-        baseColor = '#4f46e5'; // Indigo-600
-        gradient = ['#4f46e5', '#4338ca', '#3730a3'];
-        hoverGradient = ['#6366f1', '#4f46e5', '#4338ca'];
+        baseColor = '#4338ca'; // Indigo-700 for radiology
+        gradient = ['#6366f1', '#4338ca', '#3730a3'];
+        hoverGradient = ['#818cf8', '#6366f1', '#4338ca'];
+        break;
+      case 'dermatologie':
+        baseColor = '#be185d'; // Pink-700 for dermatology
+        gradient = ['#ec4899', '#be185d', '#9d174d'];
+        hoverGradient = ['#f472b6', '#ec4899', '#be185d'];
+        break;
+      case 'neurologie':
+        baseColor = '#5b21b6'; // Purple-800 for neurology
+        gradient = ['#7c3aed', '#5b21b6', '#4c1d95'];
+        hoverGradient = ['#8b5cf6', '#7c3aed', '#5b21b6'];
+        break;
+      case 'orthopädie':
+        baseColor = '#374151'; // Gray-700 for orthopedics
+        gradient = ['#6b7280', '#374151', '#1f2937'];
+        hoverGradient = ['#9ca3af', '#6b7280', '#374151'];
         break;
     }
   }
   
-  // Icon based on content and type
+  // Dynamic color distribution for items without specific parent categories
+  // This creates visual variety when folders don't match specific medical specialties
+  if (!parentSlug || (parentSlug && ![
+    'chirurgie', 'innere-medizin', 'kardiologie', 'pneumologie', 'gastroenterologie', 
+    'nephrologie', 'endokrinologie-und-stoffwechsel', 'notfallmedizin', 'infektiologie', 
+    'urologie', 'radiologie', 'dermatologie', 'neurologie', 'orthopädie'
+  ].includes(parentSlug))) {
+    // Assign colors based on content keywords for better visual distribution
+    if (normalizedTitle.includes('diagnos') || normalizedTitle.includes('befund')) {
+      baseColor = '#7c3aed'; // Purple for diagnostics
+      gradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
+      hoverGradient = ['#a78bfa', '#8b5cf6', '#7c3aed'];
+    } else if (normalizedTitle.includes('therap') || normalizedTitle.includes('behandl')) {
+      baseColor = '#059669'; // Green for therapy
+      gradient = ['#10b981', '#059669', '#047857'];
+      hoverGradient = ['#34d399', '#10b981', '#059669'];
+    } else if (normalizedTitle.includes('medikament') || normalizedTitle.includes('pharma')) {
+      baseColor = '#ea580c'; // Orange for medications
+      gradient = ['#f97316', '#ea580c', '#c2410c'];
+      hoverGradient = ['#fb923c', '#f97316', '#ea580c'];
+    } else if (normalizedTitle.includes('labor') || normalizedTitle.includes('wert')) {
+      baseColor = '#0ea5e9'; // Sky blue for lab values
+      gradient = ['#0ea5e9', '#0284c7', '#0369a1'];
+      hoverGradient = ['#38bdf8', '#0ea5e9', '#0284c7'];
+    } else if (normalizedTitle.includes('symptom') || normalizedTitle.includes('klinik')) {
+      baseColor = '#be185d'; // Pink for symptoms
+      gradient = ['#ec4899', '#be185d', '#9d174d'];
+      hoverGradient = ['#f472b6', '#ec4899', '#be185d'];
+    } else {
+      // Use a rotating color scheme based on title hash for consistent variety
+      const titleHash = normalizedTitle.split('').reduce((hash, char) => {
+        return hash + char.charCodeAt(0);
+      }, 0);
+      const colorIndex = titleHash % 6;
+      
+      const colorPalettes = [
+        { // Teal
+          baseColor: '#0891b2',
+          gradient: ['#14b8a6', '#0891b2', '#0e7490'],
+          hoverGradient: ['#2dd4bf', '#14b8a6', '#0891b2']
+        },
+        { // Indigo
+          baseColor: '#4f46e5',
+          gradient: ['#6366f1', '#4f46e5', '#4338ca'],
+          hoverGradient: ['#818cf8', '#6366f1', '#4f46e5']
+        },
+        { // Rose
+          baseColor: '#e11d48',
+          gradient: ['#f43f5e', '#e11d48', '#be185d'],
+          hoverGradient: ['#fb7185', '#f43f5e', '#e11d48']
+        },
+        { // Amber
+          baseColor: '#d97706',
+          gradient: ['#f59e0b', '#d97706', '#b45309'],
+          hoverGradient: ['#fbbf24', '#f59e0b', '#d97706']
+        },
+        { // Emerald
+          baseColor: '#059669',
+          gradient: ['#10b981', '#059669', '#047857'],
+          hoverGradient: ['#34d399', '#10b981', '#059669']
+        },
+        { // Violet
+          baseColor: '#7c3aed',
+          gradient: ['#8b5cf6', '#7c3aed', '#6d28d9'],
+          hoverGradient: ['#a78bfa', '#8b5cf6', '#7c3aed']
+        }
+      ];
+      
+      const selectedPalette = colorPalettes[colorIndex];
+      baseColor = selectedPalette.baseColor;
+      gradient = selectedPalette.gradient;
+      hoverGradient = selectedPalette.hoverGradient;
+    }
+  }
+  
+  // Enhanced icon distribution based on content and medical specialty
   let icon = 'Folder';
   if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz') || normalizedTitle.includes('koronar')) {
     icon = 'Heart';
-  } else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation') || normalizedTitle.includes('trauma')) {
+  } else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation') || normalizedTitle.includes('trauma') || normalizedTitle.includes('op-')) {
     icon = 'Scissors';
-  } else if (normalizedTitle.includes('notfall') || normalizedTitle.includes('reanimat') || normalizedTitle.includes('akut')) {
+  } else if (normalizedTitle.includes('notfall') || normalizedTitle.includes('reanimat') || normalizedTitle.includes('akut') || normalizedTitle.includes('emergency')) {
     icon = 'AlertTriangle';
-  } else if (normalizedTitle.includes('diagnostik') || normalizedTitle.includes('röntgen') || normalizedTitle.includes('tomograf')) {
+  } else if (normalizedTitle.includes('diagnostik') || normalizedTitle.includes('röntgen') || normalizedTitle.includes('tomograf') || normalizedTitle.includes('mrt') || normalizedTitle.includes('ct')) {
     icon = 'Scan';
-  } else if (normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg')) {
+  } else if (normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg') || normalizedTitle.includes('respirator')) {
     icon = 'Activity';
-  } else if (normalizedTitle.includes('urolog') || normalizedTitle.includes('niere') || normalizedTitle.includes('harn')) {
+  } else if (normalizedTitle.includes('urolog') || normalizedTitle.includes('niere') || normalizedTitle.includes('harn') || normalizedTitle.includes('blase')) {
     icon = 'Droplets';
-  } else if (normalizedTitle.includes('infekt') || normalizedTitle.includes('hygiene') || normalizedTitle.includes('bakteri') || normalizedTitle.includes('viral')) {
+  } else if (normalizedTitle.includes('infekt') || normalizedTitle.includes('hygiene') || normalizedTitle.includes('bakteri') || normalizedTitle.includes('viral') || normalizedTitle.includes('antibio')) {
     icon = 'Shield';
+  } else if (normalizedTitle.includes('medikament') || normalizedTitle.includes('pharma') || normalizedTitle.includes('dosier') || normalizedTitle.includes('therapie')) {
+    icon = 'FileText';
+  } else if (normalizedTitle.includes('labor') || normalizedTitle.includes('wert') || normalizedTitle.includes('analyse') || normalizedTitle.includes('befund')) {
+    icon = 'Scan';
+  } else if (normalizedTitle.includes('anamnes') || normalizedTitle.includes('untersuch') || normalizedTitle.includes('klinik')) {
+    icon = 'Stethoscope';
   } else if (type.toLowerCase().includes('content') || normalizedTitle.includes('content')) {
     icon = 'FileText';
   } else {
