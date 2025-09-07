@@ -292,11 +292,6 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           </View>
         </View>
         <Text style={styles.mainTitle}>{title}</Text>
-        <View style={styles.metaInfo}>
-          <Text style={styles.metaText}>📚 Medizinischer Leitfaden</Text>
-          <Text style={styles.metaText}>⏱️ Letzte Aktualisierung: {lastUpdated}</Text>
-          <Text style={styles.metaText}>📖 {completionStatus}</Text>
-        </View>
         
         {/* Action buttons */}
         <View style={styles.headerActions}>
@@ -643,15 +638,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 10,
-  },
-  metaInfo: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 15,
-  },
-  metaText: {
-    fontSize: 14,
-    color: '#666',
   },
 
   // Navigation Styles
