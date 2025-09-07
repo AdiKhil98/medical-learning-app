@@ -267,7 +267,7 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
         icon={IconComponent}
         gradient={itemDetails.gradient}
         hoverGradient={itemDetails.hoverGradient}
-        hasContent={hasContent}
+        hasContent={Boolean(hasContent)}
         onPress={onPress}
         size="medium"
         showBadge={true}
@@ -463,7 +463,7 @@ export default function SectionDetailScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Fehler</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchItemData}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => fetchItemData()}>
           <Text style={styles.retryButtonText}>Erneut versuchen</Text>
         </TouchableOpacity>
       </SafeAreaView>

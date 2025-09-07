@@ -116,7 +116,7 @@ const ContentSectionComponent = memo(({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
-    overflow: 'hidden',
+    overflow: 'hidden' as 'hidden',
     marginBottom: 16,
   }), [colors.card]);
 
@@ -360,7 +360,7 @@ const ContentDetailScreen = memo(() => {
   if (loading) {
     return (
       <SafeAreaView style={dynamicStyles.container}>
-        <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+        <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress} activeOpacity={0.7}>
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
@@ -451,7 +451,7 @@ const ContentDetailScreen = memo(() => {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+      <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
       
       <TouchableOpacity
         style={styles.backButton}

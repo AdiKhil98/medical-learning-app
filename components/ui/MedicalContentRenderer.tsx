@@ -214,13 +214,40 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     return [];
   }, [htmlContent, jsonContent, plainTextContent, createContentSections, createEnhancedContentSections, title]);
 
+  // Enhanced pattern detection for complex German medical phrases
+  const detectComplexMedicalPatterns = useCallback((text: string) => {
+    const patterns = [
+      // German medical multipliers and frequencies
+      { pattern: /\b(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s*(x|mal)\s+(häufiger|seltener)\b/gi, type: 'multiplier' },
+      { pattern: /\bbis\s+zu\s+(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s*fach\s+(erhöht|gesteigert)\b/gi, type: 'multiplier' },
+      
+      // German time expressions 
+      { pattern: /\b(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s+(Tagen?|Wochen?|Monaten?|Jahren?)\b/gi, type: 'timeRange' },
+      { pattern: /\binnerhalb\s+von\s+(\d+[.,]?\d*)\s+(Tagen?|Stunden?|Wochen?)\b/gi, type: 'timeframe' },
+      
+      // German medical statistics with context
+      { pattern: /\b(\d+[.,]?\d*)%?\s+(aller|der)\s+(akuten|chronischen|behandelten)?\s*\w+\b/gi, type: 'contextualStat' },
+      { pattern: /\b(\d+[.,]?\d*)%?\s+(nach|vor|über|unter)\s+(\d+[.,]?\d*)\s+(Jahren?|Stunden?|Tagen?)\b/gi, type: 'temporalStat' },
+    ];
+
+    let enhancedText = text;
+    patterns.forEach(({ pattern, type }) => {
+      enhancedText = enhancedText.replace(pattern, (match) => `|||${type}|||${match}|||${type}|||`);
+    });
+
+    return enhancedText;
+  }, []);
+
   // Enhanced medical text rendering with rich highlighting
   const renderContent = useCallback((text: string) => {
     try {
-      // Enhanced pattern matching for German medical content including Aortendissektion
-      const medicalPattern = /(\b\d+[.,]?\d*\s*(?:mg\/dl|mmol\/l|Jahre?|Stunden?|Tagen?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.000)\b|\b\d+[.,]?\d*[-–]\d+[.,]?\d*%?\b|\b\d+[.,]?\d*%?\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS)\b|\b(?:Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens)\b|\b(?:Stanford\s+Typ\s+[AB]|DeBakey\s+Typ\s+[I-III]|Stadium|Grad|Stufe)\s*[IVXLC0-9]*\b|\b(?:AKI-Stadium)\s+\d+\b|\bICD-10\s+unter\s+[A-Z]\d+\b)/gi;
+      // Pre-process text for complex German medical patterns
+      const preprocessedText = detectComplexMedicalPatterns(text);
       
-      const parts = text.split(medicalPattern).filter(part => part != null);
+      // Comprehensive German medical pattern matching with improved accuracy
+      const medicalPattern = /((\|\|\|\w+\|\|\|[^|]+\|\|\|\w+\|\|\|)|\b\d+[.,]?\d*\s*(?:mg\/dl|mmol\/l|mm\s*Hg|bpm|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.?000|x\s*häufiger|mal\s+häufiger|\-fach)\b|\b\d+[.,]?\d*[-–]\d+[.,]?\d*\s*(?:%|Jahre?|Stunden?|Tagen?)?\b|\b\d+[.,]?\d*%?\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS)\b|\b(?:Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens|Aortensyndrom|Mediadegeneration|Bindegewebserkrankung|Hypertonie|Ehlers-Danlos-Syndrom)\b|\b(?:Stanford\s+Typ\s+[AB]|DeBakey\s+Typ\s+[I-III]|Stadium|Grad|Stufe)\s*[IVXLC0-9]*\b|\b(?:AKI-Stadium)\s+\d+\b|\bICD-10\s+unter\s+[A-Z]\d+\b)/gi;
+      
+      const parts = preprocessedText.split(medicalPattern).filter(part => part != null);
       
       return (
         <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
@@ -229,8 +256,26 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             
             const trimmedPart = part.trim();
             
-            // Medical numbers with units and ranges (blue badges)
-            if (/^\d+[.,]?\d*\s*(mg\/dl|mmol\/l|Jahre?|Stunden?|Tagen?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.000)$/i.test(trimmedPart)) {
+            // Handle complex German medical patterns
+            if (trimmedPart.startsWith('|||') && trimmedPart.endsWith('|||')) {
+              const match = trimmedPart.match(/\|\|\|(\w+)\|\|\|([^|]+)\|\|\|\w+\|\|\|/);
+              if (match) {
+                const [, patternType, content] = match;
+                return (
+                  <Text key={index} style={[
+                    patternType === 'multiplier' ? styles.multiplierBadge :
+                    patternType === 'timeRange' || patternType === 'timeframe' ? styles.timeframeBadge :
+                    patternType === 'contextualStat' || patternType === 'temporalStat' ? styles.numberBadgeWithUnit :
+                    styles.numberBadge
+                  ]}>
+                    {content}
+                  </Text>
+                );
+              }
+            }
+            
+            // Medical numbers with units (blue badges)
+            if (/^\d+[.,]?\d*\s*(mg\/dl|mmol\/l|mm\s*Hg|bpm|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.?000|x\s*häufiger|mal\s+häufiger|\-fach)$/i.test(trimmedPart)) {
               return (
                 <Text key={index} style={styles.numberBadgeWithUnit}>
                   {trimmedPart}
@@ -238,8 +283,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
               );
             }
             
-            // Medical percentage ranges (blue badges for ranges like 10-30%)
-            if (/^\d+[.,]?\d*[-–]\d+[.,]?\d*%?$/i.test(trimmedPart)) {
+            // Medical ranges and time periods (blue badges for ranges like 10-30%, 15-90 Tagen)
+            if (/^\d+[.,]?\d*[-–]\d+[.,]?\d*\s*(?:%|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?)?$/i.test(trimmedPart)) {
               return (
                 <Text key={index} style={styles.numberBadgeWithUnit}>
                   {trimmedPart}
@@ -257,7 +302,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             }
             
             // Medical terms (purple with dotted underline)
-            if (/^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS|Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens)$/i.test(trimmedPart)) {
+            if (/^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS|Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens|Aortensyndrom|Mediadegeneration|Bindegewebserkrankung|Hypertonie|Ehlers-Danlos-Syndrom)$/i.test(trimmedPart)) {
               return (
                 <Text key={index} style={styles.medicalTerm}>
                   {trimmedPart}
@@ -295,7 +340,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         </Text>
       );
     }
-  }, [colors.text]);
+  }, [colors.text, detectComplexMedicalPatterns]);
 
   // Enhanced important boxes with better styling matching target
   const renderImportantBoxes = useCallback((content: string, sectionType: string) => {
@@ -742,6 +787,29 @@ const styles = StyleSheet.create({
   },
   icdCodeBadge: {
     backgroundColor: '#4834d4',
+    color: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 15,
+    fontSize: 14,
+    fontWeight: '600',
+    overflow: 'hidden',
+    marginHorizontal: 1,
+  },
+  // Enhanced badges for complex German medical patterns
+  multiplierBadge: {
+    backgroundColor: '#FF6B35',
+    color: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 15,
+    fontSize: 14,
+    fontWeight: '600',
+    overflow: 'hidden',
+    marginHorizontal: 1,
+  },
+  timeframeBadge: {
+    backgroundColor: '#4ECDC4',
     color: 'white',
     paddingHorizontal: 10,
     paddingVertical: 3,

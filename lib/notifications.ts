@@ -125,7 +125,7 @@ export async function sendTestNotification(title: string, body: string) {
       body,
       data: { test: true },
     },
-    trigger: { seconds: 1 },
+    trigger: { type: 'timeInterval', seconds: 1 } as Notifications.TimeIntervalTriggerInput,
   });
 }
 

@@ -19,7 +19,7 @@ export const sectionStyles = StyleSheet.create({
   structuredSectionTitle: {
     fontSize: screenWidth > 768 ? 28 : 24,
     fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.text,
+    color: MEDICAL_COLORS.textPrimary,
     marginLeft: 12,
     fontWeight: '700',
     letterSpacing: -0.5,
@@ -36,7 +36,7 @@ export const sectionStyles = StyleSheet.create({
   splitScreenHeroTitle: {
     fontSize: screenWidth > 768 ? 32 : 28,
     fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.text,
+    color: MEDICAL_COLORS.textPrimary,
     textAlign: 'center',
     fontWeight: '800',
     letterSpacing: -0.6,
@@ -83,7 +83,7 @@ export const sectionStyles = StyleSheet.create({
   recentContentTitle: {
     fontSize: screenWidth > 768 ? 18 : 16,
     fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.text,
+    color: MEDICAL_COLORS.textPrimary,
     marginBottom: 6,
     fontWeight: '700',
     lineHeight: 1.3,

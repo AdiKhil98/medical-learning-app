@@ -211,7 +211,7 @@ export default function BibliothekMainScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorTitle}>Fehler</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchMainCategories}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => fetchMainCategories()}>
           <Text style={styles.retryButtonText}>Erneut versuchen</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -290,7 +290,7 @@ export default function BibliothekMainScreen() {
                   activeOpacity={0.9}
                 >
                   <LinearGradient
-                    colors={gradient}
+                    colors={gradient as [string, string, ...string[]]}
                     style={styles.circleGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}

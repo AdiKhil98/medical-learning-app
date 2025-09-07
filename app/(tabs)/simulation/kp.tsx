@@ -161,13 +161,13 @@ export default function KPSimulationScreen() {
           document.head.removeChild(script);
         }
         // Cleanup event listener and monitoring
-        if (window.kpMessageListener) {
-          window.removeEventListener('message', window.kpMessageListener);
-          delete window.kpMessageListener;
+        if ((window as any).kpMessageListener) {
+          window.removeEventListener('message', (window as any).kpMessageListener);
+          delete (window as any).kpMessageListener;
         }
-        if (window.kpMonitoringInterval) {
-          clearInterval(window.kpMonitoringInterval);
-          delete window.kpMonitoringInterval;
+        if ((window as any).kpMonitoringInterval) {
+          clearInterval((window as any).kpMonitoringInterval);
+          delete (window as any).kpMonitoringInterval;
         }
       };
     }
@@ -314,9 +314,9 @@ export default function KPSimulationScreen() {
       setSimulationStarted(false);
       
       // Cleanup monitoring interval
-      if (window.kpMonitoringInterval) {
-        clearInterval(window.kpMonitoringInterval);
-        delete window.kpMonitoringInterval;
+      if ((window as any).kpMonitoringInterval) {
+        clearInterval((window as any).kpMonitoringInterval);
+        delete (window as any).kpMonitoringInterval;
       }
       
       // Aggressive widget removal - try multiple approaches

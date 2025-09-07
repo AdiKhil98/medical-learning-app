@@ -21,14 +21,12 @@ export default function BibliothekLayout() {
         name="[slug]"
         options={{
           headerTitle: '', // Will be set dynamically
-          headerBackTitleVisible: false,
         }}
       />
       <Stack.Screen
         name="content/[slug]"
         options={{
           headerTitle: '', // Will be set dynamically
-          headerBackTitleVisible: false,
         }}
       />
     </Stack>

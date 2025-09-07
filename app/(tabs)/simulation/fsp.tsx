@@ -22,7 +22,7 @@ const { width, height } = Dimensions.get('window');
 
 
 // Animated microphone button component
-function MicrophoneButton({ onPress, isActive }) {
+function MicrophoneButton({ onPress, isActive }: { onPress: () => void; isActive: boolean }) {
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
   const ringScale1 = useSharedValue(1);
@@ -276,7 +276,7 @@ export default function FSPSimulationScreen() {
             };
             
             // Method 1: Listen for Voiceflow events
-            const messageListener = (event) => {
+            const messageListener = (event: MessageEvent) => {
               if (event.data && typeof event.data === 'object') {
                 console.log('📬 FSP Message received:', event.data);
                 if (event.data.type && event.data.type.startsWith('voiceflow:')) {
@@ -287,11 +287,11 @@ export default function FSPSimulationScreen() {
             };
             
             window.addEventListener('message', messageListener);
-            window.fspMessageListener = messageListener;
+            (window as any).fspMessageListener = messageListener;
             
             // Method 2: Monitor widget DOM changes and interactions
             const startWidgetMonitoring = () => {
-              let monitoringInterval = null;
+              let monitoringInterval: NodeJS.Timeout | null = null;
               let hasStarted = false;
               
               const checkWidgetInteraction = () => {
@@ -325,7 +325,7 @@ export default function FSPSimulationScreen() {
               // Start monitoring after widget loads
               setTimeout(() => {
                 monitoringInterval = setInterval(checkWidgetInteraction, 1000);
-                window.fspMonitoringInterval = monitoringInterval;
+                (window as any).fspMonitoringInterval = monitoringInterval;
                 
                 // Stop monitoring after 5 minutes to prevent resource waste
                 setTimeout(() => {
@@ -365,9 +365,9 @@ export default function FSPSimulationScreen() {
           document.head.removeChild(script);
         }
         // Cleanup event listener
-        if (window.fspMessageListener) {
-          window.removeEventListener('message', window.fspMessageListener);
-          delete window.fspMessageListener;
+        if ((window as any).fspMessageListener) {
+          window.removeEventListener('message', (window as any).fspMessageListener);
+          delete (window as any).fspMessageListener;
         }
       };
     }
@@ -514,9 +514,9 @@ export default function FSPSimulationScreen() {
       setSimulationStarted(false);
       
       // Cleanup monitoring interval
-      if (window.fspMonitoringInterval) {
-        clearInterval(window.fspMonitoringInterval);
-        delete window.fspMonitoringInterval;
+      if ((window as any).fspMonitoringInterval) {
+        clearInterval((window as any).fspMonitoringInterval);
+        delete (window as any).fspMonitoringInterval;
       }
       
       // Aggressive widget removal - try multiple approaches

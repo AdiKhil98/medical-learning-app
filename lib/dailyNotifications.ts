@@ -180,9 +180,10 @@ export class DailyNotificationManager {
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
+          type: 'date',
           date: scheduledDate,
           repeats: false,
-        },
+        } as Notifications.DateTriggerInput,
         identifier: 'daily_tip_notification',
       });
 
@@ -223,9 +224,10 @@ export class DailyNotificationManager {
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: {
+          type: 'date',
           date: scheduledDate,
           repeats: false,
-        },
+        } as Notifications.DateTriggerInput,
         identifier: 'daily_question_notification',
       });
 
@@ -281,7 +283,7 @@ export class DailyNotificationManager {
           data: { type: 'daily_tip', test: true },
           sound: true,
         },
-        trigger: { seconds: 1 },
+        trigger: { type: 'timeInterval', seconds: 1 } as Notifications.TimeIntervalTriggerInput,
       });
       
       SecureLogger.log('Test tip notification sent');
@@ -302,7 +304,7 @@ export class DailyNotificationManager {
           data: { type: 'daily_question', test: true },
           sound: true,
         },
-        trigger: { seconds: 1 },
+        trigger: { type: 'timeInterval', seconds: 1 } as Notifications.TimeIntervalTriggerInput,
       });
       
       SecureLogger.log('Test question notification sent');
