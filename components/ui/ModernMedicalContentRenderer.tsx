@@ -610,78 +610,61 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
   // Render horizontal scrollable navigation
   const renderQuickNavigation = () => {
-    console.log('Rendering navigation with', navigationItems.length, 'items');
-    console.log('Navigation items:', navigationItems.map(item => item.title));
+    console.log('🔍 DEBUG: Rendering navigation with', navigationItems.length, 'items');
+    console.log('🔍 DEBUG: Navigation items:', navigationItems.map(item => item.title));
+    console.log('🔍 DEBUG: Show left arrow:', showLeftArrow, 'Show right arrow:', showRightArrow);
     
     return (
     <View style={styles.navigationContainer}>
       <Text style={styles.navTitle}>SCHNELLNAVIGATION</Text>
       
-      <View style={styles.horizontalNavWrapper}>
-        {/* Left Arrow */}
-        {showLeftArrow && (
-          <TouchableOpacity 
-            style={styles.navArrow} 
-            onPress={scrollPillsLeft}
-            accessibilityLabel="Scroll left"
-          >
-            <ChevronLeft size={20} color="#667eea" />
-          </TouchableOpacity>
-        )}
-        
-        {/* Horizontal Scrollable Pills */}
-        <ScrollView
-          ref={pillScrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          onScroll={handlePillScroll}
-          onContentSizeChange={handleContentSizeChange}
-          scrollEventThrottle={16}
-          style={styles.pillScrollContainer}
-          contentContainerStyle={styles.pillScrollContent}
-        >
-          {navigationItems.map((item, index) => {
-            const isActive = activePillId === item.sectionId;
-            
-            const handleNavPress = () => {
-              console.log(`Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
-              handlePillPress(item.sectionId);
-            };
+      {/* DEBUG: Test basic horizontal scroll first */}
+      <ScrollView
+        ref={pillScrollRef}
+        horizontal={true}
+        showsHorizontalScrollIndicator={true}
+        onScroll={handlePillScroll}
+        onContentSizeChange={handleContentSizeChange}
+        scrollEventThrottle={16}
+        style={[styles.pillScrollContainer, { backgroundColor: '#f0f0f0', height: 50 }]}
+        contentContainerStyle={[styles.pillScrollContent, { backgroundColor: '#e0e0e0' }]}
+      >
+        {navigationItems.map((item, index) => {
+          const isActive = activePillId === item.sectionId;
+          
+          const handleNavPress = () => {
+            console.log(`🔍 DEBUG: Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
+            handlePillPress(item.sectionId);
+          };
 
-            return (
-              <TouchableOpacity
-                key={`pill-${item.sectionId}`}
-                style={[
-                  styles.horizontalNavItem,
-                  isActive && styles.activeNavItem
-                ]}
-                onPress={handleNavPress}
-                activeOpacity={0.7}
-                accessibilityLabel={`Navigate to ${item.title}`}
-                accessibilityState={{ selected: isActive }}
-              >
-                <Text style={[
-                  styles.horizontalNavItemText,
-                  isActive && styles.activeNavItemText
-                ]}>
-                  {item.icon} {item.title}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-        
-        {/* Right Arrow */}
-        {showRightArrow && (
-          <TouchableOpacity 
-            style={styles.navArrow} 
-            onPress={scrollPillsRight}
-            accessibilityLabel="Scroll right"
-          >
-            <ChevronRight size={20} color="#667eea" />
-          </TouchableOpacity>
-        )}
-      </View>
+          return (
+            <TouchableOpacity
+              key={`pill-${item.sectionId}-${index}`}
+              style={[
+                styles.horizontalNavItem,
+                isActive && styles.activeNavItem,
+                { backgroundColor: isActive ? '#667eea' : '#ffffff', margin: 4 }
+              ]}
+              onPress={handleNavPress}
+              activeOpacity={0.7}
+              accessibilityLabel={`Navigate to ${item.title}`}
+              accessibilityState={{ selected: isActive }}
+            >
+              <Text style={[
+                styles.horizontalNavItemText,
+                isActive && styles.activeNavItemText,
+                { color: isActive ? 'white' : '#333' }
+              ]}>
+                {item.icon} {item.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+      
+      <Text style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+        DEBUG: {navigationItems.length} pills • Left: {showLeftArrow ? 'ON' : 'OFF'} • Right: {showRightArrow ? 'ON' : 'OFF'}
+      </Text>
     </View>
     );
   };
