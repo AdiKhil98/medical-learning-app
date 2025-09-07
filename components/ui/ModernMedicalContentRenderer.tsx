@@ -377,49 +377,57 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     ]).start();
   }, [sectionAnimations]);
 
-  // Quick navigation items
-  const navigationItems = [
-    { title: 'Definition & Pathophysiologie', icon: '📋', sectionId: 'definition' },
-    { title: 'Epidemiologie & Risikofaktoren', icon: '📊', sectionId: 'epidemiology' },
-    { title: 'Klinische Manifestationen', icon: '🔍', sectionId: 'symptoms' },
-    { title: 'Diagnostik & Assessment', icon: '🩺', sectionId: 'diagnosis' },
-    { title: 'Ätiologie & Ursachen', icon: '💊', sectionId: 'etiology' },
-    { title: 'Differentialdiagnose', icon: '🔄', sectionId: 'differential' },
-  ];
+  // Dynamic navigation items based on actual parsed sections
+  const navigationItems = useMemo(() => {
+    return parsedSections.slice(0, 6).map((section) => {
+      // Get appropriate icon based on section type
+      const getNavIcon = (type: string) => {
+        switch (type) {
+          case 'definition': return '📋';
+          case 'epidemiology': return '📊';
+          case 'symptoms': return '🔍';
+          case 'diagnosis': return '🩺';
+          case 'etiology': return '💊';
+          case 'therapy': return '💊';
+          case 'prognosis': return '📈';
+          default: return '📄';
+        }
+      };
+
+      return {
+        title: section.title,
+        icon: getNavIcon(section.type),
+        sectionId: section.id,
+      };
+    });
+  }, [parsedSections]);
 
   const scrollToSection = useCallback((sectionId: string) => {
     // Expand the section first
     setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
     
-    // Wait a moment for the section to expand, then scroll to it
-    setTimeout(() => {
-      const sectionRef = sectionRefs.current[sectionId];
-      if (sectionRef && scrollViewRef.current) {
-        sectionRef.measureLayout(
-          scrollViewRef.current.getInnerViewNode(),
-          (x, y) => {
-            scrollViewRef.current?.scrollTo({
-              x: 0,
-              y: Math.max(0, y - 100), // Offset to show section header clearly
-              animated: true
-            });
-          },
-          () => {
-            // Fallback if measureLayout fails - try scrolling by finding section index
-            const sectionIndex = parsedSections.findIndex(s => s.id === sectionId);
-            if (sectionIndex >= 0) {
-              // Approximate scroll position based on section index
-              const approximateY = 400 + (sectionIndex * 200); // Header height + section height estimate
-              scrollViewRef.current?.scrollTo({
-                x: 0,
-                y: approximateY,
-                animated: true
-              });
-            }
-          }
-        );
-      }
-    }, 300); // Allow time for expansion animation
+    // Calculate scroll position based on section index
+    const sectionIndex = parsedSections.findIndex(s => s.id === sectionId);
+    if (sectionIndex >= 0 && scrollViewRef.current) {
+      // Wait for section expansion, then scroll
+      setTimeout(() => {
+        // Calculate approximate scroll position
+        const headerHeight = 450; // Header + navigation height
+        const progressBarHeight = 60;
+        const sectionHeight = 150; // Average section height when collapsed
+        const approximateY = headerHeight + progressBarHeight + (sectionIndex * sectionHeight);
+        
+        console.log(`Scrolling to section ${sectionId} at index ${sectionIndex}, position ${approximateY}`);
+        
+        scrollViewRef.current?.scrollTo({
+          x: 0,
+          y: Math.max(0, approximateY - 50), // Small offset to show section clearly
+          animated: true
+        });
+      }, 500); // Longer delay for expansion
+    } else {
+      console.log(`Section ${sectionId} not found in parsedSections`);
+    }
   }, [parsedSections]);
 
   // Favorites management
@@ -537,6 +545,9 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           const [navScale] = useState(new Animated.Value(1));
           
           const handleNavPress = () => {
+            console.log(`Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
+            console.log('Available sections:', parsedSections.map(s => `${s.id}: ${s.title}`));
+            
             Animated.sequence([
               Animated.timing(navScale, {
                 toValue: 0.95,
