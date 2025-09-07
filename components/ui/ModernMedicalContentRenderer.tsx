@@ -132,6 +132,47 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   }, []);
 
   // Enhanced sample sections with rich content structure
+  // Helper function to decode HTML entities
+  const decodeHtmlEntities = (text: string): string => {
+    const htmlEntities: Record<string, string> = {
+      '&amp;': '&',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&quot;': '"',
+      '&#x27;': "'",
+      '&#x2F;': '/',
+      '&#39;': "'",
+      '&nbsp;': ' ',
+      '&auml;': 'ä',
+      '&ouml;': 'ö',
+      '&uuml;': 'ü',
+      '&Auml;': 'Ä',
+      '&Ouml;': 'Ö',
+      '&Uuml;': 'Ü',
+      '&szlig;': 'ß',
+      '\\n': ' ',
+      '\\r': ' ',
+      '\\t': ' ',
+    };
+    
+    let decoded = text;
+    Object.entries(htmlEntities).forEach(([entity, char]) => {
+      decoded = decoded.replace(new RegExp(entity, 'g'), char);
+    });
+    
+    return decoded.replace(/\s+/g, ' ').trim();
+  };
+
+  // Helper function to clean HTML content
+  const cleanHtmlContent = (html: string): string => {
+    return html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+      .replace(/<[^>]+>/g, ' ') // Remove HTML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  };
+
   // Parse database content into sections
   const parsedSections = useMemo(() => {
     const sections = [];
@@ -174,9 +215,9 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
             const sectionType = getSectionType(item.title || item.heading || `Section ${index + 1}`);
             sections.push({
               id: item.id || `section-${index}`,
-              title: item.title || item.heading || `Section ${index + 1}`,
+              title: decodeHtmlEntities(item.title || item.heading || `Section ${index + 1}`),
               icon: getIconFromType(sectionType),
-              content: item.content || item.text || item.description || '',
+              content: decodeHtmlEntities(cleanHtmlContent(item.content || item.text || item.description || '')),
               type: sectionType,
             });
           }
@@ -187,9 +228,9 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           const sectionType = getSectionType(item.title || item.heading || `Section ${index + 1}`);
           sections.push({
             id: item.id || `section-${index}`,
-            title: item.title || item.heading || `Section ${index + 1}`,
+            title: decodeHtmlEntities(item.title || item.heading || `Section ${index + 1}`),
             icon: getIconFromType(sectionType),
-            content: item.content || item.text || item.description || '',
+            content: decodeHtmlEntities(cleanHtmlContent(item.content || item.text || item.description || '')),
             type: sectionType,
           });
         });
@@ -200,9 +241,9 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
             const sectionType = getSectionType(key);
             sections.push({
               id: key.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-              title: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
+              title: decodeHtmlEntities(key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')),
               icon: getIconFromType(sectionType),
-              content: value,
+              content: decodeHtmlEntities(cleanHtmlContent(value)),
               type: sectionType,
             });
           }
@@ -217,16 +258,16 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       htmlSections.forEach((section, index) => {
         if (section.trim() && index > 0) {
           const titleMatch = section.match(/^([^<]+)/);
-          const contentMatch = section.replace(/^[^<]*<\/h[1-6]>/i, '').replace(/<[^>]+>/g, ' ').trim();
+          const cleanedContent = cleanHtmlContent(section.replace(/^[^<]*<\/h[1-6]>/i, ''));
           
-          if (titleMatch && contentMatch && contentMatch.length > 30) {
-            const title = titleMatch[1].trim();
+          if (titleMatch && cleanedContent && cleanedContent.length > 30) {
+            const title = decodeHtmlEntities(titleMatch[1].trim());
             const sectionType = getSectionType(title);
             sections.push({
               id: `html-section-${index}`,
               title: title,
               icon: getIconFromType(sectionType),
-              content: contentMatch.substring(0, 500) + (contentMatch.length > 500 ? '...' : ''),
+              content: decodeHtmlEntities(cleanedContent.substring(0, 500) + (cleanedContent.length > 500 ? '...' : '')),
               type: sectionType,
             });
           }
@@ -239,16 +280,18 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       const paragraphs = plainTextContent.split('\n\n').filter(p => p.trim().length > 100);
       paragraphs.forEach((paragraph, index) => {
         const lines = paragraph.split('\n');
-        const title = lines[0].length < 100 ? lines[0] : `Abschnitt ${index + 1}`;
-        const content = lines.length > 1 ? lines.slice(1).join(' ') : paragraph;
+        const rawTitle = lines[0].length < 100 ? lines[0] : `Abschnitt ${index + 1}`;
+        const rawContent = lines.length > 1 ? lines.slice(1).join(' ') : paragraph;
         
-        if (content.trim().length > 50) {
+        if (rawContent.trim().length > 50) {
+          const title = decodeHtmlEntities(rawTitle.replace(/[#*]/g, '').trim());
+          const content = decodeHtmlEntities(rawContent.trim());
           const sectionType = getSectionType(title);
           sections.push({
             id: `text-section-${index}`,
-            title: title.replace(/[#*]/g, '').trim(),
+            title: title,
             icon: getIconFromType(sectionType),
-            content: content.trim(),
+            content: content,
             type: sectionType,
           });
         }
@@ -261,7 +304,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         id: 'default-content',
         title: 'Medizinischer Inhalt',
         icon: 'definition',
-        content: plainTextContent || htmlContent?.replace(/<[^>]+>/g, '') || 'Inhalt wird geladen...',
+        content: decodeHtmlEntities(cleanHtmlContent(plainTextContent || htmlContent || 'Inhalt wird geladen...')),
         type: 'definition' as const,
       });
     }
