@@ -412,19 +412,19 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       // Wait for section expansion, then scroll
       setTimeout(() => {
         // Calculate approximate scroll position
-        const headerHeight = 450; // Header + navigation height
-        const progressBarHeight = 60;
-        const sectionHeight = 150; // Average section height when collapsed
+        const headerHeight = 400; // Header + navigation height
+        const progressBarHeight = 40;
+        const sectionHeight = 120; // Average section height when collapsed
         const approximateY = headerHeight + progressBarHeight + (sectionIndex * sectionHeight);
         
         console.log(`Scrolling to section ${sectionId} at index ${sectionIndex}, position ${approximateY}`);
         
         scrollViewRef.current?.scrollTo({
           x: 0,
-          y: Math.max(0, approximateY - 50), // Small offset to show section clearly
+          y: Math.max(0, approximateY - 80), // Better offset to show section clearly
           animated: true
         });
-      }, 500); // Longer delay for expansion
+      }, 300); // Optimized delay
     } else {
       console.log(`Section ${sectionId} not found in parsedSections`);
     }
@@ -895,22 +895,22 @@ const styles = StyleSheet.create({
     minWidth: 150,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 20, // More pill-like rounded corners
+    backgroundColor: '#f8fafc',
+    borderRadius: 25, // Perfect pill shape
     borderWidth: 1,
-    borderColor: 'rgba(103, 126, 234, 0.2)',
+    borderColor: 'rgba(103, 126, 234, 0.15)',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
   navItemText: {
     fontSize: 13,
-    color: '#4a5568',
+    color: '#475569',
     textAlign: 'center',
-    fontWeight: '600', // Semi-bold for better legibility
-    lineHeight: 16,
+    fontWeight: '500', // Medium weight for optimal pill readability
+    lineHeight: 18,
   },
 
   // Progress Styles
@@ -984,15 +984,20 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statisticalBadge: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#3b82f6',
     color: 'white',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 15, // Pill-shaped corners
-    fontWeight: '600', // Semi-bold for legibility
-    fontSize: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20, // Perfect pill shape
+    fontWeight: '600', 
+    fontSize: 12,
     overflow: 'hidden',
     textAlign: 'center',
+    elevation: 1,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   highlightBox: {
     backgroundColor: 'rgba(102, 126, 234, 0.1)',
