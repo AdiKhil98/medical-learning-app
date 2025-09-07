@@ -463,6 +463,16 @@ const ContentDetailScreen = memo(() => {
       </TouchableOpacity>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {(() => {
+          console.log('📋 About to render ModernMedicalContentRenderer');
+          console.log('📋 Current section slug:', currentSection?.slug);
+          console.log('📋 Content HTML exists:', !!currentSection?.content_html);
+          console.log('📋 Content improved exists:', !!currentSection?.content_improved);
+          console.log('📋 Content details exists:', !!currentSection?.content_details);
+          console.log('📋 Title:', currentSection?.title);
+          return null;
+        })()}
+        
         {/* Universal Enhanced Medical Content Renderer */}
         <ModernMedicalContentRenderer
           htmlContent={currentSection.slug === 'av-block' ? demoAVBlockHTML : currentSection.content_html}
