@@ -91,7 +91,7 @@ export default function BibliothekMainScreen() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [mainCategories, setMainCategories] = useState<MainCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSection, setCurrentSection] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -160,12 +160,36 @@ export default function BibliothekMainScreen() {
     }, [fetchMainCategories, authLoading, session])
   );
 
-  // Initial load effect
+  // Handle loading state based on auth loading
   useEffect(() => {
-    if (!authLoading && session) {
-      fetchMainCategories();
+    if (authLoading) {
+      setLoading(true);
+      setError(null);
     }
-  }, []); // Empty dependency array for initial load only
+  }, [authLoading]);
+  
+  // Initial load effect - handle authentication state changes
+  useEffect(() => {
+    if (!authLoading) {
+      if (session) {
+        fetchMainCategories();
+      } else {
+        // If no session, set error and stop loading
+        setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
+        setLoading(false);
+      }
+    }
+  }, [authLoading, session, fetchMainCategories]);
+
+  // Handle tab focus - only refresh if we have a session and it's been a while
+  useFocusEffect(
+    useCallback(() => {
+      if (!authLoading && session && mainCategories.length === 0) {
+        // Only fetch if we don't already have categories loaded
+        fetchMainCategories();
+      }
+    }, [authLoading, session, mainCategories.length, fetchMainCategories])
+  );
 
   const navigateToCategory = (categorySlug: string) => {
     console.log('Navigating to category:', categorySlug);
