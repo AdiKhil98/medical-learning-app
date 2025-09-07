@@ -64,6 +64,13 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   lastUpdated = "Juni 2025",
   completionStatus = "Vollständiger Leitfaden",
 }) => {
+  console.log('🚀 ModernMedicalContentRenderer STARTED');
+  console.log('🔍 Props:', { 
+    hasHtml: !!htmlContent, 
+    hasJson: !!jsonContent, 
+    hasPlainText: !!plainTextContent, 
+    title 
+  });
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [scrollY] = useState(new Animated.Value(0));
@@ -352,6 +359,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       });
     }
 
+    console.log('🔍 Parsed sections result:', sections.length, sections.map(s => s.title));
     return sections;
   }, [jsonContent, htmlContent, plainTextContent]);
 
