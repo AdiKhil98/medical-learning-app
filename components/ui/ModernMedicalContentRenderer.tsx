@@ -24,7 +24,14 @@ import {
   Brain,
   Eye,
   Zap,
+  Search,
+  Bookmark,
+  Edit3,
 } from 'lucide-react-native';
+import MedicalTermTooltip from './MedicalTermTooltip';
+import ContentSearchBar from './ContentSearchBar';
+import SectionNotesModal from './SectionNotesModal';
+import FavoritesManager from './FavoritesManager';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -60,6 +67,12 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   const [scrollY] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [bookmarkedSections, setBookmarkedSections] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [activeNoteSection, setActiveNoteSection] = useState<string | null>(null);
+  const [favoritesVisible, setFavoritesVisible] = useState(false);
 
   // Animation effects
   React.useEffect(() => {
@@ -202,6 +215,67 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
   }, []);
 
+  // Favorites management
+  const getFavoriteSections = useCallback(() => {
+    return Array.from(bookmarkedSections).map(sectionId => {
+      const section = sampleSections.find(s => s.id === sectionId);
+      if (!section) return null;
+      
+      return {
+        id: section.id,
+        title: section.title,
+        category: category,
+        addedAt: new Date(), // In real app, this would be stored
+        type: section.type,
+      };
+    }).filter(Boolean) as any[];
+  }, [bookmarkedSections, sampleSections, category]);
+
+  const toggleBookmark = useCallback((sectionId: string) => {
+    setBookmarkedSections(prev => {
+      const newBookmarks = new Set(prev);
+      if (newBookmarks.has(sectionId)) {
+        newBookmarks.delete(sectionId);
+      } else {
+        newBookmarks.add(sectionId);
+      }
+      return newBookmarks;
+    });
+  }, []);
+
+  const removeFromFavorites = useCallback((sectionId: string) => {
+    setBookmarkedSections(prev => {
+      const newBookmarks = new Set(prev);
+      newBookmarks.delete(sectionId);
+      return newBookmarks;
+    });
+  }, []);
+
+  const clearAllFavorites = useCallback(() => {
+    setBookmarkedSections(new Set());
+  }, []);
+
+  // Notes management
+  const handleNoteSave = useCallback((sectionId: string, note: string) => {
+    setNotes(prev => ({
+      ...prev,
+      [sectionId]: note
+    }));
+  }, []);
+
+  const handleNoteDelete = useCallback((sectionId: string) => {
+    setNotes(prev => {
+      const newNotes = { ...prev };
+      delete newNotes[sectionId];
+      return newNotes;
+    });
+  }, []);
+
+  const openNotesModal = useCallback((sectionId: string) => {
+    setActiveNoteSection(sectionId);
+    setNotesModalVisible(true);
+  }, []);
+
   // Render modern header
   const renderHeader = () => (
     <View style={styles.headerContainer}>
@@ -225,6 +299,31 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           <Text style={styles.metaText}>📚 Medizinischer Leitfaden</Text>
           <Text style={styles.metaText}>⏱️ Letzte Aktualisierung: {lastUpdated}</Text>
           <Text style={styles.metaText}>📖 {completionStatus}</Text>
+        </View>
+        
+        {/* Action buttons */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => setIsSearchVisible(!isSearchVisible)}
+          >
+            <Search size={18} color="#667eea" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => setFavoritesVisible(true)}
+          >
+            <Bookmark 
+              size={18} 
+              color={bookmarkedSections.size > 0 ? "#f59e0b" : "#667eea"}
+              fill={bookmarkedSections.size > 0 ? "#f59e0b" : "none"}
+            />
+            {bookmarkedSections.size > 0 && (
+              <View style={styles.badgeCount}>
+                <Text style={styles.badgeCountText}>{bookmarkedSections.size}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -273,7 +372,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     </View>
   );
 
-  // Enhanced text renderer with highlighting
+  // Enhanced text renderer with highlighting and tooltips
   const renderEnhancedText = useCallback((text: string) => {
     const parts = text.split(/(🔬[^🔬📊]+|📊\d+(?:[,.-]\d+)*%?)/);
     
@@ -281,11 +380,14 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       <Text style={styles.contentText}>
         {parts.map((part, index) => {
           if (part.startsWith('🔬')) {
-            // Medical term
+            // Medical term with tooltip
+            const termText = part.replace('🔬', '');
             return (
-              <Text key={index} style={styles.medicalTerm}>
-                {part.replace('🔬', '')}
-              </Text>
+              <MedicalTermTooltip key={index} term={termText}>
+                <Text style={styles.medicalTerm}>
+                  {termText}
+                </Text>
+              </MedicalTermTooltip>
             );
           } else if (part.startsWith('📊')) {
             // Statistical number
@@ -339,18 +441,39 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
             </LinearGradient>
           </View>
           <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Animated.View
-            style={[
-              styles.chevronContainer,
-              {
-                transform: [{
-                  rotate: isExpanded ? '180deg' : '0deg'
-                }]
-              }
-            ]}
-          >
-            <ChevronDown size={20} color="#666" />
-          </Animated.View>
+          <View style={styles.sectionHeaderActions}>
+            <TouchableOpacity 
+              onPress={() => openNotesModal(section.id)}
+              style={styles.notesButton}
+            >
+              <Edit3 
+                size={16} 
+                color={notes[section.id] ? "#10b981" : "#9ca3af"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => toggleBookmark(section.id)}
+              style={styles.bookmarkButton}
+            >
+              <Bookmark 
+                size={16} 
+                color={bookmarkedSections.has(section.id) ? "#f59e0b" : "#9ca3af"}
+                fill={bookmarkedSections.has(section.id) ? "#f59e0b" : "none"}
+              />
+            </TouchableOpacity>
+            <Animated.View
+              style={[
+                styles.chevronContainer,
+                {
+                  transform: [{
+                    rotate: isExpanded ? '180deg' : '0deg'
+                  }]
+                }
+              ]}
+            >
+              <ChevronDown size={20} color="#666" />
+            </Animated.View>
+          </View>
         </TouchableOpacity>
 
         {isExpanded && (
@@ -409,6 +532,23 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
       <View style={styles.appContainer}>
         {renderHeader()}
+        
+        {/* Search Bar */}
+        {isSearchVisible && (
+          <View style={styles.searchSection}>
+            <ContentSearchBar
+              searchableContent={sampleSections}
+              onSearchResult={(results) => {
+                console.log('Search results:', results);
+              }}
+              onSectionSelect={(sectionId) => {
+                setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
+                setIsSearchVisible(false);
+              }}
+            />
+          </View>
+        )}
+        
         {renderQuickNavigation()}
         
         {/* Progress Bar */}
@@ -424,6 +564,32 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         {/* Content Sections */}
         {sampleSections.map(renderContentSection)}
       </View>
+      
+      {/* Modals */}
+      <FavoritesManager
+        isVisible={favoritesVisible}
+        favorites={getFavoriteSections()}
+        onClose={() => setFavoritesVisible(false)}
+        onSectionSelect={(sectionId) => {
+          setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
+          setFavoritesVisible(false);
+        }}
+        onRemoveFavorite={removeFromFavorites}
+        onClearAll={clearAllFavorites}
+      />
+      
+      <SectionNotesModal
+        isVisible={notesModalVisible}
+        sectionTitle={activeNoteSection ? sampleSections.find(s => s.id === activeNoteSection)?.title || '' : ''}
+        sectionId={activeNoteSection || ''}
+        currentNote={activeNoteSection ? notes[activeNoteSection] || '' : ''}
+        onSave={handleNoteSave}
+        onDelete={handleNoteDelete}
+        onClose={() => {
+          setNotesModalVisible(false);
+          setActiveNoteSection(null);
+        }}
+      />
     </ScrollView>
   );
 };
@@ -658,6 +824,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4a4a4a',
     lineHeight: 22,
+  },
+
+  // Header Actions
+  headerActions: {
+    flexDirection: 'row',
+    marginTop: 15,
+    gap: 10,
+  },
+  actionBtn: {
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+
+  // Search Section
+  searchSection: {
+    marginBottom: 20,
+  },
+
+  // Section Header Actions
+  sectionHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bookmarkButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f9fafb',
+    marginLeft: 8,
+  },
+  notesButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f9fafb',
+  },
+  badgeCount: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeCountText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'white',
   },
 });
 
