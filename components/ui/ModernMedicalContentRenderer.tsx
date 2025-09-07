@@ -77,7 +77,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   const [favoritesVisible, setFavoritesVisible] = useState(false);
   const [activePillId, setActivePillId] = useState<string | null>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [showRightArrow, setShowRightArrow] = useState(false);
 
   // Refs for scrolling
   const scrollViewRef = useRef<ScrollView>(null);
@@ -99,6 +99,15 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       })
     ]).start();
   }, [fadeAnim, slideAnim]);
+
+  // Check initial arrow state after mount
+  React.useEffect(() => {
+    setTimeout(() => {
+      if (pillScrollRef.current) {
+        pillScrollRef.current.scrollTo({ x: 0, animated: false });
+      }
+    }, 100);
+  }, [navigationItems]);
   
   // Icon mapping for different section types
   const getIconComponent = useCallback((iconName: string) => {
@@ -466,6 +475,17 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     setShowRightArrow(scrollX < totalWidth - visibleWidth - 10);
   }, []);
 
+  const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
+    // Check if we need arrows based on content size
+    console.log('Pills content size:', contentWidth, 'Screen width:', screenWidth);
+    if (pillScrollRef.current) {
+      const containerWidth = screenWidth - 100; // Approximate container width  
+      const needsRightArrow = contentWidth > containerWidth;
+      console.log('Setting right arrow:', needsRightArrow);
+      setShowRightArrow(needsRightArrow);
+    }
+  }, []);
+
   const handlePillPress = useCallback((sectionId: string) => {
     // Toggle accordion behavior
     if (activePillId === sectionId) {
@@ -589,7 +609,11 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   );
 
   // Render horizontal scrollable navigation
-  const renderQuickNavigation = () => (
+  const renderQuickNavigation = () => {
+    console.log('Rendering navigation with', navigationItems.length, 'items');
+    console.log('Navigation items:', navigationItems.map(item => item.title));
+    
+    return (
     <View style={styles.navigationContainer}>
       <Text style={styles.navTitle}>SCHNELLNAVIGATION</Text>
       
@@ -611,56 +635,38 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           horizontal
           showsHorizontalScrollIndicator={false}
           onScroll={handlePillScroll}
+          onContentSizeChange={handleContentSizeChange}
           scrollEventThrottle={16}
           style={styles.pillScrollContainer}
           contentContainerStyle={styles.pillScrollContent}
         >
           {navigationItems.map((item, index) => {
-            const [navScale] = useState(new Animated.Value(1));
             const isActive = activePillId === item.sectionId;
             
             const handleNavPress = () => {
               console.log(`Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
-              
-              Animated.sequence([
-                Animated.timing(navScale, {
-                  toValue: 0.95,
-                  duration: 100,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(navScale, {
-                  toValue: 1,
-                  duration: 100,
-                  useNativeDriver: true,
-                })
-              ]).start();
-              
               handlePillPress(item.sectionId);
             };
 
             return (
-              <Animated.View
-                key={index}
-                style={{ transform: [{ scale: navScale }] }}
+              <TouchableOpacity
+                key={`pill-${item.sectionId}`}
+                style={[
+                  styles.horizontalNavItem,
+                  isActive && styles.activeNavItem
+                ]}
+                onPress={handleNavPress}
+                activeOpacity={0.7}
+                accessibilityLabel={`Navigate to ${item.title}`}
+                accessibilityState={{ selected: isActive }}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.horizontalNavItem,
-                    isActive && styles.activeNavItem
-                  ]}
-                  onPress={handleNavPress}
-                  activeOpacity={0.7}
-                  accessibilityLabel={`Navigate to ${item.title}`}
-                  accessibilityState={{ selected: isActive }}
-                >
-                  <Text style={[
-                    styles.horizontalNavItemText,
-                    isActive && styles.activeNavItemText
-                  ]}>
-                    {item.icon} {item.title}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
+                <Text style={[
+                  styles.horizontalNavItemText,
+                  isActive && styles.activeNavItemText
+                ]}>
+                  {item.icon} {item.title}
+                </Text>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
@@ -677,7 +683,8 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         )}
       </View>
     </View>
-  );
+    );
+  };
 
   // Enhanced text renderer with highlighting and tooltips
   const renderEnhancedText = useCallback((text: string) => {
