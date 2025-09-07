@@ -113,19 +113,34 @@ export default function ProgressScreen() {
       return;
     }
 
-    // Sort by date and take last 10 points for chart
-    const sortedEvaluations = [...evaluations]
+    // Separate KP and FSP evaluations
+    const kpEvaluations = evaluations
+      .filter(e => e.exam_type === 'KP')
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(-10);
+    
+    const fspEvaluations = evaluations
+      .filter(e => e.exam_type === 'FSP')
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       .slice(-10);
 
-    // Prepare data for Victory chart
-    const chartPoints = sortedEvaluations.map((evaluation, index) => ({
+    // Prepare separate chart data for KP and FSP
+    const kpChartPoints = kpEvaluations.map((evaluation, index) => ({
       x: index + 1,
       y: evaluation.score,
       date: format(new Date(evaluation.created_at), 'dd.MM')
     }));
 
-    setChartData(chartPoints);
+    const fspChartPoints = fspEvaluations.map((evaluation, index) => ({
+      x: index + 1,
+      y: evaluation.score,
+      date: format(new Date(evaluation.created_at), 'dd.MM')
+    }));
+
+    setChartData({
+      KP: kpChartPoints,
+      FSP: fspChartPoints
+    });
   };
 
   const getFilteredEvaluations = () => {
@@ -136,24 +151,26 @@ export default function ProgressScreen() {
 
 
   const renderChart = () => {
-    if (!chartData || chartData.length === 0) {
+    if (!chartData || !chartData[activeTab] || chartData[activeTab].length === 0) {
       return (
         <View style={styles.emptyChart}>
           <Text style={styles.emptyChartText}>
-            Noch keine Bewertungen vorhanden
+            Noch keine {activeTab}-Bewertungen vorhanden
           </Text>
         </View>
       );
     }
+
+    const currentChartData = chartData[activeTab];
 
     // Check if Victory components are available
     if (!VictoryChart || !VictoryArea || !VictoryAxis || !VictoryScatter || !VictoryLine) {
       // Fallback simple chart visualization
       return (
         <View style={styles.simpleChart}>
-          <Text style={styles.chartTitle}>Fortschritt Übersicht</Text>
+          <Text style={styles.chartTitle}>{activeTab} Fortschritt</Text>
           <View style={styles.chartBars}>
-            {chartData.map((point, index) => (
+            {currentChartData.map((point, index) => (
               <View key={index} style={styles.chartBarContainer}>
                 <View 
                   style={[
@@ -204,7 +221,7 @@ export default function ProgressScreen() {
           
           {/* X-Axis with date labels */}
           <VictoryAxis
-            tickFormat={(x, i) => chartData[i] ? chartData[i].date : ''}
+            tickFormat={(x, i) => currentChartData[i] ? currentChartData[i].date : ''}
             style={{
               grid: { stroke: 'transparent' },
               axis: { stroke: 'transparent' },
@@ -218,14 +235,14 @@ export default function ProgressScreen() {
             }}
           />
           
-          {/* Area chart with gradient fill */}
+          {/* Area chart with gradient fill - different colors for KP and FSP */}
           <VictoryArea
-            data={chartData}
+            data={currentChartData}
             style={{
               data: {
-                fill: 'rgba(33, 150, 243, 0.2)', // Light blue gradient
+                fill: activeTab === 'KP' ? 'rgba(33, 150, 243, 0.2)' : 'rgba(156, 39, 176, 0.2)', 
                 fillOpacity: 1,
-                stroke: MEDICAL_COLORS.primary, // Blue line
+                stroke: activeTab === 'KP' ? MEDICAL_COLORS.primary : '#9c27b0',
                 strokeWidth: 2.5
               }
             }}
@@ -238,7 +255,7 @@ export default function ProgressScreen() {
           
           {/* Goal lines at 60% and 80% thresholds */}
           <VictoryLine
-            data={[{x: 1, y: 60}, {x: chartData.length, y: 60}]}
+            data={[{x: 1, y: 60}, {x: currentChartData.length, y: 60}]}
             style={{
               data: {
                 stroke: '#FFA726', // Orange color for 60% threshold
@@ -248,7 +265,7 @@ export default function ProgressScreen() {
             }}
           />
           <VictoryLine
-            data={[{x: 1, y: 80}, {x: chartData.length, y: 80}]}
+            data={[{x: 1, y: 80}, {x: currentChartData.length, y: 80}]}
             style={{
               data: {
                 stroke: '#66BB6A', // Green color for 80% threshold
@@ -260,11 +277,11 @@ export default function ProgressScreen() {
           
           {/* Data point circles */}
           <VictoryScatter
-            data={chartData}
+            data={currentChartData}
             size={4}
             style={{
               data: { 
-                fill: MEDICAL_COLORS.primary,
+                fill: activeTab === 'KP' ? MEDICAL_COLORS.primary : '#9c27b0',
                 stroke: '#fff',
                 strokeWidth: 2
               }
@@ -485,7 +502,9 @@ export default function ProgressScreen() {
             >
               <TrendingUp size={20} color="white" />
             </LinearGradient>
-            <Text style={styles.statValue}>{chartData?.length || 0}</Text>
+            <Text style={styles.statValue}>
+              {chartData ? (chartData.KP?.length || 0) + (chartData.FSP?.length || 0) : 0}
+            </Text>
             <Text style={styles.statLabel}>Versuche</Text>
           </View>
         </View>
@@ -495,12 +514,15 @@ export default function ProgressScreen() {
           <View style={styles.chartHeader}>
             <View style={styles.chartTitleContainer}>
               <BarChart3 size={24} color="#4338ca" />
-              <Text style={styles.chartTitle}>Performance Verlauf</Text>
+              <Text style={styles.chartTitle}>{activeTab} Performance Verlauf</Text>
             </View>
             <View style={styles.chartLegend}>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#667eea' }]} />
-                <Text style={styles.legendText}>Score</Text>
+                <View style={[
+                  styles.legendDot, 
+                  { backgroundColor: activeTab === 'KP' ? '#667eea' : '#9c27b0' }
+                ]} />
+                <Text style={styles.legendText}>{activeTab} Score</Text>
               </View>
             </View>
           </View>
