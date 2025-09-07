@@ -845,13 +845,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 20, // Perfect pill shape
+    elevation: 1,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   badgeText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '600', // Semi-bold for optimal legibility
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   mainTitle: {
     fontSize: 32,
@@ -887,16 +893,24 @@ const styles = StyleSheet.create({
   navItem: {
     flex: 1,
     minWidth: 150,
-    padding: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 20, // More pill-like rounded corners
+    borderWidth: 1,
+    borderColor: 'rgba(103, 126, 234, 0.2)',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   navItemText: {
-    fontSize: 14,
-    color: '#333',
+    fontSize: 13,
+    color: '#4a5568',
     textAlign: 'center',
+    fontWeight: '600', // Semi-bold for better legibility
+    lineHeight: 16,
   },
 
   // Progress Styles
@@ -974,10 +988,11 @@ const styles = StyleSheet.create({
     color: 'white',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 15,
-    fontWeight: '600',
-    fontSize: 14,
+    borderRadius: 15, // Pill-shaped corners
+    fontWeight: '600', // Semi-bold for legibility
+    fontSize: 13,
     overflow: 'hidden',
+    textAlign: 'center',
   },
   highlightBox: {
     backgroundColor: 'rgba(102, 126, 234, 0.1)',
