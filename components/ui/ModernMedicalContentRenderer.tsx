@@ -132,8 +132,24 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   }, []);
 
   // Enhanced sample sections with rich content structure
-  // Helper function to decode HTML entities
+  // Helper function to decode HTML entities and clean text
   const decodeHtmlEntities = (text: string): string => {
+    if (!text || typeof text !== 'string') return '';
+    
+    let cleaned = text;
+    
+    // First handle literal escape sequences
+    cleaned = cleaned
+      .replace(/\\n\\n/g, ' ') // Double newlines to space
+      .replace(/\\n/g, ' ')    // Single newlines to space
+      .replace(/\\r/g, ' ')    // Carriage returns to space
+      .replace(/\\t/g, ' ')    // Tabs to space
+      .replace(/\n\n/g, ' ')   // Actual double newlines
+      .replace(/\n/g, ' ')     // Actual newlines
+      .replace(/\r/g, ' ')     // Actual carriage returns
+      .replace(/\t/g, ' ');    // Actual tabs
+    
+    // Handle HTML entities
     const htmlEntities: Record<string, string> = {
       '&amp;': '&',
       '&lt;': '<',
@@ -150,26 +166,34 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       '&Ouml;': 'Ö',
       '&Uuml;': 'Ü',
       '&szlig;': 'ß',
-      '\\n': ' ',
-      '\\r': ' ',
-      '\\t': ' ',
     };
     
-    let decoded = text;
     Object.entries(htmlEntities).forEach(([entity, char]) => {
-      decoded = decoded.replace(new RegExp(entity, 'g'), char);
+      cleaned = cleaned.replace(new RegExp(entity, 'g'), char);
     });
     
-    return decoded.replace(/\s+/g, ' ').trim();
+    // Normalize multiple spaces and clean up
+    cleaned = cleaned
+      .replace(/\s+/g, ' ')           // Multiple spaces to single space
+      .replace(/\s*\.\s*/g, '. ')     // Clean up periods
+      .replace(/\s*,\s*/g, ', ')      // Clean up commas
+      .replace(/\s*;\s*/g, '; ')      // Clean up semicolons
+      .trim();
+    
+    return cleaned;
   };
 
   // Helper function to clean HTML content
   const cleanHtmlContent = (html: string): string => {
+    if (!html || typeof html !== 'string') return '';
+    
     return html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
-      .replace(/<[^>]+>/g, ' ') // Remove HTML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/<br\s*\/?>/gi, ' ') // Replace line breaks with spaces
+      .replace(/<\/p>\s*<p[^>]*>/gi, ' ') // Replace paragraph breaks with spaces
+      .replace(/<[^>]+>/g, ' ') // Remove all other HTML tags
+      .replace(/&[a-zA-Z0-9#]+;/g, ' ') // Remove any remaining HTML entities
       .trim();
   };
 
