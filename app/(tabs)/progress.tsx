@@ -293,6 +293,51 @@ export default function ProgressScreen() {
   };
 
 
+  const parseEvaluationText = (text: string) => {
+    if (!text) return [];
+    
+    // Split by double asterisks or other common separators
+    const sections = text.split(/\*\*([^*]+)\*\*/).filter(Boolean);
+    const parsedSections = [];
+    
+    for (let i = 0; i < sections.length; i += 2) {
+      const title = sections[i]?.trim();
+      const content = sections[i + 1]?.trim();
+      
+      if (title && content) {
+        parsedSections.push({ title, content });
+      } else if (title && title.length > 20) {
+        // If it's a long text without a clear title, treat as content
+        parsedSections.push({ 
+          title: 'Details', 
+          content: title 
+        });
+      }
+    }
+    
+    // If no structured sections found, return the original text
+    if (parsedSections.length === 0) {
+      return [{ title: 'Bewertung', content: text }];
+    }
+    
+    return parsedSections;
+  };
+
+  const renderParsedEvaluation = (text: string) => {
+    const sections = parseEvaluationText(text);
+    
+    return (
+      <View>
+        {sections.map((section, index) => (
+          <View key={index} style={styles.parsedSection}>
+            <Text style={styles.parsedSectionTitle}>{section.title}</Text>
+            <Text style={styles.parsedSectionContent}>{section.content}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   const renderTabs = () => (
     <View style={styles.tabContainer}>
       <TouchableOpacity 
@@ -408,34 +453,49 @@ export default function ProgressScreen() {
 
                 {evaluation.patient_evaluation && (
                   <View style={styles.modernEvaluationSection}>
-                    <Text style={styles.modernSectionTitle}>📋 Detaillierte Bewertung</Text>
-                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                      <Text style={styles.modernEvaluationText}>
-                        {evaluation.patient_evaluation}
-                      </Text>
-                    </ScrollView>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionIconContainer}>
+                        <Text style={styles.sectionIcon}>📋</Text>
+                      </View>
+                      <Text style={styles.modernSectionTitle}>Detaillierte Bewertung</Text>
+                    </View>
+                    <View style={styles.evaluationContentContainer}>
+                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                        {renderParsedEvaluation(evaluation.patient_evaluation)}
+                      </ScrollView>
+                    </View>
                   </View>
                 )}
                 
                 {evaluation.examiner_evaluation && (
                   <View style={styles.modernEvaluationSection}>
-                    <Text style={styles.modernSectionTitle}>👨‍⚕️ Prüfer-Feedback</Text>
-                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                      <Text style={styles.modernEvaluationText}>
-                        {evaluation.examiner_evaluation}
-                      </Text>
-                    </ScrollView>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionIconContainer}>
+                        <Text style={styles.sectionIcon}>👨‍⚕️</Text>
+                      </View>
+                      <Text style={styles.modernSectionTitle}>Prüfer-Feedback</Text>
+                    </View>
+                    <View style={styles.evaluationContentContainer}>
+                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                        {renderParsedEvaluation(evaluation.examiner_evaluation)}
+                      </ScrollView>
+                    </View>
                   </View>
                 )}
 
                 {evaluation.evaluation && (
                   <View style={styles.modernEvaluationSection}>
-                    <Text style={styles.modernSectionTitle}>📊 Zusammenfassung</Text>
-                    <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                      <Text style={styles.modernEvaluationText}>
-                        {evaluation.evaluation}
-                      </Text>
-                    </ScrollView>
+                    <View style={styles.sectionHeader}>
+                      <View style={styles.sectionIconContainer}>
+                        <Text style={styles.sectionIcon}>📊</Text>
+                      </View>
+                      <Text style={styles.modernSectionTitle}>Zusammenfassung</Text>
+                    </View>
+                    <View style={styles.evaluationContentContainer}>
+                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
+                        {renderParsedEvaluation(evaluation.evaluation)}
+                      </ScrollView>
+                    </View>
                   </View>
                 )}
               </LinearGradient>
@@ -875,11 +935,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   detailsGradient: {
-    padding: 16,
+    padding: 20,
   },
   modernScoreSection: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   modernScoreBadge: {
     flexDirection: 'row',
@@ -897,23 +957,74 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   modernEvaluationSection: {
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  sectionIcon: {
+    fontSize: 16,
   },
   modernSectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Inter-Bold',
-    color: '#374151',
-    marginBottom: 8,
+    color: '#1f2937',
+    flex: 1,
+  },
+  evaluationContentContainer: {
+    backgroundColor: '#fafbfc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   modernEvaluationText: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: '#6b7280',
-    lineHeight: 20,
+    color: '#374151',
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
   modernEvaluationScrollView: {
-    maxHeight: 200,
-    marginTop: 4,
+    maxHeight: 180,
+  },
+
+  // Parsed Evaluation Sections
+  parsedSection: {
+    marginBottom: 16,
+  },
+  parsedSectionTitle: {
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#059669',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  parsedSectionContent: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#374151',
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    paddingLeft: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#d1fae5',
+    paddingVertical: 4,
   },
 
   // Empty State
