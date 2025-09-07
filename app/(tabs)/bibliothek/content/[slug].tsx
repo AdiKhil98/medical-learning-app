@@ -21,7 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
-import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
+import ModernMedicalContentRenderer from '@/components/ui/ModernMedicalContentRenderer';
 // Removed MedicalContentViewer import - doesn't exist and causes WebView error
 // import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
@@ -464,11 +464,14 @@ const ContentDetailScreen = memo(() => {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Universal Enhanced Medical Content Renderer */}
-        <MedicalContentRenderer
+        <ModernMedicalContentRenderer
           htmlContent={currentSection.slug === 'av-block' ? demoAVBlockHTML : currentSection.content_html}
           jsonContent={currentSection.slug === 'av-block' ? demoAVBlockJSON : currentSection.content_improved}
           plainTextContent={currentSection.content_details}
           title={currentSection.title}
+          category={currentSection.category || 'Medizin'}
+          lastUpdated="Juni 2025"
+          completionStatus="Vollständiger Leitfaden"
         />
         
         <View style={{ height: 60 }} />
