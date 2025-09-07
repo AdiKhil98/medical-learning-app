@@ -379,7 +379,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
   // Dynamic navigation items based on actual parsed sections
   const navigationItems = useMemo(() => {
-    return parsedSections.slice(0, 6).map((section) => {
+    return parsedSections.map((section) => {
       // Get appropriate icon based on section type
       const getNavIcon = (type: string) => {
         switch (type) {
@@ -888,13 +888,16 @@ const styles = StyleSheet.create({
   navGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
+    justifyContent: 'flex-start',
   },
   navItem: {
-    flex: 1,
-    minWidth: 150,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 120,
+    maxWidth: '48%', // Allow 2 pills per row on smaller screens
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     backgroundColor: '#f8fafc',
     borderRadius: 25, // Perfect pill shape
     borderWidth: 1,
@@ -904,13 +907,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
+    marginBottom: 8,
   },
   navItemText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#475569',
     textAlign: 'center',
     fontWeight: '500', // Medium weight for optimal pill readability
-    lineHeight: 18,
+    lineHeight: 16,
+    flexShrink: 1,
   },
 
   // Progress Styles
