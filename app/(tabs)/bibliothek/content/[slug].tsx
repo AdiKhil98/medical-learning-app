@@ -288,7 +288,22 @@ const ContentDetailScreen = memo(() => {
   }, []);
 
   const handleBackPress = useCallback(() => {
-    router.back();
+    console.log('🔙 Back button pressed, attempting navigation');
+    
+    try {
+      // First try to go back in history
+      if (router.canGoBack()) {
+        console.log('🔙 Using router.back()');
+        router.back();
+      } else {
+        console.log('🔙 Cannot go back, navigating to bibliothek index');
+        router.push('/(tabs)/bibliothek');
+      }
+    } catch (error) {
+      console.error('🔙 Navigation error:', error);
+      // Fallback to bibliothek index
+      router.replace('/(tabs)/bibliothek');
+    }
   }, [router]);
 
   const handleRetry = useCallback(() => {
