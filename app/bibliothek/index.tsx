@@ -26,6 +26,43 @@ interface Section {
   children?: Section[];
 }
 
+// Fallback data in case database is unreachable
+const FALLBACK_SECTIONS: Omit<Section, 'children'>[] = [
+  {
+    id: 'fallback-1',
+    slug: 'innere-medizin',
+    title: 'Innere Medizin',
+    parent_slug: null,
+    description: 'Grundlagen der Inneren Medizin',
+    type: 'folder',
+    icon: 'Stethoscope',
+    color: '#0077B6',
+    display_order: 1,
+  },
+  {
+    id: 'fallback-2', 
+    slug: 'chirurgie',
+    title: 'Chirurgie',
+    parent_slug: null,
+    description: 'Chirurgische Grundlagen',
+    type: 'folder',
+    icon: 'Scissors',
+    color: '#48CAE4',
+    display_order: 2,
+  },
+  {
+    id: 'fallback-3',
+    slug: 'notfallmedizin',
+    title: 'Notfallmedizin',
+    parent_slug: null,
+    description: 'Notfall- und Intensivmedizin',
+    type: 'folder', 
+    icon: 'AlertTriangle',
+    color: '#EF4444',
+    display_order: 3,
+  }
+];
+
 // Enhanced function to map categories/titles to icons and colors
 const getCategoryDetails = (title: string, iconName?: string, color?: string) => {
   // Use provided icon and color if available
@@ -242,29 +279,93 @@ export default function BibliothekScreen() {
   const fetchSections = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch all sections to build the hierarchy
+      console.log('🔄 Fetching sections from Supabase...');
+      
+      // Test database connection first
+      const { data: testData, error: testError } = await supabase
+        .from('sections')
+        .select('count')
+        .limit(1);
+        
+      console.log('🔍 Database test result:', { testData, testError });
+      
+      if (testError) {
+        console.error('❌ Database connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      
+      // Fetch all sections to build the hierarchy with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const { data, error } = await supabase
         .from('sections')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .abortSignal(controller.signal);
+      
+      clearTimeout(timeoutId);
+
+      console.log('📊 Fetched sections data:', { 
+        dataLength: data?.length, 
+        error, 
+        sampleData: data?.slice(0, 2) 
+      });
 
       if (error) {
-        throw error;
+        console.error('❌ Error fetching sections:', error);
+        throw new Error(`Failed to load content: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ No sections data returned from database, using fallback');
+        // Use fallback data
+        const fallbackSections = FALLBACK_SECTIONS.map(section => ({
+          ...section,
+          children: []
+        }));
+        setSections(fallbackSections);
+        setError('Using offline content. Please check your internet connection for the latest updates.');
+        return;
       }
 
       // Build tree structure
-      const sectionsTree = buildSectionsTree(data || []);
+      console.log('🌳 Building sections tree...');
+      const sectionsTree = buildSectionsTree(data);
+      console.log('✅ Sections tree built:', { 
+        rootSectionsCount: sectionsTree.length,
+        sampleSections: sectionsTree.slice(0, 2).map(s => ({ title: s.title, childrenCount: s.children?.length }))
+      });
+      
       setSections(sectionsTree);
       
       // Load expanded state from AsyncStorage
-      const storedState = await AsyncStorage.getItem('bibliothek_expanded');
-      if (storedState) {
-        setExpandedSections(JSON.parse(storedState));
+      try {
+        const storedState = await AsyncStorage.getItem('bibliothek_expanded');
+        if (storedState) {
+          setExpandedSections(JSON.parse(storedState));
+        }
+      } catch (storageError) {
+        console.warn('⚠️ Failed to load expanded state from storage:', storageError);
       }
     } catch (e) {
-      console.error('Error fetching sections:', e);
-      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      console.error('❌ Error in fetchSections:', errorMessage, e);
+      
+      // Check if it's a network/connection error and use fallback
+      if (errorMessage.includes('connection') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
+        console.log('🔄 Using fallback data due to connection issues');
+        const fallbackSections = FALLBACK_SECTIONS.map(section => ({
+          ...section,
+          children: []
+        }));
+        setSections(fallbackSections);
+        setError('Connection issue detected. Using offline content. Please check your internet connection for the latest updates.');
+      } else {
+        setError(`Failed to load bibliothek: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -398,11 +499,25 @@ export default function BibliothekScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Fehler</Text>
+        <LinearGradient
+          colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
+          style={styles.gradientBackground}
+        />
+        <AlertTriangle size={60} color="#EF4444" />
+        <Text style={styles.errorTitle}>Verbindungsfehler</Text>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchSections}>
           <Text style={styles.retryButtonText}>Erneut versuchen</Text>
         </TouchableOpacity>
+        
+        <View style={styles.troubleshootContainer}>
+          <Text style={styles.troubleshootTitle}>Probleme beim Laden?</Text>
+          <Text style={styles.troubleshootText}>
+            • Überprüfen Sie Ihre Internetverbindung{'\n'}
+            • Starten Sie die App neu{'\n'}
+            • Kontaktieren Sie den Support bei anhaltenden Problemen
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -416,6 +531,12 @@ export default function BibliothekScreen() {
       
       <View style={styles.header}>
         <Text style={styles.title}>Bibliothek</Text>
+        {error && sections.length > 0 && (
+          <View style={styles.warningBanner}>
+            <AlertTriangle size={16} color="#F59E0B" />
+            <Text style={styles.warningText}>{error}</Text>
+          </View>
+        )}
         <Input
           placeholder="Fachgebiet suchen..."
           value={searchQuery}
@@ -567,6 +688,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Medium',
   },
+  troubleshootContainer: {
+    marginTop: 32,
+    padding: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    marginHorizontal: 20,
+  },
+  troubleshootTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  troubleshootText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    lineHeight: 20,
+  },
   header: {
     padding: 16,
   },
@@ -575,6 +715,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#1F2937',
     marginBottom: 16,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  warningText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#92400E',
+    flex: 1,
   },
   searchContainer: {
     marginBottom: 8,
