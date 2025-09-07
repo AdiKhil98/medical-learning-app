@@ -406,7 +406,12 @@ export default function SectionDetailScreen() {
 
   const navigateToChild = (childSlug: string) => {
     console.log('Navigating to child:', childSlug);
-    router.push(`/(tabs)/bibliothek/${childSlug}`);
+    // Store current page as the previous page for the child
+    const currentPath = `/(tabs)/bibliothek/${slug}`;
+    router.push({
+      pathname: `/(tabs)/bibliothek/${childSlug}`,
+      params: { previousPage: currentPath }
+    });
   };
 
   const handleBackPress = () => {

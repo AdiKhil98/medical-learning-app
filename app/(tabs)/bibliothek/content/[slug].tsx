@@ -200,7 +200,7 @@ const contentCache = new Map<string, { data: Section, timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const ContentDetailScreen = memo(() => {
-  const { slug } = useLocalSearchParams();
+  const { slug, previousPage } = useLocalSearchParams();
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, isDarkMode } = useTheme();
@@ -307,9 +307,17 @@ const ContentDetailScreen = memo(() => {
 
   const handleBackPress = useCallback(() => {
     console.log('🔙 Back button pressed - going to previous page');
+    console.log('🔙 Previous page param:', previousPage);
     console.log('🔙 Navigation source was:', navigationSource);
     
     try {
+      // If we have a previousPage parameter, navigate directly to it
+      if (previousPage && typeof previousPage === 'string') {
+        console.log('🔙 Using previousPage parameter:', previousPage);
+        router.push(previousPage);
+        return;
+      }
+      
       // Try using React Navigation's goBack first
       if (navigation.canGoBack()) {
         console.log('🔙 Using navigation.goBack() to return to previous page');
@@ -327,7 +335,7 @@ const ContentDetailScreen = memo(() => {
       // Fallback to bibliothek index
       router.replace('/(tabs)/bibliothek');
     }
-  }, [navigation, router, navigationSource]);
+  }, [navigation, router, navigationSource, previousPage]);
 
   const handleRetry = useCallback(() => {
     setError(null);
