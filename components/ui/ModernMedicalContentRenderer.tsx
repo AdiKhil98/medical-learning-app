@@ -290,9 +290,6 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{category.toUpperCase()}</Text>
           </View>
-          <View style={[styles.badge, styles.mobileBadge]}>
-            <Text style={styles.badgeText}>📱 MOBILE APP</Text>
-          </View>
         </View>
         <Text style={styles.mainTitle}>{title}</Text>
         <View style={styles.metaInfo}>
@@ -634,9 +631,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-  },
-  mobileBadge: {
-    backgroundColor: '#10B981',
   },
   badgeText: {
     color: 'white',
