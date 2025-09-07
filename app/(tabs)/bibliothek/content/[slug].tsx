@@ -289,14 +289,22 @@ const ContentDetailScreen = memo(() => {
 
   const handleBackPress = useCallback(() => {
     console.log('🔙 Back button pressed, attempting navigation');
+    console.log('🔙 Current section:', currentSection?.slug, 'Parent:', currentSection?.parent_slug);
     
     try {
-      // First try to go back in history
-      if (router.canGoBack()) {
+      // If we have a parent_slug, navigate to that category
+      if (currentSection?.parent_slug) {
+        console.log('🔙 Navigating to parent category:', currentSection.parent_slug);
+        router.push(`/(tabs)/bibliothek/${currentSection.parent_slug}`);
+      } 
+      // Otherwise, try to go back in history
+      else if (router.canGoBack()) {
         console.log('🔙 Using router.back()');
         router.back();
-      } else {
-        console.log('🔙 Cannot go back, navigating to bibliothek index');
+      } 
+      // Final fallback to main bibliothek index
+      else {
+        console.log('🔙 Navigating to bibliothek main index');
         router.push('/(tabs)/bibliothek');
       }
     } catch (error) {
@@ -304,7 +312,7 @@ const ContentDetailScreen = memo(() => {
       // Fallback to bibliothek index
       router.replace('/(tabs)/bibliothek');
     }
-  }, [router]);
+  }, [router, currentSection]);
 
   const handleRetry = useCallback(() => {
     setError(null);

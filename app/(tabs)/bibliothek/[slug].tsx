@@ -406,16 +406,26 @@ export default function SectionDetailScreen() {
 
   const navigateToChild = (childSlug: string) => {
     console.log('Navigating to child:', childSlug);
-    router.push(`/bibliothek/${childSlug}`);
+    router.push(`/(tabs)/bibliothek/${childSlug}`);
   };
 
   const handleBackPress = () => {
-    if (currentItem?.parent_slug) {
-      // Go back to parent
-      router.push(`/bibliothek/${currentItem.parent_slug}`);
-    } else {
-      // Go back to main bibliothek
-      router.push('/bibliothek');
+    console.log('🔙 Category back button pressed');
+    console.log('🔙 Current item:', currentItem?.slug, 'Parent:', currentItem?.parent_slug);
+    
+    try {
+      if (currentItem?.parent_slug) {
+        // Go back to parent category
+        console.log('🔙 Navigating to parent:', currentItem.parent_slug);
+        router.push(`/(tabs)/bibliothek/${currentItem.parent_slug}`);
+      } else {
+        // Go back to main bibliothek index
+        console.log('🔙 Navigating to main bibliothek index');
+        router.push('/(tabs)/bibliothek');
+      }
+    } catch (error) {
+      console.error('🔙 Category navigation error:', error);
+      router.replace('/(tabs)/bibliothek');
     }
   };
 
