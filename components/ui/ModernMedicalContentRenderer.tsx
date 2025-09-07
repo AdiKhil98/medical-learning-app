@@ -27,6 +27,8 @@ import {
   Search,
   Bookmark,
   Edit3,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react-native';
 import MedicalTermTooltip from './MedicalTermTooltip';
 import ContentSearchBar from './ContentSearchBar';
@@ -73,10 +75,14 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [activeNoteSection, setActiveNoteSection] = useState<string | null>(null);
   const [favoritesVisible, setFavoritesVisible] = useState(false);
+  const [activePillId, setActivePillId] = useState<string | null>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   // Refs for scrolling
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<Record<string, View | null>>({});
+  const pillScrollRef = useRef<ScrollView>(null);
 
   // Animation effects
   React.useEffect(() => {
@@ -430,6 +436,52 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     }
   }, [parsedSections]);
 
+  // Horizontal pill navigation functions
+  const [currentScrollX, setCurrentScrollX] = useState(0);
+  
+  const scrollPillsLeft = useCallback(() => {
+    const newScrollX = Math.max(0, currentScrollX - 200);
+    pillScrollRef.current?.scrollTo({
+      x: newScrollX,
+      animated: true
+    });
+  }, [currentScrollX]);
+
+  const scrollPillsRight = useCallback(() => {
+    const newScrollX = currentScrollX + 200;
+    pillScrollRef.current?.scrollTo({
+      x: newScrollX,
+      animated: true
+    });
+  }, [currentScrollX]);
+
+  const handlePillScroll = useCallback((event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const scrollX = contentOffset.x;
+    const totalWidth = contentSize.width;
+    const visibleWidth = layoutMeasurement.width;
+
+    setCurrentScrollX(scrollX);
+    setShowLeftArrow(scrollX > 10);
+    setShowRightArrow(scrollX < totalWidth - visibleWidth - 10);
+  }, []);
+
+  const handlePillPress = useCallback((sectionId: string) => {
+    // Toggle accordion behavior
+    if (activePillId === sectionId) {
+      setActivePillId(null);
+      setExpandedSections(prev => ({ ...prev, [sectionId]: false }));
+    } else {
+      // Close previously active section
+      if (activePillId) {
+        setExpandedSections(prev => ({ ...prev, [activePillId]: false }));
+      }
+      // Open new section
+      setActivePillId(sectionId);
+      setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
+    }
+  }, [activePillId]);
+
   // Favorites management
   const getFavoriteSections = useCallback(() => {
     return Array.from(bookmarkedSections).map(sectionId => {
@@ -536,48 +588,93 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     </View>
   );
 
-  // Render quick navigation
+  // Render horizontal scrollable navigation
   const renderQuickNavigation = () => (
     <View style={styles.navigationContainer}>
       <Text style={styles.navTitle}>SCHNELLNAVIGATION</Text>
-      <View style={styles.navGrid}>
-        {navigationItems.map((item, index) => {
-          const [navScale] = useState(new Animated.Value(1));
-          
-          const handleNavPress = () => {
-            console.log(`Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
-            console.log('Available sections:', parsedSections.map(s => `${s.id}: ${s.title}`));
+      
+      <View style={styles.horizontalNavWrapper}>
+        {/* Left Arrow */}
+        {showLeftArrow && (
+          <TouchableOpacity 
+            style={styles.navArrow} 
+            onPress={scrollPillsLeft}
+            accessibilityLabel="Scroll left"
+          >
+            <ChevronLeft size={20} color="#667eea" />
+          </TouchableOpacity>
+        )}
+        
+        {/* Horizontal Scrollable Pills */}
+        <ScrollView
+          ref={pillScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          onScroll={handlePillScroll}
+          scrollEventThrottle={16}
+          style={styles.pillScrollContainer}
+          contentContainerStyle={styles.pillScrollContent}
+        >
+          {navigationItems.map((item, index) => {
+            const [navScale] = useState(new Animated.Value(1));
+            const isActive = activePillId === item.sectionId;
             
-            Animated.sequence([
-              Animated.timing(navScale, {
-                toValue: 0.95,
-                duration: 100,
-                useNativeDriver: true,
-              }),
-              Animated.timing(navScale, {
-                toValue: 1,
-                duration: 100,
-                useNativeDriver: true,
-              })
-            ]).start();
-            scrollToSection(item.sectionId);
-          };
+            const handleNavPress = () => {
+              console.log(`Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
+              
+              Animated.sequence([
+                Animated.timing(navScale, {
+                  toValue: 0.95,
+                  duration: 100,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(navScale, {
+                  toValue: 1,
+                  duration: 100,
+                  useNativeDriver: true,
+                })
+              ]).start();
+              
+              handlePillPress(item.sectionId);
+            };
 
-          return (
-            <Animated.View
-              key={index}
-              style={{ transform: [{ scale: navScale }] }}
-            >
-              <TouchableOpacity
-                style={styles.navItem}
-                onPress={handleNavPress}
-                activeOpacity={0.7}
+            return (
+              <Animated.View
+                key={index}
+                style={{ transform: [{ scale: navScale }] }}
               >
-                <Text style={styles.navItemText}>{item.icon} {item.title}</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          );
-        })}
+                <TouchableOpacity
+                  style={[
+                    styles.horizontalNavItem,
+                    isActive && styles.activeNavItem
+                  ]}
+                  onPress={handleNavPress}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`Navigate to ${item.title}`}
+                  accessibilityState={{ selected: isActive }}
+                >
+                  <Text style={[
+                    styles.horizontalNavItemText,
+                    isActive && styles.activeNavItemText
+                  ]}>
+                    {item.icon} {item.title}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+        
+        {/* Right Arrow */}
+        {showRightArrow && (
+          <TouchableOpacity 
+            style={styles.navArrow} 
+            onPress={scrollPillsRight}
+            accessibilityLabel="Scroll right"
+          >
+            <ChevronRight size={20} color="#667eea" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -613,13 +710,24 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     );
   }, []);
 
-  // Render enhanced content section
+  // Render enhanced content section with accordion animation
   const renderContentSection = (section: MedicalSection) => {
     const IconComponent = getIconComponent(section.icon);
     const isExpanded = expandedSections[section.id];
     const processedContent = highlightMedicalTerms(section.content);
+    const isPillActive = activePillId === section.id;
 
     const animation = sectionAnimations[section.id];
+    const [contentHeight] = useState(new Animated.Value(0));
+
+    // Animate content height when expanding/collapsing
+    React.useEffect(() => {
+      Animated.timing(contentHeight, {
+        toValue: isExpanded ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }, [isExpanded, contentHeight]);
 
     return (
       <Animated.View 
@@ -687,41 +795,63 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           </View>
         </TouchableOpacity>
 
-        {isExpanded && (
-          <View style={styles.sectionContent}>
-            {renderEnhancedText(processedContent)}
-            
-            {/* Add highlight boxes for special content */}
-            {section.id === 'epidemiology' && (
-              <View style={styles.highlightBox}>
-                <Text style={styles.highlightTitle}>📊 Epidemiologische Daten</Text>
-                <Text style={styles.highlightText}>
-                  • Inzidenz: 3-5 pro 100.000 Einwohner{"\n"}
-                  • Männer 2:3x häufiger betroffen{"\n"}
-                  • Mortalität unbehandelt: 1-2% pro Stunde{"\n"}
-                  • 50% Mortalität nach 48 Stunden
-                </Text>
-              </View>
-            )}
+        <Animated.View 
+          style={[
+            styles.sectionContent,
+            {
+              maxHeight: contentHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 1000], // Adjust max height as needed
+              }),
+              opacity: contentHeight.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [0, 0, 1],
+              }),
+              transform: [{
+                translateY: contentHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          {isExpanded && (
+            <>
+              {renderEnhancedText(processedContent)}
+              
+              {/* Add highlight boxes for special content */}
+              {section.id === 'epidemiology' && (
+                <View style={styles.highlightBox}>
+                  <Text style={styles.highlightTitle}>📊 Epidemiologische Daten</Text>
+                  <Text style={styles.highlightText}>
+                    • Inzidenz: 3-5 pro 100.000 Einwohner{"\n"}
+                    • Männer 2:3x häufiger betroffen{"\n"}
+                    • Mortalität unbehandelt: 1-2% pro Stunde{"\n"}
+                    • 50% Mortalität nach 48 Stunden
+                  </Text>
+                </View>
+              )}
 
-            {section.id === 'symptoms' && (
-              <View style={styles.subtypeContainer}>
-                <View style={styles.subtypeCard}>
-                  <Text style={styles.subtypeTitle}>Hyperaktives Delir (25%)</Text>
-                  <Text style={styles.subtypeText}>
-                    Psychomotorische Unruhe, Agitation, Halluzinationen - am ehesten erkannt aber am wenigsten häufig
-                  </Text>
+              {section.id === 'symptoms' && (
+                <View style={styles.subtypeContainer}>
+                  <View style={styles.subtypeCard}>
+                    <Text style={styles.subtypeTitle}>Hyperaktives Delir (25%)</Text>
+                    <Text style={styles.subtypeText}>
+                      Psychomotorische Unruhe, Agitation, Halluzinationen - am ehesten erkannt aber am wenigsten häufig
+                    </Text>
+                  </View>
+                  <View style={styles.subtypeCard}>
+                    <Text style={styles.subtypeTitle}>Hypoaktives Delir (50%)</Text>
+                    <Text style={styles.subtypeText}>
+                      Lethargie, Apathie, reduzierte Motorik - wird oft übersehen und hat schlechtere Prognose
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.subtypeCard}>
-                  <Text style={styles.subtypeTitle}>Hypoaktives Delir (50%)</Text>
-                  <Text style={styles.subtypeText}>
-                    Lethargie, Apathie, reduzierte Motorik - wird oft übersehen und hat schlechtere Prognose
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
+              )}
+            </>
+          )}
+        </Animated.View>
       </Animated.View>
     );
   };
@@ -885,6 +1015,71 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     letterSpacing: 0.5,
   },
+  
+  // Horizontal Navigation Styles
+  horizontalNavWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  navArrow: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(103, 126, 234, 0.2)',
+    elevation: 2,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  pillScrollContainer: {
+    flex: 1,
+  },
+  pillScrollContent: {
+    paddingHorizontal: 4,
+    alignItems: 'center',
+  },
+  horizontalNavItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(103, 126, 234, 0.15)',
+    marginHorizontal: 4,
+    minWidth: 100,
+    elevation: 2,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  activeNavItem: {
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
+    transform: [{ scale: 1.02 }],
+    elevation: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  horizontalNavItemText: {
+    fontSize: 12,
+    color: '#475569',
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  activeNavItemText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  
+  // Legacy grid styles (keeping for compatibility)
   navGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -895,11 +1090,11 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 0,
     minWidth: 120,
-    maxWidth: '48%', // Allow 2 pills per row on smaller screens
+    maxWidth: '48%',
     paddingHorizontal: 14,
     paddingVertical: 10,
     backgroundColor: '#f8fafc',
-    borderRadius: 25, // Perfect pill shape
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: 'rgba(103, 126, 234, 0.15)',
     elevation: 2,
@@ -913,7 +1108,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#475569',
     textAlign: 'center',
-    fontWeight: '500', // Medium weight for optimal pill readability
+    fontWeight: '500',
     lineHeight: 16,
     flexShrink: 1,
   },
