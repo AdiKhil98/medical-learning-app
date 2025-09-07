@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Platform, Modal } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight } from 'lucide-react-native';
+import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight, X, Maximize2 } from 'lucide-react-native';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -70,6 +70,8 @@ export default function ProgressScreen() {
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
   const [expandedEvaluation, setExpandedEvaluation] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   
   console.log('ProgressScreen: Rendering, evaluations count:', evaluations.length);
   console.log('ProgressScreen: chartData:', chartData);
@@ -338,6 +340,139 @@ export default function ProgressScreen() {
     );
   };
 
+  const openEvaluationModal = (evaluation: Evaluation) => {
+    setSelectedEvaluation(evaluation);
+    setModalVisible(true);
+  };
+
+  const closeEvaluationModal = () => {
+    setModalVisible(false);
+    setSelectedEvaluation(null);
+  };
+
+  const renderEvaluationModal = () => {
+    if (!selectedEvaluation) return null;
+
+    const scoreColor = selectedEvaluation.score >= 60 ? '#10b981' : '#ef4444';
+    const scoreBgColor = selectedEvaluation.score >= 60 ? '#dcfce7' : '#fee2e2';
+    const passStatus = selectedEvaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={closeEvaluationModal}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <LinearGradient
+            colors={['#f8fafc', '#e2e8f0', '#ffffff']}
+            style={styles.modalGradient}
+          />
+          
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderLeft}>
+              <Maximize2 size={24} color="#6366f1" />
+              <Text style={styles.modalTitle}>Bewertung Details</Text>
+            </View>
+            <TouchableOpacity 
+              onPress={closeEvaluationModal}
+              style={styles.modalCloseButton}
+            >
+              <X size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Modal Content */}
+          <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+            {/* Score Section */}
+            <View style={styles.modalScoreSection}>
+              <LinearGradient
+                colors={[scoreColor, scoreColor + '90']}
+                style={styles.modalScoreGradient}
+              >
+                <View style={styles.modalScoreContent}>
+                  <Award size={32} color="white" />
+                  <View style={styles.modalScoreTextContainer}>
+                    <Text style={styles.modalScoreText}>{selectedEvaluation.score}/100</Text>
+                    <Text style={styles.modalScoreStatus}>{passStatus}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+
+            {/* Evaluation Info */}
+            <View style={styles.modalInfoCard}>
+              <LinearGradient
+                colors={['#ffffff', '#fafbfc']}
+                style={styles.modalInfoGradient}
+              >
+                <View style={styles.modalInfoRow}>
+                  <Calendar size={20} color="#6b7280" />
+                  <Text style={styles.modalInfoText}>
+                    {format(new Date(selectedEvaluation.created_at), 'dd.MM.yyyy • HH:mm')}
+                  </Text>
+                </View>
+                <View style={styles.modalInfoRow}>
+                  <Target size={20} color="#6b7280" />
+                  <Text style={styles.modalInfoText}>
+                    {selectedEvaluation.exam_type} - {selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+
+            {/* Detailed Evaluations */}
+            {selectedEvaluation.patient_evaluation && (
+              <View style={styles.modalEvaluationSection}>
+                <View style={styles.modalSectionHeader}>
+                  <View style={styles.modalSectionIconContainer}>
+                    <Text style={styles.modalSectionIcon}>📋</Text>
+                  </View>
+                  <Text style={styles.modalSectionTitle}>Detaillierte Bewertung</Text>
+                </View>
+                <View style={styles.modalContentCard}>
+                  {renderParsedEvaluation(selectedEvaluation.patient_evaluation)}
+                </View>
+              </View>
+            )}
+
+            {selectedEvaluation.examiner_evaluation && (
+              <View style={styles.modalEvaluationSection}>
+                <View style={styles.modalSectionHeader}>
+                  <View style={styles.modalSectionIconContainer}>
+                    <Text style={styles.modalSectionIcon}>👨‍⚕️</Text>
+                  </View>
+                  <Text style={styles.modalSectionTitle}>Prüfer-Feedback</Text>
+                </View>
+                <View style={styles.modalContentCard}>
+                  {renderParsedEvaluation(selectedEvaluation.examiner_evaluation)}
+                </View>
+              </View>
+            )}
+
+            {selectedEvaluation.evaluation && (
+              <View style={styles.modalEvaluationSection}>
+                <View style={styles.modalSectionHeader}>
+                  <View style={styles.modalSectionIconContainer}>
+                    <Text style={styles.modalSectionIcon}>📊</Text>
+                  </View>
+                  <Text style={styles.modalSectionTitle}>Zusammenfassung</Text>
+                </View>
+                <View style={styles.modalContentCard}>
+                  {renderParsedEvaluation(selectedEvaluation.evaluation)}
+                </View>
+              </View>
+            )}
+            
+            <View style={styles.modalBottomSpacer} />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    );
+  };
+
   const renderTabs = () => (
     <View style={styles.tabContainer}>
       <TouchableOpacity 
@@ -370,9 +505,11 @@ export default function ProgressScreen() {
     };
 
     return (
-      <View 
+      <TouchableOpacity 
         key={evaluation.id} 
         style={styles.modernEvaluationCard}
+        onPress={() => openEvaluationModal(evaluation)}
+        activeOpacity={0.7}
       >
         <LinearGradient
           colors={['#ffffff', '#fafbfc']}
@@ -420,19 +557,10 @@ export default function ProgressScreen() {
               <Text style={styles.progressText}>{evaluation.score}% erreicht</Text>
             </View>
             
-            <TouchableOpacity 
-              style={styles.modernExpandButton}
-              onPress={toggleExpansion}
-            >
-              <Text style={styles.modernExpandText}>
-                {isExpanded ? 'Weniger' : 'Details'}
-              </Text>
-              <ChevronRight 
-                size={16} 
-                color="#6366f1" 
-                style={[styles.chevron, isExpanded && styles.chevronRotated]} 
-              />
-            </TouchableOpacity>
+            <View style={styles.modernViewButton}>
+              <Text style={styles.modernViewText}>Antippen zum Anzeigen</Text>
+              <Maximize2 size={16} color="#6366f1" />
+            </View>
           </View>
 
           {/* Expanded details with modern styling */}
@@ -502,7 +630,7 @@ export default function ProgressScreen() {
             </View>
           )}
         </LinearGradient>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -617,6 +745,9 @@ export default function ProgressScreen() {
         
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      
+      {/* Evaluation Modal */}
+      {renderEvaluationModal()}
     </SafeAreaView>
   );
 }
@@ -907,17 +1038,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#6b7280',
   },
-  modernExpandButton: {
+  modernViewButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     backgroundColor: '#f0f4ff',
-    gap: 4,
+    gap: 6,
   },
-  modernExpandText: {
-    fontSize: 12,
+  modernViewText: {
+    fontSize: 11,
     fontFamily: 'Inter-SemiBold',
     color: '#6366f1',
   },
@@ -1056,6 +1187,152 @@ const styles = StyleSheet.create({
 
   bottomSpacer: {
     height: 32,
+  },
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  modalGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '100%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+  },
+  modalCloseButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+  },
+  modalScrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  modalScoreSection: {
+    marginVertical: 20,
+  },
+  modalScoreGradient: {
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  modalScoreContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  modalScoreTextContainer: {
+    flex: 1,
+  },
+  modalScoreText: {
+    fontSize: 36,
+    fontFamily: 'Inter-Bold',
+    color: 'white',
+    marginBottom: 4,
+  },
+  modalScoreStatus: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalInfoCard: {
+    marginBottom: 24,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  modalInfoGradient: {
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  modalInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  modalInfoText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#374151',
+    flex: 1,
+  },
+  modalEvaluationSection: {
+    marginBottom: 24,
+  },
+  modalSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalSectionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  modalSectionIcon: {
+    fontSize: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+    flex: 1,
+  },
+  modalContentCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  modalBottomSpacer: {
+    height: 40,
   },
 
   // Legacy styles for fallback chart
