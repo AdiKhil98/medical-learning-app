@@ -410,21 +410,20 @@ export default function SectionDetailScreen() {
   };
 
   const handleBackPress = () => {
-    console.log('🔙 Category back button pressed');
-    console.log('🔙 Current item:', currentItem?.slug, 'Parent:', currentItem?.parent_slug);
+    console.log('🔙 Category back button pressed - going to previous page');
     
     try {
-      if (currentItem?.parent_slug) {
-        // Go back to parent category
-        console.log('🔙 Navigating to parent:', currentItem.parent_slug);
-        router.push(`/(tabs)/bibliothek/${currentItem.parent_slug}`);
+      // Simply go back to the previous page in history
+      if (router.canGoBack()) {
+        console.log('🔙 Using router.back() to return to previous page');
+        router.back();
       } else {
-        // Go back to main bibliothek index
-        console.log('🔙 Navigating to main bibliothek index');
+        // Only if there's no history, go to main bibliothek
+        console.log('🔙 No history available, going to main bibliothek');
         router.push('/(tabs)/bibliothek');
       }
     } catch (error) {
-      console.error('🔙 Category navigation error:', error);
+      console.error('🔙 Navigation error:', error);
       router.replace('/(tabs)/bibliothek');
     }
   };

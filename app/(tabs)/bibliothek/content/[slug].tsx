@@ -288,23 +288,16 @@ const ContentDetailScreen = memo(() => {
   }, []);
 
   const handleBackPress = useCallback(() => {
-    console.log('🔙 Back button pressed, attempting navigation');
-    console.log('🔙 Current section:', currentSection?.slug, 'Parent:', currentSection?.parent_slug);
+    console.log('🔙 Back button pressed - going to previous page');
     
     try {
-      // If we have a parent_slug, navigate to that category
-      if (currentSection?.parent_slug) {
-        console.log('🔙 Navigating to parent category:', currentSection.parent_slug);
-        router.push(`/(tabs)/bibliothek/${currentSection.parent_slug}`);
-      } 
-      // Otherwise, try to go back in history
-      else if (router.canGoBack()) {
-        console.log('🔙 Using router.back()');
+      // Simply go back to the previous page in history
+      if (router.canGoBack()) {
+        console.log('🔙 Using router.back() to return to previous page');
         router.back();
-      } 
-      // Final fallback to main bibliothek index
-      else {
-        console.log('🔙 Navigating to bibliothek main index');
+      } else {
+        // Only if there's no history, go to main bibliothek
+        console.log('🔙 No history available, going to main bibliothek');
         router.push('/(tabs)/bibliothek');
       }
     } catch (error) {
@@ -312,7 +305,7 @@ const ContentDetailScreen = memo(() => {
       // Fallback to bibliothek index
       router.replace('/(tabs)/bibliothek');
     }
-  }, [router, currentSection]);
+  }, [router]);
 
   const handleRetry = useCallback(() => {
     setError(null);
