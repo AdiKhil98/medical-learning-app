@@ -132,36 +132,142 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   }, []);
 
   // Enhanced sample sections with rich content structure
-  const sampleSections = useMemo(() => [
-    {
-      id: 'definition',
-      title: 'Definition und pathophysiologische Grundlagen',
-      icon: 'definition',
-      content: `Die Rheumatoide Arthritis ist eine chronisch-entzündliche Autoimmunerkrankung, die primär die Synovialmembran der Gelenke betrifft und nach ICD-10 unter M06 klassifiziert wird. Die Diagnose erfolgt anhand der ACR/EULAR-Klassifikationskriterien von 2010, wobei ein Score von mindestens 6 von 10 Punkten für eine definitive RA spricht.`,
-      type: 'definition' as const,
-    },
-    {
-      id: 'epidemiology',
-      title: 'Epidemiologie',
-      icon: 'epidemiology',  
-      content: `Die epidemiologische Verteilung zeigt: Die rheumatoide Arthritis betrifft in Deutschland etwa 0,5 bis 1,0 Prozent der Bevölkerung, wobei Frauen mit einem Verhältnis von 3:1 häufiger erkranken als Männer. Der Erkrankungsgipfel liegt zwischen dem 40. und 60. Lebensjahr, wobei auch ein juveniler Beginn vor dem 16. Lebensjahr möglich ist.`,
-      type: 'epidemiology' as const,
-    },
-    {
-      id: 'symptoms',
-      title: 'Klinische Symptomatik',
-      icon: 'symptoms',
-      content: `Die klinische Präsentation wird durch vier Kardinalsymptome charakterisiert: Akuter Beginn mit fluktuierendem Verlauf, Aufmerksamkeitsstörung, Denkstörungen und Bewusstseinsveränderung. Hyperaktives Delir (25%): Psychomotorische Unruhe, Agitation, Halluzinationen.`,
-      type: 'symptoms' as const,
-    },
-    {
-      id: 'diagnosis',
-      title: 'Diagnostik',
-      icon: 'diagnosis',
-      content: `Die Diagnostik basiert auf klinischen Kriterien, Laborparametern und bildgebenden Verfahren. Wichtige Assessment-Tools: CAM - Confusion Assessment Method, CAM-ICU - für Intensivpatienten, 4AT - benutzerfreundliches Screening.`,
-      type: 'diagnosis' as const,
-    },
-  ], []);
+  // Parse database content into sections
+  const parsedSections = useMemo(() => {
+    const sections = [];
+
+    // Helper function to determine section type from title
+    const getSectionType = (title: string): MedicalSection['type'] => {
+      const titleLower = title.toLowerCase();
+      if (titleLower.includes('definition') || titleLower.includes('pathophysiologie')) return 'definition';
+      if (titleLower.includes('epidemiologie')) return 'epidemiology';
+      if (titleLower.includes('ätiologie') || titleLower.includes('ursache')) return 'etiology';
+      if (titleLower.includes('symptom') || titleLower.includes('klinik')) return 'symptoms';
+      if (titleLower.includes('diagnos')) return 'diagnosis';
+      if (titleLower.includes('therap') || titleLower.includes('behandlung')) return 'therapy';
+      if (titleLower.includes('prognos') || titleLower.includes('verlauf')) return 'prognosis';
+      if (titleLower.includes('notfall') || titleLower.includes('emergency')) return 'emergency';
+      return 'definition';
+    };
+
+    // Helper function to get icon from type
+    const getIconFromType = (type: MedicalSection['type']): string => {
+      switch (type) {
+        case 'definition': return 'definition';
+        case 'epidemiology': return 'epidemiology';
+        case 'etiology': return 'etiology';
+        case 'symptoms': return 'symptoms';
+        case 'diagnosis': return 'diagnosis';
+        case 'therapy': return 'therapy';
+        case 'prognosis': return 'prognosis';
+        case 'emergency': return 'emergency';
+        default: return 'definition';
+      }
+    };
+
+    // Parse JSON content if available
+    if (jsonContent && typeof jsonContent === 'object') {
+      if (Array.isArray(jsonContent)) {
+        // Handle array of sections
+        jsonContent.forEach((item, index) => {
+          if (item && typeof item === 'object') {
+            const sectionType = getSectionType(item.title || item.heading || `Section ${index + 1}`);
+            sections.push({
+              id: item.id || `section-${index}`,
+              title: item.title || item.heading || `Section ${index + 1}`,
+              icon: getIconFromType(sectionType),
+              content: item.content || item.text || item.description || '',
+              type: sectionType,
+            });
+          }
+        });
+      } else if (jsonContent.sections && Array.isArray(jsonContent.sections)) {
+        // Handle object with sections array
+        jsonContent.sections.forEach((item, index) => {
+          const sectionType = getSectionType(item.title || item.heading || `Section ${index + 1}`);
+          sections.push({
+            id: item.id || `section-${index}`,
+            title: item.title || item.heading || `Section ${index + 1}`,
+            icon: getIconFromType(sectionType),
+            content: item.content || item.text || item.description || '',
+            type: sectionType,
+          });
+        });
+      } else {
+        // Handle single object - convert to sections based on properties
+        Object.entries(jsonContent).forEach(([key, value], index) => {
+          if (value && typeof value === 'string' && value.length > 50) {
+            const sectionType = getSectionType(key);
+            sections.push({
+              id: key.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              title: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
+              icon: getIconFromType(sectionType),
+              content: value,
+              type: sectionType,
+            });
+          }
+        });
+      }
+    }
+
+    // Fallback to HTML content parsing if JSON is empty
+    if (sections.length === 0 && htmlContent) {
+      // Simple HTML parsing - extract headings and content
+      const htmlSections = htmlContent.split(/<h[1-6][^>]*>/i);
+      htmlSections.forEach((section, index) => {
+        if (section.trim() && index > 0) {
+          const titleMatch = section.match(/^([^<]+)/);
+          const contentMatch = section.replace(/^[^<]*<\/h[1-6]>/i, '').replace(/<[^>]+>/g, ' ').trim();
+          
+          if (titleMatch && contentMatch && contentMatch.length > 30) {
+            const title = titleMatch[1].trim();
+            const sectionType = getSectionType(title);
+            sections.push({
+              id: `html-section-${index}`,
+              title: title,
+              icon: getIconFromType(sectionType),
+              content: contentMatch.substring(0, 500) + (contentMatch.length > 500 ? '...' : ''),
+              type: sectionType,
+            });
+          }
+        }
+      });
+    }
+
+    // Final fallback to plain text content
+    if (sections.length === 0 && plainTextContent) {
+      const paragraphs = plainTextContent.split('\n\n').filter(p => p.trim().length > 100);
+      paragraphs.forEach((paragraph, index) => {
+        const lines = paragraph.split('\n');
+        const title = lines[0].length < 100 ? lines[0] : `Abschnitt ${index + 1}`;
+        const content = lines.length > 1 ? lines.slice(1).join(' ') : paragraph;
+        
+        if (content.trim().length > 50) {
+          const sectionType = getSectionType(title);
+          sections.push({
+            id: `text-section-${index}`,
+            title: title.replace(/[#*]/g, '').trim(),
+            icon: getIconFromType(sectionType),
+            content: content.trim(),
+            type: sectionType,
+          });
+        }
+      });
+    }
+
+    // If still no sections, provide a default section
+    if (sections.length === 0) {
+      sections.push({
+        id: 'default-content',
+        title: 'Medizinischer Inhalt',
+        icon: 'definition',
+        content: plainTextContent || htmlContent?.replace(/<[^>]+>/g, '') || 'Inhalt wird geladen...',
+        type: 'definition' as const,
+      });
+    }
+
+    return sections;
+  }, [jsonContent, htmlContent, plainTextContent]);
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections(prev => ({
@@ -173,14 +279,14 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   // Create animated values for sections
   const sectionAnimations = useMemo(() => {
     const animations: Record<string, { scale: Animated.Value; opacity: Animated.Value }> = {};
-    sampleSections.forEach(section => {
+    parsedSections.forEach(section => {
       animations[section.id] = {
         scale: new Animated.Value(1),
         opacity: new Animated.Value(0.8),
       };
     });
     return animations;
-  }, [sampleSections]);
+  }, [parsedSections]);
 
   const animateSection = useCallback((sectionId: string, isPressed: boolean) => {
     const animation = sectionAnimations[sectionId];
@@ -218,7 +324,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   // Favorites management
   const getFavoriteSections = useCallback(() => {
     return Array.from(bookmarkedSections).map(sectionId => {
-      const section = sampleSections.find(s => s.id === sectionId);
+      const section = parsedSections.find(s => s.id === sectionId);
       if (!section) return null;
       
       return {
@@ -229,7 +335,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         type: section.type,
       };
     }).filter(Boolean) as any[];
-  }, [bookmarkedSections, sampleSections, category]);
+  }, [bookmarkedSections, parsedSections, category]);
 
   const toggleBookmark = useCallback((sectionId: string) => {
     setBookmarkedSections(prev => {
@@ -529,7 +635,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         {isSearchVisible && (
           <View style={styles.searchSection}>
             <ContentSearchBar
-              searchableContent={sampleSections}
+              searchableContent={parsedSections}
               onSearchResult={(results) => {
                 console.log('Search results:', results);
               }}
@@ -554,7 +660,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         </View>
 
         {/* Content Sections */}
-        {sampleSections.map(renderContentSection)}
+        {parsedSections.map(renderContentSection)}
       </View>
       
       {/* Modals */}
@@ -572,7 +678,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       
       <SectionNotesModal
         isVisible={notesModalVisible}
-        sectionTitle={activeNoteSection ? sampleSections.find(s => s.id === activeNoteSection)?.title || '' : ''}
+        sectionTitle={activeNoteSection ? parsedSections.find(s => s.id === activeNoteSection)?.title || '' : ''}
         sectionId={activeNoteSection || ''}
         currentNote={activeNoteSection ? notes[activeNoteSection] || '' : ''}
         onSave={handleNoteSave}
