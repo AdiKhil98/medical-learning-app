@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -73,6 +73,10 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [activeNoteSection, setActiveNoteSection] = useState<string | null>(null);
   const [favoritesVisible, setFavoritesVisible] = useState(false);
+
+  // Refs for scrolling
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<Record<string, View | null>>({});
 
   // Animation effects
   React.useEffect(() => {
@@ -384,9 +388,39 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   ];
 
   const scrollToSection = useCallback((sectionId: string) => {
-    // Expand the section and scroll to it
+    // Expand the section first
     setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
-  }, []);
+    
+    // Wait a moment for the section to expand, then scroll to it
+    setTimeout(() => {
+      const sectionRef = sectionRefs.current[sectionId];
+      if (sectionRef && scrollViewRef.current) {
+        sectionRef.measureLayout(
+          scrollViewRef.current.getInnerViewNode(),
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({
+              x: 0,
+              y: Math.max(0, y - 100), // Offset to show section header clearly
+              animated: true
+            });
+          },
+          () => {
+            // Fallback if measureLayout fails - try scrolling by finding section index
+            const sectionIndex = parsedSections.findIndex(s => s.id === sectionId);
+            if (sectionIndex >= 0) {
+              // Approximate scroll position based on section index
+              const approximateY = 400 + (sectionIndex * 200); // Header height + section height estimate
+              scrollViewRef.current?.scrollTo({
+                x: 0,
+                y: approximateY,
+                animated: true
+              });
+            }
+          }
+        );
+      }
+    }, 300); // Allow time for expansion animation
+  }, [parsedSections]);
 
   // Favorites management
   const getFavoriteSections = useCallback(() => {
@@ -579,6 +613,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     return (
       <Animated.View 
         key={section.id} 
+        ref={(ref) => { sectionRefs.current[section.id] = ref; }}
         style={[
           styles.contentSection,
           {
@@ -682,6 +717,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
   return (
     <ScrollView
+      ref={scrollViewRef}
       style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5' }]}
       showsVerticalScrollIndicator={false}
       onScroll={Animated.event(
