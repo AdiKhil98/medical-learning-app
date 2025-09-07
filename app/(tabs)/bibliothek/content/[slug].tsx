@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ChevronLeft,
   ChevronDown,
@@ -209,6 +210,7 @@ const ContentDetailScreen = memo(() => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [navigationSource, setNavigationSource] = useState<string | null>(null);
 
   const fetchSection = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
@@ -280,6 +282,22 @@ const ContentDetailScreen = memo(() => {
     }
   }, [fetchSection, authLoading]);
 
+  // Store navigation source when page is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      // Get the current navigation state to understand where we came from
+      const state = navigation.getState();
+      console.log('🔍 Navigation state:', state);
+      
+      // Try to determine the previous route
+      if (state?.routes && state.routes.length >= 2) {
+        const previousRoute = state.routes[state.routes.length - 2];
+        console.log('🔍 Previous route:', previousRoute);
+        setNavigationSource(previousRoute.name);
+      }
+    }, [navigation])
+  );
+
   const toggleSection = useCallback((index: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -289,10 +307,14 @@ const ContentDetailScreen = memo(() => {
 
   const handleBackPress = useCallback(() => {
     console.log('🔙 Back button pressed - going to previous page');
+    console.log('🔙 Navigation source was:', navigationSource);
     
     try {
-      // Simply go back to the previous page in history
-      if (router.canGoBack()) {
+      // Try using React Navigation's goBack first
+      if (navigation.canGoBack()) {
+        console.log('🔙 Using navigation.goBack() to return to previous page');
+        navigation.goBack();
+      } else if (router.canGoBack()) {
         console.log('🔙 Using router.back() to return to previous page');
         router.back();
       } else {
@@ -305,7 +327,7 @@ const ContentDetailScreen = memo(() => {
       // Fallback to bibliothek index
       router.replace('/(tabs)/bibliothek');
     }
-  }, [router]);
+  }, [navigation, router, navigationSource]);
 
   const handleRetry = useCallback(() => {
     setError(null);

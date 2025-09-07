@@ -413,8 +413,11 @@ export default function SectionDetailScreen() {
     console.log('🔙 Category back button pressed - going to previous page');
     
     try {
-      // Simply go back to the previous page in history
-      if (router.canGoBack()) {
+      // Try using React Navigation's goBack first
+      if (navigation.canGoBack()) {
+        console.log('🔙 Using navigation.goBack() to return to previous page');
+        navigation.goBack();
+      } else if (router.canGoBack()) {
         console.log('🔙 Using router.back() to return to previous page');
         router.back();
       } else {
