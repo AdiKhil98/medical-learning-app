@@ -50,7 +50,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
   completionStatus = "Vollständiger Leitfaden",
 }) => {
   const { colors, isDarkMode } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ 'content': true });
 
   // Icon mapping for different section types (AMBOSS-style)
   const getIconComponent = useCallback((type: string) => {
@@ -84,20 +84,43 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
   // Parse content into structured sections
   const parsedSections = React.useMemo(() => {
+    console.log('🔍 AmboxMedicalContentRenderer parsing content:');
+    console.log('- jsonContent:', jsonContent, typeof jsonContent);
+    console.log('- htmlContent exists:', !!htmlContent);
+    console.log('- plainTextContent exists:', !!plainTextContent);
+    
     if (jsonContent && Array.isArray(jsonContent)) {
+      console.log('✅ Using JSON array content, sections:', jsonContent.length);
       return jsonContent as MedicalSection[];
+    }
+    
+    if (jsonContent && typeof jsonContent === 'object') {
+      console.log('📋 JSON is object, trying to extract sections');
+      // Try to extract sections from object
+      if (jsonContent.sections) {
+        return jsonContent.sections as MedicalSection[];
+      }
+      // Convert single object to array
+      return [{ 
+        id: 'content', 
+        title: 'Inhalt', 
+        content: JSON.stringify(jsonContent, null, 2), 
+        type: 'definition' as const 
+      }];
     }
     
     // If we have HTML or plain text, create a single content section
     if (htmlContent || plainTextContent) {
+      console.log('📄 Using HTML or plain text content');
       return [{
         id: 'content',
-        title: 'Inhalt',
+        title: 'Medizinischer Inhalt',
         content: htmlContent || plainTextContent || '',
         type: 'definition' as const,
       }];
     }
     
+    console.log('❌ No content found');
     return [];
   }, [jsonContent, htmlContent, plainTextContent]);
 
@@ -181,7 +204,10 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
           <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
             <BookOpen size={48} color={colors.textSecondary} />
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              Inhalte werden geladen...
+              Medizinische Inhalte für "{title}" sind derzeit nicht verfügbar.
+            </Text>
+            <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
+              Überprüfen Sie die Datenstruktur oder kontaktieren Sie den Support.
             </Text>
           </View>
         )}
@@ -306,6 +332,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     fontFamily: 'Inter-Regular',
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'center',
+    opacity: 0.7,
   },
   bottomPadding: {
     height: 40,
