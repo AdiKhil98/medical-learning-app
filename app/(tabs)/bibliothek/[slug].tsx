@@ -5,7 +5,7 @@ import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shi
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import ModernMedicalContentRenderer from '@/components/ui/ModernMedicalContentRenderer';
+import AmboxMedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
 import Card from '@/components/ui/folder';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -549,31 +549,15 @@ export default function SectionDetailScreen() {
                 </LinearGradient>
               </View>
               <View style={styles.contentBody}>
-                <View style={{ padding: 20 }}>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-                    {currentItem.title}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: '#666', marginBottom: 10 }}>
-                    {currentItem.type || 'Medizin'} • Juni 2025
-                  </Text>
-                  {currentItem.content_html ? (
-                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
-                      [HTML Content Available]
-                    </Text>
-                  ) : currentItem.content_improved ? (
-                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
-                      [Structured Content Available]
-                    </Text>
-                  ) : currentItem.content_details ? (
-                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
-                      {currentItem.content_details}
-                    </Text>
-                  ) : (
-                    <Text style={{ fontSize: 16, lineHeight: 24, fontStyle: 'italic' }}>
-                      Content wird geladen...
-                    </Text>
-                  )}
-                </View>
+                <AmboxMedicalContentRenderer
+                  htmlContent={currentItem.content_html}
+                  jsonContent={currentItem.content_improved}
+                  plainTextContent={currentItem.content_details}
+                  title={currentItem.title}
+                  category={currentItem.type || 'Medizin'}
+                  lastUpdated="Juni 2025"
+                  completionStatus="Vollständiger Leitfaden"
+                />
               </View>
             </LinearGradient>
           </View>

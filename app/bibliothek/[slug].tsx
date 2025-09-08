@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Card from '@/components/ui/folder';
-import ModernMedicalContentRenderer from '@/components/ui/ModernMedicalContentRenderer';
+import AmboxMedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
 
 // Type for section data from Supabase
 interface Section {
@@ -349,7 +349,7 @@ export default function SectionDetailScreen() {
           <Text style={styles.subtitle}>{currentSection.description}</Text>
         )}
         {currentSection?.content_details && (
-          <ModernMedicalContentRenderer
+          <AmboxMedicalContentRenderer
             htmlContent={currentSection.content_html}
             jsonContent={currentSection.content_improved}
             plainTextContent={currentSection.content_details}
