@@ -349,7 +349,6 @@ export default function SectionDetailScreen() {
       }
 
       setCurrentItem(itemData);
-      console.log('Current item:', itemData.title, 'Type:', itemData.type);
       
       // Update navigation title with the actual title
       navigation.setOptions({
@@ -358,7 +357,6 @@ export default function SectionDetailScreen() {
 
       const children = childItemsData || [];
       setChildItems(children);
-      console.log(`Found ${children.length} child items`);
 
       // Cache the results
       dataCache.current.set(cacheKey, {
@@ -367,17 +365,21 @@ export default function SectionDetailScreen() {
         timestamp: now
       });
 
-      // Determine if we should show content or navigation
+      // Determine if we should show content
       const hasChildren = children.length > 0;
-      // content_improved is JSONB - check if it exists and has content
-      const hasContent = itemData.content_improved && 
-                        (typeof itemData.content_improved === 'object' || typeof itemData.content_improved === 'string');
+      // Check multiple content sources - content_improved, content_html, or content_details
+      const hasContent = !!(
+        (itemData.content_improved && 
+         (typeof itemData.content_improved === 'object' || 
+          (typeof itemData.content_improved === 'string' && itemData.content_improved.trim()))) ||
+        (itemData.content_html && itemData.content_html.trim()) ||
+        (itemData.content_details && itemData.content_details.trim())
+      );
       
-      console.log('Has children:', hasChildren, 'Has content:', hasContent);
-      console.log('Content type:', typeof itemData.content_improved);
       
-      // Show content if no children OR if this is a final content item
-      setShowContent(!hasChildren && hasContent);
+      // Show content if there IS content, regardless of children
+      // This allows pages to have both navigation and content
+      setShowContent(hasContent);
 
     } catch (e) {
       console.error('Error fetching item data:', e);
@@ -526,9 +528,9 @@ export default function SectionDetailScreen() {
         
       </View>
 
-      {showContent ? (
-        // Modern Content Display
-        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+        {showContent && (
+          // Modern Content Display
           <View style={styles.modernContentCard}>
             <LinearGradient
               colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
@@ -559,26 +561,10 @@ export default function SectionDetailScreen() {
               </View>
             </LinearGradient>
           </View>
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-      ) : childItems.length === 0 ? (
-        // Modern Empty State
-        <View style={styles.modernEmptyState}>
-          <LinearGradient
-            colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
-            style={styles.emptyStateGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <BookOpen size={48} color="#94a3b8" />
-            <Text style={styles.modernEmptyStateText}>
-              Keine weiteren Inhalte oder Unterkategorien verfügbar.
-            </Text>
-          </LinearGradient>
-        </View>
-      ) : (
-        // Modern Folder Cards with Section Panel
-        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+        )}
+        
+        {childItems.length > 0 ? (
+          // Navigation Grid for Children
           <View style={styles.sectionPanel}>
             <LinearGradient
               colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
@@ -586,8 +572,7 @@ export default function SectionDetailScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Text style={styles.sectionTitle}>{currentItem.title}</Text>
-              <View style={styles.foldersGrid}>
+              <View style={styles.gridContainer}>
                 {childItems.map((childItem) => (
                   <FolderCard
                     key={childItem.slug}
@@ -599,10 +584,27 @@ export default function SectionDetailScreen() {
               </View>
             </LinearGradient>
           </View>
-          
-          <View style={styles.bottomPadding} />
-        </ScrollView>
-      )}
+        ) : null}
+        
+        {/* Empty state shown only when no content AND no children */}
+        {!showContent && childItems.length === 0 && (
+          <View style={styles.modernEmptyState}>
+            <LinearGradient
+              colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
+              style={styles.emptyStateGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <BookOpen size={48} color="#94a3b8" />
+              <Text style={styles.modernEmptyStateText}>
+                Keine Inhalte oder Unterkategorien verfügbar.
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+        
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
