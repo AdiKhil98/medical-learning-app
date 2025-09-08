@@ -21,7 +21,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🚀 AuthProvider useEffect triggered, calling initializeAuth...');
     initializeAuth();
+    
+    // EMERGENCY FALLBACK: Force loading to false after 3 seconds no matter what
+    const emergencyTimeout = setTimeout(() => {
+      console.log('🚨 EMERGENCY: Force setting loading to false after 3 seconds');
+      setLoading(false);
+    }, 3000);
+    
+    return () => clearTimeout(emergencyTimeout);
   }, []);
 
   const initializeAuth = async () => {

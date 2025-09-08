@@ -5,15 +5,23 @@ import { View, ActivityIndicator, Text } from 'react-native';
 export default function Index() {
   const { session, loading } = useAuth();
 
-  console.log('Index.tsx render:', { loading, hasSession: !!session });
+  console.log('🔍 Index.tsx render:', { 
+    loading, 
+    hasSession: !!session, 
+    timestamp: new Date().toLocaleTimeString() 
+  });
 
   // Show loading state while checking authentication
   if (loading) {
-    console.log('Showing loading spinner');
+    console.log('⏳ STILL LOADING - showing spinner', { 
+      loading, 
+      session: !!session,
+      timestamp: new Date().toLocaleTimeString() 
+    });
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 10, color: '#666' }}>Loading...</Text>
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading... (Debug: {new Date().toLocaleTimeString()})</Text>
       </View>
     );
   }
