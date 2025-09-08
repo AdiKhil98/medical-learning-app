@@ -356,13 +356,6 @@ export default function SectionDetailScreen() {
       const children = childItemsData || [];
       setChildItems(children);
       
-      // Debug logging to understand data differences
-      console.log('=== DEBUG INFO ===');
-      console.log('Category slug:', slug);
-      console.log('Item data:', itemData ? { title: itemData.title, type: itemData.type, hasContent: !!itemData.content_improved } : null);
-      console.log('Children count:', children.length);
-      console.log('Children:', children.map(c => ({ slug: c.slug, title: c.title, type: c.type })));
-      console.log('==================');
 
       // Cache the results
       dataCache.current.set(cacheKey, {
@@ -382,13 +375,6 @@ export default function SectionDetailScreen() {
         (itemData.content_details && itemData.content_details.trim())
       );
       
-      console.log('Content analysis for', slug);
-      console.log('- content_improved:', !!itemData.content_improved, typeof itemData.content_improved);
-      console.log('- content_html:', !!itemData.content_html);
-      console.log('- content_details:', !!itemData.content_details);
-      console.log('- hasContent result:', hasContent);
-      console.log('- Will show content:', hasContent);
-      console.log('- Will show children:', children.length > 0);
       
       // Show content if there IS content, regardless of children
       // This allows pages to have both navigation and content
@@ -542,12 +528,6 @@ export default function SectionDetailScreen() {
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-        {/* Debug info in UI */}
-        <View style={{ backgroundColor: '#f0f0f0', padding: 10, margin: 10 }}>
-          <Text>DEBUG: {slug}</Text>
-          <Text>showContent: {String(showContent)}</Text>
-          <Text>children: {childItems.length}</Text>
-        </View>
         
         {showContent && (
           // Modern Content Display
@@ -569,15 +549,31 @@ export default function SectionDetailScreen() {
                 </LinearGradient>
               </View>
               <View style={styles.contentBody}>
-                <ModernMedicalContentRenderer 
-                  htmlContent={currentItem.content_html}
-                  jsonContent={currentItem.content_improved}
-                  plainTextContent={typeof currentItem.content_improved === 'string' ? currentItem.content_improved : JSON.stringify(currentItem.content_improved, null, 2)}
-                  title={currentItem.title}
-                  category={currentItem.type || 'Medizin'}
-                  lastUpdated="Juni 2025"
-                  completionStatus="Vollständiger Leitfaden"
-                />
+                <View style={{ padding: 20 }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+                    {currentItem.title}
+                  </Text>
+                  <Text style={{ fontSize: 14, color: '#666', marginBottom: 10 }}>
+                    {currentItem.type || 'Medizin'} • Juni 2025
+                  </Text>
+                  {currentItem.content_html ? (
+                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
+                      [HTML Content Available]
+                    </Text>
+                  ) : currentItem.content_improved ? (
+                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
+                      [Structured Content Available]
+                    </Text>
+                  ) : currentItem.content_details ? (
+                    <Text style={{ fontSize: 16, lineHeight: 24 }}>
+                      {currentItem.content_details}
+                    </Text>
+                  ) : (
+                    <Text style={{ fontSize: 16, lineHeight: 24, fontStyle: 'italic' }}>
+                      Content wird geladen...
+                    </Text>
+                  )}
+                </View>
               </View>
             </LinearGradient>
           </View>
