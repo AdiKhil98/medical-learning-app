@@ -330,7 +330,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
   },
-  contentText: {
+    contentHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 16,
+    lineHeight: 24,
+  },\n  contentText: {
     fontSize: 16,
     lineHeight: 24,
     fontFamily: 'Inter-Regular',
