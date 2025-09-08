@@ -89,27 +89,32 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
     console.log('- htmlContent exists:', !!htmlContent);
     console.log('- plainTextContent exists:', !!plainTextContent);
     
-    if (jsonContent && Array.isArray(jsonContent)) {
+    // Check for non-empty JSON array first
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
       console.log('✅ Using JSON array content, sections:', jsonContent.length);
       return jsonContent as MedicalSection[];
     }
     
-    if (jsonContent && typeof jsonContent === 'object') {
+    // Check for JSON object with content
+    if (jsonContent && typeof jsonContent === 'object' && !Array.isArray(jsonContent)) {
       console.log('📋 JSON is object, trying to extract sections');
       // Try to extract sections from object
-      if (jsonContent.sections) {
+      if (jsonContent.sections && Array.isArray(jsonContent.sections) && jsonContent.sections.length > 0) {
         return jsonContent.sections as MedicalSection[];
       }
-      // Convert single object to array
-      return [{ 
-        id: 'content', 
-        title: 'Inhalt', 
-        content: JSON.stringify(jsonContent, null, 2), 
-        type: 'definition' as const 
-      }];
+      // Convert single object to array if it has meaningful content
+      const objectString = JSON.stringify(jsonContent, null, 2);
+      if (objectString !== '{}' && objectString !== '[]') {
+        return [{ 
+          id: 'content', 
+          title: 'Strukturierter Inhalt', 
+          content: objectString, 
+          type: 'definition' as const 
+        }];
+      }
     }
     
-    // If we have HTML or plain text, create a single content section
+    // Use HTML or plain text content (this should be the main path now)
     if (htmlContent || plainTextContent) {
       console.log('📄 Using HTML or plain text content');
       return [{
@@ -168,9 +173,17 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
         {isExpanded && (
           <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
-            <Text style={[styles.contentText, { color: colors.text }]}>
-              {section.content}
-            </Text>
+            {section.content.includes('<') && section.content.includes('>') ? (
+              // This is HTML content - render as formatted text for now
+              <Text style={[styles.contentText, { color: colors.text }]}>
+                {section.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()}
+              </Text>
+            ) : (
+              // Regular text content
+              <Text style={[styles.contentText, { color: colors.text }]}>
+                {section.content}
+              </Text>
+            )}
           </View>
         )}
       </View>
