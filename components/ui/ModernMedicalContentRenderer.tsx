@@ -583,7 +583,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       <View style={styles.headerContent}>
         <View style={styles.headerTop}>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{category.toUpperCase()}</Text>
+            <Text style={styles.badgeText}>{(category || 'category').toUpperCase()}</Text>
           </View>
         </View>
         <Text style={styles.mainTitle}>{title}</Text>

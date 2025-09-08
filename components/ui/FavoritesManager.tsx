@@ -168,7 +168,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
           </View>
           <View style={[styles.typeBadge, { backgroundColor: getTypeColor(favorite.type) }]}>
             <Text style={styles.typeBadgeText}>
-              {favorite.type.toUpperCase()}
+              {(favorite.type || 'item').toUpperCase()}
             </Text>
           </View>
         </View>

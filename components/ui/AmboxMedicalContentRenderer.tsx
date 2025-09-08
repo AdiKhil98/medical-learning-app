@@ -138,8 +138,8 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
   const renderSection = useCallback((section: MedicalSection, index: number) => {
     const isExpanded = expandedSections[section.id];
-    const IconComponent = getIconComponent(section.type);
-    const sectionColor = getSectionColor(section.type);
+    const IconComponent = getIconComponent(section.type || 'content');
+    const sectionColor = getSectionColor(section.type || 'content');
 
     return (
       <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
@@ -157,7 +157,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
                 {section.title}
               </Text>
               <Text style={[styles.sectionType, { color: sectionColor }]}>
-                {section.type.toUpperCase()}
+                {(section.type || 'content').toUpperCase()}
               </Text>
             </View>
           </View>

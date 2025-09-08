@@ -182,7 +182,7 @@ export default function HierarchicalSectionCard({
             {section.category && hierarchyLevel <= 1 && (
               <View style={dynamicStyles.categoryBadge}>
                 <Text style={dynamicStyles.categoryText}>
-                  {section.category.toUpperCase()}
+                  {(section.category || 'category').toUpperCase()}
                 </Text>
               </View>
             )}
