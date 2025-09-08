@@ -316,13 +316,11 @@ export default function SectionDetailScreen() {
         return;
       }
 
-      console.log('Fetching fresh data for:', slug);
-
       // Optimized: Fetch both current item and children in parallel
       const [itemResult, childrenResult] = await Promise.all([
         supabase
           .from('sections')
-          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html')
+          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
           .eq('slug', slug)
           .maybeSingle(),
         supabase
@@ -572,7 +570,7 @@ export default function SectionDetailScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <View style={styles.gridContainer}>
+              <View style={styles.foldersGrid}>
                 {childItems.map((childItem) => (
                   <FolderCard
                     key={childItem.slug}
