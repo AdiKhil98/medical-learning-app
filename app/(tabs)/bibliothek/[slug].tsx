@@ -5,7 +5,7 @@ import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shi
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
+import ModernMedicalContentRenderer from '@/components/ui/ModernMedicalContentRenderer';
 import Card from '@/components/ui/folder';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -548,11 +548,14 @@ export default function SectionDetailScreen() {
                 </LinearGradient>
               </View>
               <View style={styles.contentBody}>
-                <MedicalContentRenderer 
+                <ModernMedicalContentRenderer 
                   htmlContent={currentItem.content_html}
                   jsonContent={currentItem.content_improved}
                   plainTextContent={typeof currentItem.content_improved === 'string' ? currentItem.content_improved : JSON.stringify(currentItem.content_improved, null, 2)}
                   title={currentItem.title}
+                  category={currentItem.type || 'Medizin'}
+                  lastUpdated="Juni 2025"
+                  completionStatus="Vollständiger Leitfaden"
                 />
               </View>
             </LinearGradient>
