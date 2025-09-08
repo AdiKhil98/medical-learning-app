@@ -26,69 +26,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
+      console.log('🔄 Initializing auth...');
       const { data: { session }, error } = await supabase.auth.getSession();
+      
       if (error) {
         SecureLogger.error('Session error:', error);
-        console.log('Session error:', error);
+        console.log('❌ Session error:', error);
       }
       
       SecureLogger.log('Initial session loaded', { hasSession: !!session, userId: session?.user?.id });
-      console.log('Session check result:', { hasSession: !!session, userId: session?.user?.id, error });
+      console.log('✅ Session check result:', { hasSession: !!session, userId: session?.user?.id, error });
       
-      // Try manual refresh if no session but no error
-      if (!session && !error) {
-        try {
-          SecureLogger.log('No session found, attempting refresh...');
-          console.log('No session found, attempting refresh...');
-          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            // Don't show error, just continue
-            setSession(null);
-            setUser(null);
-          } else {
-            if (refreshedSession) {
-              setSession(refreshedSession);
-              // Ensure user profile is loaded with role information
-              await ensureUserProfile(refreshedSession.user);
-              SecureLogger.log('Session restored from refresh');
-              console.log('Session restored from refresh');
-            } else {
-              setSession(null);
-              setUser(null);
-            }
-          }
-        } catch (error) {
-          // Don't show error, just continue with no session
-          setSession(null);
-          setUser(null);
-        }
-      } else {
-        setSession(session);
-        if (session?.user) {
-          // Ensure user profile is loaded with role information
-          await ensureUserProfile(session.user);
-        } else {
-          setUser(null);
-        }
-      }
+      // Set the session state immediately and end loading
+      setSession(session);
+      setLoading(false); // Move this up to prevent infinite loading
+      console.log('✅ AuthContext loading set to false');
       
-      // Get the final session state (either original or refreshed)
-      const finalSession = session || null;
-      
-      if (finalSession?.user) {
-        await ensureUserProfile(finalSession.user);
-        // Initialize session timeout manager
-        await SessionTimeoutManager.init(
+      // Handle user profile loading asynchronously without blocking
+      if (session?.user) {
+        console.log('👤 Loading user profile asynchronously...');
+        ensureUserProfile(session.user).catch(error => {
+          console.warn('⚠️ User profile loading failed, but app will continue:', error);
+        });
+        
+        // Initialize session timeout manager asynchronously
+        SessionTimeoutManager.init(
           () => SecureLogger.warn('Session timeout warning'),
           () => handleSessionTimeout()
-        );
+        ).catch(error => {
+          console.warn('⚠️ Session timeout manager failed to init:', error);
+        });
+      } else {
+        setUser(null);
+        console.log('👤 No session, user set to null');
       }
       
-      // Always set loading to false at the end
-      setLoading(false);
-      console.log('AuthContext loading set to false, final session:', { hasSession: !!finalSession });
     } catch (error) {
+      console.error('❌ Error initializing auth:', error);
       SecureLogger.error('Error initializing auth', error);
+      setSession(null);
+      setUser(null);
       setLoading(false);
     }
 
@@ -149,14 +126,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const ensureUserProfile = async (authUser: any) => {
     try {
-      const { data: existingUser, error: fetchError } = await supabase
+      console.log('👤 Checking user profile for:', authUser.id);
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('User profile fetch timeout')), 5000)
+      );
+      
+      const fetchPromise = supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .maybeSingle();
+      
+      const { data: existingUser, error: fetchError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]) as any;
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         SecureLogger.error('Error checking user profile', fetchError);
+        console.warn('⚠️ Error checking user profile:', fetchError);
         return;
       }
 
@@ -256,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
+      console.warn('⚠️ ensureUserProfile error (non-blocking):', error);
       SecureLogger.error('ensureUserProfile error', error);
     }
   };
