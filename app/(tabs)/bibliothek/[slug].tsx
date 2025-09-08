@@ -325,7 +325,7 @@ export default function SectionDetailScreen() {
           .maybeSingle(),
         supabase
           .from('sections')
-          .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
+          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
           .eq('parent_slug', slug)
           .order('display_order', { ascending: true })
       ]);
@@ -407,15 +407,25 @@ export default function SectionDetailScreen() {
   const navigateToChild = useCallback((childSlug: string, childItem?: Section) => {
     const currentPath = `/(tabs)/bibliothek/${slug}`;
     
-    // Navigate based on whether item has content or children
-    if (childItem && childItem.content_improved && typeof childItem.content_improved === 'object') {
-      // Navigate directly to content detail page
+    // Check if child has any content (improved, html, or details)
+    const hasContent = childItem && !!(
+      (childItem.content_improved && 
+       (typeof childItem.content_improved === 'object' || 
+        (typeof childItem.content_improved === 'string' && childItem.content_improved.trim()))) ||
+      (childItem.content_html && childItem.content_html.trim()) ||
+      (childItem.content_details && childItem.content_details.trim())
+    );
+    
+    // Always try the content page first if there's any content
+    if (hasContent) {
+      console.log('Navigating to content page for:', childSlug, 'hasContent:', hasContent);
       router.push({
         pathname: `/(tabs)/bibliothek/content/${childSlug}`,
         params: { previousPage: currentPath }
       });
     } else {
-      // Navigate to category page (may have children or render content)
+      console.log('Navigating to category page for:', childSlug, 'hasContent:', hasContent);
+      // Navigate to category page (may have children)
       router.push({
         pathname: `/(tabs)/bibliothek/${childSlug}`,
         params: { previousPage: currentPath }
