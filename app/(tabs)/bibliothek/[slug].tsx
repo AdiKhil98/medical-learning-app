@@ -325,7 +325,7 @@ export default function SectionDetailScreen() {
           .maybeSingle(),
         supabase
           .from('sections')
-          .select('id, slug, title, parent_slug, description, type, display_order')
+          .select('id, slug, title, parent_slug, description, type, display_order, content_improved')
           .eq('parent_slug', slug)
           .order('display_order', { ascending: true })
       ]);
@@ -355,6 +355,14 @@ export default function SectionDetailScreen() {
 
       const children = childItemsData || [];
       setChildItems(children);
+      
+      // Debug logging to understand data differences
+      console.log('=== DEBUG INFO ===');
+      console.log('Category slug:', slug);
+      console.log('Item data:', itemData ? { title: itemData.title, type: itemData.type, hasContent: !!itemData.content_improved } : null);
+      console.log('Children count:', children.length);
+      console.log('Children:', children.map(c => ({ slug: c.slug, title: c.title, type: c.type })));
+      console.log('==================');
 
       // Cache the results
       dataCache.current.set(cacheKey, {
@@ -374,6 +382,13 @@ export default function SectionDetailScreen() {
         (itemData.content_details && itemData.content_details.trim())
       );
       
+      console.log('Content analysis for', slug);
+      console.log('- content_improved:', !!itemData.content_improved, typeof itemData.content_improved);
+      console.log('- content_html:', !!itemData.content_html);
+      console.log('- content_details:', !!itemData.content_details);
+      console.log('- hasContent result:', hasContent);
+      console.log('- Will show content:', hasContent);
+      console.log('- Will show children:', children.length > 0);
       
       // Show content if there IS content, regardless of children
       // This allows pages to have both navigation and content
@@ -527,6 +542,13 @@ export default function SectionDetailScreen() {
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+        {/* Debug info in UI */}
+        <View style={{ backgroundColor: '#f0f0f0', padding: 10, margin: 10 }}>
+          <Text>DEBUG: {slug}</Text>
+          <Text>showContent: {String(showContent)}</Text>
+          <Text>children: {childItems.length}</Text>
+        </View>
+        
         {showContent && (
           // Modern Content Display
           <View style={styles.modernContentCard}>
