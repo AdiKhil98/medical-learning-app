@@ -262,58 +262,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      const signInStartTime = performance.now();
+      console.log('🔐 AuthContext signIn started at:', new Date().toLocaleTimeString());
       SecureLogger.log('Sign in attempt initiated');
       
       // Check client-side rate limiting first
+      const rateLimitStartTime = performance.now();
       const rateLimitCheck = await RateLimiter.checkAttempts(email);
+      console.log('⏱️ Rate limit check took:', Math.round(performance.now() - rateLimitStartTime), 'ms');
+      
       if (!rateLimitCheck.allowed) {
         const lockoutEndsAt = new Date(rateLimitCheck.lockoutEndsAt!);
         throw new Error(`Too many failed attempts. Account locked until ${lockoutEndsAt.toLocaleTimeString()}`);
       }
       
       // Check server-side account lock
+      const serverLockStartTime = performance.now();
       try {
         const { data: isLocked } = await supabase.rpc('check_account_lock', { email_input: email });
+        console.log('🔒 Server lock check took:', Math.round(performance.now() - serverLockStartTime), 'ms');
         if (isLocked) {
           throw new Error('Account locked. Try again in 30 minutes');
         }
       } catch (rpcError) {
+        console.log('🔒 Server lock check took:', Math.round(performance.now() - serverLockStartTime), 'ms (RPC not available)');
         // If RPC doesn't exist, continue with login (backwards compatibility)
         SecureLogger.log('Account lock check RPC not available, continuing');
       }
       
+      // Actual Supabase authentication
+      const supabaseAuthStartTime = performance.now();
+      console.log('🔑 Starting Supabase authentication...');
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const supabaseAuthEndTime = performance.now();
+      console.log('🔑 Supabase auth took:', Math.round(supabaseAuthEndTime - supabaseAuthStartTime), 'ms');
       
       if (error) {
         SecureLogger.warn('Sign in failed');
         // Record failed attempt
+        const failedAttemptStartTime = performance.now();
         await RateLimiter.recordFailedAttempt(email);
+        console.log('📝 Recording failed attempt took:', Math.round(performance.now() - failedAttemptStartTime), 'ms');
+        
         // Also record on server if RPC exists
+        const serverFailedStartTime = performance.now();
         try {
           await supabase.rpc('increment_failed_login', { email_input: email });
+          console.log('📝 Server failed login recording took:', Math.round(performance.now() - serverFailedStartTime), 'ms');
         } catch (rpcError) {
+          console.log('📝 Server failed login recording took:', Math.round(performance.now() - serverFailedStartTime), 'ms (RPC not available)');
           SecureLogger.log('Failed login RPC not available');
         }
+        
         // Log failed login audit event
+        const auditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_failed', undefined, { email, error: error.message });
+        console.log('📋 Audit logging took:', Math.round(performance.now() - auditStartTime), 'ms');
         throw error;
       }
       
       if (data.user) {
         SecureLogger.log('Sign in successful');
+        
         // Clear failed attempts on success
+        const clearAttemptsStartTime = performance.now();
         await RateLimiter.clearAttempts(email);
+        console.log('🧹 Clearing failed attempts took:', Math.round(performance.now() - clearAttemptsStartTime), 'ms');
+        
         // Also clear on server if RPC exists
+        const serverClearStartTime = performance.now();
         try {
           await supabase.rpc('reset_failed_login', { user_id_input: data.user.id });
+          console.log('🧹 Server clear failed attempts took:', Math.round(performance.now() - serverClearStartTime), 'ms');
         } catch (rpcError) {
+          console.log('🧹 Server clear failed attempts took:', Math.round(performance.now() - serverClearStartTime), 'ms (RPC not available)');
           SecureLogger.log('Reset failed login RPC not available');
         }
+        
         // Update activity for session timeout
+        const sessionTimeoutStartTime = performance.now();
         await SessionTimeoutManager.updateLastActivity();
+        console.log('⏲️ Session timeout update took:', Math.round(performance.now() - sessionTimeoutStartTime), 'ms');
+        
         // Log successful login audit event
+        const successAuditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_success', data.user.id, { email });
+        console.log('📋 Success audit logging took:', Math.round(performance.now() - successAuditStartTime), 'ms');
       }
+      
+      const totalSignInTime = performance.now() - signInStartTime;
+      console.log('🎯 Total signIn process took:', Math.round(totalSignInTime), 'ms');
       
     } catch (error) {
       SecureLogger.error('Sign in error', error);

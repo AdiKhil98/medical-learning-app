@@ -38,22 +38,33 @@
         return;
       }
 
+      const startTime = performance.now();
+      console.log('🚀 Login process started at:', new Date().toLocaleTimeString());
+      
       setLoading(true);
       try {
-        console.log('Attempting login with:', email);
+        console.log('📧 Attempting login with:', email);
+        const loginStartTime = performance.now();
+        
         await signIn(email.trim(), password);
+        
+        const loginEndTime = performance.now();
+        console.log('✅ SignIn completed in:', Math.round(loginEndTime - loginStartTime), 'ms');
 
         // Success - the AuthContext will handle navigation via useEffect
-        console.log('Login successful!');
+        console.log('🎉 Login successful! Total time:', Math.round(performance.now() - startTime), 'ms');
 
         // Clear form
         setEmail('');
         setPassword('');
 
       } catch (error: any) {
-        console.log('Login error:', error.message);
+        const errorTime = performance.now();
+        console.log('❌ Login error after', Math.round(errorTime - startTime), 'ms:', error.message);
         Alert.alert('Anmeldung fehlgeschlagen', error.message);
       } finally {
+        const finalTime = performance.now();
+        console.log('🔄 Login process completed in:', Math.round(finalTime - startTime), 'ms');
         setLoading(false);
       }
     };
