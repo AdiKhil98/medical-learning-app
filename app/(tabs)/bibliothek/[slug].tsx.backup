@@ -404,7 +404,7 @@ export default function SectionDetailScreen() {
     }
   }, []); // Empty dependency array for initial load only
 
-  const navigateToChild = useCallback(async (childSlug: string, childItem?: Section) => {
+  const navigateToChild = useCallback((childSlug: string, childItem?: Section) => {
     const currentPath = `/(tabs)/bibliothek/${slug}`;
     
     // Check if child has any content (improved, html, or details)
@@ -416,57 +416,22 @@ export default function SectionDetailScreen() {
       (childItem.content_details && childItem.content_details.trim())
     );
     
-    // Check if child has children (subdivisions) first - this is the key fix
-    try {
-      const { data: childrenData, error: childrenError } = await supabase
-        .from('sections')
-        .select('id')
-        .eq('parent_slug', childSlug)
-        .limit(1);
-      
-      if (childrenError) {
-        console.warn('Error checking for children:', childrenError);
-      }
-      
-      const hasSubdivisions = childrenData && childrenData.length > 0;
-      
-      console.log('Navigation decision for:', childSlug, {
-        hasContent,
-        hasSubdivisions,
-        decision: hasSubdivisions ? 'category-page' : (hasContent ? 'content-page' : 'category-page')
+    // Always try the content page first if there's any content
+    if (hasContent) {
+      console.log('Navigating to content page for:', childSlug, 'hasContent:', hasContent);
+      router.push({
+        pathname: `/(tabs)/bibliothek/content/${childSlug}`,
+        params: { previousPage: currentPath }
       });
-      
-      // FIXED LOGIC: Priority is subdivisions over content
-      // If has children/subdivisions, always go to category page for navigation
-      // Only go to content page if it has content but no children
-      if (hasSubdivisions) {
-        console.log('Navigating to category page for subdivisions:', childSlug);
-        router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}`,
-          params: { previousPage: currentPath }
-        });
-      } else if (hasContent) {
-        console.log('Navigating to content page (no subdivisions):', childSlug);
-        router.push({
-          pathname: `/(tabs)/bibliothek/content/${childSlug}`,
-          params: { previousPage: currentPath }
-        });
-      } else {
-        console.log('Navigating to category page (no content or children):', childSlug);
-        router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}`,
-          params: { previousPage: currentPath }
-        });
-      }
-    } catch (error) {
-      console.error('Error in navigateToChild:', error);
-      // Fallback to category page on error
+    } else {
+      console.log('Navigating to category page for:', childSlug, 'hasContent:', hasContent);
+      // Navigate to category page (may have children)
       router.push({
         pathname: `/(tabs)/bibliothek/${childSlug}`,
         params: { previousPage: currentPath }
       });
     }
-  }, [router, slug, supabase]);
+  }, [router, slug]);
 
   const handleBackPress = useCallback(() => {
     try {
