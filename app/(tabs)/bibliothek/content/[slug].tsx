@@ -80,7 +80,7 @@ const contentCache = new Map<string, { data: Section, timestamp: number }>();
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const ContentDetailScreen = memo(() => {
-  const { slug, previousPage } = useLocalSearchParams();
+  const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, isDarkMode } = useTheme();
@@ -186,36 +186,26 @@ const ContentDetailScreen = memo(() => {
   }, []);
 
   const handleBackPress = useCallback(() => {
-    console.log('🔙 Back button pressed - going to previous page');
-    console.log('🔙 Previous page param:', previousPage);
-    console.log('🔙 Navigation source was:', navigationSource);
-    
     try {
-      // If we have a previousPage parameter, navigate directly to it
+      // Priority 1: Use previousPage parameter if available
       if (previousPage && typeof previousPage === 'string') {
-        console.log('🔙 Using previousPage parameter:', previousPage);
         router.push(previousPage);
         return;
       }
       
-      // Try using React Navigation's goBack first
+      // Priority 2: Use navigation history if available
       if (navigation.canGoBack()) {
-        console.log('🔙 Using navigation.goBack() to return to previous page');
         navigation.goBack();
-      } else if (router.canGoBack()) {
-        console.log('🔙 Using router.back() to return to previous page');
-        router.back();
-      } else {
-        // Only if there's no history, go to main bibliothek
-        console.log('🔙 No history available, going to main bibliothek');
-        router.push('/(tabs)/bibliothek');
+        return;
       }
+      
+      // Priority 3: Fallback to main bibliothek
+      router.push('/(tabs)/bibliothek');
     } catch (error) {
-      console.error('🔙 Navigation error:', error);
-      // Fallback to bibliothek index
+      // Final fallback - replace current route
       router.replace('/(tabs)/bibliothek');
     }
-  }, [navigation, router, navigationSource, previousPage]);
+  }, [navigation, router, previousPage]);
 
   const handleRetry = useCallback(() => {
     setError(null);

@@ -276,7 +276,7 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
 });
 
 export default function SectionDetailScreen() {
-  const { slug } = useLocalSearchParams();
+  const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const { session, loading: authLoading } = useAuth();
@@ -403,37 +403,36 @@ export default function SectionDetailScreen() {
     }
   }, []); // Empty dependency array for initial load only
 
-  const navigateToChild = (childSlug: string) => {
-    console.log('Navigating to child:', childSlug);
-    // Store current page as the previous page for the child
+  const navigateToChild = useCallback((childSlug: string, childItem?: Section) => {
     const currentPath = `/(tabs)/bibliothek/${slug}`;
-    router.push({
-      pathname: `/(tabs)/bibliothek/${childSlug}`,
-      params: { previousPage: currentPath }
-    });
-  };
-
-  const handleBackPress = () => {
-    console.log('🔙 Category back button pressed - going to previous page');
     
+    // Navigate based on whether item has content or children
+    if (childItem && childItem.content_improved && typeof childItem.content_improved === 'object') {
+      // Navigate directly to content detail page
+      router.push({
+        pathname: `/(tabs)/bibliothek/content/${childSlug}`,
+        params: { previousPage: currentPath }
+      });
+    } else {
+      // Navigate to category page (may have children or render content)
+      router.push({
+        pathname: `/(tabs)/bibliothek/${childSlug}`,
+        params: { previousPage: currentPath }
+      });
+    }
+  }, [router, slug]);
+
+  const handleBackPress = useCallback(() => {
     try {
-      // Try using React Navigation's goBack first
       if (navigation.canGoBack()) {
-        console.log('🔙 Using navigation.goBack() to return to previous page');
         navigation.goBack();
-      } else if (router.canGoBack()) {
-        console.log('🔙 Using router.back() to return to previous page');
-        router.back();
       } else {
-        // Only if there's no history, go to main bibliothek
-        console.log('🔙 No history available, going to main bibliothek');
         router.push('/(tabs)/bibliothek');
       }
     } catch (error) {
-      console.error('🔙 Navigation error:', error);
       router.replace('/(tabs)/bibliothek');
     }
-  };
+  }, [navigation, router]);
 
   if (authLoading || loading) {
     return (
@@ -594,7 +593,7 @@ export default function SectionDetailScreen() {
                     key={childItem.slug}
                     childItem={childItem}
                     parentSlug={slug as string}
-                    onPress={() => navigateToChild(childItem.slug)}
+                    onPress={() => navigateToChild(childItem.slug, childItem)}
                   />
                 ))}
               </View>

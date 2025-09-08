@@ -101,7 +101,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
 };
 
 export default function SectionDetailScreen() {
-  const { slug } = useLocalSearchParams();
+  const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -221,9 +221,9 @@ export default function SectionDetailScreen() {
   };
 
   // Navigate to a section
-  const navigateToSection = (sectionSlug: string) => {
+  const navigateToSection = useCallback((sectionSlug: string) => {
     router.push(`/bibliothek/${sectionSlug}`);
-  };
+  }, [router]);
 
   // Render a section item recursively for deeper levels
   const renderSectionItem = (section: Section, depth: number = 0) => {
@@ -328,7 +328,17 @@ export default function SectionDetailScreen() {
       
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => router.back()} 
+          onPress={() => {
+            try {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/bibliothek');
+              }
+            } catch (error) {
+              router.replace('/bibliothek');
+            }
+          }}
           style={styles.backButton}
         >
           <ChevronLeft size={24} color="#0077B6" />
