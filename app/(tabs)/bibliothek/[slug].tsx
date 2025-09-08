@@ -920,4 +920,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#e2e8f0',
   },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1e293b',
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  backToMainButton: {
+    backgroundColor: '#0891b2',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  backToMainText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
 });
