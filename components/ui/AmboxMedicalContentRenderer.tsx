@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
+  TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
@@ -18,10 +16,7 @@ import {
   Target,
   BookOpen,
   TrendingUp,
-  Eye,
-  Brain,
-  Zap,
-} from 'lucide-react-native';
+  Eye } from 'lucide-react-native';
 
 interface MedicalSection {
   id: string;
@@ -47,9 +42,8 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
   title,
   category = "Medizin",
   lastUpdated = "Juni 2025",
-  completionStatus = "Vollständiger Leitfaden",
-}) => {
-  const { colors, isDarkMode } = useTheme();
+  completionStatus = "Vollständiger Leitfaden" }) => {
+  const { colors } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ 'content': true });
 
   // Icon mapping for different section types (AMBOSS-style)
@@ -121,8 +115,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
         id: 'content',
         title: 'Medizinischer Inhalt',
         content: htmlContent || plainTextContent || '',
-        type: 'definition' as const,
-      }];
+        type: 'definition' as const }];
     }
     
     console.log('❌ No content found');
@@ -232,49 +225,40 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
+    flex: 1 },
   header: {
     padding: 20,
     borderRadius: 16,
-    marginBottom: 16,
-  },
+    marginBottom: 16 },
   mainTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
-    fontFamily: 'Inter-Bold',
-  },
+    fontFamily: 'Inter-Bold' },
   headerMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
+    marginBottom: 12 },
   category: {
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'Inter-SemiBold',
-  },
+    fontFamily: 'Inter-SemiBold' },
   lastUpdated: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
-  },
+    fontFamily: 'Inter-Regular' },
   statusBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-  },
+    borderRadius: 20 },
   statusText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '600',
-    fontFamily: 'Inter-SemiBold',
-  },
+    fontFamily: 'Inter-SemiBold' },
   contentContainer: {
-    flex: 1,
-  },
+    flex: 1 },
   sectionCard: {
     borderRadius: 12,
     marginBottom: 12,
@@ -282,87 +266,71 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 2,
-  },
+    elevation: 2 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-  },
+    padding: 16 },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
+    flex: 1 },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-  },
+    marginRight: 12 },
   sectionTitleContainer: {
-    flex: 1,
-  },
+    flex: 1 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
-    marginBottom: 2,
-  },
+    marginBottom: 2 },
   sectionType: {
     fontSize: 12,
     fontWeight: '500',
     fontFamily: 'Inter-Medium',
-    opacity: 0.8,
-  },
+    opacity: 0.8 },
   chevron: {
-    marginLeft: 8,
-  },
+    marginLeft: 8 },
   chevronExpanded: {
-    transform: [{ rotate: '180deg' }],
-  },
+    transform: [{ rotate: '180deg' }] },
   sectionContent: {
     borderTopWidth: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 20,
-  },
+    paddingBottom: 20 },
     contentHeader: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 16,
-    lineHeight: 24,
-  },\n  contentText: {
+    lineHeight: 24 },
+  contentText: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: 'Inter-Regular',
-  },
+    fontFamily: 'Inter-Regular' },
   emptyState: {
     padding: 40,
     borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center' },
   emptyStateText: {
     fontSize: 16,
     marginTop: 16,
     fontFamily: 'Inter-Regular',
-    textAlign: 'center',
-  },
+    textAlign: 'center' },
   emptyStateSubtext: {
     fontSize: 14,
     marginTop: 8,
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
-    opacity: 0.7,
-  },
+    opacity: 0.7 },
   bottomPadding: {
-    height: 40,
-  },
-});
+    height: 40 } });
 
 export default AmboxMedicalContentRenderer;
