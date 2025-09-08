@@ -21,10 +21,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
-import Card from '@/components/ui/Card';
+import Card from '@/components/ui/folder';
 import ModernMedicalContentRenderer from '@/components/ui/ModernMedicalContentRenderer';
-// Removed MedicalContentViewer import - doesn't exist and causes WebView error
-// import { medicalContentService, MedicalSection } from '@/lib/medicalContentService';
 
 // Define Section type directly
 interface Section {
@@ -74,124 +72,6 @@ const ContentSkeleton = memo(() => {
         </View>
       ))}
     </View>
-  );
-});
-
-// Memoized content section component
-const ContentSectionComponent = memo(({ 
-  contentSection, 
-  index, 
-  isExpanded, 
-  onToggle, 
-  colors,
-  currentSection 
-}: {
-  contentSection: ContentSection,
-  index: number,
-  isExpanded: boolean,
-  onToggle: () => void,
-  colors: any,
-  currentSection: Section
-}) => {
-  const getIconForContentType = useCallback((type: string) => {
-    switch (type) {
-      case 'overview':
-        return <BookOpen size={20} color={colors.primary} />;
-      case 'definition':
-        return <Info size={20} color={colors.primary} />;
-      case 'list':
-        return <List size={20} color={colors.primary} />;
-      case 'clinical_pearl':
-      case 'clinical_relevance':
-        return <Lightbulb size={20} color="#F59E0B" />;
-      default:
-        return <BookOpen size={20} color={colors.primary} />;
-    }
-  }, [colors.primary]);
-
-  const cardStyles = useMemo(() => ({
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-    overflow: 'hidden' as 'hidden',
-    marginBottom: 16,
-  }), [colors.card]);
-
-  const chevronStyle = useMemo(() => [
-    { transform: [{ rotate: '0deg' }] },
-    isExpanded && { transform: [{ rotate: '180deg' }] }
-  ], [isExpanded]);
-
-  return (
-    <Card style={cardStyles}>
-      <TouchableOpacity
-        style={styles.contentHeader}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={styles.contentHeaderLeft}>
-          {getIconForContentType(contentSection.type)}
-          <Text style={[styles.contentTitle, { color: colors.text }]}>
-            {contentSection.title || 
-             (contentSection.type === 'definition' ? contentSection.term : `Abschnitt ${index + 1}`)}
-          </Text>
-        </View>
-        <ChevronDown
-          size={20}
-          color={colors.textSecondary}
-          style={chevronStyle}
-        />
-      </TouchableOpacity>
-
-      {isExpanded && (
-        <View style={styles.contentBody}>
-          {contentSection.type === 'definition' && contentSection.definition && (
-            <View style={styles.definitionContainer}>
-              <Text style={[styles.definitionTerm, { color: colors.primary }]}>
-                {contentSection.term}
-              </Text>
-              <Text style={[styles.definitionText, { color: colors.text }]}>
-                {contentSection.definition}
-              </Text>
-            </View>
-          )}
-          
-          {currentSection.content_html ? (
-            <View style={[styles.htmlContainer, { backgroundColor: colors.surface, borderLeftColor: colors.primary }]}>
-              <Text style={[styles.htmlNote, { color: colors.primary }]}>📋 Enhanced content view</Text>
-              <Text style={[styles.contentText, { color: colors.text }]}>{contentSection.content}</Text>
-            </View>
-          ) : contentSection.content ? (
-            <Text style={[styles.contentText, { color: colors.text }]}>{contentSection.content}</Text>
-          ) : null}
-          
-          {contentSection.type === 'list' && contentSection.items && (
-            <View style={styles.listContainer}>
-              {contentSection.items.map((item, itemIndex) => (
-                <View key={itemIndex} style={styles.listItem}>
-                  <View style={[styles.listBullet, { backgroundColor: colors.primary }]} />
-                  <Text style={[styles.listItemText, { color: colors.text }]}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-          
-          {contentSection.type === 'clinical_pearl' && (
-            <View style={styles.clinicalPearlContainer}>
-              <View style={styles.clinicalPearlHeader}>
-                <Lightbulb size={16} color="#F59E0B" />
-                <Text style={styles.clinicalPearlTitle}>Klinischer Tipp</Text>
-              </View>
-              <Text style={styles.clinicalPearlText}>{contentSection.content}</Text>
-            </View>
-          )}
-        </View>
-      )}
-    </Card>
   );
 });
 
