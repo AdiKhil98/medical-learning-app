@@ -44,7 +44,7 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
   lastUpdated = "Juni 2025",
   completionStatus = "Vollständiger Leitfaden" }) => {
   const { colors } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ 'content': true });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Icon mapping for different section types
   const getIconComponent = useCallback((type: string) => {
@@ -83,102 +83,98 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
     console.log('- htmlContent exists:', !!htmlContent);
     console.log('- plainTextContent exists:', !!plainTextContent);
     
-    // Check for non-empty JSON array first
+    // Priority 1: Check for structured JSON content first (content_improved)
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
       console.log('✅ Using JSON array content, sections:', jsonContent.length);
       return jsonContent as MedicalSection[];
     }
     
-    // Check for JSON object with content
+    // Priority 2: Check for JSON object with sections
     if (jsonContent && typeof jsonContent === 'object' && !Array.isArray(jsonContent)) {
       console.log('📋 JSON is object, trying to extract sections');
       // Try to extract sections from object
       if (jsonContent.sections && Array.isArray(jsonContent.sections) && jsonContent.sections.length > 0) {
         return jsonContent.sections as MedicalSection[];
       }
-      // Convert single object to array if it has meaningful content
-      const objectString = JSON.stringify(jsonContent, null, 2);
-      if (objectString !== '{}' && objectString !== '[]') {
-        return [{ 
-          id: 'content', 
-          title: 'Strukturierter Inhalt', 
-          content: objectString, 
-          type: 'definition' as const 
-        }];
-      }
     }
     
-    // Enhanced HTML parsing for structured medical sections
+    // Priority 3: Enhanced HTML parsing (content_html) combined with fallbacks
     if (htmlContent || plainTextContent) {
       console.log('📄 Using HTML or plain text content with enhanced parsing');
       const sections: MedicalSection[] = [];
       const htmlToUse = htmlContent || plainTextContent || '';
       
-      // Split by headers to create sections
-      const htmlParts = htmlToUse.split(/<h[23]>/i);
+      // Clean and split by headers to create sections
+      const cleanedHtml = htmlToUse
+        .replace(/&nbsp;/g, ' ')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n');
       
-      if (htmlParts.length > 1) {
-        // We have headers, create structured sections
-        htmlParts.forEach((part, index) => {
-          if (index === 0 && part.trim()) {
-            // First part (before first header) becomes definition
-            sections.push({
-              id: 'definition',
-              title: 'Definition und Klassifikation',
-              content: part.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(),
-              type: 'definition'
-            });
-          } else if (part.trim()) {
-            // Extract header text and content
-            const headerMatch = part.match(/^([^<]*?)(?:<\/h[23]>)?(.*)/is);
-            if (headerMatch) {
-              const headerText = headerMatch[1].trim();
-              const sectionContent = headerMatch[2].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-              
-              // Determine section type based on header text
-              let sectionType: MedicalSection['type'] = 'definition';
-              let sectionTitle = headerText;
-              
-              if (headerText.toLowerCase().includes('epidemiologie')) {
-                sectionType = 'epidemiology';
-                sectionTitle = 'Epidemiologie';
-              } else if (headerText.toLowerCase().includes('pathophysiologie')) {
-                sectionType = 'etiology';
-                sectionTitle = 'Pathophysiologie';
-              } else if (headerText.toLowerCase().includes('symptom') || headerText.toLowerCase().includes('klinisch')) {
-                sectionType = 'symptoms';
-                sectionTitle = 'Klinische Symptomatik';
-              } else if (headerText.toLowerCase().includes('diagnos')) {
-                sectionType = 'diagnosis';
-                sectionTitle = 'Diagnostik';
-              } else if (headerText.toLowerCase().includes('therap') || headerText.toLowerCase().includes('behandlung')) {
-                sectionType = 'therapy';
-                sectionTitle = 'Therapie';
-              } else if (headerText.toLowerCase().includes('prognose')) {
-                sectionType = 'prognosis';
-                sectionTitle = 'Prognose';
+      // Try to split by common medical section headers
+      const sectionHeaders = [
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Definition\s*(?:und\s*)?(?:Klassifikation|Konzept)?\s*(?:<\/h[2-4]>)?/gi, type: 'definition', title: 'Definition und Klassifikation' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Epidemiologie\s*(?:<\/h[2-4]>)?/gi, type: 'epidemiology', title: 'Epidemiologie' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Pathophysiologie|Ätiologie)\s*(?:<\/h[2-4]>)?/gi, type: 'etiology', title: 'Pathophysiologie' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Klinische?\s*)?(?:Symptomatik|Manifestation)\s*(?:<\/h[2-4]>)?/gi, type: 'symptoms', title: 'Klinische Symptomatik' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Diagnostik?\s*(?:<\/h[2-4]>)?/gi, type: 'diagnosis', title: 'Diagnostik' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Therapie|Behandlung)\s*(?:<\/h[2-4]>)?/gi, type: 'therapy', title: 'Therapie' },
+        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Prognose\s*(?:<\/h[2-4]>)?/gi, type: 'prognosis', title: 'Prognose' }
+      ];
+      
+      let remainingContent = cleanedHtml;
+      let foundSections = false;
+      
+      sectionHeaders.forEach((headerDef) => {
+        const matches = [...remainingContent.matchAll(headerDef.pattern)];
+        if (matches.length > 0) {
+          foundSections = true;
+          matches.forEach((match) => {
+            const startIndex = match.index || 0;
+            const headerLength = match[0].length;
+            
+            // Find the next section or end of content
+            let endIndex = remainingContent.length;
+            for (const nextHeader of sectionHeaders) {
+              const nextMatches = [...remainingContent.matchAll(nextHeader.pattern)];
+              for (const nextMatch of nextMatches) {
+                const nextStartIndex = nextMatch.index || 0;
+                if (nextStartIndex > startIndex + headerLength && nextStartIndex < endIndex) {
+                  endIndex = nextStartIndex;
+                }
               }
-              
+            }
+            
+            const sectionContent = remainingContent
+              .substring(startIndex + headerLength, endIndex)
+              .replace(/<[^>]*>/g, '')
+              .trim();
+            
+            if (sectionContent.length > 0) {
               sections.push({
-                id: sectionType + '_' + index,
-                title: sectionTitle,
+                id: headerDef.type,
+                title: headerDef.title,
                 content: sectionContent,
-                type: sectionType
+                type: headerDef.type as MedicalSection['type']
               });
             }
-          }
-        });
-      } else {
-        // No headers found, create a single content section
-        sections.push({
-          id: 'content',
-          title: 'Medizinischer Inhalt',
-          content: htmlToUse.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(),
-          type: 'definition'
-        });
+          });
+        }
+      });
+      
+      // If no structured sections found, create a single content section
+      if (!foundSections) {
+        const cleanContent = htmlToUse.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+        if (cleanContent.length > 0) {
+          sections.push({
+            id: 'content',
+            title: 'Medizinischer Inhalt',
+            content: cleanContent,
+            type: 'definition'
+          });
+        }
       }
       
-      return sections.filter(section => section.content.length > 0);
+      return sections.filter(section => section.content.length > 20); // Filter out very short sections
     }
     
     console.log('❌ No content found');
@@ -186,10 +182,16 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
   }, [jsonContent, htmlContent, plainTextContent]);
 
   const toggleSection = useCallback((sectionId: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
+    setExpandedSections(prev => {
+      const isCurrentlyExpanded = prev[sectionId];
+      if (isCurrentlyExpanded) {
+        // If currently expanded, collapse it
+        return {};
+      } else {
+        // If not expanded, expand only this section (close all others)
+        return { [sectionId]: true };
+      }
+    });
   }, []);
 
   // Enhanced content renderer with statistics highlighting and formatting
@@ -260,7 +262,7 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
     return <View>{elements}</View>;
   }, [colors]);
 
-  // Quick navigation pills
+  // Quick navigation pills - enhanced design
   const renderQuickNavigation = useCallback(() => {
     if (parsedSections.length <= 1) return null;
     
@@ -274,8 +276,8 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
               style={[
                 styles.quickNavPill,
                 { 
-                  backgroundColor: getSectionColor(section.type) + '15',
-                  borderColor: getSectionColor(section.type) + '30'
+                  backgroundColor: colors.card,
+                  borderColor: colors.border
                 }
               ]}
               onPress={() => toggleSection(section.id)}
@@ -283,7 +285,7 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
             >
               <Text style={[
                 styles.quickNavPillText,
-                { color: getSectionColor(section.type) }
+                { color: colors.text }
               ]}>
                 {section.title}
               </Text>
@@ -292,7 +294,7 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
         </View>
       </View>
     );
-  }, [parsedSections, colors, getSectionColor, toggleSection]);
+  }, [parsedSections, colors, toggleSection]);
 
   const renderSection = useCallback((section: MedicalSection, index: number) => {
     const isExpanded = expandedSections[section.id];
