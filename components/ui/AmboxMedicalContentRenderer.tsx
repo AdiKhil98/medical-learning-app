@@ -202,19 +202,19 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
     lines.forEach((line, index) => {
       if (!line.trim()) return;
       
-      // Check for percentage/statistics (xx-yy% pattern)
-      const percentageRegex = /(\d+(?:-\d+)?%)/g;
-      const hasPercentages = percentageRegex.test(line);
+      // Check for percentage/statistics and numbers (enhanced pattern)
+      const statisticsRegex = /(\d+(?:[,\.]\d+)?(?:-\d+(?:[,\.]\d+)?)?%?(?:\s*(?:mg|kg|ml|l|min|h|Jahre?|Tage?|Stunden?|Minuten?))?)/g;
+      const hasStatistics = statisticsRegex.test(line);
       
-      if (hasPercentages) {
-        // Split line and highlight percentages
-        const parts = line.split(percentageRegex);
+      if (hasStatistics) {
+        // Split line and highlight statistics
+        const parts = line.split(statisticsRegex);
         const lineElements: React.ReactNode[] = [];
         
         parts.forEach((part, partIndex) => {
-          if (percentageRegex.test(part)) {
+          if (statisticsRegex.test(part)) {
             lineElements.push(
-              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: '#3B82F6', color: 'white' }]}>
+              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: colors.primary || '#3B82F6', color: 'white' }]}>
                 {part}
               </Text>
             );
@@ -228,9 +228,9 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
         });
         
         elements.push(
-          <Text key={index} style={[styles.contentText, { color: colors.text }]}>
+          <View key={index} style={styles.statisticsLine}>
             {lineElements}
-          </Text>
+          </View>
         );
       } else if (line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('✓')) {
         // Bullet points or checkmarks
@@ -522,12 +522,18 @@ const styles = StyleSheet.create({
   
   // Enhanced Content Styles
   highlightedStat: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 12,
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'Inter-SemiBold' },
+    fontFamily: 'Inter-SemiBold',
+    marginHorizontal: 2 },
+  statisticsLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginVertical: 4 },
   bulletPoint: {
     flexDirection: 'row',
     alignItems: 'flex-start',
