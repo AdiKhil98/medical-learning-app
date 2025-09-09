@@ -49,8 +49,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
 
     try {
+      // Ensure contentSource is a string before checking startsWith
+      const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
+      
+      console.log('📊 Content type:', typeof contentSource, 'Content length:', contentString.length);
+      
       // If it's JSON, parse it
-      if (contentSource.startsWith('[') || contentSource.startsWith('{')) {
+      if (contentString.startsWith('[') || contentString.startsWith('{')) {
         let sections: any[] = [];
         
         if (typeof contentSource === 'string') {
@@ -69,16 +74,17 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         // If it's plain text or HTML, create a single section
         return [{
           title: supabaseRow?.title || 'Medizinischer Inhalt',
-          content: contentSource.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+          content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
         }];
       }
 
     } catch (error) {
       console.error('Error parsing content:', error);
       // Fallback to treating as plain text
+      const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
       return [{
         title: supabaseRow?.title || 'Medizinischer Inhalt',
-        content: contentSource.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+        content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
       }];
     }
   }, [supabaseRow?.content_improved, supabaseRow?.content_html, supabaseRow?.title]);
