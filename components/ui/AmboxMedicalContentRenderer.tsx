@@ -35,7 +35,7 @@ interface AmboxMedicalContentRendererProps {
   completionStatus?: string;
 }
 
-const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
+const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
   htmlContent,
   jsonContent,
   plainTextContent,
@@ -46,7 +46,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
   const { colors } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ 'content': true });
 
-  // Icon mapping for different section types (AMBOSS-style)
+  // Icon mapping for different section types
   const getIconComponent = useCallback((type: string) => {
     switch (type) {
       case 'definition': return BookOpen;
@@ -76,9 +76,9 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
     }
   }, []);
 
-  // Parse content into structured sections with enhanced AMBOSS-style parsing
+  // Parse content into structured sections with enhanced parsing
   const parsedSections = React.useMemo(() => {
-    console.log('🔍 AmboxMedicalContentRenderer parsing content:');
+    console.log('🔍 MedicalContentRenderer parsing content:');
     console.log('- jsonContent:', jsonContent, typeof jsonContent);
     console.log('- htmlContent exists:', !!htmlContent);
     console.log('- plainTextContent exists:', !!plainTextContent);
@@ -108,7 +108,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
       }
     }
     
-    // Enhanced HTML parsing for AMBOSS-style structured sections
+    // Enhanced HTML parsing for structured medical sections
     if (htmlContent || plainTextContent) {
       console.log('📄 Using HTML or plain text content with enhanced parsing');
       const sections: MedicalSection[] = [];
@@ -340,7 +340,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
   return (
     <View style={styles.container}>
-      {/* AMBOSS-style header */}
+      {/* Medical content header */}
       <LinearGradient
         colors={[colors.primary + '10', colors.primary + '05']}
         style={styles.header}
@@ -539,4 +539,4 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: 'Inter-Regular' } });
 
-export default AmboxMedicalContentRenderer;
+export default MedicalContentRenderer;

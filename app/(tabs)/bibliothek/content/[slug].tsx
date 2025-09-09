@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/folder';
-import AmboxMedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
+import MedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
 
 // Define Section type directly
 interface Section {
@@ -328,7 +328,7 @@ const ContentDetailScreen = memo(() => {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Universal Enhanced Medical Content Renderer */}
-        <AmboxMedicalContentRenderer
+        <MedicalContentRenderer
           htmlContent={currentSection.content_html}
           jsonContent={currentSection.content_improved}
           plainTextContent={currentSection.content_details}
