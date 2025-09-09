@@ -182,7 +182,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
 
         <Text style={[styles.mainTitle, { color: colors.text }]}>
-          {supabaseRow?.icon || '🏥'} {supabaseRow?.title || 'Medizinischer Inhalt'}
+          {supabaseRow?.title || 'Medizinischer Inhalt'}
         </Text>
 
         <View style={styles.metaInfo}>
@@ -259,20 +259,6 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.background }]}>
-          <Text style={[styles.navButtonText, { color: colors.textSecondary }]}>← Zurück</Text>
-        </TouchableOpacity>
-        
-        <Text style={[styles.pageInfo, { color: colors.textSecondary }]}>
-          Seite 1 von {filteredSections.length}
-        </Text>
-        
-        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.navButtonText, { color: 'white' }]}>Weiter →</Text>
-        </TouchableOpacity>
-      </View>
     </Animated.View>
   );
 };
@@ -406,25 +392,6 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderTopWidth: 1,
-  },
-  navButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  navButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  pageInfo: {
-    fontSize: 14,
   },
 });
 
