@@ -16,7 +16,8 @@ interface SupabaseRow {
   description?: string;
   icon: string;
   color: string;
-  content_json?: string;
+  content_improved?: string;
+  content_html?: string;
   category: string;
   last_updated?: string;
 }
