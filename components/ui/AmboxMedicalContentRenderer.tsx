@@ -268,33 +268,38 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
     
     return (
       <View style={styles.quickNavContainer}>
-        <Text style={[styles.quickNavTitle, { color: colors.text }]}>SCHNELLNAVIGATION</Text>
+        <Text style={[styles.quickNavTitle, { color: colors.textSecondary }]}>SCHNELLNAVIGATION</Text>
         <View style={styles.quickNavPills}>
-          {parsedSections.map((section) => (
-            <TouchableOpacity
-              key={section.id}
-              style={[
-                styles.quickNavPill,
-                { 
-                  backgroundColor: colors.card,
-                  borderColor: colors.border
-                }
-              ]}
-              onPress={() => toggleSection(section.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.quickNavPillText,
-                { color: colors.text }
-              ]}>
-                {section.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {parsedSections.map((section) => {
+            const isExpanded = !!expandedSections[section.id];
+            const sectionColor = getSectionColor(section.type);
+            return (
+              <TouchableOpacity
+                key={section.id}
+                style={[
+                  styles.quickNavPill,
+                  { 
+                    backgroundColor: isExpanded ? sectionColor + '20' : colors.card,
+                    borderColor: isExpanded ? sectionColor : colors.border,
+                    borderWidth: isExpanded ? 2 : 1
+                  }
+                ]}
+                onPress={() => toggleSection(section.id)}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.quickNavPillText,
+                  { color: isExpanded ? sectionColor : colors.text }
+                ]}>
+                  {section.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     );
-  }, [parsedSections, colors, toggleSection]);
+  }, [parsedSections, colors, toggleSection, expandedSections, getSectionColor]);
 
   const renderSection = useCallback((section: MedicalSection, index: number) => {
     const isExpanded = !!expandedSections[section.id]; // Ensure boolean
