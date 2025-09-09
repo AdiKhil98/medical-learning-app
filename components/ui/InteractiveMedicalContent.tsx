@@ -263,25 +263,138 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
   }, [supabaseRow.content_json]);
 
-  // STEP 10: Complete Processing Pipeline - Master Supabase Row Processor
-  const processSupabaseRow = useCallback((row: SupabaseRow) => {
-    console.log('🔄 STEP 10: Starting complete processing pipeline for:', row.title);
+  // STEP 11: Error Handling and Validation - Comprehensive Validation System
+  const validateAndSanitize = useCallback((row: SupabaseRow) => {
+    console.log('🛡️ STEP 11: Starting validation and sanitization for:', row.title || 'Unknown');
+    
+    // Step 11.1: Check required fields
+    console.log('📋 STEP 11.1: Validating required fields...');
+    
+    if (!row) {
+      console.error('❌ STEP 11.1: Row is null or undefined');
+      throw new Error('Row data is required');
+    }
+    
+    if (!row.content_json) {
+      console.error('❌ STEP 11.1: Missing content_json field');
+      throw new Error('Missing content_json field - medical content cannot be processed');
+    }
+    
+    // Step 11.2: JSON Validation
+    console.log('📊 STEP 11.2: Validating JSON content...');
+    let content: any;
     
     try {
-      // Step 10.1: Parse JSON content (integrating Step 1)
-      console.log('📊 STEP 10.1: Parsing JSON content...');
-      let sections: MedicalSection[] = [];
-      
       if (typeof row.content_json === 'string') {
-        sections = JSON.parse(row.content_json);
+        content = JSON.parse(row.content_json);
+        console.log('✅ STEP 11.2: Successfully parsed JSON string');
       } else if (Array.isArray(row.content_json)) {
-        sections = row.content_json;
+        content = row.content_json;
+        console.log('✅ STEP 11.2: Content is already an array');
+      } else if (typeof row.content_json === 'object') {
+        content = row.content_json;
+        console.log('✅ STEP 11.2: Content is an object');
       } else {
-        console.warn('⚠️ STEP 10.1: Invalid content_json type');
-        return [];
+        throw new Error(`Invalid content_json type: ${typeof row.content_json}`);
       }
+    } catch (e: any) {
+      console.error('❌ STEP 11.2: JSON parsing failed:', e);
+      throw new Error(`Invalid JSON in content_json: ${e.message}`);
+    }
+    
+    if (!Array.isArray(content)) {
+      console.error('❌ STEP 11.2: content_json must be an array, got:', typeof content);
+      throw new Error('content_json must be an array of medical sections');
+    }
+    
+    console.log(`✅ STEP 11.2: Validated ${content.length} sections`);
+    
+    // Step 11.3: Content Sanitization
+    console.log('🧹 STEP 11.3: Sanitizing content...');
+    
+    const sanitizeText = (text: string): string => {
+      if (!text || typeof text !== 'string') return '';
       
-      console.log(`✅ STEP 10.1: Parsed ${sections.length} sections`);
+      // Remove potentially dangerous HTML/scripts (basic sanitization for React Native)
+      return text
+        .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '') // Remove iframe tags
+        .replace(/javascript:/gi, '') // Remove javascript: protocols
+        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Remove event handlers
+        .trim();
+    };
+    
+    // Step 11.4: Set defaults for missing fields
+    console.log('⚙️ STEP 11.4: Setting defaults for missing fields...');
+    
+    const sanitizedRow = {
+      ...row,
+      title: sanitizeText(row.title) || 'Untitled Medical Content',
+      category: sanitizeText(row.category) || 'Allgemein',
+      color: (row.color && /^#[0-9A-Fa-f]{6}$/.test(row.color)) ? row.color : '#2563EB',
+      icon: row.icon || '🏥',
+      description: sanitizeText(row.description || ''),
+      slug: sanitizeText(row.slug) || 'untitled',
+      parent_slug: row.parent_slug ? sanitizeText(row.parent_slug) : null,
+      last_updated: row.last_updated || new Date().toISOString(),
+      content_json: content // Use validated content
+    };
+    
+    console.log('✅ STEP 11.4: Applied defaults and sanitization');
+    
+    // Step 11.5: Section-level validation
+    console.log('📝 STEP 11.5: Validating individual sections...');
+    
+    const validatedSections = content.map((section: any, index: number) => {
+      try {
+        if (!section || typeof section !== 'object') {
+          console.warn(`⚠️ STEP 11.5: Invalid section at index ${index}, using fallback`);
+          return {
+            title: `Section ${index + 1}`,
+            content: 'Content not available'
+          };
+        }
+        
+        return {
+          title: sanitizeText(section.title) || `Section ${index + 1}`,
+          content: sanitizeText(section.content) || 'Content not available',
+          description: section.description ? sanitizeText(section.description) : undefined
+        };
+      } catch (sectionError: any) {
+        console.warn(`⚠️ STEP 11.5: Error processing section ${index}:`, sectionError);
+        return {
+          title: `Section ${index + 1}`,
+          content: 'Content processing error'
+        };
+      }
+    });
+    
+    console.log(`✅ STEP 11.5: Validated ${validatedSections.length} sections`);
+    
+    const finalRow = {
+      ...sanitizedRow,
+      content_json: validatedSections
+    };
+    
+    console.log('🛡️ STEP 11: Validation and sanitization complete');
+    return finalRow;
+    
+  }, []);
+
+  // STEP 10: Complete Processing Pipeline - Master Supabase Row Processor (Enhanced with Step 11)
+  const processSupabaseRow = useCallback((row: SupabaseRow) => {
+    console.log('🔄 STEP 10+11: Starting enhanced processing pipeline for:', row.title);
+    
+    try {
+      // Step 11: Validate and sanitize input first
+      const validatedRow = validateAndSanitize(row);
+      console.log('✅ STEP 11: Row validation successful');
+      
+      // Step 10.1: Parse JSON content (now using validated data)
+      console.log('📊 STEP 10.1: Parsing validated JSON content...');
+      const sections = validatedRow.content_json as MedicalSection[];
+      
+      console.log(`✅ STEP 10.1: Using ${sections.length} validated sections`);
       
       // Step 10.2: Process each section through complete pipeline
       const processedSections = sections.map((section, index) => {
@@ -349,7 +462,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           acc + (section.metadata?.wordCount || 0), 0),
         processingComplete: true,
         processingTimestamp: new Date().toISOString(),
-        pipelineVersion: '10.0.0'
+        pipelineVersion: '11.0.0' // Updated for Step 11 integration
       };
       
       console.log(`📋 STEP 10.3: Generated metadata with ${metadata.totalWordCount} total words`);
@@ -371,6 +484,124 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       return [];
     }
   }, []);
+
+  // STEP 12: Final Integration Code - Complete Medical Content Initialization
+  const initializeMedicalContent = useCallback(async (row: SupabaseRow) => {
+    console.log('🚀 STEP 12: Starting final medical content initialization...');
+    
+    try {
+      // Step 12.1: Validate input thoroughly
+      console.log('🛡️ STEP 12.1: Final input validation...');
+      if (!row) {
+        throw new Error('Supabase row data is required');
+      }
+      
+      const validatedRow = validateAndSanitize(row);
+      if (!validatedRow) {
+        throw new Error('Row validation failed - unable to process medical content');
+      }
+      
+      console.log('✅ STEP 12.1: Input validation successful');
+      
+      // Step 12.2: Process through complete pipeline
+      console.log('⚙️ STEP 12.2: Processing through complete pipeline...');
+      const processedSections = processSupabaseRow(validatedRow);
+      
+      if (!processedSections || processedSections.length === 0) {
+        throw new Error('Processing pipeline returned no sections');
+      }
+      
+      console.log(`✅ STEP 12.2: Successfully processed ${processedSections.length} sections`);
+      
+      // Step 12.3: Initialize interactive features
+      console.log('🎯 STEP 12.3: Initializing interactive features...');
+      
+      // Auto-expand first section for better UX
+      setExpandedSections(prev => ({ ...prev, 0: true }));
+      
+      // Initialize search functionality
+      setSearchTerm('');
+      setCopiedItems(new Set());
+      
+      // Setup progressive animations
+      const newAnimations: Record<number, Animated.Value> = {};
+      processedSections.forEach((_, index) => {
+        newAnimations[index] = new Animated.Value(0);
+        
+        // Stagger animations for smooth entry
+        setTimeout(() => {
+          Animated.spring(newAnimations[index], {
+            toValue: 1,
+            delay: index * 100,
+            tension: 50,
+            friction: 8,
+            useNativeDriver: false,
+          }).start();
+        }, index * 50);
+      });
+      
+      setSectionAnimations(prev => ({ ...prev, ...newAnimations }));
+      console.log(`✅ STEP 12.3: Initialized ${processedSections.length} interactive animations`);
+      
+      // Step 12.4: Success logging and metrics
+      console.log('📊 STEP 12.4: Final success logging...');
+      const metrics = {
+        title: validatedRow.title,
+        totalSections: processedSections.length,
+        totalWordCount: processedSections.reduce((acc, section) => 
+          acc + (section.content?.split(' ').length || 0), 0),
+        interactiveElements: processedSections.reduce((acc, section) => {
+          const statNumbers = (section.processedContent?.match(/<STAT_NUMBER>/g) || []).length;
+          const medicalTerms = (section.processedContent?.match(/<MEDICAL_TERM>/g) || []).length;
+          const dosages = (section.processedContent?.match(/<DOSAGE>/g) || []).length;
+          return acc + statNumbers + medicalTerms + dosages;
+        }, 0),
+        initializationTime: new Date().toISOString(),
+        pipelineVersion: '12.0.0'
+      };
+      
+      console.log(`🎉 STEP 12: Medical content initialization COMPLETE!`);
+      console.log(`📋 Final metrics:`, metrics);
+      console.log(`✨ Successfully rendered: "${validatedRow.title}"`);
+      console.log(`📊 ${metrics.totalSections} sections, ${metrics.totalWordCount} words, ${metrics.interactiveElements} interactive elements`);
+      
+      return {
+        success: true,
+        processedSections,
+        metrics
+      };
+      
+    } catch (error: any) {
+      console.error('❌ STEP 12: Error during medical content initialization:', error);
+      
+      // Step 12.5: Error recovery and user feedback
+      setExpandedSections({});
+      setSearchTerm('');
+      setCopiedItems(new Set());
+      
+      // Show user-friendly error message
+      const errorMessage = error.message || 'Unbekannter Fehler beim Laden des Inhalts';
+      
+      return {
+        success: false,
+        error: errorMessage,
+        userMessage: `
+          Fehler beim Laden des medizinischen Inhalts:
+          ${errorMessage}
+          
+          Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.
+        `
+      };
+    }
+  }, [validateAndSanitize, processSupabaseRow]);
+
+  // STEP 12: Auto-initialization on component mount
+  useEffect(() => {
+    if (supabaseRow && supabaseRow.content_json) {
+      console.log('🎬 STEP 12: Auto-initializing medical content on component mount...');
+      initializeMedicalContent(supabaseRow);
+    }
+  }, [supabaseRow, initializeMedicalContent]);
 
   // Step 10.5: Initialize Complete Processing Pipeline
   const masterProcessedSections = useMemo(() => {
@@ -1219,7 +1450,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           ✅ STEP 7: Special Content Processing Rules Complete{'\n'}
           ✅ STEP 8: Responsive Design Rules Complete{'\n'}
           ✅ STEP 9: Additional Interactive Features Complete{'\n'}
-          🎯 STEP 10: Complete Processing Pipeline ACTIVE
+          ✅ STEP 10: Complete Processing Pipeline Complete{'\n'}
+          ✅ STEP 11: Error Handling and Validation Complete{'\n'}
+          🎉 STEP 12: Final Integration Code Complete
         </Text>
         
         {/* STEP 10: Complete Processing Pipeline - Search Results Info */}
