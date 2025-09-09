@@ -7,9 +7,12 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  TextInput,
+  Alert,
 } from 'react-native';
-import { ChevronDown, BookOpen, AlertCircle } from 'lucide-react-native';
+import { ChevronDown, BookOpen, AlertCircle, Search, Copy, CheckCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface MedicalSection {
@@ -45,6 +48,11 @@ interface InteractiveMedicalContentProps {
 const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow }) => {
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  
+  // STEP 9: Additional Interactive Features - State Management
+  const [searchTerm, setSearchTerm] = useState('');
+  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set());
+  const [sectionAnimations, setSectionAnimations] = useState<Record<number, Animated.Value>>({});
   
   // STEP 8: Responsive Design Rules - Screen Size Management
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
@@ -164,6 +172,36 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       return [];
     }
   }, [supabaseRow.content_json]);
+
+  // STEP 9: Additional Interactive Features - Search Filtering
+  const filteredSections = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return processedSections.map((section, index) => ({
+        ...section,
+        originalIndex: index
+      }));
+    }
+    
+    const searchLower = searchTerm.toLowerCase();
+    console.log(`🔍 STEP 9: Filtering sections by search term: "${searchTerm}"`);
+    
+    const filtered = processedSections
+      .map((section, index) => ({ ...section, originalIndex: index }))
+      .filter(section => {
+        const titleMatch = section.title.toLowerCase().includes(searchLower);
+        const contentMatch = section.content.toLowerCase().includes(searchLower);
+        const match = titleMatch || contentMatch;
+        
+        if (match) {
+          console.log(`✅ STEP 9: Section "${section.title}" matches search`);
+        }
+        
+        return match;
+      });
+    
+    console.log(`🔍 STEP 9: Found ${filtered.length} sections matching "${searchTerm}"`);
+    return filtered;
+  }, [processedSections, searchTerm]);
 
   // STEP 7: Special Content Processing Rules - Enhanced Content Function
   const enhanceContent = (content: string): string => {
@@ -360,17 +398,39 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     segments.forEach((segment, index) => {
       if (segment.startsWith('<STAT_NUMBER>')) {
         const text = segment.replace(/<\/?STAT_NUMBER>/g, '');
+        const isCopied = copiedItems.has(text);
         renderedElements.push(
-          <Text key={index} style={styles.statNumberCss}>
-            {text}
-          </Text>
+          <TouchableOpacity 
+            key={index} 
+            onPress={() => copyToClipboard(text, 'stat')}
+            style={[
+              styles.statNumberCss, 
+              styles.clickableElement,
+              isCopied && styles.copiedElement
+            ]}
+          >
+            <Text style={styles.clickableText}>
+              {text} {isCopied && '✓'}
+            </Text>
+          </TouchableOpacity>
         );
       } else if (segment.startsWith('<MEDICAL_TERM>')) {
         const text = segment.replace(/<\/?MEDICAL_TERM>/g, '');
+        const isCopied = copiedItems.has(text);
         renderedElements.push(
-          <Text key={index} style={styles.medicalTermCss}>
-            {text}
-          </Text>
+          <TouchableOpacity 
+            key={index}
+            onPress={() => copyToClipboard(text, 'medical')}
+            style={[
+              styles.medicalTermCss,
+              styles.clickableElement,
+              isCopied && styles.copiedElement
+            ]}
+          >
+            <Text style={styles.clickableText}>
+              {text} {isCopied && '✓'}
+            </Text>
+          </TouchableOpacity>
         );
       } else if (segment.startsWith('<CRITERIA_ITEM>')) {
         const text = segment.replace(/<\/?CRITERIA_ITEM>/g, '');
@@ -395,10 +455,21 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         medicationBoxes.push(text.trim());
       } else if (segment.startsWith('<DOSAGE>')) {
         const text = segment.replace(/<\/?DOSAGE>/g, '');
+        const isCopied = copiedItems.has(text);
         renderedElements.push(
-          <Text key={index} style={styles.dosageCss}>
-            {text}
-          </Text>
+          <TouchableOpacity 
+            key={index}
+            onPress={() => copyToClipboard(text, 'dosage')}
+            style={[
+              styles.dosageCss,
+              styles.clickableElement,
+              isCopied && styles.copiedElement
+            ]}
+          >
+            <Text style={styles.clickableText}>
+              {text} {isCopied && '✓'}
+            </Text>
+          </TouchableOpacity>
         );
       } else if (segment.startsWith('<NUMBERED_ITEM>')) {
         const text = segment.replace(/<\/?NUMBERED_ITEM>/g, '');
@@ -423,7 +494,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     return (
       <View>
-        {/* Main content text */}
+        {/* STEP 9: Main content text with interactive elements */}
         <Text style={[styles.contentText, { color: colors.text }]}>
           {renderedElements}
         </Text>
@@ -694,12 +765,68 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     setScrollProgress(progress);
   };
 
+  // STEP 9: Additional Interactive Features - Enhanced Collapsible Sections
   const toggleSection = (index: number) => {
-    console.log(`🔄 STEP 6: Toggling section ${index}`);
+    console.log(`🔄 STEP 9: Enhanced toggle for section ${index}`);
+    
+    // Initialize animation if not exists
+    if (!sectionAnimations[index]) {
+      const newAnim = new Animated.Value(0);
+      setSectionAnimations(prev => ({ ...prev, [index]: newAnim }));
+    }
+    
+    const willExpand = !expandedSections[index];
+    
     setExpandedSections(prev => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: willExpand
     }));
+    
+    // Enhanced collapse animation
+    if (sectionAnimations[index]) {
+      Animated.spring(sectionAnimations[index], {
+        toValue: willExpand ? 1 : 0,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: false,
+      }).start();
+    }
+    
+    console.log(`✅ STEP 9: Section ${index} ${willExpand ? 'expanded' : 'collapsed'} with animation`);
+  };
+
+  // STEP 9: Additional Interactive Features - Search Functionality
+  const handleSearch = (text: string) => {
+    console.log(`🔍 STEP 9: Searching for: "${text}"`);
+    setSearchTerm(text);
+  };
+
+  // STEP 9: Additional Interactive Features - Copy to Clipboard
+  const copyToClipboard = async (text: string, type: 'stat' | 'dosage' | 'medical') => {
+    try {
+      await Clipboard.setStringAsync(text);
+      console.log(`📋 STEP 9: Copied ${type} to clipboard: "${text}"`);
+      
+      // Add to copied items for visual feedback
+      setCopiedItems(prev => new Set([...prev, text]));
+      
+      // Remove from copied items after 2 seconds
+      setTimeout(() => {
+        setCopiedItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(text);
+          return newSet;
+        });
+      }, 2000);
+      
+      // Show success feedback
+      Alert.alert('📋 Kopiert!', `"${text}" wurde in die Zwischenablage kopiert.`, 
+        [{ text: 'OK', style: 'default' }]);
+      
+    } catch (error) {
+      console.error('❌ STEP 9: Failed to copy to clipboard:', error);
+      Alert.alert('❌ Fehler', 'Konnte nicht in die Zwischenablage kopieren.');
+    }
   };
 
   if (processedSections.length === 0) {
@@ -790,6 +917,29 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             📖 {processedSections.length} Abschnitte
           </Text>
         </View>
+
+        {/* STEP 9: Search Functionality */}
+        <View style={[styles.searchContainer, { borderColor: colors.border }]}>
+          <Search size={18} color={colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={[styles.searchBox, { 
+              color: colors.text,
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }]}
+            placeholder="Suche im Inhalt..."
+            placeholderTextColor={colors.textSecondary}
+            value={searchTerm}
+            onChangeText={handleSearch}
+          />
+          {searchTerm.length > 0 && (
+            <TouchableOpacity 
+              onPress={() => handleSearch('')}
+              style={styles.clearSearch}
+            >
+              <Text style={[styles.clearSearchText, { color: colors.textSecondary }]}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* STEP 8: Responsive Navigation Pills */}
@@ -859,10 +1009,18 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           ✅ STEP 5: CSS Styles Definition Complete{'\n'}
           ✅ STEP 6: JavaScript Functionality Complete{'\n'}
           ✅ STEP 7: Special Content Processing Rules Complete{'\n'}
-          ✅ STEP 8: Responsive Design Rules Complete
+          ✅ STEP 8: Responsive Design Rules Complete{'\n'}
+          ✅ STEP 9: Additional Interactive Features Complete
         </Text>
         
-        {processedSections.map((section, index) => generateSection(section, index))}
+        {/* STEP 9: Search Results Info */}
+        {searchTerm.length > 0 && (
+          <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
+            🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {processedSections.length} Abschnitten)
+          </Text>
+        )}
+        
+        {filteredSections.map((section, index) => generateSection(section, section.originalIndex || index))}
         
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -1523,6 +1681,54 @@ const styles = StyleSheet.create({
     // .content-section { padding: 20px; }
     padding: 20,
     marginHorizontal: 10, // Reduced margins for tablets
+  },
+  
+  // STEP 9: Additional Interactive Features - Styles
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    borderWidth: 1,
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchBox: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  clearSearch: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  clearSearchText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  searchResults: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 12,
+    paddingHorizontal: 16,
+  },
+  clickableElement: {
+    borderRadius: 4,
+    marginHorizontal: 2,
+  },
+  clickableText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  copiedElement: {
+    backgroundColor: '#10b981', // Green for copied state
   },
 });
 
