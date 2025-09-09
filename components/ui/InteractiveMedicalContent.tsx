@@ -593,21 +593,24 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         `
       };
     }
-  }, [validateAndSanitize, processSupabaseRow]);
+  }, []);
 
-  // STEP 12: Auto-initialization on component mount
-  useEffect(() => {
-    if (supabaseRow && supabaseRow.content_json) {
-      console.log('🎬 STEP 12: Auto-initializing medical content on component mount...');
-      initializeMedicalContent(supabaseRow);
-    }
-  }, [supabaseRow, initializeMedicalContent]);
-
-  // Step 10.5: Initialize Complete Processing Pipeline
+  // Step 10.5: Initialize Complete Processing Pipeline (Simplified to avoid circular dependencies)
   const masterProcessedSections = useMemo(() => {
     console.log('🚀 STEP 10: Initializing master processing pipeline...');
-    return processSupabaseRow(supabaseRow);
-  }, [supabaseRow, processSupabaseRow]);
+    
+    if (!supabaseRow || !supabaseRow.content_json) {
+      console.log('⚠️ No supabase row or content_json provided');
+      return [];
+    }
+    
+    try {
+      return processSupabaseRow(supabaseRow);
+    } catch (error) {
+      console.error('❌ Master processing pipeline failed:', error);
+      return [];
+    }
+  }, [supabaseRow]);
 
   // STEP 9: Additional Interactive Features - Search Filtering (Enhanced for Step 10)
   const filteredSections = useMemo(() => {
@@ -1268,7 +1271,24 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
   };
 
-  if (processedSections.length === 0) {
+  // Enhanced error handling and fallback rendering
+  if (!supabaseRow) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
+          <AlertCircle size={48} color={colors.textSecondary} />
+          <Text style={[styles.errorTitle, { color: colors.text }]}>
+            Keine Daten verfügbar
+          </Text>
+          <Text style={[styles.errorSubtitle, { color: colors.textSecondary }]}>
+            Supabase Row ist nicht verfügbar
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (masterProcessedSections.length === 0 && processedSections.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
@@ -1284,10 +1304,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           <View style={styles.debugContainer}>
             <Text style={[styles.debugTitle, { color: colors.textSecondary }]}>Debug Info:</Text>
             <Text style={[styles.debugText, { color: colors.textSecondary }]}>
-              Title: {supabaseRow.title}
+              Title: {supabaseRow.title || 'N/A'}
             </Text>
             <Text style={[styles.debugText, { color: colors.textSecondary }]}>
-              Slug: {supabaseRow.slug}
+              Slug: {supabaseRow.slug || 'N/A'}
             </Text>
             <Text style={[styles.debugText, { color: colors.textSecondary }]}>
               Content JSON Type: {typeof supabaseRow.content_json}
@@ -1295,199 +1315,224 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             <Text style={[styles.debugText, { color: colors.textSecondary }]}>
               Content JSON Length: {supabaseRow.content_json?.length || 0}
             </Text>
+            <Text style={[styles.debugText, { color: colors.textSecondary }]}>
+              Master Processed Sections: {masterProcessedSections.length}
+            </Text>
+            <Text style={[styles.debugText, { color: colors.textSecondary }]}>
+              Legacy Processed Sections: {processedSections.length}
+            </Text>
           </View>
         </View>
       </View>
     );
   }
 
-  return (
-    <Animated.View style={[
-      styles.appContainer, 
-      isLargeScreen && styles.appContainerLarge,
-      isTablet && styles.appContainerTablet,
-      { 
-        backgroundColor: colors.background,
-        opacity: fadeAnim 
-      }
-    ]}>
-      {/* STEP 8: Responsive Design Rules Implementation */}
-      
-      {/* Header Section with Responsive CSS Styling */}
-      <View style={[
-        styles.headerCss, 
-        isTablet && styles.headerTablet,
+  try {
+    return (
+      <Animated.View style={[
+        styles.appContainer, 
+        isLargeScreen && styles.appContainerLarge,
+        isTablet && styles.appContainerTablet,
         { 
-          backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)'
+          backgroundColor: colors.background,
+          opacity: fadeAnim 
         }
       ]}>
-        {/* Header Top - CSS Badges */}
-        <View style={styles.headerTop}>
-          <View style={styles.badgeCss}>
-            <Text style={styles.badgeTextCss}>
-              {supabaseRow.category || 'Medizin'}
-            </Text>
-          </View>
-          <View style={styles.badgeCss}>
-            <Text style={styles.badgeTextCss}>
-              📱 Mobile App
-            </Text>
-          </View>
-        </View>
-
-        {/* Main Title with Responsive Sizing */}
-        <Text style={[
-          styles.mainTitle, 
-          isTablet && styles.mainTitleTablet,
-          { color: colors.text }
+        {/* STEP 8: Responsive Design Rules Implementation */}
+        
+        {/* Header Section with Responsive CSS Styling */}
+        <View style={[
+          styles.headerCss, 
+          isTablet && styles.headerTablet,
+          { 
+            backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)'
+          }
         ]}>
-          {supabaseRow.icon || '🏥'} {supabaseRow.title}
-        </Text>
-
-        {/* Meta Information */}
-        <View style={styles.metaInfo}>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            📚 {supabaseRow.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
-          </Text>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            ⏱️ {formatDate(supabaseRow.last_updated)}
-          </Text>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            📖 {masterProcessedSections.length} Abschnitte
-          </Text>
-        </View>
-
-        {/* STEP 9: Search Functionality */}
-        <View style={[styles.searchContainer, { borderColor: colors.border }]}>
-          <Search size={18} color={colors.textSecondary} style={styles.searchIcon} />
-          <TextInput
-            style={[styles.searchBox, { 
-              color: colors.text,
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-            }]}
-            placeholder="Suche im Inhalt..."
-            placeholderTextColor={colors.textSecondary}
-            value={searchTerm}
-            onChangeText={handleSearch}
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity 
-              onPress={() => handleSearch('')}
-              style={styles.clearSearch}
-            >
-              <Text style={[styles.clearSearchText, { color: colors.textSecondary }]}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* STEP 8: Responsive Navigation Pills */}
-      <View style={[
-        styles.sectionNav, 
-        isTablet && styles.sectionNavTablet,
-        { backgroundColor: colors.card }
-      ]}>
-        <Text style={[styles.navTitle, { color: colors.text }]}>
-          Schnellnavigation
-        </Text>
-        <ScrollView 
-          horizontal={!isTablet} 
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={isTablet}
-          contentContainerStyle={[
-            styles.navGrid,
-            isTablet && styles.navGridTablet,
-            isLargeScreen && styles.navGridLarge
-          ]}
-          style={isTablet ? styles.navScrollTablet : undefined}
-        >
-          {masterProcessedSections.map((section, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={[
-                styles.navItem,
-                isTablet && styles.navItemTablet,
-                { 
-                  backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
-                  borderColor: colors.border 
-                }
-              ]}
-              onPress={() => scrollToSection(index)}
-            >
-              <Text style={[styles.navItemText, { 
-                color: expandedSections[index] ? colors.primary : colors.textSecondary 
-              }]}>
-                {section.icon || getIcon(section.title)} {section.title.substring(0, isTablet ? 30 : 20)}...
+          {/* Header Top - CSS Badges */}
+          <View style={styles.headerTop}>
+            <View style={styles.badgeCss}>
+              <Text style={styles.badgeTextCss}>
+                {supabaseRow?.category || 'Medizin'}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+            </View>
+            <View style={styles.badgeCss}>
+              <Text style={styles.badgeTextCss}>
+                📱 Mobile App
+              </Text>
+            </View>
+          </View>
 
-      {/* STEP 6: JavaScript Functionality - Progress Bar with Scroll Tracking */}
-      <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-        <View style={[styles.progressFill, { 
-          backgroundColor: colors.primary,
-          width: `${scrollProgress}%`
-        }]} />
-      </View>
-
-      {/* STEP 6: JavaScript Functionality - Content Sections with Scroll Tracking */}
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        <Text style={[styles.stepIndicator, { color: colors.primary }]}>
-          ✅ STEP 1: Parse and Clean Data Complete{'\n'}
-          ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
-          ✅ STEP 3: HTML Template Structure Complete{'\n'}
-          ✅ STEP 4: Section Generation Function Complete{'\n'}
-          ✅ STEP 5: CSS Styles Definition Complete{'\n'}
-          ✅ STEP 6: JavaScript Functionality Complete{'\n'}
-          ✅ STEP 7: Special Content Processing Rules Complete{'\n'}
-          ✅ STEP 8: Responsive Design Rules Complete{'\n'}
-          ✅ STEP 9: Additional Interactive Features Complete{'\n'}
-          ✅ STEP 10: Complete Processing Pipeline Complete{'\n'}
-          ✅ STEP 11: Error Handling and Validation Complete{'\n'}
-          🎉 STEP 12: Final Integration Code Complete
-        </Text>
-        
-        {/* STEP 10: Complete Processing Pipeline - Search Results Info */}
-        {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
-            🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {masterProcessedSections.length} Abschnitten)
+          {/* Main Title with Responsive Sizing */}
+          <Text style={[
+            styles.mainTitle, 
+            isTablet && styles.mainTitleTablet,
+            { color: colors.text }
+          ]}>
+            {supabaseRow?.icon || '🏥'} {supabaseRow?.title || 'Medizinischer Inhalt'}
           </Text>
+
+          {/* Meta Information */}
+          <View style={styles.metaInfo}>
+            <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+              📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
+            </Text>
+            <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+              ⏱️ {formatDate(supabaseRow?.last_updated)}
+            </Text>
+            <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+              📖 {Math.max(masterProcessedSections.length, processedSections.length)} Abschnitte
+            </Text>
+          </View>
+
+          {/* STEP 9: Search Functionality */}
+          <View style={[styles.searchContainer, { borderColor: colors.border }]}>
+            <Search size={18} color={colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchBox, { 
+                color: colors.text,
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+              }]}
+              placeholder="Suche im Inhalt..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchTerm}
+              onChangeText={handleSearch}
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity 
+                onPress={() => handleSearch('')}
+                style={styles.clearSearch}
+              >
+                <Text style={[styles.clearSearchText, { color: colors.textSecondary }]}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* STEP 8: Responsive Navigation Pills */}
+        {masterProcessedSections.length > 0 && (
+          <View style={[
+            styles.sectionNav, 
+            isTablet && styles.sectionNavTablet,
+            { backgroundColor: colors.card }
+          ]}>
+            <Text style={[styles.navTitle, { color: colors.text }]}>
+              Schnellnavigation
+            </Text>
+            <ScrollView 
+              horizontal={!isTablet} 
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={isTablet}
+              contentContainerStyle={[
+                styles.navGrid,
+                isTablet && styles.navGridTablet,
+                isLargeScreen && styles.navGridLarge
+              ]}
+              style={isTablet ? styles.navScrollTablet : undefined}
+            >
+              {masterProcessedSections.map((section, index) => (
+                <TouchableOpacity 
+                  key={index}
+                  style={[
+                    styles.navItem,
+                    isTablet && styles.navItemTablet,
+                    { 
+                      backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
+                      borderColor: colors.border 
+                    }
+                  ]}
+                  onPress={() => scrollToSection(index)}
+                >
+                  <Text style={[styles.navItemText, { 
+                    color: expandedSections[index] ? colors.primary : colors.textSecondary 
+                  }]}>
+                    {section.icon || getIcon(section.title || '')} {(section.title || '').substring(0, isTablet ? 30 : 20)}...
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         )}
-        
-        {/* STEP 10: Complete Processing Pipeline - Render Medical Content */}
-        {renderMedicalContent()}
-        
-        <View style={styles.bottomPadding} />
-      </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.background }]}>
-          <Text style={[styles.navButtonText, { color: colors.textSecondary }]}>
-            ← Zurück
+        {/* STEP 6: JavaScript Functionality - Progress Bar with Scroll Tracking */}
+        <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+          <View style={[styles.progressFill, { 
+            backgroundColor: colors.primary,
+            width: `${scrollProgress}%`
+          }]} />
+        </View>
+
+        {/* STEP 6: JavaScript Functionality - Content Sections with Scroll Tracking */}
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          <Text style={[styles.stepIndicator, { color: colors.primary }]}>
+            ✅ STEP 1: Parse and Clean Data Complete{'\n'}
+            ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
+            ✅ STEP 3: HTML Template Structure Complete{'\n'}
+            ✅ STEP 4: Section Generation Function Complete{'\n'}
+            ✅ STEP 5: CSS Styles Definition Complete{'\n'}
+            ✅ STEP 6: JavaScript Functionality Complete{'\n'}
+            ✅ STEP 7: Special Content Processing Rules Complete{'\n'}
+            ✅ STEP 8: Responsive Design Rules Complete{'\n'}
+            ✅ STEP 9: Additional Interactive Features Complete{'\n'}
+            ✅ STEP 10: Complete Processing Pipeline Complete{'\n'}
+            ✅ STEP 11: Error Handling and Validation Complete{'\n'}
+            🎉 STEP 12: Final Integration Code Complete
           </Text>
-        </TouchableOpacity>
-        
-        <Text style={[styles.pageInfo, { color: colors.textSecondary }]}>
-          Seite 1 von {processedSections.length}
-        </Text>
-        
-        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.navButtonText, { color: 'white' }]}>
-            Weiter →
+          
+          {/* STEP 10: Complete Processing Pipeline - Search Results Info */}
+          {searchTerm.length > 0 && (
+            <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
+              🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {masterProcessedSections.length} Abschnitten)
+            </Text>
+          )}
+          
+          {/* STEP 10: Complete Processing Pipeline - Render Medical Content */}
+          {renderMedicalContent()}
+          
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+
+        {/* Bottom Navigation */}
+        <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.background }]}>
+            <Text style={[styles.navButtonText, { color: colors.textSecondary }]}>
+              ← Zurück
+            </Text>
+          </TouchableOpacity>
+          
+          <Text style={[styles.pageInfo, { color: colors.textSecondary }]}>
+            Seite 1 von {Math.max(masterProcessedSections.length, processedSections.length)}
           </Text>
-        </TouchableOpacity>
+          
+          <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.navButtonText, { color: 'white' }]}>
+              Weiter →
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  } catch (error) {
+    console.error('❌ Critical rendering error:', error);
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
+          <AlertCircle size={48} color={colors.textSecondary} />
+          <Text style={[styles.errorTitle, { color: colors.text }]}>
+            Kritischer Rendering-Fehler
+          </Text>
+          <Text style={[styles.errorSubtitle, { color: colors.textSecondary }]}>
+            {error?.toString() || 'Unbekannter Fehler beim Rendern der Komponente'}
+          </Text>
+        </View>
       </View>
-    </Animated.View>
-  );
+    );
+  }
 };
 
 const styles = StyleSheet.create({
