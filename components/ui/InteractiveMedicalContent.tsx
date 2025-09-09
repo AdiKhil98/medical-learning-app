@@ -189,6 +189,37 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     return subtypes;
   };
 
+  // STEP 3: Helper Functions
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'Unbekannt';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Unbekannt';
+    }
+  };
+
+  const getIcon = (title: string): string => {
+    const lowerTitle = title.toLowerCase();
+    
+    if (lowerTitle.includes('definition') || lowerTitle.includes('begriff')) return '📋';
+    if (lowerTitle.includes('symptom') || lowerTitle.includes('anzeichen')) return '🔍';
+    if (lowerTitle.includes('diagnose') || lowerTitle.includes('diagnostic')) return '🩺';
+    if (lowerTitle.includes('behandlung') || lowerTitle.includes('therapie')) return '💊';
+    if (lowerTitle.includes('epidemiologie') || lowerTitle.includes('häufigkeit')) return '📊';
+    if (lowerTitle.includes('pathophysiologie') || lowerTitle.includes('mechanismus')) return '⚙️';
+    if (lowerTitle.includes('prognose') || lowerTitle.includes('verlauf')) return '📈';
+    if (lowerTitle.includes('komplikation') || lowerTitle.includes('risik')) return '⚠️';
+    
+    return '📝';
+  };
+
   // STEP 2: Render Processed Content with Pattern Recognition
   const renderProcessedContent = (content: string) => {
     console.log('🎨 Rendering processed content with patterns...');
@@ -265,26 +296,86 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
+      {/* Step 3: HTML Template Structure Implementation */}
+      
+      {/* Header Section */}
       <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {supabaseRow.title}
+        {/* Header Top - Badges */}
+        <View style={styles.headerTop}>
+          <View style={[styles.badge, { backgroundColor: colors.primary + '20' }]}>
+            <Text style={[styles.badgeText, { color: colors.primary }]}>
+              {supabaseRow.category || 'Medizin'}
+            </Text>
+          </View>
+          <View style={[styles.badge, { backgroundColor: supabaseRow.color + '20' || colors.secondary + '20' }]}>
+            <Text style={[styles.badgeText, { color: supabaseRow.color || colors.secondary }]}>
+              📱 Mobile App
+            </Text>
+          </View>
+        </View>
+
+        {/* Main Title */}
+        <Text style={[styles.mainTitle, { color: colors.text }]}>
+          {supabaseRow.icon || '🏥'} {supabaseRow.title}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {supabaseRow.category} • {processedSections.length} Abschnitte
-        </Text>
-        {supabaseRow.description && (
-          <Text style={[styles.description, { color: colors.textSecondary }]}>
-            {supabaseRow.description}
+
+        {/* Meta Information */}
+        <View style={styles.metaInfo}>
+          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+            📚 {supabaseRow.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
           </Text>
-        )}
+          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+            ⏱️ {formatDate(supabaseRow.last_updated)}
+          </Text>
+          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
+            📖 {processedSections.length} Abschnitte
+          </Text>
+        </View>
+      </View>
+
+      {/* Navigation Pills */}
+      <View style={[styles.sectionNav, { backgroundColor: colors.card }]}>
+        <Text style={[styles.navTitle, { color: colors.text }]}>
+          Schnellnavigation
+        </Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.navGrid}
+        >
+          {processedSections.map((section, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={[styles.navItem, { 
+                backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
+                borderColor: colors.border 
+              }]}
+              onPress={() => toggleSection(index)}
+            >
+              <Text style={[styles.navItemText, { 
+                color: expandedSections[index] ? colors.primary : colors.textSecondary 
+              }]}>
+                {getIcon(section.title)} {section.title.substring(0, 20)}...
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Progress Bar */}
+      <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+        <View style={[styles.progressFill, { 
+          backgroundColor: colors.primary,
+          width: `${(Object.keys(expandedSections).length / processedSections.length) * 100}%`
+        }]} />
       </View>
 
       {/* Content Sections */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.stepIndicator, { color: colors.primary }]}>
           ✅ STEP 1: Parse and Clean Data Complete{'\n'}
-          ✅ STEP 2: Pattern Recognition Rules Complete
+          ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
+          ✅ STEP 3: HTML Template Structure Complete
         </Text>
         
         {processedSections.map((section, index) => {
@@ -358,6 +449,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.background }]}>
+          <Text style={[styles.navButtonText, { color: colors.textSecondary }]}>
+            ← Zurück
+          </Text>
+        </TouchableOpacity>
+        
+        <Text style={[styles.pageInfo, { color: colors.textSecondary }]}>
+          Seite 1 von {processedSections.length}
+        </Text>
+        
+        <TouchableOpacity style={[styles.navButton, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.navButtonText, { color: 'white' }]}>
+            Weiter →
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -401,9 +511,45 @@ const styles = StyleSheet.create({
   },
   header: {
     margin: 16,
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 8,
+    marginBottom: 16,
+  },
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    lineHeight: 34,
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  metaItem: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // Legacy styles for backwards compatibility
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -536,6 +682,75 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     lineHeight: 16,
+  },
+  // Step 3: HTML Template Structure Styles
+  sectionNav: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  navTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  navGrid: {
+    paddingVertical: 4,
+  },
+  navItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  navItemText: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 4,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+    minWidth: 8,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+  },
+  navButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pageInfo: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
