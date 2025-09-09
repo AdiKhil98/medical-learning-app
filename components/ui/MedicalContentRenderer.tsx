@@ -331,7 +331,10 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     return (
       <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
         <TouchableOpacity
-          style={styles.sectionHeader}
+          style={[
+            styles.sectionHeader,
+            isExpanded && { backgroundColor: colors.primary + '08' }
+          ]}
           onPress={() => toggleSection(section.id)}
           activeOpacity={0.7}
         >
@@ -349,8 +352,8 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
             </View>
           </View>
           <ChevronDown
-            size={20}
-            color={colors.textSecondary}
+            size={24}
+            color={isExpanded ? colors.primary : colors.textSecondary}
             style={[
               styles.chevron,
               isExpanded && styles.chevronExpanded
@@ -370,13 +373,6 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* DEBUG: Visual indicator */}
-      <View style={{ backgroundColor: 'red', padding: 10, marginBottom: 10 }}>
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          🔴 NEW MedicalContentRenderer - Sections: {parsedSections.length}
-        </Text>
-      </View>
-
       {/* Medical content header */}
       <LinearGradient
         colors={[colors.primary + '10', colors.primary + '05']}
