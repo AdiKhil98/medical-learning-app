@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+  TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
@@ -16,15 +15,12 @@ import {
   Stethoscope,
   Target,
   BookOpen,
-  Clock,
   TrendingUp,
-  Info,
-} from 'lucide-react-native';
+  Eye } from 'lucide-react-native';
 
 interface MedicalSection {
   id: string;
   title: string;
-  icon: string;
   content: string;
   type: 'definition' | 'epidemiology' | 'etiology' | 'symptoms' | 'diagnosis' | 'therapy' | 'prognosis' | 'emergency';
 }
@@ -34,6 +30,9 @@ interface MedicalContentRendererProps {
   jsonContent?: any;
   plainTextContent?: string;
   title: string;
+  category?: string;
+  lastUpdated?: string;
+  completionStatus?: string;
 }
 
 const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
@@ -41,855 +40,541 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   jsonContent,
   plainTextContent,
   title,
-}) => {
-  const { colors, isDarkMode } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    '0': true,
-  });
+  category = "Medizin",
+  lastUpdated = "Juni 2025",
+  completionStatus = "Vollständiger Leitfaden" }) => {
+  const { colors } = useTheme();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Error handling - return early if no title
-  if (!title) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Fehler: Kein Titel verfügbar</Text>
-      </View>
-    );
-  }
-
-  const toggleSection = useCallback((sectionId: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId],
-    }));
-  }, []);
-
-  const getIconForSection = useCallback((type: string) => {
-    const iconProps = { size: 24, color: colors.primary || '#4CAF50' };
-    
+  // Icon mapping for different section types
+  const getIconComponent = useCallback((type: string) => {
     switch (type) {
-      case 'definition':
-        return <BookOpen {...iconProps} />;
-      case 'symptoms':
-        return <Stethoscope {...iconProps} />;
-      case 'diagnosis':
-        return <Activity {...iconProps} />;
-      case 'therapy':
-        return <Heart {...iconProps} />;
-      case 'emergency':
-        return <AlertTriangle {...iconProps} color="#EF4444" />;
-      default:
-        return <Info {...iconProps} />;
+      case 'definition': return BookOpen;
+      case 'epidemiology': return TrendingUp;
+      case 'etiology': return Target;
+      case 'symptoms': return Eye;
+      case 'diagnosis': return Stethoscope;
+      case 'therapy': return Heart;
+      case 'prognosis': return Activity;
+      case 'emergency': return AlertTriangle;
+      default: return BookOpen;
     }
-  }, [colors.primary]);
-
-  // Enhanced content generation for better highlighting
-  const createEnhancedContentSections = useCallback((): MedicalSection[] => {
-    return [
-      {
-        id: 'definition',
-        title: 'Definition und Klassifikation', 
-        icon: 'definition',
-        content: `Die Aortendissektion ist eine akute, lebensbedrohliche Gefäßerkrankung mit Einriss der Intima und nachfolgender Spaltung der Aortenwand durch eindringendes Blut zwischen den Wandschichten. Zudem wird nach der Stanford-Klassifikation klassifiziert. Sie gehört zum akuten Aortensyndrom zusammen mit intramuralem Hämatom und penetrierendem Aortenulkus. Die Stanford-Klassifikation unterscheidet Stanford Typ A mit Beteiligung der Aorta ascendens von Stanford Typ B mit ausschließlichem Befall der Aorta descendens distal der linken Arteria subclavia. Zeitlich werden akute Dissektionen innerhalb von 14 Tagen von subakuten nach 15-90 Tagen und chronischen nach 90 Tagen abgegrenzt, während die DeBakey-Klassifikation Stanford Typ I mit Befall aller Aortenabschnitte, DeBakey Typ II nur ascendens und DeBakey Typ III nur descendens unterscheidet.`,
-        type: 'definition',
-      },
-      {
-        id: 'epidemiology',
-        title: 'Epidemiologie',
-        icon: 'epidemiology', 
-        content: `Die epidemiologische Verteilung zeigt: Die Aortendissektion weist eine jährliche Inzidenz von 3-5 Fällen pro 100.000 Einwohner in Deutschland auf, wobei Männer 2-3 mal häufiger betroffen sind als Frauen mit einem Erkrankungsgipfel im 5-7 Lebensjahrzehnt. Etwa 60-65% aller akuten Aortendissektionen sind Stanford Typ A, während 35-40% Stanford Typ B darstellen. Die Prävalenz steigt mit dem Alter von 0,2 pro 100.000 bei unter 40-Jährigen auf 14,1 pro 100.000 bei über 70-Jährigen. Familiäre Häufung tritt in 5-10% der Fälle auf, insbesondere bei genetischen Bindegewebserkrankungen mit bis zu 20-60-fach erhöhtem Risiko. Die Mortalität unbehandelter Stanford Typ A-Dissektionen beträgt 1-2% pro Stunde und erreicht 50% nach 48 Stunden und 90% nach einer Woche.`,
-        type: 'epidemiology',
-      },
-      {
-        id: 'pathophysiology',
-        title: 'Ätiologie und Pathophysiologie',
-        icon: 'etiology',
-        content: `Arterielle Hypertonie stellt mit 70-80% den wichtigsten Risikofaktor für Aortendissektionen dar und führt durch chronisch erhöhten Wandstress zu progressiver Mediadegeneration mit Verlust elastischer Fasern. Zudem gliedern sich weitere Risikofaktoren: Das Dissektionsrisiko um das 5-10-fache, während Ehlers-Dantos-Syndrom Stanford Typ IV mit Kollagen-III-Defekten assoziiert ist. Die bikuspide Aortenklappe findet sich in 5-10% der Fälle, insbesondere bei Dissektionen im mittleren Lebensalter. Der Pathomechanismus beginnt mit einem Intimaeinriss in die Media eindringt und ein falsches Lumen parallel zum wahren Lumen schafft. Iatrogene Ursachen umfassen Herzkatheteruntersuchungen, aortale Klappeninterventionen und herzchirurgische Eingriffe in 3-10% der Fälle.`,
-        type: 'etiology',
-      }
-    ];
   }, []);
 
-  // Simple content parsing that won't crash  
-  const createContentSections = useCallback((content: string): MedicalSection[] => {
-    try {
-      if (!content || content.length < 10) return [];
-      
-      // Clean HTML if present
-      const cleanContent = content
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      // Simple splitting approach
-      const words = cleanContent.split(' ');
+  // Color mapping for medical section types
+  const getSectionColor = useCallback((type: string) => {
+    switch (type) {
+      case 'definition': return '#3B82F6';
+      case 'epidemiology': return '#10B981';
+      case 'etiology': return '#F59E0B';
+      case 'symptoms': return '#EF4444';
+      case 'diagnosis': return '#8B5CF6';
+      case 'therapy': return '#06B6D4';
+      case 'prognosis': return '#84CC16';
+      case 'emergency': return '#DC2626';
+      default: return '#6B7280';
+    }
+  }, []);
+
+  // Parse content into structured sections with enhanced parsing
+  const parsedSections = React.useMemo(() => {
+    console.log('🔍 MedicalContentRenderer parsing content:');
+    console.log('- jsonContent:', jsonContent, typeof jsonContent);
+    console.log('- htmlContent exists:', !!htmlContent);
+    console.log('- plainTextContent exists:', !!plainTextContent);
+    
+    // Priority 1: Check for structured JSON content first (content_improved)
+    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
+      console.log('✅ Using JSON array content, sections:', jsonContent.length);
+      return jsonContent as MedicalSection[];
+    }
+    
+    // Priority 2: Check for JSON object with sections
+    if (jsonContent && typeof jsonContent === 'object' && !Array.isArray(jsonContent)) {
+      console.log('📋 JSON is object, trying to extract sections');
+      // Try to extract sections from object
+      if (jsonContent.sections && Array.isArray(jsonContent.sections) && jsonContent.sections.length > 0) {
+        return jsonContent.sections as MedicalSection[];
+      }
+    }
+    
+    // Priority 3: HTML parsing for actual database structure (content_html)
+    if (htmlContent || plainTextContent) {
+      console.log('📄 Using HTML content - splitting by H2/H3 headers');
       const sections: MedicalSection[] = [];
-      const wordsPerSection = Math.max(100, Math.floor(words.length / 3));
+      const htmlToUse = htmlContent || plainTextContent || '';
       
-      if (words.length > 100) {
-        // Multiple sections
-        for (let i = 0; i < words.length; i += wordsPerSection) {
-          const sectionWords = words.slice(i, i + wordsPerSection);
-          const sectionContent = sectionWords.join(' ');
+      // Split content by H2 and H3 headers (the actual structure in our DB)
+      const headerRegex = /<h[23]>([^<]+)<\/h[23]>/gi;
+      const parts = htmlToUse.split(headerRegex);
+      
+      console.log('📄 Split into parts:', parts.length);
+      
+      if (parts.length > 1) {
+        // Process parts: [content_before_first_header, header1, content1, header2, content2, ...]
+        for (let i = 1; i < parts.length; i += 2) {
+          const headerText = parts[i]?.trim();
+          const sectionContent = parts[i + 1]?.trim() || '';
           
-          if (sectionContent.length > 50) {
-            const sectionIndex = Math.floor(i / wordsPerSection);
-            sections.push({
-              id: `section_${sectionIndex}`,
-              title: sectionIndex === 0 ? 'Definition' : `Bereich ${sectionIndex + 1}`,
-              icon: 'definition',
-              content: sectionContent,
-              type: 'definition',
-            });
+          if (headerText && sectionContent) {
+            // Determine section type and clean title
+            let sectionType: MedicalSection['type'] = 'definition';
+            let cleanTitle = headerText;
+            
+            const headerLower = headerText.toLowerCase();
+            if (headerLower.includes('definition')) {
+              sectionType = 'definition';
+              cleanTitle = 'Definition und Klassifikation';
+            } else if (headerLower.includes('epidemiologie')) {
+              sectionType = 'epidemiology';
+              cleanTitle = 'Epidemiologie';
+            } else if (headerLower.includes('klassifikation')) {
+              sectionType = 'definition';
+              cleanTitle = 'Klassifikation';
+            } else if (headerLower.includes('therapie') || headerLower.includes('behandlung')) {
+              sectionType = 'therapy';
+              cleanTitle = 'Therapie';
+            } else if (headerLower.includes('symptom') || headerLower.includes('klinik')) {
+              sectionType = 'symptoms';
+              cleanTitle = 'Klinische Symptomatik';
+            } else if (headerLower.includes('diagnos')) {
+              sectionType = 'diagnosis';
+              cleanTitle = 'Diagnostik';
+            } else if (headerLower.includes('pathophysiologie') || headerLower.includes('ätiologie')) {
+              sectionType = 'etiology';
+              cleanTitle = 'Pathophysiologie';
+            } else if (headerLower.includes('prognose')) {
+              sectionType = 'prognosis';
+              cleanTitle = 'Prognose';
+            }
+            
+            // Clean content: preserve structure but remove HTML tags
+            const cleanContent = sectionContent
+              .replace(/<\/p>/gi, '\n\n')
+              .replace(/<\/li>/gi, '\n')
+              .replace(/<li>/gi, '• ')
+              .replace(/<strong>/gi, '**')
+              .replace(/<\/strong>/gi, '**')
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/\n\s*\n/g, '\n\n')
+              .trim();
+            
+            if (cleanContent.length > 20) {
+              sections.push({
+                id: sectionType + '_' + i,
+                title: cleanTitle,
+                content: cleanContent,
+                type: sectionType
+              });
+            }
           }
         }
-      } else {
-        // Single section
-        sections.push({
-          id: 'single',
-          title: 'Inhalt',
-          icon: 'definition',
-          content: cleanContent,
-          type: 'definition',
-        });
       }
       
-      return sections.length > 0 ? sections : [{
-        id: 'fallback',
-        title: 'Inhalt',
-        icon: 'definition',
-        content: cleanContent,
-        type: 'definition',
-      }];
-    } catch (error) {
-      // Fallback section
-      return [{
-        id: 'error',
-        title: 'Medizinischer Inhalt',
-        icon: 'definition',
-        content: content || 'Fehler beim Laden des Inhalts',
-        type: 'definition',
-      }];
-    }
-  }, []);
-
-  // Enhanced content processing 
-  const medicalSections = useMemo(() => {
-    // Priority 1: Use JSON if it's properly structured
-    if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      const validSections = jsonContent.filter(section => 
-        section && section.title && section.content
-      );
-      
-      if (validSections.length > 0) {
-        return validSections.map((section, index) => ({
-          id: section.id || `json_${index}`,
-          title: section.title,
-          icon: section.type || 'definition',
-          content: section.content,
-          type: section.type || 'definition',
-        }));
+      // If no sections found, create single section with all content
+      if (sections.length === 0) {
+        const allContent = htmlToUse
+          .replace(/<\/p>/gi, '\n\n')
+          .replace(/<\/li>/gi, '\n')
+          .replace(/<li>/gi, '• ')
+          .replace(/<strong>/gi, '**')
+          .replace(/<\/strong>/gi, '**')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\n\s*\n/g, '\n\n')
+          .trim();
+          
+        if (allContent.length > 0) {
+          sections.push({
+            id: 'content',
+            title: 'Medizinischer Inhalt',
+            content: allContent,
+            type: 'definition'
+          });
+        }
       }
-    }
-
-    // Priority 2: Use HTML content
-    if (htmlContent && htmlContent.length > 10) {
-      return createContentSections(htmlContent);
+      
+      console.log('📄 Created sections:', sections.length, sections.map(s => s.title));
+      return sections;
     }
     
-    // Priority 3: Use plain text content
-    if (plainTextContent && plainTextContent.length > 10) {
-      return createContentSections(plainTextContent);
-    }
-    
-    // Priority 4: Use JSON as string if necessary
-    if (jsonContent && typeof jsonContent === 'string' && jsonContent.length > 10) {
-      return createContentSections(jsonContent);
-    }
-    
-    // Priority 5: Use enhanced content with rich medical statistics for demonstration
-    if (title.toLowerCase().includes('aortendissektion') || title.toLowerCase().includes('herz')) {
-      return createEnhancedContentSections();
-    }
-    
+    console.log('❌ No content found');
     return [];
-  }, [htmlContent, jsonContent, plainTextContent, createContentSections, createEnhancedContentSections, title]);
+  }, [jsonContent, htmlContent, plainTextContent]);
 
-  // Enhanced pattern detection for complex German medical phrases
-  const detectComplexMedicalPatterns = useCallback((text: string) => {
-    const patterns = [
-      // German medical multipliers and frequencies
-      { pattern: /\b(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s*(x|mal)\s+(häufiger|seltener)\b/gi, type: 'multiplier' },
-      { pattern: /\bbis\s+zu\s+(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s*fach\s+(erhöht|gesteigert)\b/gi, type: 'multiplier' },
-      
-      // German time expressions 
-      { pattern: /\b(\d+[.,]?\d*)[-–](\d+[.,]?\d*)\s+(Tagen?|Wochen?|Monaten?|Jahren?)\b/gi, type: 'timeRange' },
-      { pattern: /\binnerhalb\s+von\s+(\d+[.,]?\d*)\s+(Tagen?|Stunden?|Wochen?)\b/gi, type: 'timeframe' },
-      
-      // German medical statistics with context
-      { pattern: /\b(\d+[.,]?\d*)%?\s+(aller|der)\s+(akuten|chronischen|behandelten)?\s*\w+\b/gi, type: 'contextualStat' },
-      { pattern: /\b(\d+[.,]?\d*)%?\s+(nach|vor|über|unter)\s+(\d+[.,]?\d*)\s+(Jahren?|Stunden?|Tagen?)\b/gi, type: 'temporalStat' },
-    ];
-
-    let enhancedText = text;
-    patterns.forEach(({ pattern, type }) => {
-      enhancedText = enhancedText.replace(pattern, (match) => `|||${type}|||${match}|||${type}|||`);
+  const toggleSection = useCallback((sectionId: string) => {
+    setExpandedSections(prev => {
+      const isCurrentlyExpanded = prev[sectionId];
+      if (isCurrentlyExpanded) {
+        // If currently expanded, collapse it
+        return {};
+      } else {
+        // If not expanded, expand only this section (close all others)
+        return { [sectionId]: true };
+      }
     });
-
-    return enhancedText;
   }, []);
 
-  // Enhanced medical text rendering with rich highlighting
-  const renderContent = useCallback((text: string) => {
-    try {
-      // Pre-process text for complex German medical patterns
-      const preprocessedText = detectComplexMedicalPatterns(text);
+  // Enhanced content renderer with statistics highlighting and formatting
+  const renderEnhancedContent = useCallback((content: string) => {
+    const lines = content.split('\n');
+    const elements: React.ReactNode[] = [];
+    
+    lines.forEach((line, index) => {
+      if (!line.trim()) return;
       
-      // Comprehensive German medical pattern matching with improved accuracy
-      const medicalPattern = /((\|\|\|\w+\|\|\|[^|]+\|\|\|\w+\|\|\|)|\b\d+[.,]?\d*\s*(?:mg\/dl|mmol\/l|mm\s*Hg|bpm|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.?000|x\s*häufiger|mal\s+häufiger|\-fach)\b|\b\d+[.,]?\d*[-–]\d+[.,]?\d*\s*(?:%|Jahre?|Stunden?|Tagen?)?\b|\b\d+[.,]?\d*%?\b|\b(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS)\b|\b(?:Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens|Aortensyndrom|Mediadegeneration|Bindegewebserkrankung|Hypertonie|Ehlers-Danlos-Syndrom)\b|\b(?:Stanford\s+Typ\s+[AB]|DeBakey\s+Typ\s+[I-III]|Stadium|Grad|Stufe)\s*[IVXLC0-9]*\b|\b(?:AKI-Stadium)\s+\d+\b|\bICD-10\s+unter\s+[A-Z]\d+\b)/gi;
+      // Check for percentage/statistics and numbers (enhanced pattern)
+      const statisticsRegex = /(\d+(?:[,\.]\d+)?(?:-\d+(?:[,\.]\d+)?)?%?(?:\s*(?:mg|kg|ml|l|min|h|Jahre?|Tage?|Stunden?|Minuten?))?)/g;
+      const hasStatistics = statisticsRegex.test(line);
       
-      const parts = preprocessedText.split(medicalPattern).filter(part => part != null);
-      
-      return (
-        <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
-          {parts.map((part, index) => {
-            if (!part) return null;
-            
-            const trimmedPart = part.trim();
-            
-            // Handle complex German medical patterns
-            if (trimmedPart.startsWith('|||') && trimmedPart.endsWith('|||')) {
-              const match = trimmedPart.match(/\|\|\|(\w+)\|\|\|([^|]+)\|\|\|\w+\|\|\|/);
-              if (match) {
-                const [, patternType, content] = match;
-                return (
-                  <Text key={index} style={[
-                    patternType === 'multiplier' ? styles.multiplierBadge :
-                    patternType === 'timeRange' || patternType === 'timeframe' ? styles.timeframeBadge :
-                    patternType === 'contextualStat' || patternType === 'temporalStat' ? styles.numberBadgeWithUnit :
-                    styles.numberBadge
-                  ]}>
-                    {content}
-                  </Text>
-                );
-              }
-            }
-            
-            // Medical numbers with units (blue badges)
-            if (/^\d+[.,]?\d*\s*(mg\/dl|mmol\/l|mm\s*Hg|bpm|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?|ml\/24h|ml\/kg\s*KG\/h|%|Fälle?|Einwohner|pro\s+100\.?000|x\s*häufiger|mal\s+häufiger|\-fach)$/i.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.numberBadgeWithUnit}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            // Medical ranges and time periods (blue badges for ranges like 10-30%, 15-90 Tagen)
-            if (/^\d+[.,]?\d*[-–]\d+[.,]?\d*\s*(?:%|Jahre?|Stunden?|Tagen?|Wochen?|Monaten?)?$/i.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.numberBadgeWithUnit}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            // Simple numbers (smaller blue badges)
-            if (/^\d+[.,]?\d*%?$/.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.numberBadge}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            // Medical terms (purple with dotted underline)
-            if (/^(?:KDIGO|AKI|ICD-10|EKG|ECG|CT|MRT|MRI|WHO|NYHA|ACE|ARB|NSAID|CAM|CAM-ICU|4AT|DRS-R-98|RASS|Tubulusnekrose|Glomerulonephritis|Kussmaul-Atmung|KDIGO-Kriterien|KDIGO-Stadien|Aortendissektion|Stanford-Klassifikation|DeBakey-Klassifikation|Intimaeinriss|Aorta\s+ascendens|Aorta\s+descendens|Aortensyndrom|Mediadegeneration|Bindegewebserkrankung|Hypertonie|Ehlers-Danlos-Syndrom)$/i.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.medicalTerm}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            // Medical stages and classifications (gradient purple badges)
-            if (/^(?:Stanford\s+Typ\s+[AB]|DeBakey\s+Typ\s+[I-III]|Stadium|Grad|Stufe)\s*[IVXLC0-9]*$|^AKI-Stadium\s+\d+$/i.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.classificationBadge}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            // ICD codes (special classification)
-            if (/^ICD-10\s+unter\s+[A-Z]\d+$/i.test(trimmedPart)) {
-              return (
-                <Text key={index} style={styles.icdCodeBadge}>
-                  {trimmedPart}
-                </Text>
-              );
-            }
-            
-            return trimmedPart;
-          })}
-        </Text>
-      );
-    } catch (error) {
-      // Fallback to plain text
-      return (
-        <Text style={[styles.contentText, { color: colors.text || '#333' }]}>
-          {text}
-        </Text>
-      );
-    }
-  }, [colors.text, detectComplexMedicalPatterns]);
-
-  // Enhanced important boxes with better styling matching target
-  const renderImportantBoxes = useCallback((content: string, sectionType: string) => {
-    const boxes = [];
-    const lowerContent = content.toLowerCase();
-    
-    // Emergency/Critical information boxes
-    if (sectionType === 'emergency' || lowerContent.includes('lebensbedrohlich') || 
-        lowerContent.includes('sofort') || lowerContent.includes('notfall')) {
-      boxes.push(
-        <View key="emergency" style={styles.emergencyBox}>
-          <View style={styles.importantBoxHeader}>
-            <AlertTriangle size={16} color="#EF4444" />
-            <Text style={styles.emergencyBoxTitle}>⚠️ Lebensbedrohliche Komplikationen</Text>
+      if (hasStatistics) {
+        // Split line and highlight statistics
+        const parts = line.split(statisticsRegex);
+        const lineElements: React.ReactNode[] = [];
+        
+        parts.forEach((part, partIndex) => {
+          if (statisticsRegex.test(part)) {
+            lineElements.push(
+              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: colors.primary || '#3B82F6', color: 'white' }]}>
+                {part}
+              </Text>
+            );
+          } else if (part.trim()) {
+            lineElements.push(
+              <Text key={`${index}-${partIndex}`} style={[styles.contentText, { color: colors.text }]}>
+                {part}
+              </Text>
+            );
+          }
+        });
+        
+        elements.push(
+          <View key={index} style={styles.statisticsLine}>
+            {lineElements}
           </View>
-          <Text style={[styles.importantBoxText, { color: colors.text || '#333' }]}>
-            Sofortige medizinische Intervention erforderlich bei Hyperkaliämie, Lungenödem oder schwerer Azidose.
-          </Text>
-        </View>
-      );
-    }
-    
-    // Therapy/Treatment boxes
-    if (sectionType === 'therapy' || lowerContent.includes('nierenersatztherapie') || 
-        lowerContent.includes('dialyse') || lowerContent.includes('indikationen')) {
-      boxes.push(
-        <View key="therapy" style={styles.therapyBox}>
-          <View style={styles.importantBoxHeader}>
-            <Heart size={16} color="#F57C00" />
-            <Text style={styles.therapyBoxTitle}>🎯 Indikationen zur Nierenersatztherapie</Text>
-          </View>
-          <View style={styles.bulletPoints}>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Therapierefraktäre Hyperkaliämie über 6,5 mmol/l</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Schwere Azidose mit pH unter 7,1</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Lungenödem bei Flüssigkeitsretention</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Urämische Komplikationen</Text>
-          </View>
-        </View>
-      );
-    }
-    
-    // Diagnostic boxes
-    if (sectionType === 'diagnosis' || lowerContent.includes('kdigo') || lowerContent.includes('stadien')) {
-      boxes.push(
-        <View key="diagnostic" style={styles.diagnosticBox}>
-          <View style={styles.importantBoxHeader}>
-            <Activity size={16} color="#2196F3" />
-            <Text style={styles.diagnosticBoxTitle}>📊 KDIGO-Klassifikation</Text>
-          </View>
-          <Text style={[styles.importantBoxText, { color: colors.text || '#333' }]}>
-            Stadium 1: Kreatinin-Anstieg ≥0,3 mg/dl oder 1,5-1,9x Baseline{'\n'}
-            Stadium 2: Kreatinin-Anstieg 2,0-2,9x Baseline{'\n'}
-            Stadium 3: Kreatinin-Anstieg ≥3,0x Baseline oder Dialysepflichtigkeit
-          </Text>
-        </View>
-      );
-    }
-
-    // Aortendissektion specific boxes
-    if (lowerContent.includes('aortendissektion') || lowerContent.includes('stanford') || lowerContent.includes('debakey')) {
-      boxes.push(
-        <View key="classifications" style={styles.diagnosticBox}>
-          <View style={styles.importantBoxHeader}>
-            <Activity size={16} color="#2196F3" />
-            <Text style={styles.diagnosticBoxTitle}>📊 Klassifikationssysteme</Text>
-          </View>
-          <Text style={[styles.importantBoxText, { color: colors.text || '#333' }]}>
-            Stanford Typ A: Beteiligung Aorta ascendens (~65%){'\n'}
-            Stanford Typ B: Nur Aorta descendens (~35%){'\n'}
-            DeBakey Typ I: Alle Aortenabschnitte{'\n'}
-            DeBakey Typ II: Nur Aorta ascendens{'\n'}
-            DeBakey Typ III: Nur Aorta descendens
-          </Text>
-        </View>
-      );
-    }
-
-    // Epidemiology boxes
-    if (sectionType === 'epidemiology' || lowerContent.includes('inzidenz') || lowerContent.includes('prävalenz')) {
-      boxes.push(
-        <View key="epidemiology" style={styles.therapyBox}>
-          <View style={styles.importantBoxHeader}>
-            <TrendingUp size={16} color="#F57C00" />
-            <Text style={styles.therapyBoxTitle}>📈 Epidemiologische Daten</Text>
-          </View>
-          <View style={styles.bulletPoints}>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Inzidenz: 3-5 pro 100.000 Einwohner</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Männer 2-3x häufiger betroffen</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• Mortalität unbehandelt: 1-2% pro Stunde</Text>
-            <Text style={[styles.bulletPoint, { color: colors.text || '#333' }]}>• 50% Mortalität nach 48 Stunden</Text>
-          </View>
-        </View>
-      );
-    }
-    
-    return boxes;
-  }, [colors.text]);
-
-  const renderSection = useCallback((section: MedicalSection) => {
-    const isExpanded = expandedSections[section.id];
-    
-    return (
-      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card || '#fff' }]}>
-        <TouchableOpacity
-          style={styles.sectionHeader}
-          onPress={() => toggleSection(section.id)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.sectionHeaderLeft}>
-            {getIconForSection(section.type)}
-            <Text style={[styles.sectionTitle, { color: colors.text || '#333' }]}>
-              {section.title}
+        );
+      } else if (line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('✓')) {
+        // Bullet points or checkmarks
+        elements.push(
+          <View key={index} style={styles.bulletPoint}>
+            <Text style={[styles.bulletIcon, { color: colors.primary }]}>✓</Text>
+            <Text style={[styles.bulletText, { color: colors.text }]}>
+              {line.replace(/^[•\-✓]\s*/, '').trim()}
             </Text>
           </View>
-          <ChevronDown
-            size={20}
-            color={colors.textSecondary || '#666'}
-            style={{
-              transform: [{ rotate: isExpanded ? '180deg' : '0deg' }]
-            }}
-          />
-        </TouchableOpacity>
+        );
+      } else if (line.trim().includes(':') && line.length < 100) {
+        // Likely a header or important point
+        elements.push(
+          <Text key={index} style={[styles.contentHeader, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
+        );
+      } else {
+        // Regular content
+        elements.push(
+          <Text key={index} style={[styles.contentText, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
+        );
+      }
+    });
+    
+    return <View>{elements}</View>;
+  }, [colors]);
 
-        {isExpanded && (
-          <View style={styles.sectionContent}>
-            {renderContent(section.content)}
-            {renderImportantBoxes(section.content, section.type)}
-          </View>
-        )}
-      </View>
-    );
-  }, [colors, expandedSections, toggleSection, getIconForSection, renderContent, renderImportantBoxes]);
-
-  // Quick stats component
-  const renderQuickStats = useCallback(() => {
-    const stats = [
-      { number: medicalSections.length.toString(), label: 'Themenbereiche' },
-      { number: '3', label: 'Klassifikationen' },
-      { number: '60-70%', label: 'Prävalenz' },
-    ];
-
-    return (
-      <View style={styles.statsContainer}>
-        {stats.map((stat, index) => (
-          <View key={index} style={[styles.statCard, { backgroundColor: colors.card || '#fff' }]}>
-            <LinearGradient
-              colors={['#ffffff', '#f8fafc']}
-              style={styles.statCardGradient}
-            >
-              <Text style={[styles.statNumber, { color: colors.primary || '#4CAF50' }]}>{stat.number}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary || '#666' }]}>{stat.label}</Text>
-            </LinearGradient>
-          </View>
-        ))}
-      </View>
-    );
-  }, [medicalSections, colors]);
-
-  // Simple working navigation pills
-  const renderNavigationPills = useCallback(() => {
-    if (medicalSections.length <= 1) return null;
+  // Quick navigation pills - enhanced design
+  const renderQuickNavigation = useCallback(() => {
+    if (parsedSections.length <= 1) return null;
     
     return (
-      <View style={styles.navigationWrapper}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.navigationContainer}
-          contentContainerStyle={styles.navigationContent}
-        >
-          {medicalSections.map((section) => {
-            const isActive = expandedSections[section.id];
+      <View style={styles.quickNavContainer}>
+        <Text style={[styles.quickNavTitle, { color: colors.textSecondary }]}>SCHNELLNAVIGATION</Text>
+        <View style={styles.quickNavPills}>
+          {parsedSections.map((section) => {
+            const isExpanded = !!expandedSections[section.id];
+            const sectionColor = getSectionColor(section.type);
             return (
               <TouchableOpacity
                 key={section.id}
                 style={[
-                  styles.navPill,
+                  styles.quickNavPill,
                   { 
-                    backgroundColor: isActive ? (colors.primary || '#4CAF50') : (colors.card || '#f0f0f0'),
-                    borderColor: colors.primary || '#4CAF50',
-                    borderWidth: isActive ? 0 : 1,
+                    backgroundColor: isExpanded ? sectionColor + '20' : colors.card,
+                    borderColor: isExpanded ? sectionColor : colors.border,
+                    borderWidth: isExpanded ? 2 : 1
                   }
                 ]}
                 onPress={() => toggleSection(section.id)}
                 activeOpacity={0.7}
               >
                 <Text style={[
-                  styles.navPillText,
-                  { 
-                    color: isActive ? 'white' : (colors.primary || '#4CAF50')
-                  }
+                  styles.quickNavPillText,
+                  { color: isExpanded ? sectionColor : colors.text }
                 ]}>
                   {section.title}
                 </Text>
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
     );
-  }, [medicalSections, expandedSections, colors.primary, colors.card, toggleSection]);
+  }, [parsedSections, colors, toggleSection, expandedSections, getSectionColor]);
 
-  // Simple error state if no content
-  if (medicalSections.length === 0) {
+  const renderSection = useCallback((section: MedicalSection, index: number) => {
+    const isExpanded = !!expandedSections[section.id]; // Ensure boolean
+    const IconComponent = getIconComponent(section.type || 'content');
+    const sectionColor = getSectionColor(section.type || 'content');
+
     return (
-      <View style={[styles.emptyState, { backgroundColor: colors.card || '#fff' }]}>
-        <BookOpen size={48} color={colors.textSecondary || '#666'} />
-        <Text style={[styles.emptyStateText, { color: colors.textSecondary || '#666' }]}>
-          Keine medizinischen Inhalte verfügbar
-        </Text>
+      <View key={section.id} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => toggleSection(section.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.sectionHeaderLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: sectionColor + '20' }]}>
+              <IconComponent size={20} color={sectionColor} />
+            </View>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {section.title}
+              </Text>
+              <Text style={[styles.sectionType, { color: sectionColor }]}>
+                {(section.type || 'content').toUpperCase()}
+              </Text>
+            </View>
+          </View>
+          <ChevronDown
+            size={20}
+            color={colors.textSecondary}
+            style={[
+              styles.chevron,
+              isExpanded && styles.chevronExpanded
+            ]}
+          />
+        </TouchableOpacity>
+
+        {/* Only render content when explicitly expanded */}
+        {isExpanded === true && (
+          <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
+            {renderEnhancedContent(section.content)}
+          </View>
+        )}
       </View>
     );
-  }
+  }, [colors, expandedSections, getIconComponent, getSectionColor, toggleSection, renderEnhancedContent]);
 
-  // Clean rendering with working functionality
   return (
-    <LinearGradient
-      colors={['#667eea', '#764ba2']}
-      style={styles.appContainer}
-    >
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header - moved to top and enhanced */}
+    <View style={styles.container}>
+      {/* Medical content header */}
       <LinearGradient
-        colors={isDarkMode ? ['#1F2937', '#111827'] : ['#667eea', '#764ba2']}
+        colors={[colors.primary + '10', colors.primary + '05']}
         style={styles.header}
       >
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>💧 {title}</Text>
-          <Text style={styles.headerSubtitle}>
-            Vollständiger medizinischer Leitfaden
+        <Text style={[styles.mainTitle, { color: colors.text }]}>{title}</Text>
+        <View style={styles.headerMeta}>
+          <Text style={[styles.category, { color: colors.primary }]}>{category}</Text>
+          <Text style={[styles.lastUpdated, { color: colors.textSecondary }]}>
+            Aktualisiert: {lastUpdated}
           </Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: colors.primary }]}>
+          <Text style={styles.statusText}>{completionStatus}</Text>
         </View>
       </LinearGradient>
 
-      {/* Navigation Pills */}
-      {renderNavigationPills()}
+      {/* Quick Navigation */}
+      {renderQuickNavigation()}
 
-      {/* Content Sections */}
-      <View style={styles.contentContainer}>
-        {medicalSections.map((section) => renderSection(section))}
-      </View>
+      {/* Medical content sections */}
+      <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        {parsedSections.length > 0 ? (
+          parsedSections.map((section, index) => renderSection(section, index))
+        ) : (
+          <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
+            <BookOpen size={48} color={colors.textSecondary} />
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+              Medizinische Inhalte für "{title}" sind derzeit nicht verfügbar.
+            </Text>
+            <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
+              Überprüfen Sie die Datenstruktur oder kontaktieren Sie den Support.
+            </Text>
+          </View>
+        )}
+        <View style={styles.bottomPadding} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  appContainer: {
-    flex: 1,
-  },
   container: {
-    flex: 1,
-  },
-  errorContainer: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#EF4444',
-    textAlign: 'center',
-  },
+    flex: 1 },
   header: {
-    padding: 30,
-    borderRadius: 20,
-    margin: 16,
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  headerContent: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.95)',
-    textAlign: 'center',
-  },
-  // Quick Stats Styles
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginBottom: 20,
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  statCardGradient: {
     padding: 20,
-    alignItems: 'center',
-  },
-  statNumber: {
+    borderRadius: 16,
+    marginBottom: 16 },
+  mainTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  statLabel: {
+    marginBottom: 8,
+    fontFamily: 'Inter-Bold' },
+  headerMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12 },
+  category: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold' },
+  lastUpdated: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular' },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20 },
+  statusText: {
+    color: 'white',
     fontSize: 12,
-    textAlign: 'center',
-  },
-  // Navigation Styles
-  navigationWrapper: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginBottom: 20,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold' },
+  contentContainer: {
+    flex: 1 },
+  sectionCard: {
     borderRadius: 12,
+    marginBottom: 16,
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  navigationContainer: {
-    paddingVertical: 15,
-  },
-  navigationContent: {
-    paddingHorizontal: 15,
-    gap: 10,
-  },
-  navPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  navPillText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  // Content Styles
-  contentContainer: {
-    padding: 20,
-    gap: 20,
-  },
-  sectionCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    borderLeftWidth: 5,
-    borderLeftColor: '#667eea',
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
+    shadowRadius: 8,
+    elevation: 3 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 25,
-    borderBottomWidth: 3,
-    borderBottomColor: '#f0f0f0',
-  },
+    padding: 18,
+    minHeight: 70 },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
+    flex: 1 },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14 },
+  sectionTitleContainer: {
+    flex: 1 },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 12,
-    flex: 1,
-    color: '#2c3e50',
-  },
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 4 },
+  sectionType: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
+    opacity: 0.8 },
+  chevron: {
+    marginLeft: 8 },
+  chevronExpanded: {
+    transform: [{ rotate: '180deg' }] },
   sectionContent: {
-    paddingHorizontal: 30,
-    paddingBottom: 30,
-    paddingTop: 25,
-  },
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20 },
+    contentHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 16,
+    lineHeight: 24 },
   contentText: {
     fontSize: 16,
-    lineHeight: 28,
-    color: '#4a4a4a',
-    textAlign: 'justify',
-  },
-  // Medical Highlighting Styles
-  numberBadge: {
-    backgroundColor: '#2196F3',
-    color: 'white',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-  },
-  numberBadgeWithUnit: {
-    backgroundColor: '#2196F3',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-    marginHorizontal: 1,
-  },
-  medicalTerm: {
-    color: '#9C27B0',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
-    textDecorationColor: '#9C27B0',
-  },
-  classificationBadge: {
-    backgroundColor: '#6366f1',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 15,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-    marginHorizontal: 1,
-  },
-  icdCodeBadge: {
-    backgroundColor: '#4834d4',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 15,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-    marginHorizontal: 1,
-  },
-  // Enhanced badges for complex German medical patterns
-  multiplierBadge: {
-    backgroundColor: '#FF6B35',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 15,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-    marginHorizontal: 1,
-  },
-  timeframeBadge: {
-    backgroundColor: '#4ECDC4',
-    color: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 15,
-    fontSize: 14,
-    fontWeight: '600',
-    overflow: 'hidden',
-    marginHorizontal: 1,
-  },
-  // Important Box Styles
-  emergencyBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderLeftWidth: 5,
-    borderLeftColor: '#EF4444',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-  },
-  therapyBox: {
-    backgroundColor: 'rgba(245, 124, 0, 0.1)',
-    borderLeftWidth: 5,
-    borderLeftColor: '#F57C00',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-  },
-  diagnosticBox: {
-    backgroundColor: 'rgba(33, 150, 243, 0.1)',
-    borderLeftWidth: 5,
-    borderLeftColor: '#2196F3',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 16,
-  },
-  importantBoxHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  emergencyBoxTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#EF4444',
-    marginLeft: 8,
-  },
-  therapyBoxTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#F57C00',
-    marginLeft: 8,
-  },
-  diagnosticBoxTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2196F3',
-    marginLeft: 8,
-  },
-  importantBoxText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: 'Inter-Medium',
-  },
-  bulletPoints: {
-    gap: 4,
-  },
-  bulletPoint: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+    lineHeight: 24,
+    fontFamily: 'Inter-Regular' },
   emptyState: {
     padding: 40,
+    borderRadius: 12,
     alignItems: 'center',
-    borderRadius: 16,
-    margin: 16,
-  },
+    justifyContent: 'center' },
   emptyStateText: {
-    marginTop: 16,
     fontSize: 16,
+    marginTop: 16,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'center' },
+  emptyStateSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
-  },
-});
+    opacity: 0.7 },
+  bottomPadding: {
+    height: 40 },
+  
+  // Quick Navigation Styles
+  quickNavContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16 },
+  quickNavTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    fontFamily: 'Inter-SemiBold',
+    letterSpacing: 1 },
+  quickNavPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8 },
+  quickNavPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1 },
+  quickNavPillText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Inter-Medium' },
+  
+  // Enhanced Content Styles
+  highlightedStat: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginHorizontal: 2 },
+  statisticsLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginVertical: 4 },
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 4,
+    paddingLeft: 8 },
+  bulletIcon: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 8,
+    marginTop: 2 },
+  bulletText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: 'Inter-Regular' } });
 
 export default MedicalContentRenderer;

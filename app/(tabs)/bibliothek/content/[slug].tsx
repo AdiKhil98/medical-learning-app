@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/folder';
-import MedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
+import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 
 // Define Section type directly
 interface Section {

@@ -5,7 +5,7 @@ import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shi
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import AmboxMedicalContentRenderer from '@/components/ui/AmboxMedicalContentRenderer';
+import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 import Card from '@/components/ui/folder';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -594,7 +594,7 @@ export default function SectionDetailScreen() {
                 </LinearGradient>
               </View>
               <View style={styles.contentBody}>
-                <AmboxMedicalContentRenderer
+                <MedicalContentRenderer
                   htmlContent={currentItem.content_html}
                   jsonContent={currentItem.content_improved}
                   plainTextContent={currentItem.content_details}
