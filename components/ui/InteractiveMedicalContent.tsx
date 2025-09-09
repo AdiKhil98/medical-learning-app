@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { ChevronDown, BookOpen, AlertCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -45,6 +46,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   
+  // STEP 8: Responsive Design Rules - Screen Size Management
+  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [isTablet, setIsTablet] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+  
   // STEP 6: JavaScript Functionality - Animation and Scroll Implementation
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -52,7 +58,29 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const sectionRefs = useRef<View[]>([]);
   
   useEffect(() => {
-    console.log('🚀 STEP 6: Initializing animations and scroll functionality');
+    console.log('🚀 STEP 6+8: Initializing animations, scroll functionality, and responsive design');
+    
+    // STEP 8: Responsive Design Rules - Screen size detection
+    const onChange = (result: any) => {
+      setScreenData(result.window);
+      const { width } = result.window;
+      
+      console.log(`📱 STEP 8: Screen width changed to ${width}px`);
+      
+      // Responsive breakpoints (matching CSS media queries)
+      setIsTablet(width <= 768);  // max-width: 768px
+      setIsLargeScreen(width >= 1200);  // min-width: 1200px
+      
+      console.log(`📱 STEP 8: Responsive mode - isTablet: ${width <= 768}, isLargeScreen: ${width >= 1200}`);
+    };
+    
+    const subscription = Dimensions.addEventListener('change', onChange);
+    
+    // Initial screen size detection
+    const { width } = screenData;
+    setIsTablet(width <= 768);
+    setIsLargeScreen(width >= 1200);
+    console.log(`📱 STEP 8: Initial screen detection - width: ${width}px, isTablet: ${width <= 768}, isLargeScreen: ${width >= 1200}`);
     
     // Fade in animation on component mount
     Animated.timing(fadeAnim, {
@@ -60,7 +88,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
+    
+    return () => subscription?.remove();
+  }, [fadeAnim, screenData]);
 
   // STEP 1: Parse and Clean Data
   // STEP 2: Pattern Recognition Rules  
@@ -541,7 +571,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         ref={(ref) => {
           if (ref) sectionRefs.current[index] = ref;
         }}
-        style={[styles.contentSection, { backgroundColor: colors.card }]}
+        style={[
+          styles.contentSection, 
+          isTablet && styles.contentSectionTablet,
+          { backgroundColor: colors.card }
+        ]}
       >
         {/* Section Header with Icon */}
         <TouchableOpacity
@@ -572,8 +606,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         {/* Section Content */}
         {isExpanded && (
           <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
-            {/* Content Text with Enhanced Processing */}
-            <View style={styles.contentText}>
+            {/* STEP 8: Responsive Content Text with Enhanced Processing */}
+            <View style={[
+              styles.contentText,
+              isTablet && styles.contentTextTablet
+            ]}>
               {renderProcessedContent(processedContent)}
             </View>
             
@@ -699,16 +736,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   }
 
   return (
-    <Animated.View style={[styles.appContainer, { 
-      backgroundColor: colors.background,
-      opacity: fadeAnim 
-    }]}>
-      {/* STEP 5: CSS Styles Definition Implementation */}
+    <Animated.View style={[
+      styles.appContainer, 
+      isLargeScreen && styles.appContainerLarge,
+      isTablet && styles.appContainerTablet,
+      { 
+        backgroundColor: colors.background,
+        opacity: fadeAnim 
+      }
+    ]}>
+      {/* STEP 8: Responsive Design Rules Implementation */}
       
-      {/* Header Section with CSS Styling */}
-      <View style={[styles.headerCss, { 
-        backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)'
-      }]}>
+      {/* Header Section with Responsive CSS Styling */}
+      <View style={[
+        styles.headerCss, 
+        isTablet && styles.headerTablet,
+        { 
+          backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)'
+        }
+      ]}>
         {/* Header Top - CSS Badges */}
         <View style={styles.headerTop}>
           <View style={styles.badgeCss}>
@@ -723,8 +769,12 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </View>
         </View>
 
-        {/* Main Title */}
-        <Text style={[styles.mainTitle, { color: colors.text }]}>
+        {/* Main Title with Responsive Sizing */}
+        <Text style={[
+          styles.mainTitle, 
+          isTablet && styles.mainTitleTablet,
+          { color: colors.text }
+        ]}>
           {supabaseRow.icon || '🏥'} {supabaseRow.title}
         </Text>
 
@@ -742,29 +792,43 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
       </View>
 
-      {/* Navigation Pills */}
-      <View style={[styles.sectionNav, { backgroundColor: colors.card }]}>
+      {/* STEP 8: Responsive Navigation Pills */}
+      <View style={[
+        styles.sectionNav, 
+        isTablet && styles.sectionNavTablet,
+        { backgroundColor: colors.card }
+      ]}>
         <Text style={[styles.navTitle, { color: colors.text }]}>
           Schnellnavigation
         </Text>
         <ScrollView 
-          horizontal 
+          horizontal={!isTablet} 
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.navGrid}
+          showsVerticalScrollIndicator={isTablet}
+          contentContainerStyle={[
+            styles.navGrid,
+            isTablet && styles.navGridTablet,
+            isLargeScreen && styles.navGridLarge
+          ]}
+          style={isTablet ? styles.navScrollTablet : undefined}
         >
           {processedSections.map((section, index) => (
             <TouchableOpacity 
               key={index}
-              style={[styles.navItem, { 
-                backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
-                borderColor: colors.border 
-              }]}
+              style={[
+                styles.navItem,
+                isTablet && styles.navItemTablet,
+                { 
+                  backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
+                  borderColor: colors.border 
+                }
+              ]}
               onPress={() => scrollToSection(index)}
             >
               <Text style={[styles.navItemText, { 
                 color: expandedSections[index] ? colors.primary : colors.textSecondary 
               }]}>
-                {getIcon(section.title)} {section.title.substring(0, 20)}...
+                {getIcon(section.title)} {section.title.substring(0, isTablet ? 30 : 20)}...
               </Text>
             </TouchableOpacity>
           ))}
@@ -794,7 +858,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           ✅ STEP 4: Section Generation Function Complete{'\n'}
           ✅ STEP 5: CSS Styles Definition Complete{'\n'}
           ✅ STEP 6: JavaScript Functionality Complete{'\n'}
-          ✅ STEP 7: Special Content Processing Rules Complete
+          ✅ STEP 7: Special Content Processing Rules Complete{'\n'}
+          ✅ STEP 8: Responsive Design Rules Complete
         </Text>
         
         {processedSections.map((section, index) => generateSection(section, index))}
@@ -1387,6 +1452,77 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     lineHeight: 22,
+  },
+  // STEP 8: Responsive Design Rules - React Native Media Queries
+  
+  // App Container Responsive Styles (matching @media queries)
+  appContainerTablet: {
+    // @media (max-width: 768px) equivalent
+    paddingHorizontal: 10,
+  },
+  appContainerLarge: {
+    // @media (min-width: 1200px) equivalent
+    maxWidth: 1100,
+  },
+  
+  // Header Responsive Styles
+  headerTablet: {
+    paddingHorizontal: 16, // Reduced padding for tablets
+    paddingVertical: 20,
+  },
+  
+  // Main Title Responsive Styles
+  mainTitleTablet: {
+    // h1 { font-size: 1.8em; } equivalent (28px * 0.64 ≈ 18px -> 1.8em)
+    fontSize: 22, // Smaller title for tablets
+  },
+  
+  // Navigation Responsive Styles
+  sectionNavTablet: {
+    // .section-nav { position: sticky; top: 0; z-index: 100; }
+    position: 'absolute' as 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    elevation: 100, // Android z-index equivalent
+  },
+  
+  // Navigation Grid Responsive Styles
+  navGridTablet: {
+    // .nav-grid { grid-template-columns: 1fr; max-height: 200px; overflow-y: auto; }
+    flexDirection: 'column' as 'column',
+    paddingVertical: 8,
+  },
+  navGridLarge: {
+    // .nav-grid { grid-template-columns: repeat(4, 1fr); }
+    flexWrap: 'wrap' as 'wrap',
+    flexDirection: 'row' as 'row',
+  },
+  
+  // Navigation Scroll Container for Tablets
+  navScrollTablet: {
+    maxHeight: 200,
+  },
+  
+  // Navigation Item Responsive Styles
+  navItemTablet: {
+    // Full width for tablet layout
+    width: '100%',
+    marginBottom: 8,
+    marginRight: 0,
+  },
+  
+  // Content Text Responsive Styles
+  contentTextTablet: {
+    paddingHorizontal: 4, // Reduced padding for smaller screens
+  },
+  
+  // Content Section Responsive Styles (for generateSection function)
+  contentSectionTablet: {
+    // .content-section { padding: 20px; }
+    padding: 20,
+    marginHorizontal: 10, // Reduced margins for tablets
   },
 });
 
