@@ -78,10 +78,10 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Parse content into structured sections with enhanced parsing
   const parsedSections = React.useMemo(() => {
-    console.log('🔍 MedicalContentRenderer parsing content:');
+    console.log('🔍 MedicalContentRenderer parsing content for:', title);
     console.log('- jsonContent:', jsonContent, typeof jsonContent);
-    console.log('- htmlContent exists:', !!htmlContent);
-    console.log('- plainTextContent exists:', !!plainTextContent);
+    console.log('- htmlContent exists:', !!htmlContent, htmlContent?.substring(0, 200));
+    console.log('- plainTextContent exists:', !!plainTextContent, plainTextContent?.substring(0, 200));
     
     // Priority 1: Check for structured JSON content first (content_improved)
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
@@ -370,6 +370,13 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* DEBUG: Visual indicator */}
+      <View style={{ backgroundColor: 'red', padding: 10, marginBottom: 10 }}>
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>
+          🔴 NEW MedicalContentRenderer - Sections: {parsedSections.length}
+        </Text>
+      </View>
+
       {/* Medical content header */}
       <LinearGradient
         colors={[colors.primary + '10', colors.primary + '05']}
