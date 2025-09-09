@@ -45,10 +45,15 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   
-  // STEP 5: CSS Styles Definition - Animation Implementation
+  // STEP 6: JavaScript Functionality - Animation and Scroll Implementation
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<View[]>([]);
   
   useEffect(() => {
+    console.log('🚀 STEP 6: Initializing animations and scroll functionality');
+    
     // Fade in animation on component mount
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -209,35 +214,64 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     return subtypes;
   };
 
-  // STEP 3: Helper Functions
+  // STEP 6: JavaScript Functionality - Enhanced Date Formatter
   const formatDate = (dateString?: string): string => {
     if (!dateString) return 'Unbekannt';
     
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+      console.log(`📅 STEP 6: Formatting date: ${dateString} -> ${date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}`);
+      
+      // Enhanced German date formatting (month + year as specified)
+      return date.toLocaleDateString('de-DE', { 
+        month: 'long', 
+        year: 'numeric' 
       });
     } catch {
+      console.log(`❌ STEP 6: Date formatting failed for: ${dateString}`);
       return 'Unbekannt';
     }
   };
 
+  // STEP 6: JavaScript Functionality - Enhanced Icon Mapping Function
   const getIcon = (title: string): string => {
-    const lowerTitle = title.toLowerCase();
+    const iconMap = {
+      'Definition': '📋',
+      'Epidemiologie': '📊',
+      'Symptom': '🔍',
+      'Diagnostik': '🩺',
+      'Therapie': '💊',
+      'Pathophysiologie': '🧬',
+      'Risikofaktoren': '⚠️',
+      'Prognose': '📈',
+      'Differentialdiagnose': '🔄',
+      'Komplikationen': '⚡',
+      'Prävention': '🛡️',
+      // Additional German translations
+      'Begriff': '📋',
+      'Häufigkeit': '📊',
+      'Anzeichen': '🔍',
+      'Diagnose': '🩺',
+      'Behandlung': '💊',
+      'Mechanismus': '🧬',
+      'Risiko': '⚠️',
+      'Verlauf': '📈',
+      'Komplikation': '⚡',
+      'Vorbeugung': '🛡️'
+    };
     
-    if (lowerTitle.includes('definition') || lowerTitle.includes('begriff')) return '📋';
-    if (lowerTitle.includes('symptom') || lowerTitle.includes('anzeichen')) return '🔍';
-    if (lowerTitle.includes('diagnose') || lowerTitle.includes('diagnostic')) return '🩺';
-    if (lowerTitle.includes('behandlung') || lowerTitle.includes('therapie')) return '💊';
-    if (lowerTitle.includes('epidemiologie') || lowerTitle.includes('häufigkeit')) return '📊';
-    if (lowerTitle.includes('pathophysiologie') || lowerTitle.includes('mechanismus')) return '⚙️';
-    if (lowerTitle.includes('prognose') || lowerTitle.includes('verlauf')) return '📈';
-    if (lowerTitle.includes('komplikation') || lowerTitle.includes('risik')) return '⚠️';
+    console.log(`🎯 STEP 6: Getting icon for title: "${title}"`);
     
-    return '📝';
+    // Check each key in iconMap
+    for (let key in iconMap) {
+      if (title.toLowerCase().includes(key.toLowerCase())) {
+        console.log(`✅ STEP 6: Found match "${key}" -> ${iconMap[key]}`);
+        return iconMap[key];
+      }
+    }
+    
+    console.log(`📌 STEP 6: No match found, using default icon`);
+    return '📌';
   };
 
   // STEP 4: Section Generation Function - Enhanced Content Renderer
@@ -352,7 +386,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     console.log(`🏗️ STEP 4: Generating section "${section.title}" with icon "${icon}"`);
     
     return (
-      <View key={index} style={[styles.contentSection, { backgroundColor: colors.card }]}>
+      <View 
+        key={index} 
+        ref={(ref) => {
+          if (ref) sectionRefs.current[index] = ref;
+        }}
+        style={[styles.contentSection, { backgroundColor: colors.card }]}
+      >
         {/* Section Header with Icon */}
         <TouchableOpacity
           style={styles.sectionHeader}
@@ -425,7 +465,50 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     );
   };
 
+  // STEP 6: JavaScript Functionality - Smooth Scroll to Sections
+  const scrollToSection = (index: number) => {
+    console.log(`📜 STEP 6: Scrolling to section ${index}`);
+    
+    // First toggle the section open if it's not already
+    if (!expandedSections[index]) {
+      setExpandedSections(prev => ({
+        ...prev,
+        [index]: true
+      }));
+    }
+    
+    // Use setTimeout to ensure the section is expanded before scrolling
+    setTimeout(() => {
+      const sectionRef = sectionRefs.current[index];
+      if (sectionRef && scrollViewRef.current) {
+        console.log(`✅ STEP 6: Performing smooth scroll to section ${index}`);
+        
+        sectionRef.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: y - 50, // Offset for better visibility
+              animated: true
+            });
+          },
+          () => console.log(`❌ STEP 6: Failed to measure section ${index}`)
+        );
+      }
+    }, 100);
+  };
+
+  // STEP 6: JavaScript Functionality - Update Progress Bar on Scroll
+  const handleScroll = (event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const scrolled = (contentOffset.y / (contentSize.height - layoutMeasurement.height)) * 100;
+    const progress = Math.min(Math.max(scrolled, 0), 100);
+    
+    console.log(`📊 STEP 6: Scroll progress updated: ${progress.toFixed(1)}%`);
+    setScrollProgress(progress);
+  };
+
   const toggleSection = (index: number) => {
+    console.log(`🔄 STEP 6: Toggling section ${index}`);
     setExpandedSections(prev => ({
       ...prev,
       [index]: !prev[index]
@@ -526,7 +609,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 backgroundColor: expandedSections[index] ? colors.primary + '20' : colors.background,
                 borderColor: colors.border 
               }]}
-              onPress={() => toggleSection(index)}
+              onPress={() => scrollToSection(index)}
             >
               <Text style={[styles.navItemText, { 
                 color: expandedSections[index] ? colors.primary : colors.textSecondary 
@@ -538,22 +621,29 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </ScrollView>
       </View>
 
-      {/* Progress Bar */}
+      {/* STEP 6: JavaScript Functionality - Progress Bar with Scroll Tracking */}
       <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
         <View style={[styles.progressFill, { 
           backgroundColor: colors.primary,
-          width: `${(Object.keys(expandedSections).length / processedSections.length) * 100}%`
+          width: `${scrollProgress}%`
         }]} />
       </View>
 
-      {/* Content Sections */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      {/* STEP 6: JavaScript Functionality - Content Sections with Scroll Tracking */}
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <Text style={[styles.stepIndicator, { color: colors.primary }]}>
           ✅ STEP 1: Parse and Clean Data Complete{'\n'}
           ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
           ✅ STEP 3: HTML Template Structure Complete{'\n'}
           ✅ STEP 4: Section Generation Function Complete{'\n'}
-          ✅ STEP 5: CSS Styles Definition Complete
+          ✅ STEP 5: CSS Styles Definition Complete{'\n'}
+          ✅ STEP 6: JavaScript Functionality Complete
         </Text>
         
         {processedSections.map((section, index) => generateSection(section, index))}
