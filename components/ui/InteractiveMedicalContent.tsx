@@ -170,16 +170,6 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     <Animated.View style={[styles.appContainer, { backgroundColor: colors.background, opacity: fadeAnim }]}>
       {/* Header Section */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)' }]}>
-        <View style={styles.headerTop}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {supabaseRow?.category || 'Medizin'}
-            </Text>
-          </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>📱 Mobile App</Text>
-          </View>
-        </View>
 
         <Text style={[styles.mainTitle, { color: colors.text }]}>
           {supabaseRow?.title || 'Medizinischer Inhalt'}
@@ -303,22 +293,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
-  },
-  headerTop: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  badge: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
   },
   mainTitle: {
     fontSize: 24,
