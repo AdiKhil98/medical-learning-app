@@ -116,54 +116,60 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
   }, [supabaseRow.content_json]);
 
-  // STEP 2: Pattern Recognition Functions
-  const applyPatternRecognition = (content: string): string => {
-    let processedContent = content;
-
-    // Statistics/Numbers Pattern Recognition
-    console.log('📊 Applying statistics patterns...');
+  // STEP 4: Enhanced Section Generation Function - Process Content
+  const processContent = (content: string): string => {
+    let processed = content;
     
-    // Pattern 1: Range percentages (e.g., "10-20%", "50-70 Prozent")
-    processedContent = processedContent.replace(
-      /(\d{1,3})[-–](\d{1,3})\s?(%|Prozent|percent)/gi,
-      '<STAT_NUMBER>$1-$2$3</STAT_NUMBER>'
-    );
+    console.log('🔄 STEP 4: Processing content with enhanced patterns...');
 
-    // Pattern 2: Numbers with units (e.g., ">60 Jahre", "500 mg")
-    processedContent = processedContent.replace(
+    // Step 4.1: Wrap percentages in stat-number spans (enhanced from Step 2)
+    processed = processed.replace(/(\d{1,3}[-–]\d{1,3}\s?(%|Prozent))/gi, 
+      '<STAT_NUMBER>$1</STAT_NUMBER>');
+    
+    // Step 4.2: Wrap medical terms (enhanced pattern)
+    processed = processed.replace(/([A-ZÄÖÜ][a-zäöüß]+[-][A-ZÄÖÜ][a-zäöüß]+[-]?[A-Za-zäöüß]*)/g,
+      '<MEDICAL_TERM>$1</MEDICAL_TERM>');
+    
+    // Step 4.3: Create highlight boxes for lists starting with bullet points
+    processed = processed.replace(/•\s(.+?)(?=•|\.|\n|$)/g,
+      '<CRITERIA_ITEM>✓ $1</CRITERIA_ITEM>');
+    
+    // Step 4.4: Detect subtypes and create cards (enhanced detection)
+    processed = processed.replace(/(Hyperaktives|Hypoaktives|Gemischtes)\s+\w+\s+\((\d+\s?%?)\)/g,
+      '<SUBTYPE_CARD>$1|$2</SUBTYPE_CARD>');
+
+    // Step 4.5: Additional medical pattern recognition
+    // Numbers with units (e.g., ">60 Jahre", "500 mg")
+    processed = processed.replace(
       />?\s?(\d{1,3})\s?(Jahre|years|mg|ml|mmol|kg|cm|mm)/gi,
       '<STAT_NUMBER>>$1 $2</STAT_NUMBER>'
     );
 
-    // Pattern 3: Single percentages (e.g., "75%", "80 Prozent")
-    processedContent = processedContent.replace(
+    // Single percentages (e.g., "75%", "80 Prozent")
+    processed = processed.replace(
       /(\d{1,3})(,\d{1,3})?\s?(%|Prozent|percent)/gi,
       '<STAT_NUMBER>$1$2$3</STAT_NUMBER>'
     );
 
-    console.log('🏥 Applying medical terms patterns...');
-    
-    // Medical Terms Pattern Recognition
-    // Pattern 4: Terms with hyphens (e.g., "Acetylcholin-Defizienz")
-    processedContent = processedContent.replace(
-      /\b([A-ZÄÖÜ][a-zäöüß]*-[A-ZÄÖÜ][a-zäöüß]*(?:-[A-ZÄÖÜ][a-zäöüß]*)*)\b/g,
-      '<MEDICAL_TERM>$1</MEDICAL_TERM>'
-    );
-
-    // Pattern 5: Latin medical terms (ending in -itis, -ose, -om, -ie)
-    processedContent = processedContent.replace(
+    // Latin medical terms (ending in -itis, -ose, -om, -ie)
+    processed = processed.replace(
       /\b([A-ZÄÖÜ][a-zäöüß]*(?:itis|ose|om|ie))\b/g,
       '<MEDICAL_TERM>$1</MEDICAL_TERM>'
     );
 
-    // Pattern 6: Medical abbreviations in caps (CAM, ICU, DSM-5, ICD-11)
-    processedContent = processedContent.replace(
+    // Medical abbreviations in caps (CAM, ICU, DSM-5, ICD-11)
+    processed = processed.replace(
       /\b([A-Z]{2,}(?:-\d+)?)\b/g,
       '<MEDICAL_TERM>$1</MEDICAL_TERM>'
     );
 
-    console.log('✨ Pattern recognition complete');
-    return processedContent;
+    console.log('✅ STEP 4: Content processing complete');
+    return processed;
+  };
+
+  // Legacy function for backwards compatibility 
+  const applyPatternRecognition = (content: string): string => {
+    return processContent(content);
   };
 
   const extractSubtypes = (content: string): SubtypeCard[] => {
@@ -220,37 +226,178 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     return '📝';
   };
 
-  // STEP 2: Render Processed Content with Pattern Recognition
+  // STEP 4: Section Generation Function - Enhanced Content Renderer
   const renderProcessedContent = (content: string) => {
-    console.log('🎨 Rendering processed content with patterns...');
+    console.log('🎨 STEP 4: Rendering processed content with enhanced patterns...');
     
-    // Split content by HTML-like tags to create text segments
-    const segments = content.split(/(<(?:STAT_NUMBER|MEDICAL_TERM)>.*?<\/(?:STAT_NUMBER|MEDICAL_TERM)>)/);
+    // Split content by all possible HTML-like tags
+    const segments = content.split(/(<(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD)>.*?<\/(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD)>)/);
+    
+    const renderedElements: React.ReactElement[] = [];
+    let criteriaItems: string[] = [];
+    let subtypeCards: { title: string, percentage: string }[] = [];
+    
+    segments.forEach((segment, index) => {
+      if (segment.startsWith('<STAT_NUMBER>')) {
+        const text = segment.replace(/<\/?STAT_NUMBER>/g, '');
+        renderedElements.push(
+          <Text key={index} style={[styles.statNumber, { color: colors.primary, backgroundColor: colors.primary + '15' }]}>
+            {text}
+          </Text>
+        );
+      } else if (segment.startsWith('<MEDICAL_TERM>')) {
+        const text = segment.replace(/<\/?MEDICAL_TERM>/g, '');
+        renderedElements.push(
+          <Text key={index} style={[styles.medicalTerm, { color: colors.secondary || colors.primary, backgroundColor: colors.secondary + '15' || colors.primary + '10' }]}>
+            {text}
+          </Text>
+        );
+      } else if (segment.startsWith('<CRITERIA_ITEM>')) {
+        const text = segment.replace(/<\/?CRITERIA_ITEM>/g, '');
+        criteriaItems.push(text);
+      } else if (segment.startsWith('<SUBTYPE_CARD>')) {
+        const text = segment.replace(/<\/?SUBTYPE_CARD>/g, '');
+        const [title, percentage] = text.split('|');
+        if (title && percentage) {
+          subtypeCards.push({ title: title.trim(), percentage: percentage.trim() });
+        }
+      } else if (segment.trim()) {
+        // Regular text
+        renderedElements.push(
+          <Text key={index}>{segment}</Text>
+        );
+      }
+    });
+
+    return (
+      <View>
+        {/* Main content text */}
+        <Text style={[styles.contentText, { color: colors.text }]}>
+          {renderedElements}
+        </Text>
+        
+        {/* Criteria items as highlighted list */}
+        {criteriaItems.length > 0 && (
+          <View style={[styles.criteriaContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Text style={[styles.criteriaTitle, { color: colors.text }]}>
+              📋 Wichtige Kriterien
+            </Text>
+            {criteriaItems.map((item, index) => (
+              <View key={index} style={[styles.criteriaItem, { backgroundColor: colors.primary + '10' }]}>
+                <Text style={[styles.criteriaText, { color: colors.text }]}>
+                  {item}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+        
+        {/* Subtype cards */}
+        {subtypeCards.length > 0 && (
+          <View style={styles.subtypeCardsContainer}>
+            <Text style={[styles.subtypeCardsTitle, { color: colors.text }]}>
+              🏷️ Subtypen
+            </Text>
+            <View style={styles.subtypeCardsGrid}>
+              {subtypeCards.map((card, index) => (
+                <View key={index} style={[styles.subtypeCardItem, { 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.primary + '30' 
+                }]}>
+                  <Text style={[styles.subtypeCardTitle, { color: colors.text }]}>
+                    {card.title}
+                  </Text>
+                  <Text style={[styles.subtypeCardPercentage, { color: colors.primary }]}>
+                    {card.percentage}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // STEP 4: Section Generation Function (React Native Implementation)
+  const generateSection = (section: MedicalSection, index: number) => {
+    const processedContent = processContent(section.content);
+    const icon = getIcon(section.title);
+    const isExpanded = expandedSections[index];
+    
+    console.log(`🏗️ STEP 4: Generating section "${section.title}" with icon "${icon}"`);
     
     return (
-      <Text style={[styles.contentText, { color: colors.text }]}>
-        {segments.map((segment, index) => {
-          // Check if segment is a tagged element
-          if (segment.startsWith('<STAT_NUMBER>')) {
-            const text = segment.replace(/<\/?STAT_NUMBER>/g, '');
-            return (
-              <Text key={index} style={[styles.statNumber, { color: colors.primary, backgroundColor: colors.primary + '15' }]}>
-                {text}
+      <View key={index} style={[styles.contentSection, { backgroundColor: colors.card }]}>
+        {/* Section Header with Icon */}
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => toggleSection(index)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.sectionHeaderLeft}>
+            {/* Section Icon */}
+            <View style={[styles.sectionIcon, { backgroundColor: colors.primary + '15' }]}>
+              <Text style={styles.sectionIconText}>{icon}</Text>
+            </View>
+            {/* Section Title */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {section.title}
+            </Text>
+          </View>
+          <ChevronDown
+            size={20}
+            color={colors.textSecondary}
+            style={[
+              styles.chevron,
+              isExpanded && styles.chevronExpanded
+            ]}
+          />
+        </TouchableOpacity>
+
+        {/* Section Content */}
+        {isExpanded && (
+          <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
+            {/* Content Text with Enhanced Processing */}
+            <View style={styles.contentText}>
+              {renderProcessedContent(processedContent)}
+            </View>
+            
+            {/* Legacy subtypes support (from Step 2) */}
+            {section.subtypes && section.subtypes.length > 0 && (
+              <View style={styles.subtypesContainer}>
+                <Text style={[styles.subtypesTitle, { color: colors.text }]}>
+                  📊 Klassifikationen (Legacy):
+                </Text>
+                <View style={styles.subtypesGrid}>
+                  {section.subtypes.map((subtype, subtypeIndex) => (
+                    <View key={subtypeIndex} style={[styles.subtypeCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                      <Text style={[styles.subtypeTitle, { color: colors.text }]}>
+                        {subtype.title}
+                      </Text>
+                      <Text style={[styles.subtypePercentage, { color: colors.primary }]}>
+                        {subtype.percentage}
+                      </Text>
+                      {subtype.description && (
+                        <Text style={[styles.subtypeDescription, { color: colors.textSecondary }]}>
+                          {subtype.description}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {/* Debug info for this section */}
+            <View style={[styles.sectionDebug, { backgroundColor: colors.background }]}>
+              <Text style={[styles.debugSmall, { color: colors.textSecondary }]}>
+                STEP 4: Raw: {section.content.length} chars • Processed: {processedContent.length} chars • Icon: {icon}
               </Text>
-            );
-          } else if (segment.startsWith('<MEDICAL_TERM>')) {
-            const text = segment.replace(/<\/?MEDICAL_TERM>/g, '');
-            return (
-              <Text key={index} style={[styles.medicalTerm, { color: colors.secondary || colors.primary, backgroundColor: colors.secondary + '15' || colors.primary + '10' }]}>
-                {text}
-              </Text>
-            );
-          } else {
-            // Regular text
-            return <Text key={index}>{segment}</Text>;
-          }
-        })}
-      </Text>
+            </View>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -375,77 +522,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         <Text style={[styles.stepIndicator, { color: colors.primary }]}>
           ✅ STEP 1: Parse and Clean Data Complete{'\n'}
           ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
-          ✅ STEP 3: HTML Template Structure Complete
+          ✅ STEP 3: HTML Template Structure Complete{'\n'}
+          ✅ STEP 4: Section Generation Function Complete
         </Text>
         
-        {processedSections.map((section, index) => {
-          const isExpanded = expandedSections[index];
-          
-          return (
-            <View key={index} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-              <TouchableOpacity
-                style={styles.sectionHeader}
-                onPress={() => toggleSection(index)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.sectionHeaderLeft}>
-                  <BookOpen size={20} color={colors.primary} style={styles.icon} />
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    {section.title}
-                  </Text>
-                </View>
-                <ChevronDown
-                  size={20}
-                  color={colors.textSecondary}
-                  style={[
-                    styles.chevron,
-                    isExpanded && styles.chevronExpanded
-                  ]}
-                />
-              </TouchableOpacity>
-
-              {isExpanded && (
-                <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
-                  {/* Render processed content with pattern recognition */}
-                  {renderProcessedContent(section.processedContent || section.content)}
-                  
-                  {/* Render subtypes if found */}
-                  {section.subtypes && section.subtypes.length > 0 && (
-                    <View style={styles.subtypesContainer}>
-                      <Text style={[styles.subtypesTitle, { color: colors.text }]}>
-                        Klassifikationen:
-                      </Text>
-                      <View style={styles.subtypesGrid}>
-                        {section.subtypes.map((subtype, subtypeIndex) => (
-                          <View key={subtypeIndex} style={[styles.subtypeCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                            <Text style={[styles.subtypeTitle, { color: colors.text }]}>
-                              {subtype.title}
-                            </Text>
-                            <Text style={[styles.subtypePercentage, { color: colors.primary }]}>
-                              {subtype.percentage}
-                            </Text>
-                            {subtype.description && (
-                              <Text style={[styles.subtypeDescription, { color: colors.textSecondary }]}>
-                                {subtype.description}
-                              </Text>
-                            )}
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                  
-                  {/* Debug info for this section */}
-                  <View style={[styles.sectionDebug, { backgroundColor: colors.background }]}>
-                    <Text style={[styles.debugSmall, { color: colors.textSecondary }]}>
-                      Raw: {section.content.length} chars • Processed: {(section.processedContent || '').length} chars • Subtypes: {section.subtypes?.length || 0}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })}
+        {processedSections.map((section, index) => generateSection(section, index))}
         
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -751,6 +832,82 @@ const styles = StyleSheet.create({
   pageInfo: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  // Step 4: Section Generation Function Styles
+  contentSection: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  sectionIconText: {
+    fontSize: 16,
+  },
+  criteriaContainer: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  criteriaTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  criteriaItem: {
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  criteriaText: {
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  subtypeCardsContainer: {
+    marginTop: 16,
+  },
+  subtypeCardsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  subtypeCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  subtypeCardItem: {
+    minWidth: '30%',
+    maxWidth: '48%',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  subtypeCardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtypeCardPercentage: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
