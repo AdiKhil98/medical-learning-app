@@ -98,83 +98,105 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
       }
     }
     
-    // Priority 3: Enhanced HTML parsing (content_html) combined with fallbacks
+    // Priority 3: HTML parsing for actual database structure (content_html)
     if (htmlContent || plainTextContent) {
-      console.log('📄 Using HTML or plain text content with enhanced parsing');
+      console.log('📄 Using HTML content - splitting by H2/H3 headers');
       const sections: MedicalSection[] = [];
       const htmlToUse = htmlContent || plainTextContent || '';
       
-      // Clean and split by headers to create sections
-      const cleanedHtml = htmlToUse
-        .replace(/&nbsp;/g, ' ')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n\n');
+      // Split content by H2 and H3 headers (the actual structure in our DB)
+      const headerRegex = /<h[23]>([^<]+)<\/h[23]>/gi;
+      const parts = htmlToUse.split(headerRegex);
       
-      // Try to split by common medical section headers
-      const sectionHeaders = [
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Definition\s*(?:und\s*)?(?:Klassifikation|Konzept)?\s*(?:<\/h[2-4]>)?/gi, type: 'definition', title: 'Definition und Klassifikation' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Epidemiologie\s*(?:<\/h[2-4]>)?/gi, type: 'epidemiology', title: 'Epidemiologie' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Pathophysiologie|Ätiologie)\s*(?:<\/h[2-4]>)?/gi, type: 'etiology', title: 'Pathophysiologie' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Klinische?\s*)?(?:Symptomatik|Manifestation)\s*(?:<\/h[2-4]>)?/gi, type: 'symptoms', title: 'Klinische Symptomatik' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Diagnostik?\s*(?:<\/h[2-4]>)?/gi, type: 'diagnosis', title: 'Diagnostik' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*(?:Therapie|Behandlung)\s*(?:<\/h[2-4]>)?/gi, type: 'therapy', title: 'Therapie' },
-        { pattern: /(?:^|\n)(?:<h[2-4][^>]*>)?\s*Prognose\s*(?:<\/h[2-4]>)?/gi, type: 'prognosis', title: 'Prognose' }
-      ];
+      console.log('📄 Split into parts:', parts.length);
       
-      let remainingContent = cleanedHtml;
-      let foundSections = false;
-      
-      sectionHeaders.forEach((headerDef) => {
-        const matches = [...remainingContent.matchAll(headerDef.pattern)];
-        if (matches.length > 0) {
-          foundSections = true;
-          matches.forEach((match) => {
-            const startIndex = match.index || 0;
-            const headerLength = match[0].length;
+      if (parts.length > 1) {
+        // Process parts: [content_before_first_header, header1, content1, header2, content2, ...]
+        for (let i = 1; i < parts.length; i += 2) {
+          const headerText = parts[i]?.trim();
+          const sectionContent = parts[i + 1]?.trim() || '';
+          
+          if (headerText && sectionContent) {
+            // Determine section type and clean title
+            let sectionType: MedicalSection['type'] = 'definition';
+            let cleanTitle = headerText;
             
-            // Find the next section or end of content
-            let endIndex = remainingContent.length;
-            for (const nextHeader of sectionHeaders) {
-              const nextMatches = [...remainingContent.matchAll(nextHeader.pattern)];
-              for (const nextMatch of nextMatches) {
-                const nextStartIndex = nextMatch.index || 0;
-                if (nextStartIndex > startIndex + headerLength && nextStartIndex < endIndex) {
-                  endIndex = nextStartIndex;
-                }
-              }
+            const headerLower = headerText.toLowerCase();
+            if (headerLower.includes('definition')) {
+              sectionType = 'definition';
+              cleanTitle = 'Definition und Klassifikation';
+            } else if (headerLower.includes('epidemiologie')) {
+              sectionType = 'epidemiology';
+              cleanTitle = 'Epidemiologie';
+            } else if (headerLower.includes('klassifikation')) {
+              sectionType = 'definition';
+              cleanTitle = 'Klassifikation';
+            } else if (headerLower.includes('therapie') || headerLower.includes('behandlung')) {
+              sectionType = 'therapy';
+              cleanTitle = 'Therapie';
+            } else if (headerLower.includes('symptom') || headerLower.includes('klinik')) {
+              sectionType = 'symptoms';
+              cleanTitle = 'Klinische Symptomatik';
+            } else if (headerLower.includes('diagnos')) {
+              sectionType = 'diagnosis';
+              cleanTitle = 'Diagnostik';
+            } else if (headerLower.includes('pathophysiologie') || headerLower.includes('ätiologie')) {
+              sectionType = 'etiology';
+              cleanTitle = 'Pathophysiologie';
+            } else if (headerLower.includes('prognose')) {
+              sectionType = 'prognosis';
+              cleanTitle = 'Prognose';
             }
             
-            const sectionContent = remainingContent
-              .substring(startIndex + headerLength, endIndex)
+            // Clean content: preserve structure but remove HTML tags
+            const cleanContent = sectionContent
+              .replace(/<\/p>/gi, '\n\n')
+              .replace(/<\/li>/gi, '\n')
+              .replace(/<li>/gi, '• ')
+              .replace(/<strong>/gi, '**')
+              .replace(/<\/strong>/gi, '**')
               .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/\n\s*\n/g, '\n\n')
               .trim();
             
-            if (sectionContent.length > 0) {
+            if (cleanContent.length > 20) {
               sections.push({
-                id: headerDef.type,
-                title: headerDef.title,
-                content: sectionContent,
-                type: headerDef.type as MedicalSection['type']
+                id: sectionType + '_' + i,
+                title: cleanTitle,
+                content: cleanContent,
+                type: sectionType
               });
             }
-          });
+          }
         }
-      });
+      }
       
-      // If no structured sections found, create a single content section
-      if (!foundSections) {
-        const cleanContent = htmlToUse.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-        if (cleanContent.length > 0) {
+      // If no sections found, create single section with all content
+      if (sections.length === 0) {
+        const allContent = htmlToUse
+          .replace(/<\/p>/gi, '\n\n')
+          .replace(/<\/li>/gi, '\n')
+          .replace(/<li>/gi, '• ')
+          .replace(/<strong>/gi, '**')
+          .replace(/<\/strong>/gi, '**')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\n\s*\n/g, '\n\n')
+          .trim();
+          
+        if (allContent.length > 0) {
           sections.push({
             id: 'content',
             title: 'Medizinischer Inhalt',
-            content: cleanContent,
+            content: allContent,
             type: 'definition'
           });
         }
       }
       
-      return sections.filter(section => section.content.length > 20); // Filter out very short sections
+      console.log('📄 Created sections:', sections.length, sections.map(s => s.title));
+      return sections;
     }
     
     console.log('❌ No content found');
