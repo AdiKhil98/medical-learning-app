@@ -218,20 +218,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
       </View>
 
-      {/* Navigation */}
-      {filteredSections.length > 0 && (
-        <View style={[styles.sectionNav, { backgroundColor: colors.card }]}>
-          <Text style={[styles.navTitle, { color: colors.text }]}>
-            Schnellnavigation ({filteredSections.length} Abschnitte)
-          </Text>
-        </View>
-      )}
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.stepIndicator, { color: colors.primary }]}>
-          📱 Simplified Medical Content Viewer
-        </Text>
         
         {searchTerm.length > 0 && (
           <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
@@ -382,24 +371,9 @@ const styles = StyleSheet.create({
   clearSearchText: {
     fontSize: 16,
   },
-  sectionNav: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-  },
-  navTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   content: {
     flex: 1,
     padding: 16,
-  },
-  stepIndicator: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   searchResults: {
     fontSize: 14,
