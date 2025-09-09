@@ -135,12 +135,50 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
   }, [supabaseRow.content_json]);
 
-  // STEP 4: Enhanced Section Generation Function - Process Content
+  // STEP 7: Special Content Processing Rules - Enhanced Content Function
+  const enhanceContent = (content: string): string => {
+    let processed = content;
+    
+    console.log('🔄 STEP 7: Enhancing content with special processing rules...');
+
+    // Step 7.1: Create definition boxes for "Definition:" patterns
+    processed = processed.replace(/Definition:\s*(.+?)(?=\n|$)/gi, 
+      '<DEFINITION_BOX>$1</DEFINITION_BOX>');
+    
+    // Step 7.2: Create warning boxes for "Wichtig:" or "Achtung:" patterns
+    processed = processed.replace(/(Wichtig|Achtung|Warnung):\s*(.+?)(?=\n|$)/gi,
+      '<WARNING_BOX>$1|$2</WARNING_BOX>');
+    
+    // Step 7.3: Transform medication lists
+    processed = processed.replace(/Medikamente?:\s*(.+?)(?=\n\n|$)/gs,
+      '<MEDICATION_BOX>$1</MEDICATION_BOX>');
+    
+    // Step 7.4: Highlight dosage information
+    processed = processed.replace(/(\d+\.?\d*\s?(mg|ml|g|µg|IE|mmol|mval))/gi,
+      '<DOSAGE>$1</DOSAGE>');
+    
+    // Step 7.5: Create structured lists from enumeration patterns
+    processed = processed.replace(/(\d+\.)\s+(.+?)(?=\d+\.|$)/gs,
+      '<NUMBERED_ITEM>$1|$2</NUMBERED_ITEM>');
+    
+    // Step 7.6: Highlight temporal information
+    processed = processed.replace(/(\d+[-–]\d+\s?(Stunden|Tage|Wochen|Monate|Jahre))/gi,
+      '<TIME_SPAN>$1</TIME_SPAN>');
+
+    console.log('✅ STEP 7: Special content enhancement complete');
+    return processed;
+  };
+
+  // STEP 4: Enhanced Section Generation Function - Process Content (Updated for Step 7)
   const processContent = (content: string): string => {
     let processed = content;
     
-    console.log('🔄 STEP 4: Processing content with enhanced patterns...');
+    console.log('🔄 STEP 4+7: Processing content with enhanced + special patterns...');
 
+    // First apply Step 7 special processing rules
+    processed = enhanceContent(processed);
+
+    // Then apply Step 4 patterns
     // Step 4.1: Wrap percentages in stat-number spans (enhanced from Step 2)
     processed = processed.replace(/(\d{1,3}[-–]\d{1,3}\s?(%|Prozent))/gi, 
       '<STAT_NUMBER>$1</STAT_NUMBER>');
@@ -182,7 +220,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       '<MEDICAL_TERM>$1</MEDICAL_TERM>'
     );
 
-    console.log('✅ STEP 4: Content processing complete');
+    console.log('✅ STEP 4+7: Content processing complete');
     return processed;
   };
 
@@ -274,16 +312,20 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     return '📌';
   };
 
-  // STEP 4: Section Generation Function - Enhanced Content Renderer
+  // STEP 7: Special Content Processing Rules - Enhanced Content Renderer
   const renderProcessedContent = (content: string) => {
-    console.log('🎨 STEP 4: Rendering processed content with enhanced patterns...');
+    console.log('🎨 STEP 7: Rendering processed content with special + enhanced patterns...');
     
-    // Split content by all possible HTML-like tags
-    const segments = content.split(/(<(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD)>.*?<\/(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD)>)/);
+    // Split content by all possible HTML-like tags (Step 4 + Step 7)
+    const segments = content.split(/(<(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD|DEFINITION_BOX|WARNING_BOX|MEDICATION_BOX|DOSAGE|NUMBERED_ITEM|TIME_SPAN)>.*?<\/(?:STAT_NUMBER|MEDICAL_TERM|CRITERIA_ITEM|SUBTYPE_CARD|DEFINITION_BOX|WARNING_BOX|MEDICATION_BOX|DOSAGE|NUMBERED_ITEM|TIME_SPAN)>)/);
     
     const renderedElements: React.ReactElement[] = [];
     let criteriaItems: string[] = [];
     let subtypeCards: { title: string, percentage: string }[] = [];
+    let definitionBoxes: string[] = [];
+    let warningBoxes: { type: string, content: string }[] = [];
+    let medicationBoxes: string[] = [];
+    let numberedItems: { number: string, content: string }[] = [];
     
     segments.forEach((segment, index) => {
       if (segment.startsWith('<STAT_NUMBER>')) {
@@ -309,6 +351,38 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         if (title && percentage) {
           subtypeCards.push({ title: title.trim(), percentage: percentage.trim() });
         }
+      } else if (segment.startsWith('<DEFINITION_BOX>')) {
+        const text = segment.replace(/<\/?DEFINITION_BOX>/g, '');
+        definitionBoxes.push(text.trim());
+      } else if (segment.startsWith('<WARNING_BOX>')) {
+        const text = segment.replace(/<\/?WARNING_BOX>/g, '');
+        const [type, content] = text.split('|');
+        if (type && content) {
+          warningBoxes.push({ type: type.trim(), content: content.trim() });
+        }
+      } else if (segment.startsWith('<MEDICATION_BOX>')) {
+        const text = segment.replace(/<\/?MEDICATION_BOX>/g, '');
+        medicationBoxes.push(text.trim());
+      } else if (segment.startsWith('<DOSAGE>')) {
+        const text = segment.replace(/<\/?DOSAGE>/g, '');
+        renderedElements.push(
+          <Text key={index} style={styles.dosageCss}>
+            {text}
+          </Text>
+        );
+      } else if (segment.startsWith('<NUMBERED_ITEM>')) {
+        const text = segment.replace(/<\/?NUMBERED_ITEM>/g, '');
+        const [number, content] = text.split('|');
+        if (number && content) {
+          numberedItems.push({ number: number.trim(), content: content.trim() });
+        }
+      } else if (segment.startsWith('<TIME_SPAN>')) {
+        const text = segment.replace(/<\/?TIME_SPAN>/g, '');
+        renderedElements.push(
+          <Text key={index} style={styles.timeSpanCss}>
+            {text}
+          </Text>
+        );
       } else if (segment.trim()) {
         // Regular text
         renderedElements.push(
@@ -323,6 +397,82 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         <Text style={[styles.contentText, { color: colors.text }]}>
           {renderedElements}
         </Text>
+        
+        {/* STEP 7: Special Content Processing - Definition boxes */}
+        {definitionBoxes.length > 0 && (
+          <View style={styles.definitionBoxContainer}>
+            {definitionBoxes.map((definition, index) => (
+              <View key={index} style={[styles.definitionBox, { 
+                backgroundColor: isDarkMode ? 'rgba(102, 126, 234, 0.15)' : 'rgba(102, 126, 234, 0.08)',
+                borderLeftColor: '#667eea'
+              }]}>
+                <Text style={[styles.definitionTitle, { color: colors.text }]}>
+                  📋 Definition:
+                </Text>
+                <Text style={[styles.definitionText, { color: colors.text }]}>
+                  {definition}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* STEP 7: Special Content Processing - Warning boxes */}
+        {warningBoxes.length > 0 && (
+          <View style={styles.warningBoxContainer}>
+            {warningBoxes.map((warning, index) => (
+              <View key={index} style={[styles.warningBox, { 
+                backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+                borderLeftColor: '#ef4444'
+              }]}>
+                <Text style={[styles.warningTitle, { color: '#ef4444' }]}>
+                  ⚠️ {warning.type}:
+                </Text>
+                <Text style={[styles.warningText, { color: colors.text }]}>
+                  {warning.content}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* STEP 7: Special Content Processing - Medication boxes */}
+        {medicationBoxes.length > 0 && (
+          <View style={styles.medicationBoxContainer}>
+            {medicationBoxes.map((medication, index) => (
+              <View key={index} style={[styles.medicationBox, { 
+                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)',
+                borderLeftColor: '#22c55e'
+              }]}>
+                <Text style={[styles.medicationTitle, { color: '#22c55e' }]}>
+                  💊 Medikamente:
+                </Text>
+                <Text style={[styles.medicationText, { color: colors.text }]}>
+                  {medication}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* STEP 7: Special Content Processing - Numbered items */}
+        {numberedItems.length > 0 && (
+          <View style={styles.numberedItemsContainer}>
+            <Text style={[styles.numberedItemsTitle, { color: colors.text }]}>
+              📝 Strukturierte Liste:
+            </Text>
+            {numberedItems.map((item, index) => (
+              <View key={index} style={[styles.numberedItemCss, { backgroundColor: colors.card }]}>
+                <View style={[styles.numberCircle, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.numberText}>{item.number}</Text>
+                </View>
+                <Text style={[styles.numberedItemText, { color: colors.text }]}>
+                  {item.content}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
         
         {/* STEP 5: CSS Styles - Criteria items as highlighted list */}
         {criteriaItems.length > 0 && (
@@ -643,7 +793,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           ✅ STEP 3: HTML Template Structure Complete{'\n'}
           ✅ STEP 4: Section Generation Function Complete{'\n'}
           ✅ STEP 5: CSS Styles Definition Complete{'\n'}
-          ✅ STEP 6: JavaScript Functionality Complete
+          ✅ STEP 6: JavaScript Functionality Complete{'\n'}
+          ✅ STEP 7: Special Content Processing Rules Complete
         </Text>
         
         {processedSections.map((section, index) => generateSection(section, index))}
@@ -1108,6 +1259,134 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  // STEP 7: Special Content Processing Rules - Styles
+  dosageCss: {
+    backgroundColor: '#f59e0b',
+    color: 'white',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: '600',
+    overflow: 'hidden',
+  },
+  timeSpanCss: {
+    backgroundColor: '#8b5cf6',
+    color: 'white',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: '600',
+    overflow: 'hidden',
+  },
+  definitionBoxContainer: {
+    marginTop: 16,
+  },
+  definitionBox: {
+    padding: 16,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  definitionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  definitionText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  warningBoxContainer: {
+    marginTop: 16,
+  },
+  warningBox: {
+    padding: 16,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  warningText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  medicationBoxContainer: {
+    marginTop: 16,
+  },
+  medicationBox: {
+    padding: 16,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  medicationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  medicationText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  numberedItemsContainer: {
+    marginTop: 16,
+  },
+  numberedItemsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  numberedItemCss: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+    borderRadius: 8,
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  numberCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  numberText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  numberedItemText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });
 
