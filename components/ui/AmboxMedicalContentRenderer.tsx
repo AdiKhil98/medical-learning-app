@@ -297,7 +297,7 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
   }, [parsedSections, colors, toggleSection]);
 
   const renderSection = useCallback((section: MedicalSection, index: number) => {
-    const isExpanded = expandedSections[section.id];
+    const isExpanded = !!expandedSections[section.id]; // Ensure boolean
     const IconComponent = getIconComponent(section.type || 'content');
     const sectionColor = getSectionColor(section.type || 'content');
 
@@ -331,7 +331,8 @@ const MedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = ({
           />
         </TouchableOpacity>
 
-        {isExpanded && (
+        {/* Only render content when explicitly expanded */}
+        {isExpanded === true && (
           <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
             {renderEnhancedContent(section.content)}
           </View>
@@ -421,12 +422,13 @@ const styles = StyleSheet.create({
     flex: 1 },
   sectionCard: {
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 16,
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 2 },
+    elevation: 3 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
