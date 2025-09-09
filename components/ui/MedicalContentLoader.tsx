@@ -33,6 +33,20 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug }) => 
       try {
         console.log('🔄 Fetching medical content for slug:', slug);
         
+        // First, let's check if Supabase connection works at all
+        const { data: testConnection, error: connectionError } = await supabase
+          .from('sections')
+          .select('slug, title')
+          .limit(1);
+          
+        if (connectionError) {
+          console.error('❌ Supabase connection failed:', connectionError);
+          setError(`Database connection error: ${connectionError.message}`);
+          return;
+        }
+        
+        console.log('✅ Supabase connection successful, testing query...');
+        
         const { data: result, error } = await supabase
           .from('sections')
           .select('*')
@@ -40,8 +54,18 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug }) => 
           .single();
 
         if (error) {
-          console.error('❌ Supabase error:', error);
-          setError(`Database error: ${error.message}`);
+          console.error('❌ Supabase query error:', error);
+          console.error('❌ Error details:', { code: error.code, hint: error.hint, details: error.details });
+          
+          // Try to find similar slugs if exact match fails
+          const { data: similarSlugs } = await supabase
+            .from('sections')
+            .select('slug, title')
+            .ilike('slug', `%${slug}%`)
+            .limit(5);
+            
+          console.log('🔍 Similar slugs found:', similarSlugs);
+          setError(`Database error: ${error.message}. Similar slugs: ${similarSlugs?.map(s => s.slug).join(', ') || 'none'}`);
           return;
         }
 
