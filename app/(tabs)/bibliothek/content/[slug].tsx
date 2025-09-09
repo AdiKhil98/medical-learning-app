@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/folder';
-import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
+import SimpleMedicalContentRenderer from '@/components/ui/SimpleMedicalContentRenderer';
 
 // Define Section type directly
 interface Section {
@@ -328,7 +328,7 @@ const ContentDetailScreen = memo(() => {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Universal Enhanced Medical Content Renderer */}
-        <MedicalContentRenderer
+        <SimpleMedicalContentRenderer
           htmlContent={currentSection.content_html}
           jsonContent={currentSection.content_improved}
           plainTextContent={currentSection.content_details}
