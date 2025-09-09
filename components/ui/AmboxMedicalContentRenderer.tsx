@@ -433,25 +433,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16 },
+    padding: 18,
+    minHeight: 70 },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1 },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12 },
+    marginRight: 14 },
   sectionTitleContainer: {
     flex: 1 },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
-    marginBottom: 2 },
+    marginBottom: 4 },
   sectionType: {
     fontSize: 12,
     fontWeight: '500',
