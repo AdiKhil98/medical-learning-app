@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { ChevronDown, BookOpen, AlertCircle } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface MedicalSection {
@@ -40,8 +42,20 @@ interface InteractiveMedicalContentProps {
 }
 
 const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow }) => {
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  
+  // STEP 5: CSS Styles Definition - Animation Implementation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  
+  useEffect(() => {
+    // Fade in animation on component mount
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   // STEP 1: Parse and Clean Data
   // STEP 2: Pattern Recognition Rules  
@@ -241,14 +255,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       if (segment.startsWith('<STAT_NUMBER>')) {
         const text = segment.replace(/<\/?STAT_NUMBER>/g, '');
         renderedElements.push(
-          <Text key={index} style={[styles.statNumber, { color: colors.primary, backgroundColor: colors.primary + '15' }]}>
+          <Text key={index} style={styles.statNumberCss}>
             {text}
           </Text>
         );
       } else if (segment.startsWith('<MEDICAL_TERM>')) {
         const text = segment.replace(/<\/?MEDICAL_TERM>/g, '');
         renderedElements.push(
-          <Text key={index} style={[styles.medicalTerm, { color: colors.secondary || colors.primary, backgroundColor: colors.secondary + '15' || colors.primary + '10' }]}>
+          <Text key={index} style={styles.medicalTermCss}>
             {text}
           </Text>
         );
@@ -276,23 +290,33 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           {renderedElements}
         </Text>
         
-        {/* Criteria items as highlighted list */}
+        {/* STEP 5: CSS Styles - Criteria items as highlighted list */}
         {criteriaItems.length > 0 && (
-          <View style={[styles.criteriaContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <Text style={[styles.criteriaTitle, { color: colors.text }]}>
-              📋 Wichtige Kriterien
-            </Text>
-            {criteriaItems.map((item, index) => (
-              <View key={index} style={[styles.criteriaItem, { backgroundColor: colors.primary + '10' }]}>
-                <Text style={[styles.criteriaText, { color: colors.text }]}>
-                  {item}
-                </Text>
-              </View>
-            ))}
+          <View style={[styles.highlightBox, { borderLeftColor: '#667eea' }]}>
+            <LinearGradient
+              colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.08)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.highlightBoxGradient}
+            >
+              <Text style={[styles.criteriaTitle, { color: colors.text }]}>
+                📋 Wichtige Kriterien
+              </Text>
+              {criteriaItems.map((item, index) => (
+                <View key={index} style={[styles.criteriaItemCss, { 
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'white',
+                  borderLeftColor: '#667eea'
+                }]}>
+                  <Text style={[styles.criteriaText, { color: colors.text }]}>
+                    {item}
+                  </Text>
+                </View>
+              ))}
+            </LinearGradient>
           </View>
         )}
         
-        {/* Subtype cards */}
+        {/* STEP 5: CSS Styles - Subtype cards */}
         {subtypeCards.length > 0 && (
           <View style={styles.subtypeCardsContainer}>
             <Text style={[styles.subtypeCardsTitle, { color: colors.text }]}>
@@ -300,14 +324,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </Text>
             <View style={styles.subtypeCardsGrid}>
               {subtypeCards.map((card, index) => (
-                <View key={index} style={[styles.subtypeCardItem, { 
-                  backgroundColor: colors.card, 
-                  borderColor: colors.primary + '30' 
+                <View key={index} style={[styles.subtypeCardCss, { 
+                  backgroundColor: isDarkMode ? '#2A2A2A' : '#f8f9fa',
+                  borderLeftColor: '#2563EB'
                 }]}>
                   <Text style={[styles.subtypeCardTitle, { color: colors.text }]}>
                     {card.title}
                   </Text>
-                  <Text style={[styles.subtypeCardPercentage, { color: colors.primary }]}>
+                  <Text style={[styles.subtypeCardPercentage, { color: '#2563EB' }]}>
                     {card.percentage}
                   </Text>
                 </View>
@@ -442,20 +466,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Step 3: HTML Template Structure Implementation */}
+    <Animated.View style={[styles.appContainer, { 
+      backgroundColor: colors.background,
+      opacity: fadeAnim 
+    }]}>
+      {/* STEP 5: CSS Styles Definition Implementation */}
       
-      {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: colors.card }]}>
-        {/* Header Top - Badges */}
+      {/* Header Section with CSS Styling */}
+      <View style={[styles.headerCss, { 
+        backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)'
+      }]}>
+        {/* Header Top - CSS Badges */}
         <View style={styles.headerTop}>
-          <View style={[styles.badge, { backgroundColor: colors.primary + '20' }]}>
-            <Text style={[styles.badgeText, { color: colors.primary }]}>
+          <View style={styles.badgeCss}>
+            <Text style={styles.badgeTextCss}>
               {supabaseRow.category || 'Medizin'}
             </Text>
           </View>
-          <View style={[styles.badge, { backgroundColor: supabaseRow.color + '20' || colors.secondary + '20' }]}>
-            <Text style={[styles.badgeText, { color: supabaseRow.color || colors.secondary }]}>
+          <View style={styles.badgeCss}>
+            <Text style={styles.badgeTextCss}>
               📱 Mobile App
             </Text>
           </View>
@@ -523,7 +552,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           ✅ STEP 1: Parse and Clean Data Complete{'\n'}
           ✅ STEP 2: Pattern Recognition Rules Complete{'\n'}
           ✅ STEP 3: HTML Template Structure Complete{'\n'}
-          ✅ STEP 4: Section Generation Function Complete
+          ✅ STEP 4: Section Generation Function Complete{'\n'}
+          ✅ STEP 5: CSS Styles Definition Complete
         </Text>
         
         {processedSections.map((section, index) => generateSection(section, index))}
@@ -549,7 +579,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -908,6 +938,86 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  // STEP 5: CSS Styles Definition - React Native Implementation
+  appContainer: {
+    maxWidth: 900,
+    alignSelf: 'center',
+    width: '100%',
+    flex: 1,
+  },
+  headerCss: {
+    borderRadius: 20,
+    padding: 25,
+    marginBottom: 20,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 60,
+    elevation: 15,
+  },
+  badgeCss: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  badgeTextCss: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  statNumberCss: {
+    backgroundColor: '#2563EB',
+    color: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 15,
+    fontWeight: '600',
+    fontSize: 14,
+    overflow: 'hidden',
+  },
+  medicalTermCss: {
+    color: '#764ba2',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'dotted',
+    textDecorationColor: '#764ba2',
+  },
+  highlightBox: {
+    borderLeftWidth: 4,
+    borderRadius: 10,
+    margin: 20,
+    marginHorizontal: 0,
+    overflow: 'hidden',
+  },
+  highlightBoxGradient: {
+    padding: 20,
+    paddingLeft: 20,
+  },
+  subtypeCardCss: {
+    borderRadius: 12,
+    padding: 20,
+    marginVertical: 15,
+    borderLeftWidth: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  criteriaItemCss: {
+    padding: 15,
+    marginVertical: 8,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
 });
 
