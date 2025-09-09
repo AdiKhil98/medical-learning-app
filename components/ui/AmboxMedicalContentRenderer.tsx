@@ -76,7 +76,7 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
     }
   }, []);
 
-  // Parse content into structured sections
+  // Parse content into structured sections with enhanced AMBOSS-style parsing
   const parsedSections = React.useMemo(() => {
     console.log('🔍 AmboxMedicalContentRenderer parsing content:');
     console.log('- jsonContent:', jsonContent, typeof jsonContent);
@@ -108,14 +108,77 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
       }
     }
     
-    // Use HTML or plain text content (this should be the main path now)
+    // Enhanced HTML parsing for AMBOSS-style structured sections
     if (htmlContent || plainTextContent) {
-      console.log('📄 Using HTML or plain text content');
-      return [{
-        id: 'content',
-        title: 'Medizinischer Inhalt',
-        content: htmlContent || plainTextContent || '',
-        type: 'definition' as const }];
+      console.log('📄 Using HTML or plain text content with enhanced parsing');
+      const sections: MedicalSection[] = [];
+      const htmlToUse = htmlContent || plainTextContent || '';
+      
+      // Split by headers to create sections
+      const htmlParts = htmlToUse.split(/<h[23]>/i);
+      
+      if (htmlParts.length > 1) {
+        // We have headers, create structured sections
+        htmlParts.forEach((part, index) => {
+          if (index === 0 && part.trim()) {
+            // First part (before first header) becomes definition
+            sections.push({
+              id: 'definition',
+              title: 'Definition und Klassifikation',
+              content: part.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(),
+              type: 'definition'
+            });
+          } else if (part.trim()) {
+            // Extract header text and content
+            const headerMatch = part.match(/^([^<]*?)(?:<\/h[23]>)?(.*)/is);
+            if (headerMatch) {
+              const headerText = headerMatch[1].trim();
+              const sectionContent = headerMatch[2].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+              
+              // Determine section type based on header text
+              let sectionType: MedicalSection['type'] = 'definition';
+              let sectionTitle = headerText;
+              
+              if (headerText.toLowerCase().includes('epidemiologie')) {
+                sectionType = 'epidemiology';
+                sectionTitle = 'Epidemiologie';
+              } else if (headerText.toLowerCase().includes('pathophysiologie')) {
+                sectionType = 'etiology';
+                sectionTitle = 'Pathophysiologie';
+              } else if (headerText.toLowerCase().includes('symptom') || headerText.toLowerCase().includes('klinisch')) {
+                sectionType = 'symptoms';
+                sectionTitle = 'Klinische Symptomatik';
+              } else if (headerText.toLowerCase().includes('diagnos')) {
+                sectionType = 'diagnosis';
+                sectionTitle = 'Diagnostik';
+              } else if (headerText.toLowerCase().includes('therap') || headerText.toLowerCase().includes('behandlung')) {
+                sectionType = 'therapy';
+                sectionTitle = 'Therapie';
+              } else if (headerText.toLowerCase().includes('prognose')) {
+                sectionType = 'prognosis';
+                sectionTitle = 'Prognose';
+              }
+              
+              sections.push({
+                id: sectionType + '_' + index,
+                title: sectionTitle,
+                content: sectionContent,
+                type: sectionType
+              });
+            }
+          }
+        });
+      } else {
+        // No headers found, create a single content section
+        sections.push({
+          id: 'content',
+          title: 'Medizinischer Inhalt',
+          content: htmlToUse.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(),
+          type: 'definition'
+        });
+      }
+      
+      return sections.filter(section => section.content.length > 0);
     }
     
     console.log('❌ No content found');
@@ -128,6 +191,108 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
       [sectionId]: !prev[sectionId]
     }));
   }, []);
+
+  // Enhanced content renderer with statistics highlighting and formatting
+  const renderEnhancedContent = useCallback((content: string) => {
+    const lines = content.split('\n');
+    const elements: React.ReactNode[] = [];
+    
+    lines.forEach((line, index) => {
+      if (!line.trim()) return;
+      
+      // Check for percentage/statistics (xx-yy% pattern)
+      const percentageRegex = /(\d+(?:-\d+)?%)/g;
+      const hasPercentages = percentageRegex.test(line);
+      
+      if (hasPercentages) {
+        // Split line and highlight percentages
+        const parts = line.split(percentageRegex);
+        const lineElements: React.ReactNode[] = [];
+        
+        parts.forEach((part, partIndex) => {
+          if (percentageRegex.test(part)) {
+            lineElements.push(
+              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: '#3B82F6', color: 'white' }]}>
+                {part}
+              </Text>
+            );
+          } else if (part.trim()) {
+            lineElements.push(
+              <Text key={`${index}-${partIndex}`} style={[styles.contentText, { color: colors.text }]}>
+                {part}
+              </Text>
+            );
+          }
+        });
+        
+        elements.push(
+          <Text key={index} style={[styles.contentText, { color: colors.text }]}>
+            {lineElements}
+          </Text>
+        );
+      } else if (line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('✓')) {
+        // Bullet points or checkmarks
+        elements.push(
+          <View key={index} style={styles.bulletPoint}>
+            <Text style={[styles.bulletIcon, { color: colors.primary }]}>✓</Text>
+            <Text style={[styles.bulletText, { color: colors.text }]}>
+              {line.replace(/^[•\-✓]\s*/, '').trim()}
+            </Text>
+          </View>
+        );
+      } else if (line.trim().includes(':') && line.length < 100) {
+        // Likely a header or important point
+        elements.push(
+          <Text key={index} style={[styles.contentHeader, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
+        );
+      } else {
+        // Regular content
+        elements.push(
+          <Text key={index} style={[styles.contentText, { color: colors.text }]}>
+            {line.trim()}
+          </Text>
+        );
+      }
+    });
+    
+    return <View>{elements}</View>;
+  }, [colors]);
+
+  // Quick navigation pills
+  const renderQuickNavigation = useCallback(() => {
+    if (parsedSections.length <= 1) return null;
+    
+    return (
+      <View style={styles.quickNavContainer}>
+        <Text style={[styles.quickNavTitle, { color: colors.text }]}>SCHNELLNAVIGATION</Text>
+        <View style={styles.quickNavPills}>
+          {parsedSections.map((section) => (
+            <TouchableOpacity
+              key={section.id}
+              style={[
+                styles.quickNavPill,
+                { 
+                  backgroundColor: getSectionColor(section.type) + '15',
+                  borderColor: getSectionColor(section.type) + '30'
+                }
+              ]}
+              onPress={() => toggleSection(section.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.quickNavPillText,
+                { color: getSectionColor(section.type) }
+              ]}>
+                {section.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  }, [parsedSections, colors, getSectionColor, toggleSection]);
 
   const renderSection = useCallback((section: MedicalSection, index: number) => {
     const isExpanded = expandedSections[section.id];
@@ -166,22 +331,12 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
 
         {isExpanded && (
           <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
-            {section.content.includes('<') && section.content.includes('>') ? (
-              // This is HTML content - render as formatted text for now
-              <Text style={[styles.contentText, { color: colors.text }]}>
-                {section.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()}
-              </Text>
-            ) : (
-              // Regular text content
-              <Text style={[styles.contentText, { color: colors.text }]}>
-                {section.content}
-              </Text>
-            )}
+            {renderEnhancedContent(section.content)}
           </View>
         )}
       </View>
     );
-  }, [colors, expandedSections, getIconComponent, getSectionColor, toggleSection]);
+  }, [colors, expandedSections, getIconComponent, getSectionColor, toggleSection, renderEnhancedContent]);
 
   return (
     <View style={styles.container}>
@@ -201,6 +356,9 @@ const AmboxMedicalContentRenderer: React.FC<AmboxMedicalContentRendererProps> = 
           <Text style={styles.statusText}>{completionStatus}</Text>
         </View>
       </LinearGradient>
+
+      {/* Quick Navigation */}
+      {renderQuickNavigation()}
 
       {/* Medical content sections */}
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -331,6 +489,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7 },
   bottomPadding: {
-    height: 40 } });
+    height: 40 },
+  
+  // Quick Navigation Styles
+  quickNavContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16 },
+  quickNavTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    fontFamily: 'Inter-SemiBold',
+    letterSpacing: 1 },
+  quickNavPills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8 },
+  quickNavPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1 },
+  quickNavPillText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Inter-Medium' },
+  
+  // Enhanced Content Styles
+  highlightedStat: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold' },
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 4,
+    paddingLeft: 8 },
+  bulletIcon: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 8,
+    marginTop: 2 },
+  bulletText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: 'Inter-Regular' } });
 
 export default AmboxMedicalContentRenderer;
