@@ -80,12 +80,19 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   const parsedSections = React.useMemo(() => {
     console.log('🔍 MedicalContentRenderer parsing content for:', title);
     console.log('- jsonContent:', jsonContent, typeof jsonContent);
-    console.log('- htmlContent exists:', !!htmlContent, htmlContent?.substring(0, 200));
+    console.log('- htmlContent exists:', !!htmlContent, 'Length:', htmlContent?.length);
+    console.log('- htmlContent preview:', htmlContent?.substring(0, 500));
     console.log('- plainTextContent exists:', !!plainTextContent, plainTextContent?.substring(0, 200));
+    
+    // Check if htmlContent is actually a full HTML document
+    if (htmlContent?.includes('<!DOCTYPE html>')) {
+      console.log('⚠️ WARNING: htmlContent contains full HTML document instead of content fragment');
+    }
     
     // Priority 1: Check for structured JSON content first (content_improved)
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
       console.log('✅ Using JSON array content, sections:', jsonContent.length);
+      console.log('📊 JSON sections preview:', jsonContent.slice(0, 2));
       return jsonContent as MedicalSection[];
     }
     
