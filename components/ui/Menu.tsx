@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug, Bookmark } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -186,6 +186,13 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               </TouchableOpacity>
             ))}
 
+            <TouchableOpacity
+              style={dynamicStyles.menuItem}
+              onPress={() => handleMenuItemPress('/bookmarks')}
+            >
+              <Bookmark size={20} color={colors.text} />
+              <Text style={dynamicStyles.menuItemText}>Bookmarks</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={dynamicStyles.menuItem}
