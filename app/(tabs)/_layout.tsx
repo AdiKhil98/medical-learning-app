@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, BookOpen, BarChart, Activity, Heart } from 'lucide-react-native';
+import { Home, BookOpen, BarChart, Activity } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
@@ -70,13 +70,6 @@ export default function TabLayout() {
         options={{
           title: 'Simulation',
           tabBarIcon: ({ color, size }) => <Activity size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="bookmarks"
-        options={{
-          title: 'Favoriten',
-          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
         }}
       />
       <Tabs.Screen
