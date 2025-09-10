@@ -40,11 +40,23 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
 
   const checkBookmarkStatus = async () => {
     try {
+      console.log('🔍 BookmarkButton checking status for:', sectionSlug);
       setIsChecking(true);
-      const bookmarked = await bookmarksService.isBookmarked(sectionSlug);
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise<boolean>((_, reject) => 
+        setTimeout(() => reject(new Error('Bookmark status check timeout')), 10000)
+      );
+      
+      const statusPromise = bookmarksService.isBookmarked(sectionSlug);
+      
+      const bookmarked = await Promise.race([statusPromise, timeoutPromise]);
+      console.log('✅ BookmarkButton status result:', bookmarked);
       setIsBookmarked(bookmarked);
     } catch (error) {
-      console.error('Error checking bookmark status:', error);
+      console.error('❌ Error checking bookmark status:', error);
+      // Default to false if check fails
+      setIsBookmarked(false);
     } finally {
       setIsChecking(false);
     }
@@ -110,7 +122,10 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
     return (
       <TouchableOpacity 
         style={[styles.button, { backgroundColor: colors.card }, style]}
-        disabled={true}
+        onPress={() => {
+          console.log('🔄 Force refresh bookmark status');
+          checkBookmarkStatus();
+        }}
       >
         <ActivityIndicator 
           size="small" 
