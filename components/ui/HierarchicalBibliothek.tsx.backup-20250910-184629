@@ -25,7 +25,6 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import BookmarkButton from '@/components/ui/BookmarkButton';
 
 interface CategoryItem {
   id: string;
@@ -229,16 +228,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
           {item.hasChildren ? (
             <ChevronRight size={20} color={colors.textSecondary} />
           ) : (
-            <View style={styles.contentActions}>
-              <BookmarkButton
-                sectionSlug={item.slug}
-                sectionTitle={item.title}
-                sectionCategory={item.type}
-                size={18}
-                style={styles.bookmarkButton}
-              />
-              <FileText size={18} color={colors.primary} style={styles.fileIcon} />
-            </View>
+            <FileText size={18} color={colors.primary} />
           )}
         </View>
       </TouchableOpacity>
@@ -389,17 +379,6 @@ const styles = StyleSheet.create({
   cardIndicator: {
     alignSelf: 'flex-end',
     marginTop: 8,
-  },
-  contentActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  bookmarkButton: {
-    padding: 4,
-  },
-  fileIcon: {
-    marginLeft: 4,
   },
   bottomPadding: {
     height: 40,
