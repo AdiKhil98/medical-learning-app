@@ -5,6 +5,7 @@
   import { useAuth } from '@/contexts/AuthContext';
   import Input from '@/components/ui/Input';
   import Logo from '@/components/ui/Logo';
+  import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator';
   import { LinearGradient } from 'expo-linear-gradient';
 
   export default function RegisterScreen() {
@@ -15,7 +16,37 @@
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [emailTouched, setEmailTouched] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
     const { signUp } = useAuth();
+
+    // Email validation function
+    const validateEmailFormat = (email: string) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    // Handle email input with validation
+    const handleEmailChange = (text: string) => {
+      setEmail(text);
+      
+      if (emailTouched && text.length > 0) {
+        if (!validateEmailFormat(text)) {
+          setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+        } else {
+          setEmailError('');
+        }
+      }
+    };
+
+    // Handle email blur event
+    const handleEmailBlur = () => {
+      setEmailTouched(true);
+      if (email.length > 0 && !validateEmailFormat(email)) {
+        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      }
+    };
 
     const handleRegister = async () => {
       if (!name || !email || !password || !confirmPassword) {
@@ -28,12 +59,37 @@
         return;
       }
 
+      // Check for email validation errors
+      if (!validateEmailFormat(email)) {
+        setEmailTouched(true);
+        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+        return;
+      }
+
       setLoading(true);
       try {
         await signUp(email, password, name);
+        // If we get here without error, user was signed up successfully but needs verification
         router.replace('/(tabs)');
       } catch (error: any) {
-        Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
+        if (error.message === 'VERIFICATION_REQUIRED') {
+          // Redirect to verification screen
+          Alert.alert(
+            'Registration Successful!',
+            'Please check your email and click the verification link to activate your account.',
+            [
+              {
+                text: 'Check Email',
+                onPress: () => router.push({
+                  pathname: '/auth/verify-email',
+                  params: { email: email.toLowerCase().trim() }
+                }),
+              },
+            ]
+          );
+        } else {
+          Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
+        }
       } finally {
         setLoading(false);
       }
@@ -79,6 +135,7 @@
                   leftIcon={<User size={20} color="#6B7280" />}
                   editable={!loading}
                   containerStyle={styles.inputContainer}
+                  autoFocus={true}
                 />
 
                 <Input
@@ -88,30 +145,40 @@
                   autoCapitalize="none"
                   autoCorrect={false}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={handleEmailChange}
+                  onBlur={handleEmailBlur}
                   leftIcon={<Mail size={20} color="#6B7280" />}
                   editable={!loading}
                   containerStyle={styles.inputContainer}
+                  error={emailError}
                 />
 
-                <Input
-                  label="Passwort"
-                  placeholder="Passwort eingeben"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  leftIcon={<Lock size={20} color="#6B7280" />}
-                  rightIcon={
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ?
-                        <EyeOff size={20} color="#6B7280" /> :
-                        <Eye size={20} color="#6B7280" />
-                      }
-                    </TouchableOpacity>
-                  }
-                  editable={!loading}
-                  containerStyle={styles.inputContainer}
-                />
+                <View>
+                  <Input
+                    label="Passwort"
+                    placeholder="Passwort eingeben"
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
+                    leftIcon={<Lock size={20} color="#6B7280" />}
+                    rightIcon={
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        {showPassword ?
+                          <EyeOff size={20} color="#6B7280" /> :
+                          <Eye size={20} color="#6B7280" />
+                        }
+                      </TouchableOpacity>
+                    }
+                    editable={!loading}
+                    containerStyle={styles.inputContainer}
+                  />
+                  <PasswordStrengthIndicator 
+                    password={password}
+                    visible={passwordFocused || password.length > 0}
+                  />
+                </View>
 
                 <Input
                   label="Passwort bestätigen"
