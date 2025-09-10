@@ -25,7 +25,6 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import BookmarkButton from './BookmarkButton';
 
 interface CategoryItem {
   id: string;
@@ -210,7 +209,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   );
 
-  // Render category card with bookmark functionality
+  // Render category card
   const renderCategoryCard = (item: CategoryItem) => {
     const IconComponent = getIconComponent(item.icon);
     
@@ -241,17 +240,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
           {item.hasChildren ? (
             <ChevronRight size={20} color={colors.textSecondary} />
           ) : (
-            <View style={styles.contentCardActions}>
-              <BookmarkButton 
-                sectionSlug={item.slug}
-                sectionTitle={item.title}
-                sectionCategory={item.type}
-                size={18}
-                style={styles.bookmarkButton}
-                showAnimation={false}
-              />
-              <FileText size={18} color={colors.primary} style={styles.contentIcon} />
-            </View>
+            <FileText size={18} color={colors.primary} />
           )}
         </View>
       </TouchableOpacity>
@@ -363,7 +352,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gridContainer: {
-    padding: 16,
+    padding: 18,      // Enhanced padding
   },
   grid: {
     flexDirection: 'row',
@@ -407,24 +396,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginTop: 8,
   },
-  // 🔖 New Bookmark-related styles
-  contentCardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  bookmarkButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  contentIcon: {
-    opacity: 0.7,
-  },
   bottomPadding: {
     height: 40,
   },
-  // 🎨 Skeleton Loading Styles
+  // 🎨 New Skeleton Loading Styles
   skeletonCard: {
     width: '48%',
     marginBottom: 16,
@@ -439,9 +414,9 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   skeletonIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 52,    // Slightly larger icons
+    height: 52,   // Better proportions
+    borderRadius: 26, // Match new size
     marginBottom: 12,
   },
   skeletonContent: {
@@ -473,7 +448,7 @@ const styles = StyleSheet.create({
   skeletonHeaderTitle: {
     height: 24,
     width: 200,
-    borderRadius: 12,
+    borderRadius: 16, // Enhanced rounded corners
     marginBottom: 8,
   },
   skeletonHeaderSubtitle: {
