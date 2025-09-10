@@ -19,12 +19,23 @@
     const [emailError, setEmailError] = useState('');
     const [emailTouched, setEmailTouched] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const { signUp } = useAuth();
 
     // Email validation function
     const validateEmailFormat = (email: string) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
+    };
+
+    // Password validation function
+    const validatePasswordStrength = (password: string) => {
+      if (password.length < 8) return 'Passwort muss mindestens 8 Zeichen lang sein';
+      if (!/(?=.*[a-z])/.test(password)) return 'Passwort muss mindestens einen Kleinbuchstaben enthalten';
+      if (!/(?=.*[A-Z])/.test(password)) return 'Passwort muss mindestens einen Großbuchstaben enthalten';
+      if (!/(?=.*\d)/.test(password)) return 'Passwort muss mindestens eine Zahl enthalten';
+      return '';
     };
 
     // Handle email input with validation
@@ -48,21 +59,60 @@
       }
     };
 
+    // Handle password input with validation
+    const handlePasswordChange = (text: string) => {
+      setPassword(text);
+      const error = validatePasswordStrength(text);
+      setPasswordError(error);
+      
+      // Re-check confirm password if it's already filled
+      if (confirmPassword && text !== confirmPassword) {
+        setConfirmPasswordError('Die Passwörter stimmen nicht überein');
+      } else if (confirmPassword && text === confirmPassword) {
+        setConfirmPasswordError('');
+      }
+    };
+
+    // Handle confirm password input with validation
+    const handleConfirmPasswordChange = (text: string) => {
+      setConfirmPassword(text);
+      if (text !== password) {
+        setConfirmPasswordError('Die Passwörter stimmen nicht überein');
+      } else {
+        setConfirmPasswordError('');
+      }
+    };
+
     const handleRegister = async () => {
+      // Clear previous errors and validate all fields
+      let hasErrors = false;
+
       if (!name || !email || !password || !confirmPassword) {
         Alert.alert('Fehler', 'Bitte füllen Sie alle Felder aus.');
         return;
       }
 
-      if (password !== confirmPassword) {
-        Alert.alert('Fehler', 'Die Passwörter stimmen nicht überein.');
-        return;
-      }
-
-      // Check for email validation errors
+      // Check email format
       if (!validateEmailFormat(email)) {
         setEmailTouched(true);
         setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+        hasErrors = true;
+      }
+
+      // Check password strength
+      const passwordStrengthError = validatePasswordStrength(password);
+      if (passwordStrengthError) {
+        setPasswordError(passwordStrengthError);
+        hasErrors = true;
+      }
+
+      // Check password confirmation
+      if (password !== confirmPassword) {
+        setConfirmPasswordError('Die Passwörter stimmen nicht überein');
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
         return;
       }
 
@@ -159,7 +209,7 @@
                     placeholder="Passwort eingeben"
                     secureTextEntry={!showPassword}
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={handlePasswordChange}
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
                     leftIcon={<Lock size={20} color="#6B7280" />}
@@ -173,6 +223,7 @@
                     }
                     editable={!loading}
                     containerStyle={styles.inputContainer}
+                    error={passwordError}
                   />
                   <PasswordStrengthIndicator 
                     password={password}
@@ -185,7 +236,7 @@
                   placeholder="Passwort wiederholen"
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={handleConfirmPasswordChange}
                   leftIcon={<Lock size={20} color="#6B7280" />}
                   rightIcon={
                     <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
@@ -197,6 +248,7 @@
                   }
                   editable={!loading}
                   containerStyle={styles.inputContainer}
+                  error={confirmPasswordError}
                 />
 
                 <LinearGradient
