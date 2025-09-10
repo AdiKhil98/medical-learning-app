@@ -20,12 +20,18 @@ import {
   XCircle,
   Sparkles,
   TrendingUp,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Clock,
+  Stethoscope,
+  ChevronRight,
+  FileText
 } from 'lucide-react-native';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { useDailyContent } from '@/hooks/useDailyContent';
+import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
+import { useRouter } from 'expo-router';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -39,9 +45,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [showQuestionAnswer, setShowQuestionAnswer] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const router = useRouter();
   
   // Connect to Supabase data
   const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
+  
+  // Get recent medical content
+  const { recentContent, loading: recentContentLoading } = useRecentContentForHomepage();
   
   // Debug logging
   React.useEffect(() => {
@@ -50,7 +60,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
   const sections = [
     'Hero',
-    'About Lernkapital', 
+    'Recent Medical Content', 
     'Tip of the Day',
     'Question of the Day'
   ];
@@ -82,6 +92,14 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const handleAnswerSelect = (answer: string) => {
     setSelectedAnswer(answer);
     setShowQuestionAnswer(true);
+  };
+
+  const handleRecentContentPress = (contentSlug: string) => {
+    router.push(`/(tabs)/bibliothek/content/${contentSlug}`);
+  };
+
+  const handleViewAllRecentContent = () => {
+    router.push('/(tabs)/bibliothek');
   };
 
   // Function to format tip content with bold keywords
@@ -257,56 +275,99 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           </View>
         </View>
 
-        {/* Section 2: About Lernkapital */}
+        {/* Section 2: Recent Medical Content */}
         <View style={styles.section}>
-          <View style={styles.aboutSection}>
-            <Text style={styles.sectionTitle}>Über Lernkapital</Text>
-            <View style={styles.valuePropositions}>
-              <View style={styles.valueItem}>
-                <LinearGradient
-                  colors={['#4facfe', '#00f2fe']}
-                  style={styles.valueIcon}
-                >
-                  <Target size={32} color="#ffffff" />
-                </LinearGradient>
-                <View style={styles.valueContent}>
-                  <Text style={styles.valueTitle}>Personalisiertes Lernen</Text>
-                  <Text style={styles.valueDescription}>
-                    Maßgeschneiderte Lerninhalte basierend auf deinem Fortschritt
-                  </Text>
-                </View>
+          <View style={styles.recentContentSection}>
+            <Text style={styles.sectionTitle}>Zuletzt angesehen</Text>
+            {recentContentLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Lade letzte Inhalte...</Text>
               </View>
-
-              <View style={styles.valueItem}>
+            ) : recentContent.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.valueIcon}
+                  colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                  style={styles.emptyStateCard}
                 >
-                  <TrendingUp size={32} color="#ffffff" />
-                </LinearGradient>
-                <View style={styles.valueContent}>
-                  <Text style={styles.valueTitle}>Messbare Erfolge</Text>
-                  <Text style={styles.valueDescription}>
-                    Verfolge deinen Lernfortschritt mit detaillierten Statistiken
+                  <Stethoscope size={48} color="#6b7280" style={styles.emptyStateIcon} />
+                  <Text style={styles.emptyStateTitle}>Noch keine Inhalte angesehen</Text>
+                  <Text style={styles.emptyStateDescription}>
+                    Beginne deine medizinische Lernreise und deine zuletzt angesehenen Inhalte werden hier erscheinen.
                   </Text>
-                </View>
+                  <TouchableOpacity 
+                    style={styles.exploreButton}
+                    onPress={handleViewAllRecentContent}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#4F46E5', '#7C3AED']}
+                      style={styles.exploreButtonGradient}
+                    >
+                      <BookOpen size={16} color="#ffffff" style={styles.exploreButtonIcon} />
+                      <Text style={styles.exploreButtonText}>Inhalte entdecken</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
-
-              <View style={styles.valueItem}>
-                <LinearGradient
-                  colors={['#f093fb', '#f5576c']}
-                  style={styles.valueIcon}
+            ) : (
+              <View style={styles.recentContentList}>
+                {recentContent.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.recentContentItem}
+                    onPress={() => handleRecentContentPress(item.slug)}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                      style={styles.recentContentCard}
+                    >
+                      <View style={styles.recentContentHeader}>
+                        <View style={[styles.recentContentIcon, { backgroundColor: item.color ? `${item.color}20` : '#E0F2FE' }]}>
+                          <Stethoscope size={20} color={item.color || '#0369A1'} />
+                        </View>
+                        <View style={styles.recentContentInfo}>
+                          <Text style={styles.recentContentTitle} numberOfLines={2}>
+                            {item.title}
+                          </Text>
+                          <Text style={styles.recentContentCategory}>
+                            {item.category || item.type}
+                          </Text>
+                        </View>
+                        <View style={styles.recentContentMeta}>
+                          <View style={styles.viewCountBadge}>
+                            <Clock size={12} color="#6b7280" />
+                            <Text style={styles.viewCountText}>{item.viewCount}</Text>
+                          </View>
+                          <ChevronRight size={16} color="#9ca3af" />
+                        </View>
+                      </View>
+                      {item.description && (
+                        <Text style={styles.recentContentDescription} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ))}
+                
+                {/* View All Button */}
+                <TouchableOpacity
+                  style={styles.viewAllButton}
+                  onPress={handleViewAllRecentContent}
+                  activeOpacity={0.8}
                 >
-                  <Lightbulb size={32} color="#ffffff" />
-                </LinearGradient>
-                <View style={styles.valueContent}>
-                  <Text style={styles.valueTitle}>Täglich Neues</Text>
-                  <Text style={styles.valueDescription}>
-                    Frische Lerninhalte und Tipps jeden Tag
-                  </Text>
-                </View>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                    style={styles.viewAllCard}
+                  >
+                    <FileText size={20} color="#4F46E5" />
+                    <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                    <ChevronRight size={16} color="#4F46E5" />
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
-            </View>
+            )}
           </View>
         </View>
 
@@ -624,43 +685,165 @@ const styles = {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // About Section Styles
-  aboutSection: {
+  // Recent Content Section Styles
+  recentContentSection: {
     flex: 1,
     justifyContent: 'center',
     width: '100%',
   },
-  valuePropositions: {
-    gap: 24,
-  },
-  valueItem: {
-    flexDirection: 'row',
+  loadingContainer: {
+    padding: 40,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 20,
   },
-  valueIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  emptyStateContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
-  valueContent: {
-    flex: 1,
+  emptyStateCard: {
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    maxWidth: 320,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  valueTitle: {
+  emptyStateIcon: {
+    opacity: 0.6,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  valueDescription: {
+  emptyStateDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#6b7280',
     lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  exploreButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exploreButtonGradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exploreButtonIcon: {
+    marginRight: 8,
+  },
+  exploreButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  recentContentList: {
+    gap: 12,
+  },
+  recentContentItem: {
+    marginBottom: 8,
+  },
+  recentContentCard: {
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  recentContentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  recentContentIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  recentContentInfo: {
+    flex: 1,
+  },
+  recentContentTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 2,
+    lineHeight: 20,
+  },
+  recentContentCategory: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  recentContentMeta: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  viewCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  viewCountText: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  recentContentDescription: {
+    fontSize: 13,
+    color: '#6b7280',
+    lineHeight: 18,
+    marginLeft: 52,
+  },
+  viewAllButton: {
+    marginTop: 8,
+  },
+  viewAllCard: {
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 70, 229, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#4F46E5',
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
   // Tip Section Styles
   tipSection: {

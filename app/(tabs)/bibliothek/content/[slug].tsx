@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/folder';
 import MedicalContentLoader from '@/components/ui/MedicalContentLoader';
+import { recentContentService } from '@/lib/recentContentService';
 
 // Define Section type directly
 interface Section {
@@ -113,6 +114,22 @@ const ContentDetailScreen = memo(() => {
         headerTitle: cached.data.title || slug,
       });
       
+      // Track content view for cached content too
+      try {
+        await recentContentService.trackContentView({
+          slug: cached.data.slug,
+          title: cached.data.title,
+          description: cached.data.description,
+          category: cached.data.category || cached.data.type,
+          type: cached.data.type,
+          icon: cached.data.icon,
+          color: cached.data.color
+        });
+        console.log('📖 Tracked cached content view:', cached.data.title);
+      } catch (trackingError) {
+        console.warn('⚠️ Failed to track cached content view:', trackingError);
+      }
+      
       // Auto-expand first section if content_improved exists
       if (Array.isArray(cached.data.content_improved) && cached.data.content_improved.length > 0) {
         setExpandedSections({ '0': true });
@@ -143,6 +160,22 @@ const ContentDetailScreen = memo(() => {
       
       // Cache the result
       contentCache.set(slug, { data: sectionData, timestamp: now });
+      
+      // Track content view for recent content
+      try {
+        await recentContentService.trackContentView({
+          slug: sectionData.slug,
+          title: sectionData.title,
+          description: sectionData.description,
+          category: sectionData.category || sectionData.type,
+          type: sectionData.type,
+          icon: sectionData.icon,
+          color: sectionData.color
+        });
+        console.log('📖 Tracked content view:', sectionData.title);
+      } catch (trackingError) {
+        console.warn('⚠️ Failed to track content view:', trackingError);
+      }
       
       // Auto-expand first section if content_improved exists
       if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
