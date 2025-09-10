@@ -22,8 +22,37 @@
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [emailTouched, setEmailTouched] = useState(false);
     const router = useRouter();
     const { signIn, session } = useAuth();
+
+    // Email validation function
+    const validateEmailFormat = (email: string) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    // Handle email input with validation
+    const handleEmailChange = (text: string) => {
+      setEmail(text);
+      
+      if (emailTouched && text.length > 0) {
+        if (!validateEmailFormat(text)) {
+          setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+        } else {
+          setEmailError('');
+        }
+      }
+    };
+
+    // Handle email blur event
+    const handleEmailBlur = () => {
+      setEmailTouched(true);
+      if (email.length > 0 && !validateEmailFormat(email)) {
+        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      }
+    };
 
     // Redirect if already logged in
     useEffect(() => {
@@ -35,6 +64,13 @@
     const handleLogin = async () => {
       if (!email || !password) {
         Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
+        return;
+      }
+
+      // Check for email validation errors
+      if (!validateEmailFormat(email)) {
+        setEmailTouched(true);
+        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
         return;
       }
 
@@ -61,7 +97,31 @@
       } catch (error: any) {
         const errorTime = performance.now();
         console.log('❌ Login error after', Math.round(errorTime - startTime), 'ms:', error.message);
-        Alert.alert('Anmeldung fehlgeschlagen', error.message);
+        
+        // Provide more user-friendly error messages
+        let errorMessage = '';
+        let errorTitle = 'Anmeldung fehlgeschlagen';
+        
+        if (error.message?.includes('Invalid login credentials')) {
+          errorTitle = 'Ungültige Anmeldedaten';
+          errorMessage = 'E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut.';
+        } else if (error.message?.includes('Email not confirmed')) {
+          errorTitle = 'E-Mail nicht bestätigt';
+          errorMessage = 'Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.';
+        } else if (error.message?.includes('Too many requests')) {
+          errorTitle = 'Zu viele Versuche';
+          errorMessage = 'Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
+        } else if (error.message?.includes('Account locked')) {
+          errorTitle = 'Konto gesperrt';
+          errorMessage = 'Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.';
+        } else if (error.message?.includes('Network')) {
+          errorTitle = 'Verbindungsfehler';
+          errorMessage = 'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+        } else {
+          errorMessage = 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
+        }
+        
+        Alert.alert(errorTitle, errorMessage);
       } finally {
         const finalTime = performance.now();
         console.log('🔄 Login process completed in:', Math.round(finalTime - startTime), 'ms');
@@ -105,13 +165,16 @@
                   label="E-Mail"
                   placeholder="E-Mail eingeben"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={handleEmailChange}
+                  onBlur={handleEmailBlur}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoFocus={true}
                   leftIcon={<Mail size={20} color="#6B7280" />}
                   editable={!loading}
                   containerStyle={styles.inputContainer}
+                  error={emailError}
                 />
 
                 <Input
@@ -144,7 +207,7 @@
                     <Text style={styles.rememberText}>Für 30 Tage merken</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push('/auth/forgot-password')}>
                     <Text style={styles.forgotPassword}>Passwort vergessen?</Text>
                   </TouchableOpacity>
                 </View>

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, SecureLogger, SessionTimeoutManager, RateLimiter } from '@/lib/security';
@@ -383,7 +384,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
-        options: { data: { name: name.trim() } }
+        options: { 
+          data: { name: name.trim() },
+          emailRedirectTo: Platform.OS === 'web' 
+            ? `${window.location.origin}/auth/verify-email`
+            : 'medicallearningapp://auth/verify-email'
+        }
       });
       
       if (authError) {
@@ -391,7 +397,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw authError;
       }
       
+      // Check if user needs email confirmation
+      if (authData.user && !authData.user.email_confirmed_at) {
+        SecureLogger.log('Sign up successful - email verification required');
+        // Return a special status to indicate email verification is needed
+        throw new Error('VERIFICATION_REQUIRED');
+      }
+      
       SecureLogger.log('Sign up successful');
+      return authData;
     } catch (error) {
       SecureLogger.error('Sign up error', error);
       throw error;

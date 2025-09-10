@@ -16,10 +16,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     ...(Platform.OS === 'web' && {
-      detectSessionInUrl: false,
+      detectSessionInUrl: true, // Enable URL detection for email links
       persistSession: true,
       autoRefreshToken: true,
     }),
+    // Email link handling configuration
+    flowType: 'pkce', // Use PKCE flow for better security
   },
 });
 
