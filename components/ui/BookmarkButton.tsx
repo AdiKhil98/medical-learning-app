@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Heart, HeartOff } from 'lucide-react-native';
+import { Plus, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { bookmarksService } from '@/lib/bookmarksService';
 
@@ -125,17 +125,16 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
       ) : (
         <>
           {isBookmarked ? (
-            <Heart
+            <Check
               size={size}
               color={colors.primary}
-              fill={colors.primary}
-              style={showAnimation ? styles.heartFilled : undefined}
+              style={showAnimation ? styles.iconBookmarked : undefined}
             />
           ) : (
-            <HeartOff
+            <Plus
               size={size}
               color={colors.textSecondary}
-              style={showAnimation ? styles.heartEmpty : undefined}
+              style={showAnimation ? styles.iconUnbookmarked : undefined}
             />
           )}
         </>
@@ -158,10 +157,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  heartFilled: {
-    transform: [{ scale: 1.1 }], // Slightly larger when filled
+  iconBookmarked: {
+    transform: [{ scale: 1.1 }], // Slightly larger when bookmarked
   },
-  heartEmpty: {
+  iconUnbookmarked: {
     opacity: 0.7,
   },
 });
