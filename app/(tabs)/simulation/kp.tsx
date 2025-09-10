@@ -252,12 +252,12 @@ export default function KPSimulationScreen() {
     }
   };
   
-  // Show disclaimer when Voiceflow is loaded
-  useEffect(() => {
-    if (voiceflowLoaded && !simulationStarted) {
-      setShowDisclaimer(true);
-    }
-  }, [voiceflowLoaded, simulationStarted]);
+  // Show disclaimer when Voiceflow is loaded - DISABLED
+  // useEffect(() => {
+  //   if (voiceflowLoaded && !simulationStarted) {
+  //     setShowDisclaimer(true);
+  //   }
+  // }, [voiceflowLoaded, simulationStarted]);
   
   const handleDisclaimerAccept = () => {
     setShowDisclaimer(false);
@@ -621,13 +621,15 @@ export default function KPSimulationScreen() {
         </ScrollView>
       </SafeAreaView>
       
-      {/* Disclaimer Modal */}
-      <SimulationDisclaimerModal
-        visible={showDisclaimer}
-        onAccept={handleDisclaimerAccept}
-        onDecline={handleDisclaimerDecline}
-        simulationType="KP"
-      />
+      {/* Disclaimer Modal - DISABLED */}
+      {false && (
+        <SimulationDisclaimerModal
+          visible={showDisclaimer}
+          onAccept={handleDisclaimerAccept}
+          onDecline={handleDisclaimerDecline}
+          simulationType="KP"
+        />
+      )}
     </View>
   );
 }
