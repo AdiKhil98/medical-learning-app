@@ -22,7 +22,9 @@ import {
   HelpCircle,
   Info,
   Award,
-  Send
+  Send,
+  Bookmark,
+  Crown
 } from 'lucide-react-native';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -543,6 +545,23 @@ export default function ProfileScreen() {
             icon={Lock}
             title="Passwort ändern"
             onPress={() => navigateTo('/konto/passwort-aendern')}
+            showArrow={false}
+            rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
+          />
+        </Card>
+
+        {/* Favoriten Section */}
+        <Text style={dynamicStyles.sectionTitle}>Favoriten</Text>
+        <Card style={dynamicStyles.sectionCard}>
+          <SettingItem
+            icon={Bookmark}
+            title="Gespeicherte Inhalte"
+            onPress={() => navigateTo('/bookmarks')}
+          />
+          <SettingItem
+            icon={Crown}
+            title="Abonnement"
+            onPress={() => navigateTo('/konto/abonnement')}
             showArrow={false}
             rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
           />
