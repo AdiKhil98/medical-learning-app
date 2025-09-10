@@ -5,7 +5,6 @@ import { ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
-import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
 
 
@@ -422,39 +421,13 @@ export default function KPSimulationScreen() {
             
             {/* Main content */}
             <View style={styles.mainContent}>
-              <View style={styles.textContent}>
-                <Text style={styles.heading}>KP Simulation</Text>
-                <Text style={styles.description}>
-                  {simulationStarted 
-                    ? "Die KI-Simulation ist aktiv! Sprechen Sie mit dem virtuellen Assistenten."
-                    : "Bereit für Ihre medizinische KI-Simulation? Klicken Sie auf den Orb, um zu beginnen."
-                  }
-                </Text>
-              </View>
-
-              {/* Animated Celestial Orb */}
-              <View style={styles.orbContainer}>
-                <AnimatedOrb
+              {!simulationStarted && (
+                <TouchableOpacity
+                  style={styles.startArea}
                   onPress={handleOrbPress}
-                  isActive={simulationStarted}
-                  size={160}
+                  activeOpacity={1}
                 />
-              </View>
-
-              {/* Status indicator */}
-              <View style={styles.voiceflowStatus}>
-                <Text style={[styles.statusText, { 
-                  color: simulationStarted 
-                    ? '#22c55e' 
-                    : (voiceflowLoaded ? '#4CAF50' : '#f59e0b') 
-                }]}>
-                  {simulationStarted 
-                    ? '🎙️ Simulation läuft - Sprechen Sie!'
-                    : (voiceflowLoaded ? '✅ Bereit zum Starten' : '⏳ Initialisierung...')
-                  }
-                </Text>
-              </View>
-
+              )}
               {simulationStarted && (
                 <TouchableOpacity
                   style={styles.endSimulationButton}
@@ -465,14 +438,6 @@ export default function KPSimulationScreen() {
                     Simulation beenden
                   </Text>
                 </TouchableOpacity>
-              )}
-
-              {/* Recording indicator */}
-              {simulationStarted && (
-                <View style={styles.statusIndicator}>
-                  <View style={styles.recordingDot} />
-                  <Text style={[styles.statusText, { color: '#22c55e' }]}>Aktiv</Text>
-                </View>
               )}
             </View>
             
@@ -557,49 +522,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  orbContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 40,
-    zIndex: 5,
-  },
-  voiceflowStatus: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  statusText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
-  simulationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 20,
-    gap: 8,
-  },
-  simulationButtonActive: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#1d4ed8',
-  },
-  simulationButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#3b82f6',
-  },
-  simulationButtonTextActive: {
-    color: '#ffffff',
+  startArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
   },
   endSimulationButton: {
     backgroundColor: '#ef4444',
@@ -620,47 +549,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#ffffff',
     textAlign: 'center',
-  },
-  textContent: {
-    alignItems: 'center',
-    maxWidth: 350,
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 36,
-    fontFamily: 'Inter-Bold',
-    color: '#1e40af',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 18,
-    color: '#374151',
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 16,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    marginTop: 16,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#22c55e',
-    borderRadius: 4,
-    shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
   },
   spacer: {
     height: 100,
