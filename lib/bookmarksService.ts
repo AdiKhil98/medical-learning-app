@@ -154,28 +154,60 @@ class BookmarksService {
    */
   async removeBookmark(sectionSlug: string): Promise<void> {
     try {
+      console.log('🗑️ removeBookmark called for section:', sectionSlug);
+      
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
+        console.error('❌ Authentication error:', authError);
         throw new Error('User must be authenticated to remove bookmarks');
       }
 
-      const { error } = await supabase
+      console.log('👤 User authenticated:', user.id);
+
+      // First, check if bookmark exists
+      const { data: existingBookmark, error: checkError } = await supabase
+        .from('user_bookmarks')
+        .select('id, section_title')
+        .eq('user_id', user.id)
+        .eq('section_slug', sectionSlug)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('❌ Error checking existing bookmark:', checkError);
+        throw new Error(`Error checking bookmark: ${checkError.message}`);
+      }
+
+      if (!existingBookmark) {
+        console.warn('⚠️ Bookmark not found for section:', sectionSlug);
+        throw new Error('Bookmark not found or already removed');
+      }
+
+      console.log('📖 Found bookmark to delete:', existingBookmark.section_title);
+
+      // Perform the delete
+      const { data: deleteData, error: deleteError } = await supabase
         .from('user_bookmarks')
         .delete()
         .eq('user_id', user.id)
-        .eq('section_slug', sectionSlug);
+        .eq('section_slug', sectionSlug)
+        .select(); // Return deleted rows for confirmation
 
-      if (error) {
-        SecureLogger.log('Error removing bookmark:', error);
-        throw error;
+      if (deleteError) {
+        console.error('❌ Delete error:', deleteError);
+        SecureLogger.log('Error removing bookmark:', deleteError);
+        throw new Error(`Failed to remove bookmark: ${deleteError.message}`);
       }
+
+      console.log('✅ Delete successful, rows affected:', deleteData?.length || 0);
 
       // Clear cache to force refresh
       this.clearUserCache(user.id);
       
       SecureLogger.log('Removed bookmark for section:', sectionSlug);
+      console.log('🎉 Bookmark removed successfully!');
 
     } catch (error) {
+      console.error('💥 Error in removeBookmark:', error);
       SecureLogger.log('Error in removeBookmark:', error);
       throw error;
     }

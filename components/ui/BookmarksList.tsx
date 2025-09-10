@@ -116,6 +116,8 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
   };
 
   const handleRemoveBookmark = async (bookmark: UserBookmark) => {
+    console.log('🗑️ handleRemoveBookmark called for:', bookmark.section_title);
+    
     Alert.alert(
       'Lesezeichen entfernen',
       `Möchten Sie "${bookmark.section_title}" aus den Favoriten entfernen?`,
@@ -126,11 +128,31 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('👤 User confirmed deletion for:', bookmark.section_slug);
+              
+              // Show loading indicator could be added here
               await bookmarksService.removeBookmark(bookmark.section_slug);
+              
+              console.log('✅ Remove successful, refreshing list...');
               await fetchBookmarks(); // Refresh list
-            } catch (error) {
-              console.error('Error removing bookmark:', error);
-              Alert.alert('Fehler', 'Lesezeichen konnte nicht entfernt werden.');
+              
+              // Show success message
+              Alert.alert(
+                'Erfolg', 
+                `"${bookmark.section_title}" wurde aus den Favoriten entfernt.`,
+                [{ text: 'OK' }]
+              );
+              
+            } catch (error: any) {
+              console.error('💥 Error removing bookmark:', error);
+              
+              // Show detailed error message
+              const errorMessage = error?.message || 'Unbekannter Fehler beim Entfernen des Lesezeichens.';
+              Alert.alert(
+                'Fehler beim Entfernen', 
+                `Lesezeichen konnte nicht entfernt werden:\n\n${errorMessage}`,
+                [{ text: 'OK' }]
+              );
             }
           },
         },
