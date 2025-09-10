@@ -163,18 +163,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     await fetchItems(targetBreadcrumb.slug);
   }, [breadcrumbs, fetchItems]);
 
-  // Enhanced Loading State with Skeleton Cards
-  const renderSkeletonCard = (index: number) => (
-    <View key={`skeleton-${index}`} style={[styles.skeletonCard, { backgroundColor: colors.card }]}>
-      <View style={[styles.skeletonIcon, { backgroundColor: colors.border }]} />
-      <View style={styles.skeletonContent}>
-        <View style={[styles.skeletonTitle, { backgroundColor: colors.border }]} />
-        <View style={[styles.skeletonSubtitle, { backgroundColor: colors.border }]} />
-      </View>
-      <View style={[styles.skeletonIndicator, { backgroundColor: colors.border }]} />
-    </View>
-  );
-
   // Render breadcrumb navigation
   const renderBreadcrumbs = () => (
     <View style={styles.breadcrumbContainer}>
@@ -249,24 +237,11 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 
   if (loading && currentItems.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Skeleton Breadcrumbs */}
-        <View style={styles.breadcrumbContainer}>
-          <View style={[styles.skeletonBreadcrumb, { backgroundColor: colors.border }]} />
-        </View>
-        
-        {/* Skeleton Header */}
-        <View style={styles.headerContainer}>
-          <View style={[styles.skeletonHeaderTitle, { backgroundColor: colors.border }]} />
-          <View style={[styles.skeletonHeaderSubtitle, { backgroundColor: colors.border }]} />
-        </View>
-
-        {/* Skeleton Grid */}
-        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.gridContainer}>
-          <View style={styles.grid}>
-            {Array.from({ length: 6 }, (_, index) => renderSkeletonCard(index))}
-          </View>
-        </ScrollView>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Lade medizinische Kategorien...
+        </Text>
       </View>
     );
   }
@@ -305,6 +280,15 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
   },
   breadcrumbContainer: {
     paddingVertical: 12,
@@ -352,7 +336,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gridContainer: {
-    padding: 18,      // Enhanced padding
+    padding: 16,
   },
   grid: {
     flexDirection: 'row',
@@ -362,19 +346,19 @@ const styles = StyleSheet.create({
   categoryCard: {
     width: '48%',
     marginBottom: 16,
-    borderRadius: 16, // Enhanced rounded corners
-    padding: 18,      // Enhanced padding
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 }, // Deeper shadow
-    shadowOpacity: 0.12,                   // Enhanced shadow opacity
-    shadowRadius: 8,                       // Softer shadow spread
-    elevation: 4,                          // Better Android elevation
-    minHeight: 130,                        // Better proportions
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 120,
   },
   iconContainer: {
-    width: 52,    // Slightly larger icons
-    height: 52,   // Better proportions
-    borderRadius: 26, // Match new size
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -398,63 +382,6 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  // 🎨 New Skeleton Loading Styles
-  skeletonCard: {
-    width: '48%',
-    marginBottom: 16,
-    borderRadius: 16, // Enhanced rounded corners
-    padding: 18,      // Enhanced padding
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 }, // Deeper shadow
-    shadowOpacity: 0.05,
-    shadowRadius: 8,                       // Softer shadow spread
-    elevation: 2,
-    minHeight: 130,                        // Better proportions
-    opacity: 0.7,
-  },
-  skeletonIcon: {
-    width: 52,    // Slightly larger icons
-    height: 52,   // Better proportions
-    borderRadius: 26, // Match new size
-    marginBottom: 12,
-  },
-  skeletonContent: {
-    flex: 1,
-  },
-  skeletonTitle: {
-    height: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    width: '80%',
-  },
-  skeletonSubtitle: {
-    height: 12,
-    borderRadius: 6,
-    width: '60%',
-  },
-  skeletonIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-  skeletonBreadcrumb: {
-    height: 16,
-    width: 120,
-    borderRadius: 8,
-  },
-  skeletonHeaderTitle: {
-    height: 24,
-    width: 200,
-    borderRadius: 16, // Enhanced rounded corners
-    marginBottom: 8,
-  },
-  skeletonHeaderSubtitle: {
-    height: 14,
-    width: 100,
-    borderRadius: 7,
   },
 });
 

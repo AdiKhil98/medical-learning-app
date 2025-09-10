@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gridContainer: {
-    padding: 18,      // Enhanced padding
+    padding: 16,
   },
   grid: {
     flexDirection: 'row',
@@ -362,19 +362,19 @@ const styles = StyleSheet.create({
   categoryCard: {
     width: '48%',
     marginBottom: 16,
-    borderRadius: 16, // Enhanced rounded corners
-    padding: 18,      // Enhanced padding
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 }, // Deeper shadow
-    shadowOpacity: 0.12,                   // Enhanced shadow opacity
-    shadowRadius: 8,                       // Softer shadow spread
-    elevation: 4,                          // Better Android elevation
-    minHeight: 130,                        // Better proportions
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 120,
   },
   iconContainer: {
-    width: 52,    // Slightly larger icons
-    height: 52,   // Better proportions
-    borderRadius: 26, // Match new size
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -403,20 +403,20 @@ const styles = StyleSheet.create({
   skeletonCard: {
     width: '48%',
     marginBottom: 16,
-    borderRadius: 16, // Enhanced rounded corners
-    padding: 18,      // Enhanced padding
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 }, // Deeper shadow
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,                       // Softer shadow spread
+    shadowRadius: 4,
     elevation: 2,
-    minHeight: 130,                        // Better proportions
+    minHeight: 120,
     opacity: 0.7,
   },
   skeletonIcon: {
-    width: 52,    // Slightly larger icons
-    height: 52,   // Better proportions
-    borderRadius: 26, // Match new size
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     marginBottom: 12,
   },
   skeletonContent: {
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   skeletonHeaderTitle: {
     height: 24,
     width: 200,
-    borderRadius: 16, // Enhanced rounded corners
+    borderRadius: 12,
     marginBottom: 8,
   },
   skeletonHeaderSubtitle: {
