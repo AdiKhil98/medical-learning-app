@@ -6,6 +6,9 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
+import { VoiceInteractionService, VoiceInteractionState } from '@/utils/voiceIntegration';
+import VoiceMicrophone from '@/components/ui/VoiceMicrophone';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -14,6 +17,15 @@ export default function FSPSimulationScreen() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const scrollViewRef = useRef(null);
   const voiceflowController = useRef<VoiceflowController | null>(null);
+  const voiceService = useRef<VoiceInteractionService | null>(null);
+  const [voiceState, setVoiceState] = useState<VoiceInteractionState>({
+    isInitialized: false,
+    isRecording: false,
+    isProcessing: false,
+    currentMessage: '',
+    conversationHistory: [],
+    error: null,
+  });
   
   const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
     isActive: simulationStarted,
@@ -24,34 +36,45 @@ export default function FSPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
-  // Standard Voiceflow initialization - shows widget in default position
-  const initializeVoiceflow = () => {
-    console.log('✅ FSP Voiceflow object found, initializing...');
-    
-    const config = {
-      verify: { projectID: '68b40ab94a5a50553729c86b' },
-      url: 'https://general-runtime.voiceflow.com',
-      versionID: '68b40ab94a5a50553729c86c',
-      voice: {
-        url: 'https://runtime-api.voiceflow.com'
-      }
-    };
-    
-    console.log('🔧 Loading FSP Voiceflow with standard config:', config);
-    
+  // Initialize voice interaction service for FSP
+  const initializeVoiceService = async () => {
     try {
-      window.voiceflow.chat.load(config);
-      setVoiceflowLoaded(true);
-      console.log('🚀 FSP Voiceflow chat loaded successfully');
+      console.log('🎤 Initializing FSP voice service...');
+      
+      // Create Voiceflow controller
+      const controller = createFSPController();
+      voiceflowController.current = controller;
+      
+      // Create voice interaction service
+      const service = new VoiceInteractionService(controller);
+      voiceService.current = service;
+      
+      // Subscribe to voice state changes
+      const unsubscribe = service.subscribe((newState) => {
+        setVoiceState(newState);
+        if (newState.isInitialized && !simulationStarted) {
+          setSimulationStarted(true);
+          setVoiceflowLoaded(true);
+        }
+      });
+      
+      // Store unsubscribe function for cleanup
+      (service as any).unsubscribe = unsubscribe;
+      
+      console.log('✅ FSP Voice service created successfully');
+      return service;
     } catch (error) {
-      console.error('❌ Error loading FSP Voiceflow:', error);
+      console.error('❌ Error initializing FSP voice service:', error);
+      setVoiceState(prev => ({ 
+        ...prev, 
+        error: `Failed to initialize: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      }));
+      return null;
     }
   };
 
-  // Handle orb click - start simulation programmatically
-  const handleOrbPress = async () => {
-    if (simulationStarted) return;
-    
+  // Voice microphone event handlers for FSP
+  const handleInitializeVoice = async () => {
     // Check if user can use simulation
     if (!canUseSimulation()) {
       Alert.alert(
@@ -63,203 +86,55 @@ export default function FSPSimulationScreen() {
     }
 
     try {
-      console.log('🚀 Starting FSP simulation via orb click');
+      console.log('🚀 Initializing FSP voice simulation');
       
       // Track simulation usage
       await useSimulation('fsp');
       
       // Start simulation timer
-      setSimulationStarted(true);
       resetTimer();
       
-      // Show Voiceflow widget in default position
-      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-        try {
-          setTimeout(() => {
-            if (window.voiceflow.chat.open) {
-              window.voiceflow.chat.open();
-            } else if (window.voiceflow.chat.show) {
-              window.voiceflow.chat.show();
-            }
-            console.log('✅ FSP Voiceflow chat opened');
-          }, 1000);
-        } catch (error) {
-          console.error('❌ Error opening FSP Voiceflow chat:', error);
-        }
+      // Initialize voice service
+      const service = await initializeVoiceService();
+      if (service) {
+        await service.initialize();
+        console.log('✅ FSP Voice simulation initialized successfully');
       }
       
     } catch (error) {
-      console.error('Error starting simulation:', error);
+      console.error('❌ Error initializing FSP voice simulation:', error);
       Alert.alert(
         'Fehler',
-        'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+        'FSP Sprach-Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
         [{ text: 'OK' }]
       );
     }
   };
 
-  // Load Voiceflow script and set up event listeners
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      // Check if script already exists
-      const existingScript = document.querySelector('script[src*="voiceflow.com/widget-next/bundle.mjs"]');
-      if (existingScript) {
-        console.log('🔄 FSP Voiceflow script already loaded, initializing...');
-        // Initialize immediately if script exists
-        if (window.voiceflow && window.voiceflow.chat) {
-          initializeVoiceflow();
-        } else {
-          // Wait a bit for script to be ready
-          setTimeout(() => {
-            if (window.voiceflow && window.voiceflow.chat) {
-              initializeVoiceflow();
-            }
-          }, 1000);
-        }
-        return;
-      }
-      
-      console.log('🔄 Starting FSP Voiceflow script load...');
-      
-      const script = document.createElement('script');
-      script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
-      script.type = 'text/javascript';
-      script.onload = () => {
-        console.log('📦 FSP Voiceflow script loaded from CDN');
-        
-        try {
-          if (window.voiceflow && window.voiceflow.chat) {
-            initializeVoiceflow();
-            
-            // Set up multiple detection methods for widget interaction
-            const startSimulationTimer = async () => {
-              if (!simulationStarted) {
-                // Check if user can use simulation
-                if (!canUseSimulation()) {
-                  Alert.alert(
-                    'Simulationslimit erreicht',
-                    `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
-                    [{ text: 'OK' }]
-                  );
-                  return;
-                }
-
-                try {
-                  console.log('🚀 Starting FSP simulation timer');
-                  
-                  // Track simulation usage
-                  await useSimulation('fsp');
-                  
-                  setSimulationStarted(true);
-                  resetTimer();
-                } catch (error) {
-                  console.error('Error starting simulation:', error);
-                  Alert.alert(
-                    'Fehler',
-                    'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
-                    [{ text: 'OK' }]
-                  );
-                }
-              }
-            };
-            
-            // Method 1: Listen for Voiceflow events
-            const messageListener = (event: MessageEvent) => {
-              if (event.data && typeof event.data === 'object') {
-                console.log('📬 FSP Message received:', event.data);
-                if (event.data.type && event.data.type.startsWith('voiceflow:')) {
-                  console.log(`🔍 FSP Voiceflow Event: ${event.data.type}`);
-                  startSimulationTimer();
-                }
-              }
-            };
-            
-            window.addEventListener('message', messageListener);
-            (window as any).fspMessageListener = messageListener;
-            
-            // Method 2: Monitor widget DOM changes and interactions
-            const startWidgetMonitoring = () => {
-              let monitoringInterval: NodeJS.Timeout | null = null;
-              let hasStarted = false;
-              
-              const checkWidgetInteraction = () => {
-                if (hasStarted) return;
-                
-                // Look for Voiceflow widget elements
-                const widgetContainer = document.querySelector('[data-testid="chat"]') || 
-                                       document.querySelector('.vfrc-widget') ||
-                                       document.querySelector('#voiceflow-chat');
-                
-                if (widgetContainer) {
-                  // Check if widget has messages or input
-                  const hasMessages = widgetContainer.querySelector('.vfrc-message') || 
-                                     widgetContainer.querySelector('[role="log"]') ||
-                                     widgetContainer.textContent.length > 100;
-                  
-                  const isInputActive = widgetContainer.querySelector('input:focus') ||
-                                       widgetContainer.querySelector('textarea:focus');
-                  
-                  if (hasMessages || isInputActive) {
-                    console.log('👁️ FSP Widget interaction detected via DOM monitoring');
-                    hasStarted = true;
-                    startSimulationTimer();
-                    if (monitoringInterval) {
-                      clearInterval(monitoringInterval);
-                    }
-                  }
-                }
-              };
-              
-              // Start monitoring after widget loads
-              setTimeout(() => {
-                monitoringInterval = setInterval(checkWidgetInteraction, 1000);
-                (window as any).fspMonitoringInterval = monitoringInterval;
-                
-                // Stop monitoring after 5 minutes to prevent resource waste
-                setTimeout(() => {
-                  if (monitoringInterval) {
-                    clearInterval(monitoringInterval);
-                  }
-                }, 300000);
-              }, 2000);
-            };
-            
-            startWidgetMonitoring();
-            
-          } else {
-            console.error('❌ FSP Voiceflow object not found on window');
-            setTimeout(() => {
-              if (window.voiceflow && window.voiceflow.chat) {
-                console.log('⏰ FSP Voiceflow found after delay, initializing...');
-                initializeVoiceflow();
-              }
-            }, 1000);
-          }
-        } catch (error) {
-          console.error('❌ Error loading FSP Voiceflow:', error);
-        }
-      };
-      script.onerror = (error) => {
-        console.error('❌ Failed to load FSP Voiceflow script from CDN:', error);
-        console.error('Script URL:', script.src);
-      };
-      
-      console.log('📡 Adding FSP Voiceflow script to document head...');
-      document.head.appendChild(script);
-      
-      return () => {
-        // Cleanup script
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-        // Cleanup event listener
-        if ((window as any).fspMessageListener) {
-          window.removeEventListener('message', (window as any).fspMessageListener);
-          delete (window as any).fspMessageListener;
-        }
-      };
+  const handleStartRecording = () => {
+    if (voiceService.current) {
+      voiceService.current.startRecording();
     }
-  }, [simulationStarted, resetTimer]);
+  };
+
+  const handleStopRecording = () => {
+    if (voiceService.current) {
+      voiceService.current.stopRecording();
+    }
+  };
+
+  // Cleanup voice service on unmount
+  useEffect(() => {
+    return () => {
+      if (voiceService.current) {
+        if ((voiceService.current as any).unsubscribe) {
+          (voiceService.current as any).unsubscribe();
+        }
+        voiceService.current.destroy();
+        voiceService.current = null;
+      }
+    };
+  }, []);
 
   // Component cleanup - hide widget when leaving page
   useEffect(() => {
@@ -326,18 +201,27 @@ export default function FSPSimulationScreen() {
   const handleEndSimulation = () => {
     setSimulationStarted(false);
     resetTimer();
-    console.log('⏹️ FSP Simulation ended by user');
+    console.log('⏹️ FSP Voice Simulation ended by user');
     
-    // Close Voiceflow widget if open
-    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-      try {
-        if (window.voiceflow.chat.close) {
-          window.voiceflow.chat.close();
-        }
-      } catch (error) {
-        console.error('❌ Error closing FSP Voiceflow chat:', error);
+    // Stop voice service
+    if (voiceService.current) {
+      voiceService.current.stopRecording();
+      if ((voiceService.current as any).unsubscribe) {
+        (voiceService.current as any).unsubscribe();
       }
+      voiceService.current.destroy();
+      voiceService.current = null;
     }
+    
+    // Reset voice state
+    setVoiceState({
+      isInitialized: false,
+      isRecording: false,
+      isProcessing: false,
+      currentMessage: '',
+      conversationHistory: [],
+      error: null,
+    });
   };
   
   // Show disclaimer when Voiceflow is loaded - DISABLED
@@ -518,15 +402,27 @@ export default function FSPSimulationScreen() {
               </View>
             )}
             
-            {/* Main content */}
+            {/* Main content - Voice Microphone Interface */}
             <View style={styles.mainContent}>
-              {!simulationStarted && (
-                <TouchableOpacity
-                  style={styles.startArea}
-                  onPress={handleOrbPress}
-                  activeOpacity={1}
-                />
+              <VoiceMicrophone
+                onInitialize={handleInitializeVoice}
+                onStartRecording={handleStartRecording}
+                onStopRecording={handleStopRecording}
+                isInitialized={voiceState.isInitialized}
+                isRecording={voiceState.isRecording}
+                isProcessing={voiceState.isProcessing}
+                conversationText={voiceState.currentMessage}
+                size={160}
+              />
+              
+              {/* Error Display */}
+              {voiceState.error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{voiceState.error}</Text>
+                </View>
               )}
+              
+              {/* End Simulation Button */}
               {simulationStarted && (
                 <TouchableOpacity
                   style={styles.endSimulationButton}
@@ -621,13 +517,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  startArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
+  errorContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   spacer: {
     height: 100,
