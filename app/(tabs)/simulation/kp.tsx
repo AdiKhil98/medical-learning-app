@@ -5,19 +5,8 @@ import { ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
-import { LinearGradient } from 'expo-linear-gradient';
 import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-} from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
 
 
 export default function KPSimulationScreen() {
@@ -384,139 +373,10 @@ export default function KPSimulationScreen() {
     };
   }, []);
 
-  // Animated values for the background elements
-  const floatingOrb1 = useSharedValue(0);
-  const floatingOrb2 = useSharedValue(0);
-  const floatingOrb3 = useSharedValue(0);
-  const backgroundScale = useSharedValue(1);
-
-  // Initialize animations
-  useEffect(() => {
-    floatingOrb1.value = withRepeat(
-      withTiming(1, { duration: 4000 }),
-      -1,
-      true
-    );
-    floatingOrb2.value = withRepeat(
-      withTiming(1, { duration: 6000 }),
-      -1,
-      true
-    );
-    floatingOrb3.value = withRepeat(
-      withTiming(1, { duration: 5000 }),
-      -1,
-      true
-    );
-    backgroundScale.value = withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 8000 }),
-        withTiming(1, { duration: 8000 })
-      ),
-      -1,
-      false
-    );
-  }, []);
-
-  // Animated styles
-  const orb1Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb1.value * 20 - 10 },
-      { translateY: floatingOrb1.value * 25 - 12.5 },
-      { rotate: `${floatingOrb1.value * 360}deg` },
-      { scale: 0.9 + floatingOrb1.value * 0.2 },
-    ],
-    opacity: 0.7 + floatingOrb1.value * 0.3,
-  }));
-
-  const orb2Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb2.value * -20 + 10 },
-      { translateY: floatingOrb2.value * -25 + 12.5 },
-      { rotate: `${floatingOrb2.value * -270}deg` },
-      { scale: 0.8 + floatingOrb2.value * 0.4 },
-    ],
-    opacity: 0.6 + floatingOrb2.value * 0.4,
-  }));
-
-  const orb3Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb3.value * 15 - 7.5 },
-      { translateY: floatingOrb3.value * -20 + 10 },
-      { scale: 0.7 + floatingOrb3.value * 0.6 },
-    ],
-    opacity: 0.5 + floatingOrb3.value * 0.5,
-  }));
-
-  const backgroundScaleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: backgroundScale.value }],
-  }));
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
-        {/* Sky blue gradient background */}
-        <LinearGradient
-          colors={['#e6f3ff', '#b3d9ff', '#80c7ff']}
-          style={styles.skyBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-        
-        {/* Central organic sphere */}
-        <Animated.View style={[styles.centralSphere, backgroundScaleStyle]}>
-          <LinearGradient
-            colors={['rgba(0, 162, 255, 0.15)', 'rgba(255, 140, 70, 0.1)']}
-            style={styles.sphereGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-          {/* Inner core */}
-          <View style={styles.sphereCore}>
-            <LinearGradient
-              colors={['rgba(0, 162, 255, 0.8)', 'rgba(255, 140, 70, 0.6)']}
-              style={styles.coreGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            />
-          </View>
-          {/* Particle dots overlay */}
-          <View style={styles.particleLayer}>
-            {[...Array(50)].map((_, i) => (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.particle,
-                  {
-                    left: `${Math.random() * 90 + 5}%`,
-                    top: `${Math.random() * 90 + 5}%`,
-                    opacity: 0.3 + Math.random() * 0.7,
-                  }
-                ]}
-              />
-            ))}
-          </View>
-        </Animated.View>
-        
-        {/* Floating smaller orbs */}
-        <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]}>
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.6)', 'rgba(0, 162, 255, 0.2)']}
-            style={styles.orbGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </Animated.View>
-        <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]}>
-          <LinearGradient
-            colors={['rgba(255, 140, 70, 0.4)', 'rgba(255, 255, 255, 0.1)']}
-            style={styles.orbGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </Animated.View>
-        
-        {/* Light rays */}
-        <View style={styles.lightRay} />
         
         <ScrollView 
           ref={scrollViewRef}
@@ -637,100 +497,7 @@ export default function KPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e6f3ff',
-  },
-  skyBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    width: '100%',
-  },
-  centralSphere: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    top: '25%',
-    left: '50%',
-    marginLeft: -150,
-    shadowColor: 'rgba(0, 162, 255, 0.4)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 25,
-    elevation: 15,
-  },
-  sphereGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 150,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  sphereCore: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    top: '50%',
-    left: '50%',
-    marginTop: -60,
-    marginLeft: -60,
-  },
-  coreGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 60,
-  },
-  particleLayer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 150,
-  },
-  particle: {
-    position: 'absolute',
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  lightRay: {
-    position: 'absolute',
-    width: 2,
-    height: 200,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    top: '10%',
-    right: '20%',
-    transform: [{ rotate: '45deg' }],
-    opacity: 0.6,
-  },
-  floatingOrb: {
-    position: 'absolute',
-    borderRadius: 100,
-    shadowColor: '#ffffff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  orbGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 100,
-  },
-  orb1: {
-    width: 80,
-    height: 80,
-    top: '15%',
-    left: '10%',
-  },
-  orb2: {
-    width: 60,
-    height: 60,
-    top: '70%',
-    right: '15%',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
@@ -738,7 +505,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    minHeight: height,
   },
   contentContainer: {
     flex: 1,
@@ -754,13 +520,12 @@ const styles = StyleSheet.create({
     left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backdropFilter: 'blur(10px)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   backButtonText: {
@@ -773,13 +538,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backdropFilter: 'blur(10px)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   timerText: {
@@ -800,21 +564,17 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   voiceflowStatus: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     padding: 12,
     marginTop: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    backdropFilter: 'blur(10px)',
+    borderColor: '#e9ecef',
   },
   statusText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   simulationButton: {
     flexDirection: 'row',
@@ -842,28 +602,24 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   endSimulationButton: {
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    backgroundColor: '#ef4444',
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#dc2626',
     shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-    backdropFilter: 'blur(10px)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   endSimulationButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#ffffff',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   textContent: {
     alignItems: 'center',
@@ -890,11 +646,10 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.5)',
-    backdropFilter: 'blur(10px)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
     marginTop: 16,
   },
   recordingDot: {
