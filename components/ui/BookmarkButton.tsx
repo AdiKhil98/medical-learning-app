@@ -52,6 +52,8 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
 
   const handleToggleBookmark = async () => {
     try {
+      console.log('🎯 BookmarkButton toggle started for:', sectionTitle);
+      console.log('🎯 Current UI state - isBookmarked:', isBookmarked);
       setIsLoading(true);
       
       const newBookmarkStatus = await bookmarksService.toggleBookmark(
@@ -60,6 +62,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
         sectionCategory
       );
       
+      console.log('🎯 Toggle completed, new status:', newBookmarkStatus);
       setIsBookmarked(newBookmarkStatus);
       
       // Notify parent component
@@ -73,15 +76,29 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
           ? '⭐ Zu Favoriten hinzugefügt!'
           : '❌ Aus Favoriten entfernt';
         
+        console.log('🎯 Showing user feedback:', message);
         Alert.alert('Lesezeichen', message, [{ text: 'OK' }]);
       }
 
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('💥 BookmarkButton toggle error:', error);
+      console.error('💥 BookmarkButton error details:', JSON.stringify(error, null, 2));
       
-      // Show user-friendly error message
+      // Show detailed error message for debugging
       const errorMessage = error instanceof Error ? error.message : 'Fehler beim Speichern des Lesezeichens';
-      Alert.alert('Fehler', errorMessage, [{ text: 'OK' }]);
+      const fullErrorDetails = `Fehler: ${errorMessage}\n\nSektion: ${sectionSlug}\nTitel: ${sectionTitle}`;
+      
+      Alert.alert(
+        'Bookmark Fehler', 
+        fullErrorDetails,
+        [
+          { text: 'OK' },
+          { 
+            text: 'Erneut versuchen', 
+            onPress: () => handleToggleBookmark()
+          }
+        ]
+      );
       
     } finally {
       setIsLoading(false);
