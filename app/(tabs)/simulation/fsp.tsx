@@ -1,123 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Platform, ScrollView, Alert, Linking } from 'react-native';
 import SimulationDisclaimerModal from '@/components/simulation/SimulationDisclaimerModal';
-import { ChevronLeft, Mic } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
-import { LinearGradient } from 'expo-linear-gradient';
-import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createFSPController, VoiceflowController } from '@/utils/voiceflowIntegration';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
-
-
-// Animated microphone button component
-function MicrophoneButton({ onPress, isActive }: { onPress: () => void; isActive: boolean }) {
-  const scale = useSharedValue(1);
-  const rotation = useSharedValue(0);
-  const ringScale1 = useSharedValue(1);
-  const ringScale2 = useSharedValue(1);
-  const ringOpacity1 = useSharedValue(0);
-  const ringOpacity2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (isActive) {
-      scale.value = withRepeat(
-        withSequence(
-          withTiming(1.1, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
-        -1,
-        false
-      );
-      rotation.value = withRepeat(
-        withTiming(360, { duration: 2000, easing: Easing.linear }),
-        -1,
-        false
-      );
-      ringScale1.value = withRepeat(
-        withTiming(2, { duration: 2000, easing: Easing.out(Easing.ease) }),
-        -1,
-        false
-      );
-      ringOpacity1.value = withRepeat(
-        withSequence(
-          withTiming(0.8, { duration: 0 }),
-          withTiming(0, { duration: 2000 })
-        ),
-        -1,
-        false
-      );
-      ringScale2.value = withRepeat(
-        withTiming(2.5, { duration: 2000, easing: Easing.out(Easing.ease) }),
-        -1,
-        false
-      );
-      ringOpacity2.value = withRepeat(
-        withSequence(
-          withTiming(0, { duration: 500 }),
-          withTiming(0.6, { duration: 0 }),
-          withTiming(0, { duration: 1500 })
-        ),
-        -1,
-        false
-      );
-    } else {
-      scale.value = withTiming(1, { duration: 300 });
-      rotation.value = withTiming(0, { duration: 300 });
-      ringOpacity1.value = withTiming(0, { duration: 300 });
-      ringOpacity2.value = withTiming(0, { duration: 300 });
-    }
-  }, [isActive]);
-
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { rotate: `${rotation.value}deg` }
-    ],
-  }));
-
-  const ring1AnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ringScale1.value }],
-    opacity: ringOpacity1.value,
-  }));
-
-  const ring2AnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ringScale2.value }],
-    opacity: ringOpacity2.value,
-  }));
-
-  return (
-    <View style={styles.microphoneContainer}>
-      <Animated.View style={[styles.ring, ring1AnimatedStyle]} />
-      <Animated.View style={[styles.ring, ring2AnimatedStyle]} />
-      
-      <TouchableOpacity
-        style={styles.microphoneButton}
-        onPress={onPress}
-        activeOpacity={0.8}
-      >
-        <Animated.View style={[styles.microphoneButtonInner, buttonAnimatedStyle]}>
-          {isActive ? (
-            <View style={styles.stopIcon} />
-          ) : (
-            <Mic size={32} color="#1e40af" />
-          )}
-        </Animated.View>
-      </TouchableOpacity>
-    </View>
-  );
-}
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -452,12 +340,12 @@ export default function FSPSimulationScreen() {
     }
   };
   
-  // Show disclaimer when Voiceflow is loaded
-  useEffect(() => {
-    if (voiceflowLoaded && !simulationStarted) {
-      setShowDisclaimer(true);
-    }
-  }, [voiceflowLoaded, simulationStarted]);
+  // Show disclaimer when Voiceflow is loaded - DISABLED
+  // useEffect(() => {
+  //   if (voiceflowLoaded && !simulationStarted) {
+  //     setShowDisclaimer(true);
+  //   }
+  // }, [voiceflowLoaded, simulationStarted]);
   
   const handleDisclaimerAccept = () => {
     setShowDisclaimer(false);
@@ -587,14 +475,6 @@ export default function FSPSimulationScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
-        {/* Calm gradient background */}
-        <LinearGradient
-          colors={['#f8fafc', '#e2e8f0']}
-          style={styles.gradientBackground}
-        />
-        
-        {/* Subtle pattern overlay */}
-        <View style={styles.patternOverlay} />
         
         <ScrollView 
           ref={scrollViewRef}
@@ -640,56 +520,23 @@ export default function FSPSimulationScreen() {
             
             {/* Main content */}
             <View style={styles.mainContent}>
-              {/* Animated Celestial Orb */}
-              <View style={styles.orbContainer}>
-                <AnimatedOrb
+              {!simulationStarted && (
+                <TouchableOpacity
+                  style={styles.startArea}
                   onPress={handleOrbPress}
-                  isActive={simulationStarted}
-                  size={160}
+                  activeOpacity={1}
                 />
-              </View>
-              
-              <View style={styles.textContent}>
-                <Text style={styles.heading}>FSP Simulation</Text>
-                <Text style={styles.description}>
-                  {simulationStarted 
-                    ? "Die Sprach-Simulation ist aktiv! Sprechen Sie mit dem virtuellen Assistenten."
-                    : "Bereit für Ihre medizinische Sprach-Simulation? Klicken Sie auf den Orb, um zu beginnen."
-                  }
-                </Text>
-                
-                <View style={styles.voiceflowStatus}>
-                  <Text style={[styles.statusText, { 
-                    color: simulationStarted 
-                      ? '#3b82f6' 
-                      : (voiceflowLoaded ? '#6366f1' : '#f59e0b') 
-                  }]}>
-                    {simulationStarted 
-                      ? '🎙️ Sprach-Simulation läuft!'
-                      : (voiceflowLoaded ? '✅ Bereit zum Starten' : '⏳ Initialisierung...')
-                    }
-                  </Text>
-                </View>
-                
-                {simulationStarted && (
-                  <TouchableOpacity
-                    style={styles.endSimulationButton}
-                    onPress={handleEndSimulation}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.endSimulationButtonText}>
-                      Simulation beenden
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Status indicator */}
+              )}
               {simulationStarted && (
-                <View style={styles.statusIndicator}>
-                  <View style={styles.recordingDot} />
-                  <Text style={[styles.statusText, { color: '#3b82f6' }]}>Aufnahme</Text>
-                </View>
+                <TouchableOpacity
+                  style={styles.endSimulationButton}
+                  onPress={handleEndSimulation}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.endSimulationButtonText}>
+                    Simulation beenden
+                  </Text>
+                </TouchableOpacity>
               )}
             </View>
             
@@ -698,13 +545,15 @@ export default function FSPSimulationScreen() {
         </ScrollView>
       </SafeAreaView>
       
-      {/* Disclaimer Modal */}
-      <SimulationDisclaimerModal
-        visible={showDisclaimer}
-        onAccept={handleDisclaimerAccept}
-        onDecline={handleDisclaimerDecline}
-        simulationType="FSP"
-      />
+      {/* Disclaimer Modal - DISABLED */}
+      {false && (
+        <SimulationDisclaimerModal
+          visible={showDisclaimer}
+          onAccept={handleDisclaimerAccept}
+          onDecline={handleDisclaimerDecline}
+          simulationType="FSP"
+        />
+      )}
     </View>
   );
 }
@@ -712,23 +561,7 @@ export default function FSPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  gradientBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-  },
-  patternOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    opacity: 0.1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
@@ -736,7 +569,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    minHeight: height,
   },
   contentContainer: {
     flex: 1,
@@ -752,12 +584,12 @@ const styles = StyleSheet.create({
     left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: '#f8f9fa',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   backButtonText: {
@@ -770,12 +602,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: '#f8f9fa',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   timerText: {
@@ -789,98 +621,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  orbContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 40,
-    zIndex: 5,
-  },
-  microphoneContainer: {
-    position: 'relative',
-    marginBottom: 32,
-  },
-  ring: {
+  startArea: {
     position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
-    borderColor: '#cbd5e1',
     top: 0,
     left: 0,
-  },
-  microphoneButton: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(219, 234, 254, 0.9)',
-    borderWidth: 2,
-    borderColor: 'rgba(59, 130, 246, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  microphoneButtonInner: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stopIcon: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#1e40af',
-    borderRadius: 4,
-  },
-  voiceflowStatus: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
-  textContent: {
-    alignItems: 'center',
-    maxWidth: 350,
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 36,
-    fontFamily: 'Inter-Bold',
-    color: '#1e293b',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 18,
-    color: '#475569',
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 16,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    marginTop: 16,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#22c55e',
-    borderRadius: 4,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
   },
   spacer: {
     height: 100,
