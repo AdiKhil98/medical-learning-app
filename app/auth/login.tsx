@@ -24,6 +24,7 @@
     const [showPassword, setShowPassword] = useState(false);
     const [emailError, setEmailError] = useState('');
     const [emailTouched, setEmailTouched] = useState(false);
+    const [loginError, setLoginError] = useState('');
     const router = useRouter();
     const { signIn, session } = useAuth();
 
@@ -36,6 +37,7 @@
     // Handle email input with validation
     const handleEmailChange = (text: string) => {
       setEmail(text);
+      setLoginError(''); // Clear login error when user types
       
       if (emailTouched && text.length > 0) {
         if (!validateEmailFormat(text)) {
@@ -98,30 +100,20 @@
         const errorTime = performance.now();
         console.log('❌ Login error after', Math.round(errorTime - startTime), 'ms:', error.message);
         
-        // Provide more user-friendly error messages
-        let errorMessage = '';
-        let errorTitle = 'Anmeldung fehlgeschlagen';
-        
+        // Set red error message instead of Alert
         if (error.message?.includes('Invalid login credentials')) {
-          errorTitle = 'Ungültige Anmeldedaten';
-          errorMessage = 'E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut.';
+          setLoginError('E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben.');
         } else if (error.message?.includes('Email not confirmed')) {
-          errorTitle = 'E-Mail nicht bestätigt';
-          errorMessage = 'Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.';
+          setLoginError('Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.');
         } else if (error.message?.includes('Too many requests')) {
-          errorTitle = 'Zu viele Versuche';
-          errorMessage = 'Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
+          setLoginError('Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment.');
         } else if (error.message?.includes('Account locked')) {
-          errorTitle = 'Konto gesperrt';
-          errorMessage = 'Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.';
+          setLoginError('Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
         } else if (error.message?.includes('Network')) {
-          errorTitle = 'Verbindungsfehler';
-          errorMessage = 'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+          setLoginError('Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
         } else {
-          errorMessage = 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
+          setLoginError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
         }
-        
-        Alert.alert(errorTitle, errorMessage);
       } finally {
         const finalTime = performance.now();
         console.log('🔄 Login process completed in:', Math.round(finalTime - startTime), 'ms');
@@ -181,7 +173,10 @@
                   label="Passwort"
                   placeholder="Passwort eingeben"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setLoginError(''); // Clear login error when user types
+                  }}
                   secureTextEntry={!showPassword}
                   leftIcon={<Lock size={20} color="#6B7280" />}
                   rightIcon={
@@ -195,6 +190,10 @@
                   editable={!loading}
                   containerStyle={styles.inputContainer}
                 />
+
+                {loginError ? (
+                  <Text style={styles.loginErrorText}>{loginError}</Text>
+                ) : null}
 
                 <View style={styles.optionsRow}>
                   <TouchableOpacity
@@ -451,6 +450,15 @@
       fontSize: 14,
       color: '#10b981',
       fontWeight: '600',
+      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    },
+    loginErrorText: {
+      fontSize: 14,
+      color: '#EF4444',
+      textAlign: 'center',
+      marginTop: 12,
+      marginBottom: 8,
+      paddingHorizontal: 16,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
   });
