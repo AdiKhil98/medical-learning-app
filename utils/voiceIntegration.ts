@@ -314,37 +314,69 @@ export class VoiceInteractionService {
 
   // Text-to-speech for responses
   private speakMessage(message: string): void {
-    if (!this.speechSynthesis) return;
+    console.log('🔊 speakMessage called with:', message);
+    
+    if (!this.speechSynthesis) {
+      console.error('❌ Speech synthesis not available');
+      return;
+    }
 
     try {
       // Cancel any ongoing speech
       this.speechSynthesis.cancel();
+      console.log('🔇 Cancelled any existing speech');
 
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = 'de-DE'; // German
       utterance.rate = 0.9;
       utterance.pitch = 1;
-      utterance.volume = 0.8;
+      utterance.volume = 1.0; // Max volume
+      
+      console.log('🎛️ Speech settings:', {
+        lang: utterance.lang,
+        rate: utterance.rate,
+        pitch: utterance.pitch,
+        volume: utterance.volume
+      });
 
       // Find a German voice if available
       const voices = this.speechSynthesis.getVoices();
+      console.log('🎤 Available voices:', voices.length);
+      
       const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
       if (germanVoice) {
         utterance.voice = germanVoice;
+        console.log('🇩🇪 Using German voice:', germanVoice.name);
+      } else {
+        console.log('⚠️ No German voice found, using default');
       }
 
+      utterance.onstart = () => {
+        console.log('🔊 Speech started');
+      };
+
       utterance.onend = () => {
-        console.log('🔊 Finished speaking response');
+        console.log('🔊 Speech finished');
       };
 
       utterance.onerror = (error) => {
         console.error('❌ Speech synthesis error:', error);
       };
 
+      console.log('🎯 About to speak message...');
       this.speechSynthesis.speak(utterance);
-      console.log('🔊 Speaking response:', message);
+      
+      // Double-check if speech is working
+      setTimeout(() => {
+        console.log('📊 Speech synthesis status:', {
+          speaking: this.speechSynthesis.speaking,
+          pending: this.speechSynthesis.pending,
+          paused: this.speechSynthesis.paused
+        });
+      }, 100);
+      
     } catch (error) {
-      console.error('❌ Error speaking message:', error);
+      console.error('❌ Error in speakMessage:', error);
     }
   }
 
