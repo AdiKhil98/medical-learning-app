@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Platform, ScrollView, Alert, Linking } from 'react-native';
 import SimulationDisclaimerModal from '@/components/simulation/SimulationDisclaimerModal';
-import { ChevronLeft } from 'lucide-react-native';
+import SimulationInstructionsModal from '@/components/ui/SimulationInstructionsModal';
+import { ChevronLeft, Info } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -15,6 +16,7 @@ export default function FSPSimulationScreen() {
   const [simulationStarted, setSimulationStarted] = useState(false);
   const [voiceflowLoaded, setVoiceflowLoaded] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const scrollViewRef = useRef(null);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const voiceService = useRef<VoiceInteractionService | null>(null);
@@ -394,6 +396,15 @@ export default function FSPSimulationScreen() {
               <ChevronLeft size={24} color="#1e40af" />
               <Text style={styles.backButtonText}>Zurück</Text>
             </TouchableOpacity>
+
+            {/* Instructions Button */}
+            <TouchableOpacity 
+              style={styles.instructionsButton}
+              onPress={() => setShowInstructions(true)}
+            >
+              <Info size={20} color="#3b82f6" />
+              <Text style={styles.instructionsButtonText}>Über die Simulation</Text>
+            </TouchableOpacity>
             
             {/* Timer Display */}
             {simulationStarted && (
@@ -440,6 +451,13 @@ export default function FSPSimulationScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+      
+      {/* Instructions Modal */}
+      <SimulationInstructionsModal
+        visible={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        simulationType="FSP"
+      />
       
       {/* Disclaimer Modal - DISABLED */}
       {false && (
@@ -494,9 +512,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 4,
   },
-  timerContainer: {
+  instructionsButton: {
     position: 'absolute',
     top: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    zIndex: 10,
+  },
+  instructionsButtonText: {
+    color: '#3b82f6',
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  timerContainer: {
+    position: 'absolute',
+    top: 70,
     right: 20,
     backgroundColor: '#f8f9fa',
     paddingHorizontal: 12,
