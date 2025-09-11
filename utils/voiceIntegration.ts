@@ -83,6 +83,18 @@ export class VoiceInteractionService {
   private async initializeSpeechRecognition(): Promise<void> {
     if (typeof window === 'undefined') return;
 
+    // First, request microphone permission
+    console.log('🎙️ Requesting microphone permissions...');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('✅ Microphone permission granted');
+      // Stop the stream immediately as we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+    } catch (error) {
+      console.error('❌ Microphone permission denied:', error);
+      throw new Error('Microphone access is required for voice interaction');
+    }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
