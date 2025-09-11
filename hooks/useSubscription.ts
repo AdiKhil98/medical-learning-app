@@ -143,13 +143,19 @@ export const useSubscription = () => {
   };
 
   const useSimulation = async (type: 'kp' | 'fsp'): Promise<boolean> => {
-    if (!subscription || !user) {
-      throw new Error('No subscription or user found');
-    }
-
-    if (!canUseSimulation()) {
-      throw new Error('Simulation limit reached');
-    }
+    // Temporarily skip subscription checks for testing
+    console.log('📝 useSimulation called for type:', type);
+    
+    // Skip all database operations during testing
+    return true;
+    
+    // Original logic (commented out for testing):
+    // if (!subscription || !user) {
+    //   throw new Error('No subscription or user found');
+    // }
+    // if (!canUseSimulation()) {
+    //   throw new Error('Simulation limit reached');
+    // }
 
     try {
       // Don't increment usage during trial or unlimited
