@@ -14,11 +14,8 @@ export const useOnboarding = (): OnboardingState => {
 
   const checkOnboardingStatus = async () => {
     try {
-      const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
-      
-      if (!hasCompletedOnboarding) {
-        setShowWelcome(true);
-      }
+      // Always treat onboarding as completed to disable welcome flow
+      setShowWelcome(false);
     } catch (error) {
       SecureLogger.error('Error checking onboarding status:', error);
     } finally {
