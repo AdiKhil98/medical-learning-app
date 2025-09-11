@@ -144,7 +144,7 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                     Sehen Sie Ihren Lernfortschritt im Fortschritt-Tab und 
                     nutzen Sie die täglichen Tipps und Fragen.
                   </Text>
-                </div>
+                </View>
               </View>
             </View>
           </View>
