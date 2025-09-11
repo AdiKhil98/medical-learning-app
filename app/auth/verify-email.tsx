@@ -116,12 +116,10 @@ export default function VerifyEmail() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.title}>
-                    {params.message ? 'Registrierung erfolgreich!' : 'E-Mail überprüfen'}
+                  <Text style={styles.title}>Registrierung erfolgreich!</Text>
+                  <Text style={styles.successMessage}>
+                    {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
                   </Text>
-                  {params.message && (
-                    <Text style={styles.successMessage}>{params.message}</Text>
-                  )}
                   <Text style={styles.subtitle}>
                     Wir haben einen Bestätigungslink gesendet an:
                   </Text>
