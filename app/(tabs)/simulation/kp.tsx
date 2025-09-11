@@ -695,43 +695,9 @@ export default function KPSimulationScreen() {
               </View>
             )}
             
-            {/* Main content - Voiceflow Widget Instructions */}
+            {/* Clean interface - only Voiceflow widget */}
             <View style={styles.mainContent}>
-              <View style={styles.voiceflowInstructions}>
-                <Text style={styles.instructionTitle}>🏥 KP Medical Simulation</Text>
-                <Text style={styles.instructionText}>
-                  Die Voiceflow-Sprachsimulation wird automatisch geladen.
-                </Text>
-                <Text style={styles.instructionSubText}>
-                  📍 Suchen Sie nach dem blauen Chat-Symbol unten rechts auf der Seite
-                </Text>
-                <Text style={styles.instructionSubText}>
-                  🎤 Klicken Sie darauf und nutzen Sie die Sprachfunktion
-                </Text>
-                <Text style={styles.instructionSubText}>
-                  🗣️ Sprechen Sie auf Deutsch mit dem medizinischen KI-Assistenten
-                </Text>
-                
-                <View style={styles.statusContainer}>
-                  <View style={styles.statusDot} />
-                  <Text style={styles.statusText}>
-                    {voiceflowLoaded ? 'Widget geladen - Bereit für Simulation' : 'Widget wird geladen...'}
-                  </Text>
-                </View>
-              </View>
-              
-              {/* End Simulation Button */}
-              {simulationStarted && (
-                <TouchableOpacity
-                  style={styles.endSimulationButton}
-                  onPress={handleEndSimulation}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.endSimulationButtonText}>
-                    Simulation beenden
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* Widget loads automatically - no UI needed */}
             </View>
             
             <View style={styles.spacer} />
