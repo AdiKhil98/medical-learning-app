@@ -24,6 +24,8 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -78,16 +80,19 @@ export default function ResetPassword() {
         throw error;
       }
 
-      Alert.alert(
-        'Passwort aktualisiert',
-        'Ihr Passwort wurde erfolgreich geändert. Sie werden nun zur Anmeldung weitergeleitet.',
-        [
-          {
-            text: 'Zur Anmeldung',
-            onPress: () => router.replace('/auth/login'),
-          },
-        ]
-      );
+      setResetSuccess(true);
+      
+      // Start countdown timer
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            router.replace('/auth/login');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (error: any) {
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
       
@@ -106,6 +111,49 @@ export default function ResetPassword() {
   const handleBackToLogin = () => {
     router.replace('/auth/login');
   };
+
+  if (resetSuccess) {
+    return (
+      <LinearGradient
+        colors={['#ffffff', '#f0f9f0']}
+        style={styles.gradientBackground}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.content}>
+            <View style={styles.successCard}>
+              <View style={styles.header}>
+                <View style={styles.logoSection}>
+                  <Logo size="large" textColor="#1F2937" />
+                  <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
+                </View>
+                
+                <View style={styles.iconContainer}>
+                  <Lock size={64} color="#10b981" />
+                </View>
+
+                <Text style={styles.title}>Passwort erfolgreich geändert!</Text>
+                <Text style={styles.subtitle}>
+                  Ihr Passwort wurde erfolgreich aktualisiert.
+                </Text>
+                <Text style={styles.instructions}>
+                  Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
+                </Text>
+              </View>
+
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={handleBackToLogin}
+                >
+                  <Text style={styles.loginButtonText}>Zur Anmeldung</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -306,6 +354,56 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  successCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    marginHorizontal: 'auto',
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  iconContainer: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  instructions: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    marginTop: 8,
+  },
+  actions: {
+    marginTop: 24,
+  },
+  loginButton: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });

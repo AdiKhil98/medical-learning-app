@@ -17,6 +17,8 @@ import Logo from '@/components/ui/Logo';
 export default function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
+  const [countdown, setCountdown] = useState(3);
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -25,16 +27,21 @@ export default function VerifyEmail() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          Alert.alert(
-            'Email Verified!',
-            'Your email has been successfully verified. Welcome!',
-            [
-              {
-                text: 'Continue',
-                onPress: () => router.replace('/(tabs)'),
-              },
-            ]
-          );
+          setVerificationStatus('success');
+          
+          // Start countdown timer
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                router.replace('/auth/login');
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(timer);
         }
       }
     );
@@ -44,7 +51,7 @@ export default function VerifyEmail() {
 
   const handleResendVerification = async () => {
     if (!params.email) {
-      Alert.alert('Error', 'No email address found. Please go back and try registering again.');
+      Alert.alert('Fehler', 'Keine E-Mail-Adresse gefunden. Bitte gehen Sie zurück und versuchen Sie sich erneut zu registrieren.');
       return;
     }
 
@@ -65,11 +72,11 @@ export default function VerifyEmail() {
       }
 
       Alert.alert(
-        'Email Sent',
-        'A new verification email has been sent to your inbox.'
+        'E-Mail gesendet',
+        'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet.'
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to resend verification email');
+      Alert.alert('Fehler', error.message || 'Fehler beim erneuten Senden der Bestätigungs-E-Mail');
     } finally {
       setResendLoading(false);
     }
@@ -97,47 +104,79 @@ export default function VerifyEmail() {
                 <Mail size={64} color="#10b981" />
               </View>
 
-              <Text style={styles.title}>Check Your Email</Text>
-              <Text style={styles.subtitle}>
-                We've sent a verification link to:
-              </Text>
-              <Text style={styles.email}>{params.email}</Text>
-              
-              <Text style={styles.instructions}>
-                Click the link in your email to verify your account and start learning.
-                The link will expire in 24 hours.
-              </Text>
+              {verificationStatus === 'success' ? (
+                <>
+                  <Text style={styles.title}>E-Mail erfolgreich bestätigt!</Text>
+                  <Text style={styles.subtitle}>
+                    Ihr Konto wurde erfolgreich verifiziert.
+                  </Text>
+                  <Text style={styles.instructions}>
+                    Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.title}>
+                    {params.message ? 'Registrierung erfolgreich!' : 'E-Mail überprüfen'}
+                  </Text>
+                  {params.message && (
+                    <Text style={styles.successMessage}>{params.message}</Text>
+                  )}
+                  <Text style={styles.subtitle}>
+                    Wir haben einen Bestätigungslink gesendet an:
+                  </Text>
+                  <Text style={styles.email}>{params.email}</Text>
+                  
+                  <Text style={styles.instructions}>
+                    Klicken Sie auf den Link in Ihrer E-Mail, um Ihr Konto zu verifizieren und mit dem Lernen zu beginnen.
+                    Der Link läuft in 24 Stunden ab.
+                  </Text>
+                </>
+              )}
             </View>
 
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.resendButton}
-                onPress={handleResendVerification}
-                disabled={resendLoading}
-              >
-                <RefreshCw 
-                  size={20} 
-                  color="#10b981" 
-                  style={resendLoading ? styles.spinning : undefined}
-                />
-                <Text style={styles.resendButtonText}>
-                  {resendLoading ? 'Sending...' : 'Resend Email'}
+              {verificationStatus === 'success' ? (
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={handleBackToLogin}
+                >
+                  <Text style={styles.loginButtonText}>Zur Anmeldung</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.resendButton}
+                    onPress={handleResendVerification}
+                    disabled={resendLoading}
+                  >
+                    <RefreshCw 
+                      size={20} 
+                      color="#10b981" 
+                      style={resendLoading ? styles.spinning : undefined}
+                    />
+                    <Text style={styles.resendButtonText}>
+                      {resendLoading ? 'Wird gesendet...' : 'E-Mail erneut senden'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={handleBackToLogin}
+                  >
+                    <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+
+            {verificationStatus !== 'success' && (
+              <View style={styles.helpSection}>
+                <Text style={styles.helpText}>
+                  E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder senden Sie die E-Mail erneut.
                 </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={handleBackToLogin}
-              >
-                <Text style={styles.backButtonText}>Back to Login</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.helpSection}>
-              <Text style={styles.helpText}>
-                Didn't receive the email? Check your spam folder or try resending.
-              </Text>
-            </View>
+              </View>
+            )}
           </View>
         </View>
       </SafeAreaView>
@@ -267,5 +306,26 @@ const styles = StyleSheet.create({
   },
   spinning: {
     // Add animation if needed
+  },
+  successMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#059669',
+    marginBottom: 16,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  loginButton: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
