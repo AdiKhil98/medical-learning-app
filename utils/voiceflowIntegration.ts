@@ -243,8 +243,8 @@ export class VoiceflowController {
 // Helper function to create controller for KP simulation
 export function createKPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68b40ab270a53105f6701677',
-    versionID: '68b40ab270a53105f6701678',
+    projectID: '68c3061be0c49c3ff98ceb9e',
+    versionID: '68c3061be0c49c3ff98ceb9f',
     url: 'https://general-runtime.voiceflow.com'
   });
 }
