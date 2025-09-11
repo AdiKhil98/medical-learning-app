@@ -370,18 +370,19 @@ export default function KPSimulationScreen() {
     };
   }, []);
 
-  // Load visible Voiceflow widget optimized for medical simulation
+  // Load Voiceflow widget using the working method from test page
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // Clear any existing widgets first
-      const existingScripts = document.querySelectorAll('script[src*="voiceflow"]');
-      existingScripts.forEach(script => script.remove());
+      console.log('📦 Loading Voiceflow widget for KP medical simulation');
       
-      // Add Voiceflow widget script
-      const script = document.createElement('script');
-      script.onload = function() {
-        console.log('✅ Voiceflow script loaded for medical simulation');
-        setTimeout(() => {
+      // Use the exact same approach as the working test page
+      (function(d, t) {
+        const v = d.createElement(t);
+        const s = d.getElementsByTagName(t)[0];
+        
+        v.onload = function() {
+          console.log('✅ Voiceflow script loaded successfully');
+          
           if (window.voiceflow && window.voiceflow.chat) {
             window.voiceflow.chat.load({
               verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
@@ -389,93 +390,32 @@ export default function KPSimulationScreen() {
               versionID: 'production',
               voice: {
                 url: "https://runtime-api.voiceflow.com"
-              },
-              assistant: {
-                title: 'KP Medical Simulation',
-                description: 'Sprechen Sie mit dem KI-Assistenten für die medizinische Simulation',
-                color: '#667eea',
-                avatar: 'https://cdn.voiceflow.com/assets/avatar-placeholder.png',
-                launcher: {
-                  displayText: 'Medizinische Simulation'
-                },
-                stylesheet: `
-                  /* Custom styling for medical app integration */
-                  .vfrc-launcher {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4) !important;
-                    border: 2px solid rgba(255, 255, 255, 0.2) !important;
-                    backdrop-filter: blur(10px) !important;
-                  }
-                  
-                  .vfrc-launcher:hover {
-                    transform: scale(1.05) !important;
-                    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6) !important;
-                  }
-                  
-                  .vfrc-widget {
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-                    border-radius: 16px !important;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
-                    border: 1px solid rgba(102, 126, 234, 0.2) !important;
-                  }
-                  
-                  .vfrc-header {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                    color: white !important;
-                  }
-                  
-                  .vfrc-avatar {
-                    background: #4CAF50 !important;
-                  }
-                  
-                  /* Voice button styling */
-                  .vfrc-voice-button {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
-                  }
-                  
-                  .vfrc-voice-button:hover {
-                    transform: scale(1.1) !important;
-                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
-                  }
-                  
-                  /* Message styling */
-                  .vfrc-message--user {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                    color: white !important;
-                  }
-                  
-                  .vfrc-message--system {
-                    background: #f8f9fa !important;
-                    border: 1px solid #e9ecef !important;
-                  }
-                `
               }
             });
-            console.log('✅ Medical simulation widget loaded with custom styling');
             
-            // Initialize simulation with usage tracking
+            console.log('✅ Voiceflow widget loaded and should be visible');
+            
+            // Initialize simulation tracking
             initializeSimulation().then((success) => {
               if (success) {
                 setSimulationStarted(true);
                 setVoiceflowLoaded(true);
-                console.log('🎯 Ready for medical simulation - look for the widget in bottom-right corner!');
+                console.log('🎯 KP simulation ready - widget should appear in bottom-right!');
               }
             });
-            
           } else {
-            console.error('❌ Voiceflow not available');
+            console.error('❌ Voiceflow not available after script load');
           }
-        }, 1000);
-      };
-      script.onerror = function() {
-        console.error('❌ Failed to load Voiceflow script');
-      };
-      script.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
-      script.type = "text/javascript";
-      document.head.appendChild(script);
-      
-      console.log('📦 Loading Voiceflow widget for medical simulation');
+        };
+        
+        v.onerror = function(error) {
+          console.error('❌ Failed to load Voiceflow script:', error);
+        };
+        
+        v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
+        v.type = "text/javascript";
+        s.parentNode.insertBefore(v, s);
+      })(document, 'script');
     }
   }, []);
 
