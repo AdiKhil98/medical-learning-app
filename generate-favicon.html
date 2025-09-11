@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Medical Cross Favicon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .favicon-preview {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #357ABD;
+        }
+        .size-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Medical Cross Favicon Generator</h1>
+        <p>This tool generates PNG favicons from the medical cross design.</p>
+        
+        <div class="favicon-preview">
+            <div>
+                <div class="size-label">16x16 (Browser Tab)</div>
+                <canvas id="favicon16" width="16" height="16"></canvas>
+                <br><br>
+                <button onclick="downloadFavicon(16)">Download 16x16</button>
+            </div>
+            
+            <div>
+                <div class="size-label">32x32 (Standard)</div>
+                <canvas id="favicon32" width="32" height="32"></canvas>
+                <br><br>
+                <button onclick="downloadFavicon(32)">Download 32x32</button>
+            </div>
+            
+            <div>
+                <div class="size-label">192x192 (Android)</div>
+                <canvas id="favicon192" width="192" height="192" style="width: 64px; height: 64px;"></canvas>
+                <br><br>
+                <button onclick="downloadFavicon(192)">Download 192x192</button>
+            </div>
+        </div>
+        
+        <button onclick="generateAll()" style="background: #28a745; margin-top: 20px;">Generate All Sizes</button>
+        
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Click "Generate All Sizes" to create the favicons</li>
+            <li>Download each size using the individual buttons</li>
+            <li>Replace the existing favicon.png in assets/images/ with the 32x32 version</li>
+            <li>Optional: Save other sizes for future use</li>
+        </ol>
+    </div>
+
+    <script>
+        function drawMedicalCross(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 32; // Base design is 32x32
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4A90E2');
+            gradient.addColorStop(0.5, '#357ABD');
+            gradient.addColorStop(1, '#2E5B9A');
+            
+            // Draw rounded background
+            const cornerRadius = 6 * scale;
+            const margin = 2 * scale;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(margin, margin, size - margin * 2, size - margin * 2, cornerRadius);
+            ctx.fill();
+            
+            // Draw medical cross
+            ctx.fillStyle = 'white';
+            
+            // Vertical bar
+            const vBarX = 14 * scale;
+            const vBarY = 8 * scale;
+            const vBarWidth = 4 * scale;
+            const vBarHeight = 16 * scale;
+            ctx.beginPath();
+            ctx.roundRect(vBarX, vBarY, vBarWidth, vBarHeight, 1 * scale);
+            ctx.fill();
+            
+            // Horizontal bar
+            const hBarX = 10 * scale;
+            const hBarY = 14 * scale;
+            const hBarWidth = 12 * scale;
+            const hBarHeight = 4 * scale;
+            ctx.beginPath();
+            ctx.roundRect(hBarX, hBarY, hBarWidth, hBarHeight, 1 * scale);
+            ctx.fill();
+        }
+        
+        function downloadFavicon(size) {
+            const canvas = document.getElementById(`favicon${size}`);
+            const link = document.createElement('a');
+            link.download = `medical-cross-favicon-${size}x${size}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        function generateAll() {
+            // Generate 16x16
+            const canvas16 = document.getElementById('favicon16');
+            drawMedicalCross(canvas16, 16);
+            
+            // Generate 32x32
+            const canvas32 = document.getElementById('favicon32');
+            drawMedicalCross(canvas32, 32);
+            
+            // Generate 192x192
+            const canvas192 = document.getElementById('favicon192');
+            drawMedicalCross(canvas192, 192);
+            
+            alert('All favicon sizes generated! Use the download buttons to save them.');
+        }
+        
+        // Auto-generate on page load
+        window.onload = function() {
+            generateAll();
+        };
+    </script>
+</body>
+</html>

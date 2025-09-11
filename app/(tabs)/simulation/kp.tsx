@@ -5,19 +5,10 @@ import { ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
-import { LinearGradient } from 'expo-linear-gradient';
-import AnimatedOrb from '@/components/ui/AnimatedOrb';
 import { createKPController, VoiceflowController } from '@/utils/voiceflowIntegration';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-} from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import { VoiceInteractionService, VoiceInteractionState } from '@/utils/voiceIntegration';
+import VoiceMicrophone from '@/components/ui/VoiceMicrophone';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 export default function KPSimulationScreen() {
@@ -27,6 +18,15 @@ export default function KPSimulationScreen() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const scrollViewRef = useRef(null);
   const voiceflowController = useRef<VoiceflowController | null>(null);
+  const voiceService = useRef<VoiceInteractionService | null>(null);
+  const [voiceState, setVoiceState] = useState<VoiceInteractionState>({
+    isInitialized: false,
+    isRecording: false,
+    isProcessing: false,
+    currentMessage: '',
+    conversationHistory: [],
+    error: null,
+  });
   
   const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
     isActive: simulationStarted,
@@ -37,34 +37,45 @@ export default function KPSimulationScreen() {
 
   const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
 
-  // Standard Voiceflow initialization - shows widget in default position
-  const initializeVoiceflow = () => {
-    console.log('✅ Voiceflow object found, initializing...');
-    
-    const config = {
-      verify: { projectID: '68b40ab270a53105f6701677' },
-      url: 'https://general-runtime.voiceflow.com',
-      versionID: 'production',
-      voice: {
-        url: 'https://runtime-api.voiceflow.com'
-      }
-    };
-    
-    console.log('🔧 Loading Voiceflow with standard config:', config);
-    
+  // Initialize voice interaction service
+  const initializeVoiceService = async () => {
     try {
-      window.voiceflow.chat.load(config);
-      setVoiceflowLoaded(true);
-      console.log('🚀 Voiceflow chat loaded successfully');
+      console.log('🎤 Initializing KP voice service...');
+      
+      // Create Voiceflow controller
+      const controller = createKPController();
+      voiceflowController.current = controller;
+      
+      // Create voice interaction service
+      const service = new VoiceInteractionService(controller);
+      voiceService.current = service;
+      
+      // Subscribe to voice state changes
+      const unsubscribe = service.subscribe((newState) => {
+        setVoiceState(newState);
+        if (newState.isInitialized && !simulationStarted) {
+          setSimulationStarted(true);
+          setVoiceflowLoaded(true);
+        }
+      });
+      
+      // Store unsubscribe function for cleanup
+      (service as any).unsubscribe = unsubscribe;
+      
+      console.log('✅ KP Voice service created successfully');
+      return service;
     } catch (error) {
-      console.error('❌ Error loading Voiceflow:', error);
+      console.error('❌ Error initializing KP voice service:', error);
+      setVoiceState(prev => ({ 
+        ...prev, 
+        error: `Failed to initialize: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      }));
+      return null;
     }
   };
 
-  // Handle orb click - start simulation programmatically
-  const handleOrbPress = async () => {
-    if (simulationStarted) return;
-    
+  // Voice microphone event handlers
+  const handleInitializeVoice = async () => {
     // Check if user can use simulation
     if (!canUseSimulation()) {
       Alert.alert(
@@ -76,102 +87,55 @@ export default function KPSimulationScreen() {
     }
 
     try {
-      console.log('🚀 Starting KP simulation via orb click');
+      console.log('🚀 Initializing KP voice simulation');
       
       // Track simulation usage
       await useSimulation('kp');
       
       // Start simulation timer
-      setSimulationStarted(true);
       resetTimer();
       
-      // Show Voiceflow widget in default position
-      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-        try {
-          setTimeout(() => {
-            if (window.voiceflow.chat.open) {
-              window.voiceflow.chat.open();
-            } else if (window.voiceflow.chat.show) {
-              window.voiceflow.chat.show();
-            }
-            console.log('✅ Voiceflow chat opened');
-          }, 1000);
-        } catch (error) {
-          console.error('❌ Error opening Voiceflow chat:', error);
-        }
+      // Initialize voice service
+      const service = await initializeVoiceService();
+      if (service) {
+        await service.initialize();
+        console.log('✅ Voice simulation initialized successfully');
       }
       
     } catch (error) {
-      console.error('Error starting simulation:', error);
+      console.error('❌ Error initializing voice simulation:', error);
       Alert.alert(
         'Fehler',
-        'Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+        'Sprach-Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
         [{ text: 'OK' }]
       );
     }
   };
 
-  // Load Voiceflow script - simplified approach
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      // Check if already loaded
-      if (window.voiceflow && window.voiceflow.chat) {
-        console.log('🔄 Voiceflow already available, initializing...');
-        initializeVoiceflow();
-        return;
-      }
-      
-      // Check if script already exists
-      const existingScript = document.querySelector('script[src*="voiceflow.com/widget-next/bundle.mjs"]');
-      if (existingScript) {
-        console.log('🔄 Voiceflow script exists, waiting for load...');
-        const checkReady = () => {
-          if (window.voiceflow && window.voiceflow.chat) {
-            initializeVoiceflow();
-          } else {
-            setTimeout(checkReady, 500);
-          }
-        };
-        checkReady();
-        return;
-      }
-      
-      console.log('🔄 Loading Voiceflow script...');
-      const script = document.createElement('script');
-      script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
-      script.type = 'text/javascript';
-      script.onload = () => {
-        console.log('📦 Voiceflow script loaded');
-        if (window.voiceflow && window.voiceflow.chat) {
-          initializeVoiceflow();
-        }
-        
-      };
-      script.onerror = (error) => {
-        console.error('❌ Failed to load Voiceflow script from CDN:', error);
-        console.error('Script URL:', script.src);
-      };
-      
-      console.log('📡 Adding Voiceflow script to document head...');
-      document.head.appendChild(script);
-      
-      return () => {
-        // Cleanup script
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-        // Cleanup event listener and monitoring
-        if ((window as any).kpMessageListener) {
-          window.removeEventListener('message', (window as any).kpMessageListener);
-          delete (window as any).kpMessageListener;
-        }
-        if ((window as any).kpMonitoringInterval) {
-          clearInterval((window as any).kpMonitoringInterval);
-          delete (window as any).kpMonitoringInterval;
-        }
-      };
+  const handleStartRecording = () => {
+    if (voiceService.current) {
+      voiceService.current.startRecording();
     }
-  }, [simulationStarted, resetTimer]);
+  };
+
+  const handleStopRecording = () => {
+    if (voiceService.current) {
+      voiceService.current.stopRecording();
+    }
+  };
+
+  // Cleanup voice service on unmount
+  useEffect(() => {
+    return () => {
+      if (voiceService.current) {
+        if ((voiceService.current as any).unsubscribe) {
+          (voiceService.current as any).unsubscribe();
+        }
+        voiceService.current.destroy();
+        voiceService.current = null;
+      }
+    };
+  }, []);
 
   // Component cleanup - hide widget when leaving page
   useEffect(() => {
@@ -238,26 +202,35 @@ export default function KPSimulationScreen() {
   const handleEndSimulation = () => {
     setSimulationStarted(false);
     resetTimer();
-    console.log('⏹️ KP Simulation ended by user');
+    console.log('⏹️ KP Voice Simulation ended by user');
     
-    // Close Voiceflow widget if open
-    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-      try {
-        if (window.voiceflow.chat.close) {
-          window.voiceflow.chat.close();
-        }
-      } catch (error) {
-        console.error('❌ Error closing Voiceflow chat:', error);
+    // Stop voice service
+    if (voiceService.current) {
+      voiceService.current.stopRecording();
+      if ((voiceService.current as any).unsubscribe) {
+        (voiceService.current as any).unsubscribe();
       }
+      voiceService.current.destroy();
+      voiceService.current = null;
     }
+    
+    // Reset voice state
+    setVoiceState({
+      isInitialized: false,
+      isRecording: false,
+      isProcessing: false,
+      currentMessage: '',
+      conversationHistory: [],
+      error: null,
+    });
   };
   
-  // Show disclaimer when Voiceflow is loaded
-  useEffect(() => {
-    if (voiceflowLoaded && !simulationStarted) {
-      setShowDisclaimer(true);
-    }
-  }, [voiceflowLoaded, simulationStarted]);
+  // Show disclaimer when Voiceflow is loaded - DISABLED
+  // useEffect(() => {
+  //   if (voiceflowLoaded && !simulationStarted) {
+  //     setShowDisclaimer(true);
+  //   }
+  // }, [voiceflowLoaded, simulationStarted]);
   
   const handleDisclaimerAccept = () => {
     setShowDisclaimer(false);
@@ -384,139 +357,10 @@ export default function KPSimulationScreen() {
     };
   }, []);
 
-  // Animated values for the background elements
-  const floatingOrb1 = useSharedValue(0);
-  const floatingOrb2 = useSharedValue(0);
-  const floatingOrb3 = useSharedValue(0);
-  const backgroundScale = useSharedValue(1);
-
-  // Initialize animations
-  useEffect(() => {
-    floatingOrb1.value = withRepeat(
-      withTiming(1, { duration: 4000 }),
-      -1,
-      true
-    );
-    floatingOrb2.value = withRepeat(
-      withTiming(1, { duration: 6000 }),
-      -1,
-      true
-    );
-    floatingOrb3.value = withRepeat(
-      withTiming(1, { duration: 5000 }),
-      -1,
-      true
-    );
-    backgroundScale.value = withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 8000 }),
-        withTiming(1, { duration: 8000 })
-      ),
-      -1,
-      false
-    );
-  }, []);
-
-  // Animated styles
-  const orb1Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb1.value * 20 - 10 },
-      { translateY: floatingOrb1.value * 25 - 12.5 },
-      { rotate: `${floatingOrb1.value * 360}deg` },
-      { scale: 0.9 + floatingOrb1.value * 0.2 },
-    ],
-    opacity: 0.7 + floatingOrb1.value * 0.3,
-  }));
-
-  const orb2Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb2.value * -20 + 10 },
-      { translateY: floatingOrb2.value * -25 + 12.5 },
-      { rotate: `${floatingOrb2.value * -270}deg` },
-      { scale: 0.8 + floatingOrb2.value * 0.4 },
-    ],
-    opacity: 0.6 + floatingOrb2.value * 0.4,
-  }));
-
-  const orb3Style = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: floatingOrb3.value * 15 - 7.5 },
-      { translateY: floatingOrb3.value * -20 + 10 },
-      { scale: 0.7 + floatingOrb3.value * 0.6 },
-    ],
-    opacity: 0.5 + floatingOrb3.value * 0.5,
-  }));
-
-  const backgroundScaleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: backgroundScale.value }],
-  }));
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.container}>
-        {/* Sky blue gradient background */}
-        <LinearGradient
-          colors={['#e6f3ff', '#b3d9ff', '#80c7ff']}
-          style={styles.skyBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-        
-        {/* Central organic sphere */}
-        <Animated.View style={[styles.centralSphere, backgroundScaleStyle]}>
-          <LinearGradient
-            colors={['rgba(0, 162, 255, 0.15)', 'rgba(255, 140, 70, 0.1)']}
-            style={styles.sphereGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-          {/* Inner core */}
-          <View style={styles.sphereCore}>
-            <LinearGradient
-              colors={['rgba(0, 162, 255, 0.8)', 'rgba(255, 140, 70, 0.6)']}
-              style={styles.coreGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            />
-          </View>
-          {/* Particle dots overlay */}
-          <View style={styles.particleLayer}>
-            {[...Array(50)].map((_, i) => (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.particle,
-                  {
-                    left: `${Math.random() * 90 + 5}%`,
-                    top: `${Math.random() * 90 + 5}%`,
-                    opacity: 0.3 + Math.random() * 0.7,
-                  }
-                ]}
-              />
-            ))}
-          </View>
-        </Animated.View>
-        
-        {/* Floating smaller orbs */}
-        <Animated.View style={[styles.floatingOrb, styles.orb1, orb1Style]}>
-          <LinearGradient
-            colors={['rgba(255, 255, 255, 0.6)', 'rgba(0, 162, 255, 0.2)']}
-            style={styles.orbGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </Animated.View>
-        <Animated.View style={[styles.floatingOrb, styles.orb2, orb2Style]}>
-          <LinearGradient
-            colors={['rgba(255, 140, 70, 0.4)', 'rgba(255, 255, 255, 0.1)']}
-            style={styles.orbGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-        </Animated.View>
-        
-        {/* Light rays */}
-        <View style={styles.lightRay} />
         
         <ScrollView 
           ref={scrollViewRef}
@@ -560,41 +404,27 @@ export default function KPSimulationScreen() {
               </View>
             )}
             
-            {/* Main content */}
+            {/* Main content - Voice Microphone Interface */}
             <View style={styles.mainContent}>
-              <View style={styles.textContent}>
-                <Text style={styles.heading}>KP Simulation</Text>
-                <Text style={styles.description}>
-                  {simulationStarted 
-                    ? "Die KI-Simulation ist aktiv! Sprechen Sie mit dem virtuellen Assistenten."
-                    : "Bereit für Ihre medizinische KI-Simulation? Klicken Sie auf den Orb, um zu beginnen."
-                  }
-                </Text>
-              </View>
-
-              {/* Animated Celestial Orb */}
-              <View style={styles.orbContainer}>
-                <AnimatedOrb
-                  onPress={handleOrbPress}
-                  isActive={simulationStarted}
-                  size={160}
-                />
-              </View>
-
-              {/* Status indicator */}
-              <View style={styles.voiceflowStatus}>
-                <Text style={[styles.statusText, { 
-                  color: simulationStarted 
-                    ? '#22c55e' 
-                    : (voiceflowLoaded ? '#4CAF50' : '#f59e0b') 
-                }]}>
-                  {simulationStarted 
-                    ? '🎙️ Simulation läuft - Sprechen Sie!'
-                    : (voiceflowLoaded ? '✅ Bereit zum Starten' : '⏳ Initialisierung...')
-                  }
-                </Text>
-              </View>
-
+              <VoiceMicrophone
+                onInitialize={handleInitializeVoice}
+                onStartRecording={handleStartRecording}
+                onStopRecording={handleStopRecording}
+                isInitialized={voiceState.isInitialized}
+                isRecording={voiceState.isRecording}
+                isProcessing={voiceState.isProcessing}
+                conversationText={voiceState.currentMessage}
+                size={160}
+              />
+              
+              {/* Error Display */}
+              {voiceState.error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{voiceState.error}</Text>
+                </View>
+              )}
+              
+              {/* End Simulation Button */}
               {simulationStarted && (
                 <TouchableOpacity
                   style={styles.endSimulationButton}
@@ -606,14 +436,6 @@ export default function KPSimulationScreen() {
                   </Text>
                 </TouchableOpacity>
               )}
-
-              {/* Recording indicator */}
-              {simulationStarted && (
-                <View style={styles.statusIndicator}>
-                  <View style={styles.recordingDot} />
-                  <Text style={[styles.statusText, { color: '#22c55e' }]}>Aktiv</Text>
-                </View>
-              )}
             </View>
             
             <View style={styles.spacer} />
@@ -621,13 +443,15 @@ export default function KPSimulationScreen() {
         </ScrollView>
       </SafeAreaView>
       
-      {/* Disclaimer Modal */}
-      <SimulationDisclaimerModal
-        visible={showDisclaimer}
-        onAccept={handleDisclaimerAccept}
-        onDecline={handleDisclaimerDecline}
-        simulationType="KP"
-      />
+      {/* Disclaimer Modal - DISABLED */}
+      {false && (
+        <SimulationDisclaimerModal
+          visible={showDisclaimer}
+          onAccept={handleDisclaimerAccept}
+          onDecline={handleDisclaimerDecline}
+          simulationType="KP"
+        />
+      )}
     </View>
   );
 }
@@ -635,100 +459,7 @@ export default function KPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e6f3ff',
-  },
-  skyBackground: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    width: '100%',
-  },
-  centralSphere: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    top: '25%',
-    left: '50%',
-    marginLeft: -150,
-    shadowColor: 'rgba(0, 162, 255, 0.4)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 25,
-    elevation: 15,
-  },
-  sphereGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 150,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  sphereCore: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    top: '50%',
-    left: '50%',
-    marginTop: -60,
-    marginLeft: -60,
-  },
-  coreGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 60,
-  },
-  particleLayer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 150,
-  },
-  particle: {
-    position: 'absolute',
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  lightRay: {
-    position: 'absolute',
-    width: 2,
-    height: 200,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    top: '10%',
-    right: '20%',
-    transform: [{ rotate: '45deg' }],
-    opacity: 0.6,
-  },
-  floatingOrb: {
-    position: 'absolute',
-    borderRadius: 100,
-    shadowColor: '#ffffff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  orbGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 100,
-  },
-  orb1: {
-    width: 80,
-    height: 80,
-    top: '15%',
-    left: '10%',
-  },
-  orb2: {
-    width: 60,
-    height: 60,
-    top: '70%',
-    right: '15%',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
@@ -736,7 +467,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    minHeight: height,
   },
   contentContainer: {
     flex: 1,
@@ -752,13 +482,12 @@ const styles = StyleSheet.create({
     left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backdropFilter: 'blur(10px)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   backButtonText: {
@@ -771,13 +500,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f8f9fa',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backdropFilter: 'blur(10px)',
+    borderColor: '#e9ecef',
     zIndex: 10,
   },
   timerText: {
@@ -791,119 +519,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  orbContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 40,
-    zIndex: 5,
-  },
-  voiceflowStatus: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  errorContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    alignItems: 'center',
+    padding: 16,
+    marginTop: 20,
+    marginHorizontal: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    backdropFilter: 'blur(10px)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
-  statusText: {
+  errorText: {
+    color: '#ef4444',
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  simulationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 20,
-    gap: 8,
-  },
-  simulationButtonActive: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#1d4ed8',
-  },
-  simulationButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#3b82f6',
-  },
-  simulationButtonTextActive: {
-    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   endSimulationButton: {
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    backgroundColor: '#ef4444',
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#dc2626',
     shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-    backdropFilter: 'blur(10px)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   endSimulationButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#ffffff',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  textContent: {
-    alignItems: 'center',
-    maxWidth: 350,
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 36,
-    fontFamily: 'Inter-Bold',
-    color: '#1e40af',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 18,
-    color: '#374151',
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 16,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.5)',
-    backdropFilter: 'blur(10px)',
-    marginTop: 16,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#22c55e',
-    borderRadius: 4,
-    shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
   },
   spacer: {
     height: 100,
