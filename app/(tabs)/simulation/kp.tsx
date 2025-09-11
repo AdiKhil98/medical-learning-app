@@ -78,8 +78,11 @@ export default function KPSimulationScreen() {
 
   // Voice microphone event handlers
   const handleInitializeVoice = async () => {
+    console.log('🎤 KP: handleInitializeVoice called - button pressed!');
+    
     // Check if user can use simulation
     if (!canUseSimulation()) {
+      console.log('❌ KP: Simulation limit reached');
       Alert.alert(
         'Simulationslimit erreicht',
         `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
@@ -89,7 +92,7 @@ export default function KPSimulationScreen() {
     }
 
     try {
-      console.log('🚀 Initializing KP voice simulation');
+      console.log('🚀 KP: Starting voice simulation initialization');
       
       // Track simulation usage
       await useSimulation('kp');

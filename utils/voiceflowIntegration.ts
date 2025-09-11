@@ -22,15 +22,19 @@ export class VoiceflowController {
   async loadWidget(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
+        console.log('❌ Voiceflow: Window is undefined (not in browser)');
         resolve(false);
         return;
       }
 
       // Check if already loaded
       if (window.voiceflow && this.isLoaded) {
+        console.log('✅ Voiceflow: Already loaded');
         resolve(true);
         return;
       }
+
+      console.log('📦 Voiceflow: Loading widget for project:', this.config.projectID);
 
       // Load script if not present
       if (!document.querySelector('script[src*="voiceflow.com"]')) {
