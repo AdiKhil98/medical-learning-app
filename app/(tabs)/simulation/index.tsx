@@ -57,13 +57,13 @@ export default function SimulationScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Users size={18} color="#059669" />
-            <Text style={styles.statNumber}>1.2K+</Text>
+            <Text style={styles.statNumber}>120</Text>
             <Text style={styles.statLabel}>Teilnehmer</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Award size={18} color="#dc2626" />
-            <Text style={styles.statNumber}>85%</Text>
+            <Text style={styles.statNumber}>91%</Text>
             <Text style={styles.statLabel}>Erfolgsrate</Text>
           </View>
         </View>
