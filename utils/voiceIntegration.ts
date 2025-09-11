@@ -41,16 +41,27 @@ export class VoiceInteractionService {
       console.log('🎤 Initializing voice interaction service...');
       
       // Initialize Voiceflow widget (hidden)
+      console.log('📦 Loading Voiceflow widget...');
       const voiceflowReady = await this.voiceflowController.loadWidget();
       if (!voiceflowReady) {
+        console.error('❌ Voiceflow widget failed to load');
         throw new Error('Failed to initialize Voiceflow');
       }
+      console.log('✅ Voiceflow widget loaded successfully');
 
       // Initialize speech recognition
+      console.log('🎙️ Initializing speech recognition...');
       await this.initializeSpeechRecognition();
+      console.log('✅ Speech recognition initialized');
       
       // Start the simulation in Voiceflow
-      await this.voiceflowController.startSimulation();
+      console.log('🚀 Starting simulation in Voiceflow...');
+      const simulationStarted = await this.voiceflowController.startSimulation();
+      if (simulationStarted) {
+        console.log('✅ Simulation started successfully');
+      } else {
+        console.log('⚠️ Simulation start returned false');
+      }
       
       this.updateState({ 
         isInitialized: true, 

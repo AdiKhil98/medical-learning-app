@@ -38,22 +38,40 @@ export class VoiceflowController {
 
       // Load script if not present
       if (!document.querySelector('script[src*="voiceflow.com"]')) {
+        console.log('📡 Loading Voiceflow script from CDN...');
         const script = document.createElement('script');
         script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
         script.type = 'text/javascript';
         
         script.onload = () => {
+          console.log('✅ Voiceflow script loaded from CDN');
           this.initializeWidget()
-            .then(() => resolve(true))
-            .catch(reject);
+            .then(() => {
+              console.log('✅ Widget initialized successfully');
+              resolve(true);
+            })
+            .catch((error) => {
+              console.error('❌ Widget initialization failed:', error);
+              reject(error);
+            });
         };
         
-        script.onerror = () => reject(new Error('Failed to load Voiceflow script'));
+        script.onerror = (error) => {
+          console.error('❌ Failed to load Voiceflow script:', error);
+          reject(new Error('Failed to load Voiceflow script'));
+        };
         document.head.appendChild(script);
       } else {
+        console.log('📦 Voiceflow script already present, initializing widget...');
         this.initializeWidget()
-          .then(() => resolve(true))
-          .catch(reject);
+          .then(() => {
+            console.log('✅ Widget initialized successfully');
+            resolve(true);
+          })
+          .catch((error) => {
+            console.error('❌ Widget initialization failed:', error);
+            reject(error);
+          });
       }
     });
   }
