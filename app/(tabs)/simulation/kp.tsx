@@ -383,36 +383,51 @@ export default function KPSimulationScreen() {
         v.onload = function() {
           console.log('✅ Voiceflow script loaded successfully');
           
-          if (window.voiceflow && window.voiceflow.chat) {
-            window.voiceflow.chat.load({
-              verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
-              url: 'https://general-runtime.voiceflow.com',
-              versionID: 'production',
-              voice: {
-                url: "https://runtime-api.voiceflow.com"
-              },
-              assistant: {
-                position: 'bottom-left',
-                spacing: {
-                  side: 24,
-                  bottom: 24
-                }
+          // Wait a bit for Voiceflow to fully initialize
+          setTimeout(() => {
+            if (window.voiceflow && window.voiceflow.chat) {
+              console.log('🔧 Loading Voiceflow chat widget...');
+              
+              try {
+                window.voiceflow.chat.load({
+                  verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
+                  url: 'https://general-runtime.voiceflow.com',
+                  versionID: '68c3061be0c49c3ff98ceb9f',
+                  voice: {
+                    url: "https://runtime-api.voiceflow.com"
+                  }
+                });
+                
+                console.log('✅ Voiceflow widget configuration loaded');
+                
+                // Force show the widget if it's hidden
+                setTimeout(() => {
+                  if (window.voiceflow.chat.show) {
+                    window.voiceflow.chat.show();
+                    console.log('🔧 Forced widget to show');
+                  }
+                  if (window.voiceflow.chat.open) {
+                    console.log('🔧 Widget open method available');
+                  }
+                }, 1000);
+                
+                // Initialize simulation tracking
+                initializeSimulation().then((success) => {
+                  if (success) {
+                    setSimulationStarted(true);
+                    setVoiceflowLoaded(true);
+                    console.log('🎯 KP simulation ready - looking for widget...');
+                  }
+                });
+                
+              } catch (error) {
+                console.error('❌ Error loading Voiceflow widget:', error);
               }
-            });
-            
-            console.log('✅ Voiceflow widget loaded and should be visible');
-            
-            // Initialize simulation tracking
-            initializeSimulation().then((success) => {
-              if (success) {
-                setSimulationStarted(true);
-                setVoiceflowLoaded(true);
-                console.log('🎯 KP simulation ready - widget should appear in bottom-right!');
-              }
-            });
-          } else {
-            console.error('❌ Voiceflow not available after script load');
-          }
+              
+            } else {
+              console.error('❌ Voiceflow not available after script load');
+            }
+          }, 500);
         };
         
         v.onerror = function(error) {
