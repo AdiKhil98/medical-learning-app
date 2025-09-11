@@ -390,6 +390,13 @@ export default function KPSimulationScreen() {
               versionID: 'production',
               voice: {
                 url: "https://runtime-api.voiceflow.com"
+              },
+              assistant: {
+                position: 'bottom-left',
+                spacing: {
+                  side: 24,
+                  bottom: 24
+                }
               }
             });
             
