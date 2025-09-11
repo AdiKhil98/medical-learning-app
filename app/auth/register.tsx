@@ -123,20 +123,14 @@
         router.replace('/(tabs)');
       } catch (error: any) {
         if (error.message === 'VERIFICATION_REQUIRED') {
-          // Redirect to verification screen
-          Alert.alert(
-            'Registration Successful!',
-            'Please check your email and click the verification link to activate your account.',
-            [
-              {
-                text: 'Check Email',
-                onPress: () => router.push({
-                  pathname: '/auth/verify-email',
-                  params: { email: email.toLowerCase().trim() }
-                }),
-              },
-            ]
-          );
+          // Automatically redirect to verification screen with success message
+          router.push({
+            pathname: '/auth/verify-email',
+            params: { 
+              email: email.toLowerCase().trim(),
+              message: 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'
+            }
+          });
         } else {
           Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
         }

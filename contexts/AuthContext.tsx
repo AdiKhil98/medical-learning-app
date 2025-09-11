@@ -22,12 +22,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🚀 AuthProvider useEffect triggered, calling initializeAuth...');
     initializeAuth();
     
     // EMERGENCY FALLBACK: Force loading to false after 3 seconds no matter what
     const emergencyTimeout = setTimeout(() => {
-      console.log('🚨 EMERGENCY: Force setting loading to false after 3 seconds');
       setLoading(false);
     }, 3000);
     
@@ -36,27 +34,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initializeAuth = async () => {
     try {
-      console.log('🔄 Initializing auth...');
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         SecureLogger.error('Session error:', error);
-        console.log('❌ Session error:', error);
       }
       
       SecureLogger.log('Initial session loaded', { hasSession: !!session, userId: session?.user?.id });
-      console.log('✅ Session check result:', { hasSession: !!session, userId: session?.user?.id, error });
       
       // Set the session state immediately and end loading
       setSession(session);
       setLoading(false); // Move this up to prevent infinite loading
-      console.log('✅ AuthContext loading set to false');
       
       // Handle user profile loading asynchronously without blocking
       if (session?.user) {
-        console.log('👤 Loading user profile asynchronously...');
         ensureUserProfile(session.user).catch(error => {
-          console.warn('⚠️ User profile loading failed, but app will continue:', error);
         });
         
         // Initialize session timeout manager asynchronously
@@ -64,15 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           () => SecureLogger.warn('Session timeout warning'),
           () => handleSessionTimeout()
         ).catch(error => {
-          console.warn('⚠️ Session timeout manager failed to init:', error);
         });
       } else {
         setUser(null);
-        console.log('👤 No session, user set to null');
       }
       
     } catch (error) {
-      console.error('❌ Error initializing auth:', error);
       SecureLogger.error('Error initializing auth', error);
       setSession(null);
       setUser(null);
@@ -136,7 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const ensureUserProfile = async (authUser: any) => {
     try {
-      console.log('👤 Checking user profile for:', authUser.id);
       
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
@@ -156,7 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         SecureLogger.error('Error checking user profile', fetchError);
-        console.warn('⚠️ Error checking user profile:', fetchError);
         return;
       }
 
@@ -249,14 +236,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           setUser(completeUser);
           SecureLogger.log('User profile loaded with role', { role: userProfile.role, email: authUser.email });
-          console.log('Complete user profile set:', { role: userProfile.role, email: authUser.email });
         }
       } catch (profileFetchError) {
         SecureLogger.error('Error in profile fetch', profileFetchError);
       }
 
     } catch (error) {
-      console.warn('⚠️ ensureUserProfile error (non-blocking):', error);
       SecureLogger.error('ensureUserProfile error', error);
     }
   };
@@ -264,13 +249,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const signInStartTime = performance.now();
-      console.log('🔐 AuthContext signIn started at:', new Date().toLocaleTimeString());
       SecureLogger.log('Sign in attempt initiated');
       
       // Check client-side rate limiting first
       const rateLimitStartTime = performance.now();
       const rateLimitCheck = await RateLimiter.checkAttempts(email);
-      console.log('⏱️ Rate limit check took:', Math.round(performance.now() - rateLimitStartTime), 'ms');
       
       if (!rateLimitCheck.allowed) {
         const lockoutEndsAt = new Date(rateLimitCheck.lockoutEndsAt!);
@@ -281,44 +264,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const serverLockStartTime = performance.now();
       try {
         const { data: isLocked } = await supabase.rpc('check_account_lock', { email_input: email });
-        console.log('🔒 Server lock check took:', Math.round(performance.now() - serverLockStartTime), 'ms');
         if (isLocked) {
           throw new Error('Account locked. Try again in 30 minutes');
         }
       } catch (rpcError) {
-        console.log('🔒 Server lock check took:', Math.round(performance.now() - serverLockStartTime), 'ms (RPC not available)');
         // If RPC doesn't exist, continue with login (backwards compatibility)
         SecureLogger.log('Account lock check RPC not available, continuing');
       }
       
       // Actual Supabase authentication
       const supabaseAuthStartTime = performance.now();
-      console.log('🔑 Starting Supabase authentication...');
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       const supabaseAuthEndTime = performance.now();
-      console.log('🔑 Supabase auth took:', Math.round(supabaseAuthEndTime - supabaseAuthStartTime), 'ms');
       
       if (error) {
         SecureLogger.warn('Sign in failed');
         // Record failed attempt
         const failedAttemptStartTime = performance.now();
         await RateLimiter.recordFailedAttempt(email);
-        console.log('📝 Recording failed attempt took:', Math.round(performance.now() - failedAttemptStartTime), 'ms');
         
         // Also record on server if RPC exists
         const serverFailedStartTime = performance.now();
         try {
           await supabase.rpc('increment_failed_login', { email_input: email });
-          console.log('📝 Server failed login recording took:', Math.round(performance.now() - serverFailedStartTime), 'ms');
         } catch (rpcError) {
-          console.log('📝 Server failed login recording took:', Math.round(performance.now() - serverFailedStartTime), 'ms (RPC not available)');
           SecureLogger.log('Failed login RPC not available');
         }
         
         // Log failed login audit event
         const auditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_failed', undefined, { email, error: error.message });
-        console.log('📋 Audit logging took:', Math.round(performance.now() - auditStartTime), 'ms');
         throw error;
       }
       
@@ -328,31 +303,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Clear failed attempts on success
         const clearAttemptsStartTime = performance.now();
         await RateLimiter.clearAttempts(email);
-        console.log('🧹 Clearing failed attempts took:', Math.round(performance.now() - clearAttemptsStartTime), 'ms');
         
         // Also clear on server if RPC exists
         const serverClearStartTime = performance.now();
         try {
           await supabase.rpc('reset_failed_login', { user_id_input: data.user.id });
-          console.log('🧹 Server clear failed attempts took:', Math.round(performance.now() - serverClearStartTime), 'ms');
         } catch (rpcError) {
-          console.log('🧹 Server clear failed attempts took:', Math.round(performance.now() - serverClearStartTime), 'ms (RPC not available)');
           SecureLogger.log('Reset failed login RPC not available');
         }
         
         // Update activity for session timeout
         const sessionTimeoutStartTime = performance.now();
         await SessionTimeoutManager.updateLastActivity();
-        console.log('⏲️ Session timeout update took:', Math.round(performance.now() - sessionTimeoutStartTime), 'ms');
         
         // Log successful login audit event
         const successAuditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_success', data.user.id, { email });
-        console.log('📋 Success audit logging took:', Math.round(performance.now() - successAuditStartTime), 'ms');
       }
       
       const totalSignInTime = performance.now() - signInStartTime;
-      console.log('🎯 Total signIn process took:', Math.round(totalSignInTime), 'ms');
       
     } catch (error) {
       SecureLogger.error('Sign in error', error);
