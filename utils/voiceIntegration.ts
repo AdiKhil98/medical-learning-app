@@ -83,16 +83,36 @@ export class VoiceInteractionService {
   private async initializeSpeechRecognition(): Promise<void> {
     if (typeof window === 'undefined') return;
 
-    // First, request microphone permission
-    console.log('🎙️ Requesting microphone permissions...');
+    // First, check and request microphone permission
+    console.log('🎙️ Checking microphone permissions...');
+    
     try {
+      // Check current permission status
+      const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      console.log('📊 Current microphone permission status:', permission.state);
+      
+      if (permission.state === 'denied') {
+        throw new Error('Microphone permission was denied. Please enable microphone access in your browser settings and refresh the page.');
+      }
+      
+      // Request microphone access
+      console.log('🎙️ Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone permission granted');
+      console.log('✅ Microphone permission granted and working');
+      
       // Stop the stream immediately as we just needed permission
       stream.getTracks().forEach(track => track.stop());
+      
     } catch (error) {
-      console.error('❌ Microphone permission denied:', error);
-      throw new Error('Microphone access is required for voice interaction');
+      console.error('❌ Microphone permission issue:', error);
+      
+      if (error.name === 'NotAllowedError') {
+        throw new Error('Microphone access was denied. Please click the microphone icon in your browser\'s address bar and allow microphone access, then try again.');
+      } else if (error.name === 'NotFoundError') {
+        throw new Error('No microphone found. Please ensure you have a microphone connected.');
+      } else {
+        throw new Error(`Microphone access failed: ${error.message}`);
+      }
     }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
