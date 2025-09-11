@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Voiceflow Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+            margin-bottom: 30px;
+        }
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .back-link:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/simulation/kp" class="back-link">← Zurück zur Simulation</a>
+        
+        <h1>Standard Voiceflow Widget Test</h1>
+        
+        <div class="instructions">
+            <h3>📋 Anweisungen:</h3>
+            <ol>
+                <li>Das Standard-Voiceflow-Widget sollte unten rechts erscheinen</li>
+                <li>Klicken Sie darauf, um es zu öffnen</li>
+                <li>Testen Sie die Spracheingabe (falls verfügbar)</li>
+                <li>Sagen Sie "Hallo" oder "Simulation starten"</li>
+                <li>Beobachten Sie, ob Sie Audio-Antworten hören</li>
+            </ol>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: #e8f5e8; border-radius: 10px;">
+            <h3>🔍 Was zu beobachten ist:</h3>
+            <ul>
+                <li>Wird das Widget sichtbar?</li>
+                <li>Öffnet sich eine Chat-Oberfläche?</li>
+                <li>Gibt es ein Mikrofon-Symbol?</li>
+                <li>Funktioniert die Spracheingabe?</li>
+                <li>Hören Sie Audio-Antworten?</li>
+                <li>Werden Textantworten angezeigt?</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Official Voiceflow Widget Code -->
+    <script type="text/javascript">
+        (function(d, t) {
+            var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+            v.onload = function() {
+                window.voiceflow.chat.load({
+                    verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
+                    url: 'https://general-runtime.voiceflow.com',
+                    versionID: 'production',
+                    voice: {
+                        url: "https://runtime-api.voiceflow.com"
+                    }
+                });
+            };
+            v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; 
+            v.type = "text/javascript"; 
+            s.parentNode.insertBefore(v, s);
+        })(document, 'script');
+    </script>
+</body>
+</html>

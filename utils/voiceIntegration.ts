@@ -173,22 +173,38 @@ export class VoiceInteractionService {
   // Setup listener for Voiceflow messages
   private setupVoiceflowMessageListener(): void {
     this.messageListener = (event: MessageEvent) => {
+      console.log('📨 Received window message:', {
+        origin: event.origin,
+        data: event.data,
+        type: typeof event.data
+      });
+      
       if (event.data && typeof event.data === 'object') {
-        // Listen for Voiceflow responses
+        // Listen for Voiceflow responses - expanded patterns
         if (event.data.type === 'voiceflow:response' || 
             event.data.type === 'voiceflow:message' ||
-            (event.data.source === 'voiceflow' && event.data.message)) {
+            event.data.type === 'widget:message' ||
+            event.data.type === 'chat:message' ||
+            (event.data.source === 'voiceflow' && event.data.message) ||
+            event.data.action === 'response') {
           
-          const message = event.data.message || event.data.text || event.data.payload;
+          const message = event.data.message || event.data.text || event.data.payload || event.data.content;
           if (message && typeof message === 'string') {
-            console.log('🤖 Received Voiceflow response:', message);
+            console.log('🤖 Received Voiceflow window message:', message);
             this.handleVoiceflowResponse(message);
           }
+        }
+        
+        // Also check for any widget-related events with text content
+        if (event.data.type && event.data.type.includes('widget') || 
+            event.data.type && event.data.type.includes('chat')) {
+          console.log('🔍 Widget/Chat event:', event.data);
         }
       }
     };
 
     window.addEventListener('message', this.messageListener);
+    console.log('👂 Window message listener attached');
     
     // Also monitor DOM changes for Voiceflow responses
     this.monitorVoiceflowDOM();
@@ -197,38 +213,104 @@ export class VoiceInteractionService {
   // Monitor DOM for Voiceflow conversation updates
   private monitorVoiceflowDOM(): void {
     const checkForResponses = () => {
-      // Look for new messages in hidden Voiceflow widget
+      // Look for new messages in hidden Voiceflow widget (reduced logging)
       const messageSelectors = [
         '.vfrc-message--assistant',
         '.vf-message--bot',
         '[data-testid="assistant-message"]',
         '.assistant-message',
-        '.bot-message'
+        '.bot-message',
+        '.vfrc-message',
+        '.vfrc-chat-message',
+        '[class*="message"]',
+        '[class*="response"]',
+        '[class*="assistant"]',
+        '[class*="bot"]',
+        'div[role="region"] p',
+        'div[role="region"] span',
+        '.vfrc-text',
+        '.vfrc-system-response'
       ];
 
+      let foundElements = 0;
       for (const selector of messageSelectors) {
         const messages = document.querySelectorAll(selector);
+        foundElements += messages.length;
+        
+        // Only log if elements are found
+        if (messages.length > 0) {
+          console.log(`🔍 Found ${messages.length} elements for selector: ${selector}`);
+        }
+        
         const latestMessage = messages[messages.length - 1];
         
         if (latestMessage && latestMessage.textContent) {
           const messageText = latestMessage.textContent.trim();
+          console.log(`📝 Latest message text: "${messageText}"`);
+          console.log(`📚 Current history:`, this.state.conversationHistory);
+          
           if (messageText && !this.state.conversationHistory.includes(messageText)) {
             console.log('🤖 Found new DOM response:', messageText);
             this.handleVoiceflowResponse(messageText);
             break;
+          } else if (messageText) {
+            console.log('⏭️ Message already in history, skipping');
           }
+        }
+      }
+      
+      if (foundElements === 0) {
+        // Only log this occasionally to reduce spam
+        if (Math.random() < 0.1) {
+          console.log('❌ No Voiceflow message elements found in DOM');
+        }
+        
+        // Fallback: check for ANY new text content in the page
+        const allElements = document.querySelectorAll('*');
+        let newTextFound = false;
+        
+        allElements.forEach(el => {
+          if (el.textContent && el.textContent.trim().length > 10) {
+            const text = el.textContent.trim();
+            // Look for text that might be a Voiceflow response
+            if (!this.state.conversationHistory.some(msg => msg.includes(text)) && 
+                text !== 'Zum Sprechen tippen' && 
+                text !== 'AKTIV' && 
+                text !== 'Test Audio' &&
+                text !== 'Simulation beenden' &&
+                !text.includes('Checking DOM') &&
+                !text.includes('Found 0 elements')) {
+              
+              console.log('🔍 Found potential new text:', text.substring(0, 100));
+              
+              // Check if this could be a Voiceflow response
+              if (text.length > 20 && text.length < 500) {
+                console.log('🤖 Treating as potential Voiceflow response:', text);
+                this.handleVoiceflowResponse(text);
+                newTextFound = true;
+              }
+            }
+          }
+        });
+        
+        if (!newTextFound) {
+          console.log('🔍 No new potential response text found in DOM');
         }
       }
     };
 
-    // Check periodically
-    setInterval(checkForResponses, 1000);
+    // Check periodically - slower interval to reduce console spam
+    console.log('⏰ Starting DOM monitoring with 3-second intervals');
+    setInterval(checkForResponses, 3000);
   }
 
   // Send message to Voiceflow
   private async sendMessageToVoiceflow(message: string): Promise<void> {
     try {
       console.log('📤 Sending message to Voiceflow:', message);
+      console.log('🔧 Voiceflow object available:', !!window.voiceflow);
+      console.log('🔧 Voiceflow.chat available:', !!(window.voiceflow && window.voiceflow.chat));
+      
       this.updateState({ 
         isProcessing: true,
         currentMessage: message,
@@ -237,19 +319,64 @@ export class VoiceInteractionService {
 
       // Try different methods to send message to Voiceflow
       if (window.voiceflow && window.voiceflow.chat) {
+        console.log('🔧 Available methods:', {
+          interact: !!window.voiceflow.chat.interact,
+          send: !!window.voiceflow.chat.send,
+          sendMessage: !!window.voiceflow.chat.sendMessage
+        });
+        
         if (window.voiceflow.chat.interact) {
-          await window.voiceflow.chat.interact({
+          console.log('📡 Using interact method');
+          const response = await window.voiceflow.chat.interact({
             type: 'text',
             payload: message
           });
+          console.log('📡 Full interact response:', response);
+          
+          // Try to extract text from different response formats
+          if (response) {
+            if (typeof response === 'string') {
+              console.log('🎯 Direct string response:', response);
+              this.handleVoiceflowResponse(response);
+            } else if (response.text) {
+              console.log('🎯 Response.text:', response.text);
+              this.handleVoiceflowResponse(response.text);
+            } else if (response.message) {
+              console.log('🎯 Response.message:', response.message);
+              this.handleVoiceflowResponse(response.message);
+            } else if (response.payload) {
+              console.log('🎯 Response.payload:', response.payload);
+              this.handleVoiceflowResponse(response.payload);
+            } else if (Array.isArray(response) && response.length > 0) {
+              console.log('🎯 Array response:', response[0]);
+              const firstResponse = response[0];
+              if (firstResponse.text) {
+                this.handleVoiceflowResponse(firstResponse.text);
+              } else if (firstResponse.message) {
+                this.handleVoiceflowResponse(firstResponse.message);
+              }
+            }
+          }
         } else if (window.voiceflow.chat.send) {
-          await window.voiceflow.chat.send({
+          console.log('📡 Using send method');
+          const response = await window.voiceflow.chat.send({
             type: 'text',
             payload: message
           });
+          console.log('📡 Send response:', response);
         } else if (window.voiceflow.chat.sendMessage) {
-          await window.voiceflow.chat.sendMessage(message);
+          console.log('📡 Using sendMessage method');
+          const response = await window.voiceflow.chat.sendMessage(message);
+          console.log('📡 SendMessage response:', response);
         }
+        
+        // Try to manually trigger a response check after sending
+        setTimeout(() => {
+          console.log('🔄 Manually checking for responses after message send...');
+          this.checkForManualResponse();
+        }, 2000);
+      } else {
+        console.log('❌ Voiceflow not available, trying DOM fallback');
       }
 
       // Fallback: try to interact with hidden DOM elements
@@ -378,6 +505,44 @@ export class VoiceInteractionService {
     } catch (error) {
       console.error('❌ Error in speakMessage:', error);
     }
+  }
+
+  // Test function to manually trigger speech synthesis
+  testSpeech(): void {
+    console.log('🧪 Testing speech synthesis directly...');
+    this.speakMessage('Dies ist ein Test der Sprachsynthese');
+  }
+
+  // Manual check for responses in Voiceflow widget
+  private checkForManualResponse(): void {
+    console.log('🔄 Manual response check - looking for hidden Voiceflow content...');
+    
+    // Check all iframes for Voiceflow content
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach((iframe, index) => {
+      try {
+        console.log(`🔍 Checking iframe ${index}:`, iframe.src);
+        if (iframe.contentDocument) {
+          const iframeDoc = iframe.contentDocument;
+          const textContent = iframeDoc.body?.textContent || '';
+          if (textContent.length > 10) {
+            console.log(`📄 Iframe ${index} content:`, textContent.substring(0, 200));
+          }
+        }
+      } catch (e) {
+        console.log(`🚫 Cannot access iframe ${index} content (CORS)`, e.message);
+      }
+    });
+    
+    // Also check for any newly created elements
+    const recentElements = document.querySelectorAll('[class*="vf"], [id*="vf"], [class*="chat"], [class*="widget"]');
+    console.log(`🔍 Found ${recentElements.length} potential Voiceflow elements`);
+    
+    recentElements.forEach((el, index) => {
+      if (el.textContent && el.textContent.trim().length > 5) {
+        console.log(`📝 Element ${index} text:`, el.textContent.trim().substring(0, 100));
+      }
+    });
   }
 
   // Start recording

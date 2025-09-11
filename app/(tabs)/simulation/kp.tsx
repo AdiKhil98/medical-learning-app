@@ -54,6 +54,11 @@ export default function KPSimulationScreen() {
       
       // Subscribe to voice state changes
       const unsubscribe = service.subscribe((newState) => {
+        console.log('🔄 Voice state updated:', {
+          isInitialized: newState.isInitialized,
+          isRecording: newState.isRecording,
+          isProcessing: newState.isProcessing
+        });
         setVoiceState(newState);
         if (newState.isInitialized && !simulationStarted) {
           setSimulationStarted(true);
@@ -76,9 +81,9 @@ export default function KPSimulationScreen() {
     }
   };
 
-  // Voice microphone event handlers
-  const handleInitializeVoice = async () => {
-    console.log('🎤 KP: handleInitializeVoice called - button pressed!');
+  // Initialize simulation with usage tracking
+  const initializeSimulation = async () => {
+    console.log('🏥 KP: Initializing medical simulation');
     
     // Check if user can use simulation
     if (!canUseSimulation()) {
@@ -88,45 +93,268 @@ export default function KPSimulationScreen() {
         `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
         [{ text: 'OK' }]
       );
-      return;
+      return false;
     }
 
     try {
-      console.log('🚀 KP: Starting voice simulation initialization');
-      
       // Track simulation usage
       await useSimulation('kp');
       
       // Start simulation timer
       resetTimer();
       
-      // Initialize voice service
-      const service = await initializeVoiceService();
-      if (service) {
-        await service.initialize();
-        console.log('✅ Voice simulation initialized successfully');
-      }
+      console.log('✅ KP: Medical simulation initialized');
+      return true;
       
     } catch (error) {
-      console.error('❌ Error initializing voice simulation:', error);
+      console.error('❌ Error initializing simulation:', error);
       Alert.alert(
         'Fehler',
-        'Sprach-Simulation konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+        'Simulation konnte nicht initialisiert werden.',
         [{ text: 'OK' }]
       );
+      return false;
     }
   };
 
   const handleStartRecording = () => {
-    if (voiceService.current) {
-      voiceService.current.startRecording();
+    console.log('🎤 Starting custom microphone recording');
+    
+    // Use Web Speech API directly like the original approach, but with better integration
+    if (!navigator.mediaDevices || !window.webkitSpeechRecognition) {
+      Alert.alert('Fehler', 'Spracheingabe wird von Ihrem Browser nicht unterstützt.');
+      return;
+    }
+
+    try {
+      // Request microphone permission and start recognition
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          console.log('🎤 Microphone access granted');
+          
+          // Stop the stream immediately - we just needed permission
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Start speech recognition
+          const SpeechRecognition = window.webkitSpeechRecognition || (window as any).SpeechRecognition;
+          if (!SpeechRecognition) {
+            throw new Error('Speech recognition not supported');
+          }
+          
+          const recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+          recognition.lang = 'de-DE';
+          
+          recognition.onstart = () => {
+            console.log('🎤 Speech recognition started');
+            setVoiceState(prev => ({ ...prev, isRecording: true }));
+          };
+          
+          recognition.onresult = (event: any) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+              }
+            }
+            
+            if (finalTranscript) {
+              console.log('🗣️ Final transcript:', finalTranscript);
+              handleSpeechResult(finalTranscript);
+            }
+          };
+          
+          recognition.onerror = (event: any) => {
+            console.error('❌ Speech recognition error:', event.error);
+            setVoiceState(prev => ({ ...prev, isRecording: false, error: event.error }));
+          };
+          
+          recognition.onend = () => {
+            console.log('🎤 Speech recognition ended');
+            setVoiceState(prev => ({ ...prev, isRecording: false }));
+          };
+          
+          recognition.start();
+          
+        })
+        .catch(error => {
+          console.error('❌ Microphone permission denied:', error);
+          Alert.alert('Fehler', 'Mikrofon-Zugriff erforderlich für Spracheingabe.');
+        });
+        
+    } catch (error) {
+      console.error('❌ Error starting speech recognition:', error);
+      Alert.alert('Fehler', 'Spracheingabe konnte nicht gestartet werden.');
+    }
+  };
+
+  // Handle speech recognition result
+  const handleSpeechResult = (transcript: string) => {
+    console.log('📝 Processing speech result:', transcript);
+    
+    // Send to hidden Voiceflow widget
+    if (window.voiceflow && window.voiceflow.chat && window.voiceflow.chat.interact) {
+      setVoiceState(prev => ({ ...prev, isProcessing: true, currentMessage: `Sie: ${transcript}` }));
+      
+      window.voiceflow.chat.interact({
+        type: 'text',
+        payload: transcript
+      }).then((response: any) => {
+        console.log('🤖 Voiceflow raw response:', response);
+        
+        // Try multiple ways to extract response text
+        let responseText = '';
+        
+        if (response && Array.isArray(response) && response.length > 0) {
+          const firstResponse = response[0];
+          
+          // Try different response formats
+          if (firstResponse.type === 'speak' && firstResponse.payload) {
+            responseText = firstResponse.payload.message || firstResponse.payload;
+          } else if (firstResponse.payload && firstResponse.payload.message) {
+            responseText = firstResponse.payload.message;
+          } else if (firstResponse.payload && typeof firstResponse.payload === 'string') {
+            responseText = firstResponse.payload;
+          } else if (typeof firstResponse === 'string') {
+            responseText = firstResponse;
+          }
+          
+          // Fallback - check all response items for text
+          if (!responseText) {
+            for (const item of response) {
+              if (item.type === 'speak' || item.type === 'text') {
+                responseText = item.payload?.message || item.payload || item.text || '';
+                if (responseText) break;
+              }
+            }
+          }
+        }
+        
+        console.log('📤 Extracted response text:', responseText);
+        
+        if (responseText && typeof responseText === 'string' && responseText.trim()) {
+          speakResponse(responseText);
+          setVoiceState(prev => ({ 
+            ...prev, 
+            isProcessing: false,
+            currentMessage: `KI: ${responseText}`
+          }));
+        } else {
+          console.warn('⚠️ No valid response text found in Voiceflow response');
+          setVoiceState(prev => ({ 
+            ...prev, 
+            isProcessing: false,
+            currentMessage: 'KI: Antwort erhalten, aber kein Text extrahiert.'
+          }));
+        }
+      }).catch((error: any) => {
+        console.error('❌ Voiceflow interaction error:', error);
+        setVoiceState(prev => ({ 
+          ...prev, 
+          isProcessing: false,
+          currentMessage: 'Fehler bei der Kommunikation mit der KI.' 
+        }));
+      });
+    } else {
+      console.error('❌ Voiceflow widget not available for interaction');
+      setVoiceState(prev => ({ 
+        ...prev, 
+        isProcessing: false,
+        currentMessage: 'Voiceflow Widget nicht verfügbar.' 
+      }));
+    }
+  };
+
+  // Speak response using Web Speech API
+  const speakResponse = (text: string) => {
+    console.log('🔊 Speaking response:', text);
+    
+    if (window.speechSynthesis) {
+      // Cancel any current speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'de-DE';
+      utterance.rate = 0.8; // Slightly slower for better clarity
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Wait for voices to load and find the best German voice
+      const speakWithVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('🎯 Available voices:', voices.length);
+        
+        // Find German voice (prefer neural or premium voices)
+        const germanVoices = voices.filter(voice => voice.lang.startsWith('de'));
+        console.log('🇩🇪 German voices found:', germanVoices.length);
+        
+        if (germanVoices.length > 0) {
+          // Prefer specific high-quality German voices
+          const preferredVoice = germanVoices.find(voice => 
+            voice.name.includes('Google') || 
+            voice.name.includes('Microsoft') || 
+            voice.name.includes('Neural') ||
+            voice.name.includes('Premium')
+          ) || germanVoices[0];
+          
+          utterance.voice = preferredVoice;
+          console.log('🎤 Using voice:', preferredVoice.name);
+        }
+        
+        utterance.onstart = () => {
+          console.log('🔊 Speech synthesis started');
+        };
+        
+        utterance.onend = () => {
+          console.log('✅ Speech synthesis completed');
+        };
+        
+        utterance.onerror = (event) => {
+          console.error('❌ Speech synthesis error:', event);
+        };
+        
+        window.speechSynthesis.speak(utterance);
+      };
+      
+      // Check if voices are already loaded
+      if (window.speechSynthesis.getVoices().length > 0) {
+        speakWithVoice();
+      } else {
+        // Wait for voices to load
+        const voicesLoadedHandler = () => {
+          speakWithVoice();
+          window.speechSynthesis.removeEventListener('voiceschanged', voicesLoadedHandler);
+        };
+        window.speechSynthesis.addEventListener('voiceschanged', voicesLoadedHandler);
+      }
+    } else {
+      console.error('❌ Speech synthesis not available');
     }
   };
 
   const handleStopRecording = () => {
-    if (voiceService.current) {
-      voiceService.current.stopRecording();
+    console.log('🎤 Stopping recording');
+    
+    // Try to stop voice interaction
+    if (window.voiceflow && window.voiceflow.chat) {
+      try {
+        // Look for stop button or end voice interaction
+        setTimeout(() => {
+          const stopButton = document.querySelector('[aria-label*="stop"], [title*="stop"], .vfrc-stop-button');
+          if (stopButton) {
+            console.log('🛑 Found stop button, clicking it');
+            (stopButton as HTMLElement).click();
+          }
+        }, 100);
+      } catch (error) {
+        console.error('❌ Error stopping voice:', error);
+      }
     }
+
+    // Update UI state
+    setVoiceState(prev => ({ ...prev, isRecording: false }));
   };
 
   // Cleanup voice service on unmount
@@ -140,6 +368,115 @@ export default function KPSimulationScreen() {
         voiceService.current = null;
       }
     };
+  }, []);
+
+  // Load visible Voiceflow widget optimized for medical simulation
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      // Clear any existing widgets first
+      const existingScripts = document.querySelectorAll('script[src*="voiceflow"]');
+      existingScripts.forEach(script => script.remove());
+      
+      // Add Voiceflow widget script
+      const script = document.createElement('script');
+      script.onload = function() {
+        console.log('✅ Voiceflow script loaded for medical simulation');
+        setTimeout(() => {
+          if (window.voiceflow && window.voiceflow.chat) {
+            window.voiceflow.chat.load({
+              verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
+              url: 'https://general-runtime.voiceflow.com',
+              versionID: 'production',
+              voice: {
+                url: "https://runtime-api.voiceflow.com"
+              },
+              assistant: {
+                title: 'KP Medical Simulation',
+                description: 'Sprechen Sie mit dem KI-Assistenten für die medizinische Simulation',
+                color: '#667eea',
+                avatar: 'https://cdn.voiceflow.com/assets/avatar-placeholder.png',
+                launcher: {
+                  displayText: 'Medizinische Simulation'
+                },
+                stylesheet: `
+                  /* Custom styling for medical app integration */
+                  .vfrc-launcher {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4) !important;
+                    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+                    backdrop-filter: blur(10px) !important;
+                  }
+                  
+                  .vfrc-launcher:hover {
+                    transform: scale(1.05) !important;
+                    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6) !important;
+                  }
+                  
+                  .vfrc-widget {
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+                    border-radius: 16px !important;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+                    border: 1px solid rgba(102, 126, 234, 0.2) !important;
+                  }
+                  
+                  .vfrc-header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: white !important;
+                  }
+                  
+                  .vfrc-avatar {
+                    background: #4CAF50 !important;
+                  }
+                  
+                  /* Voice button styling */
+                  .vfrc-voice-button {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+                  }
+                  
+                  .vfrc-voice-button:hover {
+                    transform: scale(1.1) !important;
+                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
+                  }
+                  
+                  /* Message styling */
+                  .vfrc-message--user {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    color: white !important;
+                  }
+                  
+                  .vfrc-message--system {
+                    background: #f8f9fa !important;
+                    border: 1px solid #e9ecef !important;
+                  }
+                `
+              }
+            });
+            console.log('✅ Medical simulation widget loaded with custom styling');
+            
+            // Initialize simulation with usage tracking
+            initializeSimulation().then((success) => {
+              if (success) {
+                setSimulationStarted(true);
+                setVoiceflowLoaded(true);
+                console.log('🎯 Ready for medical simulation - look for the widget in bottom-right corner!');
+              }
+            });
+            
+          } else {
+            console.error('❌ Voiceflow not available');
+          }
+        }, 1000);
+      };
+      script.onerror = function() {
+        console.error('❌ Failed to load Voiceflow script');
+      };
+      script.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
+      script.type = "text/javascript";
+      document.head.appendChild(script);
+      
+      console.log('📦 Loading Voiceflow widget for medical simulation');
+    }
   }, []);
 
   // Component cleanup - hide widget when leaving page
@@ -418,25 +755,30 @@ export default function KPSimulationScreen() {
               </View>
             )}
             
-            {/* Main content - Voice Microphone Interface */}
+            {/* Main content - Voiceflow Widget Instructions */}
             <View style={styles.mainContent}>
-              <VoiceMicrophone
-                onInitialize={handleInitializeVoice}
-                onStartRecording={handleStartRecording}
-                onStopRecording={handleStopRecording}
-                isInitialized={voiceState.isInitialized}
-                isRecording={voiceState.isRecording}
-                isProcessing={voiceState.isProcessing}
-                conversationText={voiceState.currentMessage}
-                size={160}
-              />
-              
-              {/* Error Display */}
-              {voiceState.error && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{voiceState.error}</Text>
+              <View style={styles.voiceflowInstructions}>
+                <Text style={styles.instructionTitle}>🏥 KP Medical Simulation</Text>
+                <Text style={styles.instructionText}>
+                  Die Voiceflow-Sprachsimulation wird automatisch geladen.
+                </Text>
+                <Text style={styles.instructionSubText}>
+                  📍 Suchen Sie nach dem blauen Chat-Symbol unten rechts auf der Seite
+                </Text>
+                <Text style={styles.instructionSubText}>
+                  🎤 Klicken Sie darauf und nutzen Sie die Sprachfunktion
+                </Text>
+                <Text style={styles.instructionSubText}>
+                  🗣️ Sprechen Sie auf Deutsch mit dem medizinischen KI-Assistenten
+                </Text>
+                
+                <View style={styles.statusContainer}>
+                  <View style={styles.statusDot} />
+                  <Text style={styles.statusText}>
+                    {voiceflowLoaded ? 'Widget geladen - Bereit für Simulation' : 'Widget wird geladen...'}
+                  </Text>
                 </View>
-              )}
+              </View>
               
               {/* End Simulation Button */}
               {simulationStarted && (
@@ -596,7 +938,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 4,
   },
+  testButton: {
+    backgroundColor: '#f97316',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginTop: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  voiceflowInstructions: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    margin: 20,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  instructionTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#1f2937',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  instructionText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  startButton: {
+    borderRadius: 25,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  startButtonGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+  },
   spacer: {
     height: 100,
+  },
+  instructionSubText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.2)',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#667eea',
   },
 });

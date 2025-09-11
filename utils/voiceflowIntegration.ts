@@ -82,20 +82,46 @@ export class VoiceflowController {
     }
 
     try {
-      // Initialize widget with hidden configuration
+      // Use the exact same configuration that works in the test page
       window.voiceflow.chat.load({
         verify: { projectID: this.config.projectID },
-        url: this.config.url || 'https://general-runtime.voiceflow.com',
-        versionID: this.config.versionID,
-        voice: this.config.voice,
-        // Hide the widget completely
+        url: 'https://general-runtime.voiceflow.com',
+        versionID: 'production',
+        voice: {
+          url: "https://runtime-api.voiceflow.com"
+        },
         assistant: {
+          title: 'KP Simulation',
+          description: 'Hidden widget for voice integration',
           stylesheet: `
-            #voiceflow-chat { 
-              display: none !important; 
-              visibility: hidden !important;
+            /* Make widget invisible but keep it functional in DOM */
+            .vfrc-launcher {
               opacity: 0 !important;
               pointer-events: none !important;
+              position: fixed !important;
+              bottom: -200px !important;
+              right: -200px !important;
+              z-index: -1 !important;
+              width: 1px !important;
+              height: 1px !important;
+            }
+            
+            .vfrc-widget {
+              opacity: 0 !important;
+              pointer-events: none !important;
+              position: fixed !important;
+              bottom: -500px !important;
+              right: -500px !important;
+              z-index: -1 !important;
+            }
+            
+            /* But allow programmatic access to voice buttons */
+            .vfrc-voice-button,
+            [aria-label*="voice"],
+            button[class*="voice"] {
+              opacity: 1 !important;
+              pointer-events: auto !important;
+              position: absolute !important;
             }
           `
         }
@@ -104,10 +130,8 @@ export class VoiceflowController {
       this.widget = window.voiceflow.chat;
       this.isLoaded = true;
 
-      // Hide any visible elements after initialization
-      setTimeout(() => {
-        this.hideWidget();
-      }, 100);
+      // Widget is now styled to look like our custom microphone
+      console.log('✅ Widget styled as custom microphone');
 
     } catch (error) {
       console.error('Failed to initialize Voiceflow widget:', error);
