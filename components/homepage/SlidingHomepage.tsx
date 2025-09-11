@@ -18,7 +18,7 @@ import {
   HelpCircle,
   CheckCircle,
   XCircle,
-  Sparkles,
+  Info,
   TrendingUp,
   Menu as MenuIcon,
   Clock,
@@ -29,6 +29,7 @@ import {
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
+import AboutUsModal from '@/components/ui/AboutUsModal';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 import { useRouter } from 'expo-router';
@@ -44,6 +45,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showQuestionAnswer, setShowQuestionAnswer] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showAboutUs, setShowAboutUs] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   
@@ -260,15 +262,15 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </Text>
               <TouchableOpacity 
                 style={styles.ctaButton}
-                onPress={onGetStarted}
+                onPress={() => setShowAboutUs(true)}
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#FF6B6B', '#FF8E53', '#FF6B9D']}
+                  colors={['#4F46E5', '#7C3AED', '#EC4899']}
                   style={styles.ctaButtonGradient}
                 >
-                  <Sparkles size={20} color="#ffffff" style={styles.ctaIcon} />
-                  <Text style={styles.ctaButtonText}>Jetzt starten</Text>
+                  <Info size={20} color="#ffffff" style={styles.ctaIcon} />
+                  <Text style={styles.ctaButtonText}>Über Uns</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </LinearGradient>
@@ -496,6 +498,12 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      
+      {/* About Us Modal */}
+      <AboutUsModal
+        visible={showAboutUs}
+        onClose={() => setShowAboutUs(false)}
+      />
     </SafeAreaView>
   );
 }
