@@ -77,20 +77,16 @@
       }
 
       const startTime = performance.now();
-      console.log('🚀 Login process started at:', new Date().toLocaleTimeString());
       
       setLoading(true);
       try {
-        console.log('📧 Attempting login with:', email);
         const loginStartTime = performance.now();
         
         await signIn(email.trim(), password);
         
         const loginEndTime = performance.now();
-        console.log('✅ SignIn completed in:', Math.round(loginEndTime - loginStartTime), 'ms');
 
         // Success - the AuthContext will handle navigation via useEffect
-        console.log('🎉 Login successful! Total time:', Math.round(performance.now() - startTime), 'ms');
 
         // Clear form
         setEmail('');
@@ -98,7 +94,6 @@
 
       } catch (error: any) {
         const errorTime = performance.now();
-        console.log('❌ Login error after', Math.round(errorTime - startTime), 'ms:', error.message);
         
         // Set red error message instead of Alert
         if (error.message?.includes('Invalid login credentials')) {
@@ -116,7 +111,6 @@
         }
       } finally {
         const finalTime = performance.now();
-        console.log('🔄 Login process completed in:', Math.round(finalTime - startTime), 'ms');
         setLoading(false);
       }
     };

@@ -39,7 +39,7 @@ export default function ResetPassword() {
         access_token: access_token as string,
         refresh_token: refresh_token as string
       }).catch(error => {
-        console.error('Error setting session:', error);
+        // Error setting session
         Alert.alert(
           'Fehler',
           'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.',

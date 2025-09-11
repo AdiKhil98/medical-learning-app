@@ -78,7 +78,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
   const fetchItems = useCallback(async (parentSlug: string | null = null) => {
     setLoading(true);
     try {
-      console.log('📚 Fetching items for parent:', parentSlug || 'root');
       
       let query = supabase
         .from('sections')
@@ -95,7 +94,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       const { data, error } = await query;
 
       if (error) {
-        console.error('❌ Error fetching items:', error);
         return;
       }
 
@@ -117,10 +115,8 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         );
 
         setCurrentItems(itemsWithChildrenInfo);
-        console.log(`✅ Loaded ${itemsWithChildrenInfo.length} items`);
       }
     } catch (error) {
-      console.error('❌ Error in fetchItems:', error);
     } finally {
       setLoading(false);
     }
@@ -135,14 +131,12 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
   const handleItemPress = useCallback(async (item: CategoryItem) => {
     if (item.hasChildren) {
       // Navigate to subcategory
-      console.log('🔍 Navigating to subcategory:', item.title);
       
       setBreadcrumbs(prev => [...prev, { title: item.title, slug: item.slug }]);
       setCurrentParent(item.slug);
       await fetchItems(item.slug);
     } else {
       // Navigate to content
-      console.log('📄 Navigating to content:', item.title);
       
       if (onNavigateToContent) {
         onNavigateToContent(item.slug);
