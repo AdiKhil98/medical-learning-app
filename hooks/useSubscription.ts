@@ -132,16 +132,14 @@ export const useSubscription = () => {
   };
 
   const canUseSimulation = (): boolean => {
-    if (!subscription) return false;
+    // Temporarily allow unlimited simulations for testing
+    return true;
     
-    // During trial period, allow unlimited usage
-    if (subscription.in_trial) return true;
-    
-    // Unlimited plan
-    if (subscription.plan_type === 'unlimited') return true;
-    
-    // Check remaining simulations
-    return subscription.simulations_remaining > 0;
+    // Original logic (commented out for testing):
+    // if (!subscription) return false;
+    // if (subscription.in_trial) return true;
+    // if (subscription.plan_type === 'unlimited') return true;
+    // return subscription.simulations_remaining > 0;
   };
 
   const useSimulation = async (type: 'kp' | 'fsp'): Promise<boolean> => {
