@@ -276,13 +276,102 @@ export class VoiceflowController {
     return this.isLoaded && !!this.widget;
   }
 
-  // Clean up widget
+  // Clean up widget properly
   destroy(): void {
-    if (typeof window !== 'undefined' && window.voiceflow?.chat?.destroy) {
-      window.voiceflow.chat.destroy();
+    console.log('🧹 VoiceflowController: Starting cleanup...');
+    
+    if (typeof window !== 'undefined') {
+      // Step 1: Call Voiceflow API cleanup methods
+      if (window.voiceflow?.chat) {
+        try {
+          console.log('🔧 Calling Voiceflow cleanup methods...');
+          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+          window.voiceflow.chat.close && window.voiceflow.chat.close();
+          window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
+        } catch (error) {
+          console.warn('⚠️ Voiceflow API cleanup error:', error);
+        }
+      }
+
+      // Step 2: Remove all Voiceflow DOM elements
+      this.removeAllVoiceflowElements();
+
+      // Step 3: Remove Voiceflow scripts
+      this.removeVoiceflowScripts();
+
+      // Step 4: Clear global Voiceflow object
+      if (window.voiceflow) {
+        try {
+          delete (window as any).voiceflow;
+          console.log('✅ Cleared global voiceflow object');
+        } catch (error) {
+          console.warn('⚠️ Could not clear global voiceflow object:', error);
+        }
+      }
     }
+    
     this.isLoaded = false;
     this.widget = null;
+    console.log('✅ VoiceflowController cleanup completed');
+  }
+
+  // Remove all Voiceflow DOM elements
+  private removeAllVoiceflowElements(): void {
+    const selectors = [
+      '[id*="voiceflow"]',
+      '[class*="voiceflow"]', 
+      '[class*="vf-"]',
+      '[class*="VF"]',
+      '[class*="vfrc"]',
+      '[data-testid*="chat"]',
+      '[aria-label*="chat"]',
+      'iframe[src*="voiceflow"]',
+      'iframe[src*="general-runtime"]',
+      'div[style*="z-index: 1000"]',
+      'div[style*="position: fixed"]',
+      '.widget-container',
+      '#voiceflow-chat',
+      '.vfrc-widget',
+      '.vfrc-chat',
+      '.vfrc-launcher'
+    ];
+
+    let removedCount = 0;
+    selectors.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element: Element) => {
+        // Check if it's actually a Voiceflow element
+        const isVoiceflowElement = 
+          element.id.includes('voiceflow') ||
+          element.className.includes('voiceflow') ||
+          element.className.includes('vfrc') ||
+          (element as HTMLElement).innerHTML?.includes('voiceflow') ||
+          (element as HTMLIFrameElement).src?.includes('voiceflow');
+
+        if (isVoiceflowElement) {
+          element.remove();
+          removedCount++;
+        }
+      });
+    });
+    
+    console.log(`🗑️ Removed ${removedCount} Voiceflow DOM elements`);
+  }
+
+  // Remove Voiceflow scripts
+  private removeVoiceflowScripts(): void {
+    const scripts = document.querySelectorAll('script[src*="voiceflow"]');
+    scripts.forEach(script => {
+      script.remove();
+      console.log('🗑️ Removed Voiceflow script:', script.getAttribute('src'));
+    });
+
+    // Remove our injected style
+    const styleElement = document.getElementById('hide-voiceflow-aggressive');
+    if (styleElement) {
+      styleElement.remove();
+      console.log('🗑️ Removed injected Voiceflow hiding styles');
+    }
   }
 }
 
@@ -305,6 +394,106 @@ export function createFSPController(): VoiceflowController {
       url: 'https://runtime-api.voiceflow.com'
     }
   });
+}
+
+// Global cleanup utility function
+export function globalVoiceflowCleanup(): void {
+  console.log('🌍 Global Voiceflow cleanup started...');
+  
+  if (typeof window !== 'undefined') {
+    // Step 1: Call Voiceflow API cleanup methods
+    if (window.voiceflow?.chat) {
+      try {
+        console.log('🔧 Global cleanup: Calling Voiceflow methods...');
+        window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+        window.voiceflow.chat.close && window.voiceflow.chat.close();
+        window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
+      } catch (error) {
+        console.warn('⚠️ Global Voiceflow API cleanup error:', error);
+      }
+    }
+
+    // Step 2: Remove all Voiceflow elements
+    const selectors = [
+      '[id*="voiceflow"]',
+      '[class*="voiceflow"]', 
+      '[class*="vf-"]',
+      '[class*="VF"]',
+      '[class*="vfrc"]',
+      '[data-testid*="chat"]',
+      '[aria-label*="chat"]',
+      'iframe[src*="voiceflow"]',
+      'iframe[src*="general-runtime"]',
+      'div[style*="z-index: 1000"]',
+      'div[style*="position: fixed"]',
+      '.widget-container',
+      '#voiceflow-chat',
+      '.vfrc-widget',
+      '.vfrc-chat',
+      '.vfrc-launcher'
+    ];
+
+    let removedCount = 0;
+    selectors.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element: Element) => {
+          // Check if it's actually a Voiceflow element
+          const elementHTML = element as HTMLElement;
+          const isVoiceflowElement = 
+            element.id.includes('voiceflow') ||
+            element.className.includes('voiceflow') ||
+            element.className.includes('vfrc') ||
+            elementHTML.innerHTML?.includes('voiceflow') ||
+            (element as HTMLIFrameElement).src?.includes('voiceflow') ||
+            (element as HTMLIFrameElement).src?.includes('general-runtime');
+
+          if (isVoiceflowElement || selector.includes('voiceflow') || selector.includes('vfrc')) {
+            element.remove();
+            removedCount++;
+          }
+        });
+      } catch (error) {
+        console.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
+      }
+    });
+    
+    console.log(`🗑️ Global cleanup: Removed ${removedCount} Voiceflow DOM elements`);
+
+    // Step 3: Remove scripts
+    try {
+      const scripts = document.querySelectorAll('script[src*="voiceflow"]');
+      scripts.forEach(script => {
+        script.remove();
+        console.log('🗑️ Global cleanup: Removed Voiceflow script');
+      });
+    } catch (error) {
+      console.warn('⚠️ Error removing Voiceflow scripts:', error);
+    }
+
+    // Step 4: Remove injected styles
+    try {
+      const styleElement = document.getElementById('hide-voiceflow-aggressive');
+      if (styleElement) {
+        styleElement.remove();
+        console.log('🗑️ Global cleanup: Removed injected styles');
+      }
+    } catch (error) {
+      console.warn('⚠️ Error removing injected styles:', error);
+    }
+
+    // Step 5: Clear global objects
+    try {
+      if (window.voiceflow) {
+        delete (window as any).voiceflow;
+        console.log('✅ Global cleanup: Cleared global voiceflow object');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear global voiceflow object:', error);
+    }
+  }
+  
+  console.log('✅ Global Voiceflow cleanup completed');
 }
 
 // Type declaration for window.voiceflow
