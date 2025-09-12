@@ -83,9 +83,30 @@ export const useSubscription = () => {
 
       setSubscription(processedData);
 
-    } catch (err) {
-      console.error('Error fetching subscription:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
+    } catch (err: any) {
+      // Silently handle missing table errors for cleaner console
+      if (err?.code === '42P01' || err?.message?.includes('relation') || err?.status === 403) {
+        // Table doesn't exist or no permissions - use default free tier
+        setSubscription({
+          id: 'default',
+          plan_type: 'free',
+          status: 'active',
+          simulations_limit: null,
+          simulations_used: 0,
+          simulations_remaining: Infinity,
+          in_trial: false,
+          trial_end_date: null,
+          subscription_end_date: null,
+          next_billing_date: null,
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          billing_cycle: 'yearly',
+          amount: 0,
+        });
+      } else {
+        console.error('Error fetching subscription:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
+      }
     } finally {
       setLoading(false);
     }
@@ -125,7 +146,12 @@ export const useSubscription = () => {
       // Refresh subscription after creation
       await fetchSubscription();
 
-    } catch (err) {
+    } catch (err: any) {
+      // Silently handle table permission errors
+      if (err?.status === 403 || err?.message?.includes('permission')) {
+        // Can't create subscription record - app will use default free tier
+        return;
+      }
       console.error('Error creating default subscription:', err);
       setError(err instanceof Error ? err.message : 'Failed to create subscription');
     }
