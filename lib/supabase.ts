@@ -3,11 +3,24 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { SecureLogger } from './security';
 
-// Load configuration from environment variables
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Load configuration from environment variables with fallback for web deployment
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+  process.env.SUPABASE_URL ||
+  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_URL) ||
+  'https://pavjavrijaihnwbydfrk.supabase.co'; // Temporary fallback for web deployment
+  
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+  process.env.SUPABASE_ANON_KEY ||
+  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhdmphdnJpamFpaG53YnlkZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNDM4NjYsImV4cCI6MjA2MDcxOTg2Nn0.4VrlhzIdV6F8cypZlVuYwE61GspATdFcjh0ebViOHIs'; // Temporary fallback
 
-SecureLogger.log('Supabase configuration loaded');
+SecureLogger.log('Supabase configuration loaded', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  platform: Platform.OS,
+  processEnvUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
+  processEnvKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+});
 
 // Validate environment variables with helpful error messages
 if (!supabaseUrl) {
