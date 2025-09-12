@@ -11,6 +11,7 @@ import {
 import { ChevronDown, BookOpen, AlertCircle, Search } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
+import TableOfContents from './TableOfContents';
 
 interface SupabaseRow {
   idx: number;
@@ -35,6 +36,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
   const [searchTerm, setSearchTerm] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: number]: View | null }>({});
 
   // Parse content sections
   const parsedSections = React.useMemo(() => {
@@ -125,6 +128,47 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     );
   }, [parsedSections, searchTerm]);
 
+  // Create table of contents items
+  const tableOfContentsItems = React.useMemo(() => {
+    return filteredSections.map((section, index) => ({
+      id: `section-${index}`,
+      title: section.title,
+      index: index,
+    }));
+  }, [filteredSections]);
+
+  // Navigation handler for table of contents
+  const handleNavigateToSection = (sectionIndex: number) => {
+    // First expand the section if it's collapsed
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionIndex]: true
+    }));
+
+    // Then scroll to the section after a brief delay to allow expansion
+    setTimeout(() => {
+      const sectionRef = sectionRefs.current[sectionIndex];
+      if (sectionRef && scrollViewRef.current) {
+        sectionRef.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(0, y - 20), // Offset for better visibility
+              animated: true
+            });
+          },
+          () => {
+            // Fallback: scroll to approximate position
+            scrollViewRef.current?.scrollTo({
+              y: sectionIndex * 200, // Approximate section height
+              animated: true
+            });
+          }
+        );
+      }
+    }, 150);
+  };
+
   // Error handling
   if (!supabaseRow) {
     return (
@@ -170,10 +214,16 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     <Animated.View style={[styles.appContainer, { backgroundColor: colors.background, opacity: fadeAnim }]}>
       {/* Header Section */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)' }]}>
-
-        <Text style={[styles.mainTitle, { color: colors.text }]}>
-          {supabaseRow?.title || 'Medizinischer Inhalt'}
-        </Text>
+        <View style={styles.titleContainer}>
+          <Text style={[styles.mainTitle, { color: colors.text }]}>
+            {supabaseRow?.title || 'Medizinischer Inhalt'}
+          </Text>
+          <TableOfContents
+            sections={tableOfContentsItems}
+            onNavigateToSection={handleNavigateToSection}
+            iconSize={18}
+          />
+        </View>
 
         <View style={styles.metaInfo}>
           <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
@@ -210,7 +260,12 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
 
       {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
+      >
         
         {searchTerm.length > 0 && (
           <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
@@ -220,10 +275,16 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         
         {/* Sections */}
         {filteredSections.map((section, index) => (
-          <View key={index} style={[styles.contentSection, { backgroundColor: colors.card }]}>
+          <View 
+            key={index} 
+            ref={(ref) => { sectionRefs.current[index] = ref; }}
+            style={[styles.contentSection, { backgroundColor: colors.card }]}
+          >
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={() => setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }))}
+              accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
+              accessibilityRole="button"
             >
               <BookOpen size={20} color={colors.primary} />
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -232,7 +293,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               <ChevronDown
                 size={20}
                 color={colors.textSecondary}
-                style={expandedSections[index] && { transform: [{ rotate: '180deg' }] }}
+                style={[
+                  styles.chevronIcon,
+                  expandedSections[index] && { transform: [{ rotate: '180deg' }] }
+                ]}
               />
             </TouchableOpacity>
             
@@ -294,10 +358,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   mainTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    flex: 1,
+    fontFamily: 'Inter-Bold',
   },
   metaInfo: {
     flexDirection: 'row',
@@ -333,6 +404,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: 16,
   },
   searchResults: {
@@ -363,6 +436,10 @@ const styles = StyleSheet.create({
   contentText: {
     fontSize: 16,
     lineHeight: 24,
+    fontFamily: 'Inter-Regular',
+  },
+  chevronIcon: {
+    transition: 'transform 0.2s ease',
   },
   bottomPadding: {
     height: 40,
