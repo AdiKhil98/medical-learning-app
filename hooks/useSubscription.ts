@@ -49,9 +49,10 @@ export const useSubscription = () => {
         .maybeSingle();
 
       if (fetchError) {
-        // If it's a table/permission error, use default subscription
+        // If it's a table/permission/RLS error, use default subscription
         if (fetchError.code === '42P01' || fetchError.message?.includes('relation') || 
-            fetchError.message?.includes('permission') || fetchError.status === 403) {
+            fetchError.message?.includes('permission') || fetchError.status === 403 ||
+            fetchError.code === '42501' || fetchError.message?.includes('row-level security')) {
           console.log('Database table not available, using default subscription');
           setSubscription({
             id: 'default',
@@ -117,8 +118,9 @@ export const useSubscription = () => {
         details: err?.details
       });
       
-      // Silently handle missing table errors for cleaner console
-      if (err?.code === '42P01' || err?.message?.includes('relation') || err?.status === 403) {
+      // Silently handle missing table errors and RLS policies for cleaner console
+      if (err?.code === '42P01' || err?.message?.includes('relation') || err?.status === 403 ||
+          err?.code === '42501' || err?.message?.includes('row-level security')) {
         // Table doesn't exist or no permissions - use default free tier
         setSubscription({
           id: 'default',
@@ -180,9 +182,10 @@ export const useSubscription = () => {
       await fetchSubscription();
 
     } catch (err: any) {
-      // Silently handle table permission errors
+      // Silently handle table permission errors and RLS policies
       if (err?.status === 403 || err?.message?.includes('permission') || 
-          err?.code === '42P01' || err?.message?.includes('relation')) {
+          err?.code === '42P01' || err?.message?.includes('relation') ||
+          err?.code === '42501' || err?.message?.includes('row-level security')) {
         // Can't create subscription record - set default and continue
         console.log('Cannot create subscription record, using default free tier');
         setSubscription({
