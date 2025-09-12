@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
+import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { VoiceInteractionService, VoiceInteractionState } from '@/utils/voiceIntegration';
 import VoiceMicrophone from '@/components/ui/VoiceMicrophone';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,6 +43,9 @@ export default function FSPSimulationScreen() {
   const initializeVoiceService = async () => {
     try {
       console.log('🎤 Initializing FSP voice service...');
+      
+      // Stop global cleanup observer to allow Voiceflow widget on simulation page
+      stopGlobalVoiceflowCleanup();
       
       // Create Voiceflow controller
       const controller = createFSPController();

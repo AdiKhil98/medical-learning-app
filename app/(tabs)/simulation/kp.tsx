@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useSimulationTimer } from '@/hooks/useSimulationTimer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
+import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { VoiceInteractionService, VoiceInteractionState } from '@/utils/voiceIntegration';
 import VoiceMicrophone from '@/components/ui/VoiceMicrophone';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -374,6 +375,9 @@ export default function KPSimulationScreen() {
   useEffect(() => {
     if (Platform.OS === 'web') {
       console.log('📦 Loading Voiceflow widget for KP medical simulation');
+      
+      // Stop global cleanup observer to allow Voiceflow widget on simulation page
+      stopGlobalVoiceflowCleanup();
       
       // Use the exact same approach as the working test page
       (function(d, t) {
