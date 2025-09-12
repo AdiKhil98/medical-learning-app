@@ -115,10 +115,6 @@
       }
     };
 
-    const handleGoogleSignIn = async () => {
-      // TODO: Implement Google Sign-In
-      Alert.alert('Info', 'Google-Anmeldung wird bald verfügbar sein');
-    };
 
     return (
       <LinearGradient
@@ -222,21 +218,6 @@
                   </TouchableOpacity>
                 </LinearGradient>
 
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>oder</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.googleButton}
-                  onPress={handleGoogleSignIn}
-                  disabled={loading}
-                >
-                  <Text style={styles.googleButtonText}>
-                    Mit Google anmelden
-                  </Text>
-                </TouchableOpacity>
 
                 <View style={styles.signUpRow}>
                   <Text style={styles.signUpText}>Noch kein Konto? </Text>
@@ -388,46 +369,6 @@
       color: 'white',
       fontSize: 16,
       fontWeight: '600',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    divider: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 20,
-    },
-    dividerLine: {
-      flex: 1,
-      height: 1,
-      backgroundColor: '#E5E7EB',
-    },
-    dividerText: {
-      paddingHorizontal: 16,
-      fontSize: 14,
-      color: '#6B7280',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    googleButton: {
-      backgroundColor: 'white',
-      borderWidth: 1,
-      borderColor: '#D1D5DB',
-      borderRadius: 12,
-      paddingVertical: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 8,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 1,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 2,
-    },
-    googleButtonText: {
-      color: '#374151',
-      fontSize: 16,
-      fontWeight: '500',
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
     signUpRow: {
