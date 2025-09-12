@@ -9,12 +9,20 @@ import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 export default function RootLayout() {
   console.log('RootLayout rendering...');
   
-  // Run global Voiceflow cleanup on app start
+  // Run global Voiceflow cleanup on app start (but not on simulation pages)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Small delay to ensure DOM is ready
+      // Small delay to ensure DOM is ready, then check if we should run cleanup
       setTimeout(() => {
-        runGlobalVoiceflowCleanup();
+        const currentPath = window.location?.pathname || '';
+        const isSimulationPage = currentPath.includes('/simulation/');
+        
+        if (!isSimulationPage) {
+          console.log('🧹 Root layout cleanup - not on simulation page');
+          runGlobalVoiceflowCleanup();
+        } else {
+          console.log('🚫 Root layout - on simulation page, skipping cleanup');
+        }
       }, 1000);
     }
   }, []);

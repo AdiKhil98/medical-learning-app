@@ -4,6 +4,15 @@
 export function runGlobalVoiceflowCleanup() {
   if (typeof window === 'undefined') return;
 
+  // Check if we're on a simulation page - if so, don't run cleanup
+  const currentPath = window.location?.pathname || '';
+  const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
+  
+  if (isSimulationPage) {
+    console.log('🚫 On simulation page, skipping Voiceflow cleanup');
+    return;
+  }
+
   console.log('🌍 Running global Voiceflow cleanup on page load...');
 
   // Function to remove all Voiceflow elements
@@ -137,8 +146,16 @@ export function runGlobalVoiceflowCleanup() {
     console.log(`🧹 Global cleanup completed: ${removedCount + additionalRemoved} elements removed`);
   }, 500);
 
-  // Set up mutation observer to catch new Voiceflow elements
+  // Set up mutation observer to catch new Voiceflow elements (only on non-simulation pages)
   const observer = new MutationObserver((mutations) => {
+    // Check current path before cleaning up
+    const currentPath = window.location?.pathname || '';
+    const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
+    
+    if (isSimulationPage) {
+      return; // Don't clean up on simulation pages
+    }
+
     let shouldCleanup = false;
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
@@ -158,7 +175,7 @@ export function runGlobalVoiceflowCleanup() {
     });
 
     if (shouldCleanup) {
-      console.log('🔍 Detected new Voiceflow elements, cleaning up...');
+      console.log('🔍 Detected new Voiceflow elements on non-simulation page, cleaning up...');
       setTimeout(cleanupVoiceflowElements, 100);
     }
   });
@@ -186,6 +203,8 @@ if (typeof window !== 'undefined') {
   // Check if we're on a simulation page
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/');
+  
+  console.log('🔍 Current path:', currentPath, 'Is simulation page:', isSimulationPage);
   
   if (!isSimulationPage) {
     // Not on simulation page, run cleanup
