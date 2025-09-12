@@ -40,6 +40,7 @@ export const useSubscription = () => {
       setLoading(true);
       setError(null);
 
+      // Check if we can access the database table
       const { data, error: fetchError } = await supabase
         .from('user_subscriptions')
         .select('*')
@@ -48,11 +49,34 @@ export const useSubscription = () => {
         .maybeSingle();
 
       if (fetchError) {
+        // If it's a table/permission error, use default subscription
+        if (fetchError.code === '42P01' || fetchError.message?.includes('relation') || 
+            fetchError.message?.includes('permission') || fetchError.status === 403) {
+          console.log('Database table not available, using default subscription');
+          setSubscription({
+            id: 'default',
+            plan_type: 'free',
+            status: 'active',
+            simulations_limit: null,
+            simulations_used: 0,
+            simulations_remaining: Infinity,
+            in_trial: false,
+            trial_end_date: null,
+            subscription_end_date: null,
+            next_billing_date: null,
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            billing_cycle: 'yearly',
+            amount: 0,
+          });
+          return;
+        }
         throw fetchError;
       }
 
       if (!data) {
-        // No subscription found - user needs to be set up with default
+        // No subscription found but table exists - try to create default
+        console.log('No subscription found, attempting to create default');
         await createDefaultSubscription();
         return;
       }
@@ -148,8 +172,26 @@ export const useSubscription = () => {
 
     } catch (err: any) {
       // Silently handle table permission errors
-      if (err?.status === 403 || err?.message?.includes('permission')) {
-        // Can't create subscription record - app will use default free tier
+      if (err?.status === 403 || err?.message?.includes('permission') || 
+          err?.code === '42P01' || err?.message?.includes('relation')) {
+        // Can't create subscription record - set default and continue
+        console.log('Cannot create subscription record, using default free tier');
+        setSubscription({
+          id: 'default',
+          plan_type: 'free',
+          status: 'active',
+          simulations_limit: null,
+          simulations_used: 0,
+          simulations_remaining: Infinity,
+          in_trial: false,
+          trial_end_date: null,
+          subscription_end_date: null,
+          next_billing_date: null,
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          billing_cycle: 'yearly',
+          amount: 0,
+        });
         return;
       }
       console.error('Error creating default subscription:', err);
