@@ -222,7 +222,7 @@ const ContentDetailScreen = memo(() => {
     try {
       // Priority 1: Use previousPage parameter if available
       if (previousPage && typeof previousPage === 'string') {
-        router.push(previousPage);
+        router.push(previousPage as any);
         return;
       }
       

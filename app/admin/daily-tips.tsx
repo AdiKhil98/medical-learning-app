@@ -135,7 +135,7 @@ export default function DailyTipsManager() {
           </Text>
           
           {tips.length === 0 ? (
-            <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+            <Card style={[styles.emptyCard, { backgroundColor: colors.card }] as any}>
               <Lightbulb size={48} color={colors.textSecondary} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Keine täglichen Tipps für die nächsten 7 Tage gefunden.
@@ -146,7 +146,7 @@ export default function DailyTipsManager() {
             </Card>
           ) : (
             tips.map((tip) => (
-              <Card key={tip.date} style={[styles.tipCard, { backgroundColor: colors.card }]}>
+              <Card key={tip.date} style={[styles.tipCard, { backgroundColor: colors.card }] as any}>
                 <View style={styles.tipHeader}>
                   <View style={styles.tipDateContainer}>
                     <Calendar size={16} color={isToday(tip.date) ? '#EF4444' : colors.primary} />
@@ -174,14 +174,14 @@ export default function DailyTipsManager() {
           </Text>
           
           {questions.length === 0 ? (
-            <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+            <Card style={[styles.emptyCard, { backgroundColor: colors.card }] as any}>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Keine täglichen Fragen für die nächsten 7 Tage gefunden.
               </Text>
             </Card>
           ) : (
             questions.map((question) => (
-              <Card key={question.date} style={[styles.tipCard, { backgroundColor: colors.card }]}>
+              <Card key={question.date} style={[styles.tipCard, { backgroundColor: colors.card }] as any}>
                 <View style={styles.tipHeader}>
                   <View style={styles.tipDateContainer}>
                     <Calendar size={16} color={isToday(question.date) ? '#EF4444' : colors.primary} />
