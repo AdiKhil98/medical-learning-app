@@ -442,19 +442,19 @@ export default function SectionDetailScreen() {
       if (hasSubdivisions) {
         console.log('Navigating to category page for subdivisions:', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}`,
+          pathname: `/(tabs)/bibliothek/${childSlug}` as any,
           params: { previousPage: currentPath }
         });
       } else if (hasContent) {
         console.log('Navigating to content page (no subdivisions):', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/content/${childSlug}`,
+          pathname: `/(tabs)/bibliothek/content/${childSlug}` as any,
           params: { previousPage: currentPath }
         });
       } else {
         console.log('Navigating to category page (no content or children):', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}`,
+          pathname: `/(tabs)/bibliothek/${childSlug}` as any,
           params: { previousPage: currentPath }
         });
       }

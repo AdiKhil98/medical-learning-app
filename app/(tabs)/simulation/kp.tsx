@@ -121,7 +121,7 @@ export default function KPSimulationScreen() {
     console.log('🎤 Starting custom microphone recording');
     
     // Use Web Speech API directly like the original approach, but with better integration
-    if (!navigator.mediaDevices || !window.webkitSpeechRecognition) {
+    if (!navigator.mediaDevices || !(window as any).webkitSpeechRecognition) {
       Alert.alert('Fehler', 'Spracheingabe wird von Ihrem Browser nicht unterstützt.');
       return;
     }
@@ -136,7 +136,7 @@ export default function KPSimulationScreen() {
           stream.getTracks().forEach(track => track.stop());
           
           // Start speech recognition
-          const SpeechRecognition = window.webkitSpeechRecognition || (window as any).SpeechRecognition;
+          const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
           if (!SpeechRecognition) {
             throw new Error('Speech recognition not supported');
           }
@@ -434,9 +434,9 @@ export default function KPSimulationScreen() {
           console.error('❌ Failed to load Voiceflow script:', error);
         };
         
-        v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
-        v.type = "text/javascript";
-        s.parentNode.insertBefore(v, s);
+        (v as any).src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
+        (v as any).type = "text/javascript";
+        s.parentNode?.insertBefore(v, s);
       })(document, 'script');
     }
   }, []);
@@ -489,7 +489,7 @@ export default function KPSimulationScreen() {
     // Note: This would typically use a back handler library for React Native
     // For web, we can use beforeunload event
     if (Platform.OS === 'web' && simulationStarted) {
-      const handleBeforeUnload = (e) => {
+      const handleBeforeUnload = (e: any) => {
         e.preventDefault();
         e.returnValue = 'Simulation läuft. Möchten Sie wirklich die Seite verlassen?';
         return e.returnValue;
@@ -633,7 +633,7 @@ export default function KPSimulationScreen() {
           elements.forEach(element => {
             if (element && element.parentNode) {
               console.log(`🗑️ KP Removing DOM element: ${selector}`);
-              element.style.display = 'none';
+              (element as any).style.display = 'none';
               element.parentNode.removeChild(element);
             }
           });
@@ -644,7 +644,7 @@ export default function KPSimulationScreen() {
         allDivs.forEach(div => {
           const style = window.getComputedStyle(div);
           if (style.position === 'fixed' && 
-              (style.zIndex > 999 || div.textContent.includes('Voiceflow') || div.innerHTML.includes('chat'))) {
+              (parseInt(style.zIndex) > 999 || div.textContent.includes('Voiceflow') || div.innerHTML.includes('chat'))) {
             console.log('🔍 KP Removing suspicious floating element');
             div.style.display = 'none';
             if (div.parentNode) {

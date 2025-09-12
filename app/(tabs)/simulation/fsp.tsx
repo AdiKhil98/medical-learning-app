@@ -186,7 +186,7 @@ export default function FSPSimulationScreen() {
     // Note: This would typically use a back handler library for React Native
     // For web, we can use beforeunload event
     if (Platform.OS === 'web' && simulationStarted) {
-      const handleBeforeUnload = (e) => {
+      const handleBeforeUnload = (e: any) => {
         e.preventDefault();
         e.returnValue = 'Simulation läuft. Möchten Sie wirklich die Seite verlassen?';
         return e.returnValue;
@@ -327,7 +327,7 @@ export default function FSPSimulationScreen() {
         
         selectors.forEach(selector => {
           const elements = document.querySelectorAll(selector);
-          elements.forEach(element => {
+          elements.forEach((element: any) => {
             if (element && element.parentNode) {
               console.log(`🗑️ FSP Removing DOM element: ${selector}`);
               element.style.display = 'none';
@@ -341,7 +341,7 @@ export default function FSPSimulationScreen() {
         allDivs.forEach(div => {
           const style = window.getComputedStyle(div);
           if (style.position === 'fixed' && 
-              (style.zIndex > 999 || div.textContent.includes('Voiceflow') || div.innerHTML.includes('chat'))) {
+              (parseInt(style.zIndex) > 999 || div.textContent.includes('Voiceflow') || div.innerHTML.includes('chat'))) {
             console.log('🔍 FSP Removing suspicious floating element');
             div.style.display = 'none';
             if (div.parentNode) {

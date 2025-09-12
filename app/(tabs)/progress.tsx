@@ -172,7 +172,7 @@ export default function ProgressScreen() {
         <View style={styles.simpleChart}>
           <Text style={styles.chartTitle}>{activeTab} Fortschritt</Text>
           <View style={styles.chartBars}>
-            {currentChartData.map((point, index) => (
+            {currentChartData.map((point: any, index: number) => (
               <View key={index} style={styles.chartBarContainer}>
                 <View 
                   style={[
@@ -223,7 +223,7 @@ export default function ProgressScreen() {
           
           {/* X-Axis with date labels */}
           <VictoryAxis
-            tickFormat={(x, i) => currentChartData[i] ? currentChartData[i].date : ''}
+            tickFormat={(x: any, i: number) => currentChartData[i] ? currentChartData[i].date : ''}
             style={{
               grid: { stroke: 'transparent' },
               axis: { stroke: 'transparent' },

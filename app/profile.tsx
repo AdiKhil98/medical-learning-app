@@ -29,6 +29,7 @@ import {
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SubscriptionTest } from '@/components/SubscriptionTest';
 
 export default function ProfileScreen() {
   const { user, signOut, session } = useAuth();
@@ -532,6 +533,9 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Card>
+
+        {/* Subscription Test (Development Only) */}
+        <SubscriptionTest />
 
         {/* Konto Section */}
         <Text style={[dynamicStyles.sectionTitle, dynamicStyles.firstSectionTitle]}>Konto</Text>
