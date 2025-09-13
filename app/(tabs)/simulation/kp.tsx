@@ -79,22 +79,18 @@ export default function KPSimulationScreen() {
               track.addEventListener('ended', () => {
                 console.log(`🔇 KP: Audio track ${index + 1} ended - call likely finished`);
                 
-                // Check if all audio tracks are ended
-                const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
-                console.log(`🔍 KP: Track ended check:`, {
-                  totalTracks: audioTracks.length,
-                  endedTracks: audioTracks.filter(t => t.readyState === 'ended').length,
-                  allEnded: allTracksEnded,
-                  timerActive: timerActive
+                // Check current timer state from the React ref
+                const currentTimerActive = timerInterval.current !== null;
+                console.log(`🔍 KP: Track ended - checking timer interval:`, {
+                  timerIntervalExists: !!timerInterval.current,
+                  shouldStopTimer: currentTimerActive
                 });
                 
-                if (allTracksEnded && timerActive) {
-                  console.log('🔇 KP: All audio tracks ended - stopping timer');
+                if (currentTimerActive) {
+                  console.log('🔇 KP: Audio track ended - stopping timer');
                   stopSimulationTimer();
-                } else if (timerActive) {
-                  // Fallback: stop timer when any track ends
-                  console.log('🔇 KP: Audio track ended, stopping timer anyway (fallback)');
-                  stopSimulationTimer();
+                } else {
+                  console.log('⏰ KP: Timer already stopped, no action needed');
                 }
               });
 
@@ -104,25 +100,19 @@ export default function KPSimulationScreen() {
                 console.log(`🔇 KP: Audio track ${index + 1} stopped manually`);
                 originalStop();
                 
-                // Small delay to let other tracks potentially stop too
-                setTimeout(() => {
-                  const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
-                  console.log(`🔍 KP: Track states check:`, {
-                    totalTracks: audioTracks.length,
-                    endedTracks: audioTracks.filter(t => t.readyState === 'ended').length,
-                    allEnded: allTracksEnded,
-                    timerActive: timerActive
-                  });
-                  
-                  if (allTracksEnded && timerActive) {
-                    console.log('🔇 KP: All audio tracks stopped - stopping timer');
-                    stopSimulationTimer();
-                  } else if (timerActive) {
-                    // Fallback: if we detect any track stop and timer is active, just stop it
-                    console.log('🔇 KP: Audio track stopped, stopping timer anyway (fallback)');
-                    stopSimulationTimer();
-                  }
-                }, 100);
+                // Check current timer state immediately
+                const currentTimerActive = timerInterval.current !== null;
+                console.log(`🔍 KP: Track stopped - checking timer interval:`, {
+                  timerIntervalExists: !!timerInterval.current,
+                  shouldStopTimer: currentTimerActive
+                });
+                
+                if (currentTimerActive) {
+                  console.log('🔇 KP: Audio track stopped - stopping timer');
+                  stopSimulationTimer();
+                } else {
+                  console.log('⏰ KP: Timer already stopped, no action needed');
+                }
               };
             });
 
