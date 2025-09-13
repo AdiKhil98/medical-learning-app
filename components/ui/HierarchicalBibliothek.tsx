@@ -98,21 +98,27 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       }
 
       if (data) {
-        // Check which items have children
-        const itemsWithChildrenInfo = await Promise.all(
-          data.map(async (item) => {
-            const { data: children } = await supabase
-              .from('sections')
-              .select('id')
-              .eq('parent_slug', item.slug)
-              .limit(1);
-            
-            return {
-              ...item,
-              hasChildren: children && children.length > 0
-            };
-          })
-        );
+        // Optimize: Get all children counts in a single query instead of N+1 queries
+        const parentSlugs = data.map(item => item.slug);
+        
+        let childrenData = [];
+        if (parentSlugs.length > 0) {
+          const { data: children } = await supabase
+            .from('sections')
+            .select('parent_slug')
+            .in('parent_slug', parentSlugs);
+          
+          childrenData = children || [];
+        }
+        
+        // Create a set of slugs that have children for O(1) lookup
+        const hasChildrenSet = new Set(childrenData.map(child => child.parent_slug));
+        
+        // Map items with children info
+        const itemsWithChildrenInfo = data.map(item => ({
+          ...item,
+          hasChildren: hasChildrenSet.has(item.slug)
+        }));
 
         setCurrentItems(itemsWithChildrenInfo);
       }

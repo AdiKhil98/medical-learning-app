@@ -12,15 +12,11 @@ const BibliothekIndex: React.FC = () => {
     console.log('📚 Bibliothek page loaded - running Voiceflow cleanup');
     runGlobalVoiceflowCleanup();
     
-    // Run cleanup again after a delay to catch any delayed widgets
-    const timeouts = [
-      setTimeout(() => runGlobalVoiceflowCleanup(), 500),
-      setTimeout(() => runGlobalVoiceflowCleanup(), 1500),
-      setTimeout(() => runGlobalVoiceflowCleanup(), 3000),
-    ];
+    // Single delayed cleanup to catch any delayed widgets (reduced from 3 to 1)
+    const timeout = setTimeout(() => runGlobalVoiceflowCleanup(), 500);
 
     return () => {
-      timeouts.forEach(timeout => clearTimeout(timeout));
+      clearTimeout(timeout);
     };
   }, []);
 
