@@ -53,7 +53,7 @@ export default function FSPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 FSP: Setting up conversation monitoring...');
+    console.log('🔍 FSP: Setting up passive microphone detection...');
 
     // Method 1: Listen for custom Voiceflow events from the widget
     const voiceflowEventListener = (event: CustomEvent) => {
@@ -189,12 +189,52 @@ export default function FSPSimulationScreen() {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
+          console.log('🔚 FSP: Automatically ending Voiceflow conversation');
+          endVoiceflowConversation();
           stopSimulationTimer();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+  };
+
+  // End the Voiceflow conversation
+  const endVoiceflowConversation = () => {
+    try {
+      // Method 1: Try to close the Voiceflow widget
+      if (window.voiceflow?.chat) {
+        console.log('🔚 FSP: Attempting to close Voiceflow widget');
+        window.voiceflow.chat.close && window.voiceflow.chat.close();
+        window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+      }
+
+      // Method 2: Try to stop any active media streams
+      navigator.mediaDevices?.getUserMedia({ audio: true })
+        .then((stream) => {
+          console.log('🔚 FSP: Stopping active audio streams');
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(() => {
+          // No active streams, which is fine
+        });
+
+      // Method 3: Try to find and click any "End call" or "Hang up" buttons
+      setTimeout(() => {
+        const endButtons = document.querySelectorAll('button');
+        for (const button of endButtons) {
+          const buttonText = button.textContent?.toLowerCase();
+          if (buttonText?.includes('end') || buttonText?.includes('hang') || buttonText?.includes('stop')) {
+            console.log('🔚 FSP: Found potential end call button, clicking it');
+            button.click();
+            break;
+          }
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ FSP: Error ending Voiceflow conversation:', error);
+    }
   };
 
   // Stop the simulation timer
