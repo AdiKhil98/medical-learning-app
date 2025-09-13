@@ -91,47 +91,18 @@ export class VoiceflowController {
           url: "https://runtime-api.voiceflow.com"
         },
         assistant: {
-          title: 'KP Simulation',
-          description: 'Hidden widget for voice integration',
-          stylesheet: `
-            /* Make widget invisible but keep it functional in DOM */
-            .vfrc-launcher {
-              opacity: 0 !important;
-              pointer-events: none !important;
-              position: fixed !important;
-              bottom: -200px !important;
-              right: -200px !important;
-              z-index: -1 !important;
-              width: 1px !important;
-              height: 1px !important;
-            }
-            
-            .vfrc-widget {
-              opacity: 0 !important;
-              pointer-events: none !important;
-              position: fixed !important;
-              bottom: -500px !important;
-              right: -500px !important;
-              z-index: -1 !important;
-            }
-            
-            /* But allow programmatic access to voice buttons */
-            .vfrc-voice-button,
-            [aria-label*="voice"],
-            button[class*="voice"] {
-              opacity: 1 !important;
-              pointer-events: auto !important;
-              position: absolute !important;
-            }
-          `
+          title: 'Medical Simulation',
+          description: 'Voice simulation widget'
         }
       });
 
       this.widget = window.voiceflow.chat;
       this.isLoaded = true;
 
-      // Widget is now styled to look like our custom microphone
-      console.log('✅ Widget styled as custom microphone');
+      // Add event listeners for widget interactions
+      this.setupEventListeners();
+
+      console.log('✅ Widget loaded and ready');
 
     } catch (error) {
       console.error('Failed to initialize Voiceflow widget:', error);
@@ -139,97 +110,53 @@ export class VoiceflowController {
     }
   }
 
-  // Ensure widget stays hidden
-  private hideWidget(): void {
-    if (typeof document !== 'undefined') {
-      // More aggressive hiding approach
-      const hideAllWidgets = () => {
-        // Find and hide all possible Voiceflow elements
-        const selectors = [
-          '[id*="voiceflow"]',
-          '[class*="voiceflow"]', 
-          '[class*="vf-"]',
-          '[class*="VF"]',
-          '[data-testid*="chat"]',
-          '[aria-label*="chat"]',
-          'iframe[src*="voiceflow"]',
-          'div[style*="z-index: 1000"]',
-          'div[style*="position: fixed"]'
-        ];
+  // Set up event listeners for widget interactions
+  private setupEventListeners(): void {
+    try {
+      // Listen for widget events to detect simulation start
+      if (this.widget && this.widget.listen) {
+        this.widget.listen('open', () => {
+          console.log('🎯 Voiceflow: Widget opened');
+          window.dispatchEvent(new CustomEvent('voiceflowWidgetOpened'));
+        });
 
-        selectors.forEach(selector => {
-          const elements = document.querySelectorAll(selector);
-          elements.forEach((element: Element) => {
-            const htmlEl = element as HTMLElement;
-            htmlEl.style.setProperty('display', 'none', 'important');
-            htmlEl.style.setProperty('visibility', 'hidden', 'important');
-            htmlEl.style.setProperty('opacity', '0', 'important');
-            htmlEl.style.setProperty('pointer-events', 'none', 'important');
-            htmlEl.style.setProperty('position', 'absolute', 'important');
-            htmlEl.style.setProperty('left', '-99999px', 'important');
-            htmlEl.style.setProperty('top', '-99999px', 'important');
-            htmlEl.style.setProperty('z-index', '-9999', 'important');
-            htmlEl.remove(); // More aggressive - completely remove
+        this.widget.listen('interact', (interaction: any) => {
+          console.log('🎯 Voiceflow: User interaction detected:', interaction);
+          window.dispatchEvent(new CustomEvent('voiceflowUserInteraction', { detail: interaction }));
+        });
+
+        this.widget.listen('message', (message: any) => {
+          console.log('🎯 Voiceflow: Message received:', message);
+          window.dispatchEvent(new CustomEvent('voiceflowMessage', { detail: message }));
+        });
+      }
+
+      // Alternative: Monitor DOM changes for widget activity
+      if (typeof window !== 'undefined') {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node instanceof HTMLElement) {
+                const hasVoiceflowActivity = node.querySelector('.vfrc-message, .vfrc-input, .vfrc-button');
+                if (hasVoiceflowActivity) {
+                  console.log('🎯 Voiceflow: DOM activity detected');
+                  window.dispatchEvent(new CustomEvent('voiceflowDOMActivity'));
+                }
+              }
+            });
           });
         });
-      };
 
-      // Run immediately and repeatedly
-      hideAllWidgets();
-      setTimeout(hideAllWidgets, 100);
-      setTimeout(hideAllWidgets, 500);
-      setTimeout(hideAllWidgets, 1000);
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
 
-      // Inject comprehensive CSS
-      const hideCSS = `
-        /* Hide all Voiceflow elements */
-        [id*="voiceflow"],
-        [class*="voiceflow"], 
-        [class*="vf-"],
-        [class*="VF"],
-        [data-testid*="chat"],
-        [aria-label*="chat"],
-        iframe[src*="voiceflow"],
-        div[style*="z-index: 1000"],
-        div[style*="position: fixed"]:has(iframe[src*="voiceflow"]) {
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-          position: absolute !important;
-          left: -99999px !important;
-          top: -99999px !important;
-          z-index: -9999 !important;
-          width: 0 !important;
-          height: 0 !important;
-          overflow: hidden !important;
-        }
-        
-        /* Target common chat widget containers */
-        body > div:last-child:has(iframe[src*="voiceflow"]) {
-          display: none !important;
-        }
-        
-        /* Hide any floating elements in bottom right */
-        div[style*="bottom"][style*="right"] {
-          display: none !important;
-        }
-      `;
-
-      let styleElement = document.getElementById('hide-voiceflow-aggressive');
-      if (!styleElement) {
-        styleElement = document.createElement('style');
-        styleElement.id = 'hide-voiceflow-aggressive';
-        document.head.appendChild(styleElement);
+        // Store observer for cleanup
+        (window as any).voiceflowObserver = observer;
       }
-      styleElement.textContent = hideCSS;
-
-      // Set up mutation observer to catch dynamically added widgets
-      const observer = new MutationObserver(hideAllWidgets);
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
+    } catch (error) {
+      console.warn('⚠️ Could not set up Voiceflow event listeners:', error);
     }
   }
 
@@ -239,9 +166,6 @@ export class VoiceflowController {
       if (!this.isLoaded || !this.widget) {
         throw new Error('Widget not loaded');
       }
-
-      // Ensure widget is still hidden
-      this.hideWidget();
 
       // Send the "Simulation starten" message programmatically
       if (this.widget.interact) {
@@ -254,14 +178,6 @@ export class VoiceflowController {
           type: 'text',
           payload: 'Simulation starten'
         });
-      } else {
-        // Fallback method - trigger click on hidden button
-        setTimeout(() => {
-          const startButton = document.querySelector('[aria-label*="start"], [title*="start"], button:contains("starten")');
-          if (startButton) {
-            (startButton as HTMLElement).click();
-          }
-        }, 500);
       }
 
       return true;
@@ -299,7 +215,18 @@ export class VoiceflowController {
       // Step 3: Remove Voiceflow scripts
       this.removeVoiceflowScripts();
 
-      // Step 4: Clear global Voiceflow object
+      // Step 4: Clean up observers
+      if ((window as any).voiceflowObserver) {
+        try {
+          (window as any).voiceflowObserver.disconnect();
+          delete (window as any).voiceflowObserver;
+          console.log('✅ Cleaned up Voiceflow observer');
+        } catch (error) {
+          console.warn('⚠️ Could not clean up observer:', error);
+        }
+      }
+
+      // Step 5: Clear global Voiceflow object
       if (window.voiceflow) {
         try {
           delete (window as any).voiceflow;

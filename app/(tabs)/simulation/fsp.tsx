@@ -51,9 +51,21 @@ export default function FSPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 FSP: Setting up aggressive conversation monitoring...');
+    console.log('🔍 FSP: Setting up conversation monitoring...');
+
+    // Method 1: Listen for custom Voiceflow events from the widget
+    const voiceflowEventListener = (event: CustomEvent) => {
+      console.log('🎯 FSP: Voiceflow event detected:', event.type, event.detail);
+      if (!timerActive) {
+        startSimulationTimer();
+      }
+    };
+
+    window.addEventListener('voiceflowWidgetOpened', voiceflowEventListener as EventListener);
+    window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
+    window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
     
-    // Method 1: Listen for ALL window messages and log them for debugging
+    // Method 2: Listen for window messages as backup
     const messageListener = (event: MessageEvent) => {
       // Log all messages for debugging
       console.log('📨 FSP: Window message received:', event.data);
@@ -81,109 +93,7 @@ export default function FSPSimulationScreen() {
       }
     };
 
-    // Method 2: Aggressive DOM monitoring for ANY widget interaction
-    const domMonitor = setInterval(() => {
-      if (typeof window !== 'undefined' && !timerActive) {
-        // Look for ANY signs of widget activity
-        const activitySelectors = [
-          // Voiceflow widget classes
-          '.vfrc-chat',
-          '.vfrc-widget',
-          '.vfrc-launcher',
-          '.vfrc-conversation',
-          '.vfrc-message',
-          '.vfrc-input',
-          '.vfrc-button',
-          
-          // Generic chat indicators
-          '.chat-widget',
-          '.chat-container',
-          '.chat-active',
-          '.conversation-active',
-          '.widget-open',
-          
-          // Message indicators
-          '[class*="message"]',
-          '[class*="chat"]',
-          '[class*="conversation"]',
-          '[class*="voiceflow"]',
-          '[class*="vfrc"]',
-          '[class*="widget"]',
-          
-          // Input/interaction indicators  
-          'input[placeholder*="message"]',
-          'input[placeholder*="type"]',
-          'textarea[placeholder*="message"]',
-          'button[aria-label*="send"]',
-          'button[title*="send"]'
-        ];
-
-        let foundActivity = false;
-        for (const selector of activitySelectors) {
-          try {
-            const elements = document.querySelectorAll(selector);
-            if (elements.length > 0) {
-              // Check if any elements are visible/active
-              for (const element of elements) {
-                const rect = element.getBoundingClientRect();
-                const isVisible = rect.width > 0 && rect.height > 0;
-                const hasContent = element.textContent?.trim().length > 0;
-                
-                if (isVisible || hasContent) {
-                  console.log(`🎯 FSP: Widget activity detected via selector: ${selector}`, {
-                    element: element,
-                    visible: isVisible,
-                    content: element.textContent?.slice(0, 50)
-                  });
-                  foundActivity = true;
-                  break;
-                }
-              }
-              if (foundActivity) break;
-            }
-          } catch (error) {
-            // Ignore selector errors
-          }
-        }
-
-        if (foundActivity && !timerActive) {
-          startSimulationTimer();
-        }
-      }
-    }, 1000); // Check every second for faster detection
-
-    // Method 3: Manual trigger - Add a test button (temporary for debugging)
-    const addTestButton = () => {
-      if (document.getElementById('fsp-test-timer')) return; // Already added
-      
-      const testButton = document.createElement('button');
-      testButton.id = 'fsp-test-timer';
-      testButton.textContent = '🧪 Test Timer (Debug)';
-      testButton.style.cssText = `
-        position: fixed;
-        top: 60px;
-        right: 20px;
-        z-index: 9999;
-        background: #0077B6;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 12px;
-      `;
-      testButton.onclick = () => {
-        console.log('🧪 FSP: Manual timer start triggered');
-        if (!timerActive) {
-          startSimulationTimer();
-        } else {
-          stopSimulationTimer();
-        }
-      };
-      document.body.appendChild(testButton);
-    };
-
-    // Method 4: Click detection on the entire page to catch widget interactions
+    // Method 3: Click detection as final fallback
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (target) {
@@ -206,14 +116,11 @@ export default function FSPSimulationScreen() {
     };
 
     window.addEventListener('message', messageListener);
-    document.addEventListener('click', clickListener, true); // Use capture phase
-    
-    // Add test button after a delay
-    setTimeout(addTestButton, 2000);
+    document.addEventListener('click', clickListener, true);
 
     // Store references for cleanup
+    (window as any).fspVoiceflowListener = voiceflowEventListener;
     (window as any).fspMessageListener = messageListener;
-    (window as any).fspDomMonitor = domMonitor;
     (window as any).fspClickListener = clickListener;
   };
 
@@ -257,6 +164,13 @@ export default function FSPSimulationScreen() {
       stopSimulationTimer();
       
       // Remove event listeners
+      if ((window as any).fspVoiceflowListener) {
+        window.removeEventListener('voiceflowWidgetOpened', (window as any).fspVoiceflowListener);
+        window.removeEventListener('voiceflowUserInteraction', (window as any).fspVoiceflowListener);
+        window.removeEventListener('voiceflowDOMActivity', (window as any).fspVoiceflowListener);
+        delete (window as any).fspVoiceflowListener;
+      }
+
       if ((window as any).fspMessageListener) {
         window.removeEventListener('message', (window as any).fspMessageListener);
         delete (window as any).fspMessageListener;
@@ -265,18 +179,6 @@ export default function FSPSimulationScreen() {
       if ((window as any).fspClickListener) {
         document.removeEventListener('click', (window as any).fspClickListener, true);
         delete (window as any).fspClickListener;
-      }
-      
-      // Clear DOM monitor
-      if ((window as any).fspDomMonitor) {
-        clearInterval((window as any).fspDomMonitor);
-        delete (window as any).fspDomMonitor;
-      }
-      
-      // Remove test button
-      const testButton = document.getElementById('fsp-test-timer');
-      if (testButton) {
-        testButton.remove();
       }
       
       // Cleanup Voiceflow controller
