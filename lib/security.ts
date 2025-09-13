@@ -112,9 +112,9 @@ export class SecureLogger {
   }
 }
 
-// Session timeout manager for HIPAA compliance (15 minutes)
+// Session timeout manager for HIPAA compliance (30 minutes)
 export class SessionTimeoutManager {
-  private static readonly TIMEOUT_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+  private static readonly TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
   private static readonly WARNING_DURATION = 2 * 60 * 1000; // 2 minutes warning
   private static readonly STORAGE_KEY = 'last_activity_timestamp';
   

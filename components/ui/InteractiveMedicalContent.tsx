@@ -11,6 +11,7 @@ import {
 import { ChevronDown, BookOpen, AlertCircle, Search } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import TableOfContents from './TableOfContents';
 
 interface SupabaseRow {
@@ -33,6 +34,7 @@ interface InteractiveMedicalContentProps {
 
 const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow }) => {
   const { colors, isDarkMode } = useTheme();
+  const { triggerActivity } = useSessionTimeout();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
   const [searchTerm, setSearchTerm] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -104,6 +106,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   // Simple search handler
   const handleSearch = (text: string) => {
     setSearchTerm(text);
+    triggerActivity(); // Trigger activity when user searches
   };
 
   // Simple date formatter
@@ -332,6 +335,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       ...prev,
       [sectionIndex]: true
     }));
+    triggerActivity(); // Trigger activity when user navigates to section
 
     // Then scroll to the section after a brief delay to allow expansion
     setTimeout(() => {
@@ -459,7 +463,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             onChangeText={handleSearch}
           />
           {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearSearch}>
+            <TouchableOpacity onPress={() => {
+              handleSearch('');
+              triggerActivity(); // Trigger activity when clearing search
+            }} style={styles.clearSearch}>
               <Text style={[styles.clearSearchText, { color: 'rgba(255, 255, 255, 0.7)' }]}>✕</Text>
             </TouchableOpacity>
           )}
@@ -473,6 +480,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         style={styles.content} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
+        onScroll={() => {
+          // Trigger activity on scroll to prevent timeout during reading
+          triggerActivity();
+        }}
+        scrollEventThrottle={2000} // Only trigger every 2 seconds to avoid excessive calls
       >
         
         {searchTerm.length > 0 && (
@@ -497,7 +509,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           >
             <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }))}
+              onPress={() => {
+                setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
+                triggerActivity(); // Trigger activity when expanding/collapsing sections
+              }}
               accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
               accessibilityRole="button"
             >
