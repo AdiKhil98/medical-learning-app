@@ -10,7 +10,7 @@ export default function FSPSimulationScreen() {
   const router = useRouter();
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds for testing
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize Voiceflow widget when component mounts
@@ -129,7 +129,7 @@ export default function FSPSimulationScreen() {
         });
         
         if (!timerActive) {
-          console.log('⏰ FSP: Starting 30-second test timer due to Start a call button click');
+          console.log('⏰ FSP: Starting 20-minute timer due to Start a call button click');
           startSimulationTimer();
         }
       }
@@ -143,7 +143,7 @@ export default function FSPSimulationScreen() {
         });
         
         if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
-          console.log('⏰ FSP: Starting 30-second test timer due to Start button detection');
+          console.log('⏰ FSP: Starting timer due to Start button detection');
           startSimulationTimer();
         }
       }
@@ -181,14 +181,14 @@ export default function FSPSimulationScreen() {
   const startSimulationTimer = () => {
     if (timerActive) return; // Already running
     
-    console.log('⏰ FSP: Starting 30-second test timer');
+    console.log('⏰ FSP: Starting 20-minute simulation timer');
     setTimerActive(true);
-    setTimeRemaining(30); // Reset to 30 seconds for testing
+    setTimeRemaining(20 * 60); // Reset to 20 minutes
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          console.log('⏰ FSP: Timer finished - 30 seconds elapsed (TEST MODE)');
+          console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
           console.log('🔚 FSP: Automatically ending Voiceflow conversation');
           endVoiceflowConversation();
           stopSimulationTimer();
