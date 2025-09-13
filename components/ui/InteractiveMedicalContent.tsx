@@ -137,6 +137,194 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }));
   }, [filteredSections]);
 
+  // Helper function to parse and render formatted text (bold, italic, etc.)
+  const parseFormattedText = (text: string, baseStyle: any) => {
+    // Handle bold text: **text** or __text__
+    const boldRegex = /(\*\*(.+?)\*\*|__(.+?)__)/g;
+    // Handle italic text: *text* or _text_
+    const italicRegex = /(?<!\*)\*([^*]+)\*(?!\*)|(?<!_)_([^_]+)_(?!_)/g;
+    
+    let parts = [{ text, isBold: false, isItalic: false }];
+    
+    // Parse bold text
+    parts = parts.flatMap(part => {
+      if (part.isBold || part.isItalic) return [part];
+      
+      const matches = [...part.text.matchAll(boldRegex)];
+      if (matches.length === 0) return [part];
+      
+      const newParts = [];
+      let lastIndex = 0;
+      
+      matches.forEach(match => {
+        // Add text before match
+        if (match.index! > lastIndex) {
+          newParts.push({ 
+            text: part.text.slice(lastIndex, match.index), 
+            isBold: false, 
+            isItalic: false 
+          });
+        }
+        
+        // Add bold text
+        newParts.push({ 
+          text: match[2] || match[3], 
+          isBold: true, 
+          isItalic: false 
+        });
+        
+        lastIndex = match.index! + match[0].length;
+      });
+      
+      // Add remaining text
+      if (lastIndex < part.text.length) {
+        newParts.push({ 
+          text: part.text.slice(lastIndex), 
+          isBold: false, 
+          isItalic: false 
+        });
+      }
+      
+      return newParts;
+    });
+    
+    // Parse italic text
+    parts = parts.flatMap(part => {
+      if (part.isBold || part.isItalic) return [part];
+      
+      const matches = [...part.text.matchAll(italicRegex)];
+      if (matches.length === 0) return [part];
+      
+      const newParts = [];
+      let lastIndex = 0;
+      
+      matches.forEach(match => {
+        // Add text before match
+        if (match.index! > lastIndex) {
+          newParts.push({ 
+            text: part.text.slice(lastIndex, match.index), 
+            isBold: false, 
+            isItalic: false 
+          });
+        }
+        
+        // Add italic text
+        newParts.push({ 
+          text: match[1] || match[2], 
+          isBold: false, 
+          isItalic: true 
+        });
+        
+        lastIndex = match.index! + match[0].length;
+      });
+      
+      // Add remaining text
+      if (lastIndex < part.text.length) {
+        newParts.push({ 
+          text: part.text.slice(lastIndex), 
+          isBold: false, 
+          isItalic: false 
+        });
+      }
+      
+      return newParts;
+    });
+    
+    return (
+      <Text style={baseStyle}>
+        {parts.map((part, index) => {
+          let style = {};
+          if (part.isBold) style = { ...style, ...styles.boldText };
+          if (part.isItalic) style = { ...style, ...styles.italicText };
+          
+          return (
+            <Text key={index} style={style}>
+              {part.text}
+            </Text>
+          );
+        })}
+      </Text>
+    );
+  };
+
+  // Helper function to highlight search terms in text
+  const highlightSearchTerm = (text: string, searchTerm: string, baseStyle: any) => {
+    if (!searchTerm.trim()) {
+      return parseFormattedText(text, baseStyle);
+    }
+
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+
+    return (
+      <Text style={baseStyle}>
+        {parts.map((part, index) => 
+          regex.test(part) ? (
+            <Text key={index} style={styles.highlightedText}>
+              {parseFormattedText(part, {})}
+            </Text>
+          ) : (
+            parseFormattedText(part, {})
+          )
+        )}
+      </Text>
+    );
+  };
+
+  // Render formatted content with proper paragraph spacing and list support
+  const renderFormattedContent = (content: string) => {
+    // Split content into paragraphs by double line breaks or single line breaks
+    const paragraphs = content
+      .split(/\n\s*\n|\n/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    if (paragraphs.length === 0) {
+      return <Text style={styles.contentText}>{content}</Text>;
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        {paragraphs.map((paragraph, index) => {
+          // Check if this is a bullet point
+          if (paragraph.match(/^[•\-\*]\s+/)) {
+            const listText = paragraph.replace(/^[•\-\*]\s+/, '');
+            return (
+              <View key={index} style={styles.listItemContainer}>
+                <Text style={styles.bulletPoint}>•</Text>
+                <View style={{ flex: 1 }}>
+                  {highlightSearchTerm(listText, searchTerm, styles.listItemText)}
+                </View>
+              </View>
+            );
+          }
+          
+          // Check if this is a numbered list item
+          if (paragraph.match(/^\d+\.\s+/)) {
+            const match = paragraph.match(/^(\d+)\.\s+(.*)$/);
+            if (match) {
+              return (
+                <View key={index} style={styles.listItemContainer}>
+                  <Text style={styles.numberPoint}>{match[1]}.</Text>
+                  <View style={{ flex: 1 }}>
+                    {highlightSearchTerm(match[2], searchTerm, styles.listItemText)}
+                  </View>
+                </View>
+              );
+            }
+          }
+          
+          // Regular paragraph
+          return (
+            <View key={index} style={styles.paragraphContainer}>
+              {highlightSearchTerm(paragraph, searchTerm, styles.contentText)}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   // Navigation handler for table of contents
   const handleNavigateToSection = (sectionIndex: number) => {
     // First expand the section if it's collapsed
@@ -329,9 +517,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             
             {expandedSections[index] && (
               <View style={styles.sectionContent}>
-                <Text style={styles.contentText}>
-                  {section.content}
-                </Text>
+                {renderFormattedContent(section.content)}
               </View>
             )}
           </View>
@@ -480,11 +666,64 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(99, 102, 241, 0.1)',
     padding: 20,
   },
-  contentText: {
+  contentContainer: {
+    // Container for formatted content
+  },
+  paragraphContainer: {
+    marginBottom: 14, // Space between paragraphs
+  },
+  listItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingLeft: 8,
+  },
+  bulletPoint: {
     fontSize: 16,
-    lineHeight: 26,
+    lineHeight: 28,
+    fontFamily: 'Inter-Medium',
+    color: '#6366f1', // Brand color for bullets
+    marginRight: 12,
+    width: 20,
+  },
+  numberPoint: {
+    fontSize: 16,
+    lineHeight: 28,
+    fontFamily: 'Inter-SemiBold',
+    color: '#6366f1', // Brand color for numbers
+    marginRight: 12,
+    minWidth: 24,
+  },
+  listItemText: {
+    fontSize: 16,
+    lineHeight: 28,
     fontFamily: 'Inter-Regular',
     color: '#374151',
+    flex: 1,
+  },
+  contentText: {
+    fontSize: 16,
+    lineHeight: 28, // Increased line height for better readability
+    fontFamily: 'Inter-Regular',
+    color: '#374151',
+    textAlign: 'left',
+  },
+  highlightedText: {
+    backgroundColor: '#fef3c7', // Light yellow background
+    color: '#92400e', // Darker text for contrast
+    fontWeight: '600',
+    paddingHorizontal: 2,
+    borderRadius: 2,
+  },
+  boldText: {
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+    color: '#1f2937', // Slightly darker for emphasis
+  },
+  italicText: {
+    fontFamily: 'Inter-Italic',
+    fontStyle: 'italic',
+    color: '#4b5563', // Subtle gray for italic
   },
   chevronIcon: {
     transition: 'transform 0.2s ease',
