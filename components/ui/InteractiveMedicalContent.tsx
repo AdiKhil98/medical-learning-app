@@ -8,7 +8,7 @@ import {
   Animated,
   TextInput,
 } from 'react-native';
-import { ChevronDown, BookOpen, AlertCircle, Search, ArrowRight, List, FileText, Info } from 'lucide-react-native';
+import { ChevronDown, BookOpen, AlertCircle, Search } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import TableOfContents from './TableOfContents';
@@ -276,93 +276,6 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Quick Navigation Section */}
-        <View style={styles.quickNavSection}>
-          <View style={styles.quickNavHeader}>
-            <Text style={[styles.quickNavTitle, { color: 'rgba(255, 255, 255, 0.9)' }]}>
-              ⚡ SCHNELLNAVIGATION
-            </Text>
-          </View>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.quickNavScrollView}
-            contentContainerStyle={styles.quickNavContent}
-          >
-            <TouchableOpacity 
-              style={[styles.quickNavCard, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}
-              onPress={() => {
-                scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-              }}
-            >
-              <View style={[styles.quickNavIcon, { backgroundColor: 'rgba(99, 102, 241, 0.8)' }]}>
-                <Info size={16} color="white" />
-              </View>
-              <Text style={[styles.quickNavCardText, { color: 'rgba(255, 255, 255, 0.9)' }]}>
-                Übersicht
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.quickNavCard, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}
-              onPress={() => {
-                const firstSection = sectionRefs.current[0];
-                if (firstSection && scrollViewRef.current) {
-                  firstSection.measureLayout(
-                    scrollViewRef.current as any,
-                    (x, y) => {
-                      scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 20), animated: true });
-                    },
-                    () => {}
-                  );
-                }
-              }}
-            >
-              <View style={[styles.quickNavIcon, { backgroundColor: 'rgba(16, 185, 129, 0.8)' }]}>
-                <FileText size={16} color="white" />
-              </View>
-              <Text style={[styles.quickNavCardText, { color: 'rgba(255, 255, 255, 0.9)' }]}>
-                Inhalte
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.quickNavCard, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}
-              onPress={() => {
-                setExpandedSections(prev => {
-                  const allExpanded: Record<string, boolean> = {};
-                  filteredSections.forEach((_, index) => {
-                    allExpanded[index] = true;
-                  });
-                  return allExpanded;
-                });
-              }}
-            >
-              <View style={[styles.quickNavIcon, { backgroundColor: 'rgba(245, 158, 11, 0.8)' }]}>
-                <List size={16} color="white" />
-              </View>
-              <Text style={[styles.quickNavCardText, { color: 'rgba(255, 255, 255, 0.9)' }]}>
-                Alle öffnen
-              </Text>
-            </TouchableOpacity>
-
-            {filteredSections.slice(0, 4).map((section, index) => (
-              <TouchableOpacity 
-                key={index}
-                style={[styles.quickNavCard, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}
-                onPress={() => handleNavigateToSection(index)}
-              >
-                <View style={[styles.quickNavIcon, { backgroundColor: 'rgba(139, 92, 246, 0.8)' }]}>
-                  <ArrowRight size={16} color="white" />
-                </View>
-                <Text style={[styles.quickNavCardText, { color: 'rgba(255, 255, 255, 0.9)' }]} numberOfLines={2}>
-                  {section.title.length > 20 ? section.title.substring(0, 20) + '...' : section.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
       </View>
 
 
@@ -578,50 +491,6 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
-  },
-  quickNavSection: {
-    marginTop: 16,
-  },
-  quickNavHeader: {
-    marginBottom: 12,
-  },
-  quickNavTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  quickNavScrollView: {
-    flexGrow: 0,
-  },
-  quickNavContent: {
-    paddingRight: 16,
-    gap: 12,
-  },
-  quickNavCard: {
-    minWidth: 120,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  quickNavIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  quickNavCardText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 16,
   },
 });
 
