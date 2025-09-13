@@ -53,75 +53,40 @@ export default function KPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 KP: Setting up microphone-based call detection...');
+    console.log('🔍 KP: Setting up passive microphone detection...');
 
-    // Method 1: Monitor microphone access (most reliable indicator of voice call start)
-    const monitorMicrophoneAccess = () => {
-      // Check if microphone is currently active
-      navigator.mediaDevices?.getUserMedia({ audio: true })
-        .then((stream) => {
-          console.log('🎤 KP: Microphone access granted - voice call likely started!');
-          if (!timerActive) {
-            console.log('⏰ KP: Starting 20-minute timer due to microphone activation');
-            startSimulationTimer();
-          }
-          // Stop the stream to avoid keeping mic on
-          stream.getTracks().forEach(track => track.stop());
-        })
-        .catch(() => {
-          // No microphone access yet, which is normal
-        });
-    };
-
-    // Method 2: Monitor navigator.mediaDevices for permission changes
-    const monitorPermissionChanges = async () => {
-      if (navigator.permissions) {
-        try {
-          const micPermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-          micPermission.onchange = () => {
-            console.log('🔄 KP: Microphone permission changed to:', micPermission.state);
-            if (micPermission.state === 'granted' && !timerActive) {
-              console.log('🎤 KP: Microphone permission granted - checking for active call...');
-              setTimeout(monitorMicrophoneAccess, 500); // Small delay to let call start
-            }
-          };
-        } catch (error) {
-          console.log('⚠️ KP: Permission API not available');
+    // Method 1: Monitor for MediaStream creation (passive detection)
+    const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
+    if (originalGetUserMedia) {
+      navigator.mediaDevices.getUserMedia = async function(constraints) {
+        console.log('🎤 KP: MediaStream requested with constraints:', constraints);
+        
+        if (constraints?.audio && !timerActive) {
+          console.log('🎯 KP: Audio stream requested - voice call starting!');
+          console.log('⏰ KP: Starting 20-minute timer due to voice call');
+          startSimulationTimer();
         }
-      }
-    };
+        
+        return originalGetUserMedia.call(this, constraints);
+      };
+    }
 
-    // Method 3: Fallback click detection on voiceflow container
+    // Method 2: Simple click detection as backup
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
       // Only trigger on voiceflow-chat container clicks
       if (target.closest('#voiceflow-chat') && !timerActive) {
-        console.log('🎯 KP: Click detected on Voiceflow widget');
-        // Wait a moment for potential microphone access, then check
-        setTimeout(() => {
-          if (!timerActive) {
-            monitorMicrophoneAccess();
-          }
-        }, 1000);
+        console.log('🎯 KP: Click detected on Voiceflow widget - waiting for voice call...');
+        // Don't start timer immediately, wait for actual mic access
       }
     };
-
-    // Set up monitoring
-    monitorPermissionChanges();
-    
-    // Periodically check for microphone access (less frequent than before)
-    const micChecker = setInterval(() => {
-      if (!timerActive) {
-        monitorMicrophoneAccess();
-      }
-    }, 2000); // Check every 2 seconds
 
     document.addEventListener('click', clickListener, true);
 
     // Store references for cleanup
     (window as any).kpClickListener = clickListener;
-    (window as any).kpMicChecker = micChecker;
+    (window as any).kpOriginalGetUserMedia = originalGetUserMedia;
   };
 
   // Start the 20-minute simulation timer
@@ -169,9 +134,10 @@ export default function KPSimulationScreen() {
         delete (window as any).kpClickListener;
       }
 
-      if ((window as any).kpMicChecker) {
-        clearInterval((window as any).kpMicChecker);
-        delete (window as any).kpMicChecker;
+      // Restore original getUserMedia function
+      if ((window as any).kpOriginalGetUserMedia && navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia = (window as any).kpOriginalGetUserMedia;
+        delete (window as any).kpOriginalGetUserMedia;
       }
       
       // Cleanup Voiceflow controller
