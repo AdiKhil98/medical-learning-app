@@ -139,10 +139,6 @@
       }
     };
 
-    const handleGoogleSignUp = async () => {
-      // TODO: Implement Google Sign-Up
-      Alert.alert('Info', 'Google-Registrierung wird bald verfügbar sein');
-    };
 
     return (
       <LinearGradient
@@ -262,21 +258,6 @@
                   </TouchableOpacity>
                 </LinearGradient>
 
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>oder</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.googleButton}
-                  onPress={handleGoogleSignUp}
-                  disabled={loading}
-                >
-                  <Text style={styles.googleButtonText}>
-                    Mit Google registrieren
-                  </Text>
-                </TouchableOpacity>
 
                 <View style={styles.signInRow}>
                   <Text style={styles.signInText}>Bereits ein Konto? </Text>
@@ -403,46 +384,6 @@
       fontSize: 14,
       color: '#10b981',
       fontWeight: '600',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    divider: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginVertical: 20,
-    },
-    dividerLine: {
-      flex: 1,
-      height: 1,
-      backgroundColor: '#E5E7EB',
-    },
-    dividerText: {
-      paddingHorizontal: 16,
-      fontSize: 14,
-      color: '#6B7280',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    googleButton: {
-      backgroundColor: 'white',
-      borderWidth: 1,
-      borderColor: '#D1D5DB',
-      borderRadius: 12,
-      paddingVertical: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 8,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 1,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 2,
-    },
-    googleButtonText: {
-      color: '#374151',
-      fontSize: 16,
-      fontWeight: '500',
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
   });

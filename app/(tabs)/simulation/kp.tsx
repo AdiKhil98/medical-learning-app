@@ -1,715 +1,300 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Platform, ScrollView, Alert, Linking } from 'react-native';
-import SimulationDisclaimerModal from '@/components/simulation/SimulationDisclaimerModal';
-import SimulationInstructionsModal from '@/components/ui/SimulationInstructionsModal';
-import { ChevronLeft, MessageCircle, Info } from 'lucide-react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSimulationTimer } from '@/hooks/useSimulationTimer';
-import { useSubscription } from '@/hooks/useSubscription';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
-import { VoiceInteractionService, VoiceInteractionState } from '@/utils/voiceIntegration';
-import VoiceMicrophone from '@/components/ui/VoiceMicrophone';
-import { LinearGradient } from 'expo-linear-gradient';
-
 
 export default function KPSimulationScreen() {
   const router = useRouter();
-  const [simulationStarted, setSimulationStarted] = useState(false);
-  const [voiceflowLoaded, setVoiceflowLoaded] = useState(false);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const scrollViewRef = useRef(null);
   const voiceflowController = useRef<VoiceflowController | null>(null);
-  const voiceService = useRef<VoiceInteractionService | null>(null);
-  const [voiceState, setVoiceState] = useState<VoiceInteractionState>({
-    isInitialized: false,
-    isRecording: false,
-    isProcessing: false,
-    currentMessage: '',
-    conversationHistory: [],
-    error: null,
-  });
-  
-  const { formattedTime, isTimeUp, resetTimer } = useSimulationTimer({
-    isActive: simulationStarted,
-    onTimeUp: () => {
-      setSimulationStarted(false);
-    }
-  });
+  const [timerActive, setTimerActive] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const { canUseSimulation, useSimulation, getSimulationStatusText } = useSubscription();
-
-  // Initialize voice interaction service
-  const initializeVoiceService = async () => {
-    try {
-      console.log('🎤 Initializing KP voice service...');
-      
-      // Create Voiceflow controller
-      const controller = createKPController();
-      voiceflowController.current = controller;
-      
-      // Create voice interaction service
-      const service = new VoiceInteractionService(controller);
-      voiceService.current = service;
-      
-      // Subscribe to voice state changes
-      const unsubscribe = service.subscribe((newState) => {
-        console.log('🔄 Voice state updated:', {
-          isInitialized: newState.isInitialized,
-          isRecording: newState.isRecording,
-          isProcessing: newState.isProcessing
-        });
-        setVoiceState(newState);
-        if (newState.isInitialized && !simulationStarted) {
-          setSimulationStarted(true);
-          setVoiceflowLoaded(true);
-        }
-      });
-      
-      // Store unsubscribe function for cleanup
-      (service as any).unsubscribe = unsubscribe;
-      
-      console.log('✅ KP Voice service created successfully');
-      return service;
-    } catch (error) {
-      console.error('❌ Error initializing KP voice service:', error);
-      setVoiceState(prev => ({ 
-        ...prev, 
-        error: `Failed to initialize: ${error instanceof Error ? error.message : 'Unknown error'}` 
-      }));
-      return null;
-    }
-  };
-
-  // Initialize simulation with usage tracking
-  const initializeSimulation = async () => {
-    console.log('🏥 KP: Initializing medical simulation');
-    
-    // Check if user can use simulation
-    if (!canUseSimulation()) {
-      console.log('❌ KP: Simulation limit reached');
-      Alert.alert(
-        'Simulationslimit erreicht',
-        `Sie haben Ihr Simulationslimit erreicht. ${getSimulationStatusText()}`,
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-
-    try {
-      // Track simulation usage
-      await useSimulation('kp');
-      
-      // Start simulation timer
-      resetTimer();
-      
-      console.log('✅ KP: Medical simulation initialized');
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Error initializing simulation:', error);
-      Alert.alert(
-        'Fehler',
-        'Simulation konnte nicht initialisiert werden.',
-        [{ text: 'OK' }]
-      );
-      return false;
-    }
-  };
-
-  const handleStartRecording = () => {
-    console.log('🎤 Starting custom microphone recording');
-    
-    // Use Web Speech API directly like the original approach, but with better integration
-    if (!navigator.mediaDevices || !(window as any).webkitSpeechRecognition) {
-      Alert.alert('Fehler', 'Spracheingabe wird von Ihrem Browser nicht unterstützt.');
-      return;
-    }
-
-    try {
-      // Request microphone permission and start recognition
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          console.log('🎤 Microphone access granted');
-          
-          // Stop the stream immediately - we just needed permission
-          stream.getTracks().forEach(track => track.stop());
-          
-          // Start speech recognition
-          const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-          if (!SpeechRecognition) {
-            throw new Error('Speech recognition not supported');
-          }
-          
-          const recognition = new SpeechRecognition();
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.lang = 'de-DE';
-          
-          recognition.onstart = () => {
-            console.log('🎤 Speech recognition started');
-            setVoiceState(prev => ({ ...prev, isRecording: true }));
-          };
-          
-          recognition.onresult = (event: any) => {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              const transcript = event.results[i][0].transcript;
-              if (event.results[i].isFinal) {
-                finalTranscript += transcript;
-              }
-            }
-            
-            if (finalTranscript) {
-              console.log('🗣️ Final transcript:', finalTranscript);
-              handleSpeechResult(finalTranscript);
-            }
-          };
-          
-          recognition.onerror = (event: any) => {
-            console.error('❌ Speech recognition error:', event.error);
-            setVoiceState(prev => ({ ...prev, isRecording: false, error: event.error }));
-          };
-          
-          recognition.onend = () => {
-            console.log('🎤 Speech recognition ended');
-            setVoiceState(prev => ({ ...prev, isRecording: false }));
-          };
-          
-          recognition.start();
-          
-        })
-        .catch(error => {
-          console.error('❌ Microphone permission denied:', error);
-          Alert.alert('Fehler', 'Mikrofon-Zugriff erforderlich für Spracheingabe.');
-        });
-        
-    } catch (error) {
-      console.error('❌ Error starting speech recognition:', error);
-      Alert.alert('Fehler', 'Spracheingabe konnte nicht gestartet werden.');
-    }
-  };
-
-  // Handle speech recognition result
-  const handleSpeechResult = (transcript: string) => {
-    console.log('📝 Processing speech result:', transcript);
-    
-    // Send to hidden Voiceflow widget
-    if (window.voiceflow && window.voiceflow.chat && window.voiceflow.chat.interact) {
-      setVoiceState(prev => ({ ...prev, isProcessing: true, currentMessage: `Sie: ${transcript}` }));
-      
-      window.voiceflow.chat.interact({
-        type: 'text',
-        payload: transcript
-      }).then((response: any) => {
-        console.log('🤖 Voiceflow raw response:', response);
-        
-        // Try multiple ways to extract response text
-        let responseText = '';
-        
-        if (response && Array.isArray(response) && response.length > 0) {
-          const firstResponse = response[0];
-          
-          // Try different response formats
-          if (firstResponse.type === 'speak' && firstResponse.payload) {
-            responseText = firstResponse.payload.message || firstResponse.payload;
-          } else if (firstResponse.payload && firstResponse.payload.message) {
-            responseText = firstResponse.payload.message;
-          } else if (firstResponse.payload && typeof firstResponse.payload === 'string') {
-            responseText = firstResponse.payload;
-          } else if (typeof firstResponse === 'string') {
-            responseText = firstResponse;
-          }
-          
-          // Fallback - check all response items for text
-          if (!responseText) {
-            for (const item of response) {
-              if (item.type === 'speak' || item.type === 'text') {
-                responseText = item.payload?.message || item.payload || item.text || '';
-                if (responseText) break;
-              }
-            }
-          }
-        }
-        
-        console.log('📤 Extracted response text:', responseText);
-        
-        if (responseText && typeof responseText === 'string' && responseText.trim()) {
-          speakResponse(responseText);
-          setVoiceState(prev => ({ 
-            ...prev, 
-            isProcessing: false,
-            currentMessage: `KI: ${responseText}`
-          }));
-        } else {
-          console.warn('⚠️ No valid response text found in Voiceflow response');
-          setVoiceState(prev => ({ 
-            ...prev, 
-            isProcessing: false,
-            currentMessage: 'KI: Antwort erhalten, aber kein Text extrahiert.'
-          }));
-        }
-      }).catch((error: any) => {
-        console.error('❌ Voiceflow interaction error:', error);
-        setVoiceState(prev => ({ 
-          ...prev, 
-          isProcessing: false,
-          currentMessage: 'Fehler bei der Kommunikation mit der KI.' 
-        }));
-      });
-    } else {
-      console.error('❌ Voiceflow widget not available for interaction');
-      setVoiceState(prev => ({ 
-        ...prev, 
-        isProcessing: false,
-        currentMessage: 'Voiceflow Widget nicht verfügbar.' 
-      }));
-    }
-  };
-
-  // Speak response using Web Speech API
-  const speakResponse = (text: string) => {
-    console.log('🔊 Speaking response:', text);
-    
-    if (window.speechSynthesis) {
-      // Cancel any current speech
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'de-DE';
-      utterance.rate = 0.8; // Slightly slower for better clarity
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      
-      // Wait for voices to load and find the best German voice
-      const speakWithVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-        console.log('🎯 Available voices:', voices.length);
-        
-        // Find German voice (prefer neural or premium voices)
-        const germanVoices = voices.filter(voice => voice.lang.startsWith('de'));
-        console.log('🇩🇪 German voices found:', germanVoices.length);
-        
-        if (germanVoices.length > 0) {
-          // Prefer specific high-quality German voices
-          const preferredVoice = germanVoices.find(voice => 
-            voice.name.includes('Google') || 
-            voice.name.includes('Microsoft') || 
-            voice.name.includes('Neural') ||
-            voice.name.includes('Premium')
-          ) || germanVoices[0];
-          
-          utterance.voice = preferredVoice;
-          console.log('🎤 Using voice:', preferredVoice.name);
-        }
-        
-        utterance.onstart = () => {
-          console.log('🔊 Speech synthesis started');
-        };
-        
-        utterance.onend = () => {
-          console.log('✅ Speech synthesis completed');
-        };
-        
-        utterance.onerror = (event) => {
-          console.error('❌ Speech synthesis error:', event);
-        };
-        
-        window.speechSynthesis.speak(utterance);
-      };
-      
-      // Check if voices are already loaded
-      if (window.speechSynthesis.getVoices().length > 0) {
-        speakWithVoice();
-      } else {
-        // Wait for voices to load
-        const voicesLoadedHandler = () => {
-          speakWithVoice();
-          window.speechSynthesis.removeEventListener('voiceschanged', voicesLoadedHandler);
-        };
-        window.speechSynthesis.addEventListener('voiceschanged', voicesLoadedHandler);
-      }
-    } else {
-      console.error('❌ Speech synthesis not available');
-    }
-  };
-
-  const handleStopRecording = () => {
-    console.log('🎤 Stopping recording');
-    
-    // Try to stop voice interaction
-    if (window.voiceflow && window.voiceflow.chat) {
-      try {
-        // Look for stop button or end voice interaction
-        setTimeout(() => {
-          const stopButton = document.querySelector('[aria-label*="stop"], [title*="stop"], .vfrc-stop-button');
-          if (stopButton) {
-            console.log('🛑 Found stop button, clicking it');
-            (stopButton as HTMLElement).click();
-          }
-        }, 100);
-      } catch (error) {
-        console.error('❌ Error stopping voice:', error);
-      }
-    }
-
-    // Update UI state
-    setVoiceState(prev => ({ ...prev, isRecording: false }));
-  };
-
-  // Cleanup voice service on unmount
+  // Initialize Voiceflow widget when component mounts
   useEffect(() => {
-    return () => {
-      if (voiceService.current) {
-        if ((voiceService.current as any).unsubscribe) {
-          (voiceService.current as any).unsubscribe();
-        }
-        voiceService.current.destroy();
-        voiceService.current = null;
-      }
-    };
-  }, []);
-
-  // Load Voiceflow widget using the working method from test page
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      console.log('📦 Loading Voiceflow widget for KP medical simulation');
-      
-      // Stop global cleanup observer to allow Voiceflow widget on simulation page
-      stopGlobalVoiceflowCleanup();
-      
-      // Use the exact same approach as the working test page
-      (function(d, t) {
-        const v = d.createElement(t);
-        const s = d.getElementsByTagName(t)[0];
+    const initializeVoiceflow = async () => {
+      if (Platform.OS === 'web') {
+        console.log('🏥 KP: Initializing medical simulation');
         
-        v.onload = function() {
-          console.log('✅ Voiceflow script loaded successfully');
-          
-          // Wait a bit for Voiceflow to fully initialize
-          setTimeout(() => {
-            if (window.voiceflow && window.voiceflow.chat) {
-              console.log('🔧 Loading Voiceflow chat widget...');
-              
-              try {
-                window.voiceflow.chat.load({
-                  verify: { projectID: '68c3061be0c49c3ff98ceb9e' },
-                  url: 'https://general-runtime.voiceflow.com',
-                  versionID: '68c3061be0c49c3ff98ceb9f',
-                  voice: {
-                    url: "https://runtime-api.voiceflow.com"
-                  }
-                });
-                
-                console.log('✅ Voiceflow widget configuration loaded');
-                
-                // Force show the widget if it's hidden
-                setTimeout(() => {
-                  if (window.voiceflow.chat.show) {
-                    window.voiceflow.chat.show();
-                    console.log('🔧 Forced widget to show');
-                  }
-                  if (window.voiceflow.chat.open) {
-                    console.log('🔧 Widget open method available');
-                  }
-                }, 1000);
-                
-                // Initialize simulation tracking
-                initializeSimulation().then((success) => {
-                  if (success) {
-                    setSimulationStarted(true);
-                    setVoiceflowLoaded(true);
-                    console.log('🎯 KP simulation ready - looking for widget...');
-                  }
-                });
-                
-              } catch (error) {
-                console.error('❌ Error loading Voiceflow widget:', error);
-              }
-              
-            } else {
-              console.error('❌ Voiceflow not available after script load');
-            }
-          }, 500);
-        };
+        // Stop global cleanup to allow widget
+        stopGlobalVoiceflowCleanup();
         
-        v.onerror = function(error) {
-          console.error('❌ Failed to load Voiceflow script:', error);
-        };
+        // Create and load controller
+        const controller = createKPController();
+        voiceflowController.current = controller;
         
-        (v as any).src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
-        (v as any).type = "text/javascript";
-        s.parentNode?.insertBefore(v, s);
-      })(document, 'script');
-    }
-  }, []);
-
-  // Component cleanup - hide widget when leaving page
-  useEffect(() => {
-    return () => {
-      console.log('🧹 KP Simulation cleanup - hiding widget');
-      
-      if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
         try {
-          if (window.voiceflow.chat.hide) {
-            window.voiceflow.chat.hide();
-          } else if (window.voiceflow.chat.close) {
-            window.voiceflow.chat.close();
+          const loaded = await controller.loadWidget();
+          if (loaded) {
+            console.log('✅ KP: Voiceflow widget loaded successfully');
+            
+            // Make sure widget is visible and functional
+            setTimeout(() => {
+              if (window.voiceflow?.chat) {
+                window.voiceflow.chat.show();
+                console.log('👁️ KP: Widget made visible');
+              }
+            }, 1000);
+            
+            // Set up conversation monitoring
+            setupConversationMonitoring();
           }
-          console.log('✅ Voiceflow widget hidden on cleanup');
         } catch (error) {
-          console.error('❌ Error hiding Voiceflow widget:', error);
+          console.error('❌ KP: Failed to load Voiceflow widget:', error);
         }
       }
     };
+
+    initializeVoiceflow();
   }, []);
 
-  // Handle back button and navigation prevention
-  useEffect(() => {
-    const handleBackPress = () => {
-      if (simulationStarted) {
-        // Prevent navigation during simulation
-        Alert.alert(
-          'Simulation läuft',
-          'Sie können die Simulation nicht verlassen, während sie läuft. Möchten Sie die Simulation beenden?',
-          [
-            { text: 'Weiter', style: 'cancel' },
-            { 
-              text: 'Simulation beenden', 
-              onPress: () => {
-                setSimulationStarted(false);
-                resetTimer();
-                router.back();
-              }
-            }
-          ]
-        );
-        return true; // Prevent default back action
+  // Set up monitoring for conversation start
+  const setupConversationMonitoring = () => {
+    console.log('🔍 KP: Setting up conversation monitoring...');
+
+    // Method 1: Listen for custom Voiceflow events from the widget
+    const voiceflowEventListener = (event: CustomEvent) => {
+      console.log('🎯 KP: Voiceflow event detected:', event.type, event.detail);
+      if (!timerActive) {
+        startSimulationTimer();
       }
-      return false; // Allow normal navigation
     };
 
-    // Note: This would typically use a back handler library for React Native
-    // For web, we can use beforeunload event
-    if (Platform.OS === 'web' && simulationStarted) {
-      const handleBeforeUnload = (e: any) => {
-        e.preventDefault();
-        e.returnValue = 'Simulation läuft. Möchten Sie wirklich die Seite verlassen?';
-        return e.returnValue;
-      };
-      
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-  }, [simulationStarted, router, resetTimer]);
-
-  const handleEndSimulation = () => {
-    setSimulationStarted(false);
-    resetTimer();
-    console.log('⏹️ KP Voice Simulation ended by user');
+    window.addEventListener('voiceflowWidgetOpened', voiceflowEventListener as EventListener);
+    window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
+    window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
     
-    // Stop voice service
-    if (voiceService.current) {
-      voiceService.current.stopRecording();
-      if ((voiceService.current as any).unsubscribe) {
-        (voiceService.current as any).unsubscribe();
+    // Method 2: Listen for ALL window messages - comprehensive logging
+    const messageListener = (event: MessageEvent) => {
+      // Log ALL messages to see what's actually being sent
+      if (event.data) {
+        console.log('📨 KP: Window message received:', {
+          type: event.data.type,
+          action: event.data.action,
+          event: event.data.event,
+          source: event.data.source,
+          origin: event.origin,
+          data: event.data
+        });
       }
-      voiceService.current.destroy();
-      voiceService.current = null;
-    }
-    
-    // Reset voice state
-    setVoiceState({
-      isInitialized: false,
-      isRecording: false,
-      isProcessing: false,
-      currentMessage: '',
-      conversationHistory: [],
-      error: null,
-    });
-  };
-  
-  // Show disclaimer when Voiceflow is loaded - DISABLED
-  // useEffect(() => {
-  //   if (voiceflowLoaded && !simulationStarted) {
-  //     setShowDisclaimer(true);
-  //   }
-  // }, [voiceflowLoaded, simulationStarted]);
-  
-  const handleDisclaimerAccept = () => {
-    setShowDisclaimer(false);
-    
-    if (Platform.OS === 'web' && window.voiceflow && window.voiceflow.chat) {
-      try {
-        setTimeout(() => {
-          if (window.voiceflow.chat.open) {
-            window.voiceflow.chat.open();
-          } else if (window.voiceflow.chat.show) {
-            window.voiceflow.chat.show();
+      
+      if (event.data && typeof event.data === 'object') {
+        // Check for any Voiceflow-related activity
+        if (
+          event.data.type?.includes('voiceflow') ||
+          event.data.type?.includes('chat') ||
+          event.data.type?.includes('call') ||
+          event.data.source?.includes('voiceflow') ||
+          event.data.action === 'start' ||
+          event.data.event === 'start' ||
+          (event.data.message && (
+            event.data.message.includes('start') ||
+            event.data.message.includes('call') ||
+            event.data.message.includes('conversation')
+          ))
+        ) {
+          console.log('🎯 KP: Potential conversation start detected via message:', event.data);
+          if (!timerActive) {
+            startSimulationTimer();
           }
-          console.log('✅ KP Voiceflow chat widget opened after disclaimer');
-        }, 500);
-      } catch (error) {
-        console.error('❌ Error opening KP Voiceflow chat:', error);
-      }
-    } else if (Platform.OS !== 'web') {
-      // Mobile: Open in external browser
-      const voiceflowUrl = `https://creator.voiceflow.com/prototype/68b40ab270a53105f6701677`;
-      Linking.canOpenURL(voiceflowUrl).then(supported => {
-        if (supported) {
-          Linking.openURL(voiceflowUrl);
-          console.log('📱 Opened KP Voiceflow in external browser');
-        } else {
-          Alert.alert(
-            'Browser öffnen',
-            'Um den KI-Assistenten zu verwenden, öffnen Sie bitte Ihren Browser.',
-            [{ text: 'OK' }]
-          );
         }
-      }).catch(error => {
-        console.error('❌ Error opening browser:', error);
-        Alert.alert(
-          'Fehler',
-          'Der Browser konnte nicht geöffnet werden.',
-          [{ text: 'OK' }]
-        );
+      }
+    };
+
+    // Method 3: Comprehensive click detection with logging
+    const clickListener = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Log EVERY click to see if we're capturing anything at all
+      console.log('🖱️ KP: ANY click detected:', {
+        tagName: target.tagName,
+        className: target.className,
+        textContent: target.textContent?.slice(0, 30),
+        id: target.id
       });
+      
+      // Check if click was on the specific "Start a call" button or its children
+      const startCallButton = target.closest('button.vfrc-button');
+      const hasStartCallText = target.textContent?.includes('Start a call') || 
+                              target.closest('*')?.textContent?.includes('Start a call');
+
+      if (startCallButton && hasStartCallText) {
+        console.log('🎯 KP: "Start a call" button clicked!', {
+          button: startCallButton,
+          className: startCallButton.className,
+          textContent: startCallButton.textContent
+        });
+        
+        if (!timerActive) {
+          console.log('⏰ KP: Starting 20-minute timer due to Start a call button click');
+          startSimulationTimer();
+        }
+      }
+
+      // Check for ANY button with vfrc class
+      const anyVfrcButton = target.closest('button');
+      if (anyVfrcButton && anyVfrcButton.className.includes('vfrc')) {
+        console.log('🔍 KP: VFRC button clicked (backup detection):', {
+          className: anyVfrcButton.className,
+          textContent: anyVfrcButton.textContent?.slice(0, 50)
+        });
+        
+        if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
+          console.log('⏰ KP: Starting timer due to Start button detection');
+          startSimulationTimer();
+        }
+      }
+    };
+
+    // Method 4: Periodic DOM check for widget changes
+    const domChecker = setInterval(() => {
+      if (!timerActive) {
+        const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [class*="voiceflow"]');
+        if (voiceflowElements.length > 0) {
+          voiceflowElements.forEach((element, index) => {
+            if (index < 3) { // Log first 3 elements only
+              console.log(`🔍 KP: Found Voiceflow element ${index + 1}:`, {
+                className: element.className,
+                textContent: element.textContent?.slice(0, 100),
+                visible: (element as HTMLElement).offsetWidth > 0
+              });
+            }
+          });
+        }
+      }
+    }, 5000); // Check every 5 seconds
+
+    window.addEventListener('message', messageListener);
+    document.addEventListener('click', clickListener, true);
+
+    // Store references for cleanup
+    (window as any).kpVoiceflowListener = voiceflowEventListener;
+    (window as any).kpMessageListener = messageListener;
+    (window as any).kpClickListener = clickListener;
+    (window as any).kpDomChecker = domChecker;
+  };
+
+  // Start the 20-minute simulation timer
+  const startSimulationTimer = () => {
+    if (timerActive) return; // Already running
+    
+    console.log('⏰ KP: Starting 20-minute simulation timer');
+    setTimerActive(true);
+    setTimeRemaining(20 * 60); // Reset to 20 minutes
+    
+    timerInterval.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          console.log('⏰ KP: Timer finished - 20 minutes elapsed');
+          stopSimulationTimer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Stop the simulation timer
+  const stopSimulationTimer = () => {
+    console.log('🛑 KP: Stopping simulation timer');
+    setTimerActive(false);
+    
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
     }
   };
-  
-  const handleDisclaimerDecline = () => {
-    setShowDisclaimer(false);
-    router.back();
-  };
-  
-  // Cleanup widget when component unmounts or navigating away
+
+  // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
-      console.log('🧹 KP Simulation cleanup - Using proper controller cleanup');
+      console.log('🧹 KP: Cleanup started');
       
-      // Stop simulation
-      setSimulationStarted(false);
+      // Stop timer
+      stopSimulationTimer();
       
-      // Cleanup monitoring interval
-      if ((window as any).kpMonitoringInterval) {
-        clearInterval((window as any).kpMonitoringInterval);
-        delete (window as any).kpMonitoringInterval;
+      // Remove event listeners
+      if ((window as any).kpVoiceflowListener) {
+        window.removeEventListener('voiceflowWidgetOpened', (window as any).kpVoiceflowListener);
+        window.removeEventListener('voiceflowUserInteraction', (window as any).kpVoiceflowListener);
+        window.removeEventListener('voiceflowDOMActivity', (window as any).kpVoiceflowListener);
+        delete (window as any).kpVoiceflowListener;
+      }
+
+      if ((window as any).kpMessageListener) {
+        window.removeEventListener('message', (window as any).kpMessageListener);
+        delete (window as any).kpMessageListener;
       }
       
-      // Use controller's proper cleanup method
+      if ((window as any).kpClickListener) {
+        document.removeEventListener('click', (window as any).kpClickListener, true);
+        delete (window as any).kpClickListener;
+      }
+
+      if ((window as any).kpDomChecker) {
+        clearInterval((window as any).kpDomChecker);
+        delete (window as any).kpDomChecker;
+      }
+      
+      // Cleanup Voiceflow controller
       if (voiceflowController.current) {
-        console.log('🔧 KP Using VoiceflowController cleanup...');
+        console.log('🔧 KP: Cleaning up Voiceflow controller');
         voiceflowController.current.destroy();
         voiceflowController.current = null;
       }
       
-      // Cleanup voice service
-      if (voiceService.current) {
-        try {
-          if ((voiceService.current as any).unsubscribe) {
-            (voiceService.current as any).unsubscribe();
-          }
-          voiceService.current = null;
-        } catch (error) {
-          console.warn('⚠️ Error cleaning up voice service:', error);
-        }
-      }
-      
-      // Run global cleanup as final step
+      // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
-        console.log('🌍 KP Running global Voiceflow cleanup...');
+        console.log('🌍 KP: Running global Voiceflow cleanup');
         globalVoiceflowCleanup();
       }
+      
+      console.log('✅ KP: Cleanup completed');
     };
   }, []);
 
+  // Handle navigation away from page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (timerActive) {
+        e.preventDefault();
+        e.returnValue = 'Simulation läuft. Möchten Sie wirklich die Seite verlassen?';
+        return e.returnValue;
+      }
+    };
+
+    if (Platform.OS === 'web' && timerActive) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [timerActive]);
+
+  // Format time for display
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        
-        <ScrollView 
-          ref={scrollViewRef}
-          style={styles.scrollView} 
-          contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.contentContainer}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => {
-                if (simulationStarted) {
-                  Alert.alert(
-                    'Simulation beenden',
-                    'Sie können die Simulation nicht verlassen, während sie läuft. Möchten Sie die Simulation beenden?',
-                    [
-                      { text: 'Abbrechen', style: 'cancel' },
-                      { 
-                        text: 'Simulation beenden',
-                        onPress: () => {
-                          setSimulationStarted(false);
-                          resetTimer();
-                          router.back();
-                        }
-                      }
-                    ]
-                  );
-                } else {
-                  router.back();
-                }
-              }}
-            >
-              <ChevronLeft size={24} color="#1e40af" />
-              <Text style={styles.backButtonText}>Zurück</Text>
-            </TouchableOpacity>
-
-            {/* Instructions Button */}
-            <TouchableOpacity 
-              style={styles.instructionsButton}
-              onPress={() => setShowInstructions(true)}
-            >
-              <Info size={20} color="#3b82f6" />
-              <Text style={styles.instructionsButtonText}>Über die Simulation</Text>
-            </TouchableOpacity>
-            
-            {/* Timer Display */}
-            {simulationStarted && (
-              <View style={styles.timerContainer}>
-                <Text style={styles.timerText}>{formattedTime}</Text>
-              </View>
-            )}
-            
-            {/* Clean interface - only Voiceflow widget */}
-            <View style={styles.mainContent}>
-              {/* Widget loads automatically - no UI needed */}
-            </View>
-            
-            <View style={styles.spacer} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        {/* Timer display - only show when active */}
+        {timerActive && (
+          <View style={styles.timerContainer}>
+            <Text style={styles.timerText}>
+              Simulation läuft: {formatTime(timeRemaining)}
+            </Text>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-      
-      {/* Instructions Modal */}
-      <SimulationInstructionsModal
-        visible={showInstructions}
-        onClose={() => setShowInstructions(false)}
-        simulationType="KP"
-      />
-      
-      {/* Disclaimer Modal - DISABLED */}
-      {false && (
-        <SimulationDisclaimerModal
-          visible={showDisclaimer}
-          onAccept={handleDisclaimerAccept}
-          onDecline={handleDisclaimerDecline}
-          simulationType="KP"
-        />
-      )}
-    </View>
+        )}
+        
+        {/* The page is intentionally blank - Voiceflow widget will appear here */}
+        <View style={styles.widgetArea}>
+          {/* Widget loads here automatically */}
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -718,209 +303,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  scrollView: {
+  content: {
     flex: 1,
-    width: '100%',
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
     position: 'relative',
-    paddingTop: 60,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    zIndex: 10,
-  },
-  backButtonText: {
-    color: '#1e40af',
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
-    marginLeft: 4,
   },
   timerContainer: {
     position: 'absolute',
-    top: 70,
+    top: 20,
+    left: 20,
     right: 20,
-    backgroundColor: '#f8f9fa',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: '#10b981',
+    padding: 12,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    zIndex: 10,
+    zIndex: 1000,
   },
   timerText: {
-    color: '#1e40af',
-    fontFamily: 'Inter-Bold',
+    color: 'white',
     fontSize: 16,
-    letterSpacing: 1,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  mainContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  widgetArea: {
     flex: 1,
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    marginHorizontal: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  endSimulationButton: {
-    backgroundColor: '#ef4444',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#dc2626',
-    shadowColor: '#ef4444',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  endSimulationButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  instructionsButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    zIndex: 10,
-  },
-  instructionsButtonText: {
-    color: '#3b82f6',
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  testButton: {
-    backgroundColor: '#f97316',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginTop: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  voiceflowInstructions: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 20,
-    margin: 20,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  instructionTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#1f2937',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  instructionText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  startButton: {
-    borderRadius: 25,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  startButtonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  startButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-  },
-  spacer: {
-    height: 100,
-  },
-  instructionSubText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    padding: 12,
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(102, 126, 234, 0.2)',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#667eea',
+    // This area is where the Voiceflow widget will appear
   },
 });
