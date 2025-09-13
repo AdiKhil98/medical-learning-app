@@ -147,23 +147,97 @@ export default function KPSimulationScreen() {
       }
     };
 
-    // Method 4: Periodic DOM check for widget changes
-    const domChecker = setInterval(() => {
-      if (!timerActive) {
-        const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [class*="voiceflow"]');
-        if (voiceflowElements.length > 0) {
-          voiceflowElements.forEach((element, index) => {
-            if (index < 3) { // Log first 3 elements only
-              console.log(`🔍 KP: Found Voiceflow element ${index + 1}:`, {
-                className: element.className,
-                textContent: element.textContent?.slice(0, 100),
-                visible: (element as HTMLElement).offsetWidth > 0
-              });
-            }
-          });
+    // Method 4: Monitor iframe and shadow DOM for button clicks
+    const monitorIframes = () => {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach((iframe, index) => {
+        console.log(`🔍 KP: Found iframe ${index + 1}:`, {
+          src: iframe.src,
+          id: iframe.id,
+          className: iframe.className
+        });
+        
+        try {
+          // Try to access iframe content if same-origin
+          if (iframe.contentWindow) {
+            iframe.contentWindow.addEventListener('click', () => {
+              console.log('🎯 KP: Click detected in iframe!');
+              if (!timerActive) {
+                console.log('⏰ KP: Starting timer due to iframe click');
+                startSimulationTimer();
+              }
+            });
+          }
+        } catch (error) {
+          console.log(`⚠️ KP: Cannot access iframe ${index + 1} - cross-origin restriction`);
+        }
+      });
+    };
+
+    // Method 5: Monitor for audio/media activity (voice calls usually trigger media)
+    const monitorMediaActivity = () => {
+      navigator.mediaDevices?.getUserMedia({ audio: true }).then(() => {
+        console.log('🎤 KP: Microphone access detected - user likely started call');
+        if (!timerActive) {
+          console.log('⏰ KP: Starting timer due to microphone activity');
+          startSimulationTimer();
+        }
+      }).catch(() => {
+        // Expected if no mic access
+      });
+    };
+
+    // Method 6: Monitor for URL hash changes (some widgets use hash routing)
+    const hashChangeListener = () => {
+      console.log('🔗 KP: URL hash changed:', window.location.hash);
+      if (window.location.hash.includes('call') || window.location.hash.includes('active')) {
+        console.log('🎯 KP: Call-related hash detected');
+        if (!timerActive) {
+          console.log('⏰ KP: Starting timer due to URL hash change');
+          startSimulationTimer();
         }
       }
-    }, 5000); // Check every 5 seconds
+    };
+
+    // Run iframe monitoring periodically
+    const domChecker = setInterval(() => {
+      if (!timerActive) {
+        monitorIframes();
+      }
+    }, 3000);
+
+    // Set up hash monitoring
+    window.addEventListener('hashchange', hashChangeListener);
+
+    // Method 7: Monitor the voiceflow-chat div for any changes
+    const chatObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' || mutation.type === 'attributes') {
+          console.log('🔄 KP: Voiceflow widget DOM changed:', mutation.type);
+          // Check if this might indicate call started
+          const chatDiv = document.getElementById('voiceflow-chat');
+          if (chatDiv && chatDiv.textContent?.includes('call') && !timerActive) {
+            console.log('🎯 KP: Call-related content detected in widget');
+            console.log('⏰ KP: Starting timer due to widget content change');
+            startSimulationTimer();
+          }
+        }
+      });
+    });
+
+    // Start observing the voiceflow chat container
+    setTimeout(() => {
+      const chatContainer = document.getElementById('voiceflow-chat');
+      if (chatContainer) {
+        console.log('🔍 KP: Starting mutation observer on voiceflow-chat');
+        chatObserver.observe(chatContainer, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true
+        });
+      }
+    }, 2000);
 
     window.addEventListener('message', messageListener);
     document.addEventListener('click', clickListener, true);
@@ -173,6 +247,8 @@ export default function KPSimulationScreen() {
     (window as any).kpMessageListener = messageListener;
     (window as any).kpClickListener = clickListener;
     (window as any).kpDomChecker = domChecker;
+    (window as any).kpHashListener = hashChangeListener;
+    (window as any).kpChatObserver = chatObserver;
   };
 
   // Start the 20-minute simulation timer
@@ -235,6 +311,16 @@ export default function KPSimulationScreen() {
       if ((window as any).kpDomChecker) {
         clearInterval((window as any).kpDomChecker);
         delete (window as any).kpDomChecker;
+      }
+
+      if ((window as any).kpHashListener) {
+        window.removeEventListener('hashchange', (window as any).kpHashListener);
+        delete (window as any).kpHashListener;
+      }
+
+      if ((window as any).kpChatObserver) {
+        (window as any).kpChatObserver.disconnect();
+        delete (window as any).kpChatObserver;
       }
       
       // Cleanup Voiceflow controller
