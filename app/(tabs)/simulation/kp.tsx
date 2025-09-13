@@ -102,9 +102,17 @@ export default function KPSimulationScreen() {
       }
     };
 
-    // Method 3: Specific detection for "Start a call" button
+    // Method 3: Comprehensive click detection with logging
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      
+      // Log EVERY click to see if we're capturing anything at all
+      console.log('🖱️ KP: ANY click detected:', {
+        tagName: target.tagName,
+        className: target.className,
+        textContent: target.textContent?.slice(0, 30),
+        id: target.id
+      });
       
       // Check if click was on the specific "Start a call" button or its children
       const startCallButton = target.closest('button.vfrc-button');
@@ -124,12 +132,18 @@ export default function KPSimulationScreen() {
         }
       }
 
-      // Also check for any vfrc-button clicks as backup
-      if (target.closest('.vfrc-button') && !timerActive) {
-        console.log('🔍 KP: Voiceflow button clicked (backup detection):', {
-          className: target.className,
-          textContent: target.textContent?.slice(0, 50)
+      // Check for ANY button with vfrc class
+      const anyVfrcButton = target.closest('button');
+      if (anyVfrcButton && anyVfrcButton.className.includes('vfrc')) {
+        console.log('🔍 KP: VFRC button clicked (backup detection):', {
+          className: anyVfrcButton.className,
+          textContent: anyVfrcButton.textContent?.slice(0, 50)
         });
+        
+        if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
+          console.log('⏰ KP: Starting timer due to Start button detection');
+          startSimulationTimer();
+        }
       }
     };
 
