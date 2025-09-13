@@ -93,25 +93,34 @@ export default function FSPSimulationScreen() {
       }
     };
 
-    // Method 3: Click detection as final fallback
+    // Method 3: Specific detection for "Start a call" button
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (target) {
-        // Check if click was on or near Voiceflow elements
-        const isVoiceflowClick = 
-          target.closest('[class*="vfrc"]') ||
-          target.closest('[class*="voiceflow"]') ||
-          target.closest('[class*="chat"]') ||
-          target.closest('[class*="widget"]') ||
-          target.getAttribute('class')?.includes('vfrc') ||
-          target.getAttribute('class')?.includes('voiceflow');
+      
+      // Check if click was on the specific "Start a call" button or its children
+      const startCallButton = target.closest('button.vfrc-button');
+      const hasStartCallText = target.textContent?.includes('Start a call') || 
+                              target.closest('*')?.textContent?.includes('Start a call');
 
-        if (isVoiceflowClick) {
-          console.log('🎯 FSP: Click detected on Voiceflow element:', target);
-          if (!timerActive) {
-            setTimeout(() => startSimulationTimer(), 2000); // Small delay to let conversation start
-          }
+      if (startCallButton && hasStartCallText) {
+        console.log('🎯 FSP: "Start a call" button clicked!', {
+          button: startCallButton,
+          className: startCallButton.className,
+          textContent: startCallButton.textContent
+        });
+        
+        if (!timerActive) {
+          console.log('⏰ FSP: Starting 20-minute timer due to Start a call button click');
+          startSimulationTimer();
         }
+      }
+
+      // Also check for any vfrc-button clicks as backup
+      if (target.closest('.vfrc-button') && !timerActive) {
+        console.log('🔍 FSP: Voiceflow button clicked (backup detection):', {
+          className: target.className,
+          textContent: target.textContent?.slice(0, 50)
+        });
       }
     };
 

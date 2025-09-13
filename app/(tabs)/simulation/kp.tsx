@@ -65,10 +65,19 @@ export default function KPSimulationScreen() {
     window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
     window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
     
-    // Method 2: Listen for window messages as backup
+    // Method 2: Listen for ALL window messages - comprehensive logging
     const messageListener = (event: MessageEvent) => {
-      // Log all messages for debugging
-      console.log('📨 KP: Window message received:', event.data);
+      // Log ALL messages to see what's actually being sent
+      if (event.data) {
+        console.log('📨 KP: Window message received:', {
+          type: event.data.type,
+          action: event.data.action,
+          event: event.data.event,
+          source: event.data.source,
+          origin: event.origin,
+          data: event.data
+        });
+      }
       
       if (event.data && typeof event.data === 'object') {
         // Check for any Voiceflow-related activity
@@ -93,27 +102,54 @@ export default function KPSimulationScreen() {
       }
     };
 
-    // Method 3: Click detection as final fallback
+    // Method 3: Specific detection for "Start a call" button
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (target) {
-        // Check if click was on or near Voiceflow elements
-        const isVoiceflowClick = 
-          target.closest('[class*="vfrc"]') ||
-          target.closest('[class*="voiceflow"]') ||
-          target.closest('[class*="chat"]') ||
-          target.closest('[class*="widget"]') ||
-          target.getAttribute('class')?.includes('vfrc') ||
-          target.getAttribute('class')?.includes('voiceflow');
+      
+      // Check if click was on the specific "Start a call" button or its children
+      const startCallButton = target.closest('button.vfrc-button');
+      const hasStartCallText = target.textContent?.includes('Start a call') || 
+                              target.closest('*')?.textContent?.includes('Start a call');
 
-        if (isVoiceflowClick) {
-          console.log('🎯 KP: Click detected on Voiceflow element:', target);
-          if (!timerActive) {
-            setTimeout(() => startSimulationTimer(), 2000); // Small delay to let conversation start
-          }
+      if (startCallButton && hasStartCallText) {
+        console.log('🎯 KP: "Start a call" button clicked!', {
+          button: startCallButton,
+          className: startCallButton.className,
+          textContent: startCallButton.textContent
+        });
+        
+        if (!timerActive) {
+          console.log('⏰ KP: Starting 20-minute timer due to Start a call button click');
+          startSimulationTimer();
         }
       }
+
+      // Also check for any vfrc-button clicks as backup
+      if (target.closest('.vfrc-button') && !timerActive) {
+        console.log('🔍 KP: Voiceflow button clicked (backup detection):', {
+          className: target.className,
+          textContent: target.textContent?.slice(0, 50)
+        });
+      }
     };
+
+    // Method 4: Periodic DOM check for widget changes
+    const domChecker = setInterval(() => {
+      if (!timerActive) {
+        const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [class*="voiceflow"]');
+        if (voiceflowElements.length > 0) {
+          voiceflowElements.forEach((element, index) => {
+            if (index < 3) { // Log first 3 elements only
+              console.log(`🔍 KP: Found Voiceflow element ${index + 1}:`, {
+                className: element.className,
+                textContent: element.textContent?.slice(0, 100),
+                visible: (element as HTMLElement).offsetWidth > 0
+              });
+            }
+          });
+        }
+      }
+    }, 5000); // Check every 5 seconds
 
     window.addEventListener('message', messageListener);
     document.addEventListener('click', clickListener, true);
@@ -122,6 +158,7 @@ export default function KPSimulationScreen() {
     (window as any).kpVoiceflowListener = voiceflowEventListener;
     (window as any).kpMessageListener = messageListener;
     (window as any).kpClickListener = clickListener;
+    (window as any).kpDomChecker = domChecker;
   };
 
   // Start the 20-minute simulation timer
@@ -179,6 +216,11 @@ export default function KPSimulationScreen() {
       if ((window as any).kpClickListener) {
         document.removeEventListener('click', (window as any).kpClickListener, true);
         delete (window as any).kpClickListener;
+      }
+
+      if ((window as any).kpDomChecker) {
+        clearInterval((window as any).kpDomChecker);
+        delete (window as any).kpDomChecker;
       }
       
       // Cleanup Voiceflow controller
