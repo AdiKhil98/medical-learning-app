@@ -55,16 +55,60 @@ export default function KPSimulationScreen() {
   const setupConversationMonitoring = () => {
     console.log('🔍 KP: Setting up passive microphone detection...');
 
-    // Method 1: Monitor for MediaStream creation (passive detection)
+    // Method 1: Monitor for MediaStream creation and termination
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
       navigator.mediaDevices.getUserMedia = async function(constraints) {
         console.log('🎤 KP: MediaStream requested with constraints:', constraints);
         
-        if (constraints?.audio && !timerActive) {
-          console.log('🎯 KP: Audio stream requested - voice call starting!');
-          console.log('⏰ KP: Starting 20-minute timer due to voice call');
-          startSimulationTimer();
+        if (constraints?.audio) {
+          try {
+            const stream = await originalGetUserMedia.call(this, constraints);
+            
+            if (!timerActive) {
+              console.log('🎯 KP: Audio stream granted - voice call starting!');
+              console.log('⏰ KP: Starting 20-minute timer due to voice call');
+              startSimulationTimer();
+            }
+
+            // Monitor stream tracks for when they end
+            const audioTracks = stream.getAudioTracks();
+            audioTracks.forEach((track, index) => {
+              console.log(`🎤 KP: Monitoring audio track ${index + 1}`);
+              
+              track.addEventListener('ended', () => {
+                console.log(`🔇 KP: Audio track ${index + 1} ended - call likely finished`);
+                
+                // Check if all audio tracks are ended
+                const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
+                if (allTracksEnded && timerActive) {
+                  console.log('🔇 KP: All audio tracks ended - stopping timer');
+                  stopSimulationTimer();
+                }
+              });
+
+              // Also monitor for track being stopped manually
+              const originalStop = track.stop.bind(track);
+              track.stop = () => {
+                console.log(`🔇 KP: Audio track ${index + 1} stopped manually`);
+                originalStop();
+                
+                // Small delay to let other tracks potentially stop too
+                setTimeout(() => {
+                  const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
+                  if (allTracksEnded && timerActive) {
+                    console.log('🔇 KP: All audio tracks stopped - stopping timer');
+                    stopSimulationTimer();
+                  }
+                }, 100);
+              };
+            });
+
+            return stream;
+          } catch (error) {
+            console.log('❌ KP: Failed to get audio stream:', error);
+            throw error;
+          }
         }
         
         return originalGetUserMedia.call(this, constraints);
