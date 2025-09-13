@@ -10,7 +10,7 @@ export default function KPSimulationScreen() {
   const router = useRouter();
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(30); // 30 seconds for testing
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize Voiceflow widget when component mounts
@@ -149,14 +149,14 @@ export default function KPSimulationScreen() {
   const startSimulationTimer = () => {
     if (timerActive) return; // Already running
     
-    console.log('⏰ KP: Starting 20-minute simulation timer');
+    console.log('⏰ KP: Starting 30-second test timer');
     setTimerActive(true);
-    setTimeRemaining(20 * 60); // Reset to 20 minutes
+    setTimeRemaining(30); // Reset to 30 seconds for testing
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          console.log('⏰ KP: Timer finished - 20 minutes elapsed');
+          console.log('⏰ KP: Timer finished - 30 seconds elapsed (TEST MODE)');
           console.log('🔚 KP: Automatically ending Voiceflow conversation');
           endVoiceflowConversation();
           stopSimulationTimer();
