@@ -51,204 +51,75 @@ export default function KPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 KP: Setting up conversation monitoring...');
+    console.log('🔍 KP: Setting up microphone-based call detection...');
 
-    // Method 1: Listen for custom Voiceflow events from the widget
-    const voiceflowEventListener = (event: CustomEvent) => {
-      console.log('🎯 KP: Voiceflow event detected:', event.type, event.detail);
-      if (!timerActive) {
-        startSimulationTimer();
-      }
-    };
-
-    window.addEventListener('voiceflowWidgetOpened', voiceflowEventListener as EventListener);
-    window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
-    window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
-    
-    // Method 2: Listen for ALL window messages - comprehensive logging
-    const messageListener = (event: MessageEvent) => {
-      // Log ALL messages to see what's actually being sent
-      if (event.data) {
-        console.log('📨 KP: Window message received:', {
-          type: event.data.type,
-          action: event.data.action,
-          event: event.data.event,
-          source: event.data.source,
-          origin: event.origin,
-          data: event.data
-        });
-      }
-      
-      if (event.data && typeof event.data === 'object') {
-        // Check for any Voiceflow-related activity
-        if (
-          event.data.type?.includes('voiceflow') ||
-          event.data.type?.includes('chat') ||
-          event.data.type?.includes('call') ||
-          event.data.source?.includes('voiceflow') ||
-          event.data.action === 'start' ||
-          event.data.event === 'start' ||
-          (event.data.message && (
-            event.data.message.includes('start') ||
-            event.data.message.includes('call') ||
-            event.data.message.includes('conversation')
-          ))
-        ) {
-          console.log('🎯 KP: Potential conversation start detected via message:', event.data);
+    // Method 1: Monitor microphone access (most reliable indicator of voice call start)
+    const monitorMicrophoneAccess = () => {
+      // Check if microphone is currently active
+      navigator.mediaDevices?.getUserMedia({ audio: true })
+        .then((stream) => {
+          console.log('🎤 KP: Microphone access granted - voice call likely started!');
           if (!timerActive) {
+            console.log('⏰ KP: Starting 20-minute timer due to microphone activation');
             startSimulationTimer();
           }
+          // Stop the stream to avoid keeping mic on
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(() => {
+          // No microphone access yet, which is normal
+        });
+    };
+
+    // Method 2: Monitor navigator.mediaDevices for permission changes
+    const monitorPermissionChanges = async () => {
+      if (navigator.permissions) {
+        try {
+          const micPermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          micPermission.onchange = () => {
+            console.log('🔄 KP: Microphone permission changed to:', micPermission.state);
+            if (micPermission.state === 'granted' && !timerActive) {
+              console.log('🎤 KP: Microphone permission granted - checking for active call...');
+              setTimeout(monitorMicrophoneAccess, 500); // Small delay to let call start
+            }
+          };
+        } catch (error) {
+          console.log('⚠️ KP: Permission API not available');
         }
       }
     };
 
-    // Method 3: Comprehensive click detection with logging
+    // Method 3: Fallback click detection on voiceflow container
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
-      // Log EVERY click to see if we're capturing anything at all
-      console.log('🖱️ KP: ANY click detected:', {
-        tagName: target.tagName,
-        className: target.className,
-        textContent: target.textContent?.slice(0, 30),
-        id: target.id
-      });
-      
-      // Check if click was on the specific "Start a call" button or its children
-      const startCallButton = target.closest('button.vfrc-button');
-      const hasStartCallText = target.textContent?.includes('Start a call') || 
-                              target.closest('*')?.textContent?.includes('Start a call');
-
-      if (startCallButton && hasStartCallText) {
-        console.log('🎯 KP: "Start a call" button clicked!', {
-          button: startCallButton,
-          className: startCallButton.className,
-          textContent: startCallButton.textContent
-        });
-        
-        if (!timerActive) {
-          console.log('⏰ KP: Starting 20-minute timer due to Start a call button click');
-          startSimulationTimer();
-        }
-      }
-
-      // Check for ANY button with vfrc class
-      const anyVfrcButton = target.closest('button');
-      if (anyVfrcButton && anyVfrcButton.className.includes('vfrc')) {
-        console.log('🔍 KP: VFRC button clicked (backup detection):', {
-          className: anyVfrcButton.className,
-          textContent: anyVfrcButton.textContent?.slice(0, 50)
-        });
-        
-        if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
-          console.log('⏰ KP: Starting timer due to Start button detection');
-          startSimulationTimer();
-        }
-      }
-    };
-
-    // Method 4: Monitor iframe and shadow DOM for button clicks
-    const monitorIframes = () => {
-      const iframes = document.querySelectorAll('iframe');
-      iframes.forEach((iframe, index) => {
-        console.log(`🔍 KP: Found iframe ${index + 1}:`, {
-          src: iframe.src,
-          id: iframe.id,
-          className: iframe.className
-        });
-        
-        try {
-          // Try to access iframe content if same-origin
-          if (iframe.contentWindow) {
-            iframe.contentWindow.addEventListener('click', () => {
-              console.log('🎯 KP: Click detected in iframe!');
-              if (!timerActive) {
-                console.log('⏰ KP: Starting timer due to iframe click');
-                startSimulationTimer();
-              }
-            });
+      // Only trigger on voiceflow-chat container clicks
+      if (target.closest('#voiceflow-chat') && !timerActive) {
+        console.log('🎯 KP: Click detected on Voiceflow widget');
+        // Wait a moment for potential microphone access, then check
+        setTimeout(() => {
+          if (!timerActive) {
+            monitorMicrophoneAccess();
           }
-        } catch (error) {
-          console.log(`⚠️ KP: Cannot access iframe ${index + 1} - cross-origin restriction`);
-        }
-      });
-    };
-
-    // Method 5: Monitor for audio/media activity (voice calls usually trigger media)
-    const monitorMediaActivity = () => {
-      navigator.mediaDevices?.getUserMedia({ audio: true }).then(() => {
-        console.log('🎤 KP: Microphone access detected - user likely started call');
-        if (!timerActive) {
-          console.log('⏰ KP: Starting timer due to microphone activity');
-          startSimulationTimer();
-        }
-      }).catch(() => {
-        // Expected if no mic access
-      });
-    };
-
-    // Method 6: Monitor for URL hash changes (some widgets use hash routing)
-    const hashChangeListener = () => {
-      console.log('🔗 KP: URL hash changed:', window.location.hash);
-      if (window.location.hash.includes('call') || window.location.hash.includes('active')) {
-        console.log('🎯 KP: Call-related hash detected');
-        if (!timerActive) {
-          console.log('⏰ KP: Starting timer due to URL hash change');
-          startSimulationTimer();
-        }
+        }, 1000);
       }
     };
 
-    // Run iframe monitoring periodically
-    const domChecker = setInterval(() => {
+    // Set up monitoring
+    monitorPermissionChanges();
+    
+    // Periodically check for microphone access (less frequent than before)
+    const micChecker = setInterval(() => {
       if (!timerActive) {
-        monitorIframes();
+        monitorMicrophoneAccess();
       }
-    }, 3000);
+    }, 2000); // Check every 2 seconds
 
-    // Set up hash monitoring
-    window.addEventListener('hashchange', hashChangeListener);
-
-    // Method 7: Monitor the voiceflow-chat div for any changes
-    const chatObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' || mutation.type === 'attributes') {
-          console.log('🔄 KP: Voiceflow widget DOM changed:', mutation.type);
-          // Check if this might indicate call started
-          const chatDiv = document.getElementById('voiceflow-chat');
-          if (chatDiv && chatDiv.textContent?.includes('call') && !timerActive) {
-            console.log('🎯 KP: Call-related content detected in widget');
-            console.log('⏰ KP: Starting timer due to widget content change');
-            startSimulationTimer();
-          }
-        }
-      });
-    });
-
-    // Start observing the voiceflow chat container
-    setTimeout(() => {
-      const chatContainer = document.getElementById('voiceflow-chat');
-      if (chatContainer) {
-        console.log('🔍 KP: Starting mutation observer on voiceflow-chat');
-        chatObserver.observe(chatContainer, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          characterData: true
-        });
-      }
-    }, 2000);
-
-    window.addEventListener('message', messageListener);
     document.addEventListener('click', clickListener, true);
 
     // Store references for cleanup
-    (window as any).kpVoiceflowListener = voiceflowEventListener;
-    (window as any).kpMessageListener = messageListener;
     (window as any).kpClickListener = clickListener;
-    (window as any).kpDomChecker = domChecker;
-    (window as any).kpHashListener = hashChangeListener;
-    (window as any).kpChatObserver = chatObserver;
+    (window as any).kpMicChecker = micChecker;
   };
 
   // Start the 20-minute simulation timer
@@ -291,36 +162,14 @@ export default function KPSimulationScreen() {
       stopSimulationTimer();
       
       // Remove event listeners
-      if ((window as any).kpVoiceflowListener) {
-        window.removeEventListener('voiceflowWidgetOpened', (window as any).kpVoiceflowListener);
-        window.removeEventListener('voiceflowUserInteraction', (window as any).kpVoiceflowListener);
-        window.removeEventListener('voiceflowDOMActivity', (window as any).kpVoiceflowListener);
-        delete (window as any).kpVoiceflowListener;
-      }
-
-      if ((window as any).kpMessageListener) {
-        window.removeEventListener('message', (window as any).kpMessageListener);
-        delete (window as any).kpMessageListener;
-      }
-      
       if ((window as any).kpClickListener) {
         document.removeEventListener('click', (window as any).kpClickListener, true);
         delete (window as any).kpClickListener;
       }
 
-      if ((window as any).kpDomChecker) {
-        clearInterval((window as any).kpDomChecker);
-        delete (window as any).kpDomChecker;
-      }
-
-      if ((window as any).kpHashListener) {
-        window.removeEventListener('hashchange', (window as any).kpHashListener);
-        delete (window as any).kpHashListener;
-      }
-
-      if ((window as any).kpChatObserver) {
-        (window as any).kpChatObserver.disconnect();
-        delete (window as any).kpChatObserver;
+      if ((window as any).kpMicChecker) {
+        clearInterval((window as any).kpMicChecker);
+        delete (window as any).kpMicChecker;
       }
       
       // Cleanup Voiceflow controller
