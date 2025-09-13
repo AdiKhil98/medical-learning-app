@@ -65,10 +65,19 @@ export default function FSPSimulationScreen() {
     window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
     window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
     
-    // Method 2: Listen for window messages as backup
+    // Method 2: Listen for ALL window messages - comprehensive logging
     const messageListener = (event: MessageEvent) => {
-      // Log all messages for debugging
-      console.log('📨 FSP: Window message received:', event.data);
+      // Log ALL messages to see what's actually being sent
+      if (event.data) {
+        console.log('📨 FSP: Window message received:', {
+          type: event.data.type,
+          action: event.data.action,
+          event: event.data.event,
+          source: event.data.source,
+          origin: event.origin,
+          data: event.data
+        });
+      }
       
       if (event.data && typeof event.data === 'object') {
         // Check for any Voiceflow-related activity
@@ -93,9 +102,17 @@ export default function FSPSimulationScreen() {
       }
     };
 
-    // Method 3: Specific detection for "Start a call" button
+    // Method 3: Comprehensive click detection with logging
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      
+      // Log EVERY click to see if we're capturing anything at all
+      console.log('🖱️ FSP: ANY click detected:', {
+        tagName: target.tagName,
+        className: target.className,
+        textContent: target.textContent?.slice(0, 30),
+        id: target.id
+      });
       
       // Check if click was on the specific "Start a call" button or its children
       const startCallButton = target.closest('button.vfrc-button');
@@ -115,14 +132,38 @@ export default function FSPSimulationScreen() {
         }
       }
 
-      // Also check for any vfrc-button clicks as backup
-      if (target.closest('.vfrc-button') && !timerActive) {
-        console.log('🔍 FSP: Voiceflow button clicked (backup detection):', {
-          className: target.className,
-          textContent: target.textContent?.slice(0, 50)
+      // Check for ANY button with vfrc class
+      const anyVfrcButton = target.closest('button');
+      if (anyVfrcButton && anyVfrcButton.className.includes('vfrc')) {
+        console.log('🔍 FSP: VFRC button clicked (backup detection):', {
+          className: anyVfrcButton.className,
+          textContent: anyVfrcButton.textContent?.slice(0, 50)
         });
+        
+        if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
+          console.log('⏰ FSP: Starting timer due to Start button detection');
+          startSimulationTimer();
+        }
       }
     };
+
+    // Method 4: Periodic DOM check for widget changes
+    const domChecker = setInterval(() => {
+      if (!timerActive) {
+        const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [class*="voiceflow"]');
+        if (voiceflowElements.length > 0) {
+          voiceflowElements.forEach((element, index) => {
+            if (index < 3) { // Log first 3 elements only
+              console.log(`🔍 FSP: Found Voiceflow element ${index + 1}:`, {
+                className: element.className,
+                textContent: element.textContent?.slice(0, 100),
+                visible: (element as HTMLElement).offsetWidth > 0
+              });
+            }
+          });
+        }
+      }
+    }, 5000); // Check every 5 seconds
 
     window.addEventListener('message', messageListener);
     document.addEventListener('click', clickListener, true);
@@ -131,6 +172,7 @@ export default function FSPSimulationScreen() {
     (window as any).fspVoiceflowListener = voiceflowEventListener;
     (window as any).fspMessageListener = messageListener;
     (window as any).fspClickListener = clickListener;
+    (window as any).fspDomChecker = domChecker;
   };
 
   // Start the 20-minute simulation timer
@@ -188,6 +230,11 @@ export default function FSPSimulationScreen() {
       if ((window as any).fspClickListener) {
         document.removeEventListener('click', (window as any).fspClickListener, true);
         delete (window as any).fspClickListener;
+      }
+
+      if ((window as any).fspDomChecker) {
+        clearInterval((window as any).fspDomChecker);
+        delete (window as any).fspDomChecker;
       }
       
       // Cleanup Voiceflow controller
