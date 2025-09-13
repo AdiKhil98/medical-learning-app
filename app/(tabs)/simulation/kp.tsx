@@ -81,8 +81,19 @@ export default function KPSimulationScreen() {
                 
                 // Check if all audio tracks are ended
                 const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
+                console.log(`🔍 KP: Track ended check:`, {
+                  totalTracks: audioTracks.length,
+                  endedTracks: audioTracks.filter(t => t.readyState === 'ended').length,
+                  allEnded: allTracksEnded,
+                  timerActive: timerActive
+                });
+                
                 if (allTracksEnded && timerActive) {
                   console.log('🔇 KP: All audio tracks ended - stopping timer');
+                  stopSimulationTimer();
+                } else if (timerActive) {
+                  // Fallback: stop timer when any track ends
+                  console.log('🔇 KP: Audio track ended, stopping timer anyway (fallback)');
                   stopSimulationTimer();
                 }
               });
@@ -96,8 +107,19 @@ export default function KPSimulationScreen() {
                 // Small delay to let other tracks potentially stop too
                 setTimeout(() => {
                   const allTracksEnded = audioTracks.every(t => t.readyState === 'ended');
+                  console.log(`🔍 KP: Track states check:`, {
+                    totalTracks: audioTracks.length,
+                    endedTracks: audioTracks.filter(t => t.readyState === 'ended').length,
+                    allEnded: allTracksEnded,
+                    timerActive: timerActive
+                  });
+                  
                   if (allTracksEnded && timerActive) {
                     console.log('🔇 KP: All audio tracks stopped - stopping timer');
+                    stopSimulationTimer();
+                  } else if (timerActive) {
+                    // Fallback: if we detect any track stop and timer is active, just stop it
+                    console.log('🔇 KP: Audio track stopped, stopping timer anyway (fallback)');
                     stopSimulationTimer();
                   }
                 }, 100);
