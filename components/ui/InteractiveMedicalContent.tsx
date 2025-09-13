@@ -211,11 +211,22 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   }
 
   return (
-    <Animated.View style={[styles.appContainer, { backgroundColor: colors.background, opacity: fadeAnim }]}>
+    <Animated.View style={[styles.appContainer, { opacity: fadeAnim }]}>
+      {/* Gradient Background */}
+      <LinearGradient 
+        colors={isDarkMode 
+          ? ['#1e1b4b', '#312e81', '#3730a3'] 
+          : ['#6366f1', '#8b5cf6', '#a855f7']
+        }
+        style={styles.gradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+      
       {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: isDarkMode ? 'rgba(42, 42, 42, 0.98)' : 'rgba(255, 255, 255, 0.98)' }]}>
+      <View style={[styles.header, { backgroundColor: 'rgba(255, 255, 255, 0.1)', borderBottomColor: 'rgba(255, 255, 255, 0.2)' }]}>
         <View style={styles.titleContainer}>
-          <Text style={[styles.mainTitle, { color: colors.text }]}>
+          <Text style={[styles.mainTitle, { color: 'white' }]}>
             {supabaseRow?.title || 'Medizinischer Inhalt'}
           </Text>
           <TableOfContents
@@ -226,33 +237,42 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
 
         <View style={styles.metaInfo}>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
-          </Text>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            ⏱️ {formatDate(supabaseRow?.last_updated)}
-          </Text>
-          <Text style={[styles.metaItem, { color: colors.textSecondary }]}>
-            📖 {filteredSections.length} Abschnitte
-          </Text>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+              📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
+            </Text>
+          </View>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+              ⏱️ {formatDate(supabaseRow?.last_updated)}
+            </Text>
+          </View>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+              📖 {filteredSections.length} Abschnitte
+            </Text>
+          </View>
         </View>
 
         {/* Search */}
-        <View style={[styles.searchContainer, { borderColor: colors.border }]}>
-          <Search size={18} color={colors.textSecondary} style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { 
+          borderColor: 'rgba(255, 255, 255, 0.3)',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)'
+        }]}>
+          <Search size={18} color="rgba(255, 255, 255, 0.7)" style={styles.searchIcon} />
           <TextInput
             style={[styles.searchBox, { 
-              color: colors.text,
-              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+              color: 'white',
+              backgroundColor: 'transparent'
             }]}
             placeholder="Suche im Inhalt..."
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="rgba(255, 255, 255, 0.6)"
             value={searchTerm}
             onChangeText={handleSearch}
           />
           {searchTerm.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearSearch}>
-              <Text style={[styles.clearSearchText, { color: colors.textSecondary }]}>✕</Text>
+              <Text style={[styles.clearSearchText, { color: 'rgba(255, 255, 255, 0.7)' }]}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -268,7 +288,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       >
         
         {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: colors.textSecondary }]}>
+          <Text style={[styles.searchResults, { color: 'rgba(255, 255, 255, 0.8)' }]}>
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
@@ -278,7 +298,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           <View 
             key={index} 
             ref={(ref) => { sectionRefs.current[index] = ref; }}
-            style={[styles.contentSection, { backgroundColor: colors.card }]}
+            style={[styles.contentSection, { 
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              shadowColor: 'rgba(0, 0, 0, 0.1)',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              elevation: 8,
+            }]}
           >
             <TouchableOpacity
               style={styles.sectionHeader}
@@ -286,13 +313,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
               accessibilityRole="button"
             >
-              <BookOpen size={20} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              <BookOpen size={22} color="#6366f1" />
+              <Text style={styles.sectionTitle}>
                 {section.title}
               </Text>
               <ChevronDown
                 size={20}
-                color={colors.textSecondary}
+                color="#6b7280"
                 style={[
                   styles.chevronIcon,
                   expandedSections[index] && { transform: [{ rotate: '180deg' }] }
@@ -301,8 +328,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </TouchableOpacity>
             
             {expandedSections[index] && (
-              <View style={[styles.sectionContent, { borderTopColor: colors.border }]}>
-                <Text style={[styles.contentText, { color: colors.text }]}>
+              <View style={styles.sectionContent}>
+                <Text style={styles.contentText}>
                   {section.content}
                 </Text>
               </View>
@@ -323,6 +350,14 @@ const styles = StyleSheet.create({
   },
   appContainer: {
     flex: 1,
+  },
+  gradientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: -1,
   },
   errorContainer: {
     flex: 1,
@@ -374,11 +409,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 16,
+    gap: 8,
+  },
+  metaBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 4,
   },
   metaItem: {
-    fontSize: 14,
-    marginRight: 16,
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '500',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -406,7 +448,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
+    padding: 20,
+    paddingBottom: 40,
   },
   searchResults: {
     fontSize: 14,
@@ -414,29 +457,34 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   contentSection: {
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: 20,
+    borderRadius: 16,
     overflow: 'hidden',
+    marginHorizontal: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
   },
   sectionTitle: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     marginLeft: 12,
+    color: '#1e40af',
   },
   sectionContent: {
     borderTopWidth: 1,
-    padding: 16,
+    borderTopColor: 'rgba(99, 102, 241, 0.1)',
+    padding: 20,
   },
   contentText: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 26,
     fontFamily: 'Inter-Regular',
+    color: '#374151',
   },
   chevronIcon: {
     transition: 'transform 0.2s ease',
