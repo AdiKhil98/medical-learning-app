@@ -51,87 +51,170 @@ export default function FSPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 FSP: Setting up conversation monitoring...');
+    console.log('🔍 FSP: Setting up aggressive conversation monitoring...');
     
-    // Method 1: Listen for window messages
+    // Method 1: Listen for ALL window messages and log them for debugging
     const messageListener = (event: MessageEvent) => {
+      // Log all messages for debugging
+      console.log('📨 FSP: Window message received:', event.data);
+      
       if (event.data && typeof event.data === 'object') {
-        // Check for conversation start indicators
+        // Check for any Voiceflow-related activity
         if (
-          event.data.type === 'voiceflow:conversation:start' ||
-          event.data.type === 'voiceflow:call:start' ||
-          event.data.type === 'chat:start' ||
-          (event.data.action === 'start' && event.data.source === 'voiceflow') ||
+          event.data.type?.includes('voiceflow') ||
+          event.data.type?.includes('chat') ||
+          event.data.type?.includes('call') ||
+          event.data.source?.includes('voiceflow') ||
+          event.data.action === 'start' ||
+          event.data.event === 'start' ||
           (event.data.message && (
-            event.data.message.includes('call started') ||
-            event.data.message.includes('conversation started') ||
-            event.data.message.includes('simulation started')
+            event.data.message.includes('start') ||
+            event.data.message.includes('call') ||
+            event.data.message.includes('conversation')
           ))
         ) {
-          console.log('🎯 FSP: Conversation start detected via message:', event.data);
-          startSimulationTimer();
-        }
-        
-        // Check for conversation end indicators
-        if (
-          event.data.type === 'voiceflow:conversation:end' ||
-          event.data.type === 'voiceflow:call:end' ||
-          event.data.type === 'chat:end' ||
-          (event.data.action === 'end' && event.data.source === 'voiceflow')
-        ) {
-          console.log('🛑 FSP: Conversation end detected via message:', event.data);
-          stopSimulationTimer();
+          console.log('🎯 FSP: Potential conversation start detected via message:', event.data);
+          if (!timerActive) {
+            startSimulationTimer();
+          }
         }
       }
     };
 
-    // Method 2: Monitor DOM for widget interactions
+    // Method 2: Aggressive DOM monitoring for ANY widget interaction
     const domMonitor = setInterval(() => {
       if (typeof window !== 'undefined' && !timerActive) {
-        // Look for active conversation indicators in DOM
-        const conversationIndicators = [
-          '.vfrc-chat--opened',
-          '.vfrc-conversation--active',
-          '.voiceflow-conversation-active',
-          '[data-conversation="active"]',
-          '.vf-conversation',
-          '.vfrc-message--user', // User has sent a message
+        // Look for ANY signs of widget activity
+        const activitySelectors = [
+          // Voiceflow widget classes
+          '.vfrc-chat',
+          '.vfrc-widget',
+          '.vfrc-launcher',
+          '.vfrc-conversation',
+          '.vfrc-message',
+          '.vfrc-input',
+          '.vfrc-button',
+          
+          // Generic chat indicators
+          '.chat-widget',
+          '.chat-container',
+          '.chat-active',
+          '.conversation-active',
+          '.widget-open',
+          
+          // Message indicators
+          '[class*="message"]',
+          '[class*="chat"]',
+          '[class*="conversation"]',
+          '[class*="voiceflow"]',
+          '[class*="vfrc"]',
+          '[class*="widget"]',
+          
+          // Input/interaction indicators  
+          'input[placeholder*="message"]',
+          'input[placeholder*="type"]',
+          'textarea[placeholder*="message"]',
+          'button[aria-label*="send"]',
+          'button[title*="send"]'
         ];
 
-        for (const selector of conversationIndicators) {
-          const elements = document.querySelectorAll(selector);
-          if (elements.length > 0) {
-            console.log(`🎯 FSP: Active conversation detected via DOM selector: ${selector}`);
-            startSimulationTimer();
-            break;
+        let foundActivity = false;
+        for (const selector of activitySelectors) {
+          try {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+              // Check if any elements are visible/active
+              for (const element of elements) {
+                const rect = element.getBoundingClientRect();
+                const isVisible = rect.width > 0 && rect.height > 0;
+                const hasContent = element.textContent?.trim().length > 0;
+                
+                if (isVisible || hasContent) {
+                  console.log(`🎯 FSP: Widget activity detected via selector: ${selector}`, {
+                    element: element,
+                    visible: isVisible,
+                    content: element.textContent?.slice(0, 50)
+                  });
+                  foundActivity = true;
+                  break;
+                }
+              }
+              if (foundActivity) break;
+            }
+          } catch (error) {
+            // Ignore selector errors
           }
         }
 
-        // Method 3: Check for widget state changes
-        if (window.voiceflow?.chat) {
-          try {
-            // Try to access widget state (this varies by Voiceflow version)
-            const widget = window.voiceflow.chat;
-            if (widget.isOpen && widget.isOpen() && !timerActive) {
-              // Check if there are any messages indicating an active conversation
-              const messageElements = document.querySelectorAll('.vfrc-message, .vf-message');
-              if (messageElements.length > 1) { // More than just welcome message
-                console.log('🎯 FSP: Active conversation detected via widget state');
-                startSimulationTimer();
-              }
-            }
-          } catch (error) {
-            // Widget state access might not be available, that's ok
+        if (foundActivity && !timerActive) {
+          startSimulationTimer();
+        }
+      }
+    }, 1000); // Check every second for faster detection
+
+    // Method 3: Manual trigger - Add a test button (temporary for debugging)
+    const addTestButton = () => {
+      if (document.getElementById('fsp-test-timer')) return; // Already added
+      
+      const testButton = document.createElement('button');
+      testButton.id = 'fsp-test-timer';
+      testButton.textContent = '🧪 Test Timer (Debug)';
+      testButton.style.cssText = `
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        z-index: 9999;
+        background: #0077B6;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+      `;
+      testButton.onclick = () => {
+        console.log('🧪 FSP: Manual timer start triggered');
+        if (!timerActive) {
+          startSimulationTimer();
+        } else {
+          stopSimulationTimer();
+        }
+      };
+      document.body.appendChild(testButton);
+    };
+
+    // Method 4: Click detection on the entire page to catch widget interactions
+    const clickListener = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target) {
+        // Check if click was on or near Voiceflow elements
+        const isVoiceflowClick = 
+          target.closest('[class*="vfrc"]') ||
+          target.closest('[class*="voiceflow"]') ||
+          target.closest('[class*="chat"]') ||
+          target.closest('[class*="widget"]') ||
+          target.getAttribute('class')?.includes('vfrc') ||
+          target.getAttribute('class')?.includes('voiceflow');
+
+        if (isVoiceflowClick) {
+          console.log('🎯 FSP: Click detected on Voiceflow element:', target);
+          if (!timerActive) {
+            setTimeout(() => startSimulationTimer(), 2000); // Small delay to let conversation start
           }
         }
       }
-    }, 2000); // Check every 2 seconds
+    };
 
     window.addEventListener('message', messageListener);
+    document.addEventListener('click', clickListener, true); // Use capture phase
+    
+    // Add test button after a delay
+    setTimeout(addTestButton, 2000);
 
     // Store references for cleanup
     (window as any).fspMessageListener = messageListener;
     (window as any).fspDomMonitor = domMonitor;
+    (window as any).fspClickListener = clickListener;
   };
 
   // Start the 20-minute simulation timer
@@ -179,10 +262,21 @@ export default function FSPSimulationScreen() {
         delete (window as any).fspMessageListener;
       }
       
+      if ((window as any).fspClickListener) {
+        document.removeEventListener('click', (window as any).fspClickListener, true);
+        delete (window as any).fspClickListener;
+      }
+      
       // Clear DOM monitor
       if ((window as any).fspDomMonitor) {
         clearInterval((window as any).fspDomMonitor);
         delete (window as any).fspDomMonitor;
+      }
+      
+      // Remove test button
+      const testButton = document.getElementById('fsp-test-timer');
+      if (testButton) {
+        testButton.remove();
       }
       
       // Cleanup Voiceflow controller
