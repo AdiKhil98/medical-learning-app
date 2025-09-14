@@ -205,12 +205,18 @@ class SimulationTrackingService {
   // Mark simulation as used (called at 10-minute mark)
   async markSimulationUsed(sessionToken: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔍 DEBUG: markSimulationUsed called with token:', sessionToken);
+      
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 DEBUG: Current user for marking:', user?.id);
+      
       if (!user) {
+        console.error('❌ DEBUG: No authenticated user for marking');
         return { success: false, error: 'Not authenticated' };
       }
 
       const markedAt = new Date().toISOString();
+      console.log('🔍 DEBUG: About to update session to used status');
 
       const { data, error } = await supabase
         .from('simulation_usage_logs')
@@ -224,11 +230,16 @@ class SimulationTrackingService {
         .select()
         .single();
 
+      console.log('🔍 DEBUG: Database update result:', { data, error });
+
       if (error || !data) {
+        console.error('❌ DEBUG: Failed to update session:', error);
         SecureLogger.error('Failed to mark simulation as used', { error, sessionToken, user_id: user.id });
-        return { success: false, error: 'Session not found or already marked' };
+        return { success: false, error: `Database error: ${error?.message || 'Session not found or already marked'}` };
       }
 
+      console.log('✅ DEBUG: Successfully marked as used:', data);
+      
       SecureLogger.log('Simulation marked as used at 10-minute mark', { 
         sessionToken, 
         user_id: user.id, 
@@ -238,6 +249,7 @@ class SimulationTrackingService {
 
       return { success: true };
     } catch (error) {
+      console.error('❌ DEBUG: Caught error in markSimulationUsed:', error);
       SecureLogger.error('Error marking simulation as used', { error });
       return { success: false, error: 'System error' };
     }
