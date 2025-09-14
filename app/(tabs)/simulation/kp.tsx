@@ -187,8 +187,8 @@ export default function KPSimulationScreen() {
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
-        // Mark as used at 30-second mark for testing (when 30 seconds remaining)
-        if (prev === (20 * 60 - 30) && !usageMarked && sessionToken) {
+        // Mark as used after 30 seconds for testing (when 19:30 remaining)
+        if (prev === (19 * 60 + 30) && !usageMarked && sessionToken) {
           markSimulationAsUsed();
         }
         
