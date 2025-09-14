@@ -55,126 +55,94 @@ export default function FSPSimulationScreen() {
   const setupConversationMonitoring = () => {
     console.log('🔍 FSP: Setting up passive microphone detection...');
 
-    // Method 1: Listen for custom Voiceflow events from the widget
-    const voiceflowEventListener = (event: CustomEvent) => {
-      console.log('🎯 FSP: Voiceflow event detected:', event.type, event.detail);
-      if (!timerActive) {
-        startSimulationTimer();
-      }
-    };
+    // Method 1: Monitor for MediaStream creation and termination
+    const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
+    if (originalGetUserMedia) {
+      navigator.mediaDevices.getUserMedia = async function(constraints) {
+        console.log('🎤 FSP: MediaStream requested with constraints:', constraints);
+        
+        if (constraints?.audio) {
+          try {
+            const stream = await originalGetUserMedia.call(this, constraints);
+            
+            if (!timerActive) {
+              console.log('🎯 FSP: Audio stream granted - voice call starting!');
+              console.log('⏰ FSP: Starting 20-minute timer due to voice call');
+              startSimulationTimer();
+            }
 
-    window.addEventListener('voiceflowWidgetOpened', voiceflowEventListener as EventListener);
-    window.addEventListener('voiceflowUserInteraction', voiceflowEventListener as EventListener);
-    window.addEventListener('voiceflowDOMActivity', voiceflowEventListener as EventListener);
-    
-    // Method 2: Listen for ALL window messages - comprehensive logging
-    const messageListener = (event: MessageEvent) => {
-      // Log ALL messages to see what's actually being sent
-      if (event.data) {
-        console.log('📨 FSP: Window message received:', {
-          type: event.data.type,
-          action: event.data.action,
-          event: event.data.event,
-          source: event.data.source,
-          origin: event.origin,
-          data: event.data
-        });
-      }
-      
-      if (event.data && typeof event.data === 'object') {
-        // Check for any Voiceflow-related activity
-        if (
-          event.data.type?.includes('voiceflow') ||
-          event.data.type?.includes('chat') ||
-          event.data.type?.includes('call') ||
-          event.data.source?.includes('voiceflow') ||
-          event.data.action === 'start' ||
-          event.data.event === 'start' ||
-          (event.data.message && (
-            event.data.message.includes('start') ||
-            event.data.message.includes('call') ||
-            event.data.message.includes('conversation')
-          ))
-        ) {
-          console.log('🎯 FSP: Potential conversation start detected via message:', event.data);
-          if (!timerActive) {
-            startSimulationTimer();
+            // Monitor stream tracks for when they end
+            const audioTracks = stream.getAudioTracks();
+            audioTracks.forEach((track, index) => {
+              console.log(`🎤 FSP: Monitoring audio track ${index + 1}`);
+              
+              track.addEventListener('ended', () => {
+                console.log(`🔇 FSP: Audio track ${index + 1} ended - call likely finished`);
+                
+                // Check current timer state from the React ref
+                const currentTimerActive = timerInterval.current !== null;
+                console.log(`🔍 FSP: Track ended - checking timer interval:`, {
+                  timerIntervalExists: !!timerInterval.current,
+                  shouldStopTimer: currentTimerActive
+                });
+                
+                if (currentTimerActive) {
+                  console.log('🔇 FSP: Audio track ended - stopping timer');
+                  stopSimulationTimer();
+                } else {
+                  console.log('⏰ FSP: Timer already stopped, no action needed');
+                }
+              });
+
+              // Also monitor for track being stopped manually
+              const originalStop = track.stop.bind(track);
+              track.stop = () => {
+                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually`);
+                originalStop();
+                
+                // Check current timer state immediately
+                const currentTimerActive = timerInterval.current !== null;
+                console.log(`🔍 FSP: Track stopped - checking timer interval:`, {
+                  timerIntervalExists: !!timerInterval.current,
+                  shouldStopTimer: currentTimerActive
+                });
+                
+                if (currentTimerActive) {
+                  console.log('🔇 FSP: Audio track stopped - stopping timer');
+                  stopSimulationTimer();
+                } else {
+                  console.log('⏰ FSP: Timer already stopped, no action needed');
+                }
+              };
+            });
+
+            return stream;
+          } catch (error) {
+            console.log('❌ FSP: Failed to get audio stream:', error);
+            throw error;
           }
         }
-      }
-    };
+        
+        return originalGetUserMedia.call(this, constraints);
+      };
+    }
 
-    // Method 3: Comprehensive click detection with logging
+    // Method 2: Simple click detection as backup
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
-      // Log EVERY click to see if we're capturing anything at all
-      console.log('🖱️ FSP: ANY click detected:', {
-        tagName: target.tagName,
-        className: target.className,
-        textContent: target.textContent?.slice(0, 30),
-        id: target.id
-      });
-      
-      // Check if click was on the specific "Start a call" button or its children
-      const startCallButton = target.closest('button.vfrc-button');
-      const hasStartCallText = target.textContent?.includes('Start a call') || 
-                              target.closest('*')?.textContent?.includes('Start a call');
-
-      if (startCallButton && hasStartCallText) {
-        console.log('🎯 FSP: "Start a call" button clicked!', {
-          button: startCallButton,
-          className: startCallButton.className,
-          textContent: startCallButton.textContent
-        });
-        
-        if (!timerActive) {
-          console.log('⏰ FSP: Starting 20-minute timer due to Start a call button click');
-          startSimulationTimer();
-        }
-      }
-
-      // Check for ANY button with vfrc class
-      const anyVfrcButton = target.closest('button');
-      if (anyVfrcButton && anyVfrcButton.className.includes('vfrc')) {
-        console.log('🔍 FSP: VFRC button clicked (backup detection):', {
-          className: anyVfrcButton.className,
-          textContent: anyVfrcButton.textContent?.slice(0, 50)
-        });
-        
-        if (!timerActive && anyVfrcButton.textContent?.includes('Start')) {
-          console.log('⏰ FSP: Starting timer due to Start button detection');
-          startSimulationTimer();
-        }
+      // Only trigger on voiceflow-chat container clicks
+      if (target.closest('#voiceflow-chat') && !timerActive) {
+        console.log('🎯 FSP: Click detected on Voiceflow widget - waiting for voice call...');
+        // Don't start timer immediately, wait for actual mic access
       }
     };
 
-    // Method 4: Periodic DOM check for widget changes
-    const domChecker = setInterval(() => {
-      if (!timerActive) {
-        const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [class*="voiceflow"]');
-        if (voiceflowElements.length > 0) {
-          voiceflowElements.forEach((element, index) => {
-            if (index < 3) { // Log first 3 elements only
-              console.log(`🔍 FSP: Found Voiceflow element ${index + 1}:`, {
-                className: element.className,
-                textContent: element.textContent?.slice(0, 100),
-                visible: (element as HTMLElement).offsetWidth > 0
-              });
-            }
-          });
-        }
-      }
-    }, 5000); // Check every 5 seconds
-
-    window.addEventListener('message', messageListener);
     document.addEventListener('click', clickListener, true);
 
     // Store references for cleanup
-    (window as any).fspVoiceflowListener = voiceflowEventListener;
-    (window as any).fspMessageListener = messageListener;
     (window as any).fspClickListener = clickListener;
-    (window as any).fspDomChecker = domChecker;
+    (window as any).fspOriginalGetUserMedia = originalGetUserMedia;
   };
 
   // Start the 20-minute simulation timer
@@ -257,26 +225,15 @@ export default function FSPSimulationScreen() {
       stopSimulationTimer();
       
       // Remove event listeners
-      if ((window as any).fspVoiceflowListener) {
-        window.removeEventListener('voiceflowWidgetOpened', (window as any).fspVoiceflowListener);
-        window.removeEventListener('voiceflowUserInteraction', (window as any).fspVoiceflowListener);
-        window.removeEventListener('voiceflowDOMActivity', (window as any).fspVoiceflowListener);
-        delete (window as any).fspVoiceflowListener;
-      }
-
-      if ((window as any).fspMessageListener) {
-        window.removeEventListener('message', (window as any).fspMessageListener);
-        delete (window as any).fspMessageListener;
-      }
-      
       if ((window as any).fspClickListener) {
         document.removeEventListener('click', (window as any).fspClickListener, true);
         delete (window as any).fspClickListener;
       }
 
-      if ((window as any).fspDomChecker) {
-        clearInterval((window as any).fspDomChecker);
-        delete (window as any).fspDomChecker;
+      // Restore original getUserMedia function
+      if ((window as any).fspOriginalGetUserMedia && navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia = (window as any).fspOriginalGetUserMedia;
+        delete (window as any).fspOriginalGetUserMedia;
       }
       
       // Cleanup Voiceflow controller
