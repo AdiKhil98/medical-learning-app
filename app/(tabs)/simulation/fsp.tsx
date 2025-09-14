@@ -281,7 +281,7 @@ export default function FSPSimulationScreen() {
           }
         }
         
-        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus, elapsedSeconds);
+        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus as any, elapsedSeconds);
         console.log(`📊 FSP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
       } catch (error) {
         console.error('❌ FSP: Error updating simulation status:', error);

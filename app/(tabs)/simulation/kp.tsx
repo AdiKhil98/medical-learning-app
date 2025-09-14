@@ -160,20 +160,31 @@ export default function KPSimulationScreen() {
     console.log('⏰ KP: Starting 20-minute simulation timer');
     
     try {
+      console.log('🔍 DEBUG: About to check if can start simulation');
+      
       // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('kp');
+      console.log('🔍 DEBUG: canStart result:', canStart);
+      
       if (!canStart.allowed) {
+        console.error('❌ DEBUG: Cannot start simulation, showing alert');
         Alert.alert('Simulation Limit', canStart.message || 'Cannot start simulation');
         return;
       }
 
+      console.log('🔍 DEBUG: About to start simulation in database');
+      
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('kp');
+      console.log('🔍 DEBUG: startSimulation result:', result);
+      
       if (!result.success) {
+        console.error('❌ DEBUG: Failed to start simulation, showing alert');
         Alert.alert('Error', result.error || 'Failed to start simulation tracking');
         return;
       }
 
+      console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
       setSessionToken(result.sessionToken || null);
       setUsageMarked(false);
       
@@ -182,9 +193,11 @@ export default function KPSimulationScreen() {
       // Continue with timer anyway for UX, but log the error
     }
 
+    console.log('🔍 DEBUG: About to set timer active and start interval');
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
     
+    console.log('🔍 DEBUG: Creating timer interval');
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
         // Mark as used after 30 seconds for testing (when timer shows 19:30 remaining)
@@ -287,7 +300,7 @@ export default function KPSimulationScreen() {
           }
         }
         
-        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus, elapsedSeconds);
+        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus as any, elapsedSeconds);
         console.log(`📊 KP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
       } catch (error) {
         console.error('❌ KP: Error updating simulation status:', error);
