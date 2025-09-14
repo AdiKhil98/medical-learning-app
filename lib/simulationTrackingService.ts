@@ -69,24 +69,51 @@ class SimulationTrackingService {
       }
 
       // Check for active sessions (prevent multiple concurrent sessions)
+      // But be more forgiving - only block if there's a truly recent active session
       const { data: activeSessions, error: activeError } = await supabase
         .from('simulation_usage_logs')
         .select('*')
         .eq('user_id', user.id)
         .in('status', ['started', 'in_progress'])
-        .gte('started_at', new Date(Date.now() - 25 * 60 * 1000).toISOString()); // Last 25 minutes
+        .gte('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // Only last 5 minutes
 
       if (activeError) {
+        console.log('🔍 DEBUG: Error checking active sessions:', activeError);
+        // Don't block on database errors, just log them
         SecureLogger.error('Failed to check active sessions', { error: activeError, user_id: user.id });
-        return { allowed: false, reason: 'error', message: 'Unable to check session status' };
-      }
-
-      if (activeSessions && activeSessions.length > 0) {
-        return {
-          allowed: false,
-          reason: 'active_session',
-          message: 'You already have an active simulation session'
-        };
+        // Allow simulation to continue
+      } else if (activeSessions && activeSessions.length > 0) {
+        console.log('🔍 DEBUG: Found active sessions:', activeSessions);
+        
+        // Auto-cleanup old 'started' sessions (mark as incomplete)
+        const oldSessions = activeSessions.filter(session => 
+          new Date().getTime() - new Date(session.started_at).getTime() > 2 * 60 * 1000 // Older than 2 minutes
+        );
+        
+        if (oldSessions.length > 0) {
+          console.log('🔍 DEBUG: Cleaning up old sessions:', oldSessions.length);
+          // Mark old sessions as incomplete
+          await supabase
+            .from('simulation_usage_logs')
+            .update({ status: 'incomplete' })
+            .in('id', oldSessions.map(s => s.id));
+        }
+        
+        // Check if there are still truly active sessions (less than 2 minutes old)
+        const recentSessions = activeSessions.filter(session => 
+          new Date().getTime() - new Date(session.started_at).getTime() <= 2 * 60 * 1000
+        );
+        
+        if (recentSessions.length > 0) {
+          console.log('🔍 DEBUG: Blocking due to recent active session');
+          return {
+            allowed: false,
+            reason: 'active_session',
+            message: 'You already have an active simulation session'
+          };
+        } else {
+          console.log('🔍 DEBUG: Old sessions cleaned up, allowing new session');
+        }
       }
 
       // For now, allow simulations (you can add daily limits later)
