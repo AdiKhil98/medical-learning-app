@@ -182,8 +182,9 @@ export default function FSPSimulationScreen() {
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
-        // Mark as used after 30 seconds for testing (when 19:30 remaining)
-        if (prev === (19 * 60 + 30) && !usageMarked && sessionToken) {
+        // Mark as used after 30 seconds for testing (when timer shows 19:30 or less remaining)
+        if (prev <= 1170 && prev >= 1165 && !usageMarked && sessionToken) { // Around 19:30 remaining = 30 seconds elapsed
+          console.log('🔍 DEBUG: 30-second mark reached (timer at', prev, 'seconds), marking as used');
           markSimulationAsUsed();
         }
         

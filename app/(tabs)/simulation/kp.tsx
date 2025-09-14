@@ -200,9 +200,14 @@ export default function KPSimulationScreen() {
     console.log('🔍 DEBUG: Creating timer interval');
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
-        // Mark as used after 30 seconds for testing (when timer shows 19:30 remaining)
-        if (prev === 1170 && !usageMarked && sessionToken) { // 19:30 remaining = 30 seconds elapsed
-          console.log('🔍 DEBUG: 30-second mark reached, marking as used');
+        // Log timer value every 10 seconds for debugging
+        if (prev % 10 === 0) {
+          console.log('⏱️ DEBUG: Timer at', Math.floor(prev / 60) + ':' + String(prev % 60).padStart(2, '0'), `(${prev} seconds)`);
+        }
+        
+        // Mark as used after 30 seconds for testing (when timer shows 19:30 or less remaining)
+        if (prev <= 1170 && prev >= 1165 && !usageMarked && sessionToken) { // Around 19:30 remaining = 30 seconds elapsed
+          console.log('🔍 DEBUG: 30-second mark reached (timer at', prev, 'seconds), marking as used');
           markSimulationAsUsed();
         }
         
