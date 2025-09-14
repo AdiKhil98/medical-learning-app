@@ -108,9 +108,14 @@ class SimulationTrackingService {
   // Start a new simulation session
   async startSimulation(simulationType: SimulationType): Promise<{ success: boolean; sessionToken?: string; error?: string }> {
     try {
+      console.log('🔍 DEBUG: Starting simulation tracking for type:', simulationType);
+      
       // First check if user can start simulation
       const canStart = await this.canStartSimulation(simulationType);
+      console.log('🔍 DEBUG: Can start simulation result:', canStart);
+      
       if (!canStart.allowed) {
+        console.error('❌ DEBUG: Cannot start simulation:', canStart.message);
         return {
           success: false,
           error: canStart.message || 'Cannot start simulation'
@@ -118,32 +123,43 @@ class SimulationTrackingService {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('🔍 DEBUG: Current user:', user?.id || 'No user');
+      
       if (!user) {
+        console.error('❌ DEBUG: No authenticated user');
         return { success: false, error: 'Not authenticated' };
       }
 
       const sessionToken = this.generateSessionToken();
+      console.log('🔍 DEBUG: Generated session token:', sessionToken);
+
+      const insertData = {
+        user_id: user.id,
+        simulation_type: simulationType,
+        session_token: sessionToken,
+        status: 'started' as const,
+        started_at: new Date().toISOString(),
+        // Add subscription info if available (keeping existing structure)
+        billing_period_start: new Date().toISOString(),
+        billing_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+      };
+
+      console.log('🔍 DEBUG: Inserting data:', insertData);
 
       const { data, error } = await supabase
         .from('simulation_usage_logs')
-        .insert({
-          user_id: user.id,
-          simulation_type: simulationType,
-          session_token: sessionToken,
-          status: 'started',
-          started_at: new Date().toISOString(),
-          // Add subscription info if available (keeping existing structure)
-          billing_period_start: new Date().toISOString(),
-          billing_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) {
+        console.error('❌ DEBUG: Database insert error:', error);
         SecureLogger.error('Failed to create simulation session', { error, user_id: user.id });
-        return { success: false, error: 'Failed to start simulation' };
+        return { success: false, error: `Database error: ${error.message}` };
       }
 
+      console.log('✅ DEBUG: Successfully inserted session:', data);
+      
       SecureLogger.log('Simulation session started', { 
         session_id: data.id, 
         user_id: user.id, 
@@ -153,6 +169,7 @@ class SimulationTrackingService {
 
       return { success: true, sessionToken };
     } catch (error) {
+      console.error('❌ DEBUG: Caught error in startSimulation:', error);
       SecureLogger.error('Error starting simulation', { error });
       return { success: false, error: 'System error' };
     }

@@ -71,6 +71,7 @@ export default function KPSimulationScreen() {
             if (!timerActive) {
               console.log('🎯 KP: Audio stream granted - voice call starting!');
               console.log('⏰ KP: Starting 20-minute timer due to voice call');
+              console.log('🔍 DEBUG: About to call startSimulationTimer()');
               startSimulationTimer();
             }
 
@@ -150,7 +151,11 @@ export default function KPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    if (timerActive) return; // Already running
+    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive);
+    if (timerActive) {
+      console.log('🔍 DEBUG: Timer already active, returning early');
+      return; // Already running
+    }
     
     console.log('⏰ KP: Starting 20-minute simulation timer');
     
