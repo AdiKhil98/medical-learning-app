@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Target, CheckCircle, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { simulationTracker } from '@/lib/simulationTrackingService';
 
 export default function KPSimulationScreen() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function KPSimulationScreen() {
   const [timerActive, setTimerActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -146,15 +149,44 @@ export default function KPSimulationScreen() {
   };
 
   // Start the 20-minute simulation timer
-  const startSimulationTimer = () => {
+  const startSimulationTimer = async () => {
     if (timerActive) return; // Already running
     
     console.log('⏰ KP: Starting 20-minute simulation timer');
+    
+    try {
+      // Check if user can start simulation and get session token
+      const canStart = await simulationTracker.canStartSimulation('kp');
+      if (!canStart.allowed) {
+        Alert.alert('Simulation Limit', canStart.message || 'Cannot start simulation');
+        return;
+      }
+
+      // Start simulation tracking in database
+      const result = await simulationTracker.startSimulation('kp');
+      if (!result.success) {
+        Alert.alert('Error', result.error || 'Failed to start simulation tracking');
+        return;
+      }
+
+      setSessionToken(result.sessionToken || null);
+      setUsageMarked(false);
+      
+    } catch (error) {
+      console.error('❌ KP: Failed to start simulation tracking:', error);
+      // Continue with timer anyway for UX, but log the error
+    }
+
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
+        // Mark as used at 10-minute mark (when 10 minutes remaining = 10 minutes elapsed)
+        if (prev === 10 * 60 && !usageMarked && sessionToken) {
+          markSimulationAsUsed();
+        }
+        
         if (prev <= 1) {
           console.log('⏰ KP: Timer finished - 20 minutes elapsed');
           console.log('🔚 KP: Automatically ending Voiceflow conversation');
@@ -165,6 +197,24 @@ export default function KPSimulationScreen() {
         return prev - 1;
       });
     }, 1000);
+  };
+
+  // Mark simulation as used at 10-minute mark
+  const markSimulationAsUsed = async () => {
+    if (!sessionToken || usageMarked) return;
+    
+    console.log('📊 KP: Marking simulation as used at 10-minute mark');
+    try {
+      const result = await simulationTracker.markSimulationUsed(sessionToken);
+      if (result.success) {
+        setUsageMarked(true);
+        console.log('✅ KP: Simulation usage recorded in database');
+      } else {
+        console.error('❌ KP: Failed to mark simulation as used:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ KP: Error marking simulation as used:', error);
+    }
   };
 
   // End the Voiceflow conversation
@@ -206,9 +256,23 @@ export default function KPSimulationScreen() {
   };
 
   // Stop the simulation timer
-  const stopSimulationTimer = () => {
+  const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     console.log('🛑 KP: Stopping simulation timer');
+    
+    // Update status in database if we have a session token
+    if (sessionToken) {
+      try {
+        const elapsedSeconds = (20 * 60) - timeRemaining;
+        await simulationTracker.updateSimulationStatus(sessionToken, reason, elapsedSeconds);
+        console.log(`📊 KP: Simulation marked as ${reason} in database`);
+      } catch (error) {
+        console.error('❌ KP: Error updating simulation status:', error);
+      }
+    }
+    
     setTimerActive(false);
+    setSessionToken(null);
+    setUsageMarked(false);
     
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
@@ -221,8 +285,12 @@ export default function KPSimulationScreen() {
     return () => {
       console.log('🧹 KP: Cleanup started');
       
-      // Stop timer
-      stopSimulationTimer();
+      // Stop timer and mark as aborted (sync version for cleanup)
+      if (timerActive && sessionToken) {
+        simulationTracker.updateSimulationStatus(sessionToken, 'aborted', (20 * 60) - timeRemaining)
+          .then(() => console.log('📊 KP: Session marked as aborted during cleanup'))
+          .catch(error => console.error('❌ KP: Error during cleanup:', error));
+      }
       
       // Remove event listeners
       if ((window as any).kpClickListener) {
