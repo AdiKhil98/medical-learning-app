@@ -263,8 +263,26 @@ export default function FSPSimulationScreen() {
     if (sessionToken) {
       try {
         const elapsedSeconds = (20 * 60) - timeRemaining;
-        await simulationTracker.updateSimulationStatus(sessionToken, reason, elapsedSeconds);
-        console.log(`📊 FSP: Simulation marked as ${reason} in database`);
+        
+        // Determine the appropriate status based on usage and reason
+        let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
+        
+        if (reason === 'completed') {
+          // If completed naturally (timer finished), it's completed
+          finalStatus = 'completed';
+        } else if (reason === 'aborted') {
+          // If aborted, check if it was before 10-minute mark
+          if (!usageMarked) {
+            finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
+            console.log('📊 FSP: Marking as incomplete - ended before 10-minute mark');
+          } else {
+            finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
+            console.log('📊 FSP: Marking as aborted - ended after 10-minute mark');
+          }
+        }
+        
+        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus, elapsedSeconds);
+        console.log(`📊 FSP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
       } catch (error) {
         console.error('❌ FSP: Error updating simulation status:', error);
       }

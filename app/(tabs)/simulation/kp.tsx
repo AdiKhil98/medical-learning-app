@@ -187,8 +187,9 @@ export default function KPSimulationScreen() {
     
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
-        // Mark as used after 30 seconds for testing (when 19:30 remaining)
-        if (prev === (19 * 60 + 30) && !usageMarked && sessionToken) {
+        // Mark as used after 30 seconds for testing (when timer shows 19:30 remaining)
+        if (prev === 1170 && !usageMarked && sessionToken) { // 19:30 remaining = 30 seconds elapsed
+          console.log('🔍 DEBUG: 30-second mark reached, marking as used');
           markSimulationAsUsed();
         }
         
@@ -268,8 +269,26 @@ export default function KPSimulationScreen() {
     if (sessionToken) {
       try {
         const elapsedSeconds = (20 * 60) - timeRemaining;
-        await simulationTracker.updateSimulationStatus(sessionToken, reason, elapsedSeconds);
-        console.log(`📊 KP: Simulation marked as ${reason} in database`);
+        
+        // Determine the appropriate status based on usage and reason
+        let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
+        
+        if (reason === 'completed') {
+          // If completed naturally (timer finished), it's completed
+          finalStatus = 'completed';
+        } else if (reason === 'aborted') {
+          // If aborted, check if it was before 10-minute mark
+          if (!usageMarked) {
+            finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
+            console.log('📊 KP: Marking as incomplete - ended before 10-minute mark');
+          } else {
+            finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
+            console.log('📊 KP: Marking as aborted - ended after 10-minute mark');
+          }
+        }
+        
+        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus, elapsedSeconds);
+        console.log(`📊 KP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
       } catch (error) {
         console.error('❌ KP: Error updating simulation status:', error);
       }

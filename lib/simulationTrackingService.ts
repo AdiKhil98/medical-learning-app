@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { SecureLogger } from './security';
 
 export type SimulationType = 'kp' | 'fsp';
-export type SimulationStatus = 'started' | 'in_progress' | 'used' | 'completed' | 'aborted' | 'expired';
+export type SimulationStatus = 'started' | 'in_progress' | 'used' | 'completed' | 'aborted' | 'expired' | 'incomplete';
 
 export interface SimulationUsageLog {
   id: string;

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS simulation_usage_logs (
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   subscription_id uuid, -- Optional, for subscription tracking
   simulation_type text NOT NULL CHECK (simulation_type IN ('kp', 'fsp')),
-  status text DEFAULT 'started' CHECK (status IN ('started', 'in_progress', 'used', 'completed', 'aborted', 'expired')),
+  status text DEFAULT 'started' CHECK (status IN ('started', 'in_progress', 'used', 'completed', 'aborted', 'expired', 'incomplete')),
   billing_period_start timestamptz,
   billing_period_end timestamptz,
   created_at timestamptz DEFAULT now(),
