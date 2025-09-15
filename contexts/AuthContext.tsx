@@ -86,8 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           SecureLogger.log('Processing SIGNED_OUT event');
           // Cleanup session timeout on sign out
           SessionTimeoutManager.destroy();
+
+          // Force clear session and user state immediately
           setSession(null);
           setUser(null);
+
+          // Also force a brief loading state to ensure proper navigation
+          setLoading(true);
+          setTimeout(() => setLoading(false), 100);
         } else if (event === 'TOKEN_REFRESHED' && session) {
           SecureLogger.log('Processing TOKEN_REFRESHED event');
           setSession(session);
@@ -415,10 +421,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clean up session timeout manager
       SessionTimeoutManager.destroy();
       
-      // Clear local state immediately
+      // Clear local state immediately and force re-render
       SecureLogger.log('Clearing local session state');
       setSession(null);
       setUser(null);
+
+      // Force a loading state briefly to ensure components re-render properly
+      setLoading(true);
       SecureLogger.log('Local state cleared');
 
       // Add a delay to ensure state updates propagate to all components
