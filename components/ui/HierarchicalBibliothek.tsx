@@ -7,25 +7,27 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   ChevronLeft,
-  Stethoscope, 
-  Heart, 
-  Activity, 
-  Brain, 
-  Baby, 
-  Users, 
-  AlertTriangle, 
+  Stethoscope,
+  Heart,
+  Activity,
+  Brain,
+  Baby,
+  Users,
+  AlertTriangle,
   Scan,
   FileText,
   FolderOpen,
-  Home
+  Home,
+  Maximize2
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import BookmarkButton from '@/components/ui/BookmarkButton';
+import MedicalContentModal from '@/components/ui/MedicalContentModal';
 
 interface CategoryItem {
   id: string;
@@ -51,11 +53,16 @@ interface HierarchicalBibliothekProps {
 const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavigateToContent }) => {
   const { colors } = useTheme();
   const router = useRouter();
-  
+
   const [currentItems, setCurrentItems] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ title: 'Bibliothek', slug: null }]);
   const [currentParent, setCurrentParent] = useState<string | null>(null);
+
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalSlug, setModalSlug] = useState<string | null>(null);
+  const [availableSections, setAvailableSections] = useState<CategoryItem[]>([]);
 
   // Icon mapping for categories
   const getIconComponent = useCallback((iconName: string) => {
@@ -137,13 +144,13 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
   const handleItemPress = useCallback(async (item: CategoryItem) => {
     if (item.hasChildren) {
       // Navigate to subcategory
-      
+
       setBreadcrumbs(prev => [...prev, { title: item.title, slug: item.slug }]);
       setCurrentParent(item.slug);
       await fetchItems(item.slug);
     } else {
       // Navigate to content
-      
+
       if (onNavigateToContent) {
         onNavigateToContent(item.slug);
       } else {
@@ -151,6 +158,27 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       }
     }
   }, [fetchItems, onNavigateToContent, router]);
+
+  // Open content in modal
+  const handleOpenModal = useCallback(async (item: CategoryItem) => {
+    // Get all content sections at current level for navigation
+    const contentSections = currentItems.filter(i => !i.hasChildren);
+    setAvailableSections(contentSections);
+    setModalSlug(item.slug);
+    setModalVisible(true);
+  }, [currentItems]);
+
+  // Handle modal section change
+  const handleModalSectionChange = useCallback((slug: string) => {
+    setModalSlug(slug);
+  }, []);
+
+  // Close modal
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+    setModalSlug(null);
+    setAvailableSections([]);
+  }, []);
 
   // Navigate back in breadcrumbs
   const handleBreadcrumbPress = useCallback(async (index: number) => {
@@ -230,6 +258,16 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
             <ChevronRight size={20} color={colors.textSecondary} />
           ) : (
             <View style={styles.contentActions}>
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleOpenModal(item);
+                }}
+                style={styles.modalButton}
+                accessibilityLabel="In Modal öffnen"
+              >
+                <Maximize2 size={16} color={colors.primary} />
+              </TouchableOpacity>
               <BookmarkButton
                 sectionSlug={item.slug}
                 sectionTitle={item.title}
@@ -283,6 +321,20 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Medical Content Modal */}
+      <MedicalContentModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        initialSlug={modalSlug}
+        availableSections={availableSections.map(section => ({
+          id: section.id,
+          slug: section.slug,
+          title: section.title,
+          type: section.type
+        }))}
+        onSectionChange={handleModalSectionChange}
+      />
     </View>
   );
 };
@@ -394,6 +446,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  modalButton: {
+    padding: 4,
+    borderRadius: 4,
   },
   bookmarkButton: {
     padding: 4,
