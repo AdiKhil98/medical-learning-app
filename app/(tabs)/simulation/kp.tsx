@@ -15,6 +15,7 @@ export default function KPSimulationScreen() {
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
+  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -197,6 +198,19 @@ export default function KPSimulationScreen() {
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
     
+    // Start security heartbeat (every 60 seconds)
+    if (sessionToken) {
+      console.log('🔍 DEBUG: Starting security heartbeat');
+      heartbeatInterval.current = setInterval(async () => {
+        try {
+          await simulationTracker.sendHeartbeat(sessionToken);
+          console.log('💓 DEBUG: Heartbeat sent');
+        } catch (error) {
+          console.error('❌ DEBUG: Heartbeat failed:', error);
+        }
+      }, 60000); // Every 60 seconds
+    }
+    
     console.log('🔍 DEBUG: Creating timer interval');
     timerInterval.current = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -207,8 +221,10 @@ export default function KPSimulationScreen() {
         
         // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
         if (prev <= 600 && prev >= 595 && !usageMarked && sessionToken) { // Around 10:00 remaining = 10 minutes elapsed
+          const clientElapsed = (20 * 60) - prev; // Calculate client-side elapsed time
           console.log('🔍 DEBUG: 10-minute mark reached (timer at', prev, 'seconds), marking as used');
-          markSimulationAsUsed();
+          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          markSimulationAsUsed(clientElapsed);
         }
         
         if (prev <= 1) {
@@ -224,17 +240,24 @@ export default function KPSimulationScreen() {
   };
 
   // Mark simulation as used at 10-minute mark
-  const markSimulationAsUsed = async () => {
+  const markSimulationAsUsed = async (clientElapsedSeconds?: number) => {
     if (!sessionToken || usageMarked) return;
     
     console.log('📊 KP: Marking simulation as used at 10-minute mark');
+    console.log('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
+    
     try {
-      const result = await simulationTracker.markSimulationUsed(sessionToken);
+      const result = await simulationTracker.markSimulationUsed(sessionToken, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
-        console.log('✅ KP: Simulation usage recorded in database');
+        console.log('✅ KP: Simulation usage recorded in database with server validation');
       } else {
         console.error('❌ KP: Failed to mark simulation as used:', result.error);
+        
+        // If server rejected due to time manipulation, flag it
+        if (result.error?.includes('insufficient_time')) {
+          console.log('🛡️ SECURITY: Server blocked usage marking - possible time manipulation attempt');
+        }
       }
     } catch (error) {
       console.error('❌ KP: Error marking simulation as used:', error);
@@ -316,9 +339,17 @@ export default function KPSimulationScreen() {
     setSessionToken(null);
     setUsageMarked(false);
     
+    // Clear timer interval
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
+    }
+    
+    // Clear heartbeat interval
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+      console.log('💓 DEBUG: Heartbeat stopped');
     }
   };
 
