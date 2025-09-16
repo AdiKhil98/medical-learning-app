@@ -47,14 +47,6 @@ export default function Input({
       backgroundColor: '#ffffff',
       flexDirection: 'row',
       alignItems: 'center',
-      shadowColor: isFocused ? '#10b981' : 'transparent',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: isFocused ? 0.1 : 0,
-      shadowRadius: 4,
-      elevation: isFocused ? 2 : 0,
     },
     input: {
       flex: 1,
