@@ -15,6 +15,7 @@ export default function FSPSimulationScreen() {
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
+  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -172,6 +173,11 @@ export default function FSPSimulationScreen() {
       setSessionToken(result.sessionToken || null);
       setUsageMarked(false);
       
+      // Start heartbeat monitoring for security
+      if (result.sessionToken) {
+        startHeartbeat(result.sessionToken);
+      }
+      
     } catch (error) {
       console.error('❌ FSP: Failed to start simulation tracking:', error);
       // Continue with timer anyway for UX, but log the error
@@ -184,8 +190,10 @@ export default function FSPSimulationScreen() {
       setTimeRemaining((prev) => {
         // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
         if (prev <= 600 && prev >= 595 && !usageMarked && sessionToken) { // Around 10:00 remaining = 10 minutes elapsed
+          const clientElapsed = (20 * 60) - prev; // Calculate client-side elapsed time
           console.log('🔍 DEBUG: 10-minute mark reached (timer at', prev, 'seconds), marking as used');
-          markSimulationAsUsed();
+          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          markSimulationAsUsed(clientElapsed);
         }
         
         if (prev <= 1) {
@@ -200,18 +208,24 @@ export default function FSPSimulationScreen() {
     }, 1000);
   };
 
-  // Mark simulation as used at 10-minute mark
-  const markSimulationAsUsed = async () => {
+  // Mark simulation as used at 10-minute mark with server-side validation
+  const markSimulationAsUsed = async (clientElapsedSeconds: number) => {
     if (!sessionToken || usageMarked) return;
     
     console.log('📊 FSP: Marking simulation as used at 10-minute mark');
+    console.log('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);
+    
     try {
-      const result = await simulationTracker.markSimulationUsed(sessionToken);
+      const result = await simulationTracker.markSimulationUsed(sessionToken, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
-        console.log('✅ FSP: Simulation usage recorded in database');
+        console.log('✅ FSP: Simulation usage recorded in database with server validation');
       } else {
         console.error('❌ FSP: Failed to mark simulation as used:', result.error);
+        // If server-side validation fails, this could be a security issue
+        if (result.error?.includes('Server validation')) {
+          console.warn('🛡️ SECURITY: Server-side validation failed - possible time manipulation');
+        }
       }
     } catch (error) {
       console.error('❌ FSP: Error marking simulation as used:', error);
@@ -256,9 +270,38 @@ export default function FSPSimulationScreen() {
     }
   };
 
+  // Start heartbeat monitoring for session security
+  const startHeartbeat = (sessionToken: string) => {
+    console.log('💓 FSP: Starting heartbeat monitoring');
+    
+    heartbeatInterval.current = setInterval(async () => {
+      try {
+        const result = await simulationTracker.sendHeartbeat(sessionToken);
+        if (!result.success) {
+          console.warn('💓 FSP: Heartbeat failed:', result.error);
+          // Don't stop the timer on heartbeat failure, just log it
+        }
+      } catch (error) {
+        console.error('💓 FSP: Heartbeat error:', error);
+      }
+    }, 30000); // Send heartbeat every 30 seconds
+  };
+
+  // Stop heartbeat monitoring
+  const stopHeartbeat = () => {
+    if (heartbeatInterval.current) {
+      console.log('💓 FSP: Stopping heartbeat monitoring');
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+    }
+  };
+
   // Stop the simulation timer
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     console.log('🛑 FSP: Stopping simulation timer');
+    
+    // Stop heartbeat monitoring
+    stopHeartbeat();
     
     // Update status in database if we have a session token
     if (sessionToken) {
@@ -303,6 +346,9 @@ export default function FSPSimulationScreen() {
   useEffect(() => {
     return () => {
       console.log('🧹 FSP: Cleanup started');
+      
+      // Stop heartbeat monitoring
+      stopHeartbeat();
       
       // Stop timer and mark as aborted (sync version for cleanup)
       if (timerActive && sessionToken) {

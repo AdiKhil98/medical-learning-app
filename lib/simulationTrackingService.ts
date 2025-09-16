@@ -202,8 +202,8 @@ class SimulationTrackingService {
     }
   }
 
-  // Mark simulation as used (called at 10-minute mark)
-  async markSimulationUsed(sessionToken: string): Promise<{ success: boolean; error?: string }> {
+  // Mark simulation as used (called at 10-minute mark) - SERVER-SIDE VALIDATED
+  async markSimulationUsed(sessionToken: string, clientElapsedSeconds?: number): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('🔍 DEBUG: markSimulationUsed called with token:', sessionToken);
       
@@ -215,36 +215,48 @@ class SimulationTrackingService {
         return { success: false, error: 'Not authenticated' };
       }
 
-      const markedAt = new Date().toISOString();
-      console.log('🔍 DEBUG: About to update session to used status');
+      console.log('🔍 DEBUG: Using server-side validation for marking as used');
+      console.log('🔍 DEBUG: Client reported elapsed seconds:', clientElapsedSeconds);
 
-      const { data, error } = await supabase
-        .from('simulation_usage_logs')
-        .update({
-          status: 'used',
-          marked_used_at: markedAt
-        })
-        .eq('session_token', sessionToken)
-        .eq('user_id', user.id)
-        .eq('status', 'started') // Only mark sessions that are still in started state
-        .select()
-        .single();
+      // Use server-side validation function
+      const { data, error } = await supabase.rpc('mark_simulation_used_secure', {
+        p_session_token: sessionToken,
+        p_user_id: user.id,
+        p_client_reported_elapsed: clientElapsedSeconds || null
+      });
 
-      console.log('🔍 DEBUG: Database update result:', { data, error });
+      console.log('🔍 DEBUG: Server-side validation result:', { data, error });
 
-      if (error || !data) {
-        console.error('❌ DEBUG: Failed to update session:', error);
-        SecureLogger.error('Failed to mark simulation as used', { error, sessionToken, user_id: user.id });
-        return { success: false, error: `Database error: ${error?.message || 'Session not found or already marked'}` };
+      if (error) {
+        console.error('❌ DEBUG: Server-side validation error:', error);
+        SecureLogger.error('Failed server-side simulation marking', { error, sessionToken, user_id: user.id });
+        return { success: false, error: `Server validation error: ${error.message}` };
       }
 
-      console.log('✅ DEBUG: Successfully marked as used:', data);
+      if (!data.success) {
+        console.error('❌ DEBUG: Server rejected marking:', data);
+        
+        // Log different types of failures
+        if (data.reason === 'insufficient_time') {
+          console.log('🛡️ SECURITY: Blocked premature usage marking - only', data.elapsed_seconds, 'seconds elapsed');
+          this.reportSuspiciousActivity('time_manipulation');
+        }
+        
+        return { 
+          success: false, 
+          error: data.message || 'Server-side validation failed'
+        };
+      }
+
+      console.log('✅ DEBUG: Server-side validation passed:', data);
+      console.log('🔍 DEBUG: Server calculated', data.server_elapsed_seconds, 'seconds, client reported', data.client_elapsed_seconds);
       
-      SecureLogger.log('Simulation marked as used at 10-minute mark', { 
+      SecureLogger.log('Simulation marked as used with server validation', { 
         sessionToken, 
         user_id: user.id, 
-        marked_at: markedAt,
-        simulation_type: data.simulation_type
+        server_elapsed: data.server_elapsed_seconds,
+        client_elapsed: data.client_elapsed_seconds,
+        marked_at: data.marked_at
       });
 
       return { success: true };
@@ -299,6 +311,67 @@ class SimulationTrackingService {
       return { success: true };
     } catch (error) {
       SecureLogger.error('Error updating simulation status', { error });
+      return { success: false, error: 'System error' };
+    }
+  }
+
+  // Report suspicious activity for abuse detection
+  private async reportSuspiciousActivity(activityType: 'time_manipulation' | 'rapid_sessions' | 'multiple_tabs'): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      console.log('🛡️ SECURITY: Reporting suspicious activity:', activityType);
+
+      // For time manipulation, increment the specific counter
+      const updateField = activityType === 'time_manipulation' ? 'time_manipulation_attempts' :
+                         activityType === 'rapid_sessions' ? 'rapid_session_count' :
+                         'multiple_tab_attempts';
+
+      await supabase
+        .from('simulation_abuse_detection')
+        .upsert({
+          user_id: user.id,
+          [updateField]: 1,
+          last_suspicious_activity: new Date().toISOString(),
+          admin_notes: `${activityType} detected at ${new Date().toISOString()}`
+        }, {
+          onConflict: 'user_id'
+        });
+
+      SecureLogger.warn('Suspicious activity reported', { 
+        user_id: user.id, 
+        activity_type: activityType 
+      });
+
+    } catch (error) {
+      SecureLogger.error('Error reporting suspicious activity', { error });
+    }
+  }
+
+  // Heartbeat function to detect session pausing/manipulation
+  async sendHeartbeat(sessionToken: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { success: false, error: 'Not authenticated' };
+
+      const { data, error } = await supabase.rpc('update_session_heartbeat', {
+        p_session_token: sessionToken,
+        p_user_id: user.id
+      });
+
+      if (error) {
+        console.error('❌ Heartbeat error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!data.success) {
+        return { success: false, error: data.reason || 'Heartbeat failed' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Heartbeat system error:', error);
       return { success: false, error: 'System error' };
     }
   }
