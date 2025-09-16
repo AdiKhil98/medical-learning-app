@@ -16,6 +16,7 @@ import {
   List,
   Lightbulb,
   Info,
+  Maximize2,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/folder';
 import MedicalContentLoader from '@/components/ui/MedicalContentLoader';
+import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import { recentContentService } from '@/lib/recentContentService';
 
 // Define Section type directly
@@ -92,6 +94,10 @@ const ContentDetailScreen = memo(() => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [navigationSource, setNavigationSource] = useState<string | null>(null);
+
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [relatedSections, setRelatedSections] = useState<any[]>([]);
 
   const fetchSection = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
@@ -181,6 +187,25 @@ const ContentDetailScreen = memo(() => {
       if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
         setExpandedSections({ '0': true });
       }
+
+      // Fetch related sections for modal navigation
+      try {
+        const { data: related } = await supabase
+          .from('sections')
+          .select('id, slug, title, type')
+          .eq('parent_slug', sectionData.parent_slug)
+          .neq('slug', slug)
+          .order('display_order', { ascending: true });
+
+        if (related) {
+          setRelatedSections([
+            { id: sectionData.id, slug: sectionData.slug, title: sectionData.title, type: sectionData.type },
+            ...related
+          ]);
+        }
+      } catch (relatedError) {
+        console.warn('Could not fetch related sections:', relatedError);
+      }
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'Fehler beim Laden');
@@ -244,6 +269,20 @@ const ContentDetailScreen = memo(() => {
     setError(null);
     fetchSection();
   }, [fetchSection]);
+
+  // Modal handlers
+  const handleOpenModal = useCallback(() => {
+    setModalVisible(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+  }, []);
+
+  const handleModalSectionChange = useCallback((newSlug: string) => {
+    // Navigate to the new slug
+    router.replace(`/(tabs)/bibliothek/content/${newSlug}`);
+  }, [router]);
 
   const gradientColors = useMemo(() => 
     isDarkMode 
@@ -350,17 +389,39 @@ const ContentDetailScreen = memo(() => {
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
       
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-        activeOpacity={0.7}
-      >
-        <ChevronLeft size={24} color={colors.primary} />
-        <Text style={dynamicStyles.backText}>Zurück</Text>
-      </TouchableOpacity>
+      <View style={styles.headerButtons}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackPress}
+          activeOpacity={0.7}
+        >
+          <ChevronLeft size={24} color={colors.primary} />
+          <Text style={dynamicStyles.backText}>Zurück</Text>
+        </TouchableOpacity>
+
+        {currentSection && (
+          <TouchableOpacity
+            style={[styles.modalButton, { backgroundColor: colors.card }]}
+            onPress={handleOpenModal}
+            activeOpacity={0.7}
+          >
+            <Maximize2 size={20} color={colors.primary} />
+            <Text style={[styles.modalButtonText, { color: colors.primary }]}>Modal</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Step 1: Parse and Clean Data Implementation */}
       <MedicalContentLoader slug={slug as string} />
+
+      {/* Medical Content Modal */}
+      <MedicalContentModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        initialSlug={slug as string}
+        availableSections={relatedSections}
+        onSectionChange={handleModalSectionChange}
+      />
     </SafeAreaView>
   );
 });
@@ -375,10 +436,28 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   header: {
     paddingHorizontal: 16,
