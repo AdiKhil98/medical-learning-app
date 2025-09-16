@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Brain, Clock, Target, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Brain, Clock, Info } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
@@ -417,6 +417,15 @@ export default function KPSimulationScreen() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Handle info button press
+  const handleInfoPress = () => {
+    Alert.alert(
+      'Über die Simulation',
+      'Diese KP-Simulation dauert 20 Minuten und testet Ihre medizinischen Kenntnisse durch realistische Patientenfälle. Klicken Sie auf "Start a call" im Widget unten, um zu beginnen.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with back button and title */}
@@ -424,19 +433,26 @@ export default function KPSimulationScreen() {
         colors={['#4338ca', '#3730a3']}
         style={styles.header}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="white" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerTitleContainer}>
           <Brain size={24} color="white" />
           <Text style={styles.headerTitle}>KP-Simulation</Text>
         </View>
-        
-        <View style={styles.headerPlaceholder} />
+
+        {/* Info button in header instead of floating */}
+        <TouchableOpacity
+          style={styles.headerInfoButton}
+          onPress={handleInfoPress}
+          activeOpacity={0.7}
+        >
+          <Info size={20} color="white" />
+        </TouchableOpacity>
       </LinearGradient>
 
       {/* Timer display - only show when active */}
@@ -449,59 +465,12 @@ export default function KPSimulationScreen() {
         </View>
       )}
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {/* Instructions Section - only show when timer is not active */}
-        {!timerActive && (
-          <View style={styles.instructionsSection}>
-            <View style={styles.instructionsHeader}>
-              <Target size={20} color="#4338ca" />
-              <Text style={styles.instructionsTitle}>Anweisungen</Text>
-            </View>
-            
-            <View style={styles.instructionsList}>
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Klicken Sie auf "Start a call" im Widget unten, um die Simulation zu beginnen
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Sie haben 20 Minuten Zeit für die komplette KP-Simulation
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Sprechen Sie klar und deutlich - das System analysiert Ihre Antworten in Echtzeit
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <AlertTriangle size={16} color="#f59e0b" />
-                <Text style={styles.instructionText}>
-                  Verlassen Sie diese Seite nicht während der laufenden Simulation
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.tipBox}>
-              <Text style={styles.tipTitle}>💡 Tipp</Text>
-              <Text style={styles.tipText}>
-                Geben Sie strukturierte und fundierte Antworten. Die KI bewertet sowohl Fachkompetenz als auch Kommunikationsfähigkeit.
-              </Text>
-            </View>
-          </View>
-        )}
-        
+      <View style={styles.content}>
         {/* Widget Area */}
         <View style={styles.widgetArea}>
           {/* Widget loads here automatically */}
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -537,8 +506,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
   },
-  headerPlaceholder: {
-    width: 40, // Same as back button to center the title
+  headerInfoButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   timerContainer: {
     flexDirection: 'row',
@@ -559,72 +533,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
-  },
-  instructionsSection: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  instructionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  instructionsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  instructionsList: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 20,
-  },
-  tipBox: {
-    backgroundColor: '#fef7cd',
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-  },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#92400e',
-    lineHeight: 20,
-  },
   widgetArea: {
-    minHeight: 400,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    flex: 1,
+    // This area is where the Voiceflow widget will appear
   },
 });

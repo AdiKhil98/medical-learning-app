@@ -47,14 +47,6 @@ export default function Input({
       backgroundColor: '#ffffff',
       flexDirection: 'row',
       alignItems: 'center',
-      shadowColor: isFocused ? '#10b981' : 'transparent',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: isFocused ? 0.1 : 0,
-      shadowRadius: 4,
-      elevation: isFocused ? 2 : 0,
     },
     input: {
       flex: 1,
@@ -63,6 +55,12 @@ export default function Input({
       color: '#1F2937',
       paddingVertical: 14,
       paddingHorizontal: 16,
+      backgroundColor: 'transparent',
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
     },
     inputWithLeftIcon: {
       paddingLeft: 8,
@@ -105,6 +103,10 @@ export default function Input({
           placeholderTextColor="#9CA3AF"
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          underlineColorAndroid="transparent"
+          selectionColor="#10b981"
+          textContentType="none"
+          importantForAutofill="no"
           {...props}
         />
         {rightIcon && <View style={dynamicStyles.rightIcon}>{rightIcon}</View>}

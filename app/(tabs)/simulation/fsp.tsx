@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mic, Clock, Users, CheckCircle, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Mic, Clock, Info } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
@@ -409,6 +409,15 @@ export default function FSPSimulationScreen() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Handle info button press
+  const handleInfoPress = () => {
+    Alert.alert(
+      'Über die Simulation',
+      'Diese FSP-Simulation dauert 20 Minuten und testet Ihre Kommunikationsfähigkeiten durch realistische Patientengespräche. Klicken Sie auf "Start a call" im Widget unten, um zu beginnen.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with back button and title */}
@@ -427,8 +436,15 @@ export default function FSPSimulationScreen() {
           <Mic size={24} color="white" />
           <Text style={styles.headerTitle}>FSP-Simulation</Text>
         </View>
-        
-        <View style={styles.headerPlaceholder} />
+
+        {/* Info button in header */}
+        <TouchableOpacity
+          style={styles.headerInfoButton}
+          onPress={handleInfoPress}
+          activeOpacity={0.7}
+        >
+          <Info size={20} color="white" />
+        </TouchableOpacity>
       </LinearGradient>
 
       {/* Timer display - only show when active */}
@@ -441,66 +457,12 @@ export default function FSPSimulationScreen() {
         </View>
       )}
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {/* Instructions Section - only show when timer is not active */}
-        {!timerActive && (
-          <View style={styles.instructionsSection}>
-            <View style={styles.instructionsHeader}>
-              <Users size={20} color="#ef4444" />
-              <Text style={styles.instructionsTitle}>Anweisungen</Text>
-            </View>
-            
-            <View style={styles.instructionsList}>
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Klicken Sie auf "Start a call" im Widget unten, um das Patientengespräch zu beginnen
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Sie haben 20 Minuten Zeit für die komplette FSP-Simulation
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Führen Sie ein natürliches Gespräch - stellen Sie Fragen und hören Sie aufmerksam zu
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <CheckCircle size={16} color="#10b981" />
-                <Text style={styles.instructionText}>
-                  Zeigen Sie Empathie und professionelle Kommunikationsfähigkeiten
-                </Text>
-              </View>
-              
-              <View style={styles.instructionItem}>
-                <AlertTriangle size={16} color="#f59e0b" />
-                <Text style={styles.instructionText}>
-                  Verlassen Sie diese Seite nicht während der laufenden Simulation
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.tipBox}>
-              <Text style={styles.tipTitle}>💡 Tipp</Text>
-              <Text style={styles.tipText}>
-                Behandeln Sie den virtuellen Patienten wie einen echten Menschen. Aktives Zuhören und empathische Kommunikation sind entscheidend für eine erfolgreiche FSP.
-              </Text>
-            </View>
-          </View>
-        )}
-        
+      <View style={styles.content}>
         {/* Widget Area */}
         <View style={styles.widgetArea}>
           {/* Widget loads here automatically */}
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -536,8 +498,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
   },
-  headerPlaceholder: {
-    width: 40, // Same as back button to center the title
+  headerInfoButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   timerContainer: {
     flexDirection: 'row',
@@ -558,72 +525,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
-  },
-  instructionsSection: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  instructionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  instructionsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  instructionsList: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  instructionText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 20,
-  },
-  tipBox: {
-    backgroundColor: '#fef7cd',
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-  },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#92400e',
-    lineHeight: 20,
-  },
   widgetArea: {
-    minHeight: 400,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    flex: 1,
+    // This area is where the Voiceflow widget will appear
   },
 });

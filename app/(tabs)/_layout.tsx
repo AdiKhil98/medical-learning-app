@@ -1,12 +1,15 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { Home, BookOpen, BarChart, Activity } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TabLayout() {
   const { colors, isDarkMode } = useTheme();
-  
+  const { session, loading } = useAuth();
+
   // Initialize session timeout monitoring for authenticated screens
   const { triggerActivity } = useSessionTimeout({
     timeoutDuration: 30 * 60 * 1000, // 30 minutes
@@ -14,6 +17,23 @@ export default function TabLayout() {
     activityUpdateInterval: 5 * 60 * 1000, // 5 minutes database updates
     enabled: true,
   });
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 10, color: colors.textSecondary, fontSize: 14 }}>
+          Authentifizierung wird überprüft...
+        </Text>
+      </View>
+    );
+  }
+
+  // If no session, redirect to login
+  if (!session) {
+    return <Redirect href="/auth/login" />;
+  }
 
   return (
     <Tabs
