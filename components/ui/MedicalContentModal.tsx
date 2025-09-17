@@ -83,7 +83,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   // State management
   const [currentSlug, setCurrentSlug] = useState<string | null>(initialSlug || null);
   const [currentSection, setCurrentSection] = useState<SupabaseRow | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +173,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
 
       if (cached && (now - cached.timestamp) < CACHE_DURATION) {
         setCurrentSection(cached.data);
-        setExpandedSections({ '0': true });
+        setExpandedSections({});
         setLoading(false);
         return;
       }
@@ -191,10 +191,8 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       setCurrentSection(sectionData);
       contentCache.current.set(slug, { data: sectionData, timestamp: now });
 
-      // Auto-expand first section
-      if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
-        setExpandedSections({ '0': true });
-      }
+      // Start with all sections collapsed for better overview
+      setExpandedSections({});
     } catch (e: any) {
       console.error('Error fetching section:', e);
       setError(e.message || 'Fehler beim Laden');
@@ -275,7 +273,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       setCurrentSection(null);
       setCurrentSlug(null);
       setSearchTerm('');
-      setExpandedSections({ '0': true });
+      setExpandedSections({});
       setError(null);
       setIsFullscreen(false);
       setShowTableOfContents(false);
