@@ -108,10 +108,9 @@ interface HierarchicalBibliothekProps {
   onNavigateToContent?: (slug: string) => void;
 }
 
-// Cache for better performance
+// Progressive loading cache
 const itemsCache = new Map<string, CategoryItem[]>();
 const childrenCache = new Map<string, boolean>();
-let allItemsCache: CategoryItem[] | null = null;
 
 const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavigateToContent }) => {
   const { colors } = useTheme();
@@ -144,95 +143,123 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     return iconMap[iconName] || FolderOpen;
   }, []);
 
-  // Load all data once and cache it
-  const loadAllData = useCallback(async () => {
+  // Progressive data loading - load only what's needed
+  const loadLevelData = useCallback(async (parentSlug: string | null = null) => {
+    const cacheKey = parentSlug || 'null';
+    
+    // Return cached data if available
+    if (itemsCache.has(cacheKey)) {
+      return itemsCache.get(cacheKey) || [];
+    }
+
     try {
-      // Load all items in one query if not cached
-      if (!allItemsCache) {
-        const { data, error } = await supabase
-          .from('sections')
-          .select('*')
-          .order('display_order', { ascending: true })
-          .order('title', { ascending: true });
+      // Load only current level items
+      let query = supabase
+        .from('sections')
+        .select('*')
+        .order('display_order', { ascending: true })
+        .order('title', { ascending: true });
 
-        if (error) throw error;
-        if (!data) return;
-
-        // Cache all items
-        allItemsCache = data;
-        
-        // Pre-compute children relationships
-        const childrenMap = new Map<string, string[]>();
-        data.forEach(item => {
-          if (item.parent_slug) {
-            if (!childrenMap.has(item.parent_slug)) {
-              childrenMap.set(item.parent_slug, []);
-            }
-            childrenMap.get(item.parent_slug)!.push(item.slug);
-          }
-        });
-        
-        // Cache hasChildren info
-        data.forEach(item => {
-          childrenCache.set(item.slug, childrenMap.has(item.slug));
-        });
-        
-        // Cache items by parent
-        const itemsByParent = new Map<string, CategoryItem[]>();
-        data.forEach(item => {
-          const parentKey = item.parent_slug || 'root';
-          if (!itemsByParent.has(parentKey)) {
-            itemsByParent.set(parentKey, []);
-          }
-          itemsByParent.get(parentKey)!.push({
-            ...item,
-            hasChildren: childrenCache.get(item.slug) || false
-          });
-        });
-        
-        // Store in cache
-        itemsByParent.forEach((items, parentSlug) => {
-          const key = parentSlug === 'root' ? 'null' : parentSlug;
-          itemsCache.set(key, items);
-        });
+      if (parentSlug) {
+        query = query.eq('parent_slug', parentSlug);
+      } else {
+        query = query.is('parent_slug', null);
       }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data) return [];
+
+      // Get children info in a single query for this level
+      const parentSlugs = data.map(item => item.slug);
+      let childrenData: any[] = [];
+      
+      if (parentSlugs.length > 0) {
+        const { data: children } = await supabase
+          .from('sections')
+          .select('parent_slug')
+          .in('parent_slug', parentSlugs);
+        
+        childrenData = children || [];
+      }
+      
+      // Create hasChildren lookup
+      const hasChildrenSet = new Set(childrenData.map(child => child.parent_slug));
+      
+      // Process items with children info
+      const processedItems = data.map(item => {
+        const hasChildren = hasChildrenSet.has(item.slug);
+        childrenCache.set(item.slug, hasChildren);
+        return {
+          ...item,
+          hasChildren
+        };
+      });
+
+      // Cache the results
+      itemsCache.set(cacheKey, processedItems);
+      return processedItems;
+      
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading level data:', error);
+      return [];
     }
   }, []);
 
-  // Get items for current level from cache
+  // Get items from cache if available
   const getItemsFromCache = useCallback((parentSlug: string | null = null) => {
     const key = parentSlug || 'null';
-    return itemsCache.get(key) || [];
+    return itemsCache.get(key) || null;
   }, []);
 
-  // Fetch items for current level (now uses cache)
+  // Fetch items for current level (progressive loading)
   const fetchItems = useCallback(async (parentSlug: string | null = null) => {
+    // Check cache first for instant loading
+    const cachedItems = getItemsFromCache(parentSlug);
+    if (cachedItems) {
+      setCurrentItems(cachedItems);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Ensure data is loaded
-      await loadAllData();
-      
-      // Get items from cache
-      const items = getItemsFromCache(parentSlug);
+      // Load only this level's data
+      const items = await loadLevelData(parentSlug);
       setCurrentItems(items);
     } catch (error) {
       console.error('Error fetching items:', error);
     } finally {
       setLoading(false);
     }
-  }, [loadAllData, getItemsFromCache]);
+  }, [loadLevelData, getItemsFromCache]);
 
   // Initial load
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
-  // Preload all data on component mount for better UX
+  // Preload next level data in background for better UX
+  const preloadNextLevel = useCallback(async () => {
+    if (currentItems.length > 0) {
+      // Preload children for items that have them
+      const itemsWithChildren = currentItems.filter(item => item.hasChildren);
+      
+      // Load the first few children levels in background
+      itemsWithChildren.slice(0, 3).forEach(item => {
+        setTimeout(() => {
+          loadLevelData(item.slug);
+        }, 100);
+      });
+    }
+  }, [currentItems, loadLevelData]);
+
+  // Trigger preloading when current items change
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    if (currentItems.length > 0 && !loading) {
+      preloadNextLevel();
+    }
+  }, [currentItems, loading, preloadNextLevel]);
 
   // Navigate to category or content
   const handleItemPress = useCallback(async (item: CategoryItem) => {
@@ -284,7 +311,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     
     // Get items from cache immediately (no loading state for cached navigation)
     const cachedItems = getItemsFromCache(targetBreadcrumb.slug);
-    if (cachedItems.length > 0) {
+    if (cachedItems) {
       setCurrentItems(cachedItems);
     } else {
       // Fallback to fetch if cache miss
@@ -364,16 +391,8 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   ), [currentItems, renderCategoryCard]);
 
-  if (loading && currentItems.length === 0) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Lade medizinische Kategorien...
-        </Text>
-      </View>
-    );
-  }
+  // Show skeleton only if no items and loading
+  const showSkeleton = loading && currentItems.length === 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -382,11 +401,17 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       
       {/* Content Header */}
       <View style={styles.headerContainer}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {breadcrumbs[breadcrumbs.length - 1].title}
-        </Text>
+        <View style={styles.headerTitleRow}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {breadcrumbs[breadcrumbs.length - 1].title}
+          </Text>
+          {loading && currentItems.length > 0 && (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.headerLoader} />
+          )}
+        </View>
         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
           {currentItems.length} {currentItems.length === 1 ? 'Kategorie' : 'Kategorien'}
+          {loading && currentItems.length > 0 && ' • Lade mehr...'}
         </Text>
       </View>
 
@@ -396,7 +421,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
       >
-        {loading ? LoadingSkeleton : memoizedGrid}
+        {showSkeleton ? LoadingSkeleton : memoizedGrid}
         
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -465,10 +490,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    flex: 1,
+  },
+  headerLoader: {
+    marginLeft: 8,
   },
   headerSubtitle: {
     fontSize: 14,
