@@ -1,16 +1,20 @@
 // Global Voiceflow widget cleanup utility
 // This runs on every page load to ensure widgets don't persist across pages
 
-export function runGlobalVoiceflowCleanup() {
+export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
   if (typeof window === 'undefined') return;
 
-  // Check if we're on a simulation page - if so, don't run cleanup
+  // Check if we're on a simulation page - if so, don't run cleanup unless forced
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
   
-  if (isSimulationPage) {
-    console.log('🚫 On simulation page, skipping Voiceflow cleanup');
+  if (isSimulationPage && !forceCleanup) {
+    console.log('🚫 On simulation page, skipping Voiceflow cleanup (use forceCleanup=true to override)');
     return;
+  }
+
+  if (forceCleanup) {
+    console.log('⚡ Force cleanup requested - cleaning up regardless of page type');
   }
 
   console.log('🌍 Running global Voiceflow cleanup on page load...');
