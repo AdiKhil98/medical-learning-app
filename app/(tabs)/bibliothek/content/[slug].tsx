@@ -284,10 +284,10 @@ const ContentDetailScreen = memo(() => {
     router.replace(`/(tabs)/bibliothek/content/${newSlug}`);
   }, [router]);
 
-  const gradientColors = useMemo(() => 
-    isDarkMode 
+  const gradientColors = useMemo(() =>
+    isDarkMode
       ? ['#1F2937', '#111827', '#0F172A']
-      : ['#e0f2fe', '#f0f9ff', '#ffffff'],
+      : ['#F8F3E8', '#FBEEEC', '#FFFFFF'],  // White Linen to light coral to white
     [isDarkMode]
   );
 

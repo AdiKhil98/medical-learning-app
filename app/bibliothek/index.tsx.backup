@@ -44,9 +44,9 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     
     // Internal Medicine and subspecialties
     case normalizedTitle.includes('innere medizin'):
-      return { icon: 'Stethoscope', color: '#0077B6' };
+      return { icon: 'Stethoscope', color: '#E2827F' };
     case normalizedTitle.includes('gastro') || normalizedTitle.includes('verdau'):
-      return { icon: 'Circle', color: '#48CAE4' };
+      return { icon: 'Circle', color: '#E5877E' };
     case normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg'):
       return { icon: 'Lungs', color: '#22C55E' };
     case normalizedTitle.includes('nephro') || normalizedTitle.includes('niere'):
@@ -60,7 +60,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     
     // Surgery specialties
     case normalizedTitle.includes('chirurgie') || normalizedTitle.includes('operativ'):
-      return { icon: 'Scissors', color: '#48CAE4' };
+      return { icon: 'Scissors', color: '#E5877E' };
     case normalizedTitle.includes('allgemein') && normalizedTitle.includes('chirurgie'):
       return { icon: 'Scissors', color: '#0EA5E9' };
     case normalizedTitle.includes('viszeralchirurgie') || normalizedTitle.includes('viszeral'):
@@ -106,7 +106,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case normalizedTitle.includes('radiolog') || normalizedTitle.includes('bildgeb'):
       return { icon: 'Scan', color: '#22C55E' };
     case normalizedTitle.includes('sonograph') || normalizedTitle.includes('ultraschall'):
-      return { icon: 'Soup', color: '#48CAE4' };
+      return { icon: 'Soup', color: '#E5877E' };
     case normalizedTitle.includes('ct') || normalizedTitle.includes('computertomograph'):
       return { icon: 'CircuitBoard', color: '#10B981' };
     case normalizedTitle.includes('mrt') || normalizedTitle.includes('kernspintomograph'):
@@ -150,7 +150,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     
     // Anatomy
     case normalizedTitle.includes('anatomie'):
-      return { icon: 'Heart', color: '#0077B6' };
+      return { icon: 'Heart', color: '#E2827F' };
     
     // Perioperative Management
     case normalizedTitle.includes('perioperativ'):
@@ -389,7 +389,7 @@ export default function BibliothekScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0077B6" />
+        <ActivityIndicator size="large" color="#E2827F" />
         <Text style={styles.loadingText}>Lade Bibliothek...</Text>
       </SafeAreaView>
     );
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
   },
   retryButton: {
-    backgroundColor: '#0077B6',
+    backgroundColor: '#E2827F',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,

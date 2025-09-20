@@ -36,17 +36,17 @@ if (Platform.OS === 'web') {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Updated color scheme matching design requirements
+// Updated color scheme matching coral design requirements
 const MEDICAL_COLORS = {
-  primary: '#2196F3', // Blue for chart
-  chartGradient: '#E3F2FD', // Light blue for chart fill
+  primary: '#E2827F', // Burning Sand for chart
+  chartGradient: '#FDF7F6', // Very light coral for chart fill
   background: '#FFFFFF',
-  lightBackground: '#E8F5E9',
+  lightBackground: '#FBEEEC', // Light coral background
   textPrimary: '#424242',
   textSecondary: '#757575',
   border: '#E0E0E0',
-  success: '#66BB6A', // Green for scores >= 60
-  danger: '#ef4444', // Red for scores < 60
+  success: '#66BB6A', // Keep green for scores >= 60
+  danger: '#B15740', // Brown Rust for scores < 60
   lightGray: '#F5F5F5',
   gridColor: '#f0f0f0'
 };

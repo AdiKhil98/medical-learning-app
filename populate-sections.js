@@ -17,7 +17,7 @@ async function populateSections() {
       description: 'Systematische Übersicht der internistischen Erkrankungen',
       type: 'folder',
       icon: 'Stethoscope',
-      color: '#0077B6',
+      color: '#E2827F',
       display_order: 1,
       parent_slug: null
     },
@@ -27,7 +27,7 @@ async function populateSections() {
       description: 'Systematische Übersicht der chirurgischen Fachgebiete',
       type: 'folder',
       icon: 'Scissors',
-      color: '#48CAE4',
+      color: '#E5877E',
       display_order: 2,
       parent_slug: null
     },
@@ -69,7 +69,7 @@ async function populateSections() {
       description: 'Erkrankungen des Magen-Darm-Trakts',
       type: 'folder',
       icon: 'Circle',
-      color: '#48CAE4',
+      color: '#E5877E',
       display_order: 3,
       parent_slug: 'innere-medizin'
     },

@@ -393,7 +393,7 @@ class MedicalContentService {
           description: 'Systematische Übersicht der internistischen Erkrankungen',
           type: 'folder',
           icon: 'Stethoscope',
-          color: '#0077B6',
+          color: '#E2827F',
           display_order: 1,
           parent_slug: null
         },
@@ -403,7 +403,7 @@ class MedicalContentService {
           description: 'Systematische Übersicht der chirurgischen Fachgebiete',
           type: 'folder',
           icon: 'Scissors',
-          color: '#48CAE4',
+          color: '#E5877E',
           display_order: 2,
           parent_slug: null
         },

@@ -67,11 +67,11 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
   // Default mappings
   switch (title.toLowerCase()) {
     case 'innere medizin':
-      return { icon: 'Stethoscope', color: '#0077B6' };
+      return { icon: 'Stethoscope', color: '#E2827F' };
     case 'kardiologie':
-      return { icon: 'Heart', color: '#0077B6' };
+      return { icon: 'Heart', color: '#E2827F' };
     case 'gastroenterologie':
-      return { icon: 'Activity', color: '#48CAE4' };
+      return { icon: 'Activity', color: '#E5877E' };
     case 'pneumologie':
       return { icon: 'Lungs', color: '#22C55E' };
     case 'nephrologie':
@@ -80,7 +80,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case 'endokrinologie und stoffwechsel':
       return { icon: 'FlaskRound', color: '#EF4444' };
     case 'chirurgie':
-      return { icon: 'Scissors', color: '#48CAE4' };
+      return { icon: 'Scissors', color: '#E5877E' };
     case 'notfallmedizin':
       return { icon: 'Ambulance', color: '#EF4444' };
     case 'pädiatrie':
@@ -90,13 +90,13 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case 'psychiatrie':
       return { icon: 'Brain', color: '#F59E0B' };
     case 'anatomie':
-      return { icon: 'Heart', color: '#0077B6' };
+      return { icon: 'Heart', color: '#E2827F' };
     case 'radiologie':
       return { icon: 'Activity', color: '#22C55E' };
     case 'sonographie':
-      return { icon: 'Activity', color: '#48CAE4' };
+      return { icon: 'Activity', color: '#E5877E' };
     default:
-      return { icon: 'BookOpen', color: '#0077B6' };
+      return { icon: 'BookOpen', color: '#E2827F' };
   }
 };
 
@@ -286,7 +286,7 @@ export default function SectionDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0077B6" />
+        <ActivityIndicator size="large" color="#E2827F" />
         <Text style={styles.loadingText}>Lade Inhalte...</Text>
       </SafeAreaView>
     );
@@ -322,7 +322,7 @@ export default function SectionDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
+        colors={['#F8F3E8', '#FBEEEC', '#FFFFFF']} // White Linen to light coral to white
         style={styles.gradientBackground}
       />
       
@@ -341,7 +341,7 @@ export default function SectionDetailScreen() {
           }}
           style={styles.backButton}
         >
-          <ChevronLeft size={24} color="#0077B6" />
+          <ChevronLeft size={24} color="#E2827F" />
           <Text style={styles.backText}>Zurück</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{currentSection.title}</Text>
@@ -378,7 +378,7 @@ export default function SectionDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   gradientBackground: {
     position: 'absolute',
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   loadingText: {
     marginTop: 16,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
     padding: 20,
   },
   errorTitle: {
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
   },
   retryButton: {
-    backgroundColor: '#0077B6',
+    backgroundColor: '#E2827F',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#0077B6',
+    color: '#E2827F',
     marginLeft: 4,
   },
   title: {
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '90deg' }],
   },
   childContainer: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 16,

@@ -25,7 +25,7 @@ export default function DatenschutzAGBScreen() {
 
   const gradient = isDarkMode
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#e0f2fe', '#f0f9ff', '#ffffff'];
+    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const stylesD = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -313,8 +313,8 @@ export default function DatenschutzAGBScreen() {
             onPress={() => toggle('terms')}
             activeOpacity={0.7}
           >
-            <View style={[stylesD.iconWrap, { backgroundColor: '#0077B620' }]}>
-              <FileText size={20} color="#0077B6" />
+            <View style={[stylesD.iconWrap, { backgroundColor: '#E2827F20' }]}>
+              <FileText size={20} color="#E2827F" />
             </View>
             <Text style={stylesD.sectionTitle}>Allgemeine Geschäftsbedingungen</Text>
             <ChevronDown

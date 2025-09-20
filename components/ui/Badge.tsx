@@ -28,33 +28,33 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
   primary: {
-    backgroundColor: '#E6F1F8',
+    backgroundColor: '#FDF7F6',  // Very light coral
   },
   secondary: {
-    backgroundColor: '#EDFAFC',
+    backgroundColor: '#FBEEEC',  // Light coral
   },
   success: {
     backgroundColor: '#ECFDF5',
   },
   warning: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FDF8F7',  // Very light Tonys Pink background
   },
   error: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FBEEEC',  // Light coral for error background
   },
   text_primary: {
-    color: '#0077B6',
+    color: '#E2827F',  // Burning Sand
   },
   text_secondary: {
-    color: '#48CAE4',
+    color: '#B87E70',  // Old Rose
   },
   text_success: {
     color: '#22C55E',
   },
   text_warning: {
-    color: '#F59E0B',
+    color: '#E5877E',  // Tonys Pink for warning text
   },
   text_error: {
-    color: '#EF4444',
+    color: '#B15740',  // Brown Rust for error text
   },
 });

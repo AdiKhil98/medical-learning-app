@@ -29,31 +29,31 @@ interface ThemeContextType {
 }
 
 const lightColors = {
-  background: '#F9FAFB',
+  background: '#F8F3E8',  // White Linen
   surface: '#FFFFFF',
-  primary: '#0077B6',
-  secondary: '#48CAE4',
+  primary: '#E2827F',     // Burning Sand - main brand color
+  secondary: '#B87E70',   // Old Rose - dark accent
   text: '#1F2937',
   textSecondary: '#6B7280',
   border: '#E5E7EB',
   card: '#FFFFFF',
-  error: '#EF4444',
+  error: '#B15740',       // Brown Rust for errors
   success: '#22C55E',
-  warning: '#F59E0B',
+  warning: '#E5877E',     // Tonys Pink for warnings/highlights
 };
 
 const darkColors = {
   background: '#111827',
   surface: '#1F2937',
-  primary: '#60A5FA',
-  secondary: '#34D399',
-  text: '#F9FAFB',
+  primary: '#E5877E',     // Tonys Pink - lighter for dark mode
+  secondary: '#B87E70',   // Old Rose - consistent across themes
+  text: '#F8F3E8', // White Linen background
   textSecondary: '#D1D5DB',
   border: '#374151',
   card: '#1F2937',
-  error: '#F87171',
+  error: '#E2827F',       // Burning Sand for dark mode errors
   success: '#34D399',
-  warning: '#FBBF24',
+  warning: '#E5877E',     // Tonys Pink for warnings
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

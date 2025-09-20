@@ -93,9 +93,9 @@ const getCategoryColor = (category: string, title: string, defaultColor?: string
   
   switch (categoryLower) {
     case 'innere medizin':
-      return '#0077B6';
+      return '#E2827F';
     case 'chirurgie':
-      return '#48CAE4';
+      return '#E5877E';
     case 'notfallmedizin':
       return '#EF4444';
     case 'infektiologie':
@@ -115,7 +115,7 @@ const getCategoryColor = (category: string, title: string, defaultColor?: string
     default:
       if (titleLower.includes('herz')) return '#BE123C';
       if (titleLower.includes('gehirn')) return '#7C3AED';
-      if (titleLower.includes('chirurg')) return '#48CAE4';
+      if (titleLower.includes('chirurg')) return '#E5877E';
       return '#6B7280';
   }
 };

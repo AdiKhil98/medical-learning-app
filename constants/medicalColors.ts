@@ -1,49 +1,49 @@
-// Medical app color constants - Soothing Green & White Theme
+// Medical app color constants - Warm Coral & Rust Theme
 export const MEDICAL_COLORS = {
-  // Primary colors - Soothing Medical Green Theme
-  primary: '#4CAF50',        // Main green
-  secondary: '#66BB6A',      // Sage green for accents
-  primaryLight: '#81C784',   // Soft green lighter variant
-  primaryDark: '#43A047',    // Darker green for emphasis
+  // Primary colors - Warm Medical Coral Theme
+  primary: '#E2827F',        // Burning Sand - main brand color
+  secondary: '#B87E70',      // Old Rose - dark accent
+  primaryLight: '#E5877E',   // Tonys Pink - light accent
+  primaryDark: '#B15740',    // Brown Rust - emphasis color
   
   // Status colors
-  success: '#43A047',        // Darker green for success states
-  warning: '#FFA726',        // Warm orange (softer than yellow)
-  danger: '#EF5350',         // Soft red (less harsh)
-  
+  success: '#22C55E',        // Keep green for success
+  warning: '#E5877E',        // Tonys Pink for warnings
+  danger: '#B15740',         // Brown Rust for errors
+
   // Background colors
   white: '#FFFFFF',          // Pure white for cards
-  offWhite: '#FAFAFA',       // Subtle off-white backgrounds
-  mintGreen: '#E8F5E9',      // Very light green backgrounds
-  light: '#F1F8E9',          // Light mint for sections
-  
+  offWhite: '#F8F3E8',       // White Linen for subtle backgrounds
+  mintGreen: '#FDF7F6',      // Very light coral backgrounds
+  light: '#FBEEEC',          // Light coral for sections
+
   // Text colors
-  textPrimary: '#2E7D32',    // Dark green for headers
+  textPrimary: '#B15740',    // Brown Rust for headers
   textSecondary: '#424242',  // Dark gray for body text
-  dark: '#1B5E20',           // Very dark green
+  dark: '#8B3A1F',           // Very dark rust
   gray: '#616161',           // Medium gray
   lightGray: '#E0E0E0',      // Light gray for borders
   
-  // Soothing Green Gradients
-  gradient1: ['#66BB6A', '#81C784'],     // Primary header gradient
-  gradient2: ['#4CAF50', '#66BB6A'],     // Hero section gradient
-  gradient3: ['#81C784', '#A5D6A7'],     // Light gradient for cards
-  gradient4: ['#43A047', '#4CAF50'],     // Deep green gradient
-  gradientMint: ['#E8F5E9', '#F1F8E9'],  // Subtle mint gradient
-  
+  // Warm Coral Gradients
+  gradient1: ['#E2827F', '#B87E70'],     // Primary header gradient (Burning Sand to Old Rose)
+  gradient2: ['#E5877E', '#E2827F'],     // Hero section gradient (Tonys Pink to Burning Sand)
+  gradient3: ['#E5877E', '#F6DDD9'],     // Light gradient for cards
+  gradient4: ['#B15740', '#E2827F'],     // Deep rust gradient
+  gradientMint: ['#F8F3E8', '#FBEEEC'],  // Subtle coral gradient
+
   // Enhanced gradients for components
-  primaryGradient: ['#4CAF50', '#66BB6A'],      // Main green gradient
-  successGradient: ['#43A047', '#4CAF50'],      // Success gradient
-  lightGradient: ['#E8F5E9', '#F1F8E9'],       // Light background gradient
-  cardGradient: ['#FFFFFF', '#F8FFF8'],         // Subtle card gradient
+  primaryGradient: ['#E2827F', '#B87E70'],      // Main coral gradient
+  successGradient: ['#22C55E', '#16A34A'],      // Success gradient (keep green)
+  lightGradient: ['#F8F3E8', '#FBEEEC'],       // Light background gradient
+  cardGradient: ['#FFFFFF', '#FDF7F6'],         // Subtle coral card gradient
   
-  // Shadow colors with green tint
-  shadowLight: 'rgba(76, 175, 80, 0.08)',      // Light green shadow
-  shadowMedium: 'rgba(76, 175, 80, 0.15)',     // Medium green shadow
-  shadowDark: 'rgba(46, 125, 50, 0.2)',        // Dark green shadow
-  
+  // Shadow colors with coral tint
+  shadowLight: 'rgba(226, 130, 127, 0.08)',    // Light coral shadow
+  shadowMedium: 'rgba(226, 130, 127, 0.15)',   // Medium coral shadow
+  shadowDark: 'rgba(177, 87, 64, 0.2)',        // Dark rust shadow
+
   // Interactive states
-  hover: '#388E3C',          // Darker green for hover
-  pressed: '#2E7D32',        // Even darker for pressed state
-  disabled: '#C8E6C9',       // Light green for disabled state
+  hover: '#D24E45',          // Darker coral for hover
+  pressed: '#B15740',        // Brown rust for pressed state
+  disabled: '#F0CCC6',       // Light coral for disabled state
 };

@@ -16,9 +16,9 @@ The entire app has been transformed from a blue medical theme to a **soothing, c
 
 ### Background Colors
 - **Pure White**: `#FFFFFF` - Clean card backgrounds
-- **Off White**: `#FAFAFA` - Subtle page backgrounds
-- **Mint Green**: `#E8F5E9` - Very light green sections
-- **Light Mint**: `#F1F8E9` - Subtle background variations
+- **Off White**: `#F8F3E8` - White Linen - Subtle page backgrounds
+- **Light Coral**: `#FBEEEC` - Very light coral sections (was Mint Green)
+- **Light Coral Alt**: `#FBEEEC` - Subtle background variations (was Light Mint)
 
 ### Text Colors  
 - **Text Primary**: `#2E7D32` - Dark green for headers and titles
@@ -41,7 +41,7 @@ The entire app has been transformed from a blue medical theme to a **soothing, c
 
 ### Component Gradients
 - **Success Progress**: `#43A047 → #4CAF50`
-- **Subtle Mint**: `#E8F5E9 → #F1F8E9`
+- **Subtle Coral**: `#FBEEEC → #FBEEEC` (updated from mint theme)
 - **Card Gradient**: `#FFFFFF → #F8FFF8`
 
 ---

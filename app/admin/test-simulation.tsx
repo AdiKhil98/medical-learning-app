@@ -173,7 +173,7 @@ export default function SupabaseTestScreen() {
           onPress={() => router.back()} 
           style={styles.backButton}
         >
-          <ChevronLeft size={24} color="#0077B6" />
+          <ChevronLeft size={24} color="#E2827F" />
           <Text style={styles.backText}>Zurück</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Supabase Connection Test</Text>
@@ -224,7 +224,7 @@ export default function SupabaseTestScreen() {
           <Text style={styles.sectionTitle}>Connection Status</Text>
           <View style={styles.statusContainer}>
             {loading && connectionStatus !== 'success' && (
-              <ActivityIndicator size="small" color="#0077B6" style={styles.spinner} />
+              <ActivityIndicator size="small" color="#E2827F" style={styles.spinner} />
             )}
             {connectionStatus === 'success' && (
               <Text style={styles.successText}>✅ Connected to Supabase successfully!</Text>
@@ -289,7 +289,7 @@ export default function SupabaseTestScreen() {
           </TouchableOpacity>
           
           {loading && !runningSQL && (
-            <ActivityIndicator size="large" color="#0077B6" style={styles.spinner} />
+            <ActivityIndicator size="large" color="#E2827F" style={styles.spinner} />
           )}
           
           {error && !loading && !runningSQL && <Text style={styles.errorText}>{error}</Text>}
@@ -334,7 +334,7 @@ export default function SupabaseTestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   header: {
     padding: 16,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#0077B6',
+    color: '#E2827F',
     marginLeft: 4,
   },
   title: {
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     color: '#EF4444',
   },
   button: {
-    backgroundColor: '#0077B6',
+    backgroundColor: '#E2827F',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   sectionItem: {
     padding: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,

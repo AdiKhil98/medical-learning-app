@@ -353,9 +353,9 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
-  const gradientColors = isDarkMode 
+  const gradientColors = isDarkMode
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#e0f2fe', '#f0f9ff', '#ffffff'];
+    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -520,7 +520,7 @@ export default function ProfileScreen() {
         <Card style={dynamicStyles.profileCard}>
           <View style={styles.profileHeader}>
             <LinearGradient
-              colors={['#0077B6', '#0096C7']}
+              colors={['#E2827F', '#E5877E']}
               style={styles.avatarContainer}
             >
               <Text style={styles.avatarText}>

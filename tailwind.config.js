@@ -5,37 +5,42 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: "#e6f1f8",
-          100: "#cce3f1",
-          200: "#99c8e3",
-          300: "#66acd5",
-          400: "#3391c7",
-          500: "#0077b6",
-          600: "#005f92",
-          700: "#00476d",
-          800: "#002f49",
-          900: "#001824",
+          50: "#fdf7f6",
+          100: "#fbeeec",
+          200: "#f6ddd9",
+          300: "#f0ccc6",
+          400: "#ebbbb3",
+          500: "#e2827f", // Burning Sand - main brand
+          600: "#da6862",
+          700: "#d24e45",
+          800: "#ca3428",
+          900: "#b15740", // Brown Rust - darkest
         },
         accent: {
-          50: "#edfafc",
-          100: "#daf5f9",
-          200: "#b5ebf4",
-          300: "#90e1ee",
-          400: "#6bd7e8",
-          500: "#48CAE4",
-          600: "#39a2b7",
-          700: "#2b7989",
-          800: "#1c515b",
-          900: "#0e282e",
+          50: "#fdf8f7",
+          100: "#faf1ef",
+          200: "#f5e3df",
+          300: "#f0d5cf",
+          400: "#ebc7bf",
+          500: "#e5877e", // Tonys Pink - light accent
+          600: "#df6d63",
+          700: "#d95348",
+          800: "#d3392d",
+          900: "#b87e70", // Old Rose - dark accent
         },
         success: {
           500: "#22c55e",
         },
         warning: {
-          500: "#f59e0b",
+          500: "#e5877e", // Tonys Pink
         },
         error: {
-          500: "#ef4444",
+          500: "#b15740", // Brown Rust
+        },
+        background: {
+          50: "#fdfcfb",
+          100: "#faf9f7",
+          200: "#f8f3e8", // White Linen
         },
       },
       fontFamily: {

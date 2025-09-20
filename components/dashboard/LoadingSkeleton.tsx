@@ -101,7 +101,7 @@ const styles = {
   },
   card: {
     padding: 20,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
     borderRadius: 12,
   },
   questionContainer: {

@@ -6,7 +6,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export const layoutStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   gradientBackground: {
     position: 'absolute',

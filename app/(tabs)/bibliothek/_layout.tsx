@@ -6,7 +6,7 @@ export default function BibliothekLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: '#F9FAFB' },
+        headerStyle: { backgroundColor: '#F8F3E8' }, // White Linen background
         headerTintColor: '#1F2937',
         headerTitleStyle: { fontFamily: 'Inter-Bold' as any },
       }}

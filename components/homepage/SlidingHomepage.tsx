@@ -266,7 +266,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#4F46E5', '#7C3AED', '#EC4899']}
+                  colors={['#E2827F', '#B87E70', '#E5877E']}  // Burning Sand to Old Rose to Tonys Pink
                   style={styles.ctaButtonGradient}
                 >
                   <Info size={20} color="#ffffff" style={styles.ctaIcon} />
@@ -302,7 +302,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     activeOpacity={0.8}
                   >
                     <LinearGradient
-                      colors={['#4F46E5', '#7C3AED']}
+                      colors={['#E2827F', '#B87E70']}  // Burning Sand to Old Rose
                       style={styles.exploreButtonGradient}
                     >
                       <BookOpen size={16} color="#ffffff" style={styles.exploreButtonIcon} />
@@ -363,9 +363,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
                     style={styles.viewAllCard}
                   >
-                    <FileText size={20} color="#4F46E5" />
+                    <FileText size={20} color="#B87E70" />  {/* Old Rose */}
                     <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-                    <ChevronRight size={16} color="#4F46E5" />
+                    <ChevronRight size={16} color="#B87E70" />  {/* Old Rose */}
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -848,7 +848,7 @@ const styles = {
   },
   viewAllText: {
     fontSize: 14,
-    color: '#4F46E5',
+    color: '#B87E70',  // Old Rose
     fontWeight: '600',
     flex: 1,
     textAlign: 'center',

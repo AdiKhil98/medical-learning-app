@@ -119,7 +119,7 @@ export default function CaseView({ caseData, onSubmit }: CaseViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   scrollContainer: {
     flex: 1,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#0077B6',
+    borderBottomColor: '#E2827F',
   },
   tabLabel: {
     fontFamily: 'Inter-Medium',
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   activeTabLabel: {
-    color: '#0077B6',
+    color: '#E2827F',
   },
   contentContainer: {
     padding: 16,

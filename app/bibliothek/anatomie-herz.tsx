@@ -56,7 +56,7 @@ export default function AnatomieHerzScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#e0f2fe', '#f0f9ff', '#ffffff']}
+        colors={['#F8F3E8', '#FBEEEC', '#FFFFFF']} // White Linen to light coral to white
         style={styles.gradientBackground}
       />
       
@@ -65,7 +65,7 @@ export default function AnatomieHerzScreen() {
           onPress={() => router.back()} 
           style={styles.backButton}
         >
-          <ChevronLeft size={24} color="#0077B6" />
+          <ChevronLeft size={24} color="#E2827F" />
           <Text style={styles.backText}>Zurück</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Anatomie des Herzens</Text>
@@ -107,7 +107,7 @@ export default function AnatomieHerzScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F3E8', // White Linen background
   },
   gradientBackground: {
     position: 'absolute',
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: 'Inter-Medium',
     fontSize: 16,
-    color: '#0077B6',
+    color: '#E2827F',
     marginLeft: 4,
   },
   title: {

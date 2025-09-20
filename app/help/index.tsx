@@ -163,9 +163,9 @@ export default function HelpSupportScreen() {
   };
 
 
-  const gradientColors = isDarkMode 
+  const gradientColors = isDarkMode
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#e0f2fe', '#f0f9ff', '#ffffff'];
+    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {

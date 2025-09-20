@@ -58,9 +58,9 @@ export default function Button({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator 
-          color={variant === 'primary' ? 'white' : '#0077B6'} 
-          size="small" 
+        <ActivityIndicator
+          color={variant === 'primary' ? 'white' : '#E2827F'}
+          size="small"
         />
       ) : (
         <>
@@ -81,15 +81,15 @@ const styles = StyleSheet.create({
     gap: 8
   },
   button_primary: {
-    backgroundColor: '#0077B6',
+    backgroundColor: '#E2827F',  // Burning Sand
   },
   button_secondary: {
-    backgroundColor: '#48CAE4',
+    backgroundColor: '#E5877E',  // Tonys Pink
   },
   button_outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: '#0077B6',
+    borderColor: '#E2827F',  // Burning Sand
   },
   button_text: {
     backgroundColor: 'transparent',
@@ -118,13 +118,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   text_secondary: {
-    color: '#00476d',
+    color: '#B15740',  // Brown Rust
   },
   text_outline: {
-    color: '#0077B6',
+    color: '#E2827F',  // Burning Sand
   },
   text_text: {
-    color: '#0077B6',
+    color: '#E2827F',  // Burning Sand
   },
   text_sm: {
     fontSize: 14,
