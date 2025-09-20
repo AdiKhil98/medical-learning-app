@@ -61,6 +61,11 @@ export default function Input({
       shadowOpacity: 0,
       shadowRadius: 0,
       elevation: 0,
+      // Remove browser default focus outline on web
+      ...(Platform.OS === 'web' && {
+        outlineStyle: 'none',
+        outline: 'none',
+      }),
     },
     inputWithLeftIcon: {
       paddingLeft: 8,
@@ -107,6 +112,15 @@ export default function Input({
           selectionColor="#10b981"
           textContentType="none"
           importantForAutofill="no"
+          // Remove web focus outline
+          {...(Platform.OS === 'web' && {
+            //@ts-ignore
+            style: {
+              outline: 'none',
+              outlineStyle: 'none',
+              boxShadow: 'none',
+            }
+          })}
           {...props}
         />
         {rightIcon && <View style={dynamicStyles.rightIcon}>{rightIcon}</View>}

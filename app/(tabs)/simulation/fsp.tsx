@@ -332,14 +332,16 @@ export default function FSPSimulationScreen() {
       }
     }
     
-    setTimerActive(false);
-    setSessionToken(null);
-    setUsageMarked(false);
+    // Reset simulation state to allow restart
+    resetSimulationState();
     
-    if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-      timerInterval.current = null;
-    }
+    // After a short delay, reinitialize the conversation monitoring for restart
+    setTimeout(() => {
+      if (voiceflowController.current) {
+        console.log('🔄 FSP: Reinitializing conversation monitoring after stop');
+        setupConversationMonitoring();
+      }
+    }, 1000);
   };
 
   // Cleanup when component unmounts or user navigates away
@@ -378,15 +380,15 @@ export default function FSPSimulationScreen() {
       
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
-        console.log('🌍 FSP: Running global Voiceflow cleanup');
-        globalVoiceflowCleanup();
+        console.log('🌍 FSP: Running global Voiceflow cleanup with force=true');
+        globalVoiceflowCleanup(true); // Force cleanup even on simulation page
       }
       
       console.log('✅ FSP: Cleanup completed');
     };
   }, []);
 
-  // Handle navigation away from page
+  // Handle navigation away from page with immediate cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (timerActive) {
@@ -396,11 +398,111 @@ export default function FSPSimulationScreen() {
       }
     };
 
-    if (Platform.OS === 'web' && timerActive) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    // Enhanced visibility change handler for immediate widget cleanup
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' || document.hidden) {
+        console.log('🔄 FSP: Page becoming hidden - immediate widget cleanup');
+        performImmediateCleanup();
+      }
+    };
+
+    // Handle route changes (for single-page apps)
+    const handlePopState = () => {
+      console.log('🔄 FSP: Navigation detected - immediate widget cleanup');
+      performImmediateCleanup();
+    };
+
+    if (Platform.OS === 'web') {
+      if (timerActive) {
+        window.addEventListener('beforeunload', handleBeforeUnload);
+      }
+      
+      // Add listeners for immediate cleanup on navigation
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('popstate', handlePopState);
+      };
     }
   }, [timerActive]);
+
+  // Immediate cleanup function for navigation events
+  const performImmediateCleanup = () => {
+    try {
+      console.log('⚡ FSP: Performing immediate cleanup');
+      
+      // Immediately hide and destroy Voiceflow widget
+      if (window.voiceflow?.chat) {
+        window.voiceflow.chat.hide();
+        window.voiceflow.chat.close && window.voiceflow.chat.close();
+      }
+      
+      // Force remove widget elements immediately
+      const widgetSelectors = [
+        '[id*="voiceflow"]',
+        '[class*="voiceflow"]',
+        '[class*="vfrc"]',
+        '#voiceflow-chat',
+        '.vfrc-widget',
+        '.vfrc-chat'
+      ];
+      
+      widgetSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          element.remove();
+          console.log(`🗑️ FSP: Immediately removed element: ${selector}`);
+        });
+      });
+      
+      // Stop any active media streams
+      navigator.mediaDevices?.getUserMedia({ audio: true })
+        .then(stream => {
+          stream.getTracks().forEach(track => {
+            track.stop();
+            console.log('🔇 FSP: Stopped audio track during immediate cleanup');
+          });
+        })
+        .catch(() => {});
+      
+      console.log('✅ FSP: Immediate cleanup completed');
+    } catch (error) {
+      console.error('❌ FSP: Error during immediate cleanup:', error);
+    }
+  };
+
+  // Reset simulation state for restart
+  const resetSimulationState = () => {
+    console.log('🔄 FSP: Resetting simulation state for restart');
+    
+    // Reset all state variables
+    setTimerActive(false);
+    setTimeRemaining(20 * 60);
+    setSessionToken(null);
+    setUsageMarked(false);
+    
+    // Clear any existing intervals
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+    }
+    
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+    }
+    
+    // Reset getUserMedia override if it exists
+    if ((window as any).fspOriginalGetUserMedia && navigator.mediaDevices) {
+      navigator.mediaDevices.getUserMedia = (window as any).fspOriginalGetUserMedia;
+      delete (window as any).fspOriginalGetUserMedia;
+    }
+    
+    console.log('✅ FSP: Simulation state reset completed');
+  };
 
   // Format time for display
   const formatTime = (seconds: number) => {

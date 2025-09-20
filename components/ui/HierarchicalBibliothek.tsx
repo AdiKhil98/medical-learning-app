@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,64 @@ import { supabase } from '@/lib/supabase';
 import BookmarkButton from '@/components/ui/BookmarkButton';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
 
+// Memoized CategoryCard component to prevent unnecessary re-renders
+const CategoryCard = React.memo<{
+  item: CategoryItem;
+  IconComponent: any;
+  colors: any;
+  onPress: () => void;
+  onModalPress: () => void;
+}>(({ item, IconComponent, colors, onPress, onModalPress }) => (
+  <TouchableOpacity
+    style={[styles.categoryCard, { backgroundColor: colors.card }]}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
+      <IconComponent size={24} color={item.color} />
+    </View>
+    
+    <View style={styles.cardContent}>
+      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+        {item.title}
+      </Text>
+      
+      {item.description && (
+        <Text style={[styles.cardDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+          {item.description}
+        </Text>
+      )}
+    </View>
+    
+    <View style={styles.cardIndicator}>
+      {item.hasChildren ? (
+        <ChevronRight size={20} color={colors.textSecondary} />
+      ) : (
+        <View style={styles.contentActions}>
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onModalPress();
+            }}
+            style={styles.modalButton}
+            accessibilityLabel="In Modal öffnen"
+          >
+            <Maximize2 size={16} color={colors.primary} />
+          </TouchableOpacity>
+          <BookmarkButton
+            sectionSlug={item.slug}
+            sectionTitle={item.title}
+            sectionCategory={item.type}
+            size={18}
+            style={styles.bookmarkButton}
+          />
+          <FileText size={18} color={colors.primary} style={styles.fileIcon} />
+        </View>
+      )}
+    </View>
+  </TouchableOpacity>
+));
+
 interface CategoryItem {
   id: string;
   slug: string;
@@ -49,6 +107,10 @@ interface BreadcrumbItem {
 interface HierarchicalBibliothekProps {
   onNavigateToContent?: (slug: string) => void;
 }
+
+// Progressive loading cache
+const itemsCache = new Map<string, CategoryItem[]>();
+const childrenCache = new Map<string, boolean>();
 
 const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavigateToContent }) => {
   const { colors } = useTheme();
@@ -81,11 +143,17 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     return iconMap[iconName] || FolderOpen;
   }, []);
 
-  // Fetch items for current level
-  const fetchItems = useCallback(async (parentSlug: string | null = null) => {
-    setLoading(true);
+  // Progressive data loading - load only what's needed
+  const loadLevelData = useCallback(async (parentSlug: string | null = null) => {
+    const cacheKey = parentSlug || 'null';
+    
+    // Return cached data if available
+    if (itemsCache.has(cacheKey)) {
+      return itemsCache.get(cacheKey) || [];
+    }
+
     try {
-      
+      // Load only current level items
       let query = supabase
         .from('sections')
         .select('*')
@@ -99,46 +167,99 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       }
 
       const { data, error } = await query;
+      if (error) throw error;
+      if (!data) return [];
 
-      if (error) {
-        return;
+      // Get children info in a single query for this level
+      const parentSlugs = data.map(item => item.slug);
+      let childrenData: any[] = [];
+      
+      if (parentSlugs.length > 0) {
+        const { data: children } = await supabase
+          .from('sections')
+          .select('parent_slug')
+          .in('parent_slug', parentSlugs);
+        
+        childrenData = children || [];
       }
-
-      if (data) {
-        // Optimize: Get all children counts in a single query instead of N+1 queries
-        const parentSlugs = data.map(item => item.slug);
-        
-        let childrenData = [];
-        if (parentSlugs.length > 0) {
-          const { data: children } = await supabase
-            .from('sections')
-            .select('parent_slug')
-            .in('parent_slug', parentSlugs);
-          
-          childrenData = children || [];
-        }
-        
-        // Create a set of slugs that have children for O(1) lookup
-        const hasChildrenSet = new Set(childrenData.map(child => child.parent_slug));
-        
-        // Map items with children info
-        const itemsWithChildrenInfo = data.map(item => ({
+      
+      // Create hasChildren lookup
+      const hasChildrenSet = new Set(childrenData.map(child => child.parent_slug));
+      
+      // Process items with children info
+      const processedItems = data.map(item => {
+        const hasChildren = hasChildrenSet.has(item.slug);
+        childrenCache.set(item.slug, hasChildren);
+        return {
           ...item,
-          hasChildren: hasChildrenSet.has(item.slug)
-        }));
+          hasChildren
+        };
+      });
 
-        setCurrentItems(itemsWithChildrenInfo);
-      }
+      // Cache the results
+      itemsCache.set(cacheKey, processedItems);
+      return processedItems;
+      
     } catch (error) {
+      console.error('Error loading level data:', error);
+      return [];
+    }
+  }, []);
+
+  // Get items from cache if available
+  const getItemsFromCache = useCallback((parentSlug: string | null = null) => {
+    const key = parentSlug || 'null';
+    return itemsCache.get(key) || null;
+  }, []);
+
+  // Fetch items for current level (progressive loading)
+  const fetchItems = useCallback(async (parentSlug: string | null = null) => {
+    // Check cache first for instant loading
+    const cachedItems = getItemsFromCache(parentSlug);
+    if (cachedItems) {
+      setCurrentItems(cachedItems);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Load only this level's data
+      const items = await loadLevelData(parentSlug);
+      setCurrentItems(items);
+    } catch (error) {
+      console.error('Error fetching items:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadLevelData, getItemsFromCache]);
 
   // Initial load
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  // Preload next level data in background for better UX
+  const preloadNextLevel = useCallback(async () => {
+    if (currentItems.length > 0) {
+      // Preload children for items that have them
+      const itemsWithChildren = currentItems.filter(item => item.hasChildren);
+      
+      // Load the first few children levels in background
+      itemsWithChildren.slice(0, 3).forEach(item => {
+        setTimeout(() => {
+          loadLevelData(item.slug);
+        }, 100);
+      });
+    }
+  }, [currentItems, loadLevelData]);
+
+  // Trigger preloading when current items change
+  useEffect(() => {
+    if (currentItems.length > 0 && !loading) {
+      preloadNextLevel();
+    }
+  }, [currentItems, loading, preloadNextLevel]);
 
   // Navigate to category or content
   const handleItemPress = useCallback(async (item: CategoryItem) => {
@@ -180,7 +301,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     setAvailableSections([]);
   }, []);
 
-  // Navigate back in breadcrumbs
+  // Navigate back in breadcrumbs (optimized)
   const handleBreadcrumbPress = useCallback(async (index: number) => {
     const targetBreadcrumb = breadcrumbs[index];
     
@@ -188,9 +309,15 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     setBreadcrumbs(breadcrumbs.slice(0, index + 1));
     setCurrentParent(targetBreadcrumb.slug);
     
-    // Fetch items for target level
-    await fetchItems(targetBreadcrumb.slug);
-  }, [breadcrumbs, fetchItems]);
+    // Get items from cache immediately (no loading state for cached navigation)
+    const cachedItems = getItemsFromCache(targetBreadcrumb.slug);
+    if (cachedItems) {
+      setCurrentItems(cachedItems);
+    } else {
+      // Fallback to fetch if cache miss
+      await fetchItems(targetBreadcrumb.slug);
+    }
+  }, [breadcrumbs, fetchItems, getItemsFromCache]);
 
   // Render breadcrumb navigation
   const renderBreadcrumbs = () => (
@@ -226,73 +353,46 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   );
 
-  // Render category card
-  const renderCategoryCard = (item: CategoryItem) => {
+  // Memoized category card renderer for performance
+  const renderCategoryCard = useCallback((item: CategoryItem) => {
     const IconComponent = getIconComponent(item.icon);
     
     return (
-      <TouchableOpacity
+      <CategoryCard
         key={item.id}
-        style={[styles.categoryCard, { backgroundColor: colors.card }]}
+        item={item}
+        IconComponent={IconComponent}
+        colors={colors}
         onPress={() => handleItemPress(item)}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
-          <IconComponent size={24} color={item.color} />
-        </View>
-        
-        <View style={styles.cardContent}>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-            {item.title}
-          </Text>
-          
-          {item.description && (
-            <Text style={[styles.cardDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-              {item.description}
-            </Text>
-          )}
-        </View>
-        
-        <View style={styles.cardIndicator}>
-          {item.hasChildren ? (
-            <ChevronRight size={20} color={colors.textSecondary} />
-          ) : (
-            <View style={styles.contentActions}>
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleOpenModal(item);
-                }}
-                style={styles.modalButton}
-                accessibilityLabel="In Modal öffnen"
-              >
-                <Maximize2 size={16} color={colors.primary} />
-              </TouchableOpacity>
-              <BookmarkButton
-                sectionSlug={item.slug}
-                sectionTitle={item.title}
-                sectionCategory={item.type}
-                size={18}
-                style={styles.bookmarkButton}
-              />
-              <FileText size={18} color={colors.primary} style={styles.fileIcon} />
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+        onModalPress={() => handleOpenModal(item)}
+      />
     );
-  };
+  }, [colors, handleItemPress, handleOpenModal, getIconComponent]);
 
-  if (loading && currentItems.length === 0) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Lade medizinische Kategorien...
-        </Text>
-      </View>
-    );
-  }
+  // Loading skeleton for better perceived performance
+  const LoadingSkeleton = useMemo(() => (
+    <View style={styles.grid}>
+      {Array(6).fill(0).map((_, index) => (
+        <View key={index} style={[styles.categoryCard, styles.skeletonCard, { backgroundColor: colors.card }]}>
+          <View style={[styles.skeletonIcon, { backgroundColor: colors.background }]} />
+          <View style={styles.skeletonContent}>
+            <View style={[styles.skeletonTitle, { backgroundColor: colors.background }]} />
+            <View style={[styles.skeletonDescription, { backgroundColor: colors.background }]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  ), [colors]);
+
+  // Memoized grid to prevent unnecessary re-renders
+  const memoizedGrid = useMemo(() => (
+    <View style={styles.grid}>
+      {currentItems.map(renderCategoryCard)}
+    </View>
+  ), [currentItems, renderCategoryCard]);
+
+  // Show skeleton only if no items and loading
+  const showSkeleton = loading && currentItems.length === 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -301,11 +401,17 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       
       {/* Content Header */}
       <View style={styles.headerContainer}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {breadcrumbs[breadcrumbs.length - 1].title}
-        </Text>
+        <View style={styles.headerTitleRow}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {breadcrumbs[breadcrumbs.length - 1].title}
+          </Text>
+          {loading && currentItems.length > 0 && (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.headerLoader} />
+          )}
+        </View>
         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
           {currentItems.length} {currentItems.length === 1 ? 'Kategorie' : 'Kategorien'}
+          {loading && currentItems.length > 0 && ' • Lade mehr...'}
         </Text>
       </View>
 
@@ -315,9 +421,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.grid}>
-          {currentItems.map(renderCategoryCard)}
-        </View>
+        {showSkeleton ? LoadingSkeleton : memoizedGrid}
         
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -386,10 +490,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    flex: 1,
+  },
+  headerLoader: {
+    marginLeft: 8,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -459,6 +571,32 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  // Skeleton loading styles
+  skeletonCard: {
+    opacity: 0.7,
+  },
+  skeletonIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginBottom: 12,
+    opacity: 0.3,
+  },
+  skeletonContent: {
+    flex: 1,
+  },
+  skeletonTitle: {
+    height: 16,
+    borderRadius: 4,
+    marginBottom: 8,
+    opacity: 0.3,
+  },
+  skeletonDescription: {
+    height: 12,
+    borderRadius: 4,
+    width: '80%',
+    opacity: 0.2,
   },
 });
 
