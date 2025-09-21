@@ -164,10 +164,8 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
-        style={styles.gradientBackground}
-      />
+      {/* Subtle off-white background with warm undertone */}
+      <View style={styles.whiteBackground} />
 
       {/* Header with Menu */}
       <LinearGradient
@@ -196,10 +194,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.4)']}
+            colors={['rgba(184,126,112,0.9)', 'rgba(184,126,112,0.7)']}  // Old Rose gradient for visibility
             style={styles.arrowButton}
           >
-            <ArrowLeft size={20} color="rgba(0,0,0,0.5)" />
+            <ArrowLeft size={20} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -211,10 +209,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.4)']}
+            colors={['rgba(184,126,112,0.9)', 'rgba(184,126,112,0.7)']}  // Old Rose gradient for visibility
             style={styles.arrowButton}
           >
-            <ArrowRight size={20} color="rgba(0,0,0,0.5)" />
+            <ArrowRight size={20} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -511,14 +509,15 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 const styles = {
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FAFAFA',  // Soft off-white background
   },
-  gradientBackground: {
+  whiteBackground: {
     position: 'absolute' as const,
     left: 0,
     right: 0,
     top: 0,
     height: screenHeight,
+    backgroundColor: '#FAFAFA',  // Consistent soft off-white
   },
   scrollView: {
     flex: 1,
@@ -583,21 +582,21 @@ const styles = {
   sectionTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#2D2D2D',  // Dark gray for white background
     textAlign: 'center',
     marginBottom: 30,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    textShadowColor: 'rgba(0,0,0,0.05)',  // Subtle shadow
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   tipSectionTitle: {
     fontSize: 24,
     fontWeight: '500',
-    color: '#ffffff',
+    color: '#2D2D2D',  // Dark gray for white background
     textAlign: 'center',
     marginBottom: 24,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 1, height: 1 },
+    textShadowColor: 'rgba(0,0,0,0.05)',  // Subtle shadow
+    textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   // Header Styles
@@ -647,13 +646,12 @@ const styles = {
     width: '100%',
     maxWidth: 400,
     borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.2)',  // Subtle Old Rose border
-    shadowColor: 'rgba(181, 87, 64, 0.1)',  // Enhanced primary shadow
-    shadowOffset: { width: 0, height: 20 },
+    borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
+    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 40,
-    elevation: 25,
-    // Adding second shadow for depth
+    shadowRadius: 20,
+    elevation: 12,
     backgroundColor: 'transparent',  // Ensure gradient shows through
   },
   heroIcon: {
