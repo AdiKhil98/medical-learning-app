@@ -46,8 +46,8 @@ export default function SubscriptionPage() {
       paddingVertical: 12,
       paddingHorizontal: 16,
       borderRadius: 12,
-      backgroundColor: 'rgba(255,255,255,0.9)',
-      shadowColor: '#3b82f6',
+      backgroundColor: 'rgba(249, 246, 242, 0.95)',
+      shadowColor: 'rgba(181,87,64,0.3)',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -56,7 +56,7 @@ export default function SubscriptionPage() {
     backButtonText: {
       fontSize: 16,
       fontWeight: '600',
-      color: '#1e40af',
+      color: '#B87E70',
       marginLeft: 8,
     },
     content: {
@@ -65,10 +65,7 @@ export default function SubscriptionPage() {
   });
 
   return (
-    <LinearGradient
-      colors={['#ffffff', '#f0f8ff']}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <SafeAreaView style={dynamicStyles.safeArea}>
         <StatusBar 
           barStyle="dark-content"
@@ -91,6 +88,6 @@ export default function SubscriptionPage() {
           </View>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }

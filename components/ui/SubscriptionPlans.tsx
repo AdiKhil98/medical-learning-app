@@ -158,7 +158,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     heroTitle: {
       fontSize: isTablet ? 36 : 28,
       fontWeight: '800',
-      color: '#15803d',
+      color: '#B8755C',
       textAlign: 'center',
       marginBottom: 12,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -167,7 +167,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     heroSubtitle: {
       fontSize: 18,
       fontWeight: '600',
-      color: '#16a34a',
+      color: '#6B7280',
       textAlign: 'center',
       marginBottom: 32,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -175,15 +175,17 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     toggleContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.9)',
+      backgroundColor: '#F9F6F2',
       borderRadius: 16,
       padding: 6,
       marginBottom: 24,
-      shadowColor: '#16a34a',
+      shadowColor: 'rgba(181,87,64,0.15)',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
+      shadowOpacity: 0.1,
       shadowRadius: 12,
       elevation: 6,
+      borderWidth: 1,
+      borderColor: 'rgba(184, 126, 112, 0.2)',
     },
     toggleOption: {
       paddingHorizontal: 24,
@@ -192,7 +194,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       minWidth: 100,
     },
     toggleOptionActive: {
-      backgroundColor: '#16a34a',
+      backgroundColor: '#B8755C',
     },
     toggleText: {
       fontSize: 16,
@@ -210,21 +212,21 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       gap: 12,
     },
     badge: {
-      backgroundColor: 'rgba(22, 163, 74, 0.1)',
+      backgroundColor: 'rgba(184, 126, 112, 0.1)',
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderWidth: 1,
-      borderColor: '#16a34a',
+      borderColor: 'rgba(184, 126, 112, 0.3)',
     },
     badgeText: {
       fontSize: 14,
       fontWeight: '600',
-      color: '#15803d',
+      color: '#B87E70',
     },
     savingsBadge: {
-      backgroundColor: '#10b981',
-      borderColor: '#10b981',
+      backgroundColor: '#E2827F',
+      borderColor: '#E2827F',
     },
     savingsBadgeText: {
       color: '#ffffff',
@@ -242,32 +244,33 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       alignItems: isTablet ? 'flex-start' : 'center',
     },
     planCard: {
-      backgroundColor: '#ffffff',
+      backgroundColor: '#F9F6F2',
       borderRadius: 24,
       padding: 24,
       width: isTablet ? (width - 80) / 2 : width - 32,
       maxWidth: isTablet ? 360 : 400,
-      shadowColor: '#16a34a',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.12,
-      shadowRadius: 24,
+      shadowColor: 'rgba(181,87,64,0.15)',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
       elevation: 8,
       borderWidth: 1,
-      borderColor: 'rgba(22, 163, 74, 0.1)',
+      borderColor: 'rgba(184, 126, 112, 0.2)',
       position: 'relative',
     },
     recommendedCard: {
-      borderColor: '#16a34a',
+      borderColor: '#E2827F',
       borderWidth: 2,
       transform: isTablet ? [{ scale: 1.02 }] : [{ scale: 1 }],
-      shadowOpacity: 0.2,
+      shadowOpacity: 0.15,
       shadowRadius: 32,
+      backgroundColor: '#FFFFFF',
     },
     planBadge: {
       position: 'absolute',
       top: 24,
       right: 24,
-      backgroundColor: '#16a34a',
+      backgroundColor: '#B87E70',
       borderRadius: 20,
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -297,7 +300,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     planPrice: {
       fontSize: 48,
       fontWeight: '800',
-      color: '#15803d',
+      color: '#B87E70',
       lineHeight: 56,
     },
     planPeriod: {
@@ -307,7 +310,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     },
     costPerSimulation: {
       fontSize: 14,
-      color: '#10b981',
+      color: '#E2827F',
       fontWeight: '600',
       marginTop: 8,
     },
@@ -330,7 +333,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       width: 20,
       height: 20,
       borderRadius: 10,
-      backgroundColor: '#16a34a',
+      backgroundColor: '#B87E70',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
@@ -351,14 +354,14 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       color: '#9ca3af',
     },
     selectButton: {
-      backgroundColor: '#16a34a',
+      backgroundColor: '#E2827F',
       borderRadius: 16,
       paddingVertical: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#16a34a',
+      shadowColor: 'rgba(226, 130, 127, 0.4)',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 4,
     },
@@ -376,7 +379,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       alignItems: 'center',
     },
     recommendedBadgeInner: {
-      backgroundColor: '#16a34a',
+      backgroundColor: '#E2827F',
       paddingHorizontal: 20,
       paddingVertical: 8,
       borderRadius: 20,
@@ -393,12 +396,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
   });
 
   return (
-    <LinearGradient
-      colors={['#f0fdf4', '#dcfce7', '#bbf7d0']}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <View style={dynamicStyles.heroSection}>
@@ -568,6 +566,6 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       
       <View style={dynamicStyles.spacer} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
