@@ -572,7 +572,7 @@ export default function FSPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fef7f7',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',

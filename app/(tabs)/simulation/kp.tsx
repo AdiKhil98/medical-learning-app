@@ -572,7 +572,7 @@ export default function KPSimulationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
