@@ -41,13 +41,13 @@ const MEDICAL_COLORS = {
   primary: '#E2827F', // Burning Sand for chart
   chartGradient: '#FDF7F6', // Very light coral for chart fill
   background: '#FFFFFF',
-  lightBackground: '#FBEEEC', // Light coral background
-  textPrimary: '#424242',
-  textSecondary: '#757575',
-  border: '#E0E0E0',
+  lightBackground: '#F9F6F2', // Light cream background
+  textPrimary: '#1F2937',
+  textSecondary: '#6B7280',
+  border: 'rgba(184, 126, 112, 0.2)',
   success: '#66BB6A', // Keep green for scores >= 60
   danger: '#B15740', // Brown Rust for scores < 60
-  lightGray: '#F5F5F5',
+  lightGray: '#F9F6F2',
   gridColor: '#f0f0f0'
 };
 
@@ -242,9 +242,9 @@ export default function ProgressScreen() {
             data={currentChartData}
             style={{
               data: {
-                fill: activeTab === 'KP' ? 'rgba(33, 150, 243, 0.2)' : 'rgba(156, 39, 176, 0.2)', 
+                fill: activeTab === 'KP' ? 'rgba(184, 126, 112, 0.2)' : 'rgba(226, 130, 127, 0.2)', 
                 fillOpacity: 1,
-                stroke: activeTab === 'KP' ? MEDICAL_COLORS.primary : '#9c27b0',
+                stroke: activeTab === 'KP' ? '#B87E70' : '#E2827F',
                 strokeWidth: 2.5
               }
             }}
@@ -283,7 +283,7 @@ export default function ProgressScreen() {
             size={4}
             style={{
               data: { 
-                fill: activeTab === 'KP' ? MEDICAL_COLORS.primary : '#9c27b0',
+                fill: activeTab === 'KP' ? '#B87E70' : '#E2827F',
                 stroke: '#fff',
                 strokeWidth: 2
               }
@@ -373,7 +373,7 @@ export default function ProgressScreen() {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderLeft}>
-              <Maximize2 size={24} color="#6366f1" />
+              <Maximize2 size={24} color="#E2827F" />
               <Text style={styles.modalTitle}>Bewertung Details</Text>
             </View>
             <TouchableOpacity 
@@ -511,10 +511,7 @@ export default function ProgressScreen() {
         onPress={() => openEvaluationModal(evaluation)}
         activeOpacity={0.7}
       >
-        <LinearGradient
-          colors={['#ffffff', '#fafbfc']}
-          style={styles.modernCardGradient}
-        >
+        <View style={styles.modernCardGradient}>
           <View style={styles.modernCardHeader}>
             <View style={styles.modernCardLeft}>
               <View style={styles.modernDateContainer}>
@@ -559,7 +556,7 @@ export default function ProgressScreen() {
             
             <View style={styles.modernViewButton}>
               <Text style={styles.modernViewText}>Antippen zum Anzeigen</Text>
-              <Maximize2 size={16} color="#6366f1" />
+              <Maximize2 size={16} color="#E2827F" />
             </View>
           </View>
 
@@ -629,7 +626,7 @@ export default function ProgressScreen() {
               </LinearGradient>
             </View>
           )}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -645,10 +642,7 @@ export default function ProgressScreen() {
 
   return (
     <SafeAreaView style={styles.modernContainer}>
-      <LinearGradient
-        colors={['#f8fafc', '#e2e8f0', '#ffffff']}
-        style={styles.gradientBackground}
-      />
+      <View style={styles.gradientBackground} />
       
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
         {/* Modern Header */}
@@ -701,7 +695,7 @@ export default function ProgressScreen() {
         <View style={styles.modernChartContainer}>
           <View style={styles.chartHeader}>
             <View style={styles.chartTitleContainer}>
-              <BarChart3 size={24} color="#4338ca" />
+              <BarChart3 size={24} color="#B87E70" />
               <Text style={styles.chartTitle}>{activeTab} Performance Verlauf</Text>
             </View>
             <View style={styles.chartLegend}>
@@ -731,7 +725,7 @@ export default function ProgressScreen() {
                 colors={['#e3f2fd', '#f3e5f5']}
                 style={styles.emptyStateGradient}
               >
-                <Calendar size={48} color="#9c27b0" />
+                <Calendar size={48} color="#E2827F" />
                 <Text style={styles.emptyStateTitle}>Noch keine Daten</Text>
                 <Text style={styles.emptyStateText}>
                   Starten Sie eine {activeTab}-Simulation, um Ihren Fortschritt zu verfolgen
@@ -755,7 +749,7 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   modernContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#FFFFFF',
   },
   gradientBackground: {
     position: 'absolute',
@@ -763,6 +757,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: '100%',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -777,14 +772,14 @@ const styles = StyleSheet.create({
   modernTitle: {
     fontSize: 32,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
+    color: '#B8755C',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   modernSubtitle: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6b7280',
+    color: '#6B7280',
     lineHeight: 24,
   },
 
@@ -797,17 +792,17 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F9F6F2',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowColor: 'rgba(181,87,64,0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(184, 126, 112, 0.2)',
   },
   statIconContainer: {
     width: 40,
@@ -834,15 +829,15 @@ const styles = StyleSheet.create({
   modernChartContainer: {
     marginHorizontal: 20,
     marginBottom: 32,
-    backgroundColor: 'white',
+    backgroundColor: '#F9F6F2',
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: 'rgba(181,87,64,0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(184, 126, 112, 0.2)',
   },
   chartHeader: {
     flexDirection: 'row',
@@ -913,7 +908,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F9F6F2',
     borderRadius: 16,
     padding: 4,
   },
@@ -924,8 +919,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   activeTab: {
-    backgroundColor: '#6366f1',
-    shadowColor: '#6366f1',
+    backgroundColor: '#E2827F',
+    shadowColor: 'rgba(226, 130, 127, 0.4)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -958,7 +953,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(184, 126, 112, 0.2)',
+    backgroundColor: '#F9F6F2',
   },
   modernCardHeader: {
     flexDirection: 'row',
@@ -1024,7 +1020,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 6,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#F9F6F2',
     borderRadius: 3,
     marginBottom: 6,
     overflow: 'hidden',
@@ -1044,13 +1040,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: '#f0f4ff',
+    backgroundColor: 'rgba(226, 130, 127, 0.1)',
     gap: 6,
   },
   modernViewText: {
     fontSize: 11,
     fontFamily: 'Inter-SemiBold',
-    color: '#6366f1',
+    color: '#E2827F',
   },
   chevron: {
     transform: [{ rotate: '90deg' }],
@@ -1167,13 +1163,14 @@ const styles = StyleSheet.create({
     padding: 40,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(156, 39, 176, 0.1)',
+    borderColor: 'rgba(226, 130, 127, 0.3)',
     borderStyle: 'dashed',
+    backgroundColor: '#F9F6F2',
   },
   emptyStateTitle: {
     fontSize: 18,
     fontFamily: 'Inter-Bold',
-    color: '#9c27b0',
+    color: '#E2827F',
     marginTop: 16,
     marginBottom: 8,
   },
@@ -1192,7 +1189,7 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#FFFFFF',
   },
   modalGradient: {
     position: 'absolute',
@@ -1207,7 +1204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -1224,7 +1221,7 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F9F6F2',
   },
   modalScrollView: {
     flex: 1,
