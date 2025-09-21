@@ -171,7 +171,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
       {/* Header with Menu */}
       <LinearGradient
-        colors={['#E2827F', '#B87E70']}  // Sophisticated gradient - Burning Sand to Old Rose
+        colors={['#F8F3E8', '#E5877E']}  // Lighter gradient - White Linen to Tonys Pink
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.modernHeader}
@@ -181,9 +181,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             style={styles.menuButton}
             onPress={() => setMenuOpen(true)}
           >
-            <MenuIcon size={24} color="#FFFFFF" />  {/* Pure white for premium feel */}
+            <MenuIcon size={24} color="#B87E70" />  {/* Old Rose for light background */}
           </TouchableOpacity>
-          <Logo size="medium" variant="medical" textColor="white" animated={true} />
+          <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
           <UserAvatar size="medium" />
         </View>
       </LinearGradient>
@@ -620,7 +620,7 @@ const styles = {
   menuButton: {
     padding: 12,  // Enhanced padding for better touch target
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.15)',  // Slightly more visible
+    backgroundColor: 'rgba(184,126,112,0.15)',  // Old Rose tint for light background
     shadowColor: 'rgba(0,0,0,0.1)',  // Subtle shadow
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
