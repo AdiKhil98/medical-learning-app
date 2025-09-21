@@ -9,18 +9,8 @@
   NODE_VERSION = "18"
 
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/webhook"
-  to = "/.netlify/functions/webhook"
-  status = 200
-
-[[redirects]]
-  from = "/api/webhook-evaluation"
-  to = "/.netlify/functions/webhook-evaluation"
+  from = "/api/webhook/lemonsqueezy"
+  to = "/.netlify/functions/lemonsqueezy"
   status = 200
 
 [[redirects]]
@@ -29,10 +19,21 @@
   status = 200
 
 [[redirects]]
+  from = "/api/webhook-evaluation"
+  to = "/.netlify/functions/webhook-evaluation"
+  status = 200
+
+[[redirects]]
+  from = "/webhook"
+  to = "/.netlify/functions/webhook"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
-[[redirects]]
-  from = "/api/webhook/lemonsqueezy"
-  to = "/.netlify/functions/lemonsqueezy"
   status = 200
