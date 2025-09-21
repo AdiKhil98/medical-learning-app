@@ -246,11 +246,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         <View style={styles.section}>
           <View style={styles.heroSection}>
             <LinearGradient
-              colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+              colors={['rgba(248, 243, 232, 0.98)', 'rgba(248, 243, 232, 0.95)']}  // Nearly opaque White Linen
               style={styles.heroCard}
             >
               <View style={styles.heroIcon}>
-                <BookOpen size={64} color="#ffffff" />
+                <BookOpen size={64} color="#E2827F" />  {/* Burning Sand for icon visibility */}
               </View>
               <Text style={styles.heroTitle}>Lernkapital</Text>
               <Text style={styles.heroSubtitle}>
@@ -266,7 +266,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#E2827F', '#B87E70', '#E5877E']}  // Burning Sand to Old Rose to Tonys Pink
+                  colors={['#B15740', '#A04A35']}  // Brown Rust with hover effect - CONVERSION FOCUSED
                   style={styles.ctaButtonGradient}
                 >
                   <Info size={20} color="#ffffff" style={styles.ctaIcon} />
@@ -568,12 +568,17 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(184, 126, 112, 0.5)',  // Old Rose with transparency
     marginHorizontal: 4,
   },
   activeIndicator: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#B87E70',  // Solid Old Rose for active state
     width: 24,
+    shadowColor: '#B87E70',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 32,
@@ -631,18 +636,18 @@ const styles = {
     width: '100%',
   },
   heroCard: {
-    borderRadius: 24,
+    borderRadius: 16,  // Modern corner radius
     padding: 40,
     alignItems: 'center',
     width: '100%',
     maxWidth: 400,
-    borderWidth: 2,
-    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 126, 112, 0.2)',  // Subtle Old Rose border
+    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Premium shadow with Brown Rust tint
+    shadowOffset: { width: 0, height: 25 },
+    shadowOpacity: 1,
+    shadowRadius: 50,
+    elevation: 25,
   },
   heroIcon: {
     marginBottom: 20,
@@ -650,35 +655,38 @@ const styles = {
   heroTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#B15740',  // Brown Rust for maximum impact
     textAlign: 'center',
     marginBottom: 16,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 2, height: 2 },
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',  // Subtle shadow for contrast
+    textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   heroSubtitle: {
     fontSize: 20,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#333333',  // Dark gray for optimal readability against White Linen
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 28,
+    fontWeight: '500',  // Medium weight for better hierarchy
   },
   heroDescription: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#555555',  // Medium gray for optimal reading against White Linen
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
+    fontWeight: '400',  // Regular weight for body text
   },
   ctaButton: {
     borderRadius: 30,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowColor: '#B15740',  // Brown Rust shadow to make button pop
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    transform: [{ scale: 1 }],  // Ready for hover animations
   },
   ctaButtonGradient: {
     paddingVertical: 16,
@@ -691,9 +699,10 @@ const styles = {
     marginRight: 8,
   },
   ctaButtonText: {
-    color: '#ffffff',
+    color: '#ffffff',  // White text for maximum contrast
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',  // Semi-bold for premium feel
+    letterSpacing: 0.5,  // Slight letter spacing for elegance
   },
   // Recent Content Section Styles
   recentContentSection: {
