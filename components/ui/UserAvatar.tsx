@@ -52,7 +52,7 @@ export default function UserAvatar({
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={['#4CAF50', '#66BB6A', '#81C784']}
+          colors={['#10B981', '#059669', '#047857']}  // Keep green for user avatar but with modern shades
           style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -126,7 +126,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    shadowColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',  // Subtle white border
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,

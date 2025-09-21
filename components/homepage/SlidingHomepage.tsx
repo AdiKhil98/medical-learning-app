@@ -171,7 +171,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
       {/* Header with Menu */}
       <LinearGradient
-        colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
+        colors={['#E2827F', '#B87E70']}  // Sophisticated gradient - Burning Sand to Old Rose
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.modernHeader}
@@ -181,7 +181,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             style={styles.menuButton}
             onPress={() => setMenuOpen(true)}
           >
-            <MenuIcon size={24} color="rgba(255,255,255,0.9)" />
+            <MenuIcon size={24} color="#FFFFFF" />  {/* Pure white for premium feel */}
           </TouchableOpacity>
           <Logo size="medium" variant="medical" textColor="white" animated={true} />
           <UserAvatar size="medium" />
@@ -603,13 +603,13 @@ const styles = {
   // Header Styles
   modernHeader: {
     paddingVertical: 16,
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    shadowColor: '#000',
+    paddingHorizontal: 20,  // Increased for better spacing
+    paddingTop: 24,  // Enhanced top padding
+    shadowColor: 'rgba(181,87,64,0.15)',  // Premium Brown Rust shadow
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 8,
     zIndex: 1000,
   },
   headerContent: {
@@ -618,9 +618,14 @@ const styles = {
     justifyContent: 'space-between',
   },
   menuButton: {
-    padding: 8,
+    padding: 12,  // Enhanced padding for better touch target
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.15)',  // Slightly more visible
+    shadowColor: 'rgba(0,0,0,0.1)',  // Subtle shadow
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   loadingText: {
     fontSize: 16,

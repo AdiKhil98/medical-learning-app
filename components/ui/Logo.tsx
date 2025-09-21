@@ -165,14 +165,21 @@ export default function Logo({
         return (
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.medicalContainer, { transform: [{ scale: pulseAnim }] }]}>
-              {/* Outer hexagon */}
-              <View style={[styles.hexagonOuter, { width: iconSize, height: iconSize }]}>
-                <LinearGradient
-                  colors={['#E2827F', '#B15740', '#B15740']}
-                  style={[styles.hexagonGradient, { width: iconSize, height: iconSize }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+              {/* Premium gradient background for logo area */}
+              <LinearGradient
+                colors={['#B15740', '#B87E70']}  // Brown Rust to Old Rose gradient
+                style={styles.medicalBackground}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                {/* Outer hexagon */}
+                <View style={[styles.hexagonOuter, { width: iconSize, height: iconSize }]}>
+                  <LinearGradient
+                    colors={['#E2827F', '#B15740', '#B15740']}
+                    style={[styles.hexagonGradient, { width: iconSize, height: iconSize }]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
                   {/* Inner hexagon with medical cross */}
                   <View style={[styles.hexagonInner, { width: iconSize * 0.7, height: iconSize * 0.7 }]}>
                     {/* Medical cross - vertical bar */}
@@ -207,17 +214,20 @@ export default function Logo({
                   </View>
                 </LinearGradient>
               </View>
+              {/* Logo text with enhanced styling */}
+              {showText && (
+                <View style={styles.medicalTextContainer}>
+                  <Text style={[styles.medicalTitle, {
+                    color: '#FFFFFF',  // Force white for authority
+                    fontSize: size === 'small' ? 22 : size === 'large' ? 36 : 28,
+                    fontWeight: '700',  // Enhanced font weight for authority
+                  }]}>
+                    KP MED
+                  </Text>
+                </View>
+              )}
+              </LinearGradient>
             </Animated.View>
-            {showText && (
-              <View style={styles.medicalTextContainer}>
-                <Text style={[styles.medicalTitle, { 
-                  color: finalTextColor, 
-                  fontSize: size === 'small' ? 22 : size === 'large' ? 36 : 28 
-                }]}>
-                  KP MED
-                </Text>
-              </View>
-            )}
           </Container>
         );
 
@@ -380,6 +390,19 @@ const styles = StyleSheet.create({
   medicalContainer: {
     marginRight: 12,
     position: 'relative',
+  },
+  medicalBackground: {
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',  // Subtle white border
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: 'rgba(181,87,64,0.15)',  // Premium shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   hexagonOuter: {
     position: 'relative',
