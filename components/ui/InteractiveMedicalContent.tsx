@@ -8,7 +8,21 @@ import {
   Animated,
   TextInput,
 } from 'react-native';
-import { ChevronDown, BookOpen, AlertCircle, Search } from 'lucide-react-native';
+import {
+  ChevronDown,
+  BookOpen,
+  AlertCircle,
+  Search,
+  Stethoscope,
+  Activity,
+  AlertTriangle,
+  FileText,
+  Lightbulb,
+  Target,
+  Bookmark,
+  Eye,
+  Heart
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
@@ -37,6 +51,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const { triggerActivity } = useSessionTimeout();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
   const [searchTerm, setSearchTerm] = useState('');
+  const [studyMode, setStudyMode] = useState(false);
+  const [highlightedText, setHighlightedText] = useState<Set<string>>(new Set());
+  const [bookmarkedSections, setBookmarkedSections] = useState<Set<number>>(new Set());
+  const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
+  const [readingProgress, setReadingProgress] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<{ [key: number]: View | null }>({});
@@ -94,6 +113,69 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     }
   }, [supabaseRow?.content_improved, supabaseRow?.content_html, supabaseRow?.title]);
 
+  // Function to detect content type and assign styling
+  const getContentTypeStyle = (title: string, content: string) => {
+    const titleLower = title.toLowerCase();
+    const contentLower = content.toLowerCase();
+
+    // Definition sections
+    if (titleLower.includes('definition') || titleLower.includes('klassifikation') ||
+        contentLower.includes('wird definiert') || contentLower.includes('ist eine')) {
+      return {
+        borderColor: '#3B82F6',
+        backgroundColor: '#FAFBFF',
+        icon: FileText,
+        iconColor: '#3B82F6',
+        type: 'definition'
+      };
+    }
+
+    // Clinical procedures
+    if (titleLower.includes('therapie') || titleLower.includes('behandlung') ||
+        titleLower.includes('intervention') || titleLower.includes('management')) {
+      return {
+        borderColor: '#10B981',
+        backgroundColor: '#F0FDF4',
+        icon: Activity,
+        iconColor: '#10B981',
+        type: 'clinical'
+      };
+    }
+
+    // Diagnostics
+    if (titleLower.includes('diagnostik') || titleLower.includes('untersuchung') ||
+        titleLower.includes('befund') || titleLower.includes('symptom')) {
+      return {
+        borderColor: '#F59E0B',
+        backgroundColor: '#FFFBEB',
+        icon: Stethoscope,
+        iconColor: '#F59E0B',
+        type: 'diagnostic'
+      };
+    }
+
+    // Critical/Emergency
+    if (titleLower.includes('notfall') || titleLower.includes('kritisch') ||
+        titleLower.includes('komplikation') || contentLower.includes('lebensbedrohlich')) {
+      return {
+        borderColor: '#EF4444',
+        backgroundColor: '#FEF2F2',
+        icon: AlertTriangle,
+        iconColor: '#EF4444',
+        type: 'emergency'
+      };
+    }
+
+    // Default
+    return {
+      borderColor: '#B87E70',
+      backgroundColor: '#F9F6F2',
+      icon: BookOpen,
+      iconColor: '#B87E70',
+      type: 'general'
+    };
+  };
+
   // Initialize animation
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -139,6 +221,93 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       index: index,
     }));
   }, [filteredSections]);
+
+  // Enhanced function to auto-bold medical terminology
+  const enhanceMedicalText = (text: string) => {
+    const medicalTerms = [
+      'Bradykardie', 'Tachykardie', 'Hypertonie', 'Hypotonie', 'Myokardinfarkt',
+      'Angina pectoris', 'Herzinsuffizienz', 'Vorhofflimmern', 'Kammerflimmern',
+      'AV-Block', 'Schrittmacher', 'Defibrillation', 'Reanimation', 'CPR',
+      'EKG', 'Echokardiographie', 'Koronarangiographie', 'Stent', 'Bypass',
+      'Pneumonie', 'Asthma', 'COPD', 'Pneumothorax', 'Pleuraerguss',
+      'Intubation', 'Beatmung', 'Sauerstoff', 'CO2', 'pH-Wert',
+      'Diabetes', 'Insulin', 'Glukose', 'HbA1c', 'Ketoacidose',
+      'Sepsis', 'Antibiotika', 'Infektion', 'Fieber', 'Leukozytose'
+    ];
+
+    let enhancedText = text;
+
+    // Auto-bold medical terms
+    medicalTerms.forEach(term => {
+      const regex = new RegExp(`\\b(${term})\\b`, 'gi');
+      enhancedText = enhancedText.replace(regex, '**$1**');
+    });
+
+    return enhancedText;
+  };
+
+  // Function to render numerical values with colored badges
+  const renderNumericalValue = (value: string, type: 'normal' | 'pathological' | 'range') => {
+    const badgeStyle = {
+      normal: { backgroundColor: '#DCFCE7', color: '#166534', borderColor: '#10B981' },
+      pathological: { backgroundColor: '#FEE2E2', color: '#991B1B', borderColor: '#EF4444' },
+      range: { backgroundColor: '#DBEAFE', color: '#1E40AF', borderColor: '#3B82F6' }
+    };
+
+    return (
+      <View style={[styles.numericalBadge, { borderColor: badgeStyle[type].borderColor, backgroundColor: badgeStyle[type].backgroundColor }]}>
+        <Text style={[styles.numericalText, { color: badgeStyle[type].color }]}>{value}</Text>
+      </View>
+    );
+  };
+
+  // Enhanced text parsing with medical terminology and numerical values
+  const parseEnhancedMedicalText = (text: string, baseStyle: any) => {
+    // First enhance with medical terminology
+    const enhancedText = enhanceMedicalText(text);
+
+    // Parse for numerical values
+    const numericalPattern = /(\d+(?:[.,]\d+)?)\s*(mmHg|bpm|\/min|mg\/dl|%)/gi;
+    const rangePattern = /(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)\s*(mmHg|bpm|\/min|mg\/dl)/gi;
+
+    // Split text and identify numerical values
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    // First handle ranges
+    const rangeMatches = [...enhancedText.matchAll(rangePattern)];
+    rangeMatches.forEach(rangeMatch => {
+      if (rangeMatch.index !== undefined) {
+        // Add text before range
+        if (rangeMatch.index > lastIndex) {
+          parts.push({
+            type: 'text',
+            content: enhancedText.slice(lastIndex, rangeMatch.index)
+          });
+        }
+
+        // Add range badge
+        parts.push({
+          type: 'numerical',
+          content: `${rangeMatch[1]}-${rangeMatch[2]} ${rangeMatch[3]}`,
+          valueType: 'range'
+        });
+
+        lastIndex = rangeMatch.index + rangeMatch[0].length;
+      }
+    });
+
+    // Add remaining text
+    if (lastIndex < enhancedText.length) {
+      parts.push({
+        type: 'text',
+        content: enhancedText.slice(lastIndex)
+      });
+    }
+
+    return parts;
+  };
 
   // Helper function to parse and render formatted text (bold, italic, etc.)
   const parseFormattedText = (text: string, baseStyle: any) => {
@@ -438,30 +607,58 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </View>
         </View>
 
-        {/* Search */}
-        <View style={[styles.searchContainer, {
-          borderColor: 'rgba(184, 126, 112, 0.3)',  // Old Rose border
-          backgroundColor: '#FFFFFF'  // White background
+        {/* Enhanced Search Bar */}
+        <View style={[styles.enhancedSearchContainer, {
+          borderColor: 'rgba(184, 126, 112, 0.3)',
+          backgroundColor: '#FFFFFF',
+          shadowColor: 'rgba(181, 87, 64, 0.1)',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 8,
+          elevation: 4,
         }]}>
-          <Search size={18} color="#B87E70" style={styles.searchIcon} />  {/* Old Rose icon */}
+          <Search size={20} color="#B87E70" style={styles.searchIcon} />
           <TextInput
-            style={[styles.searchBox, {
-              color: '#333333',  // Dark text for white background
-              backgroundColor: 'transparent'
+            style={[styles.enhancedSearchBox, {
+              color: '#333333',
+              backgroundColor: 'transparent',
+              fontSize: 16,
             }]}
-            placeholder="Suche im Inhalt..."
-            placeholderTextColor="#6B7280"  // Medium gray placeholder
+            placeholder="Durchsuche medizinische Inhalte..."
+            placeholderTextColor="#6B7280"
             value={searchTerm}
             onChangeText={handleSearch}
           />
           {searchTerm.length > 0 && (
             <TouchableOpacity onPress={() => {
               handleSearch('');
-              triggerActivity(); // Trigger activity when clearing search
+              triggerActivity();
             }} style={styles.clearSearch}>
-              <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>  {/* Old Rose clear button */}
+              <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>
             </TouchableOpacity>
           )}
+        </View>
+
+        {/* Study Controls */}
+        <View style={styles.studyControls}>
+          <TouchableOpacity
+            style={[styles.studyToggle, studyMode && styles.studyToggleActive]}
+            onPress={() => setStudyMode(!studyMode)}
+          >
+            <Eye size={16} color={studyMode ? '#FFFFFF' : '#B87E70'} />
+            <Text style={[styles.studyToggleText, studyMode && styles.studyToggleTextActive]}>
+              Study Mode
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.fontSizeToggle, fontSize === 'large' && styles.fontSizeToggleActive]}
+            onPress={() => setFontSize(fontSize === 'normal' ? 'large' : 'normal')}
+          >
+            <Text style={[styles.fontSizeText, fontSize === 'large' && styles.fontSizeTextActive]}>
+              Aa
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -485,52 +682,100 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </Text>
         )}
         
-        {/* Sections */}
-        {filteredSections.map((section, index) => (
-          <View
-            key={index}
-            ref={(ref) => { sectionRefs.current[index] = ref; }}
-            style={[styles.contentSection, {
-              backgroundColor: '#F9F6F2',  // Light cream background matching homepage cards
-              borderWidth: 1,
-              borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border
-              shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 1,
-              shadowRadius: 20,
-              elevation: 12,
-            }]}
-          >
-            <TouchableOpacity
-              style={styles.sectionHeader}
-              onPress={() => {
-                setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
-                triggerActivity(); // Trigger activity when expanding/collapsing sections
-              }}
-              accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
-              accessibilityRole="button"
+        {/* Enhanced Sections */}
+        {filteredSections.map((section, index) => {
+          const contentStyle = getContentTypeStyle(section.title, section.content);
+          const IconComponent = contentStyle.icon;
+
+          return (
+            <View
+              key={index}
+              ref={(ref) => { sectionRefs.current[index] = ref; }}
+              style={[styles.enhancedContentSection, {
+                backgroundColor: contentStyle.backgroundColor,
+                borderLeftWidth: 4,
+                borderLeftColor: contentStyle.borderColor,
+                borderColor: 'rgba(184, 126, 112, 0.2)',
+                shadowColor: 'rgba(181, 87, 64, 0.1)',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 1,
+                shadowRadius: 12,
+                elevation: 8,
+              }]}
             >
-              <BookOpen size={22} color="#B87E70" />  {/* Old Rose color for book icon */}
-              <Text style={styles.sectionTitle}>
-                {section.title}
-              </Text>
-              <ChevronDown
-                size={20}
-                color="#6b7280"
-                style={[
-                  styles.chevronIcon,
-                  expandedSections[index] && { transform: [{ rotate: '180deg' }] }
-                ]}
-              />
-            </TouchableOpacity>
-            
-            {expandedSections[index] && (
-              <View style={styles.sectionContent}>
-                {renderFormattedContent(section.content)}
-              </View>
-            )}
-          </View>
-        ))}
+              {/* Enhanced Section Header */}
+              <TouchableOpacity
+                style={styles.enhancedSectionHeader}
+                onPress={() => {
+                  setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
+                  triggerActivity();
+                }}
+                accessibilityLabel={`${expandedSections[index] ? 'Collapse' : 'Expand'} ${section.title}`}
+                accessibilityRole="button"
+              >
+                <View style={styles.sectionHeaderLeft}>
+                  <IconComponent size={20} color={contentStyle.iconColor} />
+                  <Text style={[styles.enhancedSectionTitle, { fontSize: fontSize === 'large' ? 20 : 18 }]}>
+                    {section.title}
+                  </Text>
+                </View>
+
+                <View style={styles.sectionHeaderRight}>
+                  <TouchableOpacity
+                    style={styles.bookmarkButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      const newBookmarks = new Set(bookmarkedSections);
+                      if (newBookmarks.has(index)) {
+                        newBookmarks.delete(index);
+                      } else {
+                        newBookmarks.add(index);
+                      }
+                      setBookmarkedSections(newBookmarks);
+                    }}
+                  >
+                    <Bookmark
+                      size={16}
+                      color={bookmarkedSections.has(index) ? '#F59E0B' : '#9CA3AF'}
+                      fill={bookmarkedSections.has(index) ? '#F59E0B' : 'none'}
+                    />
+                  </TouchableOpacity>
+
+                  <ChevronDown
+                    size={20}
+                    color="#6B7280"
+                    style={[
+                      styles.chevronIcon,
+                      expandedSections[index] && { transform: [{ rotate: '180deg' }] }
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {/* Key Points Box (when study mode is active) */}
+              {studyMode && expandedSections[index] && (
+                <View style={[styles.keyPointsBox, { borderColor: contentStyle.borderColor }]}>
+                  <View style={styles.keyPointsHeader}>
+                    <Lightbulb size={16} color={contentStyle.iconColor} />
+                    <Text style={[styles.keyPointsTitle, { color: contentStyle.iconColor }]}>
+                      Wichtige Punkte
+                    </Text>
+                  </View>
+                  <Text style={styles.keyPointsText}>
+                    • Automatisch erkannte Schlüsselkonzepte werden hervorgehoben
+                  </Text>
+                </View>
+              )}
+
+              {/* Section Content */}
+              {expandedSections[index] && (
+                <View style={styles.enhancedSectionContent}>
+                  {renderFormattedContent(section.content)}
+                </View>
+              )}
+            </View>
+          );
+        })}
         
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -626,6 +871,68 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
+  enhancedSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  enhancedSearchBox: {
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+    fontWeight: '500',
+  },
+  studyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  studyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#B87E70',
+    backgroundColor: 'transparent',
+    gap: 6,
+  },
+  studyToggleActive: {
+    backgroundColor: '#B87E70',
+  },
+  studyToggleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#B87E70',
+  },
+  studyToggleTextActive: {
+    color: '#FFFFFF',
+  },
+  fontSizeToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#B87E70',
+    backgroundColor: 'transparent',
+  },
+  fontSizeToggleActive: {
+    backgroundColor: '#B87E70',
+  },
+  fontSizeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#B87E70',
+  },
+  fontSizeTextActive: {
+    color: '#FFFFFF',
+  },
   searchIcon: {
     marginRight: 8,
   },
@@ -658,11 +965,35 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginHorizontal: 4,
   },
+  enhancedContentSection: {
+    marginBottom: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginHorizontal: 4,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
     backgroundColor: 'transparent',  // Transparent to show card background
+  },
+  enhancedSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: 'transparent',
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sectionHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   sectionTitle: {
     flex: 1,
@@ -671,10 +1002,51 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     color: '#B15740',  // Brown Rust for coral branding
   },
+  enhancedSectionTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 12,
+    color: '#1F2937',
+    lineHeight: 24,
+  },
+  bookmarkButton: {
+    padding: 4,
+    borderRadius: 4,
+  },
   sectionContent: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(184, 126, 112, 0.2)',  // Old Rose border
     padding: 20,
+  },
+  enhancedSectionContent: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    padding: 20,
+    lineHeight: 28,
+  },
+  keyPointsBox: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 16,
+  },
+  keyPointsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  keyPointsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  keyPointsText: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
   },
   contentContainer: {
     // Container for formatted content
@@ -717,6 +1089,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#374151',
     textAlign: 'left',
+  },
+  numericalBadge: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginHorizontal: 2,
+    alignSelf: 'flex-start',
+  },
+  numericalText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   highlightedText: {
     backgroundColor: '#fef3c7', // Light yellow background
