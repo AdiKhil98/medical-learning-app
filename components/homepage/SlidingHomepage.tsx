@@ -250,7 +250,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               style={styles.heroCard}
             >
               <View style={styles.heroIcon}>
-                <BookOpen size={64} color="#E2827F" />  {/* Burning Sand for icon visibility */}
+                <BookOpen size={64} color="#B87E70" />  {/* Old Rose for brand consistency */}
               </View>
               <Text style={styles.heroTitle}>Lernkapital</Text>
               <Text style={styles.heroSubtitle}>
@@ -266,7 +266,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={['#B15740', '#A04A35']}  // Brown Rust with hover effect - CONVERSION FOCUSED
+                  colors={['#B15740', '#A04A35']}  // Premium gradient - Brown Rust to darker shade
                   style={styles.ctaButtonGradient}
                 >
                   <Info size={20} color="#ffffff" style={styles.ctaIcon} />
@@ -568,13 +568,13 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(184, 126, 112, 0.5)',  // Old Rose with transparency
+    backgroundColor: 'rgba(184, 126, 112, 0.4)',  // Reduced opacity for inactive dots
     marginHorizontal: 4,
   },
   activeIndicator: {
-    backgroundColor: '#B87E70',  // Solid Old Rose for active state
+    backgroundColor: '#B15740',  // Brown Rust for active state - stronger brand presence
     width: 24,
-    shadowColor: '#B87E70',
+    shadowColor: '#B15740',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -643,11 +643,13 @@ const styles = {
     maxWidth: 400,
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.2)',  // Subtle Old Rose border
-    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Premium shadow with Brown Rust tint
-    shadowOffset: { width: 0, height: 25 },
+    shadowColor: 'rgba(181, 87, 64, 0.1)',  // Enhanced primary shadow
+    shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 1,
-    shadowRadius: 50,
+    shadowRadius: 40,
     elevation: 25,
+    // Adding second shadow for depth
+    backgroundColor: 'transparent',  // Ensure gradient shows through
   },
   heroIcon: {
     marginBottom: 20,
@@ -655,7 +657,7 @@ const styles = {
   heroTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#B15740',  // Brown Rust for maximum impact
+    color: '#A04A35',  // Darker shade for more authority
     textAlign: 'center',
     marginBottom: 16,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',  // Subtle shadow for contrast
