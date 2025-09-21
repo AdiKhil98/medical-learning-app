@@ -13,19 +13,11 @@ export default function SimulationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Modern gradient background */}
-      <LinearGradient
-        colors={['#f0f4ff', '#e6f0ff', '#ffffff']}
-        style={styles.gradientBackground}
-      />
+      {/* Clean white background */}
+      <View style={styles.cleanBackground} />
       
-      {/* Enhanced header with modern styling */}
-      <LinearGradient
-        colors={['#4338ca', '#3730a3', '#312e81']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.modernHeader}
-      >
+      {/* Clean header with coral branding */}
+      <View style={styles.cleanHeader}>
         <View style={styles.headerContent}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.modernTitle}>Prüfungs-Simulation</Text>
@@ -34,35 +26,35 @@ export default function SimulationScreen() {
             </Text>
           </View>
           
-          {/* Floating header elements */}
-          <View style={styles.headerFloatingElements}>
-            <View style={[styles.floatingElement, styles.element1]}>
-              <Target size={20} color="#4338ca" />
-            </View>
-            <View style={[styles.floatingElement, styles.element2]}>
-              <TrendingUp size={18} color="#6366f1" />
-            </View>
+          {/* Coral accent element */}
+          <View style={styles.headerAccent}>
+            <LinearGradient
+              colors={['#E2827F', '#B87E70']}
+              style={styles.accentGradient}
+            >
+              <Target size={20} color="white" />
+            </LinearGradient>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Stats Section */}
       <View style={styles.statsSection}>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Clock size={18} color="#4338ca" />
+            <Clock size={18} color="#B87E70" />
             <Text style={styles.statNumber}>25 Min</Text>
             <Text style={styles.statLabel}>Durchschnitt</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Users size={18} color="#059669" />
+            <Users size={18} color="#E2827F" />
             <Text style={styles.statNumber}>120</Text>
             <Text style={styles.statLabel}>Teilnehmer</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Award size={18} color="#dc2626" />
+            <Award size={18} color="#B15740" />
             <Text style={styles.statNumber}>91%</Text>
             <Text style={styles.statLabel}>Erfolgsrate</Text>
           </View>
@@ -90,13 +82,10 @@ export default function SimulationScreen() {
               activeOpacity={0.8}
               style={styles.modernCard}
             >
-              <LinearGradient
-                colors={['#ffffff', '#f0f4ff']}
-                style={styles.cardGradient}
-              >
+              <View style={[styles.cardContainer, styles.knowledgeCard]}>
                 <View style={styles.cardHeader}>
                   <LinearGradient
-                    colors={['#4338ca', '#3730a3']}
+                    colors={['#B87E70', '#E2827F']}
                     style={styles.modernIconContainer}
                   >
                     <Brain size={24} color="white" />
@@ -112,11 +101,11 @@ export default function SimulationScreen() {
 
                 <View style={styles.cardFeatures}>
                   <View style={styles.featureItem}>
-                    <Target size={14} color="#4338ca" />
+                    <Target size={14} color="#B87E70" />
                     <Text style={styles.featureText}>Präzise</Text>
                   </View>
                   <View style={styles.featureItem}>
-                    <Clock size={14} color="#4338ca" />
+                    <Clock size={14} color="#B87E70" />
                     <Text style={styles.featureText}>15-25 Min</Text>
                   </View>
                 </View>
@@ -125,7 +114,7 @@ export default function SimulationScreen() {
                   <Text style={styles.modernButtonText}>Simulation starten</Text>
                   <ChevronRight size={16} color="white" />
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -136,13 +125,10 @@ export default function SimulationScreen() {
               activeOpacity={0.8}
               style={styles.modernCard}
             >
-              <LinearGradient
-                colors={['#ffffff', '#fef7f7']}
-                style={styles.cardGradient}
-              >
+              <View style={[styles.cardContainer, styles.practiceCard]}>
                 <View style={styles.cardHeader}>
                   <LinearGradient
-                    colors={['#ef4444', '#dc2626']}
+                    colors={['#E2827F', '#B15740']}
                     style={styles.modernIconContainer}
                   >
                     <Mic size={24} color="white" />
@@ -158,11 +144,11 @@ export default function SimulationScreen() {
 
                 <View style={styles.cardFeatures}>
                   <View style={styles.featureItem}>
-                    <Play size={14} color="#ef4444" />
+                    <Play size={14} color="#E2827F" />
                     <Text style={styles.featureText}>Interaktiv</Text>
                   </View>
                   <View style={styles.featureItem}>
-                    <Clock size={14} color="#ef4444" />
+                    <Clock size={14} color="#E2827F" />
                     <Text style={styles.featureText}>20-30 Min</Text>
                   </View>
                 </View>
@@ -171,7 +157,7 @@ export default function SimulationScreen() {
                   <Text style={styles.modernButtonText}>Simulation starten</Text>
                   <ChevronRight size={16} color="white" />
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -185,24 +171,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  gradientBackground: {
+  cleanBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: '100%',
+    backgroundColor: '#FFFFFF',
   },
   
-  // Modern Header Styles
-  modernHeader: {
+  // Clean Header Styles
+  cleanHeader: {
     paddingHorizontal: 20,
     paddingVertical: 40,
     paddingTop: 60,
-    shadowColor: '#4338ca',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+    backgroundColor: '#FFFFFF',
+    shadowColor: 'rgba(181,87,64,0.15)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   headerContent: {
     flexDirection: 'row',
@@ -215,42 +203,32 @@ const styles = StyleSheet.create({
   modernTitle: {
     fontSize: 32,
     fontFamily: 'Inter-Bold',
-    color: 'white',
+    color: '#1F2937',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   modernSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#6B7280',
     lineHeight: 22,
     fontFamily: 'Inter-Regular',
     maxWidth: '85%',
   },
-  headerFloatingElements: {
-    position: 'relative',
-    width: 80,
-    height: 80,
+  headerAccent: {
+    width: 60,
+    height: 60,
   },
-  floatingElement: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    padding: 8,
-    shadowColor: '#000',
+  accentGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(181,87,64,0.3)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
-  },
-  element1: {
-    top: 0,
-    right: 0,
-    transform: [{ rotate: '15deg' }],
-  },
-  element2: {
-    bottom: 0,
-    left: 0,
-    transform: [{ rotate: '-15deg' }],
   },
 
   // Stats Section
@@ -260,18 +238,18 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   statsContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#F9F6F2',
     borderRadius: 20,
     flexDirection: 'row',
     paddingVertical: 20,
     paddingHorizontal: 16,
-    shadowColor: '#4338ca',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: 'rgba(181,87,64,0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(67, 56, 202, 0.1)',
+    borderColor: 'rgba(184, 126, 112, 0.2)',
   },
   statItem: {
     flex: 1,
@@ -290,7 +268,7 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: 'rgba(184, 126, 112, 0.3)',
     marginHorizontal: 16,
   },
 
@@ -307,9 +285,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
+    color: '#1F2937',
     textAlign: 'center',
     marginBottom: 12,
     letterSpacing: -0.3,
@@ -317,7 +295,7 @@ const styles = StyleSheet.create({
   heroDescription: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6b7280',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: '90%',
@@ -338,11 +316,18 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 15,
   },
-  cardGradient: {
+  cardContainer: {
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderColor: 'rgba(184, 126, 112, 0.2)',
+    backgroundColor: '#F9F6F2',
+  },
+  knowledgeCard: {
+    backgroundColor: '#F9F6F2',
+  },
+  practiceCard: {
+    backgroundColor: '#F9F6F2',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -415,7 +400,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   modernCardButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#E2827F',
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -423,15 +408,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#ef4444',
+    shadowColor: 'rgba(226, 130, 127, 0.4)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
   },
   knowledgeButton: {
-    backgroundColor: '#4338ca',
-    shadowColor: '#4338ca',
+    backgroundColor: '#B87E70',
+    shadowColor: 'rgba(184, 126, 112, 0.4)',
   },
   modernButtonText: {
     color: 'white',
