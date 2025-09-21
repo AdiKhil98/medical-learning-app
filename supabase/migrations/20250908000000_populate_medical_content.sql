@@ -236,4 +236,4 @@ INSERT INTO sections (slug, title, description, type, icon, color, display_order
 -- Add some empty sections to test empty state handling
 INSERT INTO sections (slug, title, description, type, icon, color, display_order, parent_slug, category) VALUES
 ('infektiologie', 'Infektiologie', 'Infektionskrankheiten und Antibiotikatherapie', 'folder', 'Shield', '#10B981', 5, 'innere-medizin', 'Innere Medizin'),
-('endokrinologie', 'Endokrinologie', 'Hormonelle Erkrankungen und Stoffwechsel', 'folder', 'Circle', '#8B5CF6', 6, 'innere-medizin', 'Innere Medizin');
+('endokrinologie', 'Endokrinologie', 'Hormonelle Erkrankungen und Stoffwechsel', 'folder', 'Circle', '#E2827F', 6, 'innere-medizin', 'Innere Medizin');

@@ -75,7 +75,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case 'pneumologie':
       return { icon: 'Lungs', color: '#22C55E' };
     case 'nephrologie':
-      return { icon: 'Activity', color: '#8B5CF6' };
+      return { icon: 'Activity', color: '#E2827F' };
     case 'endokrinologie':
     case 'endokrinologie und stoffwechsel':
       return { icon: 'FlaskRound', color: '#EF4444' };
@@ -84,9 +84,9 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case 'notfallmedizin':
       return { icon: 'Ambulance', color: '#EF4444' };
     case 'pädiatrie':
-      return { icon: 'Baby', color: '#8B5CF6' };
+      return { icon: 'Baby', color: '#E2827F' };
     case 'gynäkologie':
-      return { icon: 'Activity', color: '#EC4899' };
+      return { icon: 'Activity', color: '#E2827F' };
     case 'psychiatrie':
       return { icon: 'Brain', color: '#F59E0B' };
     case 'anatomie':

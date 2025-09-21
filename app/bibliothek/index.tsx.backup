@@ -50,13 +50,13 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg'):
       return { icon: 'Lungs', color: '#22C55E' };
     case normalizedTitle.includes('nephro') || normalizedTitle.includes('niere'):
-      return { icon: 'Droplets', color: '#8B5CF6' };
+      return { icon: 'Droplets', color: '#E2827F' };
     case normalizedTitle.includes('endokrin') || normalizedTitle.includes('stoffwechsel') || normalizedTitle.includes('hormon'):
       return { icon: 'FlaskRound', color: '#EF4444' };
     case normalizedTitle.includes('hämatolog') || normalizedTitle.includes('onkolog'):
       return { icon: 'TestTube', color: '#DC2626' };
     case normalizedTitle.includes('rheumatolog') || normalizedTitle.includes('immunolog'):
-      return { icon: 'Shield', color: '#7C3AED' };
+      return { icon: 'Shield', color: '#B15740' };
     
     // Surgery specialties
     case normalizedTitle.includes('chirurgie') || normalizedTitle.includes('operativ'):
@@ -78,7 +78,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     case normalizedTitle.includes('mkg') || normalizedTitle.includes('mund') || normalizedTitle.includes('kiefer'):
       return { icon: 'Smile', color: '#9333EA' };
     case normalizedTitle.includes('plastisch') || normalizedTitle.includes('ästhetisch'):
-      return { icon: 'Syringe', color: '#BE185D' };
+      return { icon: 'Syringe', color: '#B15740' };
     
     // Emergency Medicine
     case normalizedTitle.includes('notfall') || normalizedTitle.includes('emergency'):
@@ -90,11 +90,11 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     
     // Pediatrics
     case normalizedTitle.includes('pädiatrie') || normalizedTitle.includes('kinder'):
-      return { icon: 'Baby', color: '#8B5CF6' };
+      return { icon: 'Baby', color: '#E2827F' };
     
     // Obstetrics & Gynecology
     case normalizedTitle.includes('gynäkolog') || normalizedTitle.includes('geburtshilf'):
-      return { icon: 'Users', color: '#EC4899' };
+      return { icon: 'Users', color: '#E2827F' };
     
     // Psychiatry & Neurology
     case normalizedTitle.includes('psychiatrie') || normalizedTitle.includes('psycholog'):
@@ -130,7 +130,7 @@ const getCategoryDetails = (title: string, iconName?: string, color?: string) =>
     
     // ENT
     case normalizedTitle.includes('hno') || normalizedTitle.includes('otolaryngolog'):
-      return { icon: 'Thermometer', color: '#7C3AED' };
+      return { icon: 'Thermometer', color: '#B15740' };
     
     // Anesthesiology
     case normalizedTitle.includes('anästhesi') || normalizedTitle.includes('narkose'):

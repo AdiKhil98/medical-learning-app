@@ -64,14 +64,14 @@ const DailyQuestionSection = React.memo<DailyQuestionSectionProps>(({
           <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
               <View style={styles.sectionTitleContainer}>
-                <HelpCircle size={24} color="#8B5CF6" />
+                <HelpCircle size={24} color="#E2827F" />
                 <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
               </View>
             </View>
             
             <View style={styles.questionCard}>
               <LinearGradient
-                colors={['#EDE9FE', '#DDD6FE', '#8B5CF6']}
+                colors={['#EDE9FE', '#DDD6FE', '#E2827F']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.questionCardGradient}
@@ -111,14 +111,14 @@ const DailyQuestionSection = React.memo<DailyQuestionSectionProps>(({
           <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
               <View style={styles.sectionTitleContainer}>
-                <HelpCircle size={24} color="#8B5CF6" />
+                <HelpCircle size={24} color="#E2827F" />
                 <Text style={styles.structuredSectionTitle}>Frage des Tages</Text>
               </View>
             </View>
             
             <View style={styles.questionCard}>
               <LinearGradient
-                colors={['#EDE9FE', '#DDD6FE', '#8B5CF6']}
+                colors={['#EDE9FE', '#DDD6FE', '#E2827F']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.questionCardGradient}

@@ -52,9 +52,9 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
         hoverGradient = ['#f87171', '#ef4444', '#dc2626'];
         break;
       case 'innere-medizin': 
-        baseColor = '#2563eb'; // Blue-600 for internal medicine
-        gradient = ['#3b82f6', '#2563eb', '#1d4ed8'];
-        hoverGradient = ['#60a5fa', '#3b82f6', '#2563eb'];
+        baseColor = '#E2827F'; // Coral for internal medicine
+        gradient = ['#E2827F', '#E2827F', '#B15740'];
+        hoverGradient = ['#E5877E', '#E2827F', '#E2827F'];
         break;
       case 'kardiologie':
         baseColor = '#e11d48'; // Rose-600 for cardiology
@@ -62,9 +62,9 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
         hoverGradient = ['#fb7185', '#f43f5e', '#e11d48'];
         break;
       case 'pneumologie':
-        baseColor = '#0ea5e9'; // Sky-500 for pulmonology
-        gradient = ['#0ea5e9', '#0284c7', '#0369a1'];
-        hoverGradient = ['#38bdf8', '#0ea5e9', '#0284c7'];
+        baseColor = '#E2827F'; // Coral for pulmonology
+        gradient = ['#E2827F', '#B15740', '#B15740'];
+        hoverGradient = ['#E5877E', '#E2827F', '#B15740'];
         break;
       case 'gastroenterologie':
         baseColor = '#ea580c'; // Orange-600 for gastroenterology
@@ -140,9 +140,9 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
       gradient = ['#f97316', '#ea580c', '#c2410c'];
       hoverGradient = ['#fb923c', '#f97316', '#ea580c'];
     } else if (normalizedTitle.includes('labor') || normalizedTitle.includes('wert')) {
-      baseColor = '#0ea5e9'; // Sky blue for lab values
-      gradient = ['#0ea5e9', '#0284c7', '#0369a1'];
-      hoverGradient = ['#38bdf8', '#0ea5e9', '#0284c7'];
+      baseColor = '#E2827F'; // Coral for lab values
+      gradient = ['#E2827F', '#B15740', '#B15740'];
+      hoverGradient = ['#E5877E', '#E2827F', '#B15740'];
     } else if (normalizedTitle.includes('symptom') || normalizedTitle.includes('klinik')) {
       baseColor = '#be185d'; // Pink for symptoms
       gradient = ['#ec4899', '#be185d', '#9d174d'];

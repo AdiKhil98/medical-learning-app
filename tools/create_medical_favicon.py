@@ -6,7 +6,7 @@ print("""
 Medical Favicon Design Specification:
 =====================================
 - Size: 32x32 pixels
-- Background: Medical blue (#2196F3) with rounded corners
+- Background: Medical coral (#E2827F) with rounded corners
 - Cross: White medical cross in center
 - Accent: Small semi-transparent white dots in corners
 - Style: Professional medical branding matching KP MED logo
@@ -14,7 +14,7 @@ Medical Favicon Design Specification:
 To manually create this favicon:
 1. Use any image editor (GIMP, Photoshop, Canva, etc.)
 2. Create 32x32px canvas
-3. Fill with blue color #2196F3
+3. Fill with coral color #E2827F
 4. Add rounded corners (6px radius)
 5. Draw white cross: 
    - Vertical: 3px wide, 14px tall, centered

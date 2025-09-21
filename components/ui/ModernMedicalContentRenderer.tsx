@@ -970,12 +970,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   badge: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E2827F',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20, // Perfect pill shape
     elevation: 1,
-    shadowColor: '#2563EB',
+    shadowColor: '#E2827F',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginVertical: 8,
     borderLeftWidth: 5,
-    borderLeftColor: '#2563EB',
+    borderLeftColor: '#E2827F',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1234,7 +1234,7 @@ const styles = StyleSheet.create({
   },
   subtypeTitle: {
     fontWeight: '600',
-    color: '#2563EB',
+    color: '#E2827F',
     marginBottom: 10,
     fontSize: 16,
   },

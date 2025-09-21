@@ -165,7 +165,7 @@ INSERT INTO notfallmedizin_sections (title, description, icon, color, route) VAL
 ('Reanimation', 'Grundlagen der kardiopulmonalen Reanimation', 'Heart', '#EF4444', '/practice/notfallmedizin/reanimation'),
 ('cABCDE-Schema', 'Systematische Notfallversorgung nach dem cABCDE-Schema', 'ClipboardCheck', '#0077B6', '/practice/notfallmedizin/cabcde-schema'),
 ('Schock', 'Schockformen und deren Management', 'Activity', '#F59E0B', '/practice/notfallmedizin/schock'),
-('Trauma', 'Management von Traumapatienten', 'AlertTriangle', '#8B5CF6', '/practice/notfallmedizin/trauma'),
+('Trauma', 'Management von Traumapatienten', 'AlertTriangle', '#E2827F', '/practice/notfallmedizin/trauma'),
 ('Akute Erkrankungen', 'Management akuter internistischer Notfälle', 'Stethoscope', '#10B981', '/practice/notfallmedizin/akute-erkrankungen');
 
 -- Add initial subsections for cABCDE-Schema

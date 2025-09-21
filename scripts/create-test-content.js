@@ -15,7 +15,7 @@ const sampleMedicalContent = `<!DOCTYPE html>
         .section-card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; }
         .section-title { font-size: 1.5rem; color: #2c3e50; margin-bottom: 20px; }
         .content-text { color: #4a5568; line-height: 1.8; }
-        .number { background: #2196F3; color: white; padding: 2px 8px; border-radius: 12px; }
+        .number { background: #E2827F; color: white; padding: 2px 8px; border-radius: 12px; }
         .medical-term { color: #9C27B0; font-weight: 600; }
     </style>
 </head>

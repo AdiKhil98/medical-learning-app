@@ -165,13 +165,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
+        colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
         style={styles.gradientBackground}
       />
 
       {/* Header with Menu */}
       <LinearGradient
-        colors={['#4A90E2', '#357ABD', '#2E5B9A']}
+        colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.modernHeader}
@@ -291,7 +291,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
                   style={styles.emptyStateCard}
                 >
-                  <Stethoscope size={48} color="#6b7280" style={styles.emptyStateIcon} />
+                  <Stethoscope size={48} color="#B87E70" style={styles.emptyStateIcon} />  {/* Old Rose */}
                   <Text style={styles.emptyStateTitle}>Noch keine Inhalte angesehen</Text>
                   <Text style={styles.emptyStateDescription}>
                     Beginne deine medizinische Lernreise und deine zuletzt angesehenen Inhalte werden hier erscheinen.
@@ -338,10 +338,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                         </View>
                         <View style={styles.recentContentMeta}>
                           <View style={styles.viewCountBadge}>
-                            <Clock size={12} color="#6b7280" />
+                            <Clock size={12} color="#B87E70" />  {/* Old Rose */}
                             <Text style={styles.viewCountText}>{item.viewCount}</Text>
                           </View>
-                          <ChevronRight size={16} color="#9ca3af" />
+                          <ChevronRight size={16} color="#B87E70" />  {/* Old Rose */}
                         </View>
                       </View>
                       {item.description && (
@@ -404,7 +404,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     colors={['#ffecd2', '#fcb69f']}
                     style={styles.tipIconBg}
                   >
-                    <Lightbulb size={20} color="#f39c12" />
+                    <Lightbulb size={20} color="#E5877E" />  {/* Tonys Pink */}
                   </LinearGradient>
                   <Text style={styles.tipTitle}>{tipData.title}</Text>
                 </View>
@@ -433,7 +433,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 style={styles.questionCard}
               >
                 <View style={styles.questionHeader}>
-                  <HelpCircle size={28} color="#6366f1" />
+                  <HelpCircle size={28} color="#B15740" />  {/* Brown Rust - EMPHASIS */}
                   <Text style={styles.questionTitle}>Wissensfrage</Text>
                 </View>
                 <Text style={styles.questionText}>{questionData.question}</Text>
@@ -636,6 +636,8 @@ const styles = {
     alignItems: 'center',
     width: '100%',
     maxWidth: 400,
+    borderWidth: 2,
+    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -770,6 +772,8 @@ const styles = {
   recentContentCard: {
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#B87E70',  // Old Rose border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -862,6 +866,8 @@ const styles = {
   tipCard: {
     borderRadius: 20,
     padding: 24,
+    borderWidth: 1,
+    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -928,6 +934,8 @@ const styles = {
   questionCard: {
     borderRadius: 20,
     padding: 24,
+    borderWidth: 1,
+    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -1006,7 +1014,7 @@ const styles = {
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#0ea5e9',
+    borderLeftColor: '#E2827F',
   },
   explanationTitle: {
     fontSize: 14,

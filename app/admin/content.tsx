@@ -235,10 +235,10 @@ export default function ContentManagement() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'category': return '#3B82F6';
+      case 'category': return '#E2827F';
       case 'subcategory': return '#10B981';
       case 'content': return '#F59E0B';
-      case 'link': return '#8B5CF6';
+      case 'link': return '#E2827F';
       case 'separator': return '#6B7280';
       default: return colors.textSecondary;
     }
@@ -362,7 +362,7 @@ export default function ContentManagement() {
                   </TouchableOpacity>
                   
                   <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: '#3B82F6' }]}
+                    style={[styles.actionButton, { backgroundColor: '#E2827F' }]}
                     onPress={() => openEditModal(section)}
                   >
                     <Edit size={16} color="white" />

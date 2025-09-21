@@ -100,7 +100,7 @@ INSERT INTO innere_medizin_sections (title, description, icon, color, route) VAL
 ('Kardiologie', 'Systematische Übersicht der kardiologischen Erkrankungen', 'Heart', '#0077B6', '/practice/cardiology'),
 ('Gastroenterologie', 'Erkrankungen des Verdauungssystems', 'Activity', '#48CAE4', '/practice/gastroenterologie'),
 ('Pneumologie', 'Erkrankungen der Atemwege und Lunge', 'Lungs', '#22C55E', '/practice/pneumologie'),
-('Nephrologie', 'Erkrankungen der Nieren', 'Kidney', '#8B5CF6', '/practice/nephrologie'),
+('Nephrologie', 'Erkrankungen der Nieren', 'Kidney', '#E2827F', '/practice/nephrologie'),
 ('Endokrinologie', 'Hormonelle und Stoffwechselerkrankungen', 'Flask', '#EF4444', '/practice/endokrinologie-stoffwechsel');
 
 -- Add some initial data for subsections (example for Kardiologie)

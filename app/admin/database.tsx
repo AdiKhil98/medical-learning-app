@@ -383,7 +383,7 @@ export default function DatabaseManagement() {
               
               <View style={styles.tableActions}>
                 <TouchableOpacity
-                  style={[styles.tableActionButton, { backgroundColor: '#3B82F6' }]}
+                  style={[styles.tableActionButton, { backgroundColor: '#E2827F' }]}
                   onPress={() => exportData(table.name)}
                 >
                   <Download size={14} color="white" />

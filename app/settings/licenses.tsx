@@ -286,8 +286,8 @@ export default function LicensesScreen() {
     switch (license) {
       case 'MIT': return '#22C55E';
       case 'Apache-2.0': return '#EF4444';
-      case 'BSD-3-Clause': return '#3B82F6';
-      case 'ISC': return '#8B5CF6';
+      case 'BSD-3-Clause': return '#E2827F';
+      case 'ISC': return '#E2827F';
       case 'GPL-3.0': return '#F59E0B';
       default: return colors.textSecondary;
     }

@@ -63,8 +63,8 @@ INSERT INTO sections (slug, title, parent_slug, description, type, icon, color, 
 ('innere-medizin', 'Innere Medizin', NULL, 'Systematische Übersicht der internistischen Erkrankungen', 'folder', 'Stethoscope', '#0077B6', 1),
 ('chirurgie', 'Chirurgie', NULL, 'Systematische Übersicht der chirurgischen Fachgebiete', 'folder', 'Scissors', '#48CAE4', 2),
 ('notfallmedizin', 'Notfallmedizin', NULL, 'Systematische Übersicht der notfallmedizinischen Versorgung', 'folder', 'AlertTriangle', '#EF4444', 3),
-('paediatrie', 'Pädiatrie', NULL, 'Systematische Übersicht der pädiatrischen Erkrankungen', 'folder', 'Baby', '#8B5CF6', 4),
-('gynaekologie', 'Gynäkologie', NULL, 'Systematische Übersicht der gynäkologischen Erkrankungen', 'folder', 'Activity', '#EC4899', 5),
+('paediatrie', 'Pädiatrie', NULL, 'Systematische Übersicht der pädiatrischen Erkrankungen', 'folder', 'Baby', '#E2827F', 4),
+('gynaekologie', 'Gynäkologie', NULL, 'Systematische Übersicht der gynäkologischen Erkrankungen', 'folder', 'Activity', '#E2827F', 5),
 ('psychiatrie', 'Psychiatrie', NULL, 'Systematische Übersicht der psychiatrischen Erkrankungen', 'folder', 'Brain', '#F59E0B', 6);
 
 -- Add subsections for Innere Medizin
@@ -72,7 +72,7 @@ INSERT INTO sections (slug, title, parent_slug, description, type, icon, color, 
 ('kardiologie', 'Kardiologie', 'innere-medizin', 'Erkrankungen des Herzens und der Gefäße', 'folder', 'Heart', '#0077B6', 1),
 ('gastroenterologie', 'Gastroenterologie', 'innere-medizin', 'Erkrankungen des Verdauungssystems', 'folder', 'Activity', '#48CAE4', 2),
 ('pneumologie', 'Pneumologie', 'innere-medizin', 'Erkrankungen der Atemwege und Lunge', 'folder', 'Lungs', '#22C55E', 3),
-('nephrologie', 'Nephrologie', 'innere-medizin', 'Erkrankungen der Nieren', 'folder', 'Activity', '#8B5CF6', 4),
+('nephrologie', 'Nephrologie', 'innere-medizin', 'Erkrankungen der Nieren', 'folder', 'Activity', '#E2827F', 4),
 ('endokrinologie-stoffwechsel', 'Endokrinologie und Stoffwechsel', 'innere-medizin', 'Hormonelle und Stoffwechselerkrankungen', 'folder', 'FlaskRound', '#EF4444', 5);
 
 -- Add subsections for Kardiologie
@@ -80,27 +80,27 @@ INSERT INTO sections (slug, title, parent_slug, description, type, icon, color, 
 ('kardiologie-grundlagen', 'Grundlagen', 'kardiologie', 'Anatomie, Physiologie und Pathophysiologie des Herzens', 'folder', 'Heart', '#0077B6', 1),
 ('kardiologie-leitsymptome', 'Leitsymptome', 'kardiologie', 'Brustschmerz, Dyspnoe, Synkope, Ödeme', 'folder', 'Stethoscope', '#48CAE4', 2),
 ('kardiologie-diagnostik', 'Diagnostik', 'kardiologie', 'EKG, Bildgebung, Labordiagnostik', 'folder', 'Activity', '#22C55E', 3),
-('kardiologie-therapie', 'Therapie', 'kardiologie', 'Medikamentöse und interventionelle Therapien', 'folder', 'Pill', '#8B5CF6', 4),
+('kardiologie-therapie', 'Therapie', 'kardiologie', 'Medikamentöse und interventionelle Therapien', 'folder', 'Pill', '#E2827F', 4),
 ('kardiologie-hypertonie', 'Hypertonie', 'kardiologie', 'Primäre und sekundäre Hypertonie', 'folder', 'ArrowUpRight', '#EF4444', 5),
 ('kardiologie-arrhythmie', 'Herzrhythmusstörungen', 'kardiologie', 'Bradykardie, Tachykardie, Vorhofflimmern', 'folder', 'HeartPulse', '#F59E0B', 6),
-('kardiologie-ischemia', 'Ischämische Herzerkrankungen', 'kardiologie', 'KHK, Myokardinfarkt, Angina pectoris', 'folder', 'HeartCrack', '#EC4899', 7),
+('kardiologie-ischemia', 'Ischämische Herzerkrankungen', 'kardiologie', 'KHK, Myokardinfarkt, Angina pectoris', 'folder', 'HeartCrack', '#E2827F', 7),
 ('kardiologie-cardiomyopathy', 'Kardiomyopathien', 'kardiologie', 'DCM, HCM, RCM, ARVC', 'folder', 'Heart', '#6366F1', 8);
 
 -- Add subsections for Chirurgie
 INSERT INTO sections (slug, title, parent_slug, description, type, icon, color, display_order) VALUES
 ('allgemein-viszeralchirurgie', 'Allgemein- und Viszeralchirurgie', 'chirurgie', 'Eingriffe am Verdauungstrakt und Bauchraum', 'folder', 'Scissors', '#48CAE4', 1),
 ('unfallchirurgie-orthopaedie', 'Unfallchirurgie und Orthopädie', 'chirurgie', 'Frakturen, Gelenkersatz, Wirbelsäule', 'folder', 'Activity', '#22C55E', 2),
-('thoraxchirurgie', 'Thoraxchirurgie', 'chirurgie', 'Eingriffe an Lunge und Thorax', 'folder', 'Lungs', '#8B5CF6', 3),
+('thoraxchirurgie', 'Thoraxchirurgie', 'chirurgie', 'Eingriffe an Lunge und Thorax', 'folder', 'Lungs', '#E2827F', 3),
 ('herzchirurgie', 'Herzchirurgie', 'chirurgie', 'Bypass, Klappen, Transplantation', 'folder', 'Heart', '#EF4444', 4),
 ('gefaesschirurgie', 'Gefäßchirurgie', 'chirurgie', 'Arterien, Venen, Aneurysmen', 'folder', 'Activity', '#F59E0B', 5),
-('mkg-chirurgie', 'MKG-Chirurgie', 'chirurgie', 'Mund-, Kiefer- und Gesichtschirurgie', 'folder', 'Scissors', '#EC4899', 6);
+('mkg-chirurgie', 'MKG-Chirurgie', 'chirurgie', 'Mund-, Kiefer- und Gesichtschirurgie', 'folder', 'Scissors', '#E2827F', 6);
 
 -- Add subsections for Notfallmedizin
 INSERT INTO sections (slug, title, parent_slug, description, type, icon, color, display_order) VALUES
 ('reanimation', 'Reanimation', 'notfallmedizin', 'Basic Life Support, Advanced Life Support', 'folder', 'Heart', '#EF4444', 1),
 ('cabcde-schema', 'cABCDE-Schema', 'notfallmedizin', 'Strukturiertes Vorgehen in der Notfallversorgung', 'folder', 'ClipboardCheck', '#0077B6', 2),
 ('schock', 'Schock', 'notfallmedizin', 'Hypovolämischer, kardiogener, septischer Schock', 'folder', 'Activity', '#F59E0B', 3),
-('trauma', 'Trauma', 'notfallmedizin', 'Polytrauma, Schädel-Hirn-Trauma, Thoraxtrauma', 'folder', 'AlertTriangle', '#8B5CF6', 4),
+('trauma', 'Trauma', 'notfallmedizin', 'Polytrauma, Schädel-Hirn-Trauma, Thoraxtrauma', 'folder', 'AlertTriangle', '#E2827F', 4),
 ('akute-erkrankungen', 'Akute Erkrankungen', 'notfallmedizin', 'Akutes Koronarsyndrom, Lungenembolie, Schlaganfall', 'folder', 'Stethoscope', '#10B981', 5);
 
 -- Add login activity tracking table

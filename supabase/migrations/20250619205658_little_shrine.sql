@@ -31,13 +31,13 @@ BEGIN
     ELSIF title_lower LIKE '%pneumo%' OR title_lower LIKE '%lunge%' OR title_lower LIKE '%atemweg%' THEN
         RETURN QUERY SELECT 'Lungs'::text, '#22C55E'::text;
     ELSIF title_lower LIKE '%nephro%' OR title_lower LIKE '%niere%' THEN
-        RETURN QUERY SELECT 'Droplets'::text, '#8B5CF6'::text;
+        RETURN QUERY SELECT 'Droplets'::text, '#E2827F'::text;
     ELSIF title_lower LIKE '%endokrin%' OR title_lower LIKE '%stoffwechsel%' OR title_lower LIKE '%hormon%' THEN
         RETURN QUERY SELECT 'FlaskRound'::text, '#EF4444'::text;
     ELSIF title_lower LIKE '%hämatolog%' OR title_lower LIKE '%onkolog%' THEN
         RETURN QUERY SELECT 'TestTube'::text, '#DC2626'::text;
     ELSIF title_lower LIKE '%rheumatolog%' OR title_lower LIKE '%immunolog%' THEN
-        RETURN QUERY SELECT 'Shield'::text, '#7C3AED'::text;
+        RETURN QUERY SELECT 'Shield'::text, '#B15740'::text;
     
     -- Surgery specialties
     ELSIF title_lower LIKE '%chirurgie%' OR title_lower LIKE '%operativ%' THEN
@@ -59,7 +59,7 @@ BEGIN
     ELSIF title_lower LIKE '%mkg%' OR title_lower LIKE '%mund%' OR title_lower LIKE '%kiefer%' THEN
         RETURN QUERY SELECT 'Smile'::text, '#9333EA'::text;
     ELSIF title_lower LIKE '%plastisch%' OR title_lower LIKE '%ästhetisch%' THEN
-        RETURN QUERY SELECT 'Syringe'::text, '#BE185D'::text;
+        RETURN QUERY SELECT 'Syringe'::text, '#B15740'::text;
     
     -- Emergency Medicine
     ELSIF title_lower LIKE '%notfall%' OR title_lower LIKE '%emergency%' THEN
@@ -77,11 +77,11 @@ BEGIN
     
     -- Pediatrics
     ELSIF title_lower LIKE '%pädiatrie%' OR title_lower LIKE '%kinder%' THEN
-        RETURN QUERY SELECT 'Baby'::text, '#8B5CF6'::text;
+        RETURN QUERY SELECT 'Baby'::text, '#E2827F'::text;
     
     -- Obstetrics & Gynecology
     ELSIF title_lower LIKE '%gynäkolog%' OR title_lower LIKE '%geburtshilf%' THEN
-        RETURN QUERY SELECT 'Users'::text, '#EC4899'::text;
+        RETURN QUERY SELECT 'Users'::text, '#E2827F'::text;
     
     -- Psychiatry & Neurology
     ELSIF title_lower LIKE '%psychiatrie%' OR title_lower LIKE '%psycholog%' THEN
@@ -117,7 +117,7 @@ BEGIN
     
     -- ENT
     ELSIF title_lower LIKE '%hno%' OR title_lower LIKE '%otolaryngolog%' THEN
-        RETURN QUERY SELECT 'Thermometer'::text, '#7C3AED'::text;
+        RETURN QUERY SELECT 'Thermometer'::text, '#B15740'::text;
     
     -- Anesthesiology
     ELSIF title_lower LIKE '%anästhesi%' OR title_lower LIKE '%narkose%' THEN
@@ -157,7 +157,7 @@ BEGIN
     ELSIF title_lower LIKE '%diagnostik%' THEN
         RETURN QUERY SELECT 'Scan'::text, '#10B981'::text;
     ELSIF title_lower LIKE '%therapie%' THEN
-        RETURN QUERY SELECT 'Pill'::text, '#8B5CF6'::text;
+        RETURN QUERY SELECT 'Pill'::text, '#E2827F'::text;
     ELSIF title_lower LIKE '%leitsymptome%' THEN
         RETURN QUERY SELECT 'Stethoscope'::text, '#F59E0B'::text;
     ELSIF title_lower LIKE '%ableitungen%' THEN

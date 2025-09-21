@@ -81,7 +81,7 @@ export default function SubscriptionPage() {
               style={dynamicStyles.backButton}
               onPress={handleGoBack}
             >
-              <ArrowLeft size={20} color="#1e40af" />
+              <ArrowLeft size={20} color="#B87E70" />  {/* Old Rose */}
               <Text style={dynamicStyles.backButtonText}>Zurück</Text>
             </TouchableOpacity>
           </View>

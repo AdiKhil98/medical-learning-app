@@ -168,7 +168,7 @@ export default function Logo({
               {/* Outer hexagon */}
               <View style={[styles.hexagonOuter, { width: iconSize, height: iconSize }]}>
                 <LinearGradient
-                  colors={['#2196F3', '#1976D2', '#0D47A1']}
+                  colors={['#E2827F', '#B15740', '#B15740']}
                   style={[styles.hexagonGradient, { width: iconSize, height: iconSize }]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2196F3',
+    shadowColor: '#E2827F',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

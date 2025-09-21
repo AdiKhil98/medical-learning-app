@@ -107,14 +107,14 @@ const getCategoryColor = (category: string, title: string, defaultColor?: string
     case 'kardiologie':
       return '#BE123C';
     case 'neurologie':
-      return '#7C3AED';
+      return '#B15740';
     case 'orthopädie':
       return '#D97706';
     case 'ophthalmologie':
       return '#059669';
     default:
       if (titleLower.includes('herz')) return '#BE123C';
-      if (titleLower.includes('gehirn')) return '#7C3AED';
+      if (titleLower.includes('gehirn')) return '#B15740';
       if (titleLower.includes('chirurg')) return '#E5877E';
       return '#6B7280';
   }

@@ -54,7 +54,7 @@ export default function Updates() {
     switch (category) {
       case 'feature': return <CheckCircle size={20} color="#10B981" />;
       case 'bugfix': return <AlertCircle size={20} color="#F59E0B" />;
-      case 'announcement': return <Bell size={20} color="#3B82F6" />;
+      case 'announcement': return <Bell size={20} color="#E2827F" />;
       default: return <Info size={20} color={colors.text} />;
     }
   };

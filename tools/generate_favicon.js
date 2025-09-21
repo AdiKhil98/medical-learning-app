@@ -3,7 +3,7 @@
 
 function generateMedicalFavicon() {
     // Create a 16x16 medical cross favicon as base64
-    // Blue background (#2196F3) with white cross
+    // Coral background (#E2827F) with white cross
     
     const faviconData = [
         "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAJYSURBVFiFtZc9SMNQFIV",
@@ -13,8 +13,8 @@ function generateMedicalFavicon() {
     // For a simple approach, let's create an SVG favicon
     const svgFavicon = `
     <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-        <!-- Blue medical background -->
-        <rect width="32" height="32" rx="6" fill="#2196F3"/>
+        <!-- Coral medical background -->
+        <rect width="32" height="32" rx="6" fill="#E2827F"/>
         
         <!-- White medical cross -->
         <rect x="13" y="8" width="6" height="16" rx="1" fill="white"/>

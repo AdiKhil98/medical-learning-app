@@ -57,14 +57,14 @@ export default function AdminDashboard() {
       icon: Bell,
       route: '/admin/add-update',
       description: 'Neue Updates veröffentlichen',
-      color: '#3B82F6'
+      color: '#E2827F'
     },
     {
       title: 'Manage Users',
       icon: Users,
       route: '/admin/manage-users',
       description: 'Benutzer verwalten',
-      color: '#8B5CF6'
+      color: '#E2827F'
     },
     {
       title: 'Feedback Manager',
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
       icon: Wand2,
       route: '/admin/transform-content',
       description: 'Alle medizinischen Inhalte in erweiterte Formate umwandeln',
-      color: '#8B5CF6'
+      color: '#E2827F'
     },
     {
       title: 'Database',

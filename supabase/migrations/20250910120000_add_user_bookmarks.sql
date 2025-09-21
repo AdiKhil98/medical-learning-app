@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS bookmark_folders (
   -- Folder details
   name text NOT NULL,
   description text,
-  color text DEFAULT '#4F46E5', -- Default blue color
+  color text DEFAULT '#E2827F', -- Default coral color
   icon text DEFAULT 'Folder',   -- Lucide icon name
   
   -- Organization

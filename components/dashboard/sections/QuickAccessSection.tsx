@@ -59,7 +59,7 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={['#667EEA', '#7C3AED', '#6366F1']}
+                colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.quickAccessGradient}
@@ -76,7 +76,7 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={['#3B82F6', '#1D4ED8', '#1E40AF']}
+                colors={['#E2827F', '#B15740', '#B15740']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.quickAccessGradient}

@@ -736,7 +736,7 @@ export default function ProfileScreen() {
                 rightComponent={
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TouchableOpacity
-                      style={[dynamicStyles.testButton, { backgroundColor: '#8B5CF6' }]}
+                      style={[dynamicStyles.testButton, { backgroundColor: '#E2827F' }]}
                       onPress={async () => {
                         try {
                           await sendTestQuestionNotification();

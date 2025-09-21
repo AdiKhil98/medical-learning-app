@@ -64,11 +64,11 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   // Color mapping for medical section types
   const getSectionColor = useCallback((type: string) => {
     switch (type) {
-      case 'definition': return '#3B82F6';
+      case 'definition': return '#E2827F';
       case 'epidemiology': return '#10B981';
       case 'etiology': return '#F59E0B';
       case 'symptoms': return '#EF4444';
-      case 'diagnosis': return '#8B5CF6';
+      case 'diagnosis': return '#E2827F';
       case 'therapy': return '#06B6D4';
       case 'prognosis': return '#84CC16';
       case 'emergency': return '#DC2626';
@@ -243,7 +243,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         parts.forEach((part, partIndex) => {
           if (statisticsRegex.test(part)) {
             lineElements.push(
-              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: colors.primary || '#3B82F6', color: 'white' }]}>
+              <Text key={`${index}-${partIndex}`} style={[styles.highlightedStat, { backgroundColor: colors.primary || '#E2827F', color: 'white' }]}>
                 {part}
               </Text>
             );

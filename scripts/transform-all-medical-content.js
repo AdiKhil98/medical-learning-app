@@ -229,7 +229,7 @@ function generateEnhancedHTML(title, sections) {
         
         /* Highlighting styles */
         .number {
-            background: #2196F3;
+            background: #E2827F;
             color: white;
             padding: 2px 8px;
             border-radius: 12px;

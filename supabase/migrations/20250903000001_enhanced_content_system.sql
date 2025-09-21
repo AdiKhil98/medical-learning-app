@@ -62,7 +62,7 @@ BEGIN
         .content-section { background: white; margin: 0 20px 16px; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #4CAF50; }
         .section-title { color: #2E3A59; font-size: 20px; font-weight: 600; margin: 0 0 15px 0; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 0 4px; }
-        .badge-blue { background: #E3F2FD; color: #1976D2; }
+        .badge-blue { background: #F8F3E8; color: #B15740; }
         .badge-purple { background: #F3E5F5; color: #7B1FA2; }
         .badge-red { background: #FFEBEE; color: #C62828; }
         .badge-green { background: #E8F5E8; color: #2E7D32; }

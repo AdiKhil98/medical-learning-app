@@ -210,7 +210,7 @@ export default function Analytics() {
                 value={analytics.totalUsers.toLocaleString()}
                 subtitle={`+${analytics.newUsersThisWeek} this week`}
                 icon={Users}
-                color="#3B82F6"
+                color="#E2827F"
               />
               <StatCard
                 title="Active Today"
@@ -231,7 +231,7 @@ export default function Analytics() {
                 value={formatDuration(analytics.averageSessionTime)}
                 subtitle="Time spent"
                 icon={Clock}
-                color="#8B5CF6"
+                color="#E2827F"
               />
             </View>
 
@@ -251,7 +251,7 @@ export default function Analytics() {
                   </View>
                 </View>
                 <View style={styles.growthStat}>
-                  <Calendar size={20} color="#3B82F6" />
+                  <Calendar size={20} color="#E2827F" />
                   <View style={styles.growthDetails}>
                     <Text style={[styles.growthValue, { color: colors.text }]}>
                       {analytics.newUsersThisWeek}

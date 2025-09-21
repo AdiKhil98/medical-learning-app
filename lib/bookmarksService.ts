@@ -337,7 +337,7 @@ class BookmarksService {
         .from('bookmark_folders')
         .insert([{
           user_id: user.id,
-          color: '#4F46E5', // Default blue
+          color: '#E2827F', // Default coral
           icon: 'Folder',   // Default icon
           ...folderData
         }])

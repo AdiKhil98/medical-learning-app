@@ -106,7 +106,7 @@ const styles = {
   },
   questionContainer: {
     padding: 24,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E2827F',
     borderRadius: 20,
     margin: 16,
   },

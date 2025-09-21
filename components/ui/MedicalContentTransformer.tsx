@@ -166,7 +166,7 @@ const MedicalContentTransformer: React.FC = () => {
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            background: linear-gradient(135deg, #E2827F 0%, #B87E70 50%, #B15740 100%);
             color: #2c3e50;
             line-height: 1.6;
         }
@@ -178,12 +178,12 @@ const MedicalContentTransformer: React.FC = () => {
         }
         
         .content-header {
-            background: linear-gradient(135deg, #66BB6A 0%, #81C784 100%);
+            background: linear-gradient(135deg, #E2827F 0%, #B87E70 100%);
             color: white;
             padding: 40px;
             border-radius: 20px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.2);
+            box-shadow: 0 10px 30px rgba(226, 130, 127, 0.3);
         }
         
         .content-header h1 {
@@ -241,7 +241,7 @@ const MedicalContentTransformer: React.FC = () => {
         
         /* Highlighting styles */
         .number {
-            background: #2196F3;
+            background: #E2827F;
             color: white;
             padding: 2px 8px;
             border-radius: 12px;
