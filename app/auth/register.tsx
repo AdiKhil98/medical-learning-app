@@ -141,10 +141,7 @@
 
 
     return (
-      <LinearGradient
-        colors={['#ffffff', '#f0f9f0']}
-        style={styles.gradientBackground}
-      >
+      <View style={styles.gradientBackground}>
         <SafeAreaView style={styles.container}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -242,7 +239,7 @@
                 />
 
                 <LinearGradient
-                  colors={['#10b981', '#059669']}
+                  colors={['#B8755C', '#E2827F']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.registerButtonGradient}
@@ -271,13 +268,14 @@
             </View>
           </ScrollView>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   const styles = StyleSheet.create({
     gradientBackground: {
       flex: 1,
+      backgroundColor: '#FFFFFF',
     },
     container: {
       flex: 1,
@@ -289,21 +287,23 @@
       minHeight: '100%',
     },
     registerCard: {
-      backgroundColor: '#ffffff',
-      borderRadius: 16,
+      backgroundColor: '#F9F6F2',
+      borderRadius: 24,
       padding: 32,
       marginHorizontal: 'auto',
       maxWidth: 440,
       width: '100%',
       alignSelf: 'center',
-      shadowColor: '#000',
+      shadowColor: 'rgba(181,87,64,0.15)',
       shadowOffset: {
         width: 0,
-        height: 4,
+        height: 6,
       },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
       elevation: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(184, 126, 112, 0.2)',
     },
     header: {
       marginBottom: 32,
@@ -321,7 +321,7 @@
     welcomeTitle: {
       fontSize: 28,
       fontWeight: '700',
-      color: '#1F2937',
+      color: '#B8755C',
       marginBottom: 8,
       textAlign: 'center',
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -350,12 +350,12 @@
     registerButtonGradient: {
       borderRadius: 12,
       marginTop: 8,
-      shadowColor: '#10b981',
+      shadowColor: 'rgba(184, 117, 92, 0.4)',
       shadowOffset: {
         width: 0,
         height: 4,
       },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 6,
     },
@@ -382,7 +382,7 @@
     },
     signInLink: {
       fontSize: 14,
-      color: '#10b981',
+      color: '#B87E70',
       fontWeight: '600',
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
