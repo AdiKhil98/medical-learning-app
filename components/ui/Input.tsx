@@ -42,7 +42,7 @@ export default function Input({
     },
     inputContainer: {
       borderWidth: 2,
-      borderColor: error ? '#EF4444' : (isFocused ? '#10b981' : '#E5E7EB'),
+      borderColor: error ? '#EF4444' : (isFocused ? '#B8755C' : '#E5E7EB'),
       borderRadius: 12,
       backgroundColor: '#ffffff',
       flexDirection: 'row',
@@ -109,7 +109,7 @@ export default function Input({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           underlineColorAndroid="transparent"
-          selectionColor="#10b981"
+          selectionColor="#B8755C"
           textContentType="none"
           importantForAutofill="no"
           // Remove web focus outline

@@ -151,7 +151,7 @@
             <View style={styles.registerCard}>
               <View style={styles.header}>
                 <View style={styles.logoSection}>
-                  <Logo size="large" textColor="#1F2937" />
+                  <Logo size="large" textColor="#1F2937" variant="premium" />
                   <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
                 </View>
                 <Text style={styles.welcomeTitle}>Konto erstellen</Text>
@@ -159,7 +159,7 @@
                   Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
                 </Text>
                 <Text style={styles.platformText}>
-                  Kenntnisprüfung & Fachsprachprüfung Vorbereitung
+                  Professional Medical Training
                 </Text>
               </View>
 
@@ -340,6 +340,7 @@
       fontWeight: '500',
       textAlign: 'center',
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+      opacity: 0.8,
     },
     form: {
       gap: 20,
