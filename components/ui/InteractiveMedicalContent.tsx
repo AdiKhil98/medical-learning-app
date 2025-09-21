@@ -403,22 +403,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   }
 
   return (
-    <Animated.View style={[styles.appContainer, { opacity: fadeAnim }]}>
-      {/* Gradient Background */}
-      <LinearGradient 
-        colors={isDarkMode 
-          ? ['#1e1b4b', '#312e81', '#3730a3'] 
-          : ['#6366f1', '#8b5cf6', '#a855f7']
-        }
-        style={styles.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+    <Animated.View style={[styles.appContainer, { opacity: fadeAnim, backgroundColor: '#FFFFFF' }]}>
+      {/* Clean White Background */}
+      <View style={styles.whiteBackground} />
       
       {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: 'rgba(255, 255, 255, 0.1)', borderBottomColor: 'rgba(255, 255, 255, 0.2)' }]}>
+      <View style={[styles.header, { backgroundColor: 'transparent', borderBottomColor: 'rgba(184, 126, 112, 0.2)' }]}>
         <View style={styles.titleContainer}>
-          <Text style={[styles.mainTitle, { color: 'white' }]}>
+          <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
             {supabaseRow?.title || 'Medizinischer Inhalt'}
           </Text>
           <TableOfContents
@@ -429,36 +421,36 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
 
         <View style={styles.metaInfo}>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>  {/* Light beige background */}
+            <Text style={[styles.metaItem, { color: '#B15740' }]}>  {/* Brown Rust text */}
               📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
             </Text>
           </View>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
+            <Text style={[styles.metaItem, { color: '#B15740' }]}>
               ⏱️ {formatDate(supabaseRow?.last_updated)}
             </Text>
           </View>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-            <Text style={[styles.metaItem, { color: 'rgba(255, 255, 255, 0.9)' }]}>
+          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
+            <Text style={[styles.metaItem, { color: '#B15740' }]}>
               📖 {filteredSections.length} Abschnitte
             </Text>
           </View>
         </View>
 
         {/* Search */}
-        <View style={[styles.searchContainer, { 
-          borderColor: 'rgba(255, 255, 255, 0.3)',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)'
+        <View style={[styles.searchContainer, {
+          borderColor: 'rgba(184, 126, 112, 0.3)',  // Old Rose border
+          backgroundColor: '#FFFFFF'  // White background
         }]}>
-          <Search size={18} color="rgba(255, 255, 255, 0.7)" style={styles.searchIcon} />
+          <Search size={18} color="#B87E70" style={styles.searchIcon} />  {/* Old Rose icon */}
           <TextInput
-            style={[styles.searchBox, { 
-              color: 'white',
+            style={[styles.searchBox, {
+              color: '#333333',  // Dark text for white background
               backgroundColor: 'transparent'
             }]}
             placeholder="Suche im Inhalt..."
-            placeholderTextColor="rgba(255, 255, 255, 0.6)"
+            placeholderTextColor="#6B7280"  // Medium gray placeholder
             value={searchTerm}
             onChangeText={handleSearch}
           />
@@ -467,7 +459,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               handleSearch('');
               triggerActivity(); // Trigger activity when clearing search
             }} style={styles.clearSearch}>
-              <Text style={[styles.clearSearchText, { color: 'rgba(255, 255, 255, 0.7)' }]}>✕</Text>
+              <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>  {/* Old Rose clear button */}
             </TouchableOpacity>
           )}
         </View>
@@ -488,23 +480,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       >
         
         {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: 'rgba(255, 255, 255, 0.8)' }]}>
+          <Text style={[styles.searchResults, { color: '#6B7280' }]}>  {/* Medium gray for white background */}
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
         
         {/* Sections */}
         {filteredSections.map((section, index) => (
-          <View 
-            key={index} 
+          <View
+            key={index}
             ref={(ref) => { sectionRefs.current[index] = ref; }}
-            style={[styles.contentSection, { 
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              shadowColor: 'rgba(0, 0, 0, 0.1)',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 12,
-              elevation: 8,
+            style={[styles.contentSection, {
+              backgroundColor: '#F9F6F2',  // Light cream background matching homepage cards
+              borderWidth: 1,
+              borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border
+              shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 1,
+              shadowRadius: 20,
+              elevation: 12,
             }]}
           >
             <TouchableOpacity
@@ -516,7 +510,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
               accessibilityRole="button"
             >
-              <BookOpen size={22} color="#6366f1" />
+              <BookOpen size={22} color="#B87E70" />  {/* Old Rose color for book icon */}
               <Text style={styles.sectionTitle}>
                 {section.title}
               </Text>
@@ -552,12 +546,13 @@ const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
   },
-  gradientBackground: {
+  whiteBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
+    backgroundColor: '#FFFFFF',
     zIndex: -1,
   },
   errorContainer: {
@@ -667,18 +662,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: 'transparent',  // Transparent to show card background
   },
   sectionTitle: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 12,
-    color: '#1e40af',
+    color: '#B15740',  // Brown Rust for coral branding
   },
   sectionContent: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(99, 102, 241, 0.1)',
+    borderTopColor: 'rgba(184, 126, 112, 0.2)',  // Old Rose border
     padding: 20,
   },
   contentContainer: {
@@ -697,7 +692,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     fontFamily: 'Inter-Medium',
-    color: '#6366f1', // Brand color for bullets
+    color: '#B87E70', // Old Rose for bullets
     marginRight: 12,
     width: 20,
   },
@@ -705,7 +700,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     fontFamily: 'Inter-SemiBold',
-    color: '#6366f1', // Brand color for numbers
+    color: '#B87E70', // Old Rose for numbers
     marginRight: 12,
     minWidth: 24,
   },
