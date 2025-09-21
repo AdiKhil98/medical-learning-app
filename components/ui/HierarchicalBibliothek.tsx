@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronRight,
   ChevronLeft,
@@ -21,13 +23,17 @@ import {
   FileText,
   FolderOpen,
   Home,
-  Maximize2
+  Maximize2,
+  Menu as MenuIcon
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import BookmarkButton from '@/components/ui/BookmarkButton';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
+import Menu from '@/components/ui/Menu';
 
 // Memoized CategoryCard component to prevent unnecessary re-renders
 const CategoryCard = React.memo<{
@@ -125,6 +131,9 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
   const [modalVisible, setModalVisible] = useState(false);
   const [modalSlug, setModalSlug] = useState<string | null>(null);
   const [availableSections, setAvailableSections] = useState<CategoryItem[]>([]);
+
+  // Menu state
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Icon mapping for categories
   const getIconComponent = useCallback((iconName: string) => {
@@ -395,7 +404,26 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
   const showSkeleton = loading && currentItems.length === 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header matching homepage */}
+      <LinearGradient
+        colors={['#F8F3E8', '#E5877E']}  // Light gradient - White Linen to Tonys Pink
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.modernHeader}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setMenuOpen(true)}
+          >
+            <MenuIcon size={24} color="#B87E70" />  {/* Old Rose for light background */}
+          </TouchableOpacity>
+          <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
+          <UserAvatar size="medium" />
+        </View>
+      </LinearGradient>
+
       {/* Breadcrumb Navigation */}
       {renderBreadcrumbs()}
       
@@ -439,13 +467,43 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         }))}
         onSectionChange={handleModalSectionChange}
       />
-    </View>
+
+      {/* Menu */}
+      <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  // Header Styles (matching homepage)
+  modernHeader: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    shadowColor: 'rgba(181,87,64,0.15)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  menuButton: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(184,126,112,0.15)',
+    shadowColor: 'rgba(0,0,0,0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -458,9 +516,10 @@ const styles = StyleSheet.create({
   },
   breadcrumbContainer: {
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,  // Match header padding
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: 'rgba(184, 126, 112, 0.2)',  // Old Rose border for consistency
+    backgroundColor: 'rgba(248, 243, 232, 0.3)',  // Subtle background tint
   },
   breadcrumbContent: {
     flexDirection: 'row',
@@ -496,15 +555,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 48,  // Match "Lernkapital" title size
     fontWeight: 'bold',
     flex: 1,
+    color: '#A04A35',  // Darker shade for authority like homepage
   },
   headerLoader: {
     marginLeft: 8,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 20,  // Match homepage subtitle size
+    color: '#333333',  // Dark gray for optimal readability
+    fontWeight: '500',  // Medium weight for better hierarchy
   },
   scrollContainer: {
     flex: 1,
@@ -520,14 +582,16 @@ const styles = StyleSheet.create({
   categoryCard: {
     width: '48%',
     marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minHeight: 120,
+    borderRadius: 16,  // Match homepage corner radius
+    padding: 20,  // Enhanced padding
+    borderWidth: 1,
+    borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
+    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 12,
+    minHeight: 130,  // Slightly taller for better proportions
   },
   iconContainer: {
     width: 48,

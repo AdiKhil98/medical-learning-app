@@ -29,14 +29,14 @@ interface ThemeContextType {
 }
 
 const lightColors = {
-  background: '#F8F3E8',  // White Linen
+  background: '#FFFFFF',  // Pure white to match homepage
   surface: '#FFFFFF',
   primary: '#E2827F',     // Burning Sand - main brand color
   secondary: '#B87E70',   // Old Rose - dark accent
   text: '#1F2937',
   textSecondary: '#6B7280',
   border: '#E5E7EB',
-  card: '#FFFFFF',
+  card: '#F9F6F2',        // Light beige/cream for cards to match homepage
   error: '#B15740',       // Brown Rust for errors
   success: '#22C55E',
   warning: '#E5877E',     // Tonys Pink for warnings/highlights
