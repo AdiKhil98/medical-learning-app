@@ -23,20 +23,7 @@ const SUBSCRIPTION_TIERS = {
   }
 };
 
-// Helper function to verify webhook signature
-function verifyWebhookSignature(payload, signature, secret) {
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(payload, 'utf8');
-  const expectedSignature = hmac.digest('hex');
-
-  // Remove 'sha256=' prefix if present
-  const cleanSignature = signature.replace(/^sha256=/, '');
-
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'hex'),
-    Buffer.from(cleanSignature, 'hex')
-  );
-}
+// Helper function to verify webhook signature (Lemon Squeezy format)function verifyWebhookSignature(payload, signature, secret) {  const hmac = crypto.createHmac('sha256', secret);  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');  const signatureBuffer = Buffer.from(signature || ', 'utf8');  return crypto.timingSafeEqual(digest, signatureBuffer);}
 
 // Helper function to determine subscription tier from variant name or ID
 function determineSubscriptionTier(variantName, variantId) {
@@ -143,7 +130,7 @@ exports.handler = async (event, context) => {
   try {
     // Get the raw body and signature
     const payload = event.body;
-    const signature = event.headers['x-signature'];
+    const signature = event.headers['X-Signature'];
     const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
