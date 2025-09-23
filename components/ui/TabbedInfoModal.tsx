@@ -77,6 +77,8 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
   }, [visible, onClose]);
 
   const handleTabPress = (tabId: string) => {
+    console.log('Tab pressed:', tabId, 'Current active:', activeTab);
+
     if (tabId === activeTab) return;
 
     // Fade out current content
@@ -87,6 +89,7 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
     }).start(() => {
       // Change tab and fade in new content
       setActiveTab(tabId);
+      console.log('Tab changed to:', tabId);
       Animated.timing(contentOpacity, {
         toValue: 1,
         duration: 150,
@@ -108,11 +111,12 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
       onRequestClose={onClose}
     >
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-        <TouchableOpacity
-          style={styles.overlayTouchable}
-          activeOpacity={1}
-          onPress={onClose}
-        >
+        <View style={styles.overlayContainer}>
+          <TouchableOpacity
+            style={styles.overlayBackground}
+            activeOpacity={1}
+            onPress={onClose}
+          />
           <Animated.View
             style={[
               styles.modalContainer,
@@ -122,7 +126,6 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
                 maxHeight: screenHeight * 0.85,
               },
             ]}
-            onStartShouldSetResponder={() => true}
           >
             {/* Header */}
             <View style={styles.header}>
@@ -177,7 +180,7 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
               </ScrollView>
             </Animated.View>
           </Animated.View>
-        </TouchableOpacity>
+        </View>
       </Animated.View>
     </Modal>
   );
@@ -195,11 +198,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 9999,
   },
-  overlayTouchable: {
+  overlayContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+  },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   modalContainer: {
     backgroundColor: '#F8F3E8',
@@ -251,6 +261,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     minHeight: 44,
     justifyContent: 'center',
+    zIndex: 10,
   },
   firstTab: {
     borderTopLeftRadius: 8,
