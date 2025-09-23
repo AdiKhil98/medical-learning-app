@@ -235,34 +235,40 @@ export default function Logo({
       default:
         return (
           <Container style={styles.container} onPress={onPress}>
-            <Animated.View style={[styles.premiumContainer, { transform: [{ scale: pulseAnim }] }]}>
-              <LinearGradient
-                colors={['#4CAF50', '#66BB6A', '#81C784']}
-                style={[styles.premiumBackground, { width: iconSize, height: iconSize }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Heart size={iconSize * 0.4} color="white" fill="white" />
-              </LinearGradient>
-              <View style={[styles.premiumOverlay, { width: iconSize * 0.4, height: iconSize * 0.4 }]}>
-                <Text style={[styles.premiumInitials, { fontSize: iconSize * 0.15 }]}>KP</Text>
-              </View>
-            </Animated.View>
-            {showText && (
-              <View style={styles.premiumTextContainer}>
-                <Text style={[styles.premiumText, { 
-                  color: finalTextColor, 
-                  fontSize: size === 'small' ? 20 : size === 'large' ? 32 : 26 
+            <View style={styles.premiumLogoSection}>
+              <Animated.View style={[styles.premiumContainer, { transform: [{ scale: pulseAnim }] }]}>
+                <LinearGradient
+                  colors={['#4ADE80', '#22C55E', '#16A34A']}
+                  style={[styles.premiumBackground, { width: iconSize, height: iconSize }]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Heart size={iconSize * 0.5} color="white" fill="white" strokeWidth={2} />
+                </LinearGradient>
+                <View style={[styles.premiumOverlay, {
+                  width: iconSize * 0.5,
+                  height: iconSize * 0.3,
+                  top: iconSize * 0.35
                 }]}>
-                  KP Med
-                </Text>
-                {(size === 'large' || size === 'medium') && (
-                  <Text style={[styles.premiumSubtext, { color: finalTextColor }]}>
-                    Professional Medical Training
+                  <Text style={[styles.premiumInitials, { fontSize: iconSize * 0.18 }]}>KP</Text>
+                </View>
+              </Animated.View>
+              {showText && (
+                <View style={styles.premiumTextContainer}>
+                  <Text style={[styles.premiumText, {
+                    color: finalTextColor,
+                    fontSize: size === 'small' ? 20 : size === 'large' ? 32 : 26
+                  }]}>
+                    KP Med
                   </Text>
-                )}
-              </View>
-            )}
+                  {(size === 'large' || size === 'medium') && (
+                    <Text style={[styles.premiumSubtext, { color: finalTextColor }]}>
+                      Professional Medical Training
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
           </Container>
         );
     }
@@ -475,6 +481,10 @@ const styles = StyleSheet.create({
   },
 
   // Premium Variant
+  premiumLogoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   premiumContainer: {
     marginRight: 12,
     position: 'relative',
@@ -491,9 +501,9 @@ const styles = StyleSheet.create({
   },
   premiumOverlay: {
     position: 'absolute',
-    top: 4,
-    left: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    left: '50%',
+    marginLeft: -12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -501,7 +511,7 @@ const styles = StyleSheet.create({
   premiumInitials: {
     fontFamily: 'System',
     fontWeight: '800',
-    color: 'white',
+    color: '#16A34A',
     letterSpacing: 0.5,
   },
   premiumTextContainer: {
