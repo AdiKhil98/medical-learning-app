@@ -29,7 +29,6 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '');
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
-  const contentOpacity = new Animated.Value(1);
 
   useEffect(() => {
     if (visible) {
@@ -78,24 +77,7 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
 
   const handleTabPress = (tabId: string) => {
     console.log('Tab pressed:', tabId, 'Current active:', activeTab);
-
-    if (tabId === activeTab) return;
-
-    // Fade out current content
-    Animated.timing(contentOpacity, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      // Change tab and fade in new content
-      setActiveTab(tabId);
-      console.log('Tab changed to:', tabId);
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }).start();
-    });
+    setActiveTab(tabId);
   };
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -150,8 +132,13 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
                     index === 0 && styles.firstTab,
                     index === tabs.length - 1 && styles.lastTab,
                   ]}
-                  onPress={() => handleTabPress(tab.id)}
+                  onPress={() => {
+                    console.log('TouchableOpacity onPress triggered for:', tab.id);
+                    handleTabPress(tab.id);
+                  }}
                   activeOpacity={0.7}
+                  accessible={true}
+                  accessibilityRole="button"
                 >
                   <Text style={[
                     styles.tabText,
@@ -165,20 +152,16 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
             </View>
 
             {/* Tab Content */}
-            <Animated.View
-              style={[
-                styles.contentContainer,
-                { opacity: contentOpacity }
-              ]}
-            >
+            <View style={styles.contentContainer}>
               <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                key={activeTab}
               >
                 {activeTabContent}
               </ScrollView>
-            </Animated.View>
+            </View>
           </Animated.View>
         </View>
       </Animated.View>
@@ -262,6 +245,9 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(184, 126, 112, 0.05)',
   },
   firstTab: {
     borderTopLeftRadius: 8,
