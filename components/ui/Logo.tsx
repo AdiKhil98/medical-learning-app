@@ -238,7 +238,7 @@ export default function Logo({
             <View style={styles.premiumLogoSection}>
               <Animated.View style={[styles.premiumContainer, { transform: [{ scale: pulseAnim }] }]}>
                 <LinearGradient
-                  colors={['#4ADE80', '#22C55E', '#16A34A']}
+                  colors={['#B8755C', '#E2827F', '#B87E70']}
                   style={[styles.premiumBackground, { width: iconSize, height: iconSize }]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4CAF50',
+    shadowColor: 'rgba(184, 117, 92, 0.4)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   premiumInitials: {
     fontFamily: 'System',
     fontWeight: '800',
-    color: '#16A34A',
+    color: '#B8755C',
     letterSpacing: 0.5,
   },
   premiumTextContainer: {
