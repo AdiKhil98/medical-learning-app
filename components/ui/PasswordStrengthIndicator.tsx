@@ -44,10 +44,10 @@ export default function PasswordStrengthIndicator({
   const strengthPercentage = (metCount / checks.length) * 100;
 
   const getStrengthColor = () => {
-    if (strengthPercentage >= 80) return '#10b981'; // Green
-    if (strengthPercentage >= 60) return '#F59E0B'; // Yellow
-    if (strengthPercentage >= 40) return '#F97316'; // Orange
-    return '#EF4444'; // Red
+    if (strengthPercentage >= 80) return '#B87E70'; // Coral - Strong
+    if (strengthPercentage >= 60) return '#E2827F'; // Light Coral - Good
+    if (strengthPercentage >= 40) return '#F97316'; // Orange - Medium
+    return '#EF4444'; // Red - Weak
   };
 
   const getStrengthLabel = () => {
@@ -83,7 +83,7 @@ export default function PasswordStrengthIndicator({
               <View key={index} style={styles.requirement}>
                 <View style={[
                   styles.checkIcon,
-                  { backgroundColor: check.met ? '#10b981' : '#E5E7EB' }
+                  { backgroundColor: check.met ? '#B87E70' : '#E5E7EB' }
                 ]}>
                   <Text style={[
                     styles.checkMark,

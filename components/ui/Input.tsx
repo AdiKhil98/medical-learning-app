@@ -112,13 +112,14 @@ export default function Input({
           selectionColor="#B8755C"
           textContentType="none"
           importantForAutofill="no"
-          // Remove web focus outline
+          // Remove web focus outline and ensure coral accent
           {...(Platform.OS === 'web' && {
             //@ts-ignore
             style: {
               outline: 'none',
               outlineStyle: 'none',
               boxShadow: 'none',
+              accentColor: '#B8755C',
             }
           })}
           {...props}

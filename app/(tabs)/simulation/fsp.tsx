@@ -1,24 +1,23 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mic, Clock, Info } from 'lucide-react-native';
+import { ArrowLeft, Mic, Clock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
-import TabbedInfoModal from '@/components/ui/TabbedInfoModal';
-import { CleanContent, Section, Paragraph, BoldText, List, Step, Highlight, TimeInfo } from '@/components/ui/CleanContent';
+import InlineInstructions from '@/components/ui/InlineInstructions';
+import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList } from '@/components/ui/InlineContent';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
   const voiceflowController = useRef<VoiceflowController | null>(null);
-  const [timerActive, setTimerActive] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timerActive, setTimerActive] = React.useState(false);
+  const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
+  const [sessionToken, setSessionToken] = React.useState<string | null>(null);
+  const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
-  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -514,41 +513,38 @@ export default function FSPSimulationScreen() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle info button press
-  const handleInfoPress = () => {
-    setShowInfoModal(true);
-  };
 
-  // FSP Simulation tabs content
-  const fspTabs = [
+  // FSP Simulation inline instructions content
+  const fspInstructions = [
     {
       id: 'overview',
       title: 'Überblick',
       content: (
-        <CleanContent>
-          <Section title="🏥 Willkommen zu Ihrem Fachsprachprüfungs-Training!">
+        <InlineContent>
+          <Section title="🏥 FSP-Prüfung Simulationsleitfaden">
             <Paragraph>
-              Dies ist eine umfassende Trainingsumgebung zur Vorbereitung auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> - die medizinische Deutschprüfung für ausländische Ärzte in Deutschland.
+              Willkommen zu Ihrem Fachsprachprüfungs-Training! Dies ist eine umfassende Trainingsumgebung zur Vorbereitung auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> - die medizinische Deutschprüfung für ausländische Ärzte in Deutschland.
             </Paragraph>
             <Paragraph>
               Unsere Simulation bildet die echte Prüfungserfahrung ab und hilft Ihnen, Selbstvertrauen aufzubauen und Ihre Leistung zu verbessern.
             </Paragraph>
           </Section>
 
-          <Highlight>
+          <InfoBox>
             📋 Diese Simulation testet Ihre Kommunikationsfähigkeiten durch realistische Patientengespräche und Prüfersituationen
-          </Highlight>
-        </CleanContent>
+          </InfoBox>
+        </InlineContent>
       )
     },
     {
       id: 'process',
       title: 'Ablauf',
       content: (
-        <CleanContent>
+        <InlineContent>
           <Section title="🚀 So funktioniert die Simulation">
             <Step
-              title="Schritt 1: Benutzer-ID Verifizierung 🔐"
+              number="1"
+              title="Benutzer-ID Verifizierung 🔐"
               description="Geben Sie zunächst Ihre zugewiesene Benutzer-ID an"
               details={[
                 "Dies stellt sicher, dass Ihre Auswertung korrekt in Ihrem persönlichen Konto erscheint",
@@ -557,7 +553,8 @@ export default function FSPSimulationScreen() {
             />
 
             <Step
-              title="Schritt 2: Fallauswahl 📂"
+              number="2"
+              title="Fallauswahl 📂"
               description="Wählen Sie aus verschiedenen medizinischen Fällen zum Üben"
               details={[
                 "Auswahl nach Fachgebiet (Innere Medizin, Notfallmedizin, Neurologie)",
@@ -566,7 +563,8 @@ export default function FSPSimulationScreen() {
             />
 
             <Step
-              title="Schritt 3: Patientenanamnese 👨‍⚕️💬"
+              number="3"
+              title="Patientenanamnese 👨‍⚕️💬 (10 Minuten)"
               description="Hier beginnt der Kern Ihres Trainings:"
               details={[
                 "Start: Begrüßen Sie Ihren Patienten professionell auf Deutsch",
@@ -577,7 +575,8 @@ export default function FSPSimulationScreen() {
             />
 
             <Step
-              title="Schritt 4: Prüfergespräch 👩‍⚕️📊"
+              number="4"
+              title="Prüfergespräch 👩‍⚕️📊 (10 Minuten)"
               description="Treffen Sie Dr. Hoffmann, den Oberarzt:"
               details={[
                 "Vorstellung: Erzählen Sie dem Prüfer über sich und Ihren Hintergrund",
@@ -587,21 +586,22 @@ export default function FSPSimulationScreen() {
               ]}
             />
           </Section>
-        </CleanContent>
+        </InlineContent>
       )
     },
     {
       id: 'evaluation',
-      title: 'Auswertung',
+      title: 'Bewertung',
       content: (
-        <CleanContent>
+        <InlineContent>
           <Section title="📊 Ihre personalisierte Auswertung">
             <Paragraph>
               Kurz nach Abschluss der Simulation finden Sie Ihre detaillierte Auswertung im <BoldText>Fortschrittsbereich</BoldText> Ihres Kontos:
             </Paragraph>
 
             <Step
-              title="✅ Leistungsanalyse"
+              number="✅"
+              title="Leistungsanalyse"
               description="Was Sie gut gemacht haben:"
               details={[
                 "Identifizierte Stärken in Ihrer Kommunikation",
@@ -610,7 +610,8 @@ export default function FSPSimulationScreen() {
             />
 
             <Step
-              title="📈 Verbesserungsmöglichkeiten"
+              number="📈"
+              title="Verbesserungsmöglichkeiten"
               description="Wo Sie sich verbessern können:"
               details={[
                 "Spezifische Sprachkorrekturen",
@@ -620,7 +621,8 @@ export default function FSPSimulationScreen() {
             />
 
             <Step
-              title="💡 Umsetzbare nächste Schritte"
+              number="💡"
+              title="Umsetzbare nächste Schritte"
               description="Konkrete Empfehlungen für Ihren Erfolg:"
               details={[
                 "Gezielte Übungsempfehlungen",
@@ -629,23 +631,23 @@ export default function FSPSimulationScreen() {
               ]}
             />
           </Section>
-        </CleanContent>
+
+          <Section title="⏱️ Zeitübersicht">
+            <TimeItem label="Gesamtdauer" time="20 Minuten" />
+            <TimeItem label="Patientenanamnese" time="10 Minuten" />
+            <TimeItem label="Prüfergespräch" time="10 Minuten" />
+            <TimeItem label="Auswertungslieferung" time="Innerhalb weniger Minuten nach Abschluss" />
+          </Section>
+        </InlineContent>
       )
     },
     {
       id: 'tips',
       title: 'Tipps',
       content: (
-        <CleanContent>
-          <Section title="⏱️ Zeitübersicht">
-            <TimeInfo>Gesamtdauer: 20 Minuten</TimeInfo>
-            <TimeInfo>Patientenanamnese: 10 Minuten</TimeInfo>
-            <TimeInfo>Prüfergespräch: 10 Minuten</TimeInfo>
-            <TimeInfo>Auswertungslieferung: Innerhalb weniger Minuten nach Abschluss</TimeInfo>
-          </Section>
-
+        <InlineContent>
           <Section title="💪 Profi-Tipps für den Erfolg">
-            <List items={[
+            <TipsList items={[
               "Sprechen Sie natürlich - Dies ist ein Gespräch, kein Skript",
               "Verwenden Sie professionelles medizinisches Deutsch - Demonstrieren Sie Ihre Fachsprache",
               "Seien Sie gründlich aber effizient - Decken Sie alle wichtigen Punkte innerhalb der Zeitlimits ab",
@@ -658,15 +660,17 @@ export default function FSPSimulationScreen() {
               Ihre Reise zum FSP-Erfolg beginnt mit Übung. Jede Simulation baut Ihr Selbstvertrauen und Ihre Kompetenz auf. Denken Sie daran: Jede Sitzung macht Sie besser auf die echte Prüfung vorbereitet!
             </Paragraph>
 
-            <Highlight>
+            <InfoBox>
               Halten Sie Ihre Benutzer-ID bereit und lassen Sie uns mit Ihrem Training beginnen! Viel Erfolg! 🌟
-            </Highlight>
+            </InfoBox>
 
-            <Text style={{ fontSize: 14, fontStyle: 'italic', color: '#B87E70', marginTop: 16, fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto' }}>
-              Hinweis: Diese Simulation bietet eine realistische Prüfungserfahrung mit hochwertigem, personalisiertem Feedback, um Ihre Vorbereitung auf die Fachsprachprüfung zu beschleunigen.
-            </Text>
+            <Paragraph>
+              <Text style={{ fontSize: 12, fontStyle: 'italic', color: '#B87E70', fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto' }}>
+                Hinweis: Diese Simulation bietet eine realistische Prüfungserfahrung mit hochwertigem, personalisiertem Feedback, um Ihre Vorbereitung auf die Fachsprachprüfung zu beschleunigen.
+              </Text>
+            </Paragraph>
           </Section>
-        </CleanContent>
+        </InlineContent>
       )
     }
   ];
@@ -690,14 +694,7 @@ export default function FSPSimulationScreen() {
           <Text style={styles.headerTitle}>FSP-Simulation</Text>
         </View>
 
-        {/* Info button in header */}
-        <TouchableOpacity
-          style={styles.headerInfoButton}
-          onPress={handleInfoPress}
-          activeOpacity={0.7}
-        >
-          <Info size={20} color="white" />
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </LinearGradient>
 
       {/* Timer display - only show when active */}
@@ -711,19 +708,16 @@ export default function FSPSimulationScreen() {
       )}
 
       <View style={styles.content}>
+        {/* Inline Instructions Panel */}
+        <View style={styles.instructionsContainer}>
+          <InlineInstructions tabs={fspInstructions} />
+        </View>
+
         {/* Widget Area */}
         <View style={styles.widgetArea}>
           {/* Widget loads here automatically */}
         </View>
       </View>
-
-      {/* Info Modal */}
-      <TabbedInfoModal
-        visible={showInfoModal}
-        onClose={() => setShowInfoModal(false)}
-        title="FSP-Prüfung Simulationsleitfaden"
-        tabs={fspTabs}
-      />
     </SafeAreaView>
   );
 }
@@ -759,13 +753,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
   },
-  headerInfoButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  headerSpacer: {
+    width: 40, // Same width as back button for symmetry
   },
   timerContainer: {
     flexDirection: 'row',
@@ -785,9 +774,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    flexDirection: 'column',
+  },
+  instructionsContainer: {
+    flex: 2, // Takes up 2/3 of available space
+    minHeight: 300,
   },
   widgetArea: {
-    flex: 1,
+    flex: 1, // Takes up 1/3 of available space
+    minHeight: 200,
     // This area is where the Voiceflow widget will appear
   },
 });
