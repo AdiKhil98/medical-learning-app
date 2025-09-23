@@ -108,6 +108,8 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
                 maxHeight: screenHeight * 0.85,
               },
             ]}
+            onStartShouldSetResponder={() => true}
+            onResponderGrant={() => {}}
           >
             {/* Header */}
             <View style={styles.header}>
@@ -122,7 +124,11 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
             </View>
 
             {/* Tab Navigation */}
-            <View style={styles.tabContainer}>
+            <View
+              style={styles.tabContainer}
+              onStartShouldSetResponder={() => true}
+              onResponderGrant={() => {}}
+            >
               {tabs.map((tab, index) => (
                 <TouchableOpacity
                   key={tab.id}
@@ -132,7 +138,8 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
                     index === 0 && styles.firstTab,
                     index === tabs.length - 1 && styles.lastTab,
                   ]}
-                  onPress={() => {
+                  onPress={(e) => {
+                    e?.stopPropagation?.();
                     console.log('TouchableOpacity onPress triggered for:', tab.id);
                     handleTabPress(tab.id);
                   }}
