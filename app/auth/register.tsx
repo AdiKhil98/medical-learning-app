@@ -152,7 +152,7 @@
               <View style={styles.header}>
                 <View style={styles.logoSection}>
                   <Logo size="large" textColor="#1F2937" variant="premium" />
-                  <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
+                  <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
                 </View>
                 <Text style={styles.welcomeTitle}>Konto erstellen</Text>
                 <Text style={styles.subtitle}>

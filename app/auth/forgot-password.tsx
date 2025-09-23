@@ -108,7 +108,7 @@ export default function ForgotPassword() {
               <View style={styles.header}>
                 <View style={styles.logoSection}>
                   <Logo size="large" textColor="#1F2937" variant="premium" />
-                  <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
+                  <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
                 </View>
                 
                 <View style={styles.iconContainer}>
@@ -171,7 +171,7 @@ export default function ForgotPassword() {
 
               <View style={styles.logoSection}>
                 <Logo size="large" textColor="#1F2937" variant="premium" />
-                <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
+                <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
               </View>
 
               <Text style={styles.title}>Passwort vergessen?</Text>
