@@ -6,7 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
-import InfoModal from '@/components/ui/InfoModal';
+import TabbedInfoModal from '@/components/ui/TabbedInfoModal';
+import { CleanContent, Section, Paragraph, BoldText, List, Step, Highlight, TimeInfo } from '@/components/ui/CleanContent';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -518,98 +519,157 @@ export default function FSPSimulationScreen() {
     setShowInfoModal(true);
   };
 
-  // FSP Simulation info content
-  const fspInfoContent = `# 🏥 FSP-Prüfung Simulationsleitfaden
-## Willkommen zu Ihrem Fachsprachprüfungs-Training!
+  // FSP Simulation tabs content
+  const fspTabs = [
+    {
+      id: 'overview',
+      title: 'Überblick',
+      content: (
+        <CleanContent>
+          <Section title="🏥 Willkommen zu Ihrem Fachsprachprüfungs-Training!">
+            <Paragraph>
+              Dies ist eine umfassende Trainingsumgebung zur Vorbereitung auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> - die medizinische Deutschprüfung für ausländische Ärzte in Deutschland.
+            </Paragraph>
+            <Paragraph>
+              Unsere Simulation bildet die echte Prüfungserfahrung ab und hilft Ihnen, Selbstvertrauen aufzubauen und Ihre Leistung zu verbessern.
+            </Paragraph>
+          </Section>
 
-### 📋 **Was ist diese Simulation?**
-Dies ist eine umfassende Trainingsumgebung zur Vorbereitung auf die **Fachsprachprüfung (FSP)** - die medizinische Deutschprüfung für ausländische Ärzte in Deutschland. Unsere Simulation bildet die echte Prüfungserfahrung ab und hilft Ihnen, Selbstvertrauen aufzubauen und Ihre Leistung zu verbessern.
+          <Highlight>
+            📋 Diese Simulation testet Ihre Kommunikationsfähigkeiten durch realistische Patientengespräche und Prüfersituationen
+          </Highlight>
+        </CleanContent>
+      )
+    },
+    {
+      id: 'process',
+      title: 'Ablauf',
+      content: (
+        <CleanContent>
+          <Section title="🚀 So funktioniert die Simulation">
+            <Step
+              title="Schritt 1: Benutzer-ID Verifizierung 🔐"
+              description="Geben Sie zunächst Ihre zugewiesene Benutzer-ID an"
+              details={[
+                "Dies stellt sicher, dass Ihre Auswertung korrekt in Ihrem persönlichen Konto erscheint",
+                "Ihr Fortschritt und Ihre Ergebnisse werden für kontinuierliche Verbesserung verfolgt"
+              ]}
+            />
 
----
+            <Step
+              title="Schritt 2: Fallauswahl 📂"
+              description="Wählen Sie aus verschiedenen medizinischen Fällen zum Üben"
+              details={[
+                "Auswahl nach Fachgebiet (Innere Medizin, Notfallmedizin, Neurologie)",
+                "Wählen Sie spezifische Themen, die Sie stärken möchten"
+              ]}
+            />
 
-## 🚀 **So funktioniert die Simulation**
+            <Step
+              title="Schritt 3: Patientenanamnese 👨‍⚕️💬"
+              description="Hier beginnt der Kern Ihres Trainings:"
+              details={[
+                "Start: Begrüßen Sie Ihren Patienten professionell auf Deutsch",
+                "Während: Erheben Sie eine umfassende Anamnese (Hauptbeschwerde, Symptome, Vorgeschichte, Medikamente, Allergien, Sozialanamnese)",
+                "Ende: Sagen Sie 'Ich bin fertig' oder 'Ich habe keine weiteren Fragen' um diese Phase abzuschließen",
+                "Ihr Gespräch wird automatisch zur Auswertung gesendet"
+              ]}
+            />
 
-### **Schritt 1: Benutzer-ID Verifizierung** 🔐
-- Geben Sie zunächst Ihre zugewiesene Benutzer-ID an
-- Dies stellt sicher, dass Ihre Auswertung korrekt in Ihrem persönlichen Konto erscheint
-- Ihr Fortschritt und Ihre Ergebnisse werden für kontinuierliche Verbesserung verfolgt
+            <Step
+              title="Schritt 4: Prüfergespräch 👩‍⚕️📊"
+              description="Treffen Sie Dr. Hoffmann, den Oberarzt:"
+              details={[
+                "Vorstellung: Erzählen Sie dem Prüfer über sich und Ihren Hintergrund",
+                "Fallbesprechung: Beantworten Sie Fragen zu Ihren Diagnoseüberlegungen, Behandlungsplanung, Patientenkommunikationsansatz und medizinischer Fachterminologie",
+                "Ende: Sagen Sie 'Ich bin fertig' oder 'Können wir das beenden?' wenn Sie bereit sind",
+                "Dieses Gespräch wird ebenfalls ausgewertet"
+              ]}
+            />
+          </Section>
+        </CleanContent>
+      )
+    },
+    {
+      id: 'evaluation',
+      title: 'Auswertung',
+      content: (
+        <CleanContent>
+          <Section title="📊 Ihre personalisierte Auswertung">
+            <Paragraph>
+              Kurz nach Abschluss der Simulation finden Sie Ihre detaillierte Auswertung im <BoldText>Fortschrittsbereich</BoldText> Ihres Kontos:
+            </Paragraph>
 
-### **Schritt 2: Fallauswahl** 📂
-- Wählen Sie aus verschiedenen medizinischen Fällen zum Üben
-- Auswahl nach Fachgebiet (Innere Medizin, Notfallmedizin, Neurologie)
-- Wählen Sie spezifische Themen, die Sie stärken möchten
+            <Step
+              title="✅ Leistungsanalyse"
+              description="Was Sie gut gemacht haben:"
+              details={[
+                "Identifizierte Stärken in Ihrer Kommunikation",
+                "Bereiche mit nachgewiesener Kompetenz"
+              ]}
+            />
 
-### **Schritt 3: Patientenanamnese** 👨‍⚕️💬 **(10 Minuten)**
-Hier beginnt der Kern Ihres Trainings:
-- **Start:** Begrüßen Sie Ihren Patienten professionell auf Deutsch
-- **Während:** Erheben Sie eine umfassende Anamnese
-  - Hauptbeschwerde
-  - Aktuelle Symptome
-  - Vorgeschichte
-  - Medikamente
-  - Allergien
-  - Sozialanamnese
-- **Ende:** Sagen Sie **"Ich bin fertig"** oder **"Ich habe keine weiteren Fragen"** um diese Phase abzuschließen
-- Ihr Gespräch wird automatisch zur Auswertung gesendet
+            <Step
+              title="📈 Verbesserungsmöglichkeiten"
+              description="Wo Sie sich verbessern können:"
+              details={[
+                "Spezifische Sprachkorrekturen",
+                "Feedback zur medizinischen Terminologie",
+                "Vorschläge zur Kommunikationstechnik"
+              ]}
+            />
 
-### **Schritt 4: Prüfergespräch** 👩‍⚕️📊 **(10 Minuten)**
-Treffen Sie Dr. Hoffmann, den Oberarzt:
-- **Vorstellung:** Erzählen Sie dem Prüfer über sich und Ihren Hintergrund
-- **Fallbesprechung:** Beantworten Sie Fragen zu:
-  - Ihren Diagnoseüberlegungen
-  - Behandlungsplanung
-  - Patientenkommunikationsansatz
-  - Medizinischer Fachterminologie auf Deutsch
-- **Ende:** Sagen Sie **"Ich bin fertig"** oder **"Können wir das beenden?"** wenn Sie bereit sind
-- Dieses Gespräch wird ebenfalls ausgewertet
+            <Step
+              title="💡 Umsetzbare nächste Schritte"
+              description="Konkrete Empfehlungen für Ihren Erfolg:"
+              details={[
+                "Gezielte Übungsempfehlungen",
+                "Ressourcen zur Verbesserung",
+                "Tipps für den Prüfungserfolg"
+              ]}
+            />
+          </Section>
+        </CleanContent>
+      )
+    },
+    {
+      id: 'tips',
+      title: 'Tipps',
+      content: (
+        <CleanContent>
+          <Section title="⏱️ Zeitübersicht">
+            <TimeInfo>Gesamtdauer: 20 Minuten</TimeInfo>
+            <TimeInfo>Patientenanamnese: 10 Minuten</TimeInfo>
+            <TimeInfo>Prüfergespräch: 10 Minuten</TimeInfo>
+            <TimeInfo>Auswertungslieferung: Innerhalb weniger Minuten nach Abschluss</TimeInfo>
+          </Section>
 
----
+          <Section title="💪 Profi-Tipps für den Erfolg">
+            <List items={[
+              "Sprechen Sie natürlich - Dies ist ein Gespräch, kein Skript",
+              "Verwenden Sie professionelles medizinisches Deutsch - Demonstrieren Sie Ihre Fachsprache",
+              "Seien Sie gründlich aber effizient - Decken Sie alle wichtigen Punkte innerhalb der Zeitlimits ab",
+              "Bleiben Sie ruhig - Die Simulation ist darauf ausgelegt, Ihnen beim Lernen und Verbessern zu helfen"
+            ]} />
+          </Section>
 
-## 📊 **Ihre personalisierte Auswertung**
+          <Section title="🎯 Bereit zu beginnen?">
+            <Paragraph>
+              Ihre Reise zum FSP-Erfolg beginnt mit Übung. Jede Simulation baut Ihr Selbstvertrauen und Ihre Kompetenz auf. Denken Sie daran: Jede Sitzung macht Sie besser auf die echte Prüfung vorbereitet!
+            </Paragraph>
 
-### Was Sie erhalten:
-Kurz nach Abschluss der Simulation finden Sie Ihre detaillierte Auswertung im **Fortschrittsbereich** Ihres Kontos:
+            <Highlight>
+              Halten Sie Ihre Benutzer-ID bereit und lassen Sie uns mit Ihrem Training beginnen! Viel Erfolg! 🌟
+            </Highlight>
 
-✅ **Leistungsanalyse**
-- Identifizierte Stärken in Ihrer Kommunikation
-- Bereiche mit nachgewiesener Kompetenz
-
-📈 **Verbesserungsmöglichkeiten**
-- Spezifische Sprachkorrekturen
-- Feedback zur medizinischen Terminologie
-- Vorschläge zur Kommunikationstechnik
-
-💡 **Umsetzbare nächste Schritte**
-- Gezielte Übungsempfehlungen
-- Ressourcen zur Verbesserung
-- Tipps für den Prüfungserfolg
-
----
-
-## ⏱️ **Zeitübersicht**
-- **Gesamtdauer:** 20 Minuten
-- **Patientenanamnese:** 10 Minuten
-- **Prüfergespräch:** 10 Minuten
-- **Auswertungslieferung:** Innerhalb weniger Minuten nach Abschluss
-
----
-
-## 💪 **Profi-Tipps für den Erfolg**
-1. **Sprechen Sie natürlich** - Dies ist ein Gespräch, kein Skript
-2. **Verwenden Sie professionelles medizinisches Deutsch** - Demonstrieren Sie Ihre Fachsprache
-3. **Seien Sie gründlich aber effizient** - Decken Sie alle wichtigen Punkte innerhalb der Zeitlimits ab
-4. **Bleiben Sie ruhig** - Die Simulation ist darauf ausgelegt, Ihnen beim Lernen und Verbessern zu helfen
-
----
-
-## 🎯 **Bereit zu beginnen?**
-Ihre Reise zum FSP-Erfolg beginnt mit Übung. Jede Simulation baut Ihr Selbstvertrauen und Ihre Kompetenz auf. Denken Sie daran: Jede Sitzung macht Sie besser auf die echte Prüfung vorbereitet!
-
-**Halten Sie Ihre Benutzer-ID bereit und lassen Sie uns mit Ihrem Training beginnen! Viel Erfolg!** 🌟
-
----
-
-*Hinweis: Diese Simulation bietet eine realistische Prüfungserfahrung mit hochwertigem, personalisiertem Feedback, um Ihre Vorbereitung auf die Fachsprachprüfung zu beschleunigen.*`;
+            <Text style={{ fontSize: 14, fontStyle: 'italic', color: '#B87E70', marginTop: 16, fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto' }}>
+              Hinweis: Diese Simulation bietet eine realistische Prüfungserfahrung mit hochwertigem, personalisiertem Feedback, um Ihre Vorbereitung auf die Fachsprachprüfung zu beschleunigen.
+            </Text>
+          </Section>
+        </CleanContent>
+      )
+    }
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -658,11 +718,11 @@ Ihre Reise zum FSP-Erfolg beginnt mit Übung. Jede Simulation baut Ihr Selbstver
       </View>
 
       {/* Info Modal */}
-      <InfoModal
+      <TabbedInfoModal
         visible={showInfoModal}
         onClose={() => setShowInfoModal(false)}
         title="FSP-Prüfung Simulationsleitfaden"
-        content={fspInfoContent}
+        tabs={fspTabs}
       />
     </SafeAreaView>
   );
