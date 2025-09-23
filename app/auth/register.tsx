@@ -158,9 +158,6 @@
                 <Text style={styles.subtitle}>
                   Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
                 </Text>
-                <Text style={styles.platformText}>
-                  Professional Medical Training
-                </Text>
               </View>
 
               <View style={styles.form}>
@@ -333,14 +330,6 @@
       textAlign: 'center',
       marginBottom: 4,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    platformText: {
-      fontSize: 14,
-      color: '#10b981',
-      fontWeight: '500',
-      textAlign: 'center',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-      opacity: 0.8,
     },
     form: {
       gap: 20,

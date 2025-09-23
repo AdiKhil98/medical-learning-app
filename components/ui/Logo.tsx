@@ -256,7 +256,7 @@ export default function Logo({
                 }]}>
                   KP Med
                 </Text>
-                {size === 'large' && (
+                {(size === 'large' || size === 'medium') && (
                   <Text style={[styles.premiumSubtext, { color: finalTextColor }]}>
                     Professional Medical Training
                   </Text>

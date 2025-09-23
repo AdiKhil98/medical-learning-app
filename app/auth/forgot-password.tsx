@@ -107,12 +107,12 @@ export default function ForgotPassword() {
             <View style={styles.successCard}>
               <View style={styles.header}>
                 <View style={styles.logoSection}>
-                  <Logo size="large" textColor="#1F2937" />
+                  <Logo size="large" textColor="#1F2937" variant="premium" />
                   <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
                 </View>
                 
                 <View style={styles.iconContainer}>
-                  <Mail size={64} color="#10b981" />
+                  <Mail size={64} color="#B87E70" />
                 </View>
 
                 <Text style={styles.title}>E-Mail versendet!</Text>
@@ -132,7 +132,7 @@ export default function ForgotPassword() {
                   style={styles.backButton}
                   onPress={handleBackToLogin}
                 >
-                  <ArrowLeft size={20} color="#10b981" />
+                  <ArrowLeft size={20} color="#B87E70" />
                   <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
                 </TouchableOpacity>
               </View>
@@ -170,7 +170,7 @@ export default function ForgotPassword() {
               </TouchableOpacity>
 
               <View style={styles.logoSection}>
-                <Logo size="large" textColor="#1F2937" />
+                <Logo size="large" textColor="#1F2937" variant="premium" />
                 <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
               </View>
 
@@ -197,7 +197,7 @@ export default function ForgotPassword() {
               />
 
               <LinearGradient
-                colors={['#10b981', '#059669']}
+                colors={['#B8755C', '#E2827F']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.resetButtonGradient}
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#10b981',
+    color: '#B87E70',
     marginBottom: 16,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   resetButtonGradient: {
     borderRadius: 12,
     marginTop: 8,
-    shadowColor: '#10b981',
+    shadowColor: 'rgba(184, 117, 92, 0.4)',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -378,13 +378,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#F0FDF4',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#B87E70',
     borderRadius: 12,
     paddingVertical: 16,
     gap: 8,
   },
   backButtonText: {
-    color: '#10b981',
+    color: '#B87E70',
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
