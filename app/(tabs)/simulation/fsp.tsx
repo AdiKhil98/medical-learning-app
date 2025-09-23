@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import InfoModal from '@/components/ui/InfoModal';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function FSPSimulationScreen() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -513,12 +515,101 @@ export default function FSPSimulationScreen() {
 
   // Handle info button press
   const handleInfoPress = () => {
-    Alert.alert(
-      'Über die Simulation',
-      'Diese FSP-Simulation dauert 20 Minuten und testet Ihre Kommunikationsfähigkeiten durch realistische Patientengespräche. Klicken Sie auf "Start a call" im Widget unten, um zu beginnen.',
-      [{ text: 'OK' }]
-    );
+    setShowInfoModal(true);
   };
+
+  // FSP Simulation info content
+  const fspInfoContent = `# 🏥 FSP-Prüfung Simulationsleitfaden
+## Willkommen zu Ihrem Fachsprachprüfungs-Training!
+
+### 📋 **Was ist diese Simulation?**
+Dies ist eine umfassende Trainingsumgebung zur Vorbereitung auf die **Fachsprachprüfung (FSP)** - die medizinische Deutschprüfung für ausländische Ärzte in Deutschland. Unsere Simulation bildet die echte Prüfungserfahrung ab und hilft Ihnen, Selbstvertrauen aufzubauen und Ihre Leistung zu verbessern.
+
+---
+
+## 🚀 **So funktioniert die Simulation**
+
+### **Schritt 1: Benutzer-ID Verifizierung** 🔐
+- Geben Sie zunächst Ihre zugewiesene Benutzer-ID an
+- Dies stellt sicher, dass Ihre Auswertung korrekt in Ihrem persönlichen Konto erscheint
+- Ihr Fortschritt und Ihre Ergebnisse werden für kontinuierliche Verbesserung verfolgt
+
+### **Schritt 2: Fallauswahl** 📂
+- Wählen Sie aus verschiedenen medizinischen Fällen zum Üben
+- Auswahl nach Fachgebiet (Innere Medizin, Notfallmedizin, Neurologie)
+- Wählen Sie spezifische Themen, die Sie stärken möchten
+
+### **Schritt 3: Patientenanamnese** 👨‍⚕️💬 **(10 Minuten)**
+Hier beginnt der Kern Ihres Trainings:
+- **Start:** Begrüßen Sie Ihren Patienten professionell auf Deutsch
+- **Während:** Erheben Sie eine umfassende Anamnese
+  - Hauptbeschwerde
+  - Aktuelle Symptome
+  - Vorgeschichte
+  - Medikamente
+  - Allergien
+  - Sozialanamnese
+- **Ende:** Sagen Sie **"Ich bin fertig"** oder **"Ich habe keine weiteren Fragen"** um diese Phase abzuschließen
+- Ihr Gespräch wird automatisch zur Auswertung gesendet
+
+### **Schritt 4: Prüfergespräch** 👩‍⚕️📊 **(10 Minuten)**
+Treffen Sie Dr. Hoffmann, den Oberarzt:
+- **Vorstellung:** Erzählen Sie dem Prüfer über sich und Ihren Hintergrund
+- **Fallbesprechung:** Beantworten Sie Fragen zu:
+  - Ihren Diagnoseüberlegungen
+  - Behandlungsplanung
+  - Patientenkommunikationsansatz
+  - Medizinischer Fachterminologie auf Deutsch
+- **Ende:** Sagen Sie **"Ich bin fertig"** oder **"Können wir das beenden?"** wenn Sie bereit sind
+- Dieses Gespräch wird ebenfalls ausgewertet
+
+---
+
+## 📊 **Ihre personalisierte Auswertung**
+
+### Was Sie erhalten:
+Kurz nach Abschluss der Simulation finden Sie Ihre detaillierte Auswertung im **Fortschrittsbereich** Ihres Kontos:
+
+✅ **Leistungsanalyse**
+- Identifizierte Stärken in Ihrer Kommunikation
+- Bereiche mit nachgewiesener Kompetenz
+
+📈 **Verbesserungsmöglichkeiten**
+- Spezifische Sprachkorrekturen
+- Feedback zur medizinischen Terminologie
+- Vorschläge zur Kommunikationstechnik
+
+💡 **Umsetzbare nächste Schritte**
+- Gezielte Übungsempfehlungen
+- Ressourcen zur Verbesserung
+- Tipps für den Prüfungserfolg
+
+---
+
+## ⏱️ **Zeitübersicht**
+- **Gesamtdauer:** 20 Minuten
+- **Patientenanamnese:** 10 Minuten
+- **Prüfergespräch:** 10 Minuten
+- **Auswertungslieferung:** Innerhalb weniger Minuten nach Abschluss
+
+---
+
+## 💪 **Profi-Tipps für den Erfolg**
+1. **Sprechen Sie natürlich** - Dies ist ein Gespräch, kein Skript
+2. **Verwenden Sie professionelles medizinisches Deutsch** - Demonstrieren Sie Ihre Fachsprache
+3. **Seien Sie gründlich aber effizient** - Decken Sie alle wichtigen Punkte innerhalb der Zeitlimits ab
+4. **Bleiben Sie ruhig** - Die Simulation ist darauf ausgelegt, Ihnen beim Lernen und Verbessern zu helfen
+
+---
+
+## 🎯 **Bereit zu beginnen?**
+Ihre Reise zum FSP-Erfolg beginnt mit Übung. Jede Simulation baut Ihr Selbstvertrauen und Ihre Kompetenz auf. Denken Sie daran: Jede Sitzung macht Sie besser auf die echte Prüfung vorbereitet!
+
+**Halten Sie Ihre Benutzer-ID bereit und lassen Sie uns mit Ihrem Training beginnen! Viel Erfolg!** 🌟
+
+---
+
+*Hinweis: Diese Simulation bietet eine realistische Prüfungserfahrung mit hochwertigem, personalisiertem Feedback, um Ihre Vorbereitung auf die Fachsprachprüfung zu beschleunigen.*`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -565,6 +656,14 @@ export default function FSPSimulationScreen() {
           {/* Widget loads here automatically */}
         </View>
       </View>
+
+      {/* Info Modal */}
+      <InfoModal
+        visible={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        title="FSP-Prüfung Simulationsleitfaden"
+        content={fspInfoContent}
+      />
     </SafeAreaView>
   );
 }
