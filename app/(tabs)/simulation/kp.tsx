@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Brain, Clock, Info } from 'lucide-react-native';
+import { ArrowLeft, Brain, Clock, Info, Heart } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
@@ -16,6 +16,18 @@ export default function KPSimulationScreen() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
+
+  // Get responsive logo size based on screen dimensions
+  const getLogoSize = () => {
+    const { width, height } = Dimensions.get('window');
+    const isSmallScreen = width < 400 || height < 600;
+    return isSmallScreen ? 80 : 120; // Mobile: 80px, Desktop: 120px
+  };
+
+  const getFontSize = () => {
+    const logoSize = getLogoSize();
+    return logoSize === 80 ? 18 : 24; // Proportional font size
+  };
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -560,8 +572,18 @@ export default function KPSimulationScreen() {
       )}
 
       <View style={styles.content}>
-        {/* Widget Area */}
+        {/* Widget Area with Centered KP Logo */}
         <View style={styles.widgetArea}>
+          {/* Centered KP Logo */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoHeartContainer}>
+              <Heart size={getLogoSize()} color="#4ADE80" fill="#4ADE80" />
+              <Text style={[styles.logoText, {
+                fontSize: getFontSize(),
+                marginTop: -getFontSize() / 2 // Center vertically based on font size
+              }]}>KP</Text>
+            </View>
+          </View>
           {/* Widget loads here automatically */}
         </View>
       </View>
@@ -629,6 +651,35 @@ const styles = StyleSheet.create({
   },
   widgetArea: {
     flex: 1,
+    position: 'relative',
     // This area is where the Voiceflow widget will appear
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // Behind the chat widget but visible in empty space
+  },
+  logoHeartContainer: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  logoText: {
+    position: 'absolute',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    top: '50%',
+    // fontSize and marginTop are now dynamic and set inline
   },
 });
