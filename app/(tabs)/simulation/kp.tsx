@@ -6,6 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import InlineInstructions from '@/components/ui/InlineInstructions';
+import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
 export default function KPSimulationScreen() {
   const router = useRouter();
@@ -520,6 +522,206 @@ export default function KPSimulationScreen() {
     );
   };
 
+  // KP Simulation inline instructions content
+  const kpInstructions = [
+    {
+      id: 'overview',
+      title: 'Überblick',
+      content: (
+        <InlineContent>
+          <Section title="🏥 Was ist die KP-Simulation?">
+            <Paragraph>
+              Willkommen zu Ihrem <BoldText>Krankenpräsentations-Training</BoldText>! Diese realistische Simulation bereitet Sie optimal auf professionelle Patientenvorstellungen vor.
+            </Paragraph>
+
+            <HighlightBox type="info">
+              🎯 <BoldText>Hauptzweck:</BoldText> Systematische Krankenpräsentation unter realistischen Bedingungen trainieren
+            </HighlightBox>
+
+            <Paragraph>
+              <BoldText>Ihre Vorteile auf einen Blick:</BoldText>
+            </Paragraph>
+
+            <View style={{ marginLeft: 16 }}>
+              <Paragraph>• Strukturierte Patientenvorstellung</Paragraph>
+              <Paragraph>• Professionelle Kommunikation mit Kollegen</Paragraph>
+              <Paragraph>• Sofortiges, detailliertes Feedback</Paragraph>
+              <Paragraph>• Praxisnahe Fallbearbeitung</Paragraph>
+            </View>
+
+            <InfoBox>
+              📋 Diese Simulation testet Ihre Fähigkeit zur systematischen Krankenpräsentation in der klinischen Praxis
+            </InfoBox>
+          </Section>
+        </InlineContent>
+      )
+    },
+    {
+      id: 'process',
+      title: 'Ablauf',
+      content: (
+        <InlineContent>
+          <Section title="📋 Simulation in 3 Schritten">
+            <Step
+              number="1"
+              title="🔐 Benutzer-ID Verifizierung"
+              description="Authentifizierung für personalisierte Auswertung"
+              details={[
+                "Eingabe Ihrer zugewiesenen ID",
+                "Sicherung der korrekten Ergebniszuordnung"
+              ]}
+            />
+
+            <Step
+              number="2"
+              title="📂 Fallauswahl"
+              description="Auswahl eines geeigneten Patientenfalls"
+              details={[
+                "Verschiedene <BoldText>Fachbereiche</BoldText> verfügbar",
+                "Schwierigkeitsgrad entsprechend Ihrem Level"
+              ]}
+            />
+
+            <Step
+              number="3"
+              title="👩‍⚕️ Krankenpräsentation"
+              description={
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text>Strukturierte Patientenvorstellung</Text>
+                  <TimeBadge>(20 Min)</TimeBadge>
+                </View>
+              }
+              details={[
+                "<BoldText>Anamnese:</BoldText> Systematische Erhebung der Patientengeschichte",
+                "<BoldText>Befunde:</BoldText> Präsentation relevanter Untersuchungsergebnisse",
+                "<BoldText>Diagnose:</BoldText> Formulierung der Arbeits- oder Differentialdiagnose",
+                "<BoldText>Therapie:</BoldText> Behandlungsplan und weiteres Vorgehen",
+                "<BoldText>Ende:</BoldText> <BoldText>Sagen Sie 'Ich bin fertig'</BoldText> zum Abschluss"
+              ]}
+            />
+          </Section>
+        </InlineContent>
+      )
+    },
+    {
+      id: 'evaluation',
+      title: 'Bewertung',
+      content: (
+        <InlineContent>
+          <Section title="📊 Ihre Auswertung">
+            <Paragraph>
+              Nach der Simulation erhalten Sie eine detaillierte Analyse im <BoldText>Fortschrittsbereich</BoldText> Ihres Kontos.
+            </Paragraph>
+
+            <HighlightBox type="success">
+              ⚡ <BoldText>Schnelle Auswertung:</BoldText> Ergebnisse innerhalb weniger Minuten verfügbar
+            </HighlightBox>
+
+            <Step
+              number="✅"
+              title="Struktur-Analyse"
+              description="Bewertung Ihrer Präsentationsstruktur:"
+              details={[
+                "Vollständigkeit der Anamnese bewertet",
+                "Logischer Aufbau der Präsentation",
+                "Verwendung medizinischer Terminologie"
+              ]}
+            />
+
+            <Step
+              number="📈"
+              title="Verbesserungsfelder"
+              description="Gezielte Optimierungsempfehlungen:"
+              details={[
+                "Strukturelle Verbesserungsvorschläge",
+                "Fachsprachliche Korrekturen",
+                "Präsentationstechnik verfeinern"
+              ]}
+            />
+
+            <Step
+              number="💡"
+              title="Entwicklungsplan"
+              description="Ihr persönlicher Erfolgsweg:"
+              details={[
+                "Spezifische Übungsempfehlungen",
+                "Weiterführende Ressourcen",
+                "Tipps für die klinische Praxis"
+              ]}
+            />
+          </Section>
+
+          <Section title="⏱️ Zeitplan im Überblick">
+            <View style={{ backgroundColor: 'rgba(75, 85, 176, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
+              <TimeItem label="📅 Gesamtdauer" time="20 Minuten" />
+              <TimeItem label="👩‍⚕️ Präsentation" time="Bis zu 20 Minuten" />
+              <TimeItem label="📊 Auswertung verfügbar" time="2-5 Minuten nach Abschluss" />
+            </View>
+          </Section>
+        </InlineContent>
+      )
+    },
+    {
+      id: 'tips',
+      title: 'Tipps',
+      content: (
+        <InlineContent>
+          <Section title="💡 Erfolgstipps">
+            <HighlightBox type="warning">
+              🎯 <BoldText>Profi-Strategien für optimale Krankenpräsentation</BoldText>
+            </HighlightBox>
+
+            <View style={{ marginVertical: 8 }}>
+              <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#22c55e' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#16a34a', marginBottom: 8 }}>1. 📋 Systematisch strukturieren</Text>
+                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
+                  <BoldText>SOAP-Schema verwenden</BoldText> – Subjektiv, Objektiv, Assessment, Plan für klare Struktur.
+                </Text>
+              </View>
+
+              <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#3b82f6' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563eb', marginBottom: 8 }}>2. ⚕️ Präzise Fachsprache</Text>
+                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
+                  <BoldText>Medizinische Terminologie korrekt</BoldText> – verwenden Sie präzise Fachbegriffe souverän.
+                </Text>
+              </View>
+
+              <View style={{ backgroundColor: 'rgba(251, 146, 60, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#fb923c' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#ea580c', marginBottom: 8 }}>3. 🎯 Relevanz fokussieren</Text>
+                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
+                  <BoldText>Auf Wesentliches konzentrieren</BoldText> – wichtige Informationen priorisieren und hervorheben.
+                </Text>
+              </View>
+
+              <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#a855f7' }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#9333ea', marginBottom: 8 }}>4. 🗣️ Klar kommunizieren</Text>
+                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
+                  <BoldText>Deutlich und verständlich</BoldText> – auch komplexe Sachverhalte strukturiert vermitteln.
+                </Text>
+              </View>
+            </View>
+          </Section>
+
+          <Section title="🚀 Jetzt starten?">
+            <Paragraph>
+              Jede KP-Simulation verbessert Ihre Präsentationskompetenz. <BoldText>Nutzen Sie die Chance</BoldText> – systematisches Training macht den Unterschied!
+            </Paragraph>
+
+            <HighlightBox type="success">
+              🌟 <BoldText>Bereit für die Präsentation?</BoldText> Halten Sie Ihre Benutzer-ID bereit und beginnen Sie Ihr professionelles KP-Training!
+            </HighlightBox>
+
+            <View style={{ marginTop: 16, padding: 12, backgroundColor: 'rgba(75, 85, 176, 0.05)', borderRadius: 8 }}>
+              <Text style={{ fontSize: 13, fontStyle: 'italic', color: '#4338ca', lineHeight: 20 }}>
+                💼 Diese Simulation bietet realistische Krankenpräsentation mit sofortigem, professionellem Feedback für optimale Vorbereitung auf die klinische Praxis.
+              </Text>
+            </View>
+          </Section>
+        </InlineContent>
+      )
+    }
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with back button and title */}
@@ -560,6 +762,11 @@ export default function KPSimulationScreen() {
       )}
 
       <View style={styles.content}>
+        {/* Inline Instructions Panel */}
+        <View style={styles.instructionsContainer}>
+          <InlineInstructions tabs={kpInstructions} />
+        </View>
+
         {/* Widget Area */}
         <View style={styles.widgetArea}>
           {/* Widget loads here automatically */}
@@ -626,9 +833,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    flexDirection: 'column',
+  },
+  instructionsContainer: {
+    flex: 2, // Takes up 2/3 of available space
+    minHeight: 300,
   },
   widgetArea: {
-    flex: 1,
+    flex: 1, // Takes up 1/3 of available space
+    minHeight: 200,
     // This area is where the Voiceflow widget will appear
   },
 });
