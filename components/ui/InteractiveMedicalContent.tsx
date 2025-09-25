@@ -576,98 +576,12 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       {/* Clean White Background */}
       <View style={styles.whiteBackground} />
 
-      {/* Static Header Section */}
-      <View style={[styles.staticHeader, { backgroundColor: '#FFFFFF', borderBottomColor: 'rgba(184, 126, 112, 0.2)' }]}>
-        <View style={styles.titleContainer}>
-          <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
-            {supabaseRow?.title || 'Medizinischer Inhalt'}
-          </Text>
-          <TableOfContents
-            sections={tableOfContentsItems}
-            onNavigateToSection={handleNavigateToSection}
-            iconSize={18}
-          />
-        </View>
-
-        <View style={styles.metaInfo}>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>  {/* Light beige background */}
-            <Text style={[styles.metaItem, { color: '#B15740' }]}>  {/* Brown Rust text */}
-              📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
-            </Text>
-          </View>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
-            <Text style={[styles.metaItem, { color: '#B15740' }]}>
-              ⏱️ {formatDate(supabaseRow?.last_updated)}
-            </Text>
-          </View>
-          <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
-            <Text style={[styles.metaItem, { color: '#B15740' }]}>
-              📖 {filteredSections.length} Abschnitte
-            </Text>
-          </View>
-        </View>
-
-        {/* Enhanced Search Bar */}
-        <View style={[styles.enhancedSearchContainer, {
-          borderColor: 'rgba(184, 126, 112, 0.3)',
-          backgroundColor: '#FFFFFF',
-          shadowColor: 'rgba(181, 87, 64, 0.1)',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 1,
-          shadowRadius: 8,
-          elevation: 4,
-        }]}>
-          <Search size={20} color="#B87E70" style={styles.searchIcon} />
-          <TextInput
-            style={[styles.enhancedSearchBox, {
-              color: '#333333',
-              backgroundColor: 'transparent',
-              fontSize: 16,
-            }]}
-            placeholder="Durchsuche medizinische Inhalte..."
-            placeholderTextColor="#6B7280"
-            value={searchTerm}
-            onChangeText={handleSearch}
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => {
-              handleSearch('');
-              triggerActivity();
-            }} style={styles.clearSearch}>
-              <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Study Controls */}
-        <View style={styles.studyControls}>
-          <TouchableOpacity
-            style={[styles.studyToggle, studyMode && styles.studyToggleActive]}
-            onPress={() => setStudyMode(!studyMode)}
-          >
-            <Eye size={16} color={studyMode ? '#FFFFFF' : '#B87E70'} />
-            <Text style={[styles.studyToggleText, studyMode && styles.studyToggleTextActive]}>
-              Study Mode
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.fontSizeToggle, fontSize === 'large' && styles.fontSizeToggleActive]}
-            onPress={() => setFontSize(fontSize === 'normal' ? 'large' : 'normal')}
-          >
-            <Text style={[styles.fontSizeText, fontSize === 'large' && styles.fontSizeTextActive]}>
-              Aa
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Scrollable Content */}
+      {/* Single ScrollView for entire content including header */}
       <ScrollView
         ref={scrollViewRef}
-        style={styles.scrollableContent}
+        style={styles.fullScreenContent}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollableContentContainer}
+        contentContainerStyle={styles.fullContentContainer}
         onScroll={() => {
           // Trigger activity on scroll to prevent timeout during reading
           triggerActivity();
@@ -675,13 +589,99 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         scrollEventThrottle={2000} // Only trigger every 2 seconds to avoid excessive calls
       >
 
+        {/* Scrollable Header Section - Now part of scrollable content */}
+        <View style={[styles.scrollableHeader, { backgroundColor: 'transparent' }]}>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
+              {supabaseRow?.title || 'Medizinischer Inhalt'}
+            </Text>
+            <TableOfContents
+              sections={tableOfContentsItems}
+              onNavigateToSection={handleNavigateToSection}
+              iconSize={18}
+            />
+          </View>
+
+          <View style={styles.metaInfo}>
+            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>  {/* Light beige background */}
+              <Text style={[styles.metaItem, { color: '#B15740' }]}>  {/* Brown Rust text */}
+                📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
+              </Text>
+            </View>
+            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
+              <Text style={[styles.metaItem, { color: '#B15740' }]}>
+                ⏱️ {formatDate(supabaseRow?.last_updated)}
+              </Text>
+            </View>
+            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
+              <Text style={[styles.metaItem, { color: '#B15740' }]}>
+                📖 {filteredSections.length} Abschnitte
+              </Text>
+            </View>
+          </View>
+
+          {/* Enhanced Search Bar - Now scrolls with content */}
+          <View style={[styles.enhancedSearchContainer, {
+            borderColor: 'rgba(184, 126, 112, 0.3)',
+            backgroundColor: '#FFFFFF',
+            shadowColor: 'rgba(181, 87, 64, 0.1)',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 1,
+            shadowRadius: 8,
+            elevation: 4,
+          }]}>
+            <Search size={20} color="#B87E70" style={styles.searchIcon} />
+            <TextInput
+              style={[styles.enhancedSearchBox, {
+                color: '#333333',
+                backgroundColor: 'transparent',
+                fontSize: 16,
+              }]}
+              placeholder="Durchsuche medizinische Inhalte..."
+              placeholderTextColor="#6B7280"
+              value={searchTerm}
+              onChangeText={handleSearch}
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => {
+                handleSearch('');
+                triggerActivity();
+              }} style={styles.clearSearch}>
+                <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Study Controls - Now scroll with content */}
+          <View style={styles.studyControls}>
+            <TouchableOpacity
+              style={[styles.studyToggle, studyMode && styles.studyToggleActive]}
+              onPress={() => setStudyMode(!studyMode)}
+            >
+              <Eye size={16} color={studyMode ? '#FFFFFF' : '#B87E70'} />
+              <Text style={[styles.studyToggleText, studyMode && styles.studyToggleTextActive]}>
+                Study Mode
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.fontSizeToggle, fontSize === 'large' && styles.fontSizeToggleActive]}
+              onPress={() => setFontSize(fontSize === 'normal' ? 'large' : 'normal')}
+            >
+              <Text style={[styles.fontSizeText, fontSize === 'large' && styles.fontSizeTextActive]}>
+                Aa
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: '#6B7280' }]}>  {/* Medium gray for white background */}
+          <Text style={[styles.searchResults, { color: '#6B7280', marginHorizontal: 20 }]}>  {/* Medium gray for white background */}
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
 
-        {/* Enhanced Sections */}
+        {/* Enhanced Sections - Now directly in main scroll */}
         {filteredSections.map((section, index) => {
           const contentStyle = getContentTypeStyle(section.title, section.content);
           const IconComponent = contentStyle.icon;
@@ -700,6 +700,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 shadowOpacity: 1,
                 shadowRadius: 12,
                 elevation: 8,
+                marginHorizontal: 20,
               }]}
             >
               {/* Enhanced Section Header */}
@@ -833,16 +834,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
-  staticHeader: {
+  scrollableHeader: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
-    zIndex: 10,
-    shadowColor: 'rgba(181, 87, 64, 0.1)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 5,
+    borderBottomColor: 'rgba(184, 126, 112, 0.2)',
   },
   titleContainer: {
     flexDirection: 'row',
@@ -960,6 +955,13 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  fullScreenContent: {
+    flex: 1,
+  },
+  fullContentContainer: {
+    paddingTop: 0,
+    paddingBottom: 40,
+  },
   scrollableContent: {
     flex: 1,
   },
@@ -983,11 +985,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   enhancedContentSection: {
-    marginBottom: 24,
-    borderRadius: 16,
+    marginBottom: 20,
+    borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
-    marginHorizontal: 4,
   },
   sectionHeader: {
     flexDirection: 'row',

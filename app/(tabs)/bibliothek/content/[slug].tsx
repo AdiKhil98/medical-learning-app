@@ -389,25 +389,34 @@ const ContentDetailScreen = memo(() => {
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
 
-      {/* Top Navigation - Fixed */}
-      <View style={styles.headerButtons}>
+      {/* Minimal Top Navigation - Fixed at 48px height */}
+      <View style={[styles.minimalHeader, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBackPress}
           activeOpacity={0.7}
         >
-          <ChevronLeft size={24} color={colors.primary} />
-          <Text style={dynamicStyles.backText}>Zurück</Text>
+          <ChevronLeft size={20} color={colors.primary} />
+          <Text style={[dynamicStyles.backText, { fontSize: 14 }]}>Zurück</Text>
         </TouchableOpacity>
+
+        {/* Abbreviated title in center */}
+        <Text style={[styles.minimalTitle, { color: colors.text }]} numberOfLines={1}>
+          {currentSection?.title ?
+            (currentSection.title.length > 30 ?
+              `${currentSection.title.substring(0, 30)}...` :
+              currentSection.title
+            ) : 'Medical Content'
+          }
+        </Text>
 
         {currentSection && (
           <TouchableOpacity
-            style={[styles.modalButton, { backgroundColor: colors.card }]}
+            style={[styles.modalButtonMini, { backgroundColor: colors.card }]}
             onPress={handleOpenModal}
             activeOpacity={0.7}
           >
-            <Maximize2 size={20} color={colors.primary} />
-            <Text style={[styles.modalButtonText, { color: colors.primary }]}>Modal</Text>
+            <Maximize2 size={16} color={colors.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -446,6 +455,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  minimalHeader: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    zIndex: 10,
+    elevation: 2,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+  },
+  minimalTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 16,
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,6 +487,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     gap: 6,
+  },
+  modalButtonMini: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
   },
   modalButtonText: {
     fontSize: 14,
