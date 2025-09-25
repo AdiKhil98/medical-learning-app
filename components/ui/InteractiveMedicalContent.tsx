@@ -21,7 +21,9 @@ import {
   Target,
   Bookmark,
   Eye,
-  Heart
+  Heart,
+  ChevronLeft,
+  Maximize2
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -44,9 +46,12 @@ interface SupabaseRow {
 
 interface InteractiveMedicalContentProps {
   supabaseRow: SupabaseRow;
+  onBackPress?: () => void;
+  onOpenModal?: () => void;
+  currentSection?: any;
 }
 
-const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow }) => {
+const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow, onBackPress, onOpenModal, currentSection }) => {
   const { colors, isDarkMode } = useTheme();
   const { triggerActivity } = useSessionTimeout();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
@@ -591,6 +596,28 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
         {/* Scrollable Header Section - Now part of scrollable content */}
         <View style={[styles.scrollableHeader, { backgroundColor: 'transparent' }]}>
+          {/* Navigation Bar with Back Button and Modal */}
+          <View style={styles.navigationBar}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={onBackPress}
+              activeOpacity={0.7}
+            >
+              <ChevronLeft size={20} color={colors.primary} />
+              <Text style={[styles.backText, { color: colors.primary }]}>Zurück</Text>
+            </TouchableOpacity>
+
+            {onOpenModal && currentSection && (
+              <TouchableOpacity
+                style={[styles.modalButtonCompact, { backgroundColor: colors.card }]}
+                onPress={onOpenModal}
+                activeOpacity={0.7}
+              >
+                <Maximize2 size={16} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
           <View style={styles.titleContainer}>
             <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
               {supabaseRow?.title || 'Medizinischer Inhalt'}
@@ -838,6 +865,29 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(184, 126, 112, 0.2)',
+  },
+  navigationBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  backText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalButtonCompact: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
   },
   titleContainer: {
     flexDirection: 'row',

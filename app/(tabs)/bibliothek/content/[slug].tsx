@@ -389,42 +389,13 @@ const ContentDetailScreen = memo(() => {
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
 
-      {/* Minimal Top Navigation - Fixed at 48px height */}
-      <View style={[styles.minimalHeader, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-          activeOpacity={0.7}
-        >
-          <ChevronLeft size={20} color={colors.primary} />
-          <Text style={[dynamicStyles.backText, { fontSize: 14 }]}>Zurück</Text>
-        </TouchableOpacity>
-
-        {/* Abbreviated title in center */}
-        <Text style={[styles.minimalTitle, { color: colors.text }]} numberOfLines={1}>
-          {currentSection?.title ?
-            (currentSection.title.length > 30 ?
-              `${currentSection.title.substring(0, 30)}...` :
-              currentSection.title
-            ) : 'Medical Content'
-          }
-        </Text>
-
-        {currentSection && (
-          <TouchableOpacity
-            style={[styles.modalButtonMini, { backgroundColor: colors.card }]}
-            onPress={handleOpenModal}
-            activeOpacity={0.7}
-          >
-            <Maximize2 size={16} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Medical Content - Takes remaining space with internal static header */}
-      <View style={styles.contentContainer}>
-        <MedicalContentLoader slug={slug as string} />
-      </View>
+      {/* Medical Content - Full screen with integrated navigation */}
+      <MedicalContentLoader
+        slug={slug as string}
+        onBackPress={handleBackPress}
+        onOpenModal={handleOpenModal}
+        currentSection={currentSection}
+      />
 
       {/* Medical Content Modal */}
       <MedicalContentModal

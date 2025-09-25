@@ -6,6 +6,9 @@ import InteractiveMedicalContent from './InteractiveMedicalContent';
 
 interface MedicalContentLoaderProps {
   slug: string;
+  onBackPress?: () => void;
+  onOpenModal?: () => void;
+  currentSection?: any;
 }
 
 interface SupabaseRow {
@@ -22,7 +25,7 @@ interface SupabaseRow {
   last_updated?: string;
 }
 
-const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug }) => {
+const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBackPress, onOpenModal, currentSection }) => {
   const { colors } = useTheme();
   const [data, setData] = useState<SupabaseRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +126,14 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug }) => 
     );
   }
 
-  return <InteractiveMedicalContent supabaseRow={data} />;
+  return (
+    <InteractiveMedicalContent
+      supabaseRow={data}
+      onBackPress={onBackPress}
+      onOpenModal={onOpenModal}
+      currentSection={currentSection}
+    />
+  );
 };
 
 const styles = StyleSheet.create({
