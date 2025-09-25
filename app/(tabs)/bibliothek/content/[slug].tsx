@@ -388,7 +388,8 @@ const ContentDetailScreen = memo(() => {
   return (
     <SafeAreaView style={dynamicStyles.container}>
       <LinearGradient colors={gradientColors as [string, string, ...string[]]} style={styles.gradientBackground} />
-      
+
+      {/* Top Navigation - Fixed */}
       <View style={styles.headerButtons}>
         <TouchableOpacity
           style={styles.backButton}
@@ -411,8 +412,10 @@ const ContentDetailScreen = memo(() => {
         )}
       </View>
 
-      {/* Step 1: Parse and Clean Data Implementation */}
-      <MedicalContentLoader slug={slug as string} />
+      {/* Medical Content - Takes remaining space with internal static header */}
+      <View style={styles.contentContainer}>
+        <MedicalContentLoader slug={slug as string} />
+      </View>
 
       {/* Medical Content Modal */}
       <MedicalContentModal
@@ -458,6 +461,9 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  contentContainer: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: 16,
