@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,18 @@ export default function KPSimulationScreen() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
+
+  // Get responsive logo size based on screen dimensions
+  const getLogoSize = () => {
+    const { width, height } = Dimensions.get('window');
+    const isSmallScreen = width < 400 || height < 600;
+    return isSmallScreen ? 100 : 140; // Mobile: 100px, Desktop: 140px
+  };
+
+  const getFontSize = () => {
+    const logoSize = getLogoSize();
+    return logoSize === 100 ? 32 : 44; // Proportional font size for bold "KP" text
+  };
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -560,8 +572,20 @@ export default function KPSimulationScreen() {
       )}
 
       <View style={styles.content}>
-        {/* Widget Area */}
+        {/* Widget Area with Centered KP Logo */}
         <View style={styles.widgetArea}>
+          {/* Centered Coral KP Logo */}
+          <View style={styles.logoContainer}>
+            <View style={[styles.logoCircle, {
+              width: getLogoSize(),
+              height: getLogoSize(),
+              borderRadius: getLogoSize() / 2
+            }]}>
+              <Text style={[styles.logoText, {
+                fontSize: getFontSize()
+              }]}>KP</Text>
+            </View>
+          </View>
           {/* Widget loads here automatically */}
         </View>
       </View>
@@ -629,6 +653,33 @@ const styles = StyleSheet.create({
   },
   widgetArea: {
     flex: 1,
+    position: 'relative',
     // This area is where the Voiceflow widget will appear
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // Behind the chat widget but visible in empty space
+  },
+  logoCircle: {
+    backgroundColor: '#E88B7A', // Coral color matching the provided image
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  logoText: {
+    fontWeight: '800', // Extra bold to match the design
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -1, // Slight negative spacing for better appearance
   },
 });
