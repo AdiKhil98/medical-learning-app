@@ -575,9 +575,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     <Animated.View style={[styles.appContainer, { opacity: fadeAnim, backgroundColor: '#FFFFFF' }]}>
       {/* Clean White Background */}
       <View style={styles.whiteBackground} />
-      
-      {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: 'transparent', borderBottomColor: 'rgba(184, 126, 112, 0.2)' }]}>
+
+      {/* Static Header Section */}
+      <View style={[styles.staticHeader, { backgroundColor: '#FFFFFF', borderBottomColor: 'rgba(184, 126, 112, 0.2)' }]}>
         <View style={styles.titleContainer}>
           <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
             {supabaseRow?.title || 'Medizinischer Inhalt'}
@@ -662,26 +662,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
       </View>
 
-
-      {/* Content */}
-      <ScrollView 
+      {/* Scrollable Content */}
+      <ScrollView
         ref={scrollViewRef}
-        style={styles.content} 
+        style={styles.scrollableContent}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={styles.scrollableContentContainer}
         onScroll={() => {
           // Trigger activity on scroll to prevent timeout during reading
           triggerActivity();
         }}
         scrollEventThrottle={2000} // Only trigger every 2 seconds to avoid excessive calls
       >
-        
+
         {searchTerm.length > 0 && (
           <Text style={[styles.searchResults, { color: '#6B7280' }]}>  {/* Medium gray for white background */}
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
-        
+
         {/* Enhanced Sections */}
         {filteredSections.map((section, index) => {
           const contentStyle = getContentTypeStyle(section.title, section.content);
@@ -776,7 +775,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </View>
           );
         })}
-        
+
         <View style={styles.bottomPadding} />
       </ScrollView>
 
@@ -833,6 +832,17 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  staticHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+    zIndex: 10,
+    shadowColor: 'rgba(181, 87, 64, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   titleContainer: {
     flexDirection: 'row',
@@ -949,6 +959,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollableContent: {
+    flex: 1,
+  },
+  scrollableContentContainer: {
+    padding: 20,
+    paddingBottom: 40,
   },
   contentContainer: {
     padding: 20,
