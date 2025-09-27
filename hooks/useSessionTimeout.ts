@@ -5,17 +5,17 @@ import { supabase } from '@/lib/supabase';
 import { SecureLogger } from '@/lib/security';
 
 interface UseSessionTimeoutOptions {
-  timeoutDuration?: number; // in milliseconds, default 30 minutes
-  warningDuration?: number; // warning time before timeout, default 2 minutes
-  activityUpdateInterval?: number; // database update interval, default 5 minutes
+  timeoutDuration?: number; // in milliseconds, default 3 hours
+  warningDuration?: number; // warning time before timeout, default 5 minutes
+  activityUpdateInterval?: number; // database update interval, default 15 minutes
   enabled?: boolean; // whether session timeout is enabled, default true
 }
 
 export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
   const {
-    timeoutDuration = 30 * 60 * 1000, // 30 minutes
-    warningDuration = 2 * 60 * 1000, // 2 minutes
-    activityUpdateInterval = 5 * 60 * 1000, // 5 minutes
+    timeoutDuration = 3 * 60 * 60 * 1000, // 3 hours (updated default)
+    warningDuration = 5 * 60 * 1000, // 5 minutes (updated default)
+    activityUpdateInterval = 15 * 60 * 1000, // 15 minutes (updated default)
     enabled = true,
   } = options;
 
@@ -115,7 +115,7 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     };
 
     if (Platform.OS === 'web') {
-      const result = confirm('Session expires in 2 minutes. Do you want to continue?');
+      const result = confirm('Session expires in 5 minutes. Do you want to continue?');
       if (result) {
         handleExtendSession();
       } else {
@@ -124,7 +124,7 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     } else {
       Alert.alert(
         'Sitzung läuft ab',
-        'Session expires in 2 minutes',
+        'Session expires in 5 minutes',
         [
           {
             text: 'Abmelden',
