@@ -325,15 +325,74 @@ export default function ProgressScreen() {
     return parsedSections;
   };
 
+  const enhanceTextReadability = (text: string) => {
+    // Improve text formatting for better readability
+    return text
+      // Break long sentences
+      .replace(/([.!?])\s+(?=[A-ZÄÖÜ])/g, '$1\n\n')
+      // Add spacing around key phrases
+      .replace(/\*\*([^*]+)\*\*/g, '**$1**') // Keep bold markers for now
+      // Clean up extra whitespace
+      .replace(/\n{3,}/g, '\n\n')
+      // Improve list formatting
+      .replace(/(\d+\.)\s*/g, '\n$1 ')
+      .replace(/[-•]\s*/g, '\n• ')
+      .trim();
+  };
+
+  const renderEnhancedEvaluationText = (text: string) => {
+    const enhancedText = enhanceTextReadability(text);
+    const parts = enhancedText.split(/(\*\*[^*]+\*\*)/g);
+
+    return (
+      <View style={styles.enhancedTextContainer}>
+        {parts.map((part, index) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            // Bold text
+            const boldText = part.slice(2, -2);
+            return (
+              <Text key={index} style={styles.enhancedBoldText}>
+                {boldText}
+              </Text>
+            );
+          } else if (part.trim()) {
+            // Regular text with paragraphs
+            const paragraphs = part.split('\n\n').filter(p => p.trim());
+            return paragraphs.map((paragraph, pIndex) => {
+              if (paragraph.startsWith('•') || paragraph.match(/^\d+\./)) {
+                // List item
+                return (
+                  <View key={`${index}-${pIndex}`} style={styles.enhancedListItem}>
+                    <Text style={styles.enhancedListText}>{paragraph.trim()}</Text>
+                  </View>
+                );
+              } else {
+                // Regular paragraph
+                return (
+                  <Text key={`${index}-${pIndex}`} style={styles.enhancedBodyText}>
+                    {paragraph.trim()}
+                  </Text>
+                );
+              }
+            });
+          }
+          return null;
+        })}
+      </View>
+    );
+  };
+
   const renderParsedEvaluation = (text: string) => {
     const sections = parseEvaluationText(text);
-    
+
     return (
       <View>
         {sections.map((section, index) => (
           <View key={index} style={styles.parsedSection}>
             <Text style={styles.parsedSectionTitle}>{section.title}</Text>
-            <Text style={styles.parsedSectionContent}>{section.content}</Text>
+            <View style={styles.parsedSectionContentContainer}>
+              {renderEnhancedEvaluationText(section.content)}
+            </View>
           </View>
         ))}
       </View>
@@ -941,7 +1000,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernEvaluationCard: {
-    marginBottom: 16,
+    marginBottom: 20, // Increased from 16px for better breathing room
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -951,7 +1010,7 @@ const styles = StyleSheet.create({
   },
   modernCardGradient: {
     borderRadius: 20,
-    padding: 20,
+    padding: 24, // Increased from 20px for better breathing room
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.2)',
     backgroundColor: '#F9F6F2',
@@ -1132,26 +1191,69 @@ const styles = StyleSheet.create({
 
   // Parsed Evaluation Sections
   parsedSection: {
-    marginBottom: 16,
+    marginBottom: 24, // Increased from 16px for better breathing room
+    backgroundColor: '#FAFBFC', // Subtle background for better contrast
+    borderRadius: 12,
+    padding: 16, // Added padding for better spacing
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   parsedSectionTitle: {
-    fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 15, // Increased from 13px
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontWeight: '700', // Stronger weight for better hierarchy
     color: '#059669',
-    marginBottom: 6,
+    marginBottom: 12, // Increased from 6px
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  parsedSectionContentContainer: {
+    paddingLeft: 4,
+  },
   parsedSectionContent: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#374151',
-    lineHeight: 22,
+    fontSize: 16, // Increased from 14px as requested
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    color: '#1F2937', // Darker for better contrast
+    lineHeight: 25.6, // 1.6 ratio as requested (16 * 1.6)
     letterSpacing: 0.2,
-    paddingLeft: 8,
+  },
+
+  // Enhanced Text Components
+  enhancedTextContainer: {
+    gap: 16, // Spacing between paragraphs
+  },
+  enhancedBodyText: {
+    fontSize: 16, // Main body text at 16px
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    color: '#1F2937',
+    lineHeight: 25.6, // 1.6 line height
+    marginBottom: 16, // Space between paragraphs
+    letterSpacing: 0.2,
+  },
+  enhancedBoldText: {
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontWeight: '700', // Bold for key terms
+    color: '#B15740', // Medical app accent color for emphasis
+    lineHeight: 25.6,
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  enhancedListItem: {
+    marginBottom: 12,
+    paddingLeft: 16,
     borderLeftWidth: 3,
-    borderLeftColor: '#d1fae5',
-    paddingVertical: 4,
+    borderLeftColor: '#B87E70', // Medical app color
+    backgroundColor: '#FDF8F6', // Very subtle background
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  enhancedListText: {
+    fontSize: 15, // Slightly smaller for lists
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    color: '#374151',
+    lineHeight: 24, // 1.6 ratio
+    letterSpacing: 0.2,
   },
 
   // Empty State
