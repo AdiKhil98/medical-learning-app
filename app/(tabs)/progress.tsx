@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight, X, Maximize2 } from 'lucide-react-native';
-import { SimplifiedEvaluationCard } from '@/components/ui/SimplifiedEvaluationCard';
+import { EvaluationCard } from '@/components/ui/EvaluationCard';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -735,7 +735,7 @@ export default function ProgressScreen() {
             </View>
           ) : (
             filteredEvaluations.map((evaluation, index) => (
-              <SimplifiedEvaluationCard
+              <EvaluationCard
                 key={evaluation.id}
                 evaluation={evaluation}
                 onPress={() => openEvaluationModal(evaluation)}
