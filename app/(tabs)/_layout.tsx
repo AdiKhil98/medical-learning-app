@@ -12,9 +12,9 @@ export default function TabLayout() {
 
   // Initialize session timeout monitoring for authenticated screens
   const { triggerActivity } = useSessionTimeout({
-    timeoutDuration: 30 * 60 * 1000, // 30 minutes
-    warningDuration: 2 * 60 * 1000,  // 2 minutes warning
-    activityUpdateInterval: 5 * 60 * 1000, // 5 minutes database updates
+    timeoutDuration: 3 * 60 * 60 * 1000, // 3 hours (180 minutes)
+    warningDuration: 5 * 60 * 1000,  // 5 minutes warning (extended for longer session)
+    activityUpdateInterval: 15 * 60 * 1000, // 15 minutes database updates (reduced frequency)
     enabled: true,
   });
 
