@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Subscription tier mapping
@@ -114,7 +114,7 @@ exports.handler = async (event, context) => {
         environment: {
           hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
           hasSupabaseUrl: !!process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL,
-          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
         }
       })
     };
