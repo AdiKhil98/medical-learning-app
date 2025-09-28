@@ -98,37 +98,48 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     }
   };
 
-  // Function to clear global objects
+  // Function to clear global objects (less aggressive to avoid auth issues)
   const clearGlobalObjects = () => {
     try {
-      if (window.voiceflow) {
-        delete (window as any).voiceflow;
-        console.log('✅ Cleared global voiceflow object');
+      // Only hide the widget, don't delete the global object completely
+      if (window.voiceflow?.chat) {
+        try {
+          window.voiceflow.chat.hide();
+          console.log('✅ Hidden Voiceflow widget');
+        } catch (error) {
+          console.warn('⚠️ Error hiding Voiceflow widget:', error);
+        }
       }
 
-      // Clear any Voiceflow-related storage
+      // Be more selective about storage cleanup - avoid auth-related keys
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.toLowerCase().includes('voiceflow')) {
+        if (key && key.toLowerCase().includes('voiceflow') &&
+            !key.toLowerCase().includes('auth') &&
+            !key.toLowerCase().includes('session') &&
+            !key.toLowerCase().includes('token')) {
           keysToRemove.push(key);
         }
       }
-      
+
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
         console.log(`🗑️ Removed localStorage key: ${key}`);
       });
 
-      // Clear sessionStorage
+      // Be selective about sessionStorage cleanup too
       const sessionKeysToRemove = [];
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i);
-        if (key && key.toLowerCase().includes('voiceflow')) {
+        if (key && key.toLowerCase().includes('voiceflow') &&
+            !key.toLowerCase().includes('auth') &&
+            !key.toLowerCase().includes('session') &&
+            !key.toLowerCase().includes('token')) {
           sessionKeysToRemove.push(key);
         }
       }
-      
+
       sessionKeysToRemove.forEach(key => {
         sessionStorage.removeItem(key);
         console.log(`🗑️ Removed sessionStorage key: ${key}`);
