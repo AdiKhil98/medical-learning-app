@@ -173,67 +173,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Special debug test case - bypass signature verification
-    if (event.body && event.body.includes('debug_test_bypass')) {
-      console.log('Debug test bypass triggered');
-
-      try {
-        const testResult = await logWebhookEvent(
-          'debug_test',
-          { test: 'bypass signature verification' },
-          'debug-sub-123',
-          null,
-          'processed',
-          null
-        );
-
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            success: true,
-            message: 'Debug test completed successfully',
-            testResult: testResult,
-            environment: {
-              hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
-              hasSupabaseUrl: !!process.env.SUPABASE_URL,
-              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET',
-              serviceKeyPreview: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT SET',
-              // Also check for alternative env var names
-              hasExpoSupabaseUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
-              hasExpoAnonKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-            }
-          })
-        };
-      } catch (error) {
-        console.error('Debug test error:', error);
-        return {
-          statusCode: 500,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            success: false,
-            error: 'Debug test failed',
-            message: error.message,
-            stack: error.stack,
-            environment: {
-              hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
-              hasSupabaseUrl: !!process.env.SUPABASE_URL,
-              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET',
-              serviceKeyPreview: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT SET',
-              hasExpoSupabaseUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
-              hasExpoAnonKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-            }
-          })
-        };
-      }
-    }
-
     // Get the raw body and signature
     const payload = event.body;
     const signature = event.headers['x-signature'];
