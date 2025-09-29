@@ -58,7 +58,15 @@ function determineSubscriptionTier(variantName, variantId) {
 // Helper function to log webhook events
 async function logWebhookEvent(eventType, eventData, subscriptionId, userId, status = 'processed', errorMessage = null) {
   try {
-    const { error } = await supabase
+    console.log('Attempting to log webhook event:', {
+      eventType,
+      subscriptionId,
+      userId,
+      status,
+      hasSupabaseClient: !!supabase
+    });
+
+    const { data, error } = await supabase
       .from('webhook_events')
       .insert({
         event_type: eventType,
@@ -67,13 +75,19 @@ async function logWebhookEvent(eventType, eventData, subscriptionId, userId, sta
         user_id: userId,
         status: status,
         error_message: errorMessage
-      });
+      })
+      .select();
 
     if (error) {
       console.error('Failed to log webhook event:', error);
+      throw new Error(`Database insert failed: ${error.message}`);
     }
+
+    console.log('Successfully logged webhook event:', data);
+    return data;
   } catch (err) {
     console.error('Error logging webhook event:', err);
+    throw err;
   }
 }
 
@@ -163,11 +177,13 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({
             success: true,
-            message: 'Debug test completed',
+            message: 'Debug test completed successfully',
+            testResult: testResult,
             environment: {
               hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
               hasSupabaseUrl: !!process.env.SUPABASE_URL,
-              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET'
             }
           })
         };
@@ -181,7 +197,13 @@ exports.handler = async (event, context) => {
           body: JSON.stringify({
             success: false,
             error: 'Debug test failed',
-            message: error.message
+            message: error.message,
+            stack: error.stack,
+            environment: {
+              hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
+              hasSupabaseUrl: !!process.env.SUPABASE_URL,
+              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+            }
           })
         };
       }
