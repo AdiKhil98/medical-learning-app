@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'lucide-react-native';
@@ -11,15 +11,37 @@ export default function SubscriptionPage() {
   const { colors, isDarkMode } = useTheme();
 
   const handleSelectPlan = (planId: string) => {
-    // Handle plan selection logic here
     console.log('Selected plan:', planId);
-    
-    // You can navigate to a checkout page or show a modal
-    // For example:
-    // router.push(`/checkout?plan=${planId}`);
-    
-    // Or show an alert/modal for now
-    alert(`${planId} Plan ausgewählt`);
+
+    // Lemon Squeezy checkout URLs for each plan
+    const checkoutUrls: Record<string, string> = {
+      'basic': 'https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948',
+      'professional': 'https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934',
+      'unlimited': 'https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947'
+    };
+
+    if (planId === 'free') {
+      // Free plan - no checkout needed
+      alert('Der kostenlose Plan ist bereits aktiv!');
+      return;
+    }
+
+    const checkoutUrl = checkoutUrls[planId];
+    if (checkoutUrl) {
+      // Open Lemon Squeezy checkout
+      openLemonSqueezyCheckout(checkoutUrl);
+    } else {
+      alert(`Plan "${planId}" ist noch nicht verfügbar`);
+    }
+  };
+
+  const openLemonSqueezyCheckout = (checkoutUrl: string) => {
+    try {
+      Linking.openURL(checkoutUrl);
+    } catch (error) {
+      console.error('Error opening checkout:', error);
+      alert('Fehler beim Öffnen der Checkout-Seite');
+    }
   };
 
   const handleGoBack = () => {
