@@ -45,7 +45,12 @@ export default function SubscriptionPage() {
   };
 
   const handleGoBack = () => {
-    router.back();
+    // Try to go back, if no history then go to dashboard
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/dashboard');
+    }
   };
 
   const dynamicStyles = StyleSheet.create({
