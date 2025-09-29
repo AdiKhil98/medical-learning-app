@@ -183,7 +183,11 @@ exports.handler = async (event, context) => {
               hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
               hasSupabaseUrl: !!process.env.SUPABASE_URL,
               hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET'
+              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET',
+              serviceKeyPreview: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT SET',
+              // Also check for alternative env var names
+              hasExpoSupabaseUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
+              hasExpoAnonKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
             }
           })
         };
@@ -202,7 +206,11 @@ exports.handler = async (event, context) => {
             environment: {
               hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
               hasSupabaseUrl: !!process.env.SUPABASE_URL,
-              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+              hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+              supabaseUrlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : 'NOT SET',
+              serviceKeyPreview: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...' : 'NOT SET',
+              hasExpoSupabaseUrl: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
+              hasExpoAnonKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
             }
           })
         };
