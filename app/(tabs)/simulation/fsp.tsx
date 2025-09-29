@@ -1,16 +1,20 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mic, Clock } from 'lucide-react-native';
+import { ArrowLeft, Mic, Clock, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = React.useState(false);
   const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
