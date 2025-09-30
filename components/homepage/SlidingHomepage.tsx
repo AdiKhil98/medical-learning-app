@@ -34,7 +34,7 @@ import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/hooks/useSubscription';
+// import { useSubscription } from '@/hooks/useSubscription';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -51,9 +51,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
 
-  // Auth and subscription data
+  // Auth data
   const { user } = useAuth();
-  const { getSubscriptionInfo, simulationsRemaining, subscriptionTier } = useSubscription(user?.id);
+  // const { getSubscriptionInfo, simulationsRemaining, subscriptionTier } = useSubscription(user?.id);
 
   // Connect to Supabase data
   const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
@@ -279,57 +279,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </TouchableOpacity>
             </LinearGradient>
 
-            {/* Subscription Status Card */}
-            {user && (
-              <LinearGradient
-                colors={['rgba(248, 243, 232, 0.98)', 'rgba(248, 243, 232, 0.95)']}
-                style={styles.subscriptionCard}
-              >
-                <View style={styles.subscriptionHeader}>
-                  <View style={styles.subscriptionIcon}>
-                    <Target size={24} color="#B87E70" />
-                  </View>
-                  <Text style={styles.subscriptionTitle}>
-                    {getSubscriptionInfo()?.planName || 'Free Plan'}
-                  </Text>
-                </View>
-
-                <Text style={styles.subscriptionUsage}>
-                  {getSubscriptionInfo()?.usageText || 'No usage data'}
-                </Text>
-
-                {/* Progress Bar */}
-                {subscriptionTier !== 'unlimited' && simulationsRemaining !== null && (
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View
-                        style={[
-                          styles.progressFill,
-                          {
-                            width: `${Math.max(0, Math.min(100,
-                              ((getSubscriptionInfo()?.planName === 'Free Plan' ? 3 :
-                                subscriptionTier === 'basis' ? 30 : 60) - simulationsRemaining) /
-                              (getSubscriptionInfo()?.planName === 'Free Plan' ? 3 :
-                                subscriptionTier === 'basis' ? 30 : 60) * 100
-                            ))}%`
-                          }
-                        ]}
-                      />
-                    </View>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={styles.subscriptionButton}
-                  onPress={() => router.push('/subscription')}
-                  activeOpacity={0.9}
-                >
-                  <Text style={styles.subscriptionButtonText}>
-                    {getSubscriptionInfo()?.canUpgrade ? 'Plan Upgraden' : 'Plan Verwalten'}
-                  </Text>
-                  <ChevronRight size={16} color="#B87E70" />
-                </TouchableOpacity>
-              </LinearGradient>
+            {/* Subscription Status Card - Temporarily Disabled */}
+            {user && false && (
+              <View style={styles.subscriptionCard}>
+                <Text>Subscription info will appear here</Text>
+              </View>
             )}
           </View>
         </View>
