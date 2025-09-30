@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { SubscriptionManager } from '../utils/subscriptionManager';
 
 interface SubscriptionStatus {
   canUseSimulation: boolean;
@@ -15,8 +14,6 @@ export const useSubscription = (userId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const subscriptionManager = new SubscriptionManager(supabase);
-
   /**
    * Check if user can start a simulation
    */
@@ -27,7 +24,51 @@ export const useSubscription = (userId: string | undefined) => {
     setError(null);
 
     try {
-      const status = await subscriptionManager.checkSimulationAccess(userId);
+      // Simple direct Supabase query without SubscriptionManager
+      const { data: user, error } = await supabase
+        .from('users')
+        .select(`
+          subscription_tier,
+          subscription_status,
+          simulation_limit,
+          simulations_used_this_month,
+          free_simulations_used,
+          subscription_period_end
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (error || !user) {
+        console.error('Error fetching user subscription:', error);
+        return null;
+      }
+
+      // Simple logic for access control
+      let canUse = true;
+      let message = 'Ready to start simulation';
+
+      if (!user.subscription_tier || user.subscription_status !== 'active') {
+        // Free tier
+        canUse = user.free_simulations_used < 3;
+        message = canUse
+          ? `${3 - user.free_simulations_used} free simulations remaining`
+          : 'Free simulations used up. Please upgrade.';
+      } else if (user.subscription_tier !== 'unlimited') {
+        // Paid tier with limits
+        canUse = user.simulations_used_this_month < user.simulation_limit;
+        message = canUse
+          ? `${user.simulation_limit - user.simulations_used_this_month} simulations remaining this month`
+          : 'Monthly simulation limit reached.';
+      }
+
+      const status: SubscriptionStatus = {
+        canUseSimulation: canUse,
+        simulationsUsed: user.subscription_tier ? user.simulations_used_this_month : user.free_simulations_used,
+        simulationLimit: user.subscription_tier ? user.simulation_limit : 3,
+        subscriptionTier: user.subscription_tier || 'free',
+        message
+      };
+
       setSubscriptionStatus(status);
       return status;
     } catch (err) {
@@ -46,12 +87,38 @@ export const useSubscription = (userId: string | undefined) => {
     if (!userId) return false;
 
     try {
-      const success = await subscriptionManager.recordSimulationUsage(userId);
-      if (success) {
-        // Refresh the subscription status after recording usage
-        await checkAccess();
+      // Simple usage recording without SubscriptionManager
+      const { data: user, error: fetchError } = await supabase
+        .from('users')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError || !user) {
+        console.error('Error fetching user for usage recording:', fetchError);
+        return false;
       }
-      return success;
+
+      // Use the database functions we created
+      if (!user.subscription_tier || user.subscription_status !== 'active') {
+        // Free tier
+        const { error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
+        if (error) {
+          console.error('Error updating free simulation usage:', error);
+          return false;
+        }
+      } else {
+        // Paid tier
+        const { error } = await supabase.rpc('increment_monthly_simulations', { user_id: userId });
+        if (error) {
+          console.error('Error updating monthly simulation usage:', error);
+          return false;
+        }
+      }
+
+      // Refresh the subscription status after recording usage
+      await checkAccess();
+      return true;
     } catch (err) {
       console.error('Error recording simulation usage:', err);
       setError('Error recording simulation usage');
