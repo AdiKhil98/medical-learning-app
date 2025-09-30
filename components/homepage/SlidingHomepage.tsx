@@ -33,6 +33,8 @@ import AboutUsModal from '@/components/ui/AboutUsModal';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -48,10 +50,14 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [showAboutUs, setShowAboutUs] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
-  
+
+  // Auth and subscription data
+  const { user } = useAuth();
+  const { getSubscriptionInfo, simulationsRemaining, subscriptionTier } = useSubscription(user?.id);
+
   // Connect to Supabase data
   const { dailyTip, dailyQuestion, loading: contentLoading, error: contentError, refetch } = useDailyContent();
-  
+
   // Get recent medical content
   const { recentContent, loading: recentContentLoading } = useRecentContentForHomepage();
   
@@ -258,7 +264,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 Entdecke moderne Lernmethoden, tägliche Wissensnuggets und 
                 interaktive Übungen, die dich zum Lernerfolg führen.
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.ctaButton}
                 onPress={() => setShowAboutUs(true)}
                 activeOpacity={0.9}
@@ -272,6 +278,59 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 </LinearGradient>
               </TouchableOpacity>
             </LinearGradient>
+
+            {/* Subscription Status Card */}
+            {user && (
+              <LinearGradient
+                colors={['rgba(248, 243, 232, 0.98)', 'rgba(248, 243, 232, 0.95)']}
+                style={styles.subscriptionCard}
+              >
+                <View style={styles.subscriptionHeader}>
+                  <View style={styles.subscriptionIcon}>
+                    <Target size={24} color="#B87E70" />
+                  </View>
+                  <Text style={styles.subscriptionTitle}>
+                    {getSubscriptionInfo()?.planName || 'Free Plan'}
+                  </Text>
+                </View>
+
+                <Text style={styles.subscriptionUsage}>
+                  {getSubscriptionInfo()?.usageText || 'No usage data'}
+                </Text>
+
+                {/* Progress Bar */}
+                {subscriptionTier !== 'unlimited' && simulationsRemaining !== null && (
+                  <View style={styles.progressContainer}>
+                    <View style={styles.progressBar}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${Math.max(0, Math.min(100,
+                              ((getSubscriptionInfo()?.planName === 'Free Plan' ? 3 :
+                                subscriptionTier === 'basis' ? 30 : 60) - simulationsRemaining) /
+                              (getSubscriptionInfo()?.planName === 'Free Plan' ? 3 :
+                                subscriptionTier === 'basis' ? 30 : 60) * 100
+                            ))}%`
+                          }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={styles.subscriptionButton}
+                  onPress={() => router.push('/subscription')}
+                  activeOpacity={0.9}
+                >
+                  <Text style={styles.subscriptionButtonText}>
+                    {getSubscriptionInfo()?.canUpgrade ? 'Plan Upgraden' : 'Plan Verwalten'}
+                  </Text>
+                  <ChevronRight size={16} color="#B87E70" />
+                </TouchableOpacity>
+              </LinearGradient>
+            )}
           </View>
         </View>
 
@@ -1040,5 +1099,77 @@ const styles = {
     fontSize: 14,
     color: '#0e7490',
     lineHeight: 20,
+  },
+
+  // Subscription Card Styles
+  subscriptionCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 126, 112, 0.2)',
+    shadowColor: 'rgba(181, 87, 64, 0.15)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  subscriptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(184, 126, 112, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  subscriptionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#B87E70',
+    flex: 1,
+  },
+  subscriptionUsage: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  progressContainer: {
+    marginBottom: 16,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: 'rgba(184, 126, 112, 0.1)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#B87E70',
+    borderRadius: 4,
+  },
+  subscriptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(184, 126, 112, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 126, 112, 0.2)',
+  },
+  subscriptionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#B87E70',
+    flex: 1,
   },
 };
