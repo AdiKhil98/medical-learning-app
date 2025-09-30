@@ -135,11 +135,7 @@ export class SubscriptionManager {
       if (!user.subscription_tier || user.subscription_status !== 'active') {
         // Free tier - increment free simulations used
         const { error: updateError } = await this.supabase
-          .from('users')
-          .update({
-            free_simulations_used: this.supabase.sql`free_simulations_used + 1`
-          })
-          .eq('id', userId);
+          .rpc('increment_free_simulations', { user_id: userId });
 
         if (updateError) {
           console.error('Error updating free simulation usage:', updateError);
@@ -148,11 +144,7 @@ export class SubscriptionManager {
       } else {
         // Paid tier - increment monthly usage
         const { error: updateError } = await this.supabase
-          .from('users')
-          .update({
-            simulations_used_this_month: this.supabase.sql`simulations_used_this_month + 1`
-          })
-          .eq('id', userId);
+          .rpc('increment_monthly_simulations', { user_id: userId });
 
         if (updateError) {
           console.error('Error updating simulation usage:', updateError);
