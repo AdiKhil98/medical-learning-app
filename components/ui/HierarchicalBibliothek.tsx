@@ -398,14 +398,16 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
           <View style={styles.bottomPadding} />
         </ScrollView>
       ) : (
-        <MobileBibliothekLayout
-          sections={currentItems}
-          title=""
-          onSectionPress={handleItemPress}
-          onBookmarkPress={handleBookmarkPress}
-          bookmarkedSections={bookmarkedSections}
-          showViewToggle={true}
-        />
+        <View style={styles.scrollContainer}>
+          <MobileBibliothekLayout
+            sections={currentItems}
+            title=""
+            onSectionPress={handleItemPress}
+            onBookmarkPress={handleBookmarkPress}
+            bookmarkedSections={bookmarkedSections}
+            showViewToggle={true}
+          />
+        </View>
       )}
 
       {/* Medical Content Modal */}

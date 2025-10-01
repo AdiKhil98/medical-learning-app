@@ -132,6 +132,8 @@ export function MobileBibliothekLayout({
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        bounces={true}
+        alwaysBounceVertical={true}
       >
         {viewMode === 'grid' ? renderGridView() : renderListView()}
       </ScrollView>
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100, // Increased bottom padding to ensure all content is accessible
   },
   gridContainer: {
     flexDirection: 'row',
