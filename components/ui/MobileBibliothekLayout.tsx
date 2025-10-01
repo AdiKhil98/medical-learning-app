@@ -19,6 +19,8 @@ interface MobileBibliothekLayoutProps {
   onBookmarkPress?: (section: Section) => void;
   bookmarkedSections?: Set<string>;
   showViewToggle?: boolean;
+  subtitle?: string;
+  loading?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -29,7 +31,9 @@ export function MobileBibliothekLayout({
   onSectionPress,
   onBookmarkPress,
   bookmarkedSections = new Set(),
-  showViewToggle = true
+  showViewToggle = true,
+  subtitle,
+  loading = false
 }: MobileBibliothekLayoutProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -101,11 +105,31 @@ export function MobileBibliothekLayout({
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+      bounces={true}
+      alwaysBounceVertical={true}
+    >
+      {/* Content Header - now scrollable */}
+      {title && (
+        <View style={styles.contentHeader}>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.headerTitle}>{title}</Text>
+            {loading && (
+              <View style={styles.headerLoader} />
+            )}
+          </View>
+          {subtitle && (
+            <Text style={styles.headerSubtitle}>{subtitle}</Text>
+          )}
+        </View>
+      )}
+
+      {/* View Toggle Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.sectionTitle}>{title}</Text>
           <Text style={styles.sectionCount}>
             {sections.length} {sections.length === 1 ? 'Kategorie' : 'Kategorien'}
           </Text>
@@ -131,16 +155,10 @@ export function MobileBibliothekLayout({
       </View>
 
       {/* Content */}
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        bounces={true}
-        alwaysBounceVertical={true}
-      >
+      <View style={styles.contentContainer}>
         {viewMode === 'grid' ? renderGridView() : renderListView()}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -149,24 +167,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFBFC',
   },
+  contentHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 0,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    flex: 1,
+    color: '#A04A35',
+  },
+  headerLoader: {
+    marginLeft: 8,
+  },
+  headerSubtitle: {
+    fontSize: 20,
+    color: '#333333',
+    fontWeight: '500',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+  contentContainer: {
+    paddingHorizontal: 0,
+  },
   headerLeft: {
     flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
   },
   sectionCount: {
     fontSize: 14,
@@ -191,15 +230,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 100, // Increased bottom padding to ensure all content is accessible
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   listContainer: {
     gap: 8,
+    paddingHorizontal: 16,
   },
 });

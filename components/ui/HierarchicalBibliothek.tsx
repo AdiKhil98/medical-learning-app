@@ -370,22 +370,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 
       {/* Breadcrumb Navigation */}
       {renderBreadcrumbs()}
-      
-      {/* Content Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerTitleRow}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {breadcrumbs[breadcrumbs.length - 1].title}
-          </Text>
-          {loading && currentItems.length > 0 && (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.headerLoader} />
-          )}
-        </View>
-        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-          {currentItems.length} {currentItems.length === 1 ? 'Kategorie' : 'Kategorien'}
-          {loading && currentItems.length > 0 && ' • Lade mehr...'}
-        </Text>
-      </View>
 
       {/* Mobile Bibliothek Layout */}
       {showSkeleton ? (
@@ -402,11 +386,13 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
           {console.log('🔧 Rendering MobileBibliothekLayout with', currentItems.length, 'items')}
           <MobileBibliothekLayout
             sections={currentItems}
-            title=""
+            title={breadcrumbs[breadcrumbs.length - 1].title}
+            subtitle={`${currentItems.length} ${currentItems.length === 1 ? 'Kategorie' : 'Kategorien'}${loading && currentItems.length > 0 ? ' • Lade mehr...' : ''}`}
             onSectionPress={handleItemPress}
             onBookmarkPress={handleBookmarkPress}
             bookmarkedSections={bookmarkedSections}
             showViewToggle={true}
+            loading={loading && currentItems.length > 0}
           />
         </View>
       )}
@@ -501,29 +487,6 @@ const styles = StyleSheet.create({
   },
   breadcrumbSeparator: {
     marginHorizontal: 8,
-  },
-  headerContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  headerTitle: {
-    fontSize: 48,  // Match "Lernkapital" title size
-    fontWeight: 'bold',
-    flex: 1,
-    color: '#A04A35',  // Darker shade for authority like homepage
-  },
-  headerLoader: {
-    marginLeft: 8,
-  },
-  headerSubtitle: {
-    fontSize: 20,  // Match homepage subtitle size
-    color: '#333333',  // Dark gray for optimal readability
-    fontWeight: '500',  // Medium weight for better hierarchy
   },
   scrollContainer: {
     flex: 1,
