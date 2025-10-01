@@ -23,75 +23,16 @@ import {
   FileText,
   FolderOpen,
   Home,
-  Maximize2,
   Menu as MenuIcon
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import BookmarkButton from '@/components/ui/BookmarkButton';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Menu from '@/components/ui/Menu';
-
-// Memoized CategoryCard component to prevent unnecessary re-renders
-const CategoryCard = React.memo<{
-  item: CategoryItem;
-  IconComponent: any;
-  colors: any;
-  onPress: () => void;
-  onModalPress: () => void;
-}>(({ item, IconComponent, colors, onPress, onModalPress }) => (
-  <TouchableOpacity
-    style={[styles.categoryCard, { backgroundColor: colors.card }]}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
-      <IconComponent size={24} color={item.color} />
-    </View>
-    
-    <View style={styles.cardContent}>
-      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-        {item.title}
-      </Text>
-      
-      {item.description && (
-        <Text style={[styles.cardDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-          {item.description}
-        </Text>
-      )}
-    </View>
-    
-    <View style={styles.cardIndicator}>
-      {item.hasChildren ? (
-        <ChevronRight size={20} color={colors.textSecondary} />
-      ) : (
-        <View style={styles.contentActions}>
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              onModalPress();
-            }}
-            style={styles.modalButton}
-            accessibilityLabel="In Modal öffnen"
-          >
-            <Maximize2 size={16} color={colors.primary} />
-          </TouchableOpacity>
-          <BookmarkButton
-            sectionSlug={item.slug}
-            sectionTitle={item.title}
-            sectionCategory={item.type}
-            size={18}
-            style={styles.bookmarkButton}
-          />
-          <FileText size={18} color={colors.primary} style={styles.fileIcon} />
-        </View>
-      )}
-    </View>
-  </TouchableOpacity>
-));
+import { MobileBibliothekLayout } from '@/components/ui/MobileBibliothekLayout';
 
 interface CategoryItem {
   id: string;
@@ -103,6 +44,8 @@ interface CategoryItem {
   color: string;
   parent_slug: string | null;
   hasChildren?: boolean;
+  content_improved?: any;
+  childCount?: number;
 }
 
 interface BreadcrumbItem {
@@ -134,6 +77,9 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 
   // Menu state
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Bookmarks state
+  const [bookmarkedSections, setBookmarkedSections] = useState<Set<string>>(new Set());
 
   // Icon mapping for categories
   const getIconComponent = useCallback((iconName: string) => {
@@ -198,10 +144,13 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       // Process items with children info
       const processedItems = data.map(item => {
         const hasChildren = hasChildrenSet.has(item.slug);
+        const childCount = childrenData.filter(child => child.parent_slug === item.slug).length;
         childrenCache.set(item.slug, hasChildren);
         return {
           ...item,
-          hasChildren
+          hasChildren,
+          childCount: hasChildren ? childCount : undefined,
+          content_improved: !hasChildren ? true : undefined // Mark items with content as having content
         };
       });
 
@@ -291,11 +240,14 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 
   // Open content in modal
   const handleOpenModal = useCallback(async (item: CategoryItem) => {
-    // Get all content sections at current level for navigation
-    const contentSections = currentItems.filter(i => !i.hasChildren);
-    setAvailableSections(contentSections);
-    setModalSlug(item.slug);
-    setModalVisible(true);
+    // Only open modal for content items (not categories with children)
+    if (!item.hasChildren) {
+      // Get all content sections at current level for navigation
+      const contentSections = currentItems.filter(i => !i.hasChildren);
+      setAvailableSections(contentSections);
+      setModalSlug(item.slug);
+      setModalVisible(true);
+    }
   }, [currentItems]);
 
   // Handle modal section change
@@ -308,6 +260,19 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     setModalVisible(false);
     setModalSlug(null);
     setAvailableSections([]);
+  }, []);
+
+  // Handle bookmark press
+  const handleBookmarkPress = useCallback((item: CategoryItem) => {
+    setBookmarkedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(item.slug)) {
+        newSet.delete(item.slug);
+      } else {
+        newSet.add(item.slug);
+      }
+      return newSet;
+    });
   }, []);
 
   // Navigate back in breadcrumbs (optimized)
@@ -362,21 +327,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   );
 
-  // Memoized category card renderer for performance
-  const renderCategoryCard = useCallback((item: CategoryItem) => {
-    const IconComponent = getIconComponent(item.icon);
-    
-    return (
-      <CategoryCard
-        key={item.id}
-        item={item}
-        IconComponent={IconComponent}
-        colors={colors}
-        onPress={() => handleItemPress(item)}
-        onModalPress={() => handleOpenModal(item)}
-      />
-    );
-  }, [colors, handleItemPress, handleOpenModal, getIconComponent]);
 
   // Loading skeleton for better perceived performance
   const LoadingSkeleton = useMemo(() => (
@@ -393,12 +343,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   ), [colors]);
 
-  // Memoized grid to prevent unnecessary re-renders
-  const memoizedGrid = useMemo(() => (
-    <View style={styles.grid}>
-      {currentItems.map(renderCategoryCard)}
-    </View>
-  ), [currentItems, renderCategoryCard]);
 
   // Show skeleton only if no items and loading
   const showSkeleton = loading && currentItems.length === 0;
@@ -443,16 +387,26 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         </Text>
       </View>
 
-      {/* Category Grid */}
-      <ScrollView 
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.gridContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {showSkeleton ? LoadingSkeleton : memoizedGrid}
-        
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+      {/* Mobile Bibliothek Layout */}
+      {showSkeleton ? (
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.gridContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {LoadingSkeleton}
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+      ) : (
+        <MobileBibliothekLayout
+          sections={currentItems}
+          title=""
+          onSectionPress={handleItemPress}
+          onBookmarkPress={handleBookmarkPress}
+          bookmarkedSections={bookmarkedSections}
+          showViewToggle={true}
+        />
+      )}
 
       {/* Medical Content Modal */}
       <MedicalContentModal
@@ -578,60 +532,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  categoryCard: {
-    width: '48%',
-    marginBottom: 16,
-    borderRadius: 16,  // Match homepage corner radius
-    padding: 20,  // Enhanced padding
-    borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
-    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 12,
-    minHeight: 130,  // Slightly taller for better proportions
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardContent: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  cardDescription: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  cardIndicator: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-  contentActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  modalButton: {
-    padding: 4,
-    borderRadius: 4,
-  },
-  bookmarkButton: {
-    padding: 4,
-  },
-  fileIcon: {
-    marginLeft: 4,
   },
   bottomPadding: {
     height: 40,
