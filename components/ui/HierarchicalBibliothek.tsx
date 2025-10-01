@@ -399,6 +399,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         </ScrollView>
       ) : (
         <View style={styles.scrollContainer}>
+          {console.log('🔧 Rendering MobileBibliothekLayout with', currentItems.length, 'items')}
           <MobileBibliothekLayout
             sections={currentItems}
             title=""

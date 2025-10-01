@@ -33,6 +33,9 @@ export function MobileBibliothekLayout({
 }: MobileBibliothekLayoutProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Debug log to verify component is loading
+  console.log('🔧 MobileBibliothekLayout loaded with', sections.length, 'sections');
+
   const getIconComponent = (iconName: string) => {
     const iconMap: Record<string, any> = {
       'Stethoscope': Stethoscope,
