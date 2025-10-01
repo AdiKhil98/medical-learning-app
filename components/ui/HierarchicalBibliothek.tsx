@@ -91,7 +91,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       'Baby': Baby,
       'Users': Users,
       'AlertTriangle': AlertTriangle,
-      'Scan': Scan,
+      'Scan': Heart, // Replace magnifying glass with heart icon
       'FileText': FileText,
       'FolderOpen': FolderOpen,
     };

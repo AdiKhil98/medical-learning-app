@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, ChevronRight, BookOpen } from 'lucide-react-native';
+import { Heart, ChevronRight, BookOpen, Stethoscope } from 'lucide-react-native';
 
 interface MobileBibliothekCardProps {
   title: string;
@@ -19,7 +19,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 cards per row with 16px margins
 
 export function MobileBibliothekCard({
   title,
-  icon: IconComponent = BookOpen,
+  icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70', '#A0645D'],
   hasContent = false,
   onPress,
@@ -77,7 +77,7 @@ export function MobileBibliothekCard({
             </View>
 
             {/* Title */}
-            <Text style={styles.cardTitle} numberOfLines={2}>
+            <Text style={styles.cardTitle} numberOfLines={3}>
               {title}
             </Text>
 
@@ -106,7 +106,7 @@ export function MobileBibliothekCard({
 // Alternative list view for dense content
 export function MobileBibliothekListItem({
   title,
-  icon: IconComponent = BookOpen,
+  icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70'],
   hasContent = false,
   onPress,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     borderRadius: 16,
-    minHeight: 140,
+    minHeight: 160,
     padding: 16,
     position: 'relative',
   },
@@ -221,12 +221,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: 'white',
-    lineHeight: 20,
+    lineHeight: 18,
     marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textAlign: 'left',
   },
   cardFooter: {
     flexDirection: 'row',
