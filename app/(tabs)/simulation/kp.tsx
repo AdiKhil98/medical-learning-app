@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Brain, Clock, Info } from 'lucide-react-native';
+import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
 export default function KPSimulationScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
@@ -159,7 +163,25 @@ export default function KPSimulationScreen() {
       console.log('🔍 DEBUG: Timer already active, returning early');
       return; // Already running
     }
-    
+
+    // Check subscription access before starting
+    console.log('🔐 Checking subscription access...');
+    if (!canUseSimulation) {
+      const info = getSubscriptionInfo();
+      Alert.alert(
+        'Simulation Limit Reached',
+        subscriptionStatus?.message || 'You have reached your simulation limit.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: info?.canUpgrade ? 'Upgrade Plan' : 'OK',
+            onPress: info?.canUpgrade ? () => router.push('/subscription') : undefined
+          }
+        ]
+      );
+      return;
+    }
+
     console.log('⏰ KP: Starting 20-minute simulation timer');
     
     try {
@@ -253,6 +275,15 @@ export default function KPSimulationScreen() {
       if (result.success) {
         setUsageMarked(true);
         console.log('✅ KP: Simulation usage recorded in database with server validation');
+
+        // Also record subscription usage
+        console.log('💳 Recording subscription usage...');
+        const subscriptionRecorded = await recordUsage();
+        if (subscriptionRecorded) {
+          console.log('✅ KP: Subscription usage recorded successfully');
+        } else {
+          console.error('❌ KP: Failed to record subscription usage');
+        }
       } else {
         console.error('❌ KP: Failed to mark simulation as used:', result.error);
         

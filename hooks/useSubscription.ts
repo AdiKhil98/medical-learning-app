@@ -1,362 +1,188 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
-export interface SubscriptionData {
-  id: string;
-  plan_type: 'free' | 'basic' | 'professional' | 'unlimited';
-  status: 'trial' | 'active' | 'cancelled' | 'expired';
-  simulations_limit: number | null; // null = unlimited
-  simulations_used: number;
-  simulations_remaining: number;
-  
-  // Trial info
-  in_trial: boolean;
-  trial_end_date: string | null;
-  
-  // Subscription info
-  subscription_end_date: string | null;
-  next_billing_date: string | null;
-  current_period_start: string;
-  current_period_end: string;
-  
-  billing_cycle: 'monthly' | 'yearly';
-  amount: number;
+interface SubscriptionStatus {
+  canUseSimulation: boolean;
+  simulationsUsed: number;
+  simulationLimit: number | null;
+  subscriptionTier: string | null;
+  message: string;
 }
 
-export const useSubscription = () => {
-  const { user } = useAuth();
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [loading, setLoading] = useState(true);
+export const useSubscription = (userId: string | undefined) => {
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscription = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  /**
+   * Check if user can start a simulation
+   */
+  const checkAccess = useCallback(async () => {
+    if (!userId) return null;
+
+    setLoading(true);
+    setError(null);
 
     try {
-      setLoading(true);
-      setError(null);
+      // Simple direct Supabase query without SubscriptionManager
+      const { data: user, error } = await supabase
+        .from('users')
+        .select(`
+          subscription_tier,
+          subscription_status,
+          simulation_limit,
+          simulations_used_this_month,
+          free_simulations_used,
+          subscription_period_end
+        `)
+        .eq('id', userId)
+        .single();
 
-      // Check if we can access the database table
-      const { data, error: fetchError } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (fetchError) {
-        // If it's a table/permission/RLS error, use default subscription
-        if (fetchError.code === '42P01' || fetchError.message?.includes('relation') || 
-            fetchError.message?.includes('permission') || fetchError.status === 403 ||
-            fetchError.code === '42501' || fetchError.message?.includes('row-level security')) {
-          console.log('Database table not available, using default subscription');
-          setSubscription({
-            id: 'default',
-            plan_type: 'free',
-            status: 'active',
-            simulations_limit: null,
-            simulations_used: 0,
-            simulations_remaining: Infinity,
-            in_trial: false,
-            trial_end_date: null,
-            subscription_end_date: null,
-            next_billing_date: null,
-            current_period_start: new Date().toISOString(),
-            current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            billing_cycle: 'yearly',
-            amount: 0,
-          });
-          return;
-        }
-        throw fetchError;
+      if (error || !user) {
+        console.error('Error fetching user subscription:', error);
+        return null;
       }
 
-      if (!data) {
-        // No subscription found but table exists - try to create default
-        console.log('No subscription found, attempting to create default');
-        await createDefaultSubscription();
-        return;
+      // Simple logic for access control
+      let canUse = true;
+      let message = 'Ready to start simulation';
+
+      if (!user.subscription_tier || user.subscription_status !== 'active') {
+        // Free tier
+        canUse = user.free_simulations_used < 3;
+        message = canUse
+          ? `${3 - user.free_simulations_used} free simulations remaining`
+          : 'Free simulations used up. Please upgrade.';
+      } else if (user.subscription_tier !== 'unlimited') {
+        // Paid tier with limits
+        canUse = user.simulations_used_this_month < user.simulation_limit;
+        message = canUse
+          ? `${user.simulation_limit - user.simulations_used_this_month} simulations remaining this month`
+          : 'Monthly simulation limit reached.';
       }
 
-      // Process subscription data
-      const now = new Date();
-      const trialEnd = data.trial_end_date ? new Date(data.trial_end_date) : null;
-      const inTrial = trialEnd ? now < trialEnd : false;
-
-      const processedData: SubscriptionData = {
-        id: data.id,
-        plan_type: data.plan_type,
-        status: inTrial ? 'trial' : data.status,
-        simulations_limit: data.simulations_limit,
-        simulations_used: data.simulations_used,
-        simulations_remaining: data.simulations_limit 
-          ? Math.max(0, data.simulations_limit - data.simulations_used)
-          : Infinity,
-        in_trial: inTrial,
-        trial_end_date: data.trial_end_date,
-        subscription_end_date: data.subscription_end_date,
-        next_billing_date: data.next_billing_date,
-        current_period_start: data.current_period_start,
-        current_period_end: data.current_period_end,
-        billing_cycle: data.billing_cycle,
-        amount: data.amount,
+      const status: SubscriptionStatus = {
+        canUseSimulation: canUse,
+        simulationsUsed: user.subscription_tier ? user.simulations_used_this_month : user.free_simulations_used,
+        simulationLimit: user.subscription_tier ? user.simulation_limit : 3,
+        subscriptionTier: user.subscription_tier || 'free',
+        message
       };
 
-      setSubscription(processedData);
-
-    } catch (err: any) {
-      // Debug logging to understand the error
-      console.log('🔍 Subscription fetch error details:', {
-        error: err,
-        code: err?.code,
-        message: err?.message,
-        status: err?.status,
-        details: err?.details
-      });
-      
-      // Silently handle missing table errors and RLS policies for cleaner console
-      if (err?.code === '42P01' || err?.message?.includes('relation') || err?.status === 403 ||
-          err?.code === '42501' || err?.message?.includes('row-level security')) {
-        // Table doesn't exist or no permissions - use default free tier
-        setSubscription({
-          id: 'default',
-          plan_type: 'free',
-          status: 'active',
-          simulations_limit: null,
-          simulations_used: 0,
-          simulations_remaining: Infinity,
-          in_trial: false,
-          trial_end_date: null,
-          subscription_end_date: null,
-          next_billing_date: null,
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          billing_cycle: 'yearly',
-          amount: 0,
-        });
-      } else {
-        console.error('Error fetching subscription:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
-      }
+      setSubscriptionStatus(status);
+      return status;
+    } catch (err) {
+      console.error('Error checking subscription access:', err);
+      setError('Error checking subscription status');
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  const createDefaultSubscription = async () => {
-    if (!user) return;
+  /**
+   * Record simulation usage
+   */
+  const recordUsage = useCallback(async () => {
+    if (!userId) return false;
 
     try {
-      const now = new Date();
-      const trialEnd = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days trial
-      const periodEnd = new Date(now.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year from now
-
-      const { data, error: insertError } = await supabase
-        .from('user_subscriptions')
-        .insert({
-          user_id: user.id,
-          plan_type: 'free',
-          status: 'active',
-          simulations_limit: 3,
-          simulations_used: 0,
-          billing_cycle: 'monthly',
-          amount: 0,
-          trial_start_date: now.toISOString(),
-          trial_end_date: trialEnd.toISOString(),
-          subscription_start_date: now.toISOString(),
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-        })
-        .select()
+      // Simple usage recording without SubscriptionManager
+      const { data: user, error: fetchError } = await supabase
+        .from('users')
+        .select('subscription_tier, subscription_status')
+        .eq('id', userId)
         .single();
 
-      if (insertError) {
-        throw insertError;
+      if (fetchError || !user) {
+        console.error('Error fetching user for usage recording:', fetchError);
+        return false;
       }
 
-      // Refresh subscription after creation
-      await fetchSubscription();
-
-    } catch (err: any) {
-      // Silently handle table permission errors and RLS policies
-      if (err?.status === 403 || err?.message?.includes('permission') || 
-          err?.code === '42P01' || err?.message?.includes('relation') ||
-          err?.code === '42501' || err?.message?.includes('row-level security')) {
-        // Can't create subscription record - set default and continue
-        console.log('Cannot create subscription record, using default free tier');
-        setSubscription({
-          id: 'default',
-          plan_type: 'free',
-          status: 'active',
-          simulations_limit: null,
-          simulations_used: 0,
-          simulations_remaining: Infinity,
-          in_trial: false,
-          trial_end_date: null,
-          subscription_end_date: null,
-          next_billing_date: null,
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          billing_cycle: 'yearly',
-          amount: 0,
-        });
-        return;
-      }
-      console.error('Error creating default subscription:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create subscription');
-    }
-  };
-
-  const canUseSimulation = (): boolean => {
-    // Temporarily allow unlimited simulations for testing
-    return true;
-    
-    // Original logic (commented out for testing):
-    // if (!subscription) return false;
-    // if (subscription.in_trial) return true;
-    // if (subscription.plan_type === 'unlimited') return true;
-    // return subscription.simulations_remaining > 0;
-  };
-
-  const useSimulation = async (type: 'kp' | 'fsp'): Promise<boolean> => {
-    // Temporarily skip subscription checks for testing
-    console.log('📝 useSimulation called for type:', type);
-    
-    // Skip all database operations during testing
-    return true;
-    
-    // Original logic (commented out for testing):
-    // if (!subscription || !user) {
-    //   throw new Error('No subscription or user found');
-    // }
-    // if (!canUseSimulation()) {
-    //   throw new Error('Simulation limit reached');
-    // }
-
-    try {
-      // Don't increment usage during trial or unlimited
-      if (!subscription.in_trial && subscription.plan_type !== 'unlimited') {
-        // Increment simulations_used
-        const { error: updateError } = await supabase
-          .from('user_subscriptions')
-          .update({ 
-            simulations_used: subscription.simulations_used + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', subscription.id);
-
-        if (updateError) {
-          throw updateError;
+      // Use the database functions we created
+      if (!user.subscription_tier || user.subscription_status !== 'active') {
+        // Free tier
+        const { error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
+        if (error) {
+          console.error('Error updating free simulation usage:', error);
+          return false;
+        }
+      } else {
+        // Paid tier
+        const { error } = await supabase.rpc('increment_monthly_simulations', { user_id: userId });
+        if (error) {
+          console.error('Error updating monthly simulation usage:', error);
+          return false;
         }
       }
 
-      // Log the simulation usage
-      const { error: logError } = await supabase
-        .from('simulation_usage_logs')
-        .insert({
-          user_id: user.id,
-          subscription_id: subscription.id,
-          simulation_type: type,
-          billing_period_start: subscription.current_period_start,
-          billing_period_end: subscription.current_period_end,
-          status: 'started'
-        });
-
-      if (logError) {
-        console.error('Error logging simulation usage:', logError);
-        // Don't throw error for logging failure
-      }
-
-      // Refresh subscription data
-      await fetchSubscription();
+      // Refresh the subscription status after recording usage
+      await checkAccess();
       return true;
-
     } catch (err) {
-      console.error('Error using simulation:', err);
-      throw err;
+      console.error('Error recording simulation usage:', err);
+      setError('Error recording simulation usage');
+      return false;
     }
-  };
+  }, [userId, checkAccess]);
 
-  const getSimulationStatusText = (): string => {
-    if (!subscription) return 'Laden...';
-    
-    if (subscription.in_trial) {
-      const daysLeft = Math.ceil(
-        (new Date(subscription.trial_end_date!).getTime() - new Date().getTime()) / 
-        (24 * 60 * 60 * 1000)
-      );
-      return `Testversion: ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''} verbleibend`;
+  /**
+   * Get subscription display info for dashboard
+   */
+  const getSubscriptionInfo = useCallback(() => {
+    if (!subscriptionStatus) return null;
+
+    const { subscriptionTier, simulationsUsed, simulationLimit, message } = subscriptionStatus;
+
+    // Format display text
+    let planName = 'Free Plan';
+    let usageText = '';
+
+    switch (subscriptionTier) {
+      case 'basis':
+        planName = 'Basis-Plan';
+        usageText = `${simulationsUsed}/${simulationLimit} simulations used`;
+        break;
+      case 'profi':
+        planName = 'Profi-Plan';
+        usageText = `${simulationsUsed}/${simulationLimit} simulations used`;
+        break;
+      case 'unlimited':
+        planName = 'Unlimited-Plan';
+        usageText = `${simulationsUsed} simulations used`;
+        break;
+      default:
+        usageText = `${simulationsUsed}/${simulationLimit} free simulations used`;
     }
 
-    if (subscription.plan_type === 'unlimited') {
-      return 'Unbegrenzte Simulationen';
-    }
-
-    if (subscription.plan_type === 'free') {
-      return `${subscription.simulations_remaining} von ${subscription.simulations_limit} Simulationen verbleibend`;
-    }
-
-    return `${subscription.simulations_remaining} Simulationen verbleibend`;
-  };
-
-  const incrementSimulationUsage = () => {
-    // For testing purposes, just simulate incrementing usage
-    if (subscription) {
-      setSubscription({
-        ...subscription,
-        simulations_used: subscription.simulations_used + 1,
-        simulations_remaining: subscription.simulations_limit 
-          ? Math.max(0, subscription.simulations_limit - (subscription.simulations_used + 1))
-          : Infinity
-      });
-    }
-  };
-
-  useEffect(() => {
-    const initializeSubscription = async () => {
-      if (user) {
-        try {
-          await fetchSubscription();
-        } catch (err) {
-          // Final fallback - ensure we always have a working subscription
-          console.log('🛡️ useEffect fallback: setting default subscription');
-          setSubscription({
-            id: 'default-fallback',
-            plan_type: 'free',
-            status: 'active',
-            simulations_limit: null,
-            simulations_used: 0,
-            simulations_remaining: Infinity,
-            in_trial: false,
-            trial_end_date: null,
-            subscription_end_date: null,
-            next_billing_date: null,
-            current_period_start: new Date().toISOString(),
-            current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            billing_cycle: 'yearly',
-            amount: 0,
-          });
-          setLoading(false);
-          setError(null); // Clear any error
-        }
-      }
+    return {
+      planName,
+      usageText,
+      message,
+      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis',
+      isUnlimited: subscriptionTier === 'unlimited'
     };
-    
-    initializeSubscription();
-  }, [user]);
+  }, [subscriptionStatus]);
+
+  // Check access on mount and when userId changes
+  useEffect(() => {
+    if (userId) {
+      checkAccess();
+    }
+  }, [userId, checkAccess]);
 
   return {
-    subscription,
+    subscriptionStatus,
     loading,
     error,
-    canUseSimulation,
-    useSimulation,
-    getSimulationStatusText,
-    incrementSimulationUsage,
-    refreshSubscription: fetchSubscription,
+    checkAccess,
+    recordUsage,
+    getSubscriptionInfo,
+    // Helper properties
+    canUseSimulation: subscriptionStatus?.canUseSimulation || false,
+    subscriptionTier: subscriptionStatus?.subscriptionTier,
+    simulationsRemaining: subscriptionStatus?.simulationLimit
+      ? subscriptionStatus.simulationLimit - subscriptionStatus.simulationsUsed
+      : null
   };
 };

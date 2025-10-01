@@ -38,27 +38,52 @@ function verifyWebhookSignature(payload, signature, secret) {
   );
 }
 
-// Helper function to determine subscription tier from variant name or ID
-function determineSubscriptionTier(variantName, variantId) {
-  const name = variantName?.toLowerCase() || '';
+// Variant ID to subscription tier mapping
+const VARIANT_TIER_MAPPING = {
+  '1006948': 'basis',     // Basis Plan
+  '1006934': 'profi',     // Profi Plan
+  '1006947': 'unlimited'  // Unlimited Plan
+};
 
+// Helper function to determine subscription tier from variant ID
+function determineSubscriptionTier(variantName, variantId) {
+  // First try to match by variant ID (most reliable)
+  const tier = VARIANT_TIER_MAPPING[String(variantId)];
+  if (tier) {
+    console.log(`Mapped variant ID ${variantId} to tier: ${tier}`);
+    return tier;
+  }
+
+  // Fallback to name-based matching if variant ID not found
+  const name = variantName?.toLowerCase() || '';
   if (name.includes('basis') || name.includes('basic')) {
+    console.log(`Mapped variant name "${variantName}" to tier: basis`);
     return 'basis';
   } else if (name.includes('profi') || name.includes('pro')) {
+    console.log(`Mapped variant name "${variantName}" to tier: profi`);
     return 'profi';
   } else if (name.includes('unlimited') || name.includes('premium')) {
+    console.log(`Mapped variant name "${variantName}" to tier: unlimited`);
     return 'unlimited';
   }
 
-  // Fallback based on variant ID or default
-  console.warn(`Unknown subscription tier for variant: ${variantName} (${variantId}), defaulting to basis`);
+  // Final fallback
+  console.warn(`Unknown subscription tier for variant: ${variantName} (ID: ${variantId}), defaulting to basis`);
   return 'basis';
 }
 
 // Helper function to log webhook events
 async function logWebhookEvent(eventType, eventData, subscriptionId, userId, status = 'processed', errorMessage = null) {
   try {
-    const { error } = await supabase
+    console.log('Attempting to log webhook event:', {
+      eventType,
+      subscriptionId,
+      userId,
+      status,
+      hasSupabaseClient: !!supabase
+    });
+
+    const { data, error } = await supabase
       .from('webhook_events')
       .insert({
         event_type: eventType,
@@ -67,13 +92,19 @@ async function logWebhookEvent(eventType, eventData, subscriptionId, userId, sta
         user_id: userId,
         status: status,
         error_message: errorMessage
-      });
+      })
+      .select();
 
     if (error) {
       console.error('Failed to log webhook event:', error);
+      throw new Error(`Database insert failed: ${error.message}`);
     }
+
+    console.log('Successfully logged webhook event:', data);
+    return data;
   } catch (err) {
     console.error('Error logging webhook event:', err);
+    throw err;
   }
 }
 
@@ -132,6 +163,7 @@ exports.handler = async (event, context) => {
       })
     };
   }
+
 
   if (event.httpMethod !== 'POST') {
     return {

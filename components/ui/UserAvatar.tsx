@@ -15,7 +15,7 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const { user, signOut } = useAuth();
   const { isDarkMode } = useTheme();
-  const { getSimulationStatusText } = useSubscription();
+  const { getSubscriptionInfo } = useSubscription(user?.id);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const getInitials = () => {
@@ -102,7 +102,7 @@ export default function UserAvatar({
             {/* Simulation status */}
             <View style={styles.infoContainer}>
               <Text style={styles.simulationStatusText}>
-                {getSimulationStatusText()}
+                {getSubscriptionInfo()?.message || 'Loading...'}
               </Text>
             </View>
           </View>

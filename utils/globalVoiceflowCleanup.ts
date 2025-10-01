@@ -176,10 +176,10 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          const isVoiceflowElement = 
+          const isVoiceflowElement =
             element.id?.toLowerCase().includes('voiceflow') ||
-            element.className?.toLowerCase().includes('voiceflow') ||
-            element.className?.toLowerCase().includes('vfrc') ||
+            (typeof element.className === 'string' ? element.className.toLowerCase() : element.className?.toString().toLowerCase())?.includes('voiceflow') ||
+            (typeof element.className === 'string' ? element.className.toLowerCase() : element.className?.toString().toLowerCase())?.includes('vfrc') ||
             (element as HTMLElement).innerHTML?.toLowerCase().includes('voiceflow');
           
           if (isVoiceflowElement) {
