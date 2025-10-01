@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Grid3X3, List, Search } from 'lucide-react-native';
+import { Grid3X3, List, Search, Stethoscope, Heart, Activity, Brain, Baby, Users, AlertTriangle, FileText, FolderOpen } from 'lucide-react-native';
 import { MobileBibliothekCard, MobileBibliothekListItem } from './MobileBibliothekCard';
 
 interface Section {
@@ -33,9 +33,20 @@ export function MobileBibliothekLayout({
 }: MobileBibliothekLayoutProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const getIconComponent = (type: string) => {
-    // This would map to your existing icon logic
-    return Search; // Placeholder
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      'Stethoscope': Stethoscope,
+      'Heart': Heart,
+      'Activity': Activity,
+      'Brain': Brain,
+      'Baby': Baby,
+      'Users': Users,
+      'AlertTriangle': AlertTriangle,
+      'Scan': Heart, // Replace magnifying glass with heart icon
+      'FileText': FileText,
+      'FolderOpen': FolderOpen,
+    };
+    return iconMap[iconName] || Stethoscope; // Default to Stethoscope instead of Search
   };
 
   const getGradient = (index: number) => {
@@ -56,7 +67,7 @@ export function MobileBibliothekLayout({
         <MobileBibliothekCard
           key={section.id}
           title={section.title}
-          icon={getIconComponent(section.type)}
+          icon={getIconComponent(section.icon)}
           gradient={getGradient(index)}
           hasContent={Boolean(section.content_improved)}
           itemCount={section.childCount}
@@ -74,7 +85,7 @@ export function MobileBibliothekLayout({
         <MobileBibliothekListItem
           key={section.id}
           title={section.title}
-          icon={getIconComponent(section.type)}
+          icon={getIconComponent(section.icon)}
           gradient={getGradient(index)}
           hasContent={Boolean(section.content_improved)}
           itemCount={section.childCount}
