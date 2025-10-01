@@ -264,19 +264,35 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 Entdecke moderne Lernmethoden, tägliche Wissensnuggets und 
                 interaktive Übungen, die dich zum Lernerfolg führen.
               </Text>
-              <TouchableOpacity
-                style={styles.ctaButton}
-                onPress={() => setShowAboutUs(true)}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={['#B15740', '#A04A35']}  // Premium gradient - Brown Rust to darker shade
-                  style={styles.ctaButtonGradient}
+              <View style={styles.ctaButtonContainer}>
+                <TouchableOpacity
+                  style={styles.ctaButton}
+                  onPress={() => setShowAboutUs(true)}
+                  activeOpacity={0.9}
                 >
-                  <Info size={20} color="#ffffff" style={styles.ctaIcon} />
-                  <Text style={styles.ctaButtonText}>Über Uns</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                  <LinearGradient
+                    colors={['#B15740', '#A04A35']}  // Premium gradient - Brown Rust to darker shade
+                    style={styles.ctaButtonGradient}
+                  >
+                    <Info size={20} color="#ffffff" style={styles.ctaIcon} />
+                    <Text style={styles.ctaButtonText}>Über Uns</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.ctaButton}
+                  onPress={() => router.push('/subscription')}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={['#E2827F', '#B87E70']}  // Burning Sand to Old Rose gradient
+                    style={styles.ctaButtonGradient}
+                  >
+                    <TrendingUp size={20} color="#ffffff" style={styles.ctaIcon} />
+                    <Text style={styles.ctaButtonText}>Abonnieren</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </LinearGradient>
 
             {/* Subscription Status Card - Temporarily Disabled */}
@@ -696,6 +712,13 @@ const styles = {
     lineHeight: 24,
     fontWeight: '400',  // Regular weight for body text
   },
+  ctaButtonContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   ctaButton: {
     borderRadius: 30,
     overflow: 'hidden',
@@ -705,10 +728,13 @@ const styles = {
     shadowRadius: 12,
     elevation: 12,
     transform: [{ scale: 1 }],  // Ready for hover animations
+    flex: 1,
+    minWidth: 140,
+    maxWidth: 180,
   },
   ctaButtonGradient: {
     paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
