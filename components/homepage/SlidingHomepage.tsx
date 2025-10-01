@@ -267,29 +267,29 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
                   style={styles.ctaButton}
-                  onPress={() => setShowAboutUs(true)}
+                  onPress={() => router.push('/subscription')}
                   activeOpacity={0.9}
                 >
                   <LinearGradient
-                    colors={['#B15740', '#A04A35']}  // Premium gradient - Brown Rust to darker shade
+                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
                     style={styles.ctaButtonGradient}
                   >
-                    <Info size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Über Uns</Text>
+                    <TrendingUp size={20} color="#ffffff" style={styles.ctaIcon} />
+                    <Text style={styles.ctaButtonText}>Abonnieren</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.ctaButton}
-                  onPress={() => router.push('/subscription')}
+                  onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.9}
                 >
                   <LinearGradient
-                    colors={['#E2827F', '#B87E70']}  // Burning Sand to Old Rose gradient
+                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
                     style={styles.ctaButtonGradient}
                   >
-                    <TrendingUp size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Abonnieren</Text>
+                    <Info size={20} color="#ffffff" style={styles.ctaIcon} />
+                    <Text style={styles.ctaButtonText}>Über Uns</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
