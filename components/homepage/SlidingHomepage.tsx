@@ -289,7 +289,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     style={styles.ctaButtonGradient}
                   >
                     <Info size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Über Uns</Text>
+                    <Text style={styles.ctaButtonText}>Über KP Med</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
