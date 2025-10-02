@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text, Linking, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text, Linking, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'lucide-react-native';
@@ -15,9 +15,15 @@ export default function SubscriptionPage() {
   const { user } = useAuth();
   const { checkAccess } = useSubscription(user?.id);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const handleSelectPlan = async (planId: string) => {
     console.log('Selected plan:', planId);
+
+    // Prevent spamming - check if already updating
+    if (isUpdating) {
+      return;
+    }
 
     if (!user?.id) {
       Alert.alert('Fehler', 'Sie müssen angemeldet sein, um ein Abonnement zu ändern.');
@@ -67,10 +73,17 @@ export default function SubscriptionPage() {
 
   const handleFreePlanSelection = async () => {
     setIsUpdating(true);
+    setLoadingMessage('Wechsel zum kostenlosen Plan...');
+
     try {
       const result = await SubscriptionService.updateUserSubscription(user!.id, 'free');
 
       if (result.success) {
+        setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
+
+        // Refresh subscription data
+        await checkAccess();
+
         Alert.alert(
           'Erfolgreich!',
           'Sie wurden erfolgreich zum kostenlosen Plan gewechselt. Sie haben wieder 3 kostenlose Simulationen.',
@@ -78,8 +91,6 @@ export default function SubscriptionPage() {
             {
               text: 'OK',
               onPress: () => {
-                // Refresh subscription data
-                checkAccess();
                 // Go back to dashboard
                 router.replace('/(tabs)/dashboard');
               }
@@ -94,15 +105,23 @@ export default function SubscriptionPage() {
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
+      setLoadingMessage('');
     }
   };
 
   const handleInstantPlanSwitch = async (planId: string) => {
     setIsUpdating(true);
+    setLoadingMessage(`Wechsel zum ${planId.toUpperCase()}-Plan...`);
+
     try {
       const result = await SubscriptionService.updateUserSubscription(user!.id, planId);
 
       if (result.success) {
+        setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
+
+        // Refresh subscription data
+        await checkAccess();
+
         const planDetails = SubscriptionService.getPlanDetails(planId);
         const limitText = planDetails?.simulationLimit
           ? `${planDetails.simulationLimit} Simulationen pro Monat`
@@ -115,8 +134,6 @@ export default function SubscriptionPage() {
             {
               text: 'OK',
               onPress: () => {
-                // Refresh subscription data
-                checkAccess();
                 // Go back to dashboard
                 router.replace('/(tabs)/dashboard');
               }
@@ -131,6 +148,7 @@ export default function SubscriptionPage() {
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
+      setLoadingMessage('');
     }
   };
 
@@ -188,12 +206,38 @@ export default function SubscriptionPage() {
     content: {
       flex: 1,
     },
+    loadingOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingContainer: {
+      backgroundColor: 'white',
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      minWidth: 200,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 10,
+    },
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#333',
+      textAlign: 'center',
+      lineHeight: 22,
+    },
   });
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <SafeAreaView style={dynamicStyles.safeArea}>
-        <StatusBar 
+        <StatusBar
           barStyle="dark-content"
           backgroundColor="transparent"
           translucent
@@ -201,19 +245,37 @@ export default function SubscriptionPage() {
         <View style={dynamicStyles.container}>
           <View style={dynamicStyles.header}>
             <TouchableOpacity
-              style={dynamicStyles.backButton}
+              style={[dynamicStyles.backButton, isUpdating && { opacity: 0.5 }]}
               onPress={handleGoBack}
+              disabled={isUpdating}
             >
-              <ArrowLeft size={20} color="#B87E70" />  {/* Old Rose */}
+              <ArrowLeft size={20} color="#B87E70" />
               <Text style={dynamicStyles.backButtonText}>Zurück</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={dynamicStyles.content}>
             <SubscriptionPlans onSelectPlan={handleSelectPlan} />
           </View>
         </View>
       </SafeAreaView>
+
+      {/* Loading Modal */}
+      <Modal
+        visible={isUpdating}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+      >
+        <View style={dynamicStyles.loadingOverlay}>
+          <View style={dynamicStyles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={dynamicStyles.loadingText}>
+              {loadingMessage || 'Wird verarbeitet...'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
