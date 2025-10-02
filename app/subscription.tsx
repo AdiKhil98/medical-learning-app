@@ -76,9 +76,12 @@ export default function SubscriptionPage() {
     setLoadingMessage('Wechsel zum kostenlosen Plan...');
 
     try {
+      console.log('🎯 Starting free plan selection...');
       const result = await SubscriptionService.updateUserSubscription(user!.id, 'free');
+      console.log('📊 Update result:', result);
 
       if (result.success) {
+        console.log('✅ Free plan update successful');
         setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
 
         // Refresh subscription data
@@ -98,6 +101,7 @@ export default function SubscriptionPage() {
           ]
         );
       } else {
+        console.log('❌ Free plan update failed:', result.error);
         Alert.alert('Fehler', result.error || 'Fehler beim Wechseln zum kostenlosen Plan');
       }
     } catch (error) {
