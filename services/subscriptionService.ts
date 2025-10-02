@@ -35,6 +35,8 @@ export class SubscriptionService {
    */
   static async canSwitchToFreeTier(userId: string): Promise<{ canSwitch: boolean; reason?: string }> {
     try {
+      console.log('🔍 Checking free tier eligibility for user:', userId);
+
       const { data: user, error } = await supabase
         .from('users')
         .select('has_used_free_tier, subscription_tier, created_at')
@@ -42,15 +44,23 @@ export class SubscriptionService {
         .single();
 
       if (error) {
+        console.error('❌ Error fetching user for free tier check:', error);
         return { canSwitch: false, reason: 'Fehler beim Überprüfen des Benutzerstatus' };
       }
 
+      console.log('📊 User free tier status:', {
+        has_used_free_tier: user.has_used_free_tier,
+        subscription_tier: user.subscription_tier
+      });
+
       // Allow new users who haven't used free tier yet
       if (!user.has_used_free_tier) {
+        console.log('✅ User can use free tier (first time)');
         return { canSwitch: true };
       }
 
       // Block users who have already used free tier
+      console.log('❌ User has already used free tier - blocking');
       return {
         canSwitch: false,
         reason: 'Sie haben bereits Ihren kostenlosen Plan genutzt. Um mehr Simulationen zu erhalten, wählen Sie bitte einen kostenpflichtigen Plan.'
@@ -74,10 +84,15 @@ export class SubscriptionService {
 
       // Check free tier eligibility
       if (planId === 'free') {
+        console.log('🔍 Checking eligibility for free tier...');
         const eligibility = await this.canSwitchToFreeTier(userId);
+        console.log('📋 Eligibility result:', eligibility);
+
         if (!eligibility.canSwitch) {
+          console.log('🚫 Free tier blocked:', eligibility.reason);
           return { success: false, error: eligibility.reason };
         }
+        console.log('✅ Free tier allowed, proceeding...');
       }
 
       // Prepare update data based on plan type
