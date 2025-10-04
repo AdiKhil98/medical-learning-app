@@ -254,21 +254,26 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               <View style={styles.heroIcon}>
                 <BookOpen size={64} color="#B87E70" />  {/* Old Rose for brand consistency */}
               </View>
-              <Text style={styles.heroTitle}>Lernkapital</Text>
+              <Text style={styles.heroTitle}>Bestehen Sie Ihre KP & FSP Prüfung beim ersten Versuch</Text>
               <Text style={styles.heroSubtitle}>
-                Deine Plattform für effektives und nachhaltiges Lernen
+                Realistische Simulationen + Personalisiertes Feedback + Prüfungsrelevante Inhalte
               </Text>
-              <Text style={styles.heroDescription}>
-                Entdecke moderne Lernmethoden, tägliche Wissensnuggets und 
-                interaktive Übungen, die dich zum Lernerfolg führen.
-              </Text>
+
+              {/* Social Proof */}
+              <View style={styles.socialProofContainer}>
+                <CheckCircle size={16} color="#10b981" />
+                <Text style={styles.socialProofText}>
+                  94% Erfolgsquote bei unseren Nutzern
+                </Text>
+              </View>
+
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
                   style={styles.primaryButton}
                   onPress={() => router.push('/subscription')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.primaryButtonText}>Abonnieren</Text>
+                  <Text style={styles.primaryButtonText}>Kostenlos testen</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -276,8 +281,26 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.secondaryButtonText}>Über KP Med</Text>
+                  <Text style={styles.secondaryButtonText}>Wie es funktioniert</Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* Trust Signals */}
+              <View style={styles.trustSignalsContainer}>
+                <View style={styles.trustSignal}>
+                  <CheckCircle size={14} color="#10b981" />
+                  <Text style={styles.trustSignalText}>14 Tage kostenlos</Text>
+                </View>
+                <View style={styles.trustSignalDivider} />
+                <View style={styles.trustSignal}>
+                  <CheckCircle size={14} color="#10b981" />
+                  <Text style={styles.trustSignalText}>Keine Kreditkarte</Text>
+                </View>
+                <View style={styles.trustSignalDivider} />
+                <View style={styles.trustSignal}>
+                  <CheckCircle size={14} color="#10b981" />
+                  <Text style={styles.trustSignalText}>Jederzeit kündbar</Text>
+                </View>
               </View>
             </LinearGradient>
 
@@ -656,12 +679,12 @@ const styles = {
   },
   heroCard: {
     borderRadius: 16,  // Modern corner radius
-    padding: 40,
-    paddingBottom: 60,  // Extra bottom padding to ensure buttons are fully visible
+    padding: 32,
+    paddingBottom: 40,  // Extra bottom padding to ensure trust signals are fully visible
     alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
-    minHeight: 520,  // Ensure card is tall enough for all content
+    width: screenWidth < 600 ? '90%' : '100%',  // 90% on mobile for better viewport usage
+    maxWidth: 420,
+    minHeight: 580,  // Increased height for new elements
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
     shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
@@ -675,30 +698,39 @@ const styles = {
     marginBottom: 20,
   },
   heroTitle: {
-    fontSize: 48,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#A04A35',  // Darker shade for more authority
     textAlign: 'center',
     marginBottom: 16,
+    lineHeight: 36,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',  // Subtle shadow for contrast
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   heroSubtitle: {
-    fontSize: 20,
-    color: '#333333',  // Dark gray for optimal readability against White Linen
+    fontSize: 16,
+    color: '#555555',  // Medium gray for readability
     textAlign: 'center',
     marginBottom: 20,
-    lineHeight: 28,
+    lineHeight: 24,
     fontWeight: '500',  // Medium weight for better hierarchy
   },
-  heroDescription: {
-    fontSize: 16,
-    color: '#555555',  // Medium gray for optimal reading against White Linen
-    textAlign: 'center',
-    marginBottom: 0,  // Remove bottom margin, let container handle spacing
-    lineHeight: 24,
-    fontWeight: '400',  // Regular weight for body text
+  socialProofContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    gap: 8,
+  },
+  socialProofText: {
+    fontSize: 14,
+    color: '#065f46',
+    fontWeight: '600',
   },
   ctaButtonContainer: {
     display: 'flex',
@@ -758,6 +790,30 @@ const styles = {
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.3,
+  },
+  trustSignalsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  trustSignal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trustSignalText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  trustSignalDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: '#d1d5db',
   },
   // Recent Content Section Styles
   recentContentSection: {
