@@ -176,6 +176,7 @@ export default function HelpSupportScreen() {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
+      paddingTop: 60,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
@@ -183,20 +184,22 @@ export default function HelpSupportScreen() {
     backButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 8,
-      marginRight: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      backgroundColor: 'rgba(249, 246, 242, 0.95)',
+      shadowColor: 'rgba(181,87,64,0.3)',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
     backText: {
       fontFamily: 'Inter-Medium',
       fontSize: fontScale(16),
-      color: colors.primary,
+      color: '#B87E70',
       marginLeft: 4,
-    },
-    title: {
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
-      color: colors.text,
-      flex: 1,
+      fontWeight: '600',
     },
     content: {
       flex: 1,
@@ -349,14 +352,13 @@ export default function HelpSupportScreen() {
       
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()} 
+        <TouchableOpacity
+          onPress={() => router.back()}
           style={dynamicStyles.backButton}
         >
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
         </TouchableOpacity>
-        <Text style={dynamicStyles.title}>Hilfe & Support</Text>
       </View>
 
       <ScrollView 
