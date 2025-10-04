@@ -1,20 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const SubscriptionTest = () => {
-  const { 
-    subscription, 
-    loading, 
-    error, 
-    canUseSimulation, 
-    incrementSimulationUsage 
-  } = useSubscription();
+  const { user } = useAuth();
+  const {
+    subscriptionStatus,
+    loading,
+    error,
+    canUseSimulation,
+    recordUsage
+  } = useSubscription(user?.id);
 
-  const handleTestSimulation = () => {
-    if (canUseSimulation()) {
-      incrementSimulationUsage();
-      alert('✅ Simulation allowed! Usage incremented.');
+  const handleTestSimulation = async () => {
+    if (canUseSimulation) {
+      const success = await recordUsage();
+      if (success) {
+        alert('✅ Simulation allowed! Usage incremented.');
+      } else {
+        alert('❌ Error recording usage');
+      }
     } else {
       alert('❌ Simulation blocked - limit reached!');
     }
@@ -38,33 +44,35 @@ export const SubscriptionTest = () => {
         <>
           <View style={styles.infoBox}>
             <Text style={styles.label}>Plan:</Text>
-            <Text style={styles.value}>{subscription?.plan_type || 'None'}</Text>
+            <Text style={styles.value}>{subscriptionStatus?.subscriptionTier || 'None'}</Text>
           </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Status:</Text>
-            <Text style={styles.value}>{subscription?.status || 'Unknown'}</Text>
+            <Text style={styles.value}>{subscriptionStatus?.canUseSimulation ? 'Active' : 'Limited'}</Text>
           </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Simulations Used:</Text>
             <Text style={styles.value}>
-              {subscription?.simulations_used || 0}
-              {subscription?.simulations_limit ? ` / ${subscription.simulations_limit}` : ' / ∞'}
+              {subscriptionStatus?.simulationsUsed || 0}
+              {subscriptionStatus?.simulationLimit ? ` / ${subscriptionStatus.simulationLimit}` : ' / ∞'}
             </Text>
           </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Remaining:</Text>
             <Text style={styles.value}>
-              {subscription?.simulations_remaining === Infinity ? '∞' : subscription?.simulations_remaining || 0}
+              {subscriptionStatus?.simulationLimit
+                ? (subscriptionStatus.simulationLimit - subscriptionStatus.simulationsUsed)
+                : '∞'}
             </Text>
           </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Can Use Simulation:</Text>
-            <Text style={[styles.value, canUseSimulation() ? styles.success : styles.error]}>
-              {canUseSimulation() ? '✅ Yes' : '❌ No'}
+            <Text style={[styles.value, canUseSimulation ? styles.success : styles.error]}>
+              {canUseSimulation ? '✅ Yes' : '❌ No'}
             </Text>
           </View>
 
