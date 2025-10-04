@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
-import { Bell, AlertCircle, CheckCircle, Info } from 'lucide-react-native';
+import { Bell, AlertCircle, CheckCircle, Info, ArrowLeft } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -18,6 +19,7 @@ interface Update {
 }
 
 export default function Updates() {
+  const router = useRouter();
   const { colors } = useTheme();
   const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,8 +70,26 @@ export default function Updates() {
     }
   };
 
+  const handleGoBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.backButtonContainer}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <ArrowLeft size={20} color="#B87E70" />
+          <Text style={styles.backButtonText}>Zurück</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={[styles.header, { backgroundColor: colors.card }]}>
         <Bell size={24} color={colors.primary} />
         <Text style={[styles.headerTitle, { color: colors.text }]}>Updates & Neuigkeiten</Text>
@@ -113,6 +133,31 @@ export default function Updates() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  backButtonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(249, 246, 242, 0.95)',
+    shadowColor: 'rgba(181,87,64,0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    alignSelf: 'flex-start',
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#B87E70',
+    marginLeft: 8,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

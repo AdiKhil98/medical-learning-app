@@ -9,17 +9,15 @@ import {
   SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  BookOpen, 
-  Target, 
-  Lightbulb, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Target,
+  Lightbulb,
   HelpCircle,
   CheckCircle,
   XCircle,
-  Info,
-  TrendingUp,
   Menu as MenuIcon,
   Clock,
   Stethoscope,
@@ -266,31 +264,19 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </Text>
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
-                  style={styles.ctaButton}
+                  style={styles.primaryButton}
                   onPress={() => router.push('/subscription')}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
-                    style={styles.ctaButtonGradient}
-                  >
-                    <TrendingUp size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Abonnieren</Text>
-                  </LinearGradient>
+                  <Text style={styles.primaryButtonText}>Abonnieren</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.ctaButton}
+                  style={styles.secondaryButton}
                   onPress={() => setShowAboutUs(true)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
-                    style={styles.ctaButtonGradient}
-                  >
-                    <Info size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Über KP Med</Text>
-                  </LinearGradient>
+                  <Text style={styles.secondaryButtonText}>Über KP Med</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -584,7 +570,7 @@ const styles = {
   },
   sectionIndicators: {
     position: 'absolute' as const,
-    bottom: 40,
+    bottom: 20,  // Moved lower to prevent overlap with buttons
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -671,9 +657,11 @@ const styles = {
   heroCard: {
     borderRadius: 16,  // Modern corner radius
     padding: 40,
+    paddingBottom: 60,  // Extra bottom padding to ensure buttons are fully visible
     alignItems: 'center',
     width: '100%',
     maxWidth: 400,
+    minHeight: 520,  // Ensure card is tall enough for all content
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
     shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
@@ -708,45 +696,68 @@ const styles = {
     fontSize: 16,
     color: '#555555',  // Medium gray for optimal reading against White Linen
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 0,  // Remove bottom margin, let container handle spacing
     lineHeight: 24,
     fontWeight: '400',  // Regular weight for body text
   },
   ctaButtonContainer: {
-    flexDirection: 'row',
+    display: 'flex',
+    flexDirection: screenWidth < 600 ? 'column' : 'row',
     gap: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
+    marginTop: 32,
+    marginBottom: 32,
+    width: '100%',
   },
-  ctaButton: {
-    borderRadius: 30,
-    overflow: 'hidden',
-    shadowColor: '#B15740',  // Brown Rust shadow to make button pop
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
-    transform: [{ scale: 1 }],  // Ready for hover animations
-    flex: 1,
-    minWidth: 140,
-    maxWidth: 180,
-  },
-  ctaButtonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
+  primaryButton: {
+    // Base button styles
+    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 28,
+    width: screenWidth < 600 ? '100%' : 240,
+    maxWidth: 240,
+    height: 56,
+    // Unified color scheme
+    backgroundColor: '#B15740',
+    shadowColor: 'rgba(177, 87, 64, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 14,
+    elevation: 7,
   },
-  ctaIcon: {
-    marginRight: 8,
+  secondaryButton: {
+    // Base button styles
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28,
+    width: screenWidth < 600 ? '100%' : 240,
+    maxWidth: 240,
+    height: 56,
+    // Same color as primary for unified appearance
+    backgroundColor: '#B15740',
+    shadowColor: 'rgba(177, 87, 64, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 14,
+    elevation: 7,
   },
-  ctaButtonText: {
-    color: '#ffffff',  // White text for maximum contrast
-    fontSize: 18,
-    fontWeight: '600',  // Semi-bold for premium feel
-    letterSpacing: 0.5,  // Slight letter spacing for elegance
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  secondaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   // Recent Content Section Styles
   recentContentSection: {
