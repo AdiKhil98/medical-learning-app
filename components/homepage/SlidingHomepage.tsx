@@ -256,14 +256,14 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </View>
               <Text style={styles.heroTitle}>Bestehen Sie Ihre KP & FSP Prüfung beim ersten Versuch</Text>
               <Text style={styles.heroSubtitle}>
-                Realistische Simulationen + Personalisiertes Feedback + Prüfungsrelevante Inhalte
+                Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
               </Text>
 
               {/* Social Proof */}
               <View style={styles.socialProofContainer}>
-                <CheckCircle size={16} color="#10b981" />
+                <CheckCircle size={18} color="#10b981" />
                 <Text style={styles.socialProofText}>
-                  94% Erfolgsquote bei unseren Nutzern
+                  <Text style={styles.socialProofNumber}>94%</Text> Erfolgsquote bei unseren Nutzern
                 </Text>
               </View>
 
@@ -288,17 +288,17 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               {/* Trust Signals */}
               <View style={styles.trustSignalsContainer}>
                 <View style={styles.trustSignal}>
-                  <CheckCircle size={14} color="#10b981" />
+                  <CheckCircle size={16} color="#10b981" />
                   <Text style={styles.trustSignalText}>14 Tage kostenlos</Text>
                 </View>
                 <View style={styles.trustSignalDivider} />
                 <View style={styles.trustSignal}>
-                  <CheckCircle size={14} color="#10b981" />
+                  <CheckCircle size={16} color="#10b981" />
                   <Text style={styles.trustSignalText}>Keine Kreditkarte</Text>
                 </View>
                 <View style={styles.trustSignalDivider} />
                 <View style={styles.trustSignal}>
-                  <CheckCircle size={14} color="#10b981" />
+                  <CheckCircle size={16} color="#10b981" />
                   <Text style={styles.trustSignalText}>Jederzeit kündbar</Text>
                 </View>
               </View>
@@ -722,20 +722,25 @@ const styles = {
     justifyContent: 'center',
     backgroundColor: 'rgba(16, 185, 129, 0.1)',
     borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     marginBottom: 8,
-    gap: 8,
+    gap: 10,
   },
   socialProofText: {
     fontSize: 14,
     color: '#065f46',
     fontWeight: '600',
   },
+  socialProofNumber: {
+    fontSize: 18,
+    color: '#047857',
+    fontWeight: '800',
+  },
   ctaButtonContainer: {
     display: 'flex',
     flexDirection: screenWidth < 600 ? 'column' : 'row',
-    gap: 16,
+    gap: 12,
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
@@ -744,21 +749,21 @@ const styles = {
     width: '100%',
   },
   primaryButton: {
-    // Base button styles
+    // Base button styles - Enhanced for primary action
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 28,
     width: screenWidth < 600 ? '100%' : 240,
     maxWidth: 240,
-    height: 56,
+    height: 58,  // Slightly taller for more prominence
     // Unified color scheme
     backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.2)',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: 'rgba(177, 87, 64, 0.3)',  // Stronger shadow
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
-    shadowRadius: 14,
-    elevation: 7,
+    shadowRadius: 16,
+    elevation: 8,
   },
   secondaryButton: {
     // Base button styles
