@@ -48,32 +48,14 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // For paid plans, show choice: instant switch or go to checkout
-    Alert.alert(
-      'Plan wählen',
-      `Möchten Sie sofort zum ${planId.toUpperCase()}-Plan wechseln oder zur Zahlungsseite gehen?`,
-      [
-        {
-          text: 'Abbrechen',
-          style: 'cancel'
-        },
-        {
-          text: 'Sofort wechseln',
-          onPress: () => handleInstantPlanSwitch(planId)
-        },
-        {
-          text: 'Zur Zahlung',
-          onPress: () => {
-            const checkoutUrl = checkoutUrls[planId];
-            if (checkoutUrl) {
-              openLemonSqueezyCheckout(checkoutUrl);
-            } else {
-              Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
-            }
-          }
-        }
-      ]
-    );
+    // For paid plans, go directly to checkout page
+    const checkoutUrl = checkoutUrls[planId];
+    if (checkoutUrl) {
+      console.log(`Opening checkout for ${planId} plan:`, checkoutUrl);
+      openLemonSqueezyCheckout(checkoutUrl);
+    } else {
+      Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
+    }
   };
 
   const handleFreePlanSelection = async () => {
