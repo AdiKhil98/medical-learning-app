@@ -720,13 +720,13 @@ const styles = {
     width: screenWidth < 600 ? '100%' : 240,
     maxWidth: 240,
     height: 56,
-    // Primary button specific - darker, more prominent
+    // Unified color scheme
     backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.25)',
+    shadowColor: 'rgba(177, 87, 64, 0.2)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 14,
-    elevation: 8,
+    elevation: 7,
   },
   secondaryButton: {
     // Base button styles
@@ -737,13 +737,13 @@ const styles = {
     width: screenWidth < 600 ? '100%' : 240,
     maxWidth: 240,
     height: 56,
-    // Secondary button specific - lighter, clear distinction
-    backgroundColor: '#D4A89A',
-    shadowColor: 'rgba(212, 168, 154, 0.2)',
+    // Same color as primary for unified appearance
+    backgroundColor: '#B15740',
+    shadowColor: 'rgba(177, 87, 64, 0.2)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 14,
-    elevation: 6,
+    elevation: 7,
   },
   primaryButtonText: {
     color: '#FFFFFF',
