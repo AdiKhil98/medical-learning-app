@@ -32,16 +32,26 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <NotificationProvider>
-            <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/forgot-password" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/reset-password" options={{ headerShown: false }} />
-              <Stack.Screen name="auth/verify-email" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="subscription" options={{ headerShown: false }} />
-              <Stack.Screen name="updates" options={{ headerShown: false }} />
+            <Stack
+              screenOptions={{
+                headerShown: false,  // Hide default headers globally
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="auth/login" />
+              <Stack.Screen name="auth/register" />
+              <Stack.Screen name="auth/forgot-password" />
+              <Stack.Screen name="auth/reset-password" />
+              <Stack.Screen name="auth/verify-email" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="subscription" />
+              <Stack.Screen name="updates" />
+              <Stack.Screen name="bookmarks" />
+              <Stack.Screen name="profile" />
+              <Stack.Screen name="feedback" />
+              <Stack.Screen name="impressum" />
+              <Stack.Screen name="haftung" />
+              <Stack.Screen name="datenschutz-einstellungen" />
             </Stack>
           </NotificationProvider>
         </AuthProvider>
