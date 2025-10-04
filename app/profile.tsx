@@ -7,11 +7,11 @@ import { supabase } from '@/lib/supabase';
 import { CommonActions } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Platform } from 'react-native';
-import { 
-  LogOut, 
-  Moon, 
-  User, 
-  ChevronRight, 
+import {
+  LogOut,
+  Moon,
+  User,
+  ChevronRight,
   Settings,
   Lock,
   Shield,
@@ -24,7 +24,8 @@ import {
   Award,
   Send,
   Bookmark,
-  Crown
+  Crown,
+  ArrowLeft
 } from 'lucide-react-native';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -254,6 +255,15 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleGoBack = () => {
+    // Try to go back, if no history then go to dashboard
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/dashboard');
+    }
+  };
+
   const handlePushNotificationToggle = async (value: boolean) => {
     try {
       setUpdatingNotifications(true);
@@ -367,6 +377,31 @@ export default function ProfileScreen() {
       right: 0,
       top: 0,
       height: '100%',
+    },
+    headerContainer: {
+      paddingHorizontal: 24,
+      paddingVertical: 16,
+      paddingTop: 60,
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      backgroundColor: 'rgba(249, 246, 242, 0.95)',
+      shadowColor: 'rgba(181,87,64,0.3)',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+      alignSelf: 'flex-start',
+    },
+    backButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#B87E70',
+      marginLeft: 8,
     },
     title: {
       fontFamily: 'Inter-Bold',
@@ -504,12 +539,23 @@ export default function ProfileScreen() {
         style={dynamicStyles.gradientBackground}
       />
       
-      <Animated.ScrollView 
+      <Animated.ScrollView
         style={[styles.scrollContainer, { opacity: fadeAnim }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
+        {/* Back Button */}
+        <View style={dynamicStyles.headerContainer}>
+          <TouchableOpacity
+            style={dynamicStyles.backButton}
+            onPress={handleGoBack}
+          >
+            <ArrowLeft size={20} color="#B87E70" />
+            <Text style={dynamicStyles.backButtonText}>Zurück</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.header}>
           <Text style={dynamicStyles.title}>Einstellungen</Text>
           <Text style={dynamicStyles.subtitle}>Verwalten Sie Ihr Konto und Ihre Präferenzen</Text>
