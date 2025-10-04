@@ -657,6 +657,7 @@ const styles = {
   heroCard: {
     borderRadius: 16,  // Modern corner radius
     padding: 40,
+    paddingBottom: 60,  // Extra bottom padding to prevent overlap with indicators
     alignItems: 'center',
     width: '100%',
     maxWidth: 400,
@@ -741,8 +742,8 @@ const styles = {
     width: screenWidth < 600 ? '100%' : 'auto',
     maxWidth: screenWidth < 600 ? 280 : 'auto',
     // Secondary button specific
-    backgroundColor: '#C99487',
-    shadowColor: 'rgba(201, 148, 135, 0.2)',
+    backgroundColor: '#B87E70',  // Darker Old Rose to match primary button saturation
+    shadowColor: 'rgba(184, 126, 112, 0.2)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,
