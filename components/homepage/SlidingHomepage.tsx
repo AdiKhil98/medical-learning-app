@@ -9,17 +9,15 @@ import {
   SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  BookOpen, 
-  Target, 
-  Lightbulb, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Target,
+  Lightbulb,
   HelpCircle,
   CheckCircle,
   XCircle,
-  Info,
-  TrendingUp,
   Menu as MenuIcon,
   Clock,
   Stethoscope,
@@ -266,31 +264,19 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </Text>
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
-                  style={styles.ctaButton}
+                  style={styles.primaryButton}
                   onPress={() => router.push('/subscription')}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
-                    style={styles.ctaButtonGradient}
-                  >
-                    <TrendingUp size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Abonnieren</Text>
-                  </LinearGradient>
+                  <Text style={styles.primaryButtonText}>Abonnieren</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.ctaButton}
+                  style={styles.secondaryButton}
                   onPress={() => setShowAboutUs(true)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#B15740', '#A04A35']}  // Matching gradient - Brown Rust to darker shade
-                    style={styles.ctaButtonGradient}
-                  >
-                    <Info size={20} color="#ffffff" style={styles.ctaIcon} />
-                    <Text style={styles.ctaButtonText}>Über KP Med</Text>
-                  </LinearGradient>
+                  <Text style={styles.secondaryButtonText}>Über KP Med</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -713,40 +699,62 @@ const styles = {
     fontWeight: '400',  // Regular weight for body text
   },
   ctaButtonContainer: {
-    flexDirection: 'row',
+    flexDirection: screenWidth < 640 ? 'column' : 'row',
     gap: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
+    width: '100%',
   },
-  ctaButton: {
-    borderRadius: 30,
-    overflow: 'hidden',
-    shadowColor: '#B15740',  // Brown Rust shadow to make button pop
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
-    transform: [{ scale: 1 }],  // Ready for hover animations
-    flex: 1,
-    minWidth: 140,
-    maxWidth: 180,
-  },
-  ctaButtonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+  primaryButton: {
+    backgroundColor: '#B15740',  // Brown Rust
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 28,
+    minHeight: 56,
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(181,87,64,0.25)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 8,
+    width: screenWidth < 640 ? '100%' : 'auto',
+    flex: screenWidth < 640 ? 0 : 1,
+    minWidth: 140,
+    maxWidth: 280,
   },
-  ctaIcon: {
-    marginRight: 8,
+  secondaryButton: {
+    backgroundColor: '#B87E70',  // Old Rose
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 28,
+    minHeight: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: 'rgba(184,126,112,0.25)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 8,
+    width: screenWidth < 640 ? '100%' : 'auto',
+    flex: screenWidth < 640 ? 0 : 1,
+    minWidth: 140,
+    maxWidth: 280,
   },
-  ctaButtonText: {
-    color: '#ffffff',  // White text for maximum contrast
-    fontSize: 18,
-    fontWeight: '600',  // Semi-bold for premium feel
-    letterSpacing: 0.5,  // Slight letter spacing for elegance
+  primaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  secondaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   // Recent Content Section Styles
   recentContentSection: {
