@@ -570,7 +570,7 @@ const styles = {
   },
   sectionIndicators: {
     position: 'absolute' as const,
-    bottom: 40,
+    bottom: 20,  // Moved lower to prevent overlap with buttons
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -657,9 +657,11 @@ const styles = {
   heroCard: {
     borderRadius: 16,  // Modern corner radius
     padding: 40,
+    paddingBottom: 60,  // Extra bottom padding to ensure buttons are fully visible
     alignItems: 'center',
     width: '100%',
     maxWidth: 400,
+    minHeight: 520,  // Ensure card is tall enough for all content
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
     shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
@@ -694,18 +696,19 @@ const styles = {
     fontSize: 16,
     color: '#555555',  // Medium gray for optimal reading against White Linen
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 0,  // Remove bottom margin, let container handle spacing
     lineHeight: 24,
     fontWeight: '400',  // Regular weight for body text
   },
   ctaButtonContainer: {
     display: 'flex',
     flexDirection: screenWidth < 600 ? 'column' : 'row',
-    gap: screenWidth < 600 ? 16 : 20,
+    gap: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: 32,
+    marginBottom: 32,
     width: '100%',
   },
   primaryButton: {
@@ -713,39 +716,33 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    minWidth: 160,
-    height: 60,
-    width: screenWidth < 600 ? '100%' : 'auto',
-    maxWidth: screenWidth < 600 ? 280 : 'auto',
-    // Primary button specific
+    borderRadius: 28,
+    width: screenWidth < 600 ? '100%' : 240,
+    maxWidth: 240,
+    height: 56,
+    // Primary button specific - darker, more prominent
     backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.2)',
+    shadowColor: 'rgba(177, 87, 64, 0.25)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowRadius: 14,
+    elevation: 8,
   },
   secondaryButton: {
     // Base button styles
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    minWidth: 160,
-    height: 60,
-    width: screenWidth < 600 ? '100%' : 'auto',
-    maxWidth: screenWidth < 600 ? 280 : 'auto',
-    // Secondary button specific
-    backgroundColor: '#C99487',
-    shadowColor: 'rgba(201, 148, 135, 0.2)',
+    borderRadius: 28,
+    width: screenWidth < 600 ? '100%' : 240,
+    maxWidth: 240,
+    height: 56,
+    // Secondary button specific - lighter, clear distinction
+    backgroundColor: '#D4A89A',
+    shadowColor: 'rgba(212, 168, 154, 0.2)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 12,
+    shadowRadius: 14,
     elevation: 6,
   },
   primaryButtonText: {
