@@ -247,27 +247,27 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
-                  style={styles.primaryButton}
+                  style={styles.ctaButton}
                   onPress={() => router.push('/(tabs)/simulation')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.primaryButtonText}>Simulation testen</Text>
+                  <Text style={styles.ctaButtonText}>Simulation testen</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.secondaryButton}
+                  style={styles.ctaButton}
                   onPress={() => router.push('/subscription')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.secondaryButtonText}>Kostenlos testen</Text>
+                  <Text style={styles.ctaButtonText}>Abonnieren</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.tertiaryButton}
+                  style={styles.ctaButton}
                   onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.tertiaryButtonText}>Wie es funktioniert</Text>
+                  <Text style={styles.ctaButtonText}>Wie es funktioniert</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -672,8 +672,8 @@ const styles = {
     marginBottom: 0,
     width: '100%',
   },
-  primaryButton: {
-    // TOP BUTTON - Most prominent (darkest Brown Rust)
+  ctaButton: {
+    // UNIFIED BUTTON STYLE - All buttons identical
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -681,60 +681,14 @@ const styles = {
     width: screenWidth < 600 ? '100%' : 260,
     maxWidth: 260,
     height: 56,
-    backgroundColor: '#B15740',  // Brown Rust - darkest, most prominent
-    shadowColor: 'rgba(177, 87, 64, 0.35)',
+    backgroundColor: '#B15740',  // Brown Rust - unified color for all buttons
+    shadowColor: 'rgba(177, 87, 64, 0.3)',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 8,
   },
-  secondaryButton: {
-    // MIDDLE BUTTON - Medium prominence (Old Rose)
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 260,
-    maxWidth: 260,
-    height: 56,
-    backgroundColor: '#B87E70',  // Old Rose - medium tone
-    shadowColor: 'rgba(184, 126, 112, 0.25)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  tertiaryButton: {
-    // BOTTOM BUTTON - Least prominent (lightest coral)
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 260,
-    maxWidth: 260,
-    height: 56,
-    backgroundColor: '#C99487',  // Lightest coral
-    shadowColor: 'rgba(201, 148, 135, 0.2)',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  secondaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  tertiaryButtonText: {
+  ctaButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
