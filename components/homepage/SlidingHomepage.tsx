@@ -221,20 +221,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </TouchableOpacity>
       )}
 
-      {/* Section Indicators */}
-      <View style={styles.sectionIndicators}>
-        {sections.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.indicator,
-              currentSection === index && styles.activeIndicator
-            ]}
-            onPress={() => scrollToSection(index)}
-          />
-        ))}
-      </View>
-
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -259,48 +245,30 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
               </Text>
 
-              {/* Social Proof */}
-              <View style={styles.socialProofContainer}>
-                <CheckCircle size={18} color="#10b981" />
-                <Text style={styles.socialProofText}>
-                  <Text style={styles.socialProofNumber}>94%</Text> Erfolgsquote bei unseren Nutzern
-                </Text>
-              </View>
-
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
-                  style={styles.primaryButton}
+                  style={styles.ctaButton}
+                  onPress={() => router.push('/(tabs)/simulation')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.ctaButtonText}>Simulation testen</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.ctaButton}
                   onPress={() => router.push('/subscription')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.primaryButtonText}>Kostenlos testen</Text>
+                  <Text style={styles.ctaButtonText}>Abonnieren</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.secondaryButton}
+                  style={styles.ctaButton}
                   onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.secondaryButtonText}>Wie es funktioniert</Text>
+                  <Text style={styles.ctaButtonText}>Über KP Med</Text>
                 </TouchableOpacity>
-              </View>
-
-              {/* Trust Signals */}
-              <View style={styles.trustSignalsContainer}>
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>14 Tage kostenlos</Text>
-                </View>
-                <View style={styles.trustSignalDivider} />
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>Keine Kreditkarte</Text>
-                </View>
-                <View style={styles.trustSignalDivider} />
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>Jederzeit kündbar</Text>
-                </View>
               </View>
             </LinearGradient>
 
@@ -591,32 +559,6 @@ const styles = {
     shadowRadius: 3.84,
     elevation: 5,
   },
-  sectionIndicators: {
-    position: 'absolute' as const,
-    bottom: 20,  // Moved lower to prevent overlap with buttons
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(184, 126, 112, 0.4)',  // Reduced opacity for inactive dots
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: '#B15740',  // Brown Rust for active state - stronger brand presence
-    width: 24,
-    shadowColor: '#B15740',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
   sectionTitle: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -676,15 +618,17 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    paddingVertical: 20,  // Add vertical padding to prevent clipping
   },
   heroCard: {
     borderRadius: 16,  // Modern corner radius
-    padding: 32,
-    paddingBottom: 40,  // Extra bottom padding to ensure trust signals are fully visible
+    padding: 40,  // Consistent padding top/bottom and left/right
+    paddingTop: 40,
+    paddingBottom: 40,
     alignItems: 'center',
     width: screenWidth < 600 ? '90%' : '100%',  // 90% on mobile for better viewport usage
-    maxWidth: 420,
-    minHeight: 580,  // Increased height for new elements
+    maxWidth: 480,  // Increased max width
+    minHeight: 'auto',  // Auto height to fit content
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
     shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
@@ -693,9 +637,11 @@ const styles = {
     shadowRadius: 20,
     elevation: 12,
     backgroundColor: 'transparent',  // Ensure gradient shows through
+    overflow: 'visible',  // Ensure content isn't clipped
+    marginVertical: 20,  // Add margin to prevent viewport clipping
   },
   heroIcon: {
-    marginBottom: 20,
+    marginBottom: 24,  // Proper spacing to headline
   },
   heroTitle: {
     fontSize: 28,
@@ -712,113 +658,42 @@ const styles = {
     fontSize: 16,
     color: '#555555',  // Medium gray for readability
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 40,  // Increased spacing to buttons (no social proof in between)
     lineHeight: 24,
     fontWeight: '500',  // Medium weight for better hierarchy
   },
-  socialProofContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    marginBottom: 8,
-    gap: 10,
-  },
-  socialProofText: {
-    fontSize: 14,
-    color: '#065f46',
-    fontWeight: '600',
-  },
-  socialProofNumber: {
-    fontSize: 18,
-    color: '#047857',
-    fontWeight: '800',
-  },
   ctaButtonContainer: {
     display: 'flex',
-    flexDirection: screenWidth < 600 ? 'column' : 'row',
-    gap: 12,
+    flexDirection: 'column',  // Always stack vertically for 3 buttons
+    gap: 14,  // Proper spacing between buttons
     justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    marginTop: 32,
-    marginBottom: 32,
+    marginTop: 0,
+    marginBottom: 0,
     width: '100%',
   },
-  primaryButton: {
-    // Base button styles - Enhanced for primary action
+  ctaButton: {
+    // UNIFIED BUTTON STYLE - All buttons identical
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 240,
-    maxWidth: 240,
-    height: 58,  // Slightly taller for more prominence
-    // Unified color scheme
-    backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.3)',  // Stronger shadow
+    width: screenWidth < 600 ? '100%' : 260,
+    maxWidth: 260,
+    height: 56,
+    backgroundColor: '#B15740',  // Brown Rust - unified color for all buttons
+    shadowColor: 'rgba(177, 87, 64, 0.3)',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 8,
   },
-  secondaryButton: {
-    // Base button styles
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 240,
-    maxWidth: 240,
-    height: 56,
-    // Same color as primary for unified appearance
-    backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.2)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 14,
-    elevation: 7,
-  },
-  primaryButtonText: {
+  ctaButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.3,
-  },
-  secondaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  trustSignalsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  trustSignal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  trustSignalText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  trustSignalDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: '#d1d5db',
   },
   // Recent Content Section Styles
   recentContentSection: {
