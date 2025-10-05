@@ -259,14 +259,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
               </Text>
 
-              {/* Social Proof */}
-              <View style={styles.socialProofContainer}>
-                <CheckCircle size={18} color="#10b981" />
-                <Text style={styles.socialProofText}>
-                  <Text style={styles.socialProofNumber}>94%</Text> Erfolgsquote bei unseren Nutzern
-                </Text>
-              </View>
-
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
                   style={styles.primaryButton}
@@ -283,24 +275,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 >
                   <Text style={styles.secondaryButtonText}>Wie es funktioniert</Text>
                 </TouchableOpacity>
-              </View>
-
-              {/* Trust Signals */}
-              <View style={styles.trustSignalsContainer}>
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>14 Tage kostenlos</Text>
-                </View>
-                <View style={styles.trustSignalDivider} />
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>Keine Kreditkarte</Text>
-                </View>
-                <View style={styles.trustSignalDivider} />
-                <View style={styles.trustSignal}>
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text style={styles.trustSignalText}>Jederzeit kündbar</Text>
-                </View>
               </View>
             </LinearGradient>
 
@@ -716,30 +690,9 @@ const styles = {
     fontSize: 16,
     color: '#555555',  // Medium gray for readability
     textAlign: 'center',
-    marginBottom: 24,  // Proper spacing to social proof
+    marginBottom: 40,  // Increased spacing to buttons (no social proof in between)
     lineHeight: 24,
     fontWeight: '500',  // Medium weight for better hierarchy
-  },
-  socialProofContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',  // Remove yellow/green background
-    borderRadius: 0,  // Remove border radius
-    paddingVertical: 0,  // Remove padding
-    paddingHorizontal: 0,
-    marginBottom: 32,  // Proper spacing to buttons
-    gap: 10,
-  },
-  socialProofText: {
-    fontSize: 14,
-    color: '#065f46',
-    fontWeight: '600',
-  },
-  socialProofNumber: {
-    fontSize: 18,
-    color: '#047857',
-    fontWeight: '800',
   },
   ctaButtonContainer: {
     display: 'flex',
@@ -748,8 +701,8 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginTop: 0,  // Remove top margin (spacing handled by socialProofContainer)
-    marginBottom: 24,  // Proper spacing to trust signals
+    marginTop: 0,
+    marginBottom: 0,  // No trust signals below, so no bottom margin needed
     width: '100%',
   },
   primaryButton: {
@@ -799,32 +752,6 @@ const styles = {
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.3,
-  },
-  trustSignalsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 0,  // Remove top margin (spacing handled by ctaButtonContainer)
-    paddingHorizontal: 0,  // Remove horizontal padding
-    marginBottom: 0,  // No extra bottom margin needed
-  },
-  trustSignal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'transparent',  // Ensure no background
-  },
-  trustSignalText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  trustSignalDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: '#d1d5db',
   },
   // Recent Content Section Styles
   recentContentSection: {
