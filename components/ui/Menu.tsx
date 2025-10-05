@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, HelpCircle, Bell, Shield, Bug, Bookmark } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -58,6 +58,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   const submenuItems = [
     { label: 'Hilfe & Support', route: '/help' },
+    { label: 'Fehler melden', route: '/feedback' },
     { label: 'AGB', route: '/konto/datenschutz-agb' },
     { label: 'Haftung', route: '/haftung' },
     { label: 'Datenschutz', route: '/konto/datenschutz-agb' },
@@ -194,14 +195,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               <Text style={dynamicStyles.menuItemText}>Bookmarks</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={dynamicStyles.menuItem}
-              onPress={() => handleMenuItemPress('/help')}
-            >
-              <HelpCircle size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Hilfe & Support</Text>
-            </TouchableOpacity>
-
             {user?.role === 'admin' && (
               <TouchableOpacity
                 style={dynamicStyles.menuItem}
@@ -211,14 +204,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 <Text style={dynamicStyles.menuItemText}>Admin Panel</Text>
               </TouchableOpacity>
             )}
-
-            <TouchableOpacity
-              style={dynamicStyles.menuItem}
-              onPress={() => handleMenuItemPress('/feedback')}
-            >
-              <Bug size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Fehler melden</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               style={dynamicStyles.menuItem}
