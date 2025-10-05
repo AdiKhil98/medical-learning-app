@@ -267,7 +267,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.ctaButtonText}>Wie es funktioniert</Text>
+                  <Text style={styles.ctaButtonText}>Über KP Med</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
