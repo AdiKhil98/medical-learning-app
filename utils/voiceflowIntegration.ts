@@ -305,8 +305,8 @@ export class VoiceflowController {
 // Helper function to create controller for KP simulation
 export function createKPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '677a50ffa4a0a1ba13d37e92',
-    versionID: '677a50ffa4a0a1ba13d37e93',
+    projectID: '68d177a569e8e7269d71b369',
+    versionID: '68d177a569e8e7269d71b36a',
     url: 'https://general-runtime.voiceflow.com'
   });
 }
@@ -314,8 +314,8 @@ export function createKPController(): VoiceflowController {
 // Helper function to create controller for FSP simulation
 export function createFSPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68c3061286edc166c7409034',
-    versionID: '68c3061286edc166c7409035',
+    projectID: '68d177c4ea66bfff40f5c5b9',
+    versionID: '68d177c4ea66bfff40f5c5ba',
     url: 'https://general-runtime.voiceflow.com',
     voice: {
       url: 'https://runtime-api.voiceflow.com'
