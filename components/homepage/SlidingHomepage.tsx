@@ -676,15 +676,17 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    paddingVertical: 20,  // Add vertical padding to prevent clipping
   },
   heroCard: {
     borderRadius: 16,  // Modern corner radius
-    padding: 32,
-    paddingBottom: 40,  // Extra bottom padding to ensure trust signals are fully visible
+    padding: 40,  // Consistent padding top/bottom and left/right
+    paddingTop: 40,
+    paddingBottom: 40,
     alignItems: 'center',
     width: screenWidth < 600 ? '90%' : '100%',  // 90% on mobile for better viewport usage
-    maxWidth: 420,
-    minHeight: 580,  // Increased height for new elements
+    maxWidth: 480,  // Increased max width
+    minHeight: 'auto',  // Auto height to fit content
     borderWidth: 1,
     borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
     shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
@@ -693,9 +695,11 @@ const styles = {
     shadowRadius: 20,
     elevation: 12,
     backgroundColor: 'transparent',  // Ensure gradient shows through
+    overflow: 'visible',  // Ensure content isn't clipped
+    marginVertical: 20,  // Add margin to prevent viewport clipping
   },
   heroIcon: {
-    marginBottom: 20,
+    marginBottom: 24,  // Proper spacing to headline
   },
   heroTitle: {
     fontSize: 28,
@@ -712,7 +716,7 @@ const styles = {
     fontSize: 16,
     color: '#555555',  // Medium gray for readability
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,  // Proper spacing to social proof
     lineHeight: 24,
     fontWeight: '500',  // Medium weight for better hierarchy
   },
@@ -720,11 +724,11 @@ const styles = {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    marginBottom: 8,
+    backgroundColor: 'transparent',  // Remove yellow/green background
+    borderRadius: 0,  // Remove border radius
+    paddingVertical: 0,  // Remove padding
+    paddingHorizontal: 0,
+    marginBottom: 32,  // Proper spacing to buttons
     gap: 10,
   },
   socialProofText: {
@@ -744,8 +748,8 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginTop: 32,
-    marginBottom: 32,
+    marginTop: 0,  // Remove top margin (spacing handled by socialProofContainer)
+    marginBottom: 24,  // Proper spacing to trust signals
     width: '100%',
   },
   primaryButton: {
@@ -802,13 +806,15 @@ const styles = {
     justifyContent: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 16,
+    marginTop: 0,  // Remove top margin (spacing handled by ctaButtonContainer)
+    paddingHorizontal: 0,  // Remove horizontal padding
+    marginBottom: 0,  // No extra bottom margin needed
   },
   trustSignal: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: 'transparent',  // Ensure no background
   },
   trustSignalText: {
     fontSize: 12,
