@@ -262,18 +262,26 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               <View style={styles.ctaButtonContainer}>
                 <TouchableOpacity
                   style={styles.primaryButton}
-                  onPress={() => router.push('/subscription')}
+                  onPress={() => router.push('/(tabs)/simulation')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.primaryButtonText}>Kostenlos testen</Text>
+                  <Text style={styles.primaryButtonText}>Simulation testen</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.secondaryButton}
+                  onPress={() => router.push('/subscription')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.secondaryButtonText}>Kostenlos testen</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.tertiaryButton}
                   onPress={() => setShowAboutUs(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.secondaryButtonText}>Wie es funktioniert</Text>
+                  <Text style={styles.tertiaryButtonText}>Wie es funktioniert</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -696,48 +704,61 @@ const styles = {
   },
   ctaButtonContainer: {
     display: 'flex',
-    flexDirection: screenWidth < 600 ? 'column' : 'row',
-    gap: 12,
+    flexDirection: 'column',  // Always stack vertically for 3 buttons
+    gap: 14,  // Proper spacing between buttons
     justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
     marginTop: 0,
-    marginBottom: 0,  // No trust signals below, so no bottom margin needed
+    marginBottom: 0,
     width: '100%',
   },
   primaryButton: {
-    // Base button styles - Enhanced for primary action
+    // TOP BUTTON - Most prominent (darkest Brown Rust)
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 240,
-    maxWidth: 240,
-    height: 58,  // Slightly taller for more prominence
-    // Unified color scheme
-    backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.3)',  // Stronger shadow
+    width: screenWidth < 600 ? '100%' : 260,
+    maxWidth: 260,
+    height: 56,
+    backgroundColor: '#B15740',  // Brown Rust - darkest, most prominent
+    shadowColor: 'rgba(177, 87, 64, 0.35)',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 8,
   },
   secondaryButton: {
-    // Base button styles
+    // MIDDLE BUTTON - Medium prominence (Old Rose)
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 240,
-    maxWidth: 240,
+    width: screenWidth < 600 ? '100%' : 260,
+    maxWidth: 260,
     height: 56,
-    // Same color as primary for unified appearance
-    backgroundColor: '#B15740',
-    shadowColor: 'rgba(177, 87, 64, 0.2)',
+    backgroundColor: '#B87E70',  // Old Rose - medium tone
+    shadowColor: 'rgba(184, 126, 112, 0.25)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 14,
-    elevation: 7,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  tertiaryButton: {
+    // BOTTOM BUTTON - Least prominent (lightest coral)
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28,
+    width: screenWidth < 600 ? '100%' : 260,
+    maxWidth: 260,
+    height: 56,
+    backgroundColor: '#C99487',  // Lightest coral
+    shadowColor: 'rgba(201, 148, 135, 0.2)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   primaryButtonText: {
     color: '#FFFFFF',
@@ -747,6 +768,13 @@ const styles = {
     letterSpacing: 0.3,
   },
   secondaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  tertiaryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
