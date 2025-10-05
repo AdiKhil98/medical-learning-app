@@ -19,26 +19,30 @@ export default function ImpressumScreen() {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
+      paddingTop: 60,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       backgroundColor: isDarkMode ? 'rgba(31,41,55,0.9)' : 'rgba(255,255,255,0.9)',
     },
-    backBtn: { 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      marginRight: 16 
+    backBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      backgroundColor: 'rgba(249, 246, 242, 0.95)',
+      shadowColor: 'rgba(181,87,64,0.3)',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
     backTxt: {
-      marginLeft: 4,
+      marginLeft: 8,
       fontSize: 16,
-      color: colors.primary,
+      color: '#B87E70',
       fontFamily: 'Inter-Medium',
-    },
-    title: {
-      flex: 1,
-      fontFamily: 'Inter-Bold',
-      fontSize: 20,
-      color: colors.text,
+      fontWeight: '600',
     },
     content: { 
       flex: 1, 
@@ -111,7 +115,6 @@ export default function ImpressumScreen() {
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backTxt}>Zurück</Text>
         </TouchableOpacity>
-        <Text style={dynamicStyles.title}>Impressum</Text>
       </View>
 
       <ScrollView style={dynamicStyles.content} showsVerticalScrollIndicator={false}>
