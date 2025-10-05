@@ -221,20 +221,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </TouchableOpacity>
       )}
 
-      {/* Section Indicators */}
-      <View style={styles.sectionIndicators}>
-        {sections.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.indicator,
-              currentSection === index && styles.activeIndicator
-            ]}
-            onPress={() => scrollToSection(index)}
-          />
-        ))}
-      </View>
-
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -572,32 +558,6 @@ const styles = {
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  sectionIndicators: {
-    position: 'absolute' as const,
-    bottom: 20,  // Moved lower to prevent overlap with buttons
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(184, 126, 112, 0.4)',  // Reduced opacity for inactive dots
-    marginHorizontal: 4,
-  },
-  activeIndicator: {
-    backgroundColor: '#B15740',  // Brown Rust for active state - stronger brand presence
-    width: 24,
-    shadowColor: '#B15740',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   sectionTitle: {
     fontSize: 32,
