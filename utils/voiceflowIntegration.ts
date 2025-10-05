@@ -89,10 +89,6 @@ export class VoiceflowController {
         versionID: 'production',
         voice: {
           url: "https://runtime-api.voiceflow.com"
-        },
-        assistant: {
-          title: 'Medical Simulation',
-          description: 'Voice simulation widget'
         }
       });
 
@@ -307,7 +303,10 @@ export function createKPController(): VoiceflowController {
   return new VoiceflowController({
     projectID: '68d177a569e8e7269d71b369',
     versionID: '68d177a569e8e7269d71b36a',
-    url: 'https://general-runtime.voiceflow.com'
+    url: 'https://general-runtime.voiceflow.com',
+    voice: {
+      url: 'https://runtime-api.voiceflow.com'
+    }
   });
 }
 
