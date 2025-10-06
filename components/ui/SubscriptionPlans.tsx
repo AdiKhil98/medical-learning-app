@@ -52,7 +52,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       badge: '3',
       ctaText: 'Kostenlos starten',
       icon: Star,
-      gradient: ['#9ca3af', '#6b7280'],
+      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient
       keyFeatures: [
         '3 Medizinische Simulationen',
         'Grundlegende Funktionen',
@@ -107,10 +107,10 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       period: 'Monat',
       simulations: 'Unbegrenzt',
       badge: '∞',
-      ctaText: 'Jetzt upgraden',
+      ctaText: 'Jetzt starten',  // Changed from "upgraden" to "starten"
       savings: 'Sparen Sie €540 jährlich',
       icon: Infinity,
-      gradient: ['#7C3AED', '#5B21B6'],
+      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient (was purple)
       keyFeatures: [
         'Unbegrenzte Simulationen',
         'VIP Support & Account Manager',
@@ -241,7 +241,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     },
     cardsRow: {
       flexDirection: isMobile ? 'column' : 'row',
-      gap: isMobile ? 20 : 16,
+      gap: isMobile ? 24 : 16,  // Increased mobile gap from 20px to 24px
       justifyContent: 'center',
       alignItems: 'stretch',
       width: '100%',
@@ -250,7 +250,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     planCard: {
       backgroundColor: '#F9F6F2',
       borderRadius: 20,
-      padding: 24,
+      padding: isMobile ? 20 : 24,  // Mobile: 20px, Desktop: 24px
       flex: isMobile ? 0 : 1,
       maxWidth: isMobile ? 380 : 360,
       width: '100%',
@@ -262,6 +262,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       borderWidth: 2,
       borderColor: 'transparent',
       position: 'relative',
+      minHeight: 'auto',  // Let content determine height
     },
     recommendedCard: {
       borderColor: '#B15740',
@@ -334,10 +335,10 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       alignItems: 'baseline',
     },
     planPrice: {
-      fontSize: isMobile ? 52 : 56,
+      fontSize: isMobile ? 42 : 56,  // Reduced from 52 to 42 for better mobile fit
       fontWeight: '900',
       color: '#B15740',
-      lineHeight: isMobile ? 56 : 60,
+      lineHeight: isMobile ? 48 : 60,
     },
     planPeriod: {
       fontSize: 16,
@@ -419,7 +420,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     },
     selectButton: {
       borderRadius: 12,
-      paddingVertical: 16,
+      paddingVertical: isMobile ? 14 : 16,  // Mobile: 14px, Desktop: 16px
       alignItems: 'center',
       justifyContent: 'center',
       shadowColor: 'rgba(177, 87, 64, 0.3)',
@@ -427,19 +428,28 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       shadowOpacity: 1,
       shadowRadius: 8,
       elevation: 6,
-      marginBottom: 12,
+      marginBottom: 8,  // Reduced from 12 to 8 for cancel text
+      marginHorizontal: isMobile ? 0 : 0,  // Full width on mobile
     },
     selectButtonGradient: {
       width: '100%',
-      paddingVertical: 16,
+      paddingVertical: isMobile ? 14 : 16,  // Mobile: 52px total (14*2 + text), Desktop: 56px
       borderRadius: 12,
       alignItems: 'center',
+      minHeight: isMobile ? 52 : 56,  // Ensure minimum tap target
     },
     selectButtonText: {
-      fontSize: 16,
+      fontSize: isMobile ? 15 : 16,  // Mobile: 15px, Desktop: 16px
       fontWeight: '700',
       color: '#ffffff',
       letterSpacing: 0.3,
+    },
+    cancelText: {
+      fontSize: 12,
+      color: '#6b7280',
+      textAlign: 'center',
+      fontWeight: '500',
+      marginTop: 4,
     },
     trustSignalText: {
       fontSize: 12,
