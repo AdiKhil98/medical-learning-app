@@ -28,10 +28,21 @@ export default function KPSimulationScreen() {
     const initializeVoiceflow = async () => {
       if (Platform.OS === 'web') {
         console.log('🏥 KP: Initializing medical simulation');
-        
+
+        // Check if this is a fresh page load or a return from navigation
+        const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+        const isPageReload = navigationEntries.length > 0 && navigationEntries[0].type === 'reload';
+
+        if (!isPageReload) {
+          // Auto-refresh on navigation to ensure clean state
+          console.log('🔄 KP: Navigated to simulation page - refreshing for clean state');
+          window.location.reload();
+          return;
+        }
+
         // Stop global cleanup to allow widget
         stopGlobalVoiceflowCleanup();
-        
+
         // Create and load controller
         const controller = createKPController();
         voiceflowController.current = controller;
@@ -350,16 +361,16 @@ export default function KPSimulationScreen() {
       }
     }
     
-    // Reset simulation state to allow restart
+    // Reset simulation state
     resetSimulationState();
-    
-    // After a short delay, reinitialize the conversation monitoring for restart
+
+    // Auto-refresh page after simulation ends for clean state
+    console.log('🔄 KP: Simulation ended - refreshing page for clean state');
     setTimeout(() => {
-      if (voiceflowController.current) {
-        console.log('🔄 KP: Reinitializing conversation monitoring after stop');
-        setupConversationMonitoring();
+      if (Platform.OS === 'web') {
+        window.location.reload();
       }
-    }, 1000);
+    }, 2000); // 2 second delay to allow any final operations
   };
 
   // Cleanup when component unmounts or user navigates away
@@ -438,27 +449,49 @@ export default function KPSimulationScreen() {
 
     // Enhanced visibility change handler for immediate widget cleanup
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' || document.hidden) {
-        console.log('🔄 KP: Page becoming hidden - immediate widget cleanup');
-        performImmediateCleanup();
+      if (timerActive && (document.visibilityState === 'hidden' || document.hidden)) {
+        console.log('🚫 KP: Attempted to leave page during simulation - BLOCKED');
+        // For mobile apps, prevent backgrounding during simulation
+        if (Platform.OS !== 'web') {
+          Alert.alert(
+            'Simulation läuft',
+            'Sie können die App nicht verlassen, während die Simulation läuft.',
+            [{ text: 'OK' }]
+          );
+        }
+        return false;
       }
     };
 
-    // Handle route changes (for single-page apps)
-    const handlePopState = () => {
-      console.log('🔄 KP: Navigation detected - immediate widget cleanup');
-      performImmediateCleanup();
+    // Handle route changes - BLOCK during active simulation
+    const handlePopState = (e: PopStateEvent) => {
+      if (timerActive) {
+        console.log('🚫 KP: Navigation blocked - simulation in progress');
+        e.preventDefault();
+        // Push the current state back to prevent navigation
+        window.history.pushState(null, '', window.location.href);
+        Alert.alert(
+          'Simulation läuft',
+          'Sie können die Seite nicht verlassen, während die Simulation läuft.',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
     };
 
     if (Platform.OS === 'web') {
       if (timerActive) {
+        // Block all navigation during simulation
         window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Add history state to block back button
+        window.history.pushState(null, '', window.location.href);
       }
-      
-      // Add listeners for immediate cleanup on navigation
+
+      // Add listeners for navigation blocking
       document.addEventListener('visibilitychange', handleVisibilityChange);
       window.addEventListener('popstate', handlePopState);
-      
+
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
