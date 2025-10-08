@@ -35,11 +35,12 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // Lemon Squeezy checkout URLs for paid plans
+    // Lemon Squeezy checkout URLs for paid plans with pre-filled email
+    const userEmail = encodeURIComponent(user?.email || '');
     const checkoutUrls: Record<string, string> = {
-      'basic': 'https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948',
-      'professional': 'https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934',
-      'unlimited': 'https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947'
+      'basic': `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
+      'professional': `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
+      'unlimited': `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`
     };
 
     if (planId === 'free') {
