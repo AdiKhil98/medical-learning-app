@@ -190,8 +190,8 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
       </LinearGradient>
 
-      {/* Navigation Arrows - Visually Lighter */}
-      {currentSection > 0 && (
+      {/* Navigation Arrows - Hidden on mobile for cleaner interface */}
+      {screenWidth >= 600 && currentSection > 0 && (
         <TouchableOpacity
           style={[styles.navigationArrow, styles.leftArrow]}
           onPress={scrollToPrevious}
@@ -206,7 +206,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </TouchableOpacity>
       )}
 
-      {currentSection < sections.length - 1 && (
+      {screenWidth >= 600 && currentSection < sections.length - 1 && (
         <TouchableOpacity
           style={[styles.navigationArrow, styles.rightArrow]}
           onPress={scrollToNext}
@@ -238,7 +238,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               style={styles.heroCard}
             >
               <View style={styles.heroIcon}>
-                <BookOpen size={64} color="#B87E70" />  {/* Old Rose for brand consistency */}
+                <BookOpen size={screenWidth < 600 ? 48 : 64} color="#B87E70" />  {/* Responsive icon size */}
               </View>
               <Text style={styles.heroTitle}>Bestehen Sie Ihre KP & FSP Prüfung beim ersten Versuch</Text>
               <Text style={styles.heroSubtitle}>
@@ -622,9 +622,9 @@ const styles = {
   },
   heroCard: {
     borderRadius: 16,  // Modern corner radius
-    padding: 40,  // Consistent padding top/bottom and left/right
-    paddingTop: 40,
-    paddingBottom: 40,
+    padding: screenWidth < 600 ? 24 : 40,  // Mobile: 24px, Desktop: 40px
+    paddingTop: screenWidth < 600 ? 32 : 40,  // Extra top padding on mobile
+    paddingBottom: screenWidth < 600 ? 32 : 40,
     alignItems: 'center',
     width: screenWidth < 600 ? '90%' : '100%',  // 90% on mobile for better viewport usage
     maxWidth: 480,  // Increased max width
@@ -641,31 +641,31 @@ const styles = {
     marginVertical: 20,  // Add margin to prevent viewport clipping
   },
   heroIcon: {
-    marginBottom: 24,  // Proper spacing to headline
+    marginBottom: screenWidth < 600 ? 20 : 24,  // Slightly less spacing on mobile
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: screenWidth < 600 ? 22 : 28,  // Mobile: 22px, Desktop: 28px
     fontWeight: 'bold',
     color: '#A04A35',  // Darker shade for more authority
     textAlign: 'center',
     marginBottom: 16,
-    lineHeight: 36,
+    lineHeight: screenWidth < 600 ? 28 : 36,  // Mobile: 1.27, Desktop: 1.28 line-height ratio
     textShadowColor: 'rgba(0, 0, 0, 0.1)',  // Subtle shadow for contrast
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   heroSubtitle: {
-    fontSize: 16,
+    fontSize: screenWidth < 600 ? 14 : 16,  // Mobile: 14px, Desktop: 16px
     color: '#555555',  // Medium gray for readability
     textAlign: 'center',
-    marginBottom: 40,  // Increased spacing to buttons (no social proof in between)
-    lineHeight: 24,
+    marginBottom: screenWidth < 600 ? 32 : 40,  // Mobile: 32px, Desktop: 40px
+    lineHeight: screenWidth < 600 ? 21 : 24,  // Mobile: 1.5, Desktop: 1.5 line-height ratio
     fontWeight: '500',  // Medium weight for better hierarchy
   },
   ctaButtonContainer: {
     display: 'flex',
     flexDirection: 'column',  // Always stack vertically for 3 buttons
-    gap: 14,  // Proper spacing between buttons
+    gap: screenWidth < 600 ? 12 : 14,  // Mobile: 12px, Desktop: 14px spacing
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 0,
@@ -673,14 +673,14 @@ const styles = {
     width: '100%',
   },
   ctaButton: {
-    // UNIFIED BUTTON STYLE - All buttons identical
+    // UNIFIED BUTTON STYLE - Responsive for mobile
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 28,
     width: screenWidth < 600 ? '100%' : 260,
-    maxWidth: 260,
-    height: 56,
+    maxWidth: screenWidth < 600 ? 280 : 260,  // Mobile: 280px max, Desktop: 260px max
+    height: screenWidth < 600 ? 52 : 56,  // Mobile: 52px, Desktop: 56px
     backgroundColor: '#B15740',  // Brown Rust - unified color for all buttons
     shadowColor: 'rgba(177, 87, 64, 0.3)',
     shadowOffset: { width: 0, height: 6 },
@@ -690,7 +690,7 @@ const styles = {
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: screenWidth < 600 ? 15 : 16,  // Mobile: 15px, Desktop: 16px
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.3,
