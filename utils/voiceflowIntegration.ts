@@ -313,8 +313,8 @@ export function createKPController(): VoiceflowController {
 // Helper function to create controller for FSP simulation
 export function createFSPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68d177c4ea66bfff40f5c5b9',
-    versionID: '68d177c4ea66bfff40f5c5ba',
+    projectID: '68e6600ae20ffc6d99af289f',  // Updated FSP Project ID
+    versionID: '68e6600ae20ffc6d99af28a0',  // Updated FSP Version ID
     url: 'https://general-runtime.voiceflow.com',
     voice: {
       url: 'https://runtime-api.voiceflow.com'
