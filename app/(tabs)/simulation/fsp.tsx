@@ -165,14 +165,14 @@ export default function FSPSimulationScreen() {
       // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('fsp');
       if (!canStart.allowed) {
-        Alert.alert('Simulation Limit', canStart.message || 'Cannot start simulation');
+        Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
         return;
       }
 
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('fsp');
       if (!result.success) {
-        Alert.alert('Error', result.error || 'Failed to start simulation tracking');
+        Alert.alert('Fehler', result.error || 'Simulation-Tracking konnte nicht gestartet werden');
         return;
       }
 
@@ -393,6 +393,29 @@ export default function FSPSimulationScreen() {
       console.log('✅ FSP: Cleanup completed');
     };
   }, []);
+
+  // Check simulation access on page load
+  useEffect(() => {
+    if (user && !canUseSimulation) {
+      const info = getSubscriptionInfo();
+      Alert.alert(
+        'Simulationslimit erreicht',
+        subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit erreicht.',
+        [
+          {
+            text: info?.canUpgrade ? 'Plan upgraden' : 'OK',
+            onPress: () => {
+              if (info?.canUpgrade) {
+                router.push('/subscription');
+              } else {
+                router.back();
+              }
+            }
+          }
+        ]
+      );
+    }
+  }, [user, canUseSimulation, subscriptionStatus, getSubscriptionInfo]);
 
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {

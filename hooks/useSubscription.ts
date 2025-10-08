@@ -51,14 +51,14 @@ export const useSubscription = (userId: string | undefined) => {
         // Free tier
         canUse = user.free_simulations_used < 3;
         message = canUse
-          ? `${3 - user.free_simulations_used} free simulations remaining`
-          : 'Free simulations used up. Please upgrade.';
+          ? `${3 - user.free_simulations_used} kostenlose Simulationen verbleibend`
+          : 'Kostenlose Simulationen aufgebraucht. Bitte upgraden.';
       } else if (user.subscription_tier !== 'unlimited') {
         // Paid tier with limits
         canUse = user.simulations_used_this_month < user.simulation_limit;
         message = canUse
-          ? `${user.simulation_limit - user.simulations_used_this_month} simulations remaining this month`
-          : 'Monthly simulation limit reached.';
+          ? `${user.simulation_limit - user.simulations_used_this_month} Simulationen verbleibend in diesem Monat`
+          : 'Monatliches Simulationslimit erreicht.';
       }
 
       const status: SubscriptionStatus = {

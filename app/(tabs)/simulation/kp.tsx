@@ -164,24 +164,6 @@ export default function KPSimulationScreen() {
       return; // Already running
     }
 
-    // Check subscription access before starting
-    console.log('🔐 Checking subscription access...');
-    if (!canUseSimulation) {
-      const info = getSubscriptionInfo();
-      Alert.alert(
-        'Simulation Limit Reached',
-        subscriptionStatus?.message || 'You have reached your simulation limit.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: info?.canUpgrade ? 'Upgrade Plan' : 'OK',
-            onPress: info?.canUpgrade ? () => router.push('/subscription') : undefined
-          }
-        ]
-      );
-      return;
-    }
-
     console.log('⏰ KP: Starting 20-minute simulation timer');
     
     try {
@@ -193,7 +175,7 @@ export default function KPSimulationScreen() {
       
       if (!canStart.allowed) {
         console.error('❌ DEBUG: Cannot start simulation, showing alert');
-        Alert.alert('Simulation Limit', canStart.message || 'Cannot start simulation');
+        Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
         return;
       }
 
@@ -205,7 +187,7 @@ export default function KPSimulationScreen() {
       
       if (!result.success) {
         console.error('❌ DEBUG: Failed to start simulation, showing alert');
-        Alert.alert('Error', result.error || 'Failed to start simulation tracking');
+        Alert.alert('Fehler', result.error || 'Simulation-Tracking konnte nicht gestartet werden');
         return;
       }
 
@@ -420,6 +402,29 @@ export default function KPSimulationScreen() {
       console.log('✅ KP: Cleanup completed');
     };
   }, []);
+
+  // Check simulation access on page load
+  useEffect(() => {
+    if (user && !canUseSimulation) {
+      const info = getSubscriptionInfo();
+      Alert.alert(
+        'Simulationslimit erreicht',
+        subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit erreicht.',
+        [
+          {
+            text: info?.canUpgrade ? 'Plan upgraden' : 'OK',
+            onPress: () => {
+              if (info?.canUpgrade) {
+                router.push('/subscription');
+              } else {
+                router.back();
+              }
+            }
+          }
+        ]
+      );
+    }
+  }, [user, canUseSimulation, subscriptionStatus, getSubscriptionInfo]);
 
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {

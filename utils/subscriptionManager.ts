@@ -73,8 +73,8 @@ export class SubscriptionManager {
           simulationLimit: freeLimit,
           subscriptionTier: 'free',
           message: canUse
-            ? `${freeLimit - user.free_simulations_used} free simulations remaining`
-            : 'Free simulations used up. Please upgrade to continue.'
+            ? `${freeLimit - user.free_simulations_used} kostenlose Simulationen verbleibend`
+            : 'Kostenlose Simulationen aufgebraucht. Bitte upgraden um fortzufahren.'
         };
       }
 
@@ -99,8 +99,8 @@ export class SubscriptionManager {
         simulationLimit: user.simulation_limit,
         subscriptionTier: user.subscription_tier,
         message: canUse
-          ? `${remaining} simulations remaining this month`
-          : 'Monthly simulation limit reached. Upgrade or wait for next period.'
+          ? `${remaining} Simulationen verbleibend in diesem Monat`
+          : 'Monatliches Simulationslimit erreicht. Upgraden oder auf nächste Periode warten.'
       };
 
     } catch (error) {
