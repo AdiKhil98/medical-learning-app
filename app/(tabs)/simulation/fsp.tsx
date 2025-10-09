@@ -197,67 +197,68 @@ export default function FSPSimulationScreen() {
     }
 
     console.log('⏰ FSP: Starting 20-minute simulation timer');
-    
+
+    // CRITICAL FIX: Activate timer BEFORE async database calls
+    // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
+    setTimerActive(true);
+    timerActiveRef.current = true;
+    setTimeRemaining(20 * 60);
+    previousTimeRef.current = 20 * 60;
+
+    // Calculate absolute end time for the timer
+    const startTime = Date.now();
+    const duration = 20 * 60 * 1000;
+    const endTime = startTime + duration;
+    setTimerEndTime(endTime);
+    timerEndTimeRef.current = endTime;
+
+    console.log('✅ FSP: Timer activated BEFORE database calls');
+
     try {
       // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('fsp');
       if (!canStart.allowed) {
-        Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
-        return;
+        console.warn('⚠️ FSP: User cannot start simulation, but timer continues:', canStart.message);
+        // Don't return - let timer continue for UX
       }
 
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('fsp');
-      if (!result.success) {
-        Alert.alert('Fehler', result.error || 'Simulation-Tracking konnte nicht gestartet werden');
-        return;
-      }
+      if (result.success) {
+        // Success case: save session token and setup heartbeat
+        setSessionToken(result.sessionToken || null);
+        setUsageMarked(false);
 
-      setSessionToken(result.sessionToken || null);
-      setUsageMarked(false);
-
-      // Calculate absolute end time for the timer
-      const startTime = Date.now();
-      const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
-      const calculatedEndTime = startTime + duration;
-      setTimerEndTime(calculatedEndTime);
-
-      // Save simulation state to localStorage
-      if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem('sim_start_time_fsp', startTime.toString());
-          localStorage.setItem('sim_end_time_fsp', calculatedEndTime.toString());
-          localStorage.setItem('sim_session_token_fsp', result.sessionToken);
-          localStorage.setItem('sim_duration_ms_fsp', duration.toString());
-          if (user?.id) {
-            localStorage.setItem('sim_user_id_fsp', user.id);
+        // Save simulation state to localStorage
+        if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem('sim_start_time_fsp', startTime.toString());
+            localStorage.setItem('sim_end_time_fsp', endTime.toString());
+            localStorage.setItem('sim_session_token_fsp', result.sessionToken);
+            localStorage.setItem('sim_duration_ms_fsp', duration.toString());
+            if (user?.id) {
+              localStorage.setItem('sim_user_id_fsp', user.id);
+            }
+            console.log('💾 FSP: Saved simulation state to localStorage');
+          } catch (error) {
+            console.error('❌ FSP: Error saving to localStorage:', error);
           }
-          console.log('💾 FSP: Saved simulation state to localStorage');
-        } catch (error) {
-          console.error('❌ FSP: Error saving to localStorage:', error);
         }
-      }
 
-      // Start heartbeat monitoring for security
-      if (result.sessionToken) {
-        startHeartbeat(result.sessionToken);
+        // Start heartbeat monitoring for security
+        if (result.sessionToken) {
+          startHeartbeat(result.sessionToken);
+        }
+      } else {
+        // Failure case: log error but continue timer
+        console.error('❌ FSP: Failed to start simulation tracking:', result.error);
+        console.log('⏰ FSP: Timer continues despite DB error for better UX');
       }
 
     } catch (error) {
-      console.error('❌ FSP: Failed to start simulation tracking:', error);
-      // Continue with timer anyway for UX, but log the error
+      console.error('❌ FSP: Exception during simulation tracking:', error);
+      console.log('⏰ FSP: Timer continues despite exception for better UX');
     }
-
-    setTimerActive(true);
-    timerActiveRef.current = true; // Update ref for closures
-    setTimeRemaining(20 * 60); // Reset to 20 minutes
-    previousTimeRef.current = 20 * 60; // Initialize ref
-
-    // Calculate end time (in case the try block failed)
-    const startTime = Date.now();
-    const duration = 20 * 60 * 1000;
-    const endTime = startTime + duration;
-    timerEndTimeRef.current = endTime;
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
     // Use 1000ms interval for mobile compatibility
@@ -377,9 +378,15 @@ export default function FSPSimulationScreen() {
   // Start heartbeat monitoring for session security
   const startHeartbeat = (sessionToken: string) => {
     console.log('💓 FSP: Starting heartbeat monitoring');
-    
+
     heartbeatInterval.current = setInterval(async () => {
       try {
+        // Check if sessionToken is still valid
+        if (!sessionToken) {
+          console.warn('💓 FSP: No session token available for heartbeat');
+          return;
+        }
+
         const result = await simulationTracker.sendHeartbeat(sessionToken);
         if (!result.success) {
           console.warn('💓 FSP: Heartbeat failed:', result.error);

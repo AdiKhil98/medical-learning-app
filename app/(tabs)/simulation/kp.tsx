@@ -198,56 +198,63 @@ export default function KPSimulationScreen() {
     }
 
     console.log('⏰ KP: Starting 20-minute simulation timer');
-    
+
+    // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
+    console.log('🔍 DEBUG: Setting timer active IMMEDIATELY before database calls');
+    setTimerActive(true);
+    timerActiveRef.current = true;
+    setTimeRemaining(20 * 60);
+
+    // Calculate end time upfront
+    const startTime = Date.now();
+    const duration = 20 * 60 * 1000;
+    const endTime = startTime + duration;
+    setTimerEndTime(endTime);
+    timerEndTimeRef.current = endTime;
+    previousTimeRef.current = 20 * 60;
+
     try {
       console.log('🔍 DEBUG: About to check if can start simulation');
-      
+
       // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('kp');
       console.log('🔍 DEBUG: canStart result:', canStart);
-      
+
       if (!canStart.allowed) {
         console.error('❌ DEBUG: Cannot start simulation, showing alert');
         Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
-        return;
+        // Don't return - continue with timer for UX
       }
 
       console.log('🔍 DEBUG: About to start simulation in database');
-      
+
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('kp');
       console.log('🔍 DEBUG: startSimulation result:', result);
-      
-      if (!result.success) {
-        console.error('❌ DEBUG: Failed to start simulation, showing alert');
-        Alert.alert('Fehler', result.error || 'Simulation-Tracking konnte nicht gestartet werden');
-        return;
-      }
 
-      console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
-      setSessionToken(result.sessionToken || null);
-      setUsageMarked(false);
+      if (result.success && result.sessionToken) {
+        console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
+        setSessionToken(result.sessionToken);
+        setUsageMarked(false);
 
-      // Calculate absolute end time for the timer
-      const startTime = Date.now();
-      const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
-      const calculatedEndTime = startTime + duration;
-      setTimerEndTime(calculatedEndTime);
-
-      // Save simulation state to localStorage
-      if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem('sim_start_time_kp', startTime.toString());
-          localStorage.setItem('sim_end_time_kp', calculatedEndTime.toString());
-          localStorage.setItem('sim_session_token_kp', result.sessionToken);
-          localStorage.setItem('sim_duration_ms_kp', duration.toString());
-          if (user?.id) {
-            localStorage.setItem('sim_user_id_kp', user.id);
+        // Save simulation state to localStorage
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem('sim_start_time_kp', startTime.toString());
+            localStorage.setItem('sim_end_time_kp', endTime.toString());
+            localStorage.setItem('sim_session_token_kp', result.sessionToken);
+            localStorage.setItem('sim_duration_ms_kp', duration.toString());
+            if (user?.id) {
+              localStorage.setItem('sim_user_id_kp', user.id);
+            }
+            console.log('💾 KP: Saved simulation state to localStorage');
+          } catch (error) {
+            console.error('❌ KP: Error saving to localStorage:', error);
           }
-          console.log('💾 KP: Saved simulation state to localStorage');
-        } catch (error) {
-          console.error('❌ KP: Error saving to localStorage:', error);
         }
+      } else {
+        console.error('❌ DEBUG: Failed to start simulation tracking:', result.error);
+        // Continue with timer anyway for UX
       }
 
     } catch (error) {
@@ -255,35 +262,22 @@ export default function KPSimulationScreen() {
       // Continue with timer anyway for UX, but log the error
     }
 
-    console.log('🔍 DEBUG: About to set timer active and start interval');
-    setTimerActive(true);
-    timerActiveRef.current = true; // Update ref for closures
-    setTimeRemaining(20 * 60); // Reset to 20 minutes
+    console.log('🔍 DEBUG: Timer already active, now starting heartbeat and interval');
 
-    // Calculate end time (in case the try block failed)
-    const startTime = Date.now();
-    const duration = 20 * 60 * 1000;
-    const endTime = startTime + duration;
-
-    // Start security heartbeat (every 60 seconds)
-    if (sessionToken) {
-      console.log('🔍 DEBUG: Starting security heartbeat');
-      heartbeatInterval.current = setInterval(async () => {
-        try {
-          await simulationTracker.sendHeartbeat(sessionToken);
+    // Start security heartbeat (every 60 seconds) - use closure to get latest sessionToken
+    heartbeatInterval.current = setInterval(async () => {
+      try {
+        const token = sessionToken; // Will be set by database call if successful
+        if (token) {
+          await simulationTracker.sendHeartbeat(token);
           console.log('💓 DEBUG: Heartbeat sent');
-        } catch (error) {
-          console.error('❌ DEBUG: Heartbeat failed:', error);
         }
-      }, 60000); // Every 60 seconds
-    }
+      } catch (error) {
+        console.error('❌ DEBUG: Heartbeat failed:', error);
+      }
+    }, 60000); // Every 60 seconds
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
-    // Reset previous time ref
-    previousTimeRef.current = 20 * 60;
-
-    // Store end time in ref for mobile reliability
-    timerEndTimeRef.current = endTime;
 
     // Use 1000ms interval for better mobile compatibility (less battery drain)
     timerInterval.current = setInterval(() => {
