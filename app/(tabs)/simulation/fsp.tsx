@@ -46,6 +46,10 @@ export default function FSPSimulationScreen() {
   const [checklistItems, setChecklistItems] = React.useState<Array<{id: string, label: string, checked: boolean}>>([]);
   const [allItemsChecked, setAllItemsChecked] = React.useState(false);
 
+  // Early completion state
+  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = React.useState(false);
+  const [earlyCompletionReason, setEarlyCompletionReason] = React.useState('');
+
   // Check for existing simulation on mount
   useEffect(() => {
     initializeChecklist();
@@ -540,6 +544,90 @@ export default function FSPSimulationScreen() {
     resetSimulationState();
   };
 
+  // Early completion functions
+  const initiateEarlyCompletion = () => {
+    console.log('🏁 FSP: User initiated early completion');
+    setShowEarlyCompletionModal(true);
+  };
+
+  const confirmEarlyCompletion = () => {
+    console.log('✅ FSP: User confirmed early completion');
+    setShowEarlyCompletionModal(false);
+
+    // Calculate elapsed time
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+
+    // Execute early completion
+    executeEarlyCompletion(elapsedSeconds);
+  };
+
+  const cancelEarlyCompletion = () => {
+    console.log('↩️ FSP: User cancelled early completion');
+    setShowEarlyCompletionModal(false);
+    setEarlyCompletionReason('');
+  };
+
+  const executeEarlyCompletion = async (elapsedSeconds: number) => {
+    console.log('🏁 FSP: Executing early completion');
+
+    // Set graceful shutdown flag
+    setIsGracefulShutdown(true);
+
+    // Stop timer
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+    }
+
+    // Stop heartbeat
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+    }
+
+    setTimerActive(false);
+
+    // Give Voiceflow 2 seconds to flush any pending messages
+    setTimeout(async () => {
+      // Close Voiceflow conversation
+      if (window.voiceflow?.chat) {
+        try {
+          console.log('🔚 FSP: Closing Voiceflow widget');
+          window.voiceflow.chat.close && window.voiceflow.chat.close();
+          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+        } catch (error) {
+          console.error('❌ FSP: Error closing voiceflow:', error);
+        }
+      }
+
+      // Update database with early completion status
+      if (sessionToken) {
+        try {
+          await simulationTracker.updateSimulationStatus(
+            sessionToken,
+            'completed',
+            elapsedSeconds,
+            {
+              completion_type: 'early',
+              completion_reason: earlyCompletionReason || 'user_finished_early'
+            }
+          );
+          console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
+        } catch (error) {
+          console.error('❌ FSP: Error updating early completion status:', error);
+        }
+      }
+
+      // Clear localStorage
+      clearSimulationStorage();
+
+      // Show completion modal after brief delay
+      setTimeout(() => {
+        showCompletionModal();
+      }, 500);
+    }, 2000);
+  };
+
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
@@ -776,6 +864,10 @@ export default function FSPSimulationScreen() {
     // Reset readiness checklist
     resetChecklist();
     setShowReadinessModal(true);
+
+    // Reset early completion state
+    setShowEarlyCompletionModal(false);
+    setEarlyCompletionReason('');
 
     console.log('✅ FSP: Simulation state reset completed');
   };
@@ -1425,20 +1517,43 @@ export default function FSPSimulationScreen() {
 
       {/* Timer display - only show when active */}
       {timerActive && (
-        <View style={[
-          styles.timerContainer,
-          timerWarningLevel === 'normal' && styles.timerNormal,
-          timerWarningLevel === 'yellow' && styles.timerWarningYellow,
-          timerWarningLevel === 'orange' && styles.timerWarningOrange,
-          timerWarningLevel === 'red' && styles.timerWarningRed
-        ]}>
-          <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
-          <Text style={[
-            styles.timerText,
-            timerWarningLevel === 'red' && styles.timerTextRed
+        <View style={styles.timerSection}>
+          <View style={[
+            styles.timerContainer,
+            timerWarningLevel === 'normal' && styles.timerNormal,
+            timerWarningLevel === 'yellow' && styles.timerWarningYellow,
+            timerWarningLevel === 'orange' && styles.timerWarningOrange,
+            timerWarningLevel === 'red' && styles.timerWarningRed
           ]}>
-            Simulation läuft: {formatTime(timeRemaining)}
-          </Text>
+            <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
+            <Text style={[
+              styles.timerText,
+              timerWarningLevel === 'red' && styles.timerTextRed
+            ]}>
+              Simulation läuft: {formatTime(timeRemaining)}
+            </Text>
+          </View>
+
+          {/* Early completion button */}
+          <TouchableOpacity
+            style={[
+              styles.finishButton,
+              timeRemaining > 1140 && styles.finishButtonDisabled
+            ]}
+            onPress={initiateEarlyCompletion}
+            disabled={timeRemaining > 1140}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.finishIcon}>✓</Text>
+            <Text style={styles.finishButtonText}>Ich bin fertig</Text>
+          </TouchableOpacity>
+
+          {/* Hint when button is disabled */}
+          {timeRemaining > 1140 && (
+            <Text style={styles.finishButtonHint}>
+              Verfügbar nach 1 Minute
+            </Text>
+          )}
         </View>
       )}
 
@@ -1501,6 +1616,104 @@ export default function FSPSimulationScreen() {
               <View style={[styles.dot, styles.dot1]} />
               <View style={[styles.dot, styles.dot2]} />
               <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Early Completion Confirmation Modal */}
+      {showEarlyCompletionModal && (
+        <View style={styles.earlyCompletionOverlay}>
+          <View style={styles.earlyCompletionModal}>
+            <Text style={styles.modalIcon}>⚠️</Text>
+            <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
+
+            {/* Time Information */}
+            <View style={styles.timeInfo}>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeRowLabel}>Verstrichene Zeit:</Text>
+                <Text style={styles.timeRowValue}>{formatTime((20 * 60) - timeRemaining)}</Text>
+              </View>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeRowLabel}>Verbleibende Zeit:</Text>
+                <Text style={styles.timeRowValue}>{formatTime(timeRemaining)}</Text>
+              </View>
+            </View>
+
+            {/* Warning Box */}
+            <View style={styles.warningBox}>
+              <Text style={styles.warningBoxIcon}>ℹ️</Text>
+              <Text style={styles.warningBoxText}>
+                Ihre Simulation wird beendet und zur Auswertung weitergeleitet. Das Gespräch wird gespeichert und analysiert.
+              </Text>
+            </View>
+
+            {/* Reason Selector */}
+            <View style={styles.reasonSection}>
+              <Text style={styles.reasonLabel}>Grund (optional):</Text>
+              <TouchableOpacity
+                style={styles.reasonSelector}
+                onPress={() => {
+                  Alert.alert(
+                    'Grund wählen',
+                    'Warum möchten Sie die Simulation vorzeitig beenden?',
+                    [
+                      {
+                        text: 'Alle Aufgaben abgeschlossen',
+                        onPress: () => setEarlyCompletionReason('finished_all_tasks')
+                      },
+                      {
+                        text: 'Ausreichendes Gespräch geführt',
+                        onPress: () => setEarlyCompletionReason('sufficient_conversation')
+                      },
+                      {
+                        text: 'Technisches Problem',
+                        onPress: () => setEarlyCompletionReason('technical_issue')
+                      },
+                      {
+                        text: 'Persönlicher Grund',
+                        onPress: () => setEarlyCompletionReason('personal_reason')
+                      },
+                      {
+                        text: 'Sonstiges',
+                        onPress: () => setEarlyCompletionReason('other')
+                      },
+                      { text: 'Abbrechen', style: 'cancel' }
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.reasonText}>
+                  {earlyCompletionReason === 'finished_all_tasks' ? 'Alle Aufgaben abgeschlossen' :
+                   earlyCompletionReason === 'sufficient_conversation' ? 'Ausreichendes Gespräch geführt' :
+                   earlyCompletionReason === 'technical_issue' ? 'Technisches Problem' :
+                   earlyCompletionReason === 'personal_reason' ? 'Persönlicher Grund' :
+                   earlyCompletionReason === 'other' ? 'Sonstiges' :
+                   'Tippen Sie, um einen Grund auszuwählen'}
+                </Text>
+                <Text style={styles.reasonArrow}>▼</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.earlyCompletionButtons}>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={confirmEarlyCompletion}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmButtonIcon}>✓</Text>
+                <Text style={styles.confirmButtonText}>Ja, beenden</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.continueButton}
+                onPress={cancelEarlyCompletion}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.continueButtonIcon}>↩</Text>
+                <Text style={styles.continueButtonText}>Weiter üben</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -2060,5 +2273,204 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Early Completion Styles
+  timerSection: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  },
+  finishButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: 'rgba(76, 175, 80, 0.3)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  finishButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    shadowOpacity: 0,
+    opacity: 0.5,
+  },
+  finishIcon: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: '700',
+  },
+  finishButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  finishButtonHint: {
+    fontSize: 13,
+    color: '#999999',
+    fontStyle: 'italic',
+  },
+  earlyCompletionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10003,
+    padding: 20,
+  },
+  earlyCompletionModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    maxWidth: 520,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 25 },
+    shadowOpacity: 0.4,
+    shadowRadius: 80,
+    elevation: 20,
+  },
+  modalIcon: {
+    fontSize: 56,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  earlyCompletionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#B15740',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  timeInfo: {
+    backgroundColor: '#F8F3E8',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeRowLabel: {
+    fontSize: 15,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  timeRowValue: {
+    fontSize: 18,
+    color: '#B15740',
+    fontWeight: '700',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: '#FFF4E6',
+    borderWidth: 1,
+    borderColor: '#FFD93D',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 20,
+  },
+  warningBoxIcon: {
+    fontSize: 20,
+  },
+  warningBoxText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 21,
+  },
+  reasonSection: {
+    marginBottom: 24,
+  },
+  reasonLabel: {
+    fontSize: 15,
+    color: '#333333',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  reasonSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8F3E8',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+    borderRadius: 8,
+    padding: 14,
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333333',
+  },
+  reasonArrow: {
+    fontSize: 12,
+    color: '#999999',
+  },
+  earlyCompletionButtons: {
+    gap: 12,
+  },
+  confirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#B15740',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    shadowColor: 'rgba(177, 87, 64, 0.3)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  confirmButtonIcon: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '700',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    shadowColor: 'rgba(76, 175, 80, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  continueButtonIcon: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '700',
+  },
+  continueButtonText: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '700',
   },
 });

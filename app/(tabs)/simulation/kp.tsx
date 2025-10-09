@@ -46,6 +46,10 @@ export default function KPSimulationScreen() {
   const [checklistItems, setChecklistItems] = useState<Array<{id: string, label: string, checked: boolean}>>([]);
   const [allItemsChecked, setAllItemsChecked] = useState(false);
 
+  // Early completion state
+  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
+  const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
+
   // Check for existing simulation on mount
   useEffect(() => {
     initializeChecklist();
@@ -552,6 +556,99 @@ export default function KPSimulationScreen() {
     resetSimulationState();
   };
 
+  // Early completion functions
+  const initiateEarlyCompletion = () => {
+    console.log('🏁 KP: User initiated early completion');
+    setShowEarlyCompletionModal(true);
+  };
+
+  const confirmEarlyCompletion = () => {
+    console.log('✅ KP: User confirmed early completion');
+    setShowEarlyCompletionModal(false);
+
+    // Calculate elapsed time
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+    console.log(`📊 KP: Completed early after ${elapsedSeconds} seconds (${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')})`);
+
+    // Execute early completion sequence
+    executeEarlyCompletion(elapsedSeconds);
+  };
+
+  const cancelEarlyCompletion = () => {
+    console.log('↩️ KP: User cancelled early completion');
+    setShowEarlyCompletionModal(false);
+    setEarlyCompletionReason('');
+  };
+
+  const executeEarlyCompletion = async (elapsedSeconds: number) => {
+    try {
+      console.log('🔄 KP: Executing early completion sequence');
+
+      // Mark as graceful shutdown to prevent conflicts
+      setIsGracefulShutdown(true);
+
+      // Stop the timer
+      if (timerInterval.current) {
+        clearInterval(timerInterval.current);
+        timerInterval.current = null;
+      }
+
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
+
+      // Update timer state
+      setTimerActive(false);
+
+      // Give Voiceflow 2 seconds to flush any pending messages
+      setTimeout(async () => {
+        console.log('💬 KP: Closing Voiceflow conversation');
+
+        // Close Voiceflow conversation
+        if (typeof window !== 'undefined' && (window as any).voiceflow) {
+          try {
+            (window as any).voiceflow.chat.close();
+          } catch (error) {
+            console.error('❌ KP: Error closing voiceflow:', error);
+          }
+        }
+
+        // Update database with early completion status
+        try {
+          if (sessionToken) {
+            console.log('💾 KP: Updating database with early completion status');
+            await simulationTracker.updateSimulationStatus(
+              sessionToken,
+              'completed',
+              elapsedSeconds,
+              {
+                completion_type: 'early',
+                completion_reason: earlyCompletionReason || 'user_finished_early'
+              }
+            );
+          }
+        } catch (error) {
+          console.error('❌ KP: Error updating session for early completion:', error);
+        }
+
+        // Clear localStorage
+        clearSimulationStorage();
+
+        // Show completion modal after brief delay
+        setTimeout(() => {
+          showCompletionModal();
+        }, 500);
+
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ KP: Error in early completion:', error);
+      // Fallback to normal stop
+      stopSimulationTimer();
+    }
+  };
+
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
@@ -785,6 +882,10 @@ export default function KPSimulationScreen() {
     // Reset readiness checklist
     resetChecklist();
     setShowReadinessModal(true);
+
+    // Reset early completion state
+    setShowEarlyCompletionModal(false);
+    setEarlyCompletionReason('');
 
     console.log('✅ KP: Simulation state reset completed');
   };
@@ -1446,20 +1547,37 @@ export default function KPSimulationScreen() {
 
       {/* Timer display - only show when active */}
       {timerActive && (
-        <View style={[
-          styles.timerContainer,
-          timerWarningLevel === 'normal' && styles.timerNormal,
-          timerWarningLevel === 'yellow' && styles.timerWarningYellow,
-          timerWarningLevel === 'orange' && styles.timerWarningOrange,
-          timerWarningLevel === 'red' && styles.timerWarningRed
-        ]}>
-          <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
-          <Text style={[
-            styles.timerText,
-            timerWarningLevel === 'red' && styles.timerTextRed
+        <View style={styles.timerSection}>
+          <View style={[
+            styles.timerContainer,
+            timerWarningLevel === 'normal' && styles.timerNormal,
+            timerWarningLevel === 'yellow' && styles.timerWarningYellow,
+            timerWarningLevel === 'orange' && styles.timerWarningOrange,
+            timerWarningLevel === 'red' && styles.timerWarningRed
           ]}>
-            Simulation läuft: {formatTime(timeRemaining)}
-          </Text>
+            <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
+            <Text style={[
+              styles.timerText,
+              timerWarningLevel === 'red' && styles.timerTextRed
+            ]}>
+              Simulation läuft: {formatTime(timeRemaining)}
+            </Text>
+          </View>
+
+          {/* "Ich bin fertig" Button */}
+          <TouchableOpacity
+            style={[styles.finishButton, timeRemaining > 1140 && styles.finishButtonDisabled]}
+            onPress={initiateEarlyCompletion}
+            disabled={timeRemaining > 1140}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.finishIcon}>✓</Text>
+            <Text style={styles.finishButtonText}>Ich bin fertig</Text>
+          </TouchableOpacity>
+
+          {timeRemaining > 1140 && (
+            <Text style={styles.finishButtonHint}>Verfügbar nach 1 Minute</Text>
+          )}
         </View>
       )}
 
@@ -1522,6 +1640,78 @@ export default function KPSimulationScreen() {
               <View style={[styles.dot, styles.dot1]} />
               <View style={[styles.dot, styles.dot2]} />
               <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Early Completion Confirmation Modal */}
+      {showEarlyCompletionModal && (
+        <View style={styles.earlyCompletionOverlay}>
+          <View style={styles.earlyCompletionModal}>
+            <Text style={styles.modalIcon}>⚠️</Text>
+            <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
+
+            <View style={styles.timeInfo}>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeLabel}>Verstrichene Zeit:</Text>
+                <Text style={styles.timeValue}>{formatTime((20 * 60) - timeRemaining)}</Text>
+              </View>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeLabel}>Verbleibende Zeit:</Text>
+                <Text style={styles.timeValue}>{formatTime(timeRemaining)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.warningBox}>
+              <Text style={styles.warningIconText}>ℹ️</Text>
+              <Text style={styles.warningBoxText}>
+                Ihre Simulation wird beendet und ausgewertet. Sie können nicht zur Simulation zurückkehren.
+              </Text>
+            </View>
+
+            <View style={styles.reasonSection}>
+              <Text style={styles.reasonLabel}>Grund (optional):</Text>
+              <View style={styles.pickerContainer}>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => {
+                    Alert.alert(
+                      'Grund wählen',
+                      '',
+                      [
+                        { text: 'Alle Aufgaben abgeschlossen', onPress: () => setEarlyCompletionReason('finished_all_tasks') },
+                        { text: 'Ausreichendes Gespräch geführt', onPress: () => setEarlyCompletionReason('sufficient_conversation') },
+                        { text: 'Technisches Problem', onPress: () => setEarlyCompletionReason('technical_issue') },
+                        { text: 'Persönlicher Grund', onPress: () => setEarlyCompletionReason('personal_reason') },
+                        { text: 'Sonstiges', onPress: () => setEarlyCompletionReason('other') },
+                        { text: 'Abbrechen', style: 'cancel' }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.pickerButtonText}>
+                    {earlyCompletionReason ?
+                      earlyCompletionReason === 'finished_all_tasks' ? 'Alle Aufgaben abgeschlossen' :
+                      earlyCompletionReason === 'sufficient_conversation' ? 'Ausreichendes Gespräch geführt' :
+                      earlyCompletionReason === 'technical_issue' ? 'Technisches Problem' :
+                      earlyCompletionReason === 'personal_reason' ? 'Persönlicher Grund' :
+                      earlyCompletionReason === 'other' ? 'Sonstiges' : 'Bitte wählen...'
+                      : 'Bitte wählen...'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.buttonGroupEarly}>
+              <TouchableOpacity style={styles.confirmButton} onPress={confirmEarlyCompletion}>
+                <Text style={styles.buttonIconEarly}>✓</Text>
+                <Text style={styles.confirmButtonText}>Ja, beenden</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={cancelEarlyCompletion}>
+                <Text style={styles.buttonIconEarly}>↩</Text>
+                <Text style={styles.cancelButtonText}>Weiter üben</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -2086,5 +2276,189 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Early Completion Styles
+  timerSection: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  finishButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: 'rgba(76, 175, 80, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  finishButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    shadowOpacity: 0,
+    opacity: 0.5,
+  },
+  finishIcon: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '700',
+  },
+  finishButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  finishButtonHint: {
+    fontSize: 12,
+    color: '#999999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  earlyCompletionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10003,
+    padding: 20,
+  },
+  earlyCompletionModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    maxWidth: 520,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 25 },
+    shadowOpacity: 0.4,
+    shadowRadius: 80,
+    elevation: 20,
+  },
+  modalIcon: {
+    fontSize: 64,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  earlyCompletionTitle: {
+    color: '#B15740',
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  timeInfo: {
+    backgroundColor: '#F8F3E8',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeLabel: {
+    color: '#333333',
+    fontSize: 15,
+  },
+  timeValue: {
+    color: '#B15740',
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: '#FFF4E6',
+    borderWidth: 2,
+    borderColor: '#FFD93D',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 20,
+  },
+  warningIconText: {
+    fontSize: 20,
+  },
+  warningBoxText: {
+    color: '#666666',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 21,
+  },
+  reasonSection: {
+    marginBottom: 24,
+  },
+  reasonLabel: {
+    color: '#333333',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  pickerContainer: {
+    width: '100%',
+  },
+  pickerButton: {
+    width: '100%',
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    backgroundColor: 'white',
+  },
+  pickerButtonText: {
+    fontSize: 15,
+    color: '#333333',
+  },
+  buttonGroupEarly: {
+    gap: 12,
+  },
+  confirmButton: {
+    backgroundColor: '#B15740',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: 'rgba(177, 87, 64, 0.3)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonIconEarly: {
+    fontSize: 20,
   },
 });
