@@ -1486,8 +1486,12 @@ export default function KPSimulationScreen() {
               {/* Close Button (X) */}
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={cancelReadiness}
+                onPress={() => {
+                  console.log('🔘 KP: Close button clicked');
+                  cancelReadiness();
+                }}
                 activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
@@ -2190,7 +2194,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 9999,
+    elevation: 5,
   },
   closeButtonText: {
     color: 'white',
