@@ -12,7 +12,7 @@ ALTER TABLE simulation_usage_logs ADD COLUMN IF NOT EXISTS heartbeat_count integ
 CREATE OR REPLACE FUNCTION validate_simulation_usage(
   p_session_token text,
   p_user_id uuid,
-  p_min_elapsed_seconds integer DEFAULT 600 -- 10 minutes
+  p_min_elapsed_seconds integer DEFAULT 30 -- 30 seconds for testing
 )
 RETURNS json AS $$
 DECLARE
