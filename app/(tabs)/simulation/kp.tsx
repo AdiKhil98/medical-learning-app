@@ -102,14 +102,12 @@ export default function KPSimulationScreen() {
           try {
             const stream = await originalGetUserMedia.call(this, constraints);
 
-            // Only start timer if readiness checklist was completed
-            if (!timerActive && !showReadinessModal) {
+            // Start timer when voice call begins
+            if (!timerActive) {
               console.log('🎯 KP: Audio stream granted - voice call starting!');
               console.log('⏰ KP: Starting 20-minute timer due to voice call');
               console.log('🔍 DEBUG: About to call startSimulationTimer()');
               startSimulationTimer();
-            } else if (showReadinessModal) {
-              console.log('⏸️ KP: Audio stream granted but readiness modal still showing');
             }
 
             // Monitor stream tracks for when they end
