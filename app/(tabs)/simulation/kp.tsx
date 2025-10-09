@@ -1471,16 +1471,13 @@ export default function KPSimulationScreen() {
     <SafeAreaView style={styles.container}>
       {/* Readiness Modal */}
       {showReadinessModal && (
-        <TouchableOpacity
-          style={styles.readinessOverlay}
-          activeOpacity={1}
-          onPress={cancelReadiness}
-        >
+        <View style={styles.readinessOverlay}>
           <TouchableOpacity
-            style={styles.readinessModal}
+            style={styles.overlayBackdrop}
             activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
-          >
+            onPress={cancelReadiness}
+          />
+          <View style={styles.readinessModal}>
             <View style={styles.readinessHeader}>
               <Text style={styles.headerIcon}>🎯</Text>
               <Text style={styles.readinessHeaderTitle}>Simulation Vorbereitung</Text>
@@ -1549,8 +1546,8 @@ export default function KPSimulationScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {/* Header with back button and title */}
@@ -2150,11 +2147,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10002,
     padding: 20,
+  },
+  overlayBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
   },
   readinessModal: {
     backgroundColor: '#FFFFFF',
@@ -2168,6 +2172,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 80,
     elevation: 20,
+    zIndex: 1,
   },
   readinessHeader: {
     backgroundColor: '#B15740',
