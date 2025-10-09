@@ -20,6 +20,7 @@ export default function FSPSimulationScreen() {
   const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = React.useState<string | null>(null);
   const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
@@ -241,6 +242,7 @@ export default function FSPSimulationScreen() {
 
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
+    previousTimeRef.current = 20 * 60; // Initialize ref
 
     // Calculate end time (in case the try block failed)
     const startTime = Date.now();
@@ -255,11 +257,12 @@ export default function FSPSimulationScreen() {
       const remainingSeconds = Math.floor(remaining / 1000);
 
       // Get previous value for comparison
-      const prev = timeRemaining;
+      const prev = previousTimeRef.current;
 
       // Update time remaining
       if (remaining <= 0) {
         setTimeRemaining(0);
+        previousTimeRef.current = 0;
         clearInterval(timerInterval.current!);
         timerInterval.current = null;
         console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
@@ -268,6 +271,7 @@ export default function FSPSimulationScreen() {
         return;
       } else {
         setTimeRemaining(remainingSeconds);
+        previousTimeRef.current = remainingSeconds;
       }
 
       // Mark as used at 10-minute mark (only trigger once)
@@ -993,6 +997,7 @@ export default function FSPSimulationScreen() {
       setTimeRemaining(Math.floor(remaining / 1000));
       setTimerEndTime(endTime); // Set absolute end time
       setSessionToken(savedSessionToken);
+      previousTimeRef.current = Math.floor(remaining / 1000); // Initialize ref for resume
 
       // Start heartbeat monitoring for resumed session
       startHeartbeat(savedSessionToken);
@@ -1004,11 +1009,12 @@ export default function FSPSimulationScreen() {
         const remainingSeconds = Math.floor(remaining / 1000);
 
         // Get previous value for comparison
-        const prev = timeRemaining;
+        const prev = previousTimeRef.current;
 
         // Update time remaining
         if (remaining <= 0) {
           setTimeRemaining(0);
+          previousTimeRef.current = 0;
           clearInterval(timerInterval.current!);
           timerInterval.current = null;
           console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
@@ -1017,6 +1023,7 @@ export default function FSPSimulationScreen() {
           return;
         } else {
           setTimeRemaining(remainingSeconds);
+          previousTimeRef.current = remainingSeconds;
         }
 
         // Mark as used at 10-minute mark (only trigger once)
