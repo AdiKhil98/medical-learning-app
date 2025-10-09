@@ -41,8 +41,8 @@ export default function FSPSimulationScreen() {
   const [showResumeModal, setShowResumeModal] = React.useState(false);
   const [resumeTimeRemaining, setResumeTimeRemaining] = React.useState(0);
 
-  // Readiness checklist state
-  const [showReadinessModal, setShowReadinessModal] = React.useState(true);
+  // Readiness checklist state - DISABLED
+  const [showReadinessModal, setShowReadinessModal] = React.useState(false);
   const [checklistItems, setChecklistItems] = React.useState<Array<{id: string, label: string, checked: boolean}>>([]);
   const [allItemsChecked, setAllItemsChecked] = React.useState(false);
 

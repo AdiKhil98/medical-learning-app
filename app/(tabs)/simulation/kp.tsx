@@ -41,8 +41,8 @@ export default function KPSimulationScreen() {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
 
-  // Readiness checklist state
-  const [showReadinessModal, setShowReadinessModal] = useState(true);
+  // Readiness checklist state - DISABLED
+  const [showReadinessModal, setShowReadinessModal] = useState(false);
   const [checklistItems, setChecklistItems] = useState<Array<{id: string, label: string, checked: boolean}>>([]);
   const [allItemsChecked, setAllItemsChecked] = useState(false);
 
