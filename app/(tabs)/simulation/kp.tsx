@@ -223,16 +223,17 @@ export default function KPSimulationScreen() {
       setSessionToken(result.sessionToken || null);
       setUsageMarked(false);
 
+      // Calculate absolute end time for the timer
+      const startTime = Date.now();
+      const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
+      const calculatedEndTime = startTime + duration;
+      setTimerEndTime(calculatedEndTime);
+
       // Save simulation state to localStorage
       if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
         try {
-          const startTime = Date.now();
-          const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
-          const endTime = startTime + duration;
-          setTimerEndTime(endTime);
-
           localStorage.setItem('sim_start_time_kp', startTime.toString());
-          localStorage.setItem('sim_end_time_kp', endTime.toString());
+          localStorage.setItem('sim_end_time_kp', calculatedEndTime.toString());
           localStorage.setItem('sim_session_token_kp', result.sessionToken);
           localStorage.setItem('sim_duration_ms_kp', duration.toString());
           if (user?.id) {
@@ -252,7 +253,12 @@ export default function KPSimulationScreen() {
     console.log('🔍 DEBUG: About to set timer active and start interval');
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
-    
+
+    // Calculate end time (in case the try block failed)
+    const startTime = Date.now();
+    const duration = 20 * 60 * 1000;
+    const endTime = startTime + duration;
+
     // Start security heartbeat (every 60 seconds)
     if (sessionToken) {
       console.log('🔍 DEBUG: Starting security heartbeat');
@@ -265,12 +271,11 @@ export default function KPSimulationScreen() {
         }
       }, 60000); // Every 60 seconds
     }
-    
-    console.log('🔍 DEBUG: Creating timer interval with absolute time calculation');
+
+    console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
     // Use 100ms interval for better accuracy
     timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time
-      const endTime = timerEndTime;
+      // Calculate remaining time based on absolute end time (use closure variable, not state)
       const remaining = endTime - Date.now();
       const remainingSeconds = Math.floor(remaining / 1000);
 

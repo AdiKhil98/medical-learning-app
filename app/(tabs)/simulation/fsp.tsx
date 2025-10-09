@@ -207,16 +207,17 @@ export default function FSPSimulationScreen() {
       setSessionToken(result.sessionToken || null);
       setUsageMarked(false);
 
+      // Calculate absolute end time for the timer
+      const startTime = Date.now();
+      const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
+      const calculatedEndTime = startTime + duration;
+      setTimerEndTime(calculatedEndTime);
+
       // Save simulation state to localStorage
       if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
         try {
-          const startTime = Date.now();
-          const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
-          const endTime = startTime + duration;
-          setTimerEndTime(endTime);
-
           localStorage.setItem('sim_start_time_fsp', startTime.toString());
-          localStorage.setItem('sim_end_time_fsp', endTime.toString());
+          localStorage.setItem('sim_end_time_fsp', calculatedEndTime.toString());
           localStorage.setItem('sim_session_token_fsp', result.sessionToken);
           localStorage.setItem('sim_duration_ms_fsp', duration.toString());
           if (user?.id) {
@@ -241,10 +242,15 @@ export default function FSPSimulationScreen() {
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
 
+    // Calculate end time (in case the try block failed)
+    const startTime = Date.now();
+    const duration = 20 * 60 * 1000;
+    const endTime = startTime + duration;
+
+    console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
     // Use 100ms interval for better accuracy with absolute time calculation
     timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time
-      const endTime = timerEndTime;
+      // Calculate remaining time based on absolute end time (use closure variable, not state)
       const remaining = endTime - Date.now();
       const remainingSeconds = Math.floor(remaining / 1000);
 
