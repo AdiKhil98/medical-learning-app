@@ -69,13 +69,13 @@ class SimulationTrackingService {
       }
 
       // Check for active sessions (prevent multiple concurrent sessions)
-      // But be more forgiving - only block if there's a truly recent active session
+      // Be more forgiving - auto-cleanup old sessions
       const { data: activeSessions, error: activeError } = await supabase
         .from('simulation_usage_logs')
         .select('*')
         .eq('user_id', user.id)
         .in('status', ['started', 'in_progress'])
-        .gte('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // Only last 5 minutes
+        .gte('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Last 30 minutes
 
       if (activeError) {
         console.log('🔍 DEBUG: Error checking active sessions:', activeError);
@@ -84,32 +84,36 @@ class SimulationTrackingService {
         // Allow simulation to continue
       } else if (activeSessions && activeSessions.length > 0) {
         console.log('🔍 DEBUG: Found active sessions:', activeSessions);
-        
-        // Auto-cleanup old 'started' sessions (mark as incomplete)
-        const oldSessions = activeSessions.filter(session => 
-          new Date().getTime() - new Date(session.started_at).getTime() > 2 * 60 * 1000 // Older than 2 minutes
+
+        // Auto-cleanup sessions older than 1 minute (very lenient)
+        const oldSessions = activeSessions.filter(session =>
+          new Date().getTime() - new Date(session.started_at).getTime() > 60 * 1000 // Older than 1 minute
         );
-        
+
         if (oldSessions.length > 0) {
           console.log('🔍 DEBUG: Cleaning up old sessions:', oldSessions.length);
           // Mark old sessions as incomplete
-          await supabase
+          const { error: cleanupError } = await supabase
             .from('simulation_usage_logs')
-            .update({ status: 'incomplete' })
+            .update({ status: 'incomplete', completed_at: new Date().toISOString() })
             .in('id', oldSessions.map(s => s.id));
+
+          if (cleanupError) {
+            console.error('🔍 DEBUG: Error cleaning up sessions:', cleanupError);
+          }
         }
-        
-        // Check if there are still truly active sessions (less than 2 minutes old)
-        const recentSessions = activeSessions.filter(session => 
-          new Date().getTime() - new Date(session.started_at).getTime() <= 2 * 60 * 1000
+
+        // Check if there are still truly active sessions (less than 1 minute old)
+        const recentSessions = activeSessions.filter(session =>
+          new Date().getTime() - new Date(session.started_at).getTime() <= 60 * 1000
         );
-        
+
         if (recentSessions.length > 0) {
           console.log('🔍 DEBUG: Blocking due to recent active session');
           return {
             allowed: false,
             reason: 'active_session',
-            message: 'You already have an active simulation session'
+            message: 'Please wait a moment before starting a new simulation'
           };
         } else {
           console.log('🔍 DEBUG: Old sessions cleaned up, allowing new session');
