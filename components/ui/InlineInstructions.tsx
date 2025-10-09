@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,43 +19,66 @@ interface InlineInstructionsProps {
   tabs: Tab[];
 }
 
+// Memoized tab button component for better performance
+const TabButton = React.memo(({
+  tab,
+  isActive,
+  isSmallScreen,
+  onPress
+}: {
+  tab: Tab;
+  isActive: boolean;
+  isSmallScreen: boolean;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    style={[
+      styles.tab,
+      isActive && styles.activeTab,
+      isSmallScreen && styles.tabMobile,
+    ]}
+    onPress={onPress}
+    activeOpacity={0.8}
+    accessible={true}
+    accessibilityRole="button"
+  >
+    <Text style={[
+      styles.tabText,
+      isActive && styles.activeTabText,
+      isSmallScreen && styles.tabTextMobile,
+    ]}>
+      {tab.title}
+    </Text>
+  </TouchableOpacity>
+));
+
 export default function InlineInstructions({ tabs }: InlineInstructionsProps) {
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '');
 
-  const handleTabPress = (tabId: string) => {
+  const handleTabPress = useCallback((tabId: string) => {
     setActiveTab(tabId);
-  };
+  }, []);
 
   const { width: screenWidth } = Dimensions.get('window');
-  const isSmallScreen = screenWidth < 768;
+  const isSmallScreen = useMemo(() => screenWidth < 768, [screenWidth]);
 
-  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
+  const activeTabContent = useMemo(
+    () => tabs.find(tab => tab.id === activeTab)?.content,
+    [tabs, activeTab]
+  );
 
   return (
     <View style={styles.container}>
       {/* Tab Navigation */}
       <View style={[styles.tabContainer, isSmallScreen && styles.tabContainerMobile]}>
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
+        {tabs.map((tab) => (
+          <TabButton
             key={tab.id}
-            style={[
-              styles.tab,
-              activeTab === tab.id && styles.activeTab,
-              isSmallScreen && styles.tabMobile,
-            ]}
+            tab={tab}
+            isActive={activeTab === tab.id}
+            isSmallScreen={isSmallScreen}
             onPress={() => handleTabPress(tab.id)}
-            activeOpacity={0.8}
-            accessible={true}
-            accessibilityRole="button"
-          >
-            <Text style={[
-              styles.tabText,
-              activeTab === tab.id && styles.activeTabText,
-              isSmallScreen && styles.tabTextMobile,
-            ]}>
-              {tab.title}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
 
@@ -66,6 +89,11 @@ export default function InlineInstructions({ tabs }: InlineInstructionsProps) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={21}
+          scrollEventThrottle={16}
         >
           {activeTabContent}
         </ScrollView>
