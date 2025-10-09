@@ -197,13 +197,17 @@ export default function FSPSimulationScreen() {
     }
 
     console.log('⏰ FSP: Starting 20-minute simulation timer');
+    console.log('🔍 FSP DEBUG: Current timerActive state:', timerActive);
+    console.log('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
 
     // CRITICAL FIX: Activate timer BEFORE async database calls
     // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
+    console.log('🔍 FSP DEBUG: About to call setTimerActive(true)');
     setTimerActive(true);
     timerActiveRef.current = true;
     setTimeRemaining(20 * 60);
     previousTimeRef.current = 20 * 60;
+    console.log('🔍 FSP DEBUG: setTimerActive(true) called, timerActiveRef set to true');
 
     // Calculate absolute end time for the timer
     const startTime = Date.now();
@@ -1376,6 +1380,7 @@ export default function FSPSimulationScreen() {
       </LinearGradient>
 
       {/* Timer display - only show when active */}
+      {console.log('🔍 FSP RENDER: timerActive =', timerActive, 'timeRemaining =', timeRemaining)}
       {timerActive && (
         <View style={styles.timerSection}>
           <View style={[
