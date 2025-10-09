@@ -29,17 +29,6 @@ export default function KPSimulationScreen() {
       if (Platform.OS === 'web') {
         console.log('🏥 KP: Initializing medical simulation');
 
-        // Check if this is a fresh page load or a return from navigation
-        const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-        const isPageReload = navigationEntries.length > 0 && navigationEntries[0].type === 'reload';
-
-        if (!isPageReload) {
-          // Auto-refresh on navigation to ensure clean state
-          console.log('🔄 KP: Navigated to simulation page - refreshing for clean state');
-          window.location.reload();
-          return;
-        }
-
         // Stop global cleanup to allow widget
         stopGlobalVoiceflowCleanup();
 
@@ -361,16 +350,16 @@ export default function KPSimulationScreen() {
       }
     }
     
-    // Reset simulation state
+    // Reset simulation state to allow restart
     resetSimulationState();
 
-    // Auto-refresh page after simulation ends for clean state
-    console.log('🔄 KP: Simulation ended - refreshing page for clean state');
+    // After a short delay, reinitialize the conversation monitoring for restart
     setTimeout(() => {
-      if (Platform.OS === 'web') {
-        window.location.reload();
+      if (voiceflowController.current) {
+        console.log('🔄 KP: Reinitializing conversation monitoring after stop');
+        setupConversationMonitoring();
       }
-    }, 2000); // 2 second delay to allow any final operations
+    }, 1000);
   };
 
   // Cleanup when component unmounts or user navigates away
