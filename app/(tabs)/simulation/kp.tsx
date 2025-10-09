@@ -20,6 +20,7 @@ export default function KPSimulationScreen() {
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
@@ -277,10 +278,14 @@ export default function KPSimulationScreen() {
     // Reset previous time ref
     previousTimeRef.current = 20 * 60;
 
-    // Use 100ms interval for better accuracy
+    // Store end time in ref for mobile reliability
+    timerEndTimeRef.current = endTime;
+
+    // Use 1000ms interval for better mobile compatibility (less battery drain)
     timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time (use closure variable, not state)
-      const remaining = endTime - Date.now();
+      // Calculate remaining time based on absolute end time (use ref for mobile reliability)
+      const currentEndTime = timerEndTimeRef.current || endTime;
+      const remaining = currentEndTime - Date.now();
       const remainingSeconds = Math.floor(remaining / 1000);
 
       // Get previous value for comparison
@@ -330,7 +335,7 @@ export default function KPSimulationScreen() {
       if (prev > 10 && remainingSeconds <= 10) {
         showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
       }
-    }, 100); // Check every 100ms for high accuracy
+    }, 1000); // Check every 1000ms (1 second) for mobile compatibility
   };
 
   // Mark simulation as used at 10-minute mark
@@ -1020,6 +1025,7 @@ export default function KPSimulationScreen() {
       setTimerEndTime(endTime); // Set absolute end time
       setSessionToken(savedSessionToken);
       previousTimeRef.current = remainingSeconds; // Initialize ref for resume
+      timerEndTimeRef.current = endTime; // Store in ref for mobile reliability
 
       // Start security heartbeat for resumed session
       if (savedSessionToken) {
@@ -1035,8 +1041,9 @@ export default function KPSimulationScreen() {
 
       // Start timer interval for resumed session with absolute time calculation
       timerInterval.current = setInterval(() => {
-        // Calculate remaining time based on absolute end time
-        const remaining = endTime - Date.now();
+        // Calculate remaining time based on absolute end time (use ref for mobile reliability)
+        const currentEndTime = timerEndTimeRef.current || endTime;
+        const remaining = currentEndTime - Date.now();
         const remainingSeconds = Math.floor(remaining / 1000);
 
         // Get previous value for comparison
@@ -1086,7 +1093,7 @@ export default function KPSimulationScreen() {
         if (prev > 10 && remainingSeconds <= 10) {
           showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
         }
-      }, 100); // Check every 100ms for high accuracy
+      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
 
       // Hide resume modal
       setShowResumeModal(false);

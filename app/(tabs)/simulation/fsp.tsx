@@ -20,6 +20,7 @@ export default function FSPSimulationScreen() {
   const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = React.useState<string | null>(null);
   const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
@@ -248,12 +249,14 @@ export default function FSPSimulationScreen() {
     const startTime = Date.now();
     const duration = 20 * 60 * 1000;
     const endTime = startTime + duration;
+    timerEndTimeRef.current = endTime;
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
-    // Use 100ms interval for better accuracy with absolute time calculation
+    // Use 1000ms interval for mobile compatibility
     timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time (use closure variable, not state)
-      const remaining = endTime - Date.now();
+      // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
+      const currentEndTime = timerEndTimeRef.current || endTime;
+      const remaining = currentEndTime - Date.now();
       const remainingSeconds = Math.floor(remaining / 1000);
 
       // Get previous value for comparison
@@ -298,7 +301,7 @@ export default function FSPSimulationScreen() {
       if (prev > 10 && remainingSeconds <= 10) {
         showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
       }
-    }, 100); // Check every 100ms for high accuracy
+    }, 1000); // Check every 1000ms (1 second) for mobile compatibility
   };
 
   // Mark simulation as used at 10-minute mark with server-side validation
@@ -996,6 +999,7 @@ export default function FSPSimulationScreen() {
       setTimerActive(true);
       setTimeRemaining(Math.floor(remaining / 1000));
       setTimerEndTime(endTime); // Set absolute end time
+      timerEndTimeRef.current = endTime;
       setSessionToken(savedSessionToken);
       previousTimeRef.current = Math.floor(remaining / 1000); // Initialize ref for resume
 
@@ -1004,8 +1008,9 @@ export default function FSPSimulationScreen() {
 
       // Start timer interval for resumed session with absolute time calculation
       timerInterval.current = setInterval(() => {
-        // Calculate remaining time based on absolute end time
-        const remaining = endTime - Date.now();
+        // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
+        const currentEndTime = timerEndTimeRef.current || endTime;
+        const remaining = currentEndTime - Date.now();
         const remainingSeconds = Math.floor(remaining / 1000);
 
         // Get previous value for comparison
@@ -1050,7 +1055,7 @@ export default function FSPSimulationScreen() {
         if (prev > 10 && remainingSeconds <= 10) {
           showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
         }
-      }, 100); // Check every 100ms for high accuracy
+      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
 
       // Hide resume modal
       setShowResumeModal(false);
