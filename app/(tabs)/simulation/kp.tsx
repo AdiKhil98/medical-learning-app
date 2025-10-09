@@ -435,7 +435,7 @@ export default function KPSimulationScreen() {
         ]
       );
     }
-  }, [user, canUseSimulation, subscriptionStatus, getSubscriptionInfo]);
+  }, [user, canUseSimulation]); // Removed subscriptionStatus and getSubscriptionInfo to prevent re-render loop
 
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {
