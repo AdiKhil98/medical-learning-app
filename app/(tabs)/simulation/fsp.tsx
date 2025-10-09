@@ -56,6 +56,24 @@ export default function FSPSimulationScreen() {
     checkExistingSimulation();
   }, []);
 
+  // Add Escape key listener for readiness modal
+  useEffect(() => {
+    if (!showReadinessModal) return;
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        console.log('🔑 FSP: Escape key pressed, closing readiness modal');
+        cancelReadiness();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      window.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showReadinessModal]);
+
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
@@ -1430,12 +1448,29 @@ export default function FSPSimulationScreen() {
     <SafeAreaView style={styles.container}>
       {/* Readiness Modal */}
       {showReadinessModal && (
-        <View style={styles.readinessOverlay}>
-          <View style={styles.readinessModal}>
+        <TouchableOpacity
+          style={styles.readinessOverlay}
+          activeOpacity={1}
+          onPress={cancelReadiness}
+        >
+          <TouchableOpacity
+            style={styles.readinessModal}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.readinessHeader}>
               <Text style={styles.headerIcon}>🎯</Text>
               <Text style={styles.readinessHeaderTitle}>Simulation Vorbereitung</Text>
               <Text style={styles.headerSubtitle}>Stellen Sie sicher, dass Sie bereit sind</Text>
+
+              {/* Close Button (X) */}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={cancelReadiness}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.checklistContainer}>
@@ -1491,8 +1526,8 @@ export default function FSPSimulationScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
       {/* Header with back button and title */}
@@ -2135,6 +2170,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#B15740',
     padding: 32,
     alignItems: 'center',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 24,
   },
   headerIcon: {
     fontSize: 56,
