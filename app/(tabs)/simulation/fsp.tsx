@@ -18,6 +18,7 @@ export default function FSPSimulationScreen() {
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = React.useState(false);
   const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
+  const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const [sessionToken, setSessionToken] = React.useState<string | null>(null);
   const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
@@ -215,7 +216,11 @@ export default function FSPSimulationScreen() {
         try {
           const startTime = Date.now();
           const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
+          const endTime = startTime + duration;
+          setTimerEndTime(endTime);
+
           localStorage.setItem('sim_start_time_fsp', startTime.toString());
+          localStorage.setItem('sim_end_time_fsp', endTime.toString());
           localStorage.setItem('sim_session_token_fsp', result.sessionToken);
           localStorage.setItem('sim_duration_ms_fsp', duration.toString());
           if (user?.id) {
@@ -239,47 +244,55 @@ export default function FSPSimulationScreen() {
 
     setTimerActive(true);
     setTimeRemaining(20 * 60); // Reset to 20 minutes
-    
+
+    // Use 100ms interval for better accuracy with absolute time calculation
     timerInterval.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        // Timer warning triggers
-        if (prev === 300) {
-          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
-        }
+      // Calculate remaining time based on absolute end time
+      const endTime = timerEndTime;
+      const remaining = endTime - Date.now();
+      const remainingSeconds = Math.floor(remaining / 1000);
 
-        if (prev === 120) {
-          showTimerWarning('2 Minuten verbleibend', 'orange', false);
-        }
+      // Get previous value for comparison
+      const prev = timeRemaining;
 
-        if (prev === 60) {
-          showTimerWarning('Nur noch 1 Minute!', 'red', false);
-        }
+      // Update time remaining
+      if (remaining <= 0) {
+        setTimeRemaining(0);
+        clearInterval(timerInterval.current!);
+        timerInterval.current = null;
+        console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
+        console.log('🔚 FSP: Initiating graceful end sequence');
+        initiateGracefulEnd();
+        return;
+      } else {
+        setTimeRemaining(remainingSeconds);
+      }
 
-        if (prev === 30) {
-          showTimerWarning('30 Sekunden verbleibend', 'red', true);
-        }
+      // Mark as used at 10-minute mark (only trigger once)
+      if (prev > 600 && remainingSeconds <= 600 && !usageMarked && sessionToken) {
+        const clientElapsed = (20 * 60) - remainingSeconds;
+        console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+        console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+        markSimulationAsUsed(clientElapsed);
+      }
 
-        if (prev === 10) {
-          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
-        }
-
-        // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
-        if (prev <= 600 && prev >= 595 && !usageMarked && sessionToken) { // Around 10:00 remaining = 10 minutes elapsed
-          const clientElapsed = (20 * 60) - prev; // Calculate client-side elapsed time
-          console.log('🔍 DEBUG: 10-minute mark reached (timer at', prev, 'seconds), marking as used');
-          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-          markSimulationAsUsed(clientElapsed);
-        }
-
-        if (prev <= 1) {
-          console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
-          console.log('🔚 FSP: Initiating graceful end sequence');
-          initiateGracefulEnd();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      // Timer warnings (only trigger once per threshold)
+      if (prev > 300 && remainingSeconds <= 300) {
+        showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+      }
+      if (prev > 120 && remainingSeconds <= 120) {
+        showTimerWarning('2 Minuten verbleibend', 'orange', false);
+      }
+      if (prev > 60 && remainingSeconds <= 60) {
+        showTimerWarning('Nur noch 1 Minute!', 'red', false);
+      }
+      if (prev > 30 && remainingSeconds <= 30) {
+        showTimerWarning('30 Sekunden verbleibend', 'red', true);
+      }
+      if (prev > 10 && remainingSeconds <= 10) {
+        showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+      }
+    }, 100); // Check every 100ms for high accuracy
   };
 
   // Mark simulation as used at 10-minute mark with server-side validation
@@ -709,6 +722,7 @@ export default function FSPSimulationScreen() {
     // Reset all state variables
     setTimerActive(false);
     setTimeRemaining(20 * 60);
+    setTimerEndTime(0);
     setSessionToken(null);
     setUsageMarked(false);
 
@@ -771,6 +785,7 @@ export default function FSPSimulationScreen() {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem('sim_start_time_fsp');
+        localStorage.removeItem('sim_end_time_fsp');
         localStorage.removeItem('sim_session_token_fsp');
         localStorage.removeItem('sim_duration_ms_fsp');
         localStorage.removeItem('sim_user_id_fsp');
@@ -896,6 +911,7 @@ export default function FSPSimulationScreen() {
       if (typeof window === 'undefined' || !window.localStorage) return;
 
       const startTime = localStorage.getItem('sim_start_time_fsp');
+      const endTime = localStorage.getItem('sim_end_time_fsp');
       const savedSessionToken = localStorage.getItem('sim_session_token_fsp');
       const durationMs = localStorage.getItem('sim_duration_ms_fsp');
 
@@ -907,10 +923,18 @@ export default function FSPSimulationScreen() {
 
       console.log('🔍 FSP: Found existing simulation in localStorage');
 
-      const startTimeInt = parseInt(startTime);
-      const durationInt = parseInt(durationMs);
-      const elapsed = Date.now() - startTimeInt;
-      const remaining = durationInt - elapsed;
+      // Calculate end time
+      let calculatedEndTime: number;
+      if (endTime) {
+        calculatedEndTime = parseInt(endTime);
+      } else {
+        const startTimeInt = parseInt(startTime);
+        const durationInt = parseInt(durationMs);
+        calculatedEndTime = startTimeInt + durationInt;
+      }
+
+      // Calculate remaining time
+      const remaining = calculatedEndTime - Date.now();
 
       // Check if time has already expired
       if (remaining <= 0) {
@@ -943,6 +967,7 @@ export default function FSPSimulationScreen() {
       if (typeof window === 'undefined' || !window.localStorage) return;
 
       const startTime = localStorage.getItem('sim_start_time_fsp');
+      const savedEndTime = localStorage.getItem('sim_end_time_fsp');
       const savedSessionToken = localStorage.getItem('sim_session_token_fsp');
       const durationMs = localStorage.getItem('sim_duration_ms_fsp');
 
@@ -954,11 +979,18 @@ export default function FSPSimulationScreen() {
 
       console.log('▶️ FSP: Resuming simulation');
 
-      // Calculate actual remaining time
-      const startTimeInt = parseInt(startTime);
-      const durationInt = parseInt(durationMs);
-      const elapsed = Date.now() - startTimeInt;
-      const remaining = durationInt - elapsed;
+      // Use saved end time if available, otherwise calculate
+      let endTime: number;
+      if (savedEndTime) {
+        endTime = parseInt(savedEndTime);
+      } else {
+        const startTimeInt = parseInt(startTime);
+        const durationInt = parseInt(durationMs);
+        endTime = startTimeInt + durationInt;
+      }
+
+      // Calculate remaining time
+      const remaining = endTime - Date.now();
 
       if (remaining <= 0) {
         setShowResumeModal(false);
@@ -970,52 +1002,59 @@ export default function FSPSimulationScreen() {
       // Set timer state
       setTimerActive(true);
       setTimeRemaining(Math.floor(remaining / 1000));
+      setTimerEndTime(endTime); // Set absolute end time
       setSessionToken(savedSessionToken);
 
       // Start heartbeat monitoring for resumed session
       startHeartbeat(savedSessionToken);
 
-      // Start timer interval for resumed session
+      // Start timer interval for resumed session with absolute time calculation
       timerInterval.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          // Timer warning triggers
-          if (prev === 300) {
-            showTimerWarning('5 Minuten verbleibend', 'yellow', false);
-          }
+        // Calculate remaining time based on absolute end time
+        const remaining = endTime - Date.now();
+        const remainingSeconds = Math.floor(remaining / 1000);
 
-          if (prev === 120) {
-            showTimerWarning('2 Minuten verbleibend', 'orange', false);
-          }
+        // Get previous value for comparison
+        const prev = timeRemaining;
 
-          if (prev === 60) {
-            showTimerWarning('Nur noch 1 Minute!', 'red', false);
-          }
+        // Update time remaining
+        if (remaining <= 0) {
+          setTimeRemaining(0);
+          clearInterval(timerInterval.current!);
+          timerInterval.current = null;
+          console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
+          console.log('🔚 FSP: Initiating graceful end sequence');
+          initiateGracefulEnd();
+          return;
+        } else {
+          setTimeRemaining(remainingSeconds);
+        }
 
-          if (prev === 30) {
-            showTimerWarning('30 Sekunden verbleibend', 'red', true);
-          }
+        // Mark as used at 10-minute mark (only trigger once)
+        if (prev > 600 && remainingSeconds <= 600 && !usageMarked && savedSessionToken) {
+          const clientElapsed = (20 * 60) - remainingSeconds;
+          console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          markSimulationAsUsed(clientElapsed);
+        }
 
-          if (prev === 10) {
-            showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
-          }
-
-          // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
-          if (prev <= 600 && prev >= 595 && !usageMarked && savedSessionToken) {
-            const clientElapsed = (20 * 60) - prev;
-            console.log('🔍 DEBUG: 10-minute mark reached (timer at', prev, 'seconds), marking as used');
-            console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-            markSimulationAsUsed(clientElapsed);
-          }
-
-          if (prev <= 1) {
-            console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
-            console.log('🔚 FSP: Initiating graceful end sequence');
-            initiateGracefulEnd();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        // Timer warnings (only trigger once per threshold)
+        if (prev > 300 && remainingSeconds <= 300) {
+          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+        }
+        if (prev > 120 && remainingSeconds <= 120) {
+          showTimerWarning('2 Minuten verbleibend', 'orange', false);
+        }
+        if (prev > 60 && remainingSeconds <= 60) {
+          showTimerWarning('Nur noch 1 Minute!', 'red', false);
+        }
+        if (prev > 30 && remainingSeconds <= 30) {
+          showTimerWarning('30 Sekunden verbleibend', 'red', true);
+        }
+        if (prev > 10 && remainingSeconds <= 10) {
+          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        }
+      }, 100); // Check every 100ms for high accuracy
 
       // Hide resume modal
       setShowResumeModal(false);
