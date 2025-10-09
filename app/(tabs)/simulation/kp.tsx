@@ -23,6 +23,12 @@ export default function KPSimulationScreen() {
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
+  // Timer warning system state
+  const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+  const [warningMessageText, setWarningMessageText] = useState('');
+  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
@@ -224,7 +230,28 @@ export default function KPSimulationScreen() {
         if (prev % 10 === 0) {
           console.log('⏱️ DEBUG: Timer at', Math.floor(prev / 60) + ':' + String(prev % 60).padStart(2, '0'), `(${prev} seconds)`);
         }
-        
+
+        // Timer warning triggers
+        if (prev === 300) {
+          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+        }
+
+        if (prev === 120) {
+          showTimerWarning('2 Minuten verbleibend', 'orange', false);
+        }
+
+        if (prev === 60) {
+          showTimerWarning('Nur noch 1 Minute!', 'red', false);
+        }
+
+        if (prev === 30) {
+          showTimerWarning('30 Sekunden verbleibend', 'red', true);
+        }
+
+        if (prev === 10) {
+          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        }
+
         // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
         if (prev <= 600 && prev >= 595 && !usageMarked && sessionToken) { // Around 10:00 remaining = 10 minutes elapsed
           const clientElapsed = (20 * 60) - prev; // Calculate client-side elapsed time
@@ -232,7 +259,7 @@ export default function KPSimulationScreen() {
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           markSimulationAsUsed(clientElapsed);
         }
-        
+
         if (prev <= 1) {
           console.log('⏰ KP: Timer finished - 20 minutes elapsed');
           console.log('🔚 KP: Automatically ending Voiceflow conversation');
@@ -537,31 +564,64 @@ export default function KPSimulationScreen() {
   // Reset simulation state for restart
   const resetSimulationState = () => {
     console.log('🔄 KP: Resetting simulation state for restart');
-    
+
     // Reset all state variables
     setTimerActive(false);
     setTimeRemaining(20 * 60);
     setSessionToken(null);
     setUsageMarked(false);
-    
+
+    // Reset timer warning states
+    setTimerWarningLevel('normal');
+    setShowWarningMessage(false);
+    setWarningMessageText('');
+
     // Clear any existing intervals
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
     }
-    
+
     if (heartbeatInterval.current) {
       clearInterval(heartbeatInterval.current);
       heartbeatInterval.current = null;
     }
-    
+
+    // Clear warning timeout
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+
     // Reset getUserMedia override if it exists
     if ((window as any).kpOriginalGetUserMedia && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia = (window as any).kpOriginalGetUserMedia;
       delete (window as any).kpOriginalGetUserMedia;
     }
-    
+
     console.log('✅ KP: Simulation state reset completed');
+  };
+
+  // Show timer warning with color and message
+  const showTimerWarning = (message: string, level: 'yellow' | 'orange' | 'red', isPulsing: boolean) => {
+    console.log(`⚠️ Timer warning: ${message} (${level})`);
+
+    // Update warning level
+    setTimerWarningLevel(level);
+
+    // Show warning message
+    setWarningMessageText(message);
+    setShowWarningMessage(true);
+
+    // Clear any existing warning timeout
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+    }
+
+    // Hide warning message after 3 seconds
+    warningTimeoutRef.current = setTimeout(() => {
+      setShowWarningMessage(false);
+    }, 3000);
   };
 
   // Format time for display
@@ -811,11 +871,27 @@ export default function KPSimulationScreen() {
 
       {/* Timer display - only show when active */}
       {timerActive && (
-        <View style={styles.timerContainer}>
-          <Clock size={16} color="white" />
-          <Text style={styles.timerText}>
+        <View style={[
+          styles.timerContainer,
+          timerWarningLevel === 'normal' && styles.timerNormal,
+          timerWarningLevel === 'yellow' && styles.timerWarningYellow,
+          timerWarningLevel === 'orange' && styles.timerWarningOrange,
+          timerWarningLevel === 'red' && styles.timerWarningRed
+        ]}>
+          <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
+          <Text style={[
+            styles.timerText,
+            timerWarningLevel === 'red' && styles.timerTextRed
+          ]}>
             Simulation läuft: {formatTime(timeRemaining)}
           </Text>
+        </View>
+      )}
+
+      {/* Warning message notification */}
+      {showWarningMessage && (
+        <View style={styles.warningNotification}>
+          <Text style={styles.warningNotificationText}>{warningMessageText}</Text>
         </View>
       )}
 
@@ -878,16 +954,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#10b981',
     marginHorizontal: 20,
     marginVertical: 10,
     padding: 12,
     borderRadius: 12,
   },
   timerText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Timer warning level styles
+  timerNormal: {
+    backgroundColor: '#F8F3E8',
+    borderWidth: 0,
+  },
+  timerWarningYellow: {
+    backgroundColor: '#FFF4E6',
+    borderWidth: 2,
+    borderColor: '#FFD93D',
+  },
+  timerWarningOrange: {
+    backgroundColor: '#FFE8D6',
+    borderWidth: 2,
+    borderColor: '#FF9A3D',
+  },
+  timerWarningRed: {
+    backgroundColor: '#B15740',
+    borderWidth: 2,
+    borderColor: '#8B2E1F',
+  },
+  timerTextRed: {
+    color: 'white',
+  },
+  // Warning notification
+  warningNotification: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    right: 20,
+    backgroundColor: '#B15740',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: 'rgba(177, 87, 64, 0.3)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 10,
+    zIndex: 9999,
+  },
+  warningNotificationText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   content: {
     flex: 1,
