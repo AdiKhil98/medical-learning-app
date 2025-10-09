@@ -191,9 +191,9 @@ export default function KPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive);
-    if (timerActive) {
-      console.log('🔍 DEBUG: Timer already active, returning early');
+    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
+    if (timerActiveRef.current) {
+      console.log('🔍 DEBUG: Timer already active (via ref), returning early');
       return; // Already running
     }
 

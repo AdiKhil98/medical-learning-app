@@ -190,8 +190,12 @@ export default function FSPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    if (timerActive) return; // Already running
-    
+    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
+    if (timerActiveRef.current) {
+      console.log('🔍 DEBUG: Timer already active (via ref), returning early');
+      return; // Already running
+    }
+
     console.log('⏰ FSP: Starting 20-minute simulation timer');
     
     try {
