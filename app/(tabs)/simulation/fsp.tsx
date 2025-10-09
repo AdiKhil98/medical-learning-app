@@ -997,22 +997,35 @@ export default function FSPSimulationScreen() {
 
   // Cancel readiness
   const cancelReadiness = () => {
-    Alert.alert(
-      'Simulation verlassen',
-      'Möchten Sie die Simulation wirklich verlassen?',
-      [
-        { text: 'Nein', style: 'cancel' },
-        {
-          text: 'Ja',
-          style: 'destructive',
-          onPress: () => {
-            setShowReadinessModal(false);
-            resetChecklist();
-            router.back();
+    console.log('↩️ FSP: Closing readiness modal');
+
+    // On web, use window.confirm for confirmation dialog
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Möchten Sie die Simulation wirklich verlassen?');
+      if (confirmed) {
+        setShowReadinessModal(false);
+        resetChecklist();
+        router.back();
+      }
+    } else {
+      // On mobile, use Alert.alert
+      Alert.alert(
+        'Simulation verlassen',
+        'Möchten Sie die Simulation wirklich verlassen?',
+        [
+          { text: 'Nein', style: 'cancel' },
+          {
+            text: 'Ja',
+            style: 'destructive',
+            onPress: () => {
+              setShowReadinessModal(false);
+              resetChecklist();
+              router.back();
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   // Check for existing simulation on mount
