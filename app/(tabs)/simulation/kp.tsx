@@ -20,6 +20,7 @@ export default function KPSimulationScreen() {
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
@@ -273,6 +274,9 @@ export default function KPSimulationScreen() {
     }
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
+    // Reset previous time ref
+    previousTimeRef.current = 20 * 60;
+
     // Use 100ms interval for better accuracy
     timerInterval.current = setInterval(() => {
       // Calculate remaining time based on absolute end time (use closure variable, not state)
@@ -280,11 +284,12 @@ export default function KPSimulationScreen() {
       const remainingSeconds = Math.floor(remaining / 1000);
 
       // Get previous value for comparison
-      const prev = timeRemaining;
+      const prev = previousTimeRef.current;
 
       // Update time remaining
       if (remaining <= 0) {
         setTimeRemaining(0);
+        previousTimeRef.current = 0;
         clearInterval(timerInterval.current!);
         timerInterval.current = null;
         console.log('⏰ KP: Timer finished - 20 minutes elapsed');
@@ -293,6 +298,7 @@ export default function KPSimulationScreen() {
         return;
       } else {
         setTimeRemaining(remainingSeconds);
+        previousTimeRef.current = remainingSeconds;
       }
 
       // Log timer value every 10 seconds (only when value changes)
@@ -1009,9 +1015,11 @@ export default function KPSimulationScreen() {
 
       // Set timer state
       setTimerActive(true);
-      setTimeRemaining(Math.floor(remaining / 1000));
+      const remainingSeconds = Math.floor(remaining / 1000);
+      setTimeRemaining(remainingSeconds);
       setTimerEndTime(endTime); // Set absolute end time
       setSessionToken(savedSessionToken);
+      previousTimeRef.current = remainingSeconds; // Initialize ref for resume
 
       // Start security heartbeat for resumed session
       if (savedSessionToken) {
@@ -1032,11 +1040,12 @@ export default function KPSimulationScreen() {
         const remainingSeconds = Math.floor(remaining / 1000);
 
         // Get previous value for comparison
-        const prev = timeRemaining;
+        const prev = previousTimeRef.current;
 
         // Update time remaining
         if (remaining <= 0) {
           setTimeRemaining(0);
+          previousTimeRef.current = 0;
           clearInterval(timerInterval.current!);
           timerInterval.current = null;
           console.log('⏰ KP: Timer finished - 20 minutes elapsed');
@@ -1045,6 +1054,7 @@ export default function KPSimulationScreen() {
           return;
         } else {
           setTimeRemaining(remainingSeconds);
+          previousTimeRef.current = remainingSeconds;
         }
 
         // Log timer value every 10 seconds (only when value changes)
