@@ -36,6 +36,15 @@ export default function KPSimulationScreen() {
   const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
 
+  // Resume simulation state
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
+
+  // Check for existing simulation on mount
+  useEffect(() => {
+    checkExistingSimulation();
+  }, []);
+
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
@@ -207,7 +216,24 @@ export default function KPSimulationScreen() {
       console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
       setSessionToken(result.sessionToken || null);
       setUsageMarked(false);
-      
+
+      // Save simulation state to localStorage
+      if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const startTime = Date.now();
+          const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
+          localStorage.setItem('sim_start_time_kp', startTime.toString());
+          localStorage.setItem('sim_session_token_kp', result.sessionToken);
+          localStorage.setItem('sim_duration_ms_kp', duration.toString());
+          if (user?.id) {
+            localStorage.setItem('sim_user_id_kp', user.id);
+          }
+          console.log('💾 KP: Saved simulation state to localStorage');
+        } catch (error) {
+          console.error('❌ KP: Error saving to localStorage:', error);
+        }
+      }
+
     } catch (error) {
       console.error('❌ KP: Failed to start simulation tracking:', error);
       // Continue with timer anyway for UX, but log the error
@@ -402,6 +428,9 @@ export default function KPSimulationScreen() {
       }
     }
     
+    // Clear localStorage
+    clearSimulationStorage();
+
     // Reset simulation state to allow restart
     resetSimulationState();
 
@@ -723,7 +752,211 @@ export default function KPSimulationScreen() {
       delete (window as any).kpOriginalGetUserMedia;
     }
 
+    // Clear localStorage
+    clearSimulationStorage();
+
+    // Reset resume modal states
+    setShowResumeModal(false);
+    setResumeTimeRemaining(0);
+
     console.log('✅ KP: Simulation state reset completed');
+  };
+
+  // Clear simulation localStorage
+  const clearSimulationStorage = () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('sim_start_time_kp');
+        localStorage.removeItem('sim_session_token_kp');
+        localStorage.removeItem('sim_duration_ms_kp');
+        localStorage.removeItem('sim_user_id_kp');
+        console.log('✅ KP: Cleared simulation localStorage');
+      }
+    } catch (error) {
+      console.error('❌ KP: Error clearing localStorage:', error);
+    }
+  };
+
+  // Show expired simulation message
+  const showExpiredSimulationMessage = () => {
+    Alert.alert(
+      'Simulation abgelaufen',
+      'Ihre vorherige Simulation ist abgelaufen.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  // Format time display for resume modal
+  const formatTimeDisplay = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Check for existing simulation on mount
+  const checkExistingSimulation = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return;
+
+      const startTime = localStorage.getItem('sim_start_time_kp');
+      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
+      const durationMs = localStorage.getItem('sim_duration_ms_kp');
+
+      // If no saved simulation, return
+      if (!startTime || !savedSessionToken || !durationMs) {
+        return;
+      }
+
+      console.log('🔍 KP: Found existing simulation in localStorage');
+
+      const startTimeInt = parseInt(startTime);
+      const durationInt = parseInt(durationMs);
+      const elapsed = Date.now() - startTimeInt;
+      const remaining = durationInt - elapsed;
+
+      // Check if time has already expired
+      if (remaining <= 0) {
+        console.log('⏰ KP: Saved simulation has expired');
+        clearSimulationStorage();
+        showExpiredSimulationMessage();
+        return;
+      }
+
+      // Time still remaining, offer to resume
+      const remainingSeconds = Math.floor(remaining / 1000);
+      console.log(`✅ KP: Can resume simulation with ${remainingSeconds}s remaining`);
+      setResumeTimeRemaining(remainingSeconds);
+      setShowResumeModal(true);
+
+    } catch (error) {
+      console.error('❌ KP: Error checking existing simulation:', error);
+      clearSimulationStorage();
+    }
+  };
+
+  // Resume simulation from localStorage
+  const resumeSimulation = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return;
+
+      const startTime = localStorage.getItem('sim_start_time_kp');
+      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
+      const durationMs = localStorage.getItem('sim_duration_ms_kp');
+
+      if (!startTime || !savedSessionToken || !durationMs) {
+        setShowResumeModal(false);
+        clearSimulationStorage();
+        return;
+      }
+
+      console.log('▶️ KP: Resuming simulation');
+
+      // Calculate actual remaining time
+      const startTimeInt = parseInt(startTime);
+      const durationInt = parseInt(durationMs);
+      const elapsed = Date.now() - startTimeInt;
+      const remaining = durationInt - elapsed;
+
+      if (remaining <= 0) {
+        setShowResumeModal(false);
+        clearSimulationStorage();
+        showExpiredSimulationMessage();
+        return;
+      }
+
+      // Set timer state
+      setTimerActive(true);
+      setTimeRemaining(Math.floor(remaining / 1000));
+      setSessionToken(savedSessionToken);
+
+      // Start security heartbeat for resumed session
+      if (savedSessionToken) {
+        heartbeatInterval.current = setInterval(async () => {
+          try {
+            await simulationTracker.sendHeartbeat(savedSessionToken);
+            console.log('💓 DEBUG: Heartbeat sent');
+          } catch (error) {
+            console.error('❌ DEBUG: Heartbeat failed:', error);
+          }
+        }, 60000); // Every 60 seconds
+      }
+
+      // Start timer interval for resumed session
+      timerInterval.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          // Log timer value every 10 seconds for debugging
+          if (prev % 10 === 0) {
+            console.log('⏱️ DEBUG: Timer at', Math.floor(prev / 60) + ':' + String(prev % 60).padStart(2, '0'), `(${prev} seconds)`);
+          }
+
+          // Timer warning triggers
+          if (prev === 300) {
+            showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+          }
+
+          if (prev === 120) {
+            showTimerWarning('2 Minuten verbleibend', 'orange', false);
+          }
+
+          if (prev === 60) {
+            showTimerWarning('Nur noch 1 Minute!', 'red', false);
+          }
+
+          if (prev === 30) {
+            showTimerWarning('30 Sekunden verbleibend', 'red', true);
+          }
+
+          if (prev === 10) {
+            showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+          }
+
+          // Mark as used at 10-minute mark (when timer shows 10:00 remaining)
+          if (prev <= 600 && prev >= 595 && !usageMarked && savedSessionToken) {
+            const clientElapsed = (20 * 60) - prev;
+            console.log('🔍 DEBUG: 10-minute mark reached (timer at', prev, 'seconds), marking as used');
+            console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+            markSimulationAsUsed(clientElapsed);
+          }
+
+          if (prev <= 1) {
+            console.log('⏰ KP: Timer finished - 20 minutes elapsed');
+            console.log('🔚 KP: Initiating graceful end sequence');
+            initiateGracefulEnd();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Hide resume modal
+      setShowResumeModal(false);
+
+      console.log(`✅ KP: Resumed with ${Math.floor(remaining / 1000)}s remaining`);
+
+    } catch (error) {
+      console.error('❌ KP: Error resuming simulation:', error);
+      setShowResumeModal(false);
+      clearSimulationStorage();
+    }
+  };
+
+  // Decline to resume simulation
+  const declineResume = async () => {
+    console.log('❌ KP: User declined to resume simulation');
+    setShowResumeModal(false);
+
+    try {
+      // Mark session as abandoned in database
+      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
+      if (savedSessionToken) {
+        await simulationTracker.updateSimulationStatus(savedSessionToken, 'aborted', 0);
+        console.log('📊 KP: Marked session as abandoned');
+      }
+    } catch (error) {
+      console.error('❌ KP: Error marking session as abandoned:', error);
+    }
+
+    clearSimulationStorage();
   };
 
   // Show timer warning with color and message
@@ -1030,6 +1263,34 @@ export default function KPSimulationScreen() {
           {/* Widget loads here automatically */}
         </View>
       </View>
+
+      {/* Resume Simulation Modal */}
+      {showResumeModal && (
+        <View style={styles.resumeOverlay}>
+          <View style={styles.resumeModal}>
+            <Text style={styles.resumeIcon}>⏰</Text>
+            <Text style={styles.resumeTitle}>Simulation fortsetzen?</Text>
+            <Text style={styles.resumeMessage}>
+              Sie haben eine laufende Simulation.
+            </Text>
+            <View style={styles.timeRemainingBox}>
+              <Text style={styles.timeLabel}>Verbleibende Zeit:</Text>
+              <Text style={styles.timeValue}>{formatTimeDisplay(resumeTimeRemaining)}</Text>
+            </View>
+            <Text style={styles.resumeWarning}>
+              Wenn Sie nicht fortsetzen, wird die Simulation abgebrochen.
+            </Text>
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={styles.primaryButton} onPress={resumeSimulation}>
+                <Text style={styles.primaryButtonText}>Fortsetzen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryButton} onPress={declineResume}>
+                <Text style={styles.secondaryButtonText}>Abbrechen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Final Warning Modal */}
       {showFinalWarningModal && (
@@ -1365,5 +1626,78 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Resume Modal Styles
+  resumeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10001,
+  },
+  resumeModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 40,
+    maxWidth: 480,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 60,
+    elevation: 10,
+  },
+  resumeIcon: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  resumeTitle: {
+    color: '#B15740',
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  resumeMessage: {
+    color: '#333333',
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  timeRemainingBox: {
+    backgroundColor: '#F8F3E8',
+    borderWidth: 2,
+    borderColor: '#B15740',
+    borderRadius: 12,
+    padding: 20,
+    marginVertical: 24,
+    width: '100%',
+    alignItems: 'center',
+  },
+  timeLabel: {
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  timeValue: {
+    color: '#B15740',
+    fontSize: 36,
+    fontWeight: '700',
+  },
+  resumeWarning: {
+    color: '#999999',
+    fontSize: 13,
+    marginBottom: 24,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
