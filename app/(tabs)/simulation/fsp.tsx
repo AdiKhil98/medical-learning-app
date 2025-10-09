@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Mic, Clock, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1401,17 +1401,25 @@ export default function FSPSimulationScreen() {
         </View>
       )}
 
-      <View style={styles.content}>
-        {/* Inline Instructions Panel */}
-        <View style={styles.instructionsContainer}>
-          <InlineInstructions tabs={fspInstructions} />
-        </View>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+      >
+        <View style={styles.content}>
+          {/* Inline Instructions Panel */}
+          <View style={styles.instructionsContainer}>
+            <InlineInstructions tabs={fspInstructions} />
+          </View>
 
-        {/* Widget Area */}
-        <View style={styles.widgetArea}>
-          {/* Widget loads here automatically */}
+          {/* Widget Area */}
+          <View style={styles.widgetArea}>
+            {/* Widget loads here automatically */}
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Resume Simulation Modal */}
       {showResumeModal && (
@@ -1681,13 +1689,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  content: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
     flexDirection: 'column',
+    paddingBottom: 20,
   },
   instructionsContainer: {
-    flex: 2, // Takes up 2/3 of available space
-    minHeight: 300,
+    minHeight: 400,
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space
