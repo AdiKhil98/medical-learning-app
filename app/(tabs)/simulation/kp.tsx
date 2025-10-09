@@ -17,6 +17,7 @@ export default function KPSimulationScreen() {
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
+  const timerActiveRef = useRef(false); // Ref to track timer state for closures
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -104,12 +105,14 @@ export default function KPSimulationScreen() {
           try {
             const stream = await originalGetUserMedia.call(this, constraints);
 
-            // Start timer when voice call begins
-            if (!timerActive) {
+            // Start timer when voice call begins (use ref to avoid closure issues)
+            if (!timerActiveRef.current) {
               console.log('🎯 KP: Audio stream granted - voice call starting!');
               console.log('⏰ KP: Starting 20-minute timer due to voice call');
               console.log('🔍 DEBUG: About to call startSimulationTimer()');
               startSimulationTimer();
+            } else {
+              console.log('⏰ KP: Timer already active, not starting again');
             }
 
             // Monitor stream tracks for when they end
@@ -254,6 +257,7 @@ export default function KPSimulationScreen() {
 
     console.log('🔍 DEBUG: About to set timer active and start interval');
     setTimerActive(true);
+    timerActiveRef.current = true; // Update ref for closures
     setTimeRemaining(20 * 60); // Reset to 20 minutes
 
     // Calculate end time (in case the try block failed)
@@ -608,6 +612,7 @@ export default function KPSimulationScreen() {
 
       // Update timer state
       setTimerActive(false);
+      timerActiveRef.current = false;
 
       // Give Voiceflow 2 seconds to flush any pending messages
       setTimeout(async () => {
@@ -835,6 +840,7 @@ export default function KPSimulationScreen() {
 
     // Reset all state variables
     setTimerActive(false);
+    timerActiveRef.current = false;
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
     setSessionToken(null);
@@ -1020,6 +1026,7 @@ export default function KPSimulationScreen() {
 
       // Set timer state
       setTimerActive(true);
+      timerActiveRef.current = true; // Update ref for closures
       const remainingSeconds = Math.floor(remaining / 1000);
       setTimeRemaining(remainingSeconds);
       setTimerEndTime(endTime); // Set absolute end time

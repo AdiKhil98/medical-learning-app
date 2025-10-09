@@ -17,6 +17,7 @@ export default function FSPSimulationScreen() {
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = React.useState(false);
+  const timerActiveRef = useRef(false); // Ref to track timer state for closures
   const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -105,10 +106,12 @@ export default function FSPSimulationScreen() {
             const stream = await originalGetUserMedia.call(this, constraints);
 
             // Start timer when audio stream is granted
-            if (!timerActive) {
+            if (!timerActiveRef.current) {
               console.log('🎯 FSP: Audio stream granted - voice call starting!');
               console.log('⏰ FSP: Starting 20-minute timer due to voice call');
               startSimulationTimer();
+            } else {
+              console.log('⏰ FSP: Timer already active, not starting again');
             }
 
             // Monitor stream tracks for when they end
@@ -242,6 +245,7 @@ export default function FSPSimulationScreen() {
     }
 
     setTimerActive(true);
+    timerActiveRef.current = true; // Update ref for closures
     setTimeRemaining(20 * 60); // Reset to 20 minutes
     previousTimeRef.current = 20 * 60; // Initialize ref
 
@@ -591,6 +595,7 @@ export default function FSPSimulationScreen() {
     }
 
     setTimerActive(false);
+    timerActiveRef.current = false;
 
     // Give Voiceflow 2 seconds to flush any pending messages
     setTimeout(async () => {
@@ -814,6 +819,7 @@ export default function FSPSimulationScreen() {
 
     // Reset all state variables
     setTimerActive(false);
+    timerActiveRef.current = false;
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
     setSessionToken(null);
@@ -997,6 +1003,7 @@ export default function FSPSimulationScreen() {
 
       // Set timer state
       setTimerActive(true);
+      timerActiveRef.current = true; // Update ref for closures
       setTimeRemaining(Math.floor(remaining / 1000));
       setTimerEndTime(endTime); // Set absolute end time
       timerEndTimeRef.current = endTime;
