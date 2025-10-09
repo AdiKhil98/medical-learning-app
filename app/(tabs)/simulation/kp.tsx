@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1510,31 +1510,37 @@ export default function KPSimulationScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.checklistContainer}>
-              <Text style={styles.checklistIntro}>
-                Bitte bestätigen Sie folgende Punkte, bevor Sie beginnen:
-              </Text>
+            <ScrollView
+              style={styles.readinessScrollView}
+              showsVerticalScrollIndicator={true}
+              bounces={false}
+            >
+              <View style={styles.checklistContainer}>
+                <Text style={styles.checklistIntro}>
+                  Bitte bestätigen Sie folgende Punkte, bevor Sie beginnen:
+                </Text>
 
-              <View style={styles.checklistItems}>
-                {checklistItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.checklistItem}
-                    onPress={() => toggleChecklistItem(item.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-                      {item.checked && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
+                <View style={styles.checklistItems}>
+                  {checklistItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.checklistItem}
+                      onPress={() => toggleChecklistItem(item.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
+                        {item.checked && (
+                          <View style={styles.checkmark}>
+                            <Text style={styles.checkmarkText}>✓</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.itemLabel}>{item.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            </ScrollView>
 
             <View style={styles.readinessFooter}>
               <View style={styles.infoBoxReadiness}>
@@ -2190,6 +2196,10 @@ const styles = StyleSheet.create({
     shadowRadius: 80,
     elevation: 20,
     zIndex: 1,
+  },
+  readinessScrollView: {
+    flex: 0,
+    maxHeight: 400,
   },
   readinessHeader: {
     backgroundColor: '#B15740',
