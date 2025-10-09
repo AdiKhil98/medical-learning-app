@@ -1,14 +1,16 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 
 export default function RootLayout() {
   console.log('RootLayout rendering...');
-  
+  const pathname = usePathname();
+  const previousPathRef = useRef<string | null>(null);
+
   // Run global Voiceflow cleanup on app start (but not on simulation pages)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -16,7 +18,7 @@ export default function RootLayout() {
       setTimeout(() => {
         const currentPath = window.location?.pathname || '';
         const isSimulationPage = currentPath.includes('/simulation/');
-        
+
         if (!isSimulationPage) {
           console.log('🧹 Root layout cleanup - not on simulation page');
           runGlobalVoiceflowCleanup();
@@ -26,6 +28,28 @@ export default function RootLayout() {
       }, 1000);
     }
   }, []);
+
+  // Clean up Voiceflow widget when navigating away from simulation pages
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const currentPath = pathname || window.location?.pathname || '';
+      const previousPath = previousPathRef.current || '';
+
+      const wasOnSimulationPage = previousPath.includes('/simulation/kp') || previousPath.includes('/simulation/fsp');
+      const isOnSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
+
+      // If we were on a simulation page and now we're not, run cleanup
+      if (wasOnSimulationPage && !isOnSimulationPage) {
+        console.log('🔄 Navigated away from simulation page, running cleanup...');
+        setTimeout(() => {
+          runGlobalVoiceflowCleanup(true); // Force cleanup
+        }, 100);
+      }
+
+      // Update previous path
+      previousPathRef.current = currentPath;
+    }
+  }, [pathname]);
   
   return (
     <SafeAreaProvider>
