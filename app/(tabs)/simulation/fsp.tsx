@@ -1487,35 +1487,35 @@ export default function FSPSimulationScreen() {
               </TouchableOpacity>
             </View>
 
+            <View style={styles.checklistIntroContainer}>
+              <Text style={styles.checklistIntro}>
+                Bitte bestätigen Sie folgende Punkte, bevor Sie beginnen:
+              </Text>
+            </View>
+
             <ScrollView
               style={styles.readinessScrollView}
               showsVerticalScrollIndicator={true}
               bounces={false}
             >
-              <View style={styles.checklistContainer}>
-                <Text style={styles.checklistIntro}>
-                  Bitte bestätigen Sie folgende Punkte, bevor Sie beginnen:
-                </Text>
-
-                <View style={styles.checklistItems}>
-                  {checklistItems.map((item) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={styles.checklistItem}
-                      onPress={() => toggleChecklistItem(item.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-                        {item.checked && (
-                          <View style={styles.checkmark}>
-                            <Text style={styles.checkmarkText}>✓</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={styles.itemLabel}>{item.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              <View style={styles.checklistItems}>
+                {checklistItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.checklistItem}
+                    onPress={() => toggleChecklistItem(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
+                      {item.checked && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.itemLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </ScrollView>
 
@@ -2237,8 +2237,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.95)',
     margin: 0,
   },
-  checklistContainer: {
-    padding: 32,
+  checklistIntroContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 12,
   },
   checklistIntro: {
     color: '#333333',
@@ -2249,6 +2251,8 @@ const styles = StyleSheet.create({
   },
   checklistItems: {
     gap: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
   checklistItem: {
     flexDirection: 'row',
