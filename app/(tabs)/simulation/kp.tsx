@@ -2198,8 +2198,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   readinessScrollView: {
-    flex: 0,
-    maxHeight: 400,
+    flex: 1,
+    minHeight: 300,
   },
   readinessHeader: {
     backgroundColor: '#B15740',
