@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Mic, Clock, Lock } from 'lucide-react-native';
@@ -16,37 +16,37 @@ export default function FSPSimulationScreen() {
   const { user } = useAuth();
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
-  const [timerActive, setTimerActive] = React.useState(false);
+  const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
-  const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
-  const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
-  const [sessionToken, setSessionToken] = React.useState<string | null>(null);
-  const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
   // Timer warning system state
-  const [timerWarningLevel, setTimerWarningLevel] = React.useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
-  const [showWarningMessage, setShowWarningMessage] = React.useState(false);
-  const [warningMessageText, setWarningMessageText] = React.useState('');
+  const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+  const [warningMessageText, setWarningMessageText] = useState('');
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Graceful end system state
-  const [showFinalWarningModal, setShowFinalWarningModal] = React.useState(false);
-  const [finalWarningCountdown, setFinalWarningCountdown] = React.useState(10);
-  const [isGracefulShutdown, setIsGracefulShutdown] = React.useState(false);
-  const [showSimulationCompleted, setShowSimulationCompleted] = React.useState(false);
+  const [showFinalWarningModal, setShowFinalWarningModal] = useState(false);
+  const [finalWarningCountdown, setFinalWarningCountdown] = useState(10);
+  const [isGracefulShutdown, setIsGracefulShutdown] = useState(false);
+  const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Resume simulation state
-  const [showResumeModal, setShowResumeModal] = React.useState(false);
-  const [resumeTimeRemaining, setResumeTimeRemaining] = React.useState(0);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
 
   // Early completion state
-  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = React.useState(false);
-  const [earlyCompletionReason, setEarlyCompletionReason] = React.useState('');
+  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
+  const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -1380,7 +1380,6 @@ export default function FSPSimulationScreen() {
       </LinearGradient>
 
       {/* Timer display - only show when active */}
-      {console.log('🔍 FSP RENDER: timerActive =', timerActive, 'timeRemaining =', timeRemaining)}
       {timerActive && (
         <View style={styles.timerSection}>
           <View style={[
