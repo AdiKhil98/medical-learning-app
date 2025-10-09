@@ -29,6 +29,13 @@ export default function KPSimulationScreen() {
   const [warningMessageText, setWarningMessageText] = useState('');
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Graceful end system state
+  const [showFinalWarningModal, setShowFinalWarningModal] = useState(false);
+  const [finalWarningCountdown, setFinalWarningCountdown] = useState(10);
+  const [isGracefulShutdown, setIsGracefulShutdown] = useState(false);
+  const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
+  const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
+
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
@@ -262,9 +269,8 @@ export default function KPSimulationScreen() {
 
         if (prev <= 1) {
           console.log('⏰ KP: Timer finished - 20 minutes elapsed');
-          console.log('🔚 KP: Automatically ending Voiceflow conversation');
-          endVoiceflowConversation();
-          stopSimulationTimer();
+          console.log('🔚 KP: Initiating graceful end sequence');
+          initiateGracefulEnd();
           return 0;
         }
         return prev - 1;
@@ -347,7 +353,26 @@ export default function KPSimulationScreen() {
   // Stop the simulation timer
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     console.log('🛑 KP: Stopping simulation timer');
-    
+
+    // If graceful shutdown is in progress, skip voiceflow close
+    if (isGracefulShutdown && reason === 'completed') {
+      // Just update database
+      try {
+        const elapsedSeconds = (20 * 60) - timeRemaining;
+
+        if (sessionToken) {
+          await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds);
+          console.log(`📊 KP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
+        }
+      } catch (error) {
+        console.error('❌ KP: Error updating session during graceful shutdown:', error);
+      }
+
+      // Reset state
+      resetSimulationState();
+      return;
+    }
+
     // Update status in database if we have a session token
     if (sessionToken) {
       try {
@@ -387,6 +412,93 @@ export default function KPSimulationScreen() {
         setupConversationMonitoring();
       }
     }, 1000);
+  };
+
+  // Initiate graceful end sequence
+  const initiateGracefulEnd = () => {
+    console.log('🎬 KP: Starting graceful end sequence');
+
+    // Prevent timer from continuing
+    setIsGracefulShutdown(true);
+
+    // Clear existing timer interval
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+    }
+
+    // Clear heartbeat interval
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+    }
+
+    // Show 10-second warning modal
+    setShowFinalWarningModal(true);
+    setFinalWarningCountdown(10);
+
+    // Start countdown in modal
+    finalCountdownInterval.current = setInterval(() => {
+      setFinalWarningCountdown((prev) => {
+        if (prev <= 1) {
+          if (finalCountdownInterval.current) {
+            clearInterval(finalCountdownInterval.current);
+            finalCountdownInterval.current = null;
+          }
+          executeSimulationEnd();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Execute simulation end
+  const executeSimulationEnd = () => {
+    console.log('🏁 KP: Executing simulation end');
+
+    // Hide final warning modal
+    setShowFinalWarningModal(false);
+
+    // Give Voiceflow 2 seconds to flush any pending messages
+    setTimeout(() => {
+      // Close Voiceflow conversation
+      if (window.voiceflow?.chat) {
+        try {
+          console.log('🔚 KP: Closing Voiceflow widget');
+          window.voiceflow.chat.close && window.voiceflow.chat.close();
+          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+        } catch (error) {
+          console.error('❌ KP: Error closing voiceflow:', error);
+        }
+      }
+
+      // Stop timer with completed status
+      stopSimulationTimer('completed');
+
+      // Show completion modal after brief delay
+      setTimeout(() => {
+        showCompletionModal();
+      }, 500);
+    }, 2000);
+  };
+
+  // Show completion modal
+  const showCompletionModal = () => {
+    console.log('🎉 KP: Showing completion modal');
+    setShowSimulationCompleted(true);
+  };
+
+  // Navigate to progress page
+  const navigateToProgress = () => {
+    setShowSimulationCompleted(false);
+    router.push('/(tabs)/progress');
+  };
+
+  // Close completion modal
+  const closeCompletionModal = () => {
+    setShowSimulationCompleted(false);
+    resetSimulationState();
   };
 
   // Cleanup when component unmounts or user navigates away
@@ -576,6 +688,12 @@ export default function KPSimulationScreen() {
     setShowWarningMessage(false);
     setWarningMessageText('');
 
+    // Reset graceful end states
+    setShowFinalWarningModal(false);
+    setFinalWarningCountdown(10);
+    setIsGracefulShutdown(false);
+    setShowSimulationCompleted(false);
+
     // Clear any existing intervals
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
@@ -591,6 +709,12 @@ export default function KPSimulationScreen() {
     if (warningTimeoutRef.current) {
       clearTimeout(warningTimeoutRef.current);
       warningTimeoutRef.current = null;
+    }
+
+    // Clear final countdown interval
+    if (finalCountdownInterval.current) {
+      clearInterval(finalCountdownInterval.current);
+      finalCountdownInterval.current = null;
     }
 
     // Reset getUserMedia override if it exists
@@ -906,6 +1030,49 @@ export default function KPSimulationScreen() {
           {/* Widget loads here automatically */}
         </View>
       </View>
+
+      {/* Final Warning Modal */}
+      {showFinalWarningModal && (
+        <View style={styles.finalWarningOverlay}>
+          <View style={styles.finalWarningModal}>
+            <Text style={styles.warningIcon}>⏱️</Text>
+            <Text style={styles.finalWarningTitle}>Simulation endet</Text>
+            <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
+            <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
+            <View style={styles.progressDots}>
+              <View style={[styles.dot, styles.dot1]} />
+              <View style={[styles.dot, styles.dot2]} />
+              <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Completion Modal */}
+      {showSimulationCompleted && (
+        <View style={styles.completionOverlay}>
+          <View style={styles.completionModal}>
+            <View style={styles.successIcon}>
+              <Text style={styles.successIconText}>✓</Text>
+            </View>
+            <Text style={styles.completionTitle}>Simulation abgeschlossen</Text>
+            <Text style={styles.completionMessage}>
+              Ihre Simulation wurde erfolgreich beendet und wird nun ausgewertet.
+            </Text>
+            <Text style={styles.nextSteps}>
+              Die Auswertung finden Sie in Kürze im Fortschrittsbereich.
+            </Text>
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={styles.primaryButton} onPress={navigateToProgress}>
+                <Text style={styles.primaryButtonText}>Zur Auswertung</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryButton} onPress={closeCompletionModal}>
+                <Text style={styles.secondaryButtonText}>Schließen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -1023,5 +1190,180 @@ const styles = StyleSheet.create({
     flex: 1, // Takes up 1/3 of available space
     minHeight: 200,
     // This area is where the Voiceflow widget will appear
+  },
+  // Final Warning Modal Styles
+  finalWarningOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10000,
+  },
+  finalWarningModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 48,
+    maxWidth: 420,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 60,
+    elevation: 10,
+  },
+  warningIcon: {
+    fontSize: 72,
+    marginBottom: 24,
+  },
+  finalWarningTitle: {
+    color: '#B15740',
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  countdownText: {
+    fontSize: 64,
+    fontWeight: '700',
+    color: '#B15740',
+    marginVertical: 24,
+  },
+  infoText: {
+    color: '#666666',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  progressDots: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    backgroundColor: '#B15740',
+    borderRadius: 4,
+  },
+  dot1: {
+    opacity: 0.3,
+  },
+  dot2: {
+    opacity: 0.6,
+  },
+  dot3: {
+    opacity: 1,
+  },
+  // Completion Modal Styles
+  completionOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10000,
+  },
+  completionModal: {
+    backgroundColor: '#F8F3E8',
+    borderRadius: 16,
+    padding: 48,
+    maxWidth: 520,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 60,
+    elevation: 10,
+  },
+  successIcon: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#4CAF50',
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  successIconText: {
+    fontSize: 48,
+    color: 'white',
+    fontWeight: '700',
+  },
+  completionTitle: {
+    color: '#B15740',
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  completionMessage: {
+    color: '#333333',
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  nextSteps: {
+    color: '#666666',
+    fontSize: 15,
+    marginBottom: 32,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  primaryButton: {
+    backgroundColor: '#B15740',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 8,
+    minWidth: 160,
+    shadowColor: '#B15740',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#B15740',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 8,
+    minWidth: 160,
+  },
+  secondaryButtonText: {
+    color: '#B15740',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
