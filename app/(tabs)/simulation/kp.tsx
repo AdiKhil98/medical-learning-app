@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,38 +41,14 @@ export default function KPSimulationScreen() {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
 
-  // Readiness checklist state - DISABLED
-  const [showReadinessModal, setShowReadinessModal] = useState(false);
-  const [checklistItems, setChecklistItems] = useState<Array<{id: string, label: string, checked: boolean}>>([]);
-  const [allItemsChecked, setAllItemsChecked] = useState(false);
-
   // Early completion state
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
   // Check for existing simulation on mount
   useEffect(() => {
-    initializeChecklist();
     checkExistingSimulation();
   }, []);
-
-  // Add Escape key listener for readiness modal
-  useEffect(() => {
-    if (!showReadinessModal) return;
-
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        console.log('🔑 KP: Escape key pressed, closing readiness modal');
-        cancelReadiness();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscapeKey);
-
-    return () => {
-      window.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [showReadinessModal]);
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
@@ -897,10 +873,6 @@ export default function KPSimulationScreen() {
     setShowResumeModal(false);
     setResumeTimeRemaining(0);
 
-    // Reset readiness checklist
-    resetChecklist();
-    setShowReadinessModal(true);
-
     // Reset early completion state
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
@@ -941,111 +913,6 @@ export default function KPSimulationScreen() {
   };
 
   // Initialize readiness checklist
-  const initializeChecklist = () => {
-    const items = [
-      {
-        id: 'quiet_environment',
-        label: 'Ich befinde mich in einer ruhigen Umgebung',
-        checked: false
-      },
-      {
-        id: 'microphone_ready',
-        label: 'Mein Mikrofon funktioniert einwandfrei',
-        checked: false
-      },
-      {
-        id: 'time_available',
-        label: 'Ich habe 20 Minuten Zeit ohne Unterbrechungen',
-        checked: false
-      },
-      {
-        id: 'stable_connection',
-        label: 'Meine Internetverbindung ist stabil',
-        checked: false
-      },
-      {
-        id: 'device_charged',
-        label: 'Mein Gerät ist aufgeladen oder am Netzteil',
-        checked: false
-      }
-    ];
-    setChecklistItems(items);
-    updateAllItemsChecked(items);
-  };
-
-  // Toggle checklist item
-  const toggleChecklistItem = (itemId: string) => {
-    const updatedItems = checklistItems.map(item =>
-      item.id === itemId ? { ...item, checked: !item.checked } : item
-    );
-    setChecklistItems(updatedItems);
-    updateAllItemsChecked(updatedItems);
-  };
-
-  // Update all items checked status
-  const updateAllItemsChecked = (items: Array<{id: string, label: string, checked: boolean}>) => {
-    const allChecked = items.every(item => item.checked);
-    setAllItemsChecked(allChecked);
-  };
-
-  // Reset checklist
-  const resetChecklist = () => {
-    const resetItems = checklistItems.map(item => ({ ...item, checked: false }));
-    setChecklistItems(resetItems);
-    setAllItemsChecked(false);
-  };
-
-  // Handle start simulation button
-  const handleStartSimulation = () => {
-    if (!allItemsChecked) {
-      const uncheckedItems = checklistItems.filter(item => !item.checked);
-      const uncheckedLabels = uncheckedItems.map(item => `• ${item.label}`).join('\n');
-      Alert.alert(
-        'Bereitschaftsprüfung',
-        `Bitte bestätigen Sie alle Punkte:\n\n${uncheckedLabels}`,
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    console.log('✅ KP: All checklist items confirmed, hiding readiness modal');
-    setShowReadinessModal(false);
-    // Microphone detection will trigger timer start automatically
-  };
-
-  // Cancel readiness
-  const cancelReadiness = () => {
-    console.log('↩️ KP: Closing readiness modal');
-
-    // On web, use window.confirm for confirmation dialog
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Möchten Sie die Simulation wirklich verlassen?');
-      if (confirmed) {
-        setShowReadinessModal(false);
-        resetChecklist();
-        router.back();
-      }
-    } else {
-      // On mobile, use Alert.alert
-      Alert.alert(
-        'Simulation verlassen',
-        'Möchten Sie die Simulation wirklich verlassen?',
-        [
-          { text: 'Nein', style: 'cancel' },
-          {
-            text: 'Ja',
-            style: 'destructive',
-            onPress: () => {
-              setShowReadinessModal(false);
-              resetChecklist();
-              router.back();
-            }
-          }
-        ]
-      );
-    }
-  };
-
   // Check for existing simulation on mount
   const checkExistingSimulation = () => {
     try {
@@ -1056,9 +923,8 @@ export default function KPSimulationScreen() {
       const savedSessionToken = localStorage.getItem('sim_session_token_kp');
       const durationMs = localStorage.getItem('sim_duration_ms_kp');
 
-      // If no saved simulation, show readiness modal
+      // If no saved simulation, just return
       if (!startTime || !savedSessionToken || !durationMs) {
-        setShowReadinessModal(true);
         return;
       }
 
@@ -1091,14 +957,12 @@ export default function KPSimulationScreen() {
       console.log(`✅ KP: Can resume simulation with ${remainingSeconds}s remaining`);
       setResumeTimeRemaining(remainingSeconds);
 
-      // Hide readiness modal, show resume modal instead
-      setShowReadinessModal(false);
+      // Show resume modal
       setShowResumeModal(true);
 
     } catch (error) {
       console.error('❌ KP: Error checking existing simulation:', error);
       clearSimulationStorage();
-      setShowReadinessModal(true);
     }
   };
 
@@ -1482,97 +1346,6 @@ export default function KPSimulationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Readiness Modal */}
-      {showReadinessModal && (
-        <View style={styles.readinessOverlay}>
-          <TouchableOpacity
-            style={styles.overlayBackdrop}
-            activeOpacity={1}
-            onPress={cancelReadiness}
-          />
-          <View style={styles.readinessModal}>
-            <View style={styles.readinessHeader}>
-              <Text style={styles.headerIcon}>🎯</Text>
-              <Text style={styles.readinessHeaderTitle}>Simulation Vorbereitung</Text>
-              <Text style={styles.headerSubtitle}>Stellen Sie sicher, dass Sie bereit sind</Text>
-
-              {/* Close Button (X) */}
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => {
-                  console.log('🔘 KP: Close button clicked');
-                  cancelReadiness();
-                }}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.checklistIntroContainer}>
-              <Text style={styles.checklistIntro}>
-                Bitte bestätigen Sie folgende Punkte, bevor Sie beginnen:
-              </Text>
-            </View>
-
-            <ScrollView
-              style={styles.readinessScrollView}
-              showsVerticalScrollIndicator={true}
-              bounces={false}
-            >
-              <View style={styles.checklistItems}>
-                {checklistItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.checklistItem}
-                    onPress={() => toggleChecklistItem(item.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-                      {item.checked && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-
-            <View style={styles.readinessFooter}>
-              <View style={styles.infoBoxReadiness}>
-                <Text style={styles.infoIconText}>ℹ️</Text>
-                <Text style={styles.infoBoxText}>
-                  Die Simulation dauert 20 Minuten und kann nicht pausiert werden.
-                </Text>
-              </View>
-
-              <View style={styles.buttonGroupReadiness}>
-                <TouchableOpacity
-                  style={[styles.startButton, !allItemsChecked && styles.startButtonDisabled]}
-                  onPress={handleStartSimulation}
-                  disabled={!allItemsChecked}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.buttonIconText}>🎤</Text>
-                  <Text style={styles.startButtonText}>Simulation starten</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelButtonReadiness}
-                  onPress={cancelReadiness}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.cancelButtonText}>Abbrechen</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-
       {/* Header with back button and title */}
       <LinearGradient
         colors={['#4338ca', '#3730a3']}
@@ -2162,210 +1935,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  // Readiness Modal Styles
-  readinessOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10002,
-    padding: 20,
-  },
-  overlayBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-  },
-  readinessModal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    maxWidth: 600,
-    width: '100%',
-    maxHeight: '90%',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.4,
-    shadowRadius: 80,
-    elevation: 20,
-    zIndex: 1,
-  },
-  readinessScrollView: {
-    maxHeight: 300,
-  },
-  readinessHeader: {
-    backgroundColor: '#B15740',
-    padding: 32,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9999,
-    elevation: 5,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 24,
-  },
-  headerIcon: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  readinessHeaderTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.95)',
-    margin: 0,
-  },
-  checklistIntroContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 12,
-  },
-  checklistIntro: {
-    color: '#333333',
-    fontSize: 16,
-    marginBottom: 24,
-    lineHeight: 24,
-    fontWeight: '500',
-  },
-  checklistItems: {
-    gap: 16,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  checklistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    padding: 16,
-    backgroundColor: '#F8F3E8',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  checkbox: {
-    width: 28,
-    height: 28,
-    borderWidth: 3,
-    borderColor: '#B15740',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  checkboxChecked: {
-    backgroundColor: '#B15740',
-    borderColor: '#B15740',
-  },
-  checkmark: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  itemLabel: {
-    color: '#333333',
-    fontSize: 15,
-    lineHeight: 21,
-    flex: 1,
-  },
-  readinessFooter: {
-    padding: 32,
-    paddingTop: 24,
-    backgroundColor: '#FAFAFA',
-  },
-  infoBoxReadiness: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#FFF4E6',
-    borderWidth: 1,
-    borderColor: '#FFD93D',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 24,
-  },
-  infoIconText: {
-    fontSize: 20,
-  },
-  infoBoxText: {
-    color: '#666666',
-    fontSize: 14,
-    flex: 1,
-    lineHeight: 21,
-  },
-  buttonGroupReadiness: {
-    gap: 12,
-  },
-  startButton: {
-    backgroundColor: '#B15740',
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    shadowColor: 'rgba(177, 87, 64, 0.3)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 6,
-  },
-  startButtonDisabled: {
-    backgroundColor: '#CCCCCC',
-    shadowOpacity: 0,
-    opacity: 0.6,
-  },
-  buttonIconText: {
-    fontSize: 24,
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  cancelButtonReadiness: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#CCCCCC',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    color: '#666666',
-    fontSize: 16,
-    fontWeight: '600',
   },
   // Early Completion Styles
   timerSection: {
