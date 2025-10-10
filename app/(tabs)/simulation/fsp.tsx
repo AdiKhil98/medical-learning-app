@@ -501,7 +501,7 @@ export default function FSPSimulationScreen() {
           finalStatus = 'completed';
         } else if (reason === 'aborted') {
           // If aborted, check if it was before 10-minute mark
-          if (!usageMarked) {
+          if (!usageMarked && elapsedSeconds < 600) {
             finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
             console.log('📊 FSP: Marking as incomplete - ended before 10-minute mark');
 
@@ -510,7 +510,7 @@ export default function FSPSimulationScreen() {
             resetOptimisticCount();
           } else {
             finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 FSP: Marking as aborted - ended after 10-minute mark');
+            console.log('📊 FSP: Marking as aborted - ended after 10-minute mark (or usage already recorded)');
           }
         }
         
@@ -695,9 +695,11 @@ export default function FSPSimulationScreen() {
           console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
           // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-          if (!usageMarked) {
+          if (!usageMarked && elapsedSeconds < 600) {
             console.log('🔄 FSP: Early completion before 10-minute mark - resetting optimistic count');
             resetOptimisticCount();
+          } else if (elapsedSeconds >= 600) {
+            console.log('✅ FSP: Simulation reached 10-minute threshold - counter already deducted, no reset needed');
           }
         } catch (error) {
           console.error('❌ FSP: Error updating early completion status:', error);

@@ -498,7 +498,7 @@ export default function KPSimulationScreen() {
           finalStatus = 'completed';
         } else if (reason === 'aborted') {
           // If aborted, check if it was before 10-minute mark
-          if (!usageMarked) {
+          if (!usageMarked && elapsedSeconds < 600) {
             finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
             console.log('📊 KP: Marking as incomplete - ended before 10-minute mark');
 
@@ -507,7 +507,7 @@ export default function KPSimulationScreen() {
             resetOptimisticCount();
           } else {
             finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 KP: Marking as aborted - ended after 10-minute mark');
+            console.log('📊 KP: Marking as aborted - ended after 10-minute mark (or usage already recorded)');
           }
         }
         
@@ -694,9 +694,11 @@ export default function KPSimulationScreen() {
             );
 
             // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-            if (!usageMarked) {
+            if (!usageMarked && elapsedSeconds < 600) {
               console.log('🔄 KP: Early completion before 10-minute mark - resetting optimistic count');
               resetOptimisticCount();
+            } else if (elapsedSeconds >= 600) {
+              console.log('✅ KP: Simulation reached 10-minute threshold - counter already deducted, no reset needed');
             }
           }
         } catch (error) {
