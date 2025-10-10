@@ -501,6 +501,10 @@ export default function KPSimulationScreen() {
           if (!usageMarked) {
             finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
             console.log('📊 KP: Marking as incomplete - ended before 10-minute mark');
+
+            // Reset optimistic counter since simulation ended before being charged
+            console.log('🔄 KP: Resetting optimistic count - simulation ended before being charged');
+            resetOptimisticCount();
           } else {
             finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
             console.log('📊 KP: Marking as aborted - ended after 10-minute mark');
@@ -688,6 +692,12 @@ export default function KPSimulationScreen() {
                 completion_reason: earlyCompletionReason || 'user_finished_early'
               }
             );
+
+            // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
+            if (!usageMarked) {
+              console.log('🔄 KP: Early completion before 10-minute mark - resetting optimistic count');
+              resetOptimisticCount();
+            }
           }
         } catch (error) {
           console.error('❌ KP: Error updating session for early completion:', error);
