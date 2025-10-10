@@ -14,6 +14,10 @@ export const useSubscription = (userId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Optimistic counter state
+  const [optimisticDeduction, setOptimisticDeduction] = useState<number>(0);
+  const [hasOptimisticState, setHasOptimisticState] = useState<boolean>(false);
+
   /**
    * Check if user can start a simulation
    */
@@ -134,6 +138,11 @@ export const useSubscription = (userId: string | undefined) => {
 
     const { subscriptionTier, simulationsUsed, simulationLimit, message } = subscriptionStatus;
 
+    // Calculate display count (optimistic if active, actual otherwise)
+    const displayUsed = hasOptimisticState
+      ? simulationsUsed + optimisticDeduction
+      : simulationsUsed;
+
     // Format display text
     let planName = 'Free Plan';
     let usageText = '';
@@ -141,18 +150,18 @@ export const useSubscription = (userId: string | undefined) => {
     switch (subscriptionTier) {
       case 'basis':
         planName = 'Basis-Plan';
-        usageText = `${simulationsUsed}/${simulationLimit} simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} simulations used`;
         break;
       case 'profi':
         planName = 'Profi-Plan';
-        usageText = `${simulationsUsed}/${simulationLimit} simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} simulations used`;
         break;
       case 'unlimited':
         planName = 'Unlimited-Plan';
-        usageText = `${simulationsUsed} simulations used`;
+        usageText = `${displayUsed} simulations used`;
         break;
       default:
-        usageText = `${simulationsUsed}/${simulationLimit} free simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} free simulations used`;
     }
 
     return {
@@ -162,7 +171,29 @@ export const useSubscription = (userId: string | undefined) => {
       canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis',
       isUnlimited: subscriptionTier === 'unlimited'
     };
-  }, [subscriptionStatus]);
+  }, [subscriptionStatus, hasOptimisticState, optimisticDeduction]);
+
+  /**
+   * Apply optimistic deduction (call when simulation STARTS)
+   * Shows immediate feedback while backend handles actual deduction at 10-min mark
+   */
+  const applyOptimisticDeduction = useCallback(() => {
+    console.log('🎯 Applying optimistic deduction to counter...');
+    setOptimisticDeduction(1);
+    setHasOptimisticState(true);
+  }, []);
+
+  /**
+   * Reset optimistic count to show actual backend count
+   * Call this on: page refresh, simulation completion, or when returning to dashboard
+   */
+  const resetOptimisticCount = useCallback(() => {
+    console.log('🔄 Resetting to actual backend count...');
+    setOptimisticDeduction(0);
+    setHasOptimisticState(false);
+    // Re-fetch actual count from backend
+    checkAccess();
+  }, [checkAccess]);
 
   // Check access on mount and when userId changes
   useEffect(() => {
@@ -178,6 +209,9 @@ export const useSubscription = (userId: string | undefined) => {
     checkAccess,
     recordUsage,
     getSubscriptionInfo,
+    // Optimistic counter functions
+    applyOptimisticDeduction,
+    resetOptimisticCount,
     // Helper properties
     canUseSimulation: subscriptionStatus?.canUseSimulation || false,
     subscriptionTier: subscriptionStatus?.subscriptionTier,

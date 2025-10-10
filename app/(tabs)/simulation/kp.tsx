@@ -14,7 +14,15 @@ import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, T
 export default function KPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
+  const {
+    canUseSimulation,
+    subscriptionStatus,
+    recordUsage,
+    getSubscriptionInfo,
+    checkAccess,
+    applyOptimisticDeduction,
+    resetOptimisticCount
+  } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
@@ -51,6 +59,11 @@ export default function KPSimulationScreen() {
   // Check for existing simulation on mount
   useEffect(() => {
     checkExistingSimulation();
+  }, []);
+
+  // Reset optimistic count on page mount/refresh to show actual backend count
+  useEffect(() => {
+    resetOptimisticCount();
   }, []);
 
   // Initialize Voiceflow widget when component mounts
@@ -256,6 +269,9 @@ export default function KPSimulationScreen() {
         console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
         setSessionToken(result.sessionToken);
         setUsageMarked(false);
+
+        // Apply optimistic counter deduction (show immediate feedback to user)
+        applyOptimisticDeduction();
 
         // Save simulation state to localStorage
         if (typeof window !== 'undefined' && window.localStorage) {
