@@ -112,10 +112,10 @@ export class SecureLogger {
   }
 }
 
-// Session timeout manager for HIPAA compliance (30 minutes)
+// Session timeout manager for exam preparation platform (4 hours)
 export class SessionTimeoutManager {
-  private static readonly TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-  private static readonly WARNING_DURATION = 2 * 60 * 1000; // 2 minutes warning
+  private static readonly TIMEOUT_DURATION = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+  private static readonly WARNING_DURATION = 5 * 60 * 1000; // 5 minutes warning
   private static readonly STORAGE_KEY = 'last_activity_timestamp';
   
   private static timeoutId: NodeJS.Timeout | null = null;
