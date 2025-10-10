@@ -246,6 +246,24 @@ export default function KPSimulationScreen() {
         }
       }
 
+      // Send session variables to Voiceflow
+      if (result.sessionToken && user?.id && voiceflowController.current) {
+        try {
+          console.log('📤 KP: Sending session variables to Voiceflow...');
+          const variablesUpdated = await voiceflowController.current.updateSessionVariables(
+            user.id,
+            result.sessionToken
+          );
+          if (variablesUpdated) {
+            console.log('✅ KP: Session variables successfully sent to Voiceflow');
+          } else {
+            console.warn('⚠️ KP: Failed to send session variables to Voiceflow');
+          }
+        } catch (error) {
+          console.error('❌ KP: Error sending variables to Voiceflow:', error);
+        }
+      }
+
     } catch (error) {
       console.error('❌ KP: Failed to start simulation tracking:', error);
       // Continue with timer anyway for UX, but log the error

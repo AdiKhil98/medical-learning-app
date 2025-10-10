@@ -230,6 +230,24 @@ export default function FSPSimulationScreen() {
         }
       }
 
+      // Send session variables to Voiceflow
+      if (result.sessionToken && user?.id && voiceflowController.current) {
+        try {
+          console.log('📤 FSP: Sending session variables to Voiceflow...');
+          const variablesUpdated = await voiceflowController.current.updateSessionVariables(
+            user.id,
+            result.sessionToken
+          );
+          if (variablesUpdated) {
+            console.log('✅ FSP: Session variables successfully sent to Voiceflow');
+          } else {
+            console.warn('⚠️ FSP: Failed to send session variables to Voiceflow');
+          }
+        } catch (error) {
+          console.error('❌ FSP: Error sending variables to Voiceflow:', error);
+        }
+      }
+
       // Start heartbeat monitoring for security
       if (result.sessionToken) {
         startHeartbeat(result.sessionToken);

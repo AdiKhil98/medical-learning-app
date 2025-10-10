@@ -13,6 +13,8 @@ export class VoiceflowController {
   private config: VoiceflowConfig;
   private isLoaded = false;
   private widget: any = null;
+  private userId: string | null = null;
+  private sessionToken: string | null = null;
 
   constructor(config: VoiceflowConfig) {
     this.config = config;
@@ -188,6 +190,75 @@ export class VoiceflowController {
     return this.isLoaded && !!this.widget;
   }
 
+  // Update session variables in an active Voiceflow session
+  // Call this when session token is generated after widget is loaded
+  async updateSessionVariables(userId: string, sessionToken: string): Promise<boolean> {
+    this.userId = userId;
+    this.sessionToken = sessionToken;
+
+    console.log('🔄 Updating Voiceflow session variables:', { userId, sessionToken });
+
+    if (!this.isReady()) {
+      console.error('❌ Voiceflow widget not ready for variable update');
+      return false;
+    }
+
+    try {
+      // Method 1: Try using interact to set variables
+      if (this.widget.interact) {
+        await this.widget.interact({
+          type: 'launch',
+          payload: {
+            user_id: userId,
+            session_token: sessionToken
+          }
+        });
+        console.log('✅ Session variables updated via interact method');
+        return true;
+      }
+
+      // Method 2: Try using send method as fallback
+      if (this.widget.send) {
+        await this.widget.send({
+          type: 'launch',
+          payload: {
+            user_id: userId,
+            session_token: sessionToken
+          }
+        });
+        console.log('✅ Session variables updated via send method');
+        return true;
+      }
+
+      console.error('❌ No suitable method found to update Voiceflow variables');
+      return false;
+
+    } catch (error) {
+      console.error('❌ Failed to update Voiceflow session variables:', error);
+      return false;
+    }
+  }
+
+  // Open the widget
+  open(): void {
+    if (this.isReady()) {
+      this.widget.show();
+      console.log('📂 Voiceflow widget opened');
+    } else {
+      console.warn('⚠️ Cannot open widget - not ready');
+    }
+  }
+
+  // Close the widget
+  close(): void {
+    if (this.isReady()) {
+      this.widget.hide();
+      console.log('📁 Voiceflow widget closed');
+    } else {
+      console.warn('⚠️ Cannot close widget - not ready');
+    }
+  }
+
   // Clean up widget properly
   destroy(): void {
     console.log('🧹 VoiceflowController: Starting cleanup...');
@@ -235,6 +306,8 @@ export class VoiceflowController {
     
     this.isLoaded = false;
     this.widget = null;
+    this.userId = null;
+    this.sessionToken = null;
     console.log('✅ VoiceflowController cleanup completed');
   }
 
