@@ -399,9 +399,11 @@ class SimulationTrackingService {
       });
 
       // SILENT REFUND: Check if we should refund this simulation
-      // Only triggers for aborted/incomplete sessions
-      if (status === 'aborted' || status === 'incomplete') {
+      // Triggers for: aborted, incomplete, OR early completion
+      if (status === 'aborted' || status === 'incomplete' ||
+          (status === 'completed' && metadata?.completion_type === 'early')) {
         console.log('🔍 Checking if simulation is eligible for silent refund...');
+        console.log('🔍 Status:', status, 'Metadata:', metadata);
         await this.attemptSilentRefund(sessionToken, durationSeconds);
       }
 
