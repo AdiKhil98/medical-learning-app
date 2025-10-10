@@ -192,18 +192,38 @@ export default function KPSimulationScreen() {
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
-    if (timerActiveRef.current) {
-      console.log('🔍 DEBUG: Timer already active (via ref), returning early');
-      return; // Already running
+
+    // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
+    // This prevents false positives from stale state
+    if (timerActiveRef.current && timerInterval.current !== null) {
+      console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+      return;
+    }
+
+    // If ref is true but interval is null, we have stale state - reset it
+    if (timerActiveRef.current && timerInterval.current === null) {
+      console.warn('⚠️ KP: Detected stale timer state, resetting...');
+      timerActiveRef.current = false;
+      setTimerActive(false);
     }
 
     console.log('⏰ KP: Starting 20-minute simulation timer');
+    console.log('🔍 KP DEBUG: Current timerActive state:', timerActive);
+    console.log('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+    console.log('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
 
     // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
     console.log('🔍 DEBUG: Setting timer active IMMEDIATELY before database calls');
-    setTimerActive(true);
+
+    // Set ref FIRST to prevent race conditions
     timerActiveRef.current = true;
+    previousTimeRef.current = 20 * 60;
+
+    // Then update React state
+    setTimerActive(true);
     setTimeRemaining(20 * 60);
+
+    console.log('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
     // Calculate end time upfront
     const startTime = Date.now();
@@ -832,9 +852,37 @@ export default function KPSimulationScreen() {
   const resetSimulationState = () => {
     console.log('🔄 KP: Resetting simulation state for restart');
 
-    // Reset all state variables
-    setTimerActive(false);
+    // CRITICAL: Clear intervals FIRST before resetting refs
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+      console.log('✅ KP: Cleared timer interval');
+    }
+
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+      console.log('✅ KP: Cleared heartbeat interval');
+    }
+
+    // Clear warning timeout
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+
+    // Clear final countdown interval
+    if (finalCountdownInterval.current) {
+      clearInterval(finalCountdownInterval.current);
+      finalCountdownInterval.current = null;
+    }
+
+    // THEN reset refs and state
     timerActiveRef.current = false;
+    timerEndTimeRef.current = 0;
+    previousTimeRef.current = 20 * 60;
+
+    setTimerActive(false);
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
     setSessionToken(null);
@@ -851,33 +899,16 @@ export default function KPSimulationScreen() {
     setIsGracefulShutdown(false);
     setShowSimulationCompleted(false);
 
-    // Clear any existing intervals
-    if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-      timerInterval.current = null;
-    }
-
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
-
-    // Clear warning timeout
-    if (warningTimeoutRef.current) {
-      clearTimeout(warningTimeoutRef.current);
-      warningTimeoutRef.current = null;
-    }
-
-    // Clear final countdown interval
-    if (finalCountdownInterval.current) {
-      clearInterval(finalCountdownInterval.current);
-      finalCountdownInterval.current = null;
-    }
-
-    // Reset getUserMedia override if it exists
+    // Reset getUserMedia override and re-register it for next run
     if ((window as any).kpOriginalGetUserMedia && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia = (window as any).kpOriginalGetUserMedia;
       delete (window as any).kpOriginalGetUserMedia;
+    }
+
+    // Remove and re-add click listener for next run
+    if ((window as any).kpClickListener) {
+      document.removeEventListener('click', (window as any).kpClickListener, true);
+      delete (window as any).kpClickListener;
     }
 
     // Clear localStorage
@@ -891,7 +922,16 @@ export default function KPSimulationScreen() {
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
-    console.log('✅ KP: Simulation state reset completed');
+    console.log('✅ KP: Simulation state reset completed - ready for next run');
+    console.log('🔍 KP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+
+    // Re-setup conversation monitoring for next run
+    setTimeout(() => {
+      if (voiceflowController.current) {
+        console.log('🔄 KP: Re-initializing conversation monitoring after reset');
+        setupConversationMonitoring();
+      }
+    }, 500);
   };
 
   // Clear simulation localStorage

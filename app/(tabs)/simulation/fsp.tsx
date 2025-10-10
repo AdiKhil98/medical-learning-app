@@ -191,23 +191,40 @@ export default function FSPSimulationScreen() {
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
-    if (timerActiveRef.current) {
-      console.log('🔍 DEBUG: Timer already active (via ref), returning early');
-      return; // Already running
+
+    // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
+    // This prevents false positives from stale state
+    if (timerActiveRef.current && timerInterval.current !== null) {
+      console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+      return;
+    }
+
+    // If ref is true but interval is null, we have stale state - reset it
+    if (timerActiveRef.current && timerInterval.current === null) {
+      console.warn('⚠️ FSP: Detected stale timer state, resetting...');
+      timerActiveRef.current = false;
+      setTimerActive(false);
     }
 
     console.log('⏰ FSP: Starting 20-minute simulation timer');
     console.log('🔍 FSP DEBUG: Current timerActive state:', timerActive);
     console.log('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+    console.log('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
 
     // CRITICAL FIX: Activate timer BEFORE async database calls
     // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
+    // Force state update immediately with flushSync-like behavior
     console.log('🔍 FSP DEBUG: About to call setTimerActive(true)');
-    setTimerActive(true);
+
+    // Set ref FIRST to prevent race conditions
     timerActiveRef.current = true;
-    setTimeRemaining(20 * 60);
     previousTimeRef.current = 20 * 60;
-    console.log('🔍 FSP DEBUG: setTimerActive(true) called, timerActiveRef set to true');
+
+    // Then update React state
+    setTimerActive(true);
+    setTimeRemaining(20 * 60);
+
+    console.log('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
     // Calculate absolute end time for the timer
     const startTime = Date.now();
@@ -832,9 +849,37 @@ export default function FSPSimulationScreen() {
   const resetSimulationState = () => {
     console.log('🔄 FSP: Resetting simulation state for restart');
 
-    // Reset all state variables
-    setTimerActive(false);
+    // CRITICAL: Clear intervals FIRST before resetting refs
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+      console.log('✅ FSP: Cleared timer interval');
+    }
+
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+      console.log('✅ FSP: Cleared heartbeat interval');
+    }
+
+    // Clear warning timeout
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+
+    // Clear final countdown interval
+    if (finalCountdownInterval.current) {
+      clearInterval(finalCountdownInterval.current);
+      finalCountdownInterval.current = null;
+    }
+
+    // THEN reset refs and state
     timerActiveRef.current = false;
+    timerEndTimeRef.current = 0;
+    previousTimeRef.current = 20 * 60;
+
+    setTimerActive(false);
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
     setSessionToken(null);
@@ -851,33 +896,16 @@ export default function FSPSimulationScreen() {
     setIsGracefulShutdown(false);
     setShowSimulationCompleted(false);
 
-    // Clear any existing intervals
-    if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-      timerInterval.current = null;
-    }
-
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
-
-    // Clear warning timeout
-    if (warningTimeoutRef.current) {
-      clearTimeout(warningTimeoutRef.current);
-      warningTimeoutRef.current = null;
-    }
-
-    // Clear final countdown interval
-    if (finalCountdownInterval.current) {
-      clearInterval(finalCountdownInterval.current);
-      finalCountdownInterval.current = null;
-    }
-
-    // Reset getUserMedia override if it exists
+    // Reset getUserMedia override and re-register it for next run
     if ((window as any).fspOriginalGetUserMedia && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia = (window as any).fspOriginalGetUserMedia;
       delete (window as any).fspOriginalGetUserMedia;
+    }
+
+    // Remove and re-add click listener for next run
+    if ((window as any).fspClickListener) {
+      document.removeEventListener('click', (window as any).fspClickListener, true);
+      delete (window as any).fspClickListener;
     }
 
     // Clear localStorage
@@ -891,7 +919,16 @@ export default function FSPSimulationScreen() {
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
-    console.log('✅ FSP: Simulation state reset completed');
+    console.log('✅ FSP: Simulation state reset completed - ready for next run');
+    console.log('🔍 FSP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+
+    // Re-setup conversation monitoring for next run
+    setTimeout(() => {
+      if (voiceflowController.current) {
+        console.log('🔄 FSP: Re-initializing conversation monitoring after reset');
+        setupConversationMonitoring();
+      }
+    }, 500);
   };
 
   // Clear simulation localStorage
