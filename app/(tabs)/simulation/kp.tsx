@@ -8,6 +8,7 @@ import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { SessionTimeoutManager } from '@/lib/security';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
@@ -65,6 +66,31 @@ export default function KPSimulationScreen() {
   useEffect(() => {
     resetOptimisticCount();
   }, []);
+
+  // Keep session alive during simulation to prevent timeout logout
+  useEffect(() => {
+    let activityInterval: NodeJS.Timeout | null = null;
+
+    if (timerActive) {
+      console.log('🔄 KP: Starting session activity tracker to prevent timeout');
+
+      // Update activity immediately when timer starts
+      SessionTimeoutManager.updateLastActivity();
+
+      // Update activity every 5 minutes while simulation is running
+      activityInterval = setInterval(async () => {
+        console.log('⏰ KP: Updating last activity to keep session alive');
+        await SessionTimeoutManager.updateLastActivity();
+      }, 5 * 60 * 1000); // Every 5 minutes
+    }
+
+    return () => {
+      if (activityInterval) {
+        console.log('🛑 KP: Stopping session activity tracker');
+        clearInterval(activityInterval);
+      }
+    };
+  }, [timerActive]);
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
