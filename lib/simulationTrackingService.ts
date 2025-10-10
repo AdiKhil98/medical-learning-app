@@ -28,6 +28,50 @@ export interface CanStartResult {
 }
 
 class SimulationTrackingService {
+  // Force cleanup all active sessions for current user (emergency fix)
+  async forceCleanupAllSessions(): Promise<{ success: boolean; cleaned: number }> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { success: false, cleaned: 0 };
+      }
+
+      console.log('🧹 FORCE CLEANUP: Cleaning ALL active sessions for user');
+
+      // Get all active sessions
+      const { data: activeSessions } = await supabase
+        .from('simulation_usage_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['started', 'in_progress']);
+
+      if (!activeSessions || activeSessions.length === 0) {
+        console.log('✅ FORCE CLEANUP: No active sessions found');
+        return { success: true, cleaned: 0 };
+      }
+
+      console.log(`🧹 FORCE CLEANUP: Found ${activeSessions.length} active sessions, cleaning all`);
+
+      // Mark ALL as incomplete
+      const { error } = await supabase
+        .from('simulation_usage_logs')
+        .update({ status: 'incomplete', completed_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .in('status', ['started', 'in_progress']);
+
+      if (error) {
+        console.error('❌ FORCE CLEANUP: Error:', error);
+        return { success: false, cleaned: 0 };
+      }
+
+      console.log(`✅ FORCE CLEANUP: Successfully cleaned ${activeSessions.length} sessions`);
+      return { success: true, cleaned: activeSessions.length };
+    } catch (error) {
+      console.error('❌ FORCE CLEANUP: Exception:', error);
+      return { success: false, cleaned: 0 };
+    }
+  }
+
   // Generate unique session token
   private generateSessionToken(): string {
     const timestamp = Date.now().toString(36);
@@ -158,17 +202,34 @@ class SimulationTrackingService {
   async startSimulation(simulationType: SimulationType): Promise<{ success: boolean; sessionToken?: string; error?: string }> {
     try {
       console.log('🔍 DEBUG: Starting simulation tracking for type:', simulationType);
-      
+
       // First check if user can start simulation
       const canStart = await this.canStartSimulation(simulationType);
       console.log('🔍 DEBUG: Can start simulation result:', canStart);
-      
+
       if (!canStart.allowed) {
         console.error('❌ DEBUG: Cannot start simulation:', canStart.message);
-        return {
-          success: false,
-          error: canStart.message || 'Cannot start simulation'
-        };
+
+        // EMERGENCY FIX: If blocked by concurrency, force cleanup and retry
+        if (canStart.reason === 'active_session') {
+          console.log('🔧 DEBUG: Attempting force cleanup due to concurrency block');
+          const cleanup = await this.forceCleanupAllSessions();
+          console.log('🔧 DEBUG: Force cleanup result:', cleanup);
+
+          if (cleanup.success && cleanup.cleaned > 0) {
+            console.log('✅ DEBUG: Force cleanup successful, retrying simulation start');
+            // Don't retry canStartSimulation, just proceed with session creation
+          } else {
+            // Force cleanup failed, but still try to start session (prevent lockout)
+            console.warn('⚠️ DEBUG: Force cleanup failed, but proceeding anyway to prevent lockout');
+          }
+        } else {
+          // Different error reason, return it
+          return {
+            success: false,
+            error: canStart.message || 'Cannot start simulation'
+          };
+        }
       }
 
       const { data: { user } } = await supabase.auth.getUser();
