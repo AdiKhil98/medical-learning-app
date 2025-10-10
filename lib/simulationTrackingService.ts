@@ -398,10 +398,88 @@ class SimulationTrackingService {
         metadata
       });
 
+      // SILENT REFUND: Check if we should refund this simulation
+      // Only triggers for aborted/incomplete sessions
+      if (status === 'aborted' || status === 'incomplete') {
+        console.log('🔍 Checking if simulation is eligible for silent refund...');
+        await this.attemptSilentRefund(sessionToken, durationSeconds);
+      }
+
       return { success: true };
     } catch (error) {
       SecureLogger.error('Error updating simulation status', { error });
       return { success: false, error: 'System error' };
+    }
+  }
+
+  // Silent refund: Automatically refund if simulation aborted before 10 minutes
+  private async attemptSilentRefund(sessionToken: string, clientDuration?: number): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      console.log('💸 Attempting silent refund for session:', sessionToken);
+      console.log('💸 Client reported duration:', clientDuration, 'seconds');
+
+      // Call database function for silent refund
+      const { data, error } = await supabase.rpc('silent_refund_simulation', {
+        p_session_token: sessionToken,
+        p_user_id: user.id
+      });
+
+      if (error) {
+        console.error('❌ Silent refund error:', error);
+        SecureLogger.error('Silent refund failed', { error, sessionToken });
+        return;
+      }
+
+      console.log('💸 Silent refund result:', data);
+
+      if (data.refunded) {
+        console.log('✅ SILENT REFUND: Simulation refunded successfully');
+        console.log('💸 Reason:', data.reason);
+        console.log('💸 Duration:', data.duration_seconds, 'seconds');
+
+        SecureLogger.log('Silent refund executed', {
+          sessionToken,
+          user_id: user.id,
+          refunded: true,
+          reason: data.reason,
+          duration: data.duration_seconds
+        });
+      } else {
+        console.log('ℹ️ Silent refund: No refund necessary');
+        console.log('ℹ️ Reason:', data.reason);
+      }
+    } catch (error) {
+      console.error('❌ Exception in silent refund:', error);
+      SecureLogger.error('Exception in silent refund', { error });
+      // Don't throw - refund failure shouldn't break simulation flow
+    }
+  }
+
+  // Check if simulation is eligible for refund (for debugging/admin)
+  async checkRefundEligibility(sessionToken: string): Promise<any> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { eligible: false, reason: 'not_authenticated' };
+      }
+
+      const { data, error } = await supabase.rpc('check_refund_eligibility', {
+        p_session_token: sessionToken,
+        p_user_id: user.id
+      });
+
+      if (error) {
+        console.error('❌ Error checking refund eligibility:', error);
+        return { eligible: false, reason: 'error' };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Exception checking refund eligibility:', error);
+      return { eligible: false, reason: 'exception' };
     }
   }
 
