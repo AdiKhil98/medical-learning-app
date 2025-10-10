@@ -1435,13 +1435,13 @@ export default function FSPSimulationScreen() {
         colors={['#ef4444', '#dc2626']}
         style={styles.header}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <ArrowLeft size={24} color="white" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerTitleContainer}>
           <Mic size={24} color="white" />
           <Text style={styles.headerTitle}>FSP-Simulation</Text>
@@ -1449,6 +1449,17 @@ export default function FSPSimulationScreen() {
 
         <View style={styles.headerSpacer} />
       </LinearGradient>
+
+      {/* Subscription Counter Badge - always visible */}
+      {getSubscriptionInfo() && (
+        <View style={styles.counterBadgeContainer}>
+          <View style={styles.counterBadge}>
+            <Text style={styles.counterBadgeText}>
+              {getSubscriptionInfo()?.usageText}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Timer display - only show when active */}
       {timerActive && (
@@ -2251,5 +2262,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 17,
     fontWeight: '700',
+  },
+  // Counter Badge Styles
+  counterBadgeContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  counterBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: 'rgba(76, 175, 80, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  counterBadgeText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
