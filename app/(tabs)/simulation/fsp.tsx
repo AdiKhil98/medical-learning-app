@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Mic, Clock, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,35 +16,37 @@ export default function FSPSimulationScreen() {
   const { user } = useAuth();
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
-  const [timerActive, setTimerActive] = React.useState(false);
-  const [timeRemaining, setTimeRemaining] = React.useState(20 * 60); // 20 minutes in seconds
-  const [timerEndTime, setTimerEndTime] = React.useState(0); // Absolute timestamp when timer should end
+  const [timerActive, setTimerActive] = useState(false);
+  const timerActiveRef = useRef(false); // Ref to track timer state for closures
+  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
-  const [sessionToken, setSessionToken] = React.useState<string | null>(null);
-  const [usageMarked, setUsageMarked] = React.useState(false); // Track if we've marked usage at 10min
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
   // Timer warning system state
-  const [timerWarningLevel, setTimerWarningLevel] = React.useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
-  const [showWarningMessage, setShowWarningMessage] = React.useState(false);
-  const [warningMessageText, setWarningMessageText] = React.useState('');
+  const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
+  const [showWarningMessage, setShowWarningMessage] = useState(false);
+  const [warningMessageText, setWarningMessageText] = useState('');
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Graceful end system state
-  const [showFinalWarningModal, setShowFinalWarningModal] = React.useState(false);
-  const [finalWarningCountdown, setFinalWarningCountdown] = React.useState(10);
-  const [isGracefulShutdown, setIsGracefulShutdown] = React.useState(false);
-  const [showSimulationCompleted, setShowSimulationCompleted] = React.useState(false);
+  const [showFinalWarningModal, setShowFinalWarningModal] = useState(false);
+  const [finalWarningCountdown, setFinalWarningCountdown] = useState(10);
+  const [isGracefulShutdown, setIsGracefulShutdown] = useState(false);
+  const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Resume simulation state
-  const [showResumeModal, setShowResumeModal] = React.useState(false);
-  const [resumeTimeRemaining, setResumeTimeRemaining] = React.useState(0);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
 
   // Early completion state
-  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = React.useState(false);
-  const [earlyCompletionReason, setEarlyCompletionReason] = React.useState('');
+  const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
+  const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -104,10 +106,12 @@ export default function FSPSimulationScreen() {
             const stream = await originalGetUserMedia.call(this, constraints);
 
             // Start timer when audio stream is granted
-            if (!timerActive) {
+            if (!timerActiveRef.current) {
               console.log('🎯 FSP: Audio stream granted - voice call starting!');
               console.log('⏰ FSP: Starting 20-minute timer due to voice call');
               startSimulationTimer();
+            } else {
+              console.log('⏰ FSP: Timer already active, not starting again');
             }
 
             // Monitor stream tracks for when they end
@@ -186,92 +190,121 @@ export default function FSPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    if (timerActive) return; // Already running
-    
+    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
+
+    // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
+    // This prevents false positives from stale state
+    if (timerActiveRef.current && timerInterval.current !== null) {
+      console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+      return;
+    }
+
+    // If ref is true but interval is null, we have stale state - reset it
+    if (timerActiveRef.current && timerInterval.current === null) {
+      console.warn('⚠️ FSP: Detected stale timer state, resetting...');
+      timerActiveRef.current = false;
+      setTimerActive(false);
+    }
+
     console.log('⏰ FSP: Starting 20-minute simulation timer');
-    
+    console.log('🔍 FSP DEBUG: Current timerActive state:', timerActive);
+    console.log('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+    console.log('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
+
+    // CRITICAL FIX: Activate timer BEFORE async database calls
+    // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
+    // Force state update immediately with flushSync-like behavior
+    console.log('🔍 FSP DEBUG: About to call setTimerActive(true)');
+
+    // Set ref FIRST to prevent race conditions
+    timerActiveRef.current = true;
+    previousTimeRef.current = 20 * 60;
+
+    // Then update React state
+    setTimerActive(true);
+    setTimeRemaining(20 * 60);
+
+    console.log('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
+
+    // Calculate absolute end time for the timer
+    const startTime = Date.now();
+    const duration = 20 * 60 * 1000;
+    const endTime = startTime + duration;
+    setTimerEndTime(endTime);
+    timerEndTimeRef.current = endTime;
+
+    console.log('✅ FSP: Timer activated BEFORE database calls');
+
     try {
       // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('fsp');
       if (!canStart.allowed) {
-        Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
-        return;
+        console.warn('⚠️ FSP: User cannot start simulation, but timer continues:', canStart.message);
+        // Don't return - let timer continue for UX
       }
 
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('fsp');
-      if (!result.success) {
-        Alert.alert('Fehler', result.error || 'Simulation-Tracking konnte nicht gestartet werden');
-        return;
-      }
+      if (result.success) {
+        // Success case: save session token and setup heartbeat
+        setSessionToken(result.sessionToken || null);
+        setUsageMarked(false);
 
-      setSessionToken(result.sessionToken || null);
-      setUsageMarked(false);
-
-      // Calculate absolute end time for the timer
-      const startTime = Date.now();
-      const duration = 20 * 60 * 1000; // 20 minutes in milliseconds
-      const calculatedEndTime = startTime + duration;
-      setTimerEndTime(calculatedEndTime);
-
-      // Save simulation state to localStorage
-      if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem('sim_start_time_fsp', startTime.toString());
-          localStorage.setItem('sim_end_time_fsp', calculatedEndTime.toString());
-          localStorage.setItem('sim_session_token_fsp', result.sessionToken);
-          localStorage.setItem('sim_duration_ms_fsp', duration.toString());
-          if (user?.id) {
-            localStorage.setItem('sim_user_id_fsp', user.id);
+        // Save simulation state to localStorage
+        if (result.sessionToken && typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem('sim_start_time_fsp', startTime.toString());
+            localStorage.setItem('sim_end_time_fsp', endTime.toString());
+            localStorage.setItem('sim_session_token_fsp', result.sessionToken);
+            localStorage.setItem('sim_duration_ms_fsp', duration.toString());
+            if (user?.id) {
+              localStorage.setItem('sim_user_id_fsp', user.id);
+            }
+            console.log('💾 FSP: Saved simulation state to localStorage');
+          } catch (error) {
+            console.error('❌ FSP: Error saving to localStorage:', error);
           }
-          console.log('💾 FSP: Saved simulation state to localStorage');
-        } catch (error) {
-          console.error('❌ FSP: Error saving to localStorage:', error);
         }
-      }
 
-      // Send session variables to Voiceflow
-      if (result.sessionToken && user?.id && voiceflowController.current) {
-        try {
-          console.log('📤 FSP: Sending session variables to Voiceflow...');
-          const variablesUpdated = await voiceflowController.current.updateSessionVariables(
-            user.id,
-            result.sessionToken
-          );
-          if (variablesUpdated) {
-            console.log('✅ FSP: Session variables successfully sent to Voiceflow');
-          } else {
-            console.warn('⚠️ FSP: Failed to send session variables to Voiceflow');
+        // Send session variables to Voiceflow
+        if (result.sessionToken && user?.id && voiceflowController.current) {
+          try {
+            console.log('📤 FSP: Sending session variables to Voiceflow...');
+            const variablesUpdated = await voiceflowController.current.updateSessionVariables(
+              user.id,
+              result.sessionToken
+            );
+            if (variablesUpdated) {
+              console.log('✅ FSP: Session variables successfully sent to Voiceflow');
+            } else {
+              console.warn('⚠️ FSP: Failed to send session variables to Voiceflow');
+            }
+          } catch (error) {
+            console.error('❌ FSP: Error sending variables to Voiceflow:', error);
           }
-        } catch (error) {
-          console.error('❌ FSP: Error sending variables to Voiceflow:', error);
         }
-      }
 
-      // Start heartbeat monitoring for security
-      if (result.sessionToken) {
-        startHeartbeat(result.sessionToken);
+        // Start heartbeat monitoring for security
+        if (result.sessionToken) {
+          startHeartbeat(result.sessionToken);
+        }
+      } else {
+        // Failure case: log error but continue timer
+        console.error('❌ FSP: Failed to start simulation tracking:', result.error);
+        console.log('⏰ FSP: Timer continues despite DB error for better UX');
       }
 
     } catch (error) {
-      console.error('❌ FSP: Failed to start simulation tracking:', error);
-      // Continue with timer anyway for UX, but log the error
+      console.error('❌ FSP: Exception during simulation tracking:', error);
+      console.log('⏰ FSP: Timer continues despite exception for better UX');
     }
 
-    setTimerActive(true);
-    setTimeRemaining(20 * 60); // Reset to 20 minutes
-    previousTimeRef.current = 20 * 60; // Initialize ref
-
-    // Calculate end time (in case the try block failed)
-    const startTime = Date.now();
-    const duration = 20 * 60 * 1000;
-    const endTime = startTime + duration;
-
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
-    // Use 100ms interval for better accuracy with absolute time calculation
+    // Use 1000ms interval for mobile compatibility
     timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time (use closure variable, not state)
-      const remaining = endTime - Date.now();
+      // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
+      const currentEndTime = timerEndTimeRef.current || endTime;
+      const remaining = currentEndTime - Date.now();
       const remainingSeconds = Math.floor(remaining / 1000);
 
       // Get previous value for comparison
@@ -316,7 +349,7 @@ export default function FSPSimulationScreen() {
       if (prev > 10 && remainingSeconds <= 10) {
         showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
       }
-    }, 100); // Check every 100ms for high accuracy
+    }, 1000); // Check every 1000ms (1 second) for mobile compatibility
   };
 
   // Mark simulation as used at 10-minute mark with server-side validation
@@ -384,9 +417,15 @@ export default function FSPSimulationScreen() {
   // Start heartbeat monitoring for session security
   const startHeartbeat = (sessionToken: string) => {
     console.log('💓 FSP: Starting heartbeat monitoring');
-    
+
     heartbeatInterval.current = setInterval(async () => {
       try {
+        // Check if sessionToken is still valid
+        if (!sessionToken) {
+          console.warn('💓 FSP: No session token available for heartbeat');
+          return;
+        }
+
         const result = await simulationTracker.sendHeartbeat(sessionToken);
         if (!result.success) {
           console.warn('💓 FSP: Heartbeat failed:', result.error);
@@ -606,6 +645,7 @@ export default function FSPSimulationScreen() {
     }
 
     setTimerActive(false);
+    timerActiveRef.current = false;
 
     // Give Voiceflow 2 seconds to flush any pending messages
     setTimeout(async () => {
@@ -827,7 +867,36 @@ export default function FSPSimulationScreen() {
   const resetSimulationState = () => {
     console.log('🔄 FSP: Resetting simulation state for restart');
 
-    // Reset all state variables
+    // CRITICAL: Clear intervals FIRST before resetting refs
+    if (timerInterval.current) {
+      clearInterval(timerInterval.current);
+      timerInterval.current = null;
+      console.log('✅ FSP: Cleared timer interval');
+    }
+
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+      console.log('✅ FSP: Cleared heartbeat interval');
+    }
+
+    // Clear warning timeout
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+
+    // Clear final countdown interval
+    if (finalCountdownInterval.current) {
+      clearInterval(finalCountdownInterval.current);
+      finalCountdownInterval.current = null;
+    }
+
+    // THEN reset refs and state
+    timerActiveRef.current = false;
+    timerEndTimeRef.current = 0;
+    previousTimeRef.current = 20 * 60;
+
     setTimerActive(false);
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
@@ -845,33 +914,16 @@ export default function FSPSimulationScreen() {
     setIsGracefulShutdown(false);
     setShowSimulationCompleted(false);
 
-    // Clear any existing intervals
-    if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-      timerInterval.current = null;
-    }
-
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
-
-    // Clear warning timeout
-    if (warningTimeoutRef.current) {
-      clearTimeout(warningTimeoutRef.current);
-      warningTimeoutRef.current = null;
-    }
-
-    // Clear final countdown interval
-    if (finalCountdownInterval.current) {
-      clearInterval(finalCountdownInterval.current);
-      finalCountdownInterval.current = null;
-    }
-
-    // Reset getUserMedia override if it exists
+    // Reset getUserMedia override and re-register it for next run
     if ((window as any).fspOriginalGetUserMedia && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia = (window as any).fspOriginalGetUserMedia;
       delete (window as any).fspOriginalGetUserMedia;
+    }
+
+    // Remove and re-add click listener for next run
+    if ((window as any).fspClickListener) {
+      document.removeEventListener('click', (window as any).fspClickListener, true);
+      delete (window as any).fspClickListener;
     }
 
     // Clear localStorage
@@ -885,7 +937,16 @@ export default function FSPSimulationScreen() {
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
-    console.log('✅ FSP: Simulation state reset completed');
+    console.log('✅ FSP: Simulation state reset completed - ready for next run');
+    console.log('🔍 FSP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+
+    // Re-setup conversation monitoring for next run
+    setTimeout(() => {
+      if (voiceflowController.current) {
+        console.log('🔄 FSP: Re-initializing conversation monitoring after reset');
+        setupConversationMonitoring();
+      }
+    }, 500);
   };
 
   // Clear simulation localStorage
@@ -1012,8 +1073,10 @@ export default function FSPSimulationScreen() {
 
       // Set timer state
       setTimerActive(true);
+      timerActiveRef.current = true; // Update ref for closures
       setTimeRemaining(Math.floor(remaining / 1000));
       setTimerEndTime(endTime); // Set absolute end time
+      timerEndTimeRef.current = endTime;
       setSessionToken(savedSessionToken);
       previousTimeRef.current = Math.floor(remaining / 1000); // Initialize ref for resume
 
@@ -1022,8 +1085,9 @@ export default function FSPSimulationScreen() {
 
       // Start timer interval for resumed session with absolute time calculation
       timerInterval.current = setInterval(() => {
-        // Calculate remaining time based on absolute end time
-        const remaining = endTime - Date.now();
+        // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
+        const currentEndTime = timerEndTimeRef.current || endTime;
+        const remaining = currentEndTime - Date.now();
         const remainingSeconds = Math.floor(remaining / 1000);
 
         // Get previous value for comparison
@@ -1068,7 +1132,7 @@ export default function FSPSimulationScreen() {
         if (prev > 10 && remainingSeconds <= 10) {
           showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
         }
-      }, 100); // Check every 100ms for high accuracy
+      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
 
       // Hide resume modal
       setShowResumeModal(false);
@@ -1419,17 +1483,25 @@ export default function FSPSimulationScreen() {
         </View>
       )}
 
-      <View style={styles.content}>
-        {/* Inline Instructions Panel */}
-        <View style={styles.instructionsContainer}>
-          <InlineInstructions tabs={fspInstructions} />
-        </View>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+      >
+        <View style={styles.content}>
+          {/* Inline Instructions Panel */}
+          <View style={styles.instructionsContainer}>
+            <InlineInstructions tabs={fspInstructions} />
+          </View>
 
-        {/* Widget Area */}
-        <View style={styles.widgetArea}>
-          {/* Widget loads here automatically */}
+          {/* Widget Area */}
+          <View style={styles.widgetArea}>
+            {/* Widget loads here automatically */}
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Resume Simulation Modal */}
       {showResumeModal && (
@@ -1699,13 +1771,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  content: {
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
     flexDirection: 'column',
+    paddingBottom: 20,
   },
   instructionsContainer: {
-    flex: 2, // Takes up 2/3 of available space
-    minHeight: 300,
+    minHeight: 400,
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space

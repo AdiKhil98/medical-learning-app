@@ -69,50 +69,70 @@ class SimulationTrackingService {
       }
 
       // Check for active sessions (prevent multiple concurrent sessions)
-      // But be more forgiving - only block if there's a truly recent active session
+      // AGGRESSIVE cleanup - auto-cleanup ALL old sessions
       const { data: activeSessions, error: activeError } = await supabase
         .from('simulation_usage_logs')
         .select('*')
         .eq('user_id', user.id)
         .in('status', ['started', 'in_progress'])
-        .gte('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // Only last 5 minutes
+        .gte('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // Last 30 minutes
 
       if (activeError) {
         console.log('🔍 DEBUG: Error checking active sessions:', activeError);
         // Don't block on database errors, just log them
         SecureLogger.error('Failed to check active sessions', { error: activeError, user_id: user.id });
-        // Allow simulation to continue
-      } else if (activeSessions && activeSessions.length > 0) {
+        // Allow simulation to continue despite error
+        return {
+          allowed: true,
+          remaining: 999,
+          daily_limit: 999
+        };
+      }
+
+      if (activeSessions && activeSessions.length > 0) {
         console.log('🔍 DEBUG: Found active sessions:', activeSessions);
-        
-        // Auto-cleanup old 'started' sessions (mark as incomplete)
-        const oldSessions = activeSessions.filter(session => 
-          new Date().getTime() - new Date(session.started_at).getTime() > 2 * 60 * 1000 // Older than 2 minutes
-        );
-        
+
+        // CRITICAL FIX: Auto-cleanup ALL sessions older than 30 seconds (very aggressive)
+        // This prevents the concurrency error when timer doesn't show properly
+        const now = new Date().getTime();
+        const oldSessions = activeSessions.filter(session => {
+          const sessionAge = now - new Date(session.started_at).getTime();
+          return sessionAge > 30 * 1000; // Older than 30 seconds
+        });
+
         if (oldSessions.length > 0) {
-          console.log('🔍 DEBUG: Cleaning up old sessions:', oldSessions.length);
+          console.log('🔍 DEBUG: Auto-cleaning up', oldSessions.length, 'old sessions');
+
           // Mark old sessions as incomplete
-          await supabase
+          const { error: cleanupError } = await supabase
             .from('simulation_usage_logs')
-            .update({ status: 'incomplete' })
+            .update({ status: 'incomplete', completed_at: new Date().toISOString() })
             .in('id', oldSessions.map(s => s.id));
+
+          if (cleanupError) {
+            console.error('🔍 DEBUG: Error cleaning up sessions:', cleanupError);
+            // Even if cleanup fails, still allow new session to prevent user lockout
+          } else {
+            console.log('✅ DEBUG: Successfully cleaned up old sessions');
+          }
         }
-        
-        // Check if there are still truly active sessions (less than 2 minutes old)
-        const recentSessions = activeSessions.filter(session => 
-          new Date().getTime() - new Date(session.started_at).getTime() <= 2 * 60 * 1000
-        );
-        
+
+        // Check if there are still truly active sessions (less than 30 seconds old)
+        const recentSessions = activeSessions.filter(session => {
+          const sessionAge = now - new Date(session.started_at).getTime();
+          return sessionAge <= 30 * 1000; // Less than 30 seconds old
+        });
+
         if (recentSessions.length > 0) {
-          console.log('🔍 DEBUG: Blocking due to recent active session');
+          console.log('🔍 DEBUG: Blocking due to very recent active session (< 30s old)');
+          console.log('🔍 DEBUG: Recent session details:', recentSessions[0]);
           return {
             allowed: false,
             reason: 'active_session',
-            message: 'You already have an active simulation session'
+            message: 'Bitte warten Sie einen Moment, bevor Sie eine neue Simulation starten'
           };
         } else {
-          console.log('🔍 DEBUG: Old sessions cleaned up, allowing new session');
+          console.log('✅ DEBUG: All old sessions cleaned up, allowing new session');
         }
       }
 
@@ -123,11 +143,13 @@ class SimulationTrackingService {
         daily_limit: 999
       };
     } catch (error) {
+      console.error('❌ DEBUG: Exception in canStartSimulation:', error);
       SecureLogger.error('Error checking simulation permissions', { error });
+      // IMPORTANT: On error, allow the simulation to start to prevent user lockout
       return {
-        allowed: false,
-        reason: 'error',
-        message: 'Unable to check simulation permissions'
+        allowed: true,
+        remaining: 999,
+        daily_limit: 999
       };
     }
   }
@@ -269,9 +291,10 @@ class SimulationTrackingService {
 
   // Update simulation status (in_progress, completed, aborted, etc.)
   async updateSimulationStatus(
-    sessionToken: string, 
-    status: SimulationStatus, 
-    durationSeconds?: number
+    sessionToken: string,
+    status: SimulationStatus,
+    durationSeconds?: number,
+    metadata?: Record<string, any>
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -290,6 +313,11 @@ class SimulationTrackingService {
         }
       }
 
+      // Add metadata if provided (e.g., early completion reason)
+      if (metadata) {
+        updateData.metadata = metadata;
+      }
+
       const { error } = await supabase
         .from('simulation_usage_logs')
         .update(updateData)
@@ -301,11 +329,12 @@ class SimulationTrackingService {
         return { success: false, error: 'Failed to update simulation' };
       }
 
-      SecureLogger.log('Simulation status updated', { 
-        sessionToken, 
-        user_id: user.id, 
+      SecureLogger.log('Simulation status updated', {
+        sessionToken,
+        user_id: user.id,
         status,
-        duration: durationSeconds 
+        duration: durationSeconds,
+        metadata
       });
 
       return { success: true };
