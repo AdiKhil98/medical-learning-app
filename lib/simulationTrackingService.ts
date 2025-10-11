@@ -367,11 +367,16 @@ class SimulationTrackingService {
         status
       };
 
-      if (status === 'completed' || status === 'aborted') {
+      // ALWAYS record duration_seconds if provided, regardless of status
+      // This is critical for silent refund logic to work correctly
+      if (durationSeconds !== undefined) {
+        updateData.duration_seconds = durationSeconds;
+        console.log('🔍 DEBUG: Recording duration_seconds:', durationSeconds, 'for status:', status);
+      }
+
+      // Set completed_at for terminal states
+      if (status === 'completed' || status === 'aborted' || status === 'incomplete') {
         updateData.completed_at = new Date().toISOString();
-        if (durationSeconds !== undefined) {
-          updateData.duration_seconds = durationSeconds;
-        }
       }
 
       // Add metadata if provided (e.g., early completion reason)
