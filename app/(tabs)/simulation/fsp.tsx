@@ -372,15 +372,24 @@ export default function FSPSimulationScreen() {
   // Mark simulation as used at 5-minute mark with server-side validation
   const markSimulationAsUsed = async (clientElapsedSeconds: number) => {
     if (!sessionToken || usageMarked) return;
-    
+
     console.log('📊 FSP: Marking simulation as used at 5-minute mark');
     console.log('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);
-    
+
     try {
       const result = await simulationTracker.markSimulationUsed(sessionToken, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
         console.log('✅ FSP: Simulation usage recorded in database with server validation');
+
+        // Also record subscription usage
+        console.log('💳 Recording subscription usage...');
+        const subscriptionRecorded = await recordUsage();
+        if (subscriptionRecorded) {
+          console.log('✅ FSP: Subscription usage recorded successfully');
+        } else {
+          console.error('❌ FSP: Failed to record subscription usage');
+        }
       } else {
         console.error('❌ FSP: Failed to mark simulation as used:', result.error);
         // If server-side validation fails, this could be a security issue
