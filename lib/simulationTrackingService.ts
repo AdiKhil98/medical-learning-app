@@ -285,7 +285,7 @@ class SimulationTrackingService {
     }
   }
 
-  // Mark simulation as used (called at 10-minute mark) - SERVER-SIDE VALIDATED
+  // Mark simulation as used (called at 5-minute mark) - SERVER-SIDE VALIDATED
   async markSimulationUsed(sessionToken: string, clientElapsedSeconds?: number): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('🔍 DEBUG: markSimulationUsed called with token:', sessionToken);
@@ -415,7 +415,7 @@ class SimulationTrackingService {
     }
   }
 
-  // Silent refund: Automatically refund if simulation aborted before 10 minutes
+  // Silent refund: Automatically refund if simulation aborted before 5 minutes
   private async attemptSilentRefund(sessionToken: string, clientDuration?: number): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();

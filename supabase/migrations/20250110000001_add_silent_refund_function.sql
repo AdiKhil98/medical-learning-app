@@ -1,13 +1,13 @@
 -- Migration: Add silent refund function for early-aborted simulations
 -- Created: 2025-01-10
--- Purpose: Automatically refund simulations aborted before 10-minute threshold
+-- Purpose: Automatically refund simulations aborted before 5-minute threshold
 
 -- ============================================================================
 -- FUNCTION: silent_refund_simulation
 -- ============================================================================
--- Refunds a simulation if it was aborted/incomplete before 10-minute mark
+-- Refunds a simulation if it was aborted/incomplete before 5-minute mark
 -- This function:
--- 1. Checks if session was aborted before 10 minutes
+-- 1. Checks if session was aborted before 5 minutes
 -- 2. Checks if usage was actually recorded (status = 'used')
 -- 3. Decrements appropriate counter (free or paid tier)
 -- 4. Updates session status for analytics
@@ -63,9 +63,9 @@ BEGIN
   -- REFUND CONDITIONS:
   -- 1. Session was marked as 'used' (meaning counter was incremented)
   -- 2. Session ended as 'aborted' or 'incomplete'
-  -- 3. Duration was less than 600 seconds (10 minutes)
+  -- 3. Duration was less than 300 seconds (5 minutes)
 
-  IF v_status = 'used' AND v_duration < 600 THEN
+  IF v_status = 'used' AND v_duration < 300 THEN
     -- This case: Session was marked as used but shouldn't have been
     -- (possible timing bug or manual database manipulation)
     v_was_refunded := true;
@@ -73,12 +73,12 @@ BEGIN
 
   ELSIF v_status IN ('aborted', 'incomplete', 'expired') AND v_marked_used_at IS NOT NULL THEN
     -- This case: Session was aborted after being marked as used
-    -- Check if it was marked used too early (< 9.5 minutes)
-    IF v_duration < 570 THEN
+    -- Check if it was marked used too early (< 4.5 minutes)
+    IF v_duration < 270 THEN
       v_was_refunded := true;
       v_refund_reason := 'marked_too_early';
     ELSE
-      -- Session legitimately reached 10-minute mark, don't refund
+      -- Session legitimately reached 5-minute mark, don't refund
       v_refund_reason := 'reached_threshold';
     END IF;
 
@@ -137,7 +137,7 @@ BEGIN
     'original_status', v_status,
     'message', CASE
       WHEN v_was_refunded THEN 'Simulation refunded successfully'
-      WHEN v_refund_reason = 'reached_threshold' THEN 'Simulation legitimately reached 10-minute threshold'
+      WHEN v_refund_reason = 'reached_threshold' THEN 'Simulation legitimately reached 5-minute threshold'
       WHEN v_refund_reason = 'never_marked_used' THEN 'Simulation was never marked as used'
       ELSE 'No refund necessary'
     END
@@ -160,7 +160,7 @@ GRANT EXECUTE ON FUNCTION silent_refund_simulation(TEXT, UUID) TO authenticated;
 
 -- Add helpful comments
 COMMENT ON FUNCTION silent_refund_simulation(TEXT, UUID) IS
-'Silently refunds simulations that were aborted before 10-minute threshold.
+'Silently refunds simulations that were aborted before 5-minute threshold.
 Returns JSON with refund status and reason. Automatically called on simulation abort.';
 
 -- ============================================================================
@@ -206,10 +206,10 @@ BEGIN
     v_duration := EXTRACT(EPOCH FROM (NOW() - v_started_at))::INTEGER;
   END IF;
 
-  IF v_status = 'used' AND v_duration < 600 THEN
+  IF v_status = 'used' AND v_duration < 300 THEN
     v_is_eligible := true;
     v_reason := 'marked_used_but_under_threshold';
-  ELSIF v_status IN ('aborted', 'incomplete') AND v_marked_used_at IS NOT NULL AND v_duration < 570 THEN
+  ELSIF v_status IN ('aborted', 'incomplete') AND v_marked_used_at IS NOT NULL AND v_duration < 270 THEN
     v_is_eligible := true;
     v_reason := 'aborted_after_premature_marking';
   ELSE

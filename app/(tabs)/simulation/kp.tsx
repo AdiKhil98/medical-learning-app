@@ -365,10 +365,10 @@ export default function KPSimulationScreen() {
         console.log('⏱️ DEBUG: Timer at', Math.floor(remainingSeconds / 60) + ':' + String(remainingSeconds % 60).padStart(2, '0'), `(${remainingSeconds} seconds)`);
       }
 
-      // Mark as used at 10-minute mark (only trigger once)
-      if (prev > 600 && remainingSeconds <= 600 && !usageMarked && sessionToken) {
+      // Mark as used at 5-minute mark (only trigger once)
+      if (prev > 300 && remainingSeconds <= 300 && !usageMarked && sessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
-        console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+        console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
         console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
         markSimulationAsUsed(clientElapsed);
       }
@@ -392,11 +392,11 @@ export default function KPSimulationScreen() {
     }, 1000); // Check every 1000ms (1 second) for mobile compatibility
   };
 
-  // Mark simulation as used at 10-minute mark
+  // Mark simulation as used at 5-minute mark
   const markSimulationAsUsed = async (clientElapsedSeconds?: number) => {
     if (!sessionToken || usageMarked) return;
     
-    console.log('📊 KP: Marking simulation as used at 10-minute mark');
+    console.log('📊 KP: Marking simulation as used at 5-minute mark');
     console.log('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
     
     try {
@@ -501,16 +501,16 @@ export default function KPSimulationScreen() {
           finalStatus = 'completed';
         } else if (reason === 'aborted') {
           // If aborted, check if it was before 10-minute mark
-          if (!usageMarked && elapsedSeconds < 600) {
+          if (!usageMarked && elapsedSeconds < 300) {
             finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
-            console.log('📊 KP: Marking as incomplete - ended before 10-minute mark');
+            console.log('📊 KP: Marking as incomplete - ended before 5-minute mark');
 
             // Reset optimistic counter since simulation ended before being charged
             console.log('🔄 KP: Resetting optimistic count - simulation ended before being charged');
             resetOptimisticCount();
           } else {
             finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 KP: Marking as aborted - ended after 10-minute mark (or usage already recorded)');
+            console.log('📊 KP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
           }
         }
         
@@ -697,11 +697,11 @@ export default function KPSimulationScreen() {
             );
 
             // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-            if (!usageMarked && elapsedSeconds < 600) {
-              console.log('🔄 KP: Early completion before 10-minute mark - resetting optimistic count');
+            if (!usageMarked && elapsedSeconds < 300) {
+              console.log('🔄 KP: Early completion before 5-minute mark - resetting optimistic count');
               resetOptimisticCount();
-            } else if (elapsedSeconds >= 600) {
-              console.log('✅ KP: Simulation reached 10-minute threshold - counter already deducted, no reset needed');
+            } else if (elapsedSeconds >= 300) {
+              console.log('✅ KP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
             }
           }
         } catch (error) {
@@ -732,7 +732,7 @@ export default function KPSimulationScreen() {
 
       // Stop timer and mark status based on whether usage was recorded
       if (timerActiveRef.current && sessionToken) {
-        // CRITICAL: If usage was already marked at 10-minute mark, treat as completed
+        // CRITICAL: If usage was already marked at 5-minute mark, treat as completed
         // This prevents silent refund from incorrectly refunding the counter
         const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
         console.log(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
@@ -1165,10 +1165,10 @@ export default function KPSimulationScreen() {
           console.log('⏱️ DEBUG: Timer at', Math.floor(remainingSeconds / 60) + ':' + String(remainingSeconds % 60).padStart(2, '0'), `(${remainingSeconds} seconds)`);
         }
 
-        // Mark as used at 10-minute mark (only trigger once)
-        if (prev > 600 && remainingSeconds <= 600 && !usageMarked && savedSessionToken) {
+        // Mark as used at 5-minute mark (only trigger once)
+        if (prev > 300 && remainingSeconds <= 300 && !usageMarked && savedSessionToken) {
           const clientElapsed = (20 * 60) - remainingSeconds;
-          console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+          console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           markSimulationAsUsed(clientElapsed);
         }

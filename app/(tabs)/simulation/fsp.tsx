@@ -341,10 +341,10 @@ export default function FSPSimulationScreen() {
         previousTimeRef.current = remainingSeconds;
       }
 
-      // Mark as used at 10-minute mark (only trigger once)
-      if (prev > 600 && remainingSeconds <= 600 && !usageMarked && sessionToken) {
+      // Mark as used at 5-minute mark (only trigger once)
+      if (prev > 300 && remainingSeconds <= 300 && !usageMarked && sessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
-        console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+        console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
         console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
         markSimulationAsUsed(clientElapsed);
       }
@@ -368,11 +368,11 @@ export default function FSPSimulationScreen() {
     }, 1000); // Check every 1000ms (1 second) for mobile compatibility
   };
 
-  // Mark simulation as used at 10-minute mark with server-side validation
+  // Mark simulation as used at 5-minute mark with server-side validation
   const markSimulationAsUsed = async (clientElapsedSeconds: number) => {
     if (!sessionToken || usageMarked) return;
     
-    console.log('📊 FSP: Marking simulation as used at 10-minute mark');
+    console.log('📊 FSP: Marking simulation as used at 5-minute mark');
     console.log('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);
     
     try {
@@ -501,16 +501,16 @@ export default function FSPSimulationScreen() {
           finalStatus = 'completed';
         } else if (reason === 'aborted') {
           // If aborted, check if it was before 10-minute mark
-          if (!usageMarked && elapsedSeconds < 600) {
+          if (!usageMarked && elapsedSeconds < 300) {
             finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
-            console.log('📊 FSP: Marking as incomplete - ended before 10-minute mark');
+            console.log('📊 FSP: Marking as incomplete - ended before 5-minute mark');
 
             // Reset optimistic counter since simulation ended before being charged
             console.log('🔄 FSP: Resetting optimistic count - simulation ended before being charged');
             resetOptimisticCount();
           } else {
             finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 FSP: Marking as aborted - ended after 10-minute mark (or usage already recorded)');
+            console.log('📊 FSP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
           }
         }
         
@@ -695,11 +695,11 @@ export default function FSPSimulationScreen() {
           console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
           // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-          if (!usageMarked && elapsedSeconds < 600) {
-            console.log('🔄 FSP: Early completion before 10-minute mark - resetting optimistic count');
+          if (!usageMarked && elapsedSeconds < 300) {
+            console.log('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
             resetOptimisticCount();
-          } else if (elapsedSeconds >= 600) {
-            console.log('✅ FSP: Simulation reached 10-minute threshold - counter already deducted, no reset needed');
+          } else if (elapsedSeconds >= 300) {
+            console.log('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
           }
         } catch (error) {
           console.error('❌ FSP: Error updating early completion status:', error);
@@ -1136,10 +1136,10 @@ export default function FSPSimulationScreen() {
           previousTimeRef.current = remainingSeconds;
         }
 
-        // Mark as used at 10-minute mark (only trigger once)
-        if (prev > 600 && remainingSeconds <= 600 && !usageMarked && savedSessionToken) {
+        // Mark as used at 5-minute mark (only trigger once)
+        if (prev > 300 && remainingSeconds <= 300 && !usageMarked && savedSessionToken) {
           const clientElapsed = (20 * 60) - remainingSeconds;
-          console.log('🔍 DEBUG: 10-minute mark reached, marking as used');
+          console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           markSimulationAsUsed(clientElapsed);
         }
