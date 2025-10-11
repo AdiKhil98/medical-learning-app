@@ -33,6 +33,7 @@ export default function FSPSimulationScreen() {
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
+  const usageMarkedRef = useRef(false); // Ref to track usage marked state for cleanup closure
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
 
   // Timer warning system state
@@ -262,6 +263,7 @@ export default function FSPSimulationScreen() {
         // Success case: save session token and setup heartbeat
         setSessionToken(result.sessionToken || null);
         setUsageMarked(false);
+        usageMarkedRef.current = false; // Initialize ref
 
         // Apply optimistic counter deduction (show immediate feedback to user)
         applyOptimisticDeduction();
@@ -380,6 +382,7 @@ export default function FSPSimulationScreen() {
       const result = await simulationTracker.markSimulationUsed(sessionToken, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
+        usageMarkedRef.current = true; // Also update ref for cleanup closure
         console.log('✅ FSP: Simulation usage recorded in database with server validation');
 
         // Also record subscription usage
@@ -730,14 +733,19 @@ export default function FSPSimulationScreen() {
   useEffect(() => {
     return () => {
       console.log('🧹 FSP: Cleanup started');
-      
+
       // Stop heartbeat monitoring
       stopHeartbeat();
-      
-      // Stop timer and mark as aborted (sync version for cleanup)
+
+      // Stop timer and mark status based on whether usage was recorded
       if (timerActive && sessionToken) {
-        simulationTracker.updateSimulationStatus(sessionToken, 'aborted', (20 * 60) - timeRemaining)
-          .then(() => console.log('📊 FSP: Session marked as aborted during cleanup'))
+        // CRITICAL: If usage was already marked at 5-minute mark, treat as completed
+        // This prevents silent refund from incorrectly refunding the counter
+        const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
+        console.log(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+
+        simulationTracker.updateSimulationStatus(sessionToken, finalStatus, (20 * 60) - timeRemaining)
+          .then(() => console.log(`📊 FSP: Session marked as ${finalStatus} during cleanup`))
           .catch(error => console.error('❌ FSP: Error during cleanup:', error));
       }
       
@@ -940,6 +948,7 @@ export default function FSPSimulationScreen() {
     setTimerEndTime(0);
     setSessionToken(null);
     setUsageMarked(false);
+    usageMarkedRef.current = false; // Also reset ref
 
     // Reset timer warning states
     setTimerWarningLevel('normal');
