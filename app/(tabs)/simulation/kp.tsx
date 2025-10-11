@@ -366,9 +366,10 @@ export default function KPSimulationScreen() {
       }
 
       // Mark as used at 5-minute mark (only trigger once)
-      if (prev > 300 && remainingSeconds <= 300 && !usageMarked && sessionToken) {
+      // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
+      if (prev > 900 && remainingSeconds <= 900 && !usageMarked && sessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
-        console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
+        console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
         console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
         markSimulationAsUsed(clientElapsed);
       }
@@ -1166,9 +1167,10 @@ export default function KPSimulationScreen() {
         }
 
         // Mark as used at 5-minute mark (only trigger once)
-        if (prev > 300 && remainingSeconds <= 300 && !usageMarked && savedSessionToken) {
+        // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
+        if (prev > 900 && remainingSeconds <= 900 && !usageMarked && savedSessionToken) {
           const clientElapsed = (20 * 60) - remainingSeconds;
-          console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
+          console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           markSimulationAsUsed(clientElapsed);
         }
