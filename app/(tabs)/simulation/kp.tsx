@@ -32,6 +32,7 @@ export default function KPSimulationScreen() {
   const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
   const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const sessionTokenRef = useRef<string | null>(null); // Ref for sessionToken to avoid closure issues
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const usageMarkedRef = useRef(false); // Ref to track usage marked state for cleanup closure
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
@@ -269,6 +270,7 @@ export default function KPSimulationScreen() {
       if (result.success && result.sessionToken) {
         console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
         setSessionToken(result.sessionToken);
+        sessionTokenRef.current = result.sessionToken; // Store in ref for timer closure
         setUsageMarked(false);
         usageMarkedRef.current = false; // Initialize ref
 
@@ -367,10 +369,12 @@ export default function KPSimulationScreen() {
 
       // Mark as used at 5-minute mark (only trigger once)
       // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
-      if (prev > 900 && remainingSeconds <= 900 && !usageMarked && sessionToken) {
+      const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
+      if (prev > 900 && remainingSeconds <= 900 && !usageMarkedRef.current && currentSessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
         console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
         console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+        console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
         markSimulationAsUsed(clientElapsed);
       }
 
@@ -395,13 +399,15 @@ export default function KPSimulationScreen() {
 
   // Mark simulation as used at 5-minute mark
   const markSimulationAsUsed = async (clientElapsedSeconds?: number) => {
-    if (!sessionToken || usageMarked) return;
+    const token = sessionTokenRef.current; // Use ref instead of state
+    if (!token || usageMarkedRef.current) return;
     
     console.log('📊 KP: Marking simulation as used at 5-minute mark');
     console.log('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
-    
+    console.log('🔍 DEBUG: Using session token:', token);
+
     try {
-      const result = await simulationTracker.markSimulationUsed(sessionToken, clientElapsedSeconds);
+      const result = await simulationTracker.markSimulationUsed(token, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
@@ -941,6 +947,7 @@ export default function KPSimulationScreen() {
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
     setSessionToken(null);
+    sessionTokenRef.current = null; // Also reset ref
     setUsageMarked(false);
     usageMarkedRef.current = false; // Also reset ref
 
@@ -1121,6 +1128,7 @@ export default function KPSimulationScreen() {
       setTimeRemaining(remainingSeconds);
       setTimerEndTime(endTime); // Set absolute end time
       setSessionToken(savedSessionToken);
+      sessionTokenRef.current = savedSessionToken; // Store in ref for timer closure
       previousTimeRef.current = remainingSeconds; // Initialize ref for resume
       timerEndTimeRef.current = endTime; // Store in ref for mobile reliability
 
@@ -1168,10 +1176,12 @@ export default function KPSimulationScreen() {
 
         // Mark as used at 5-minute mark (only trigger once)
         // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
-        if (prev > 900 && remainingSeconds <= 900 && !usageMarked && savedSessionToken) {
+        const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
+        if (prev > 900 && remainingSeconds <= 900 && !usageMarkedRef.current && currentSessionToken) {
           const clientElapsed = (20 * 60) - remainingSeconds;
           console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
           markSimulationAsUsed(clientElapsed);
         }
 
