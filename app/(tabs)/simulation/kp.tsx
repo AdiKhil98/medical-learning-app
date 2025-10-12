@@ -1470,7 +1470,7 @@ export default function KPSimulationScreen() {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push('/(tabs)/simulation')}
         >
           <ArrowLeft size={24} color="white" />
         </TouchableOpacity>
