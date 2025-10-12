@@ -188,7 +188,13 @@ export default function FSPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current);
+    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+
+    // CRITICAL: Check if a session already exists to prevent duplicate database sessions
+    if (sessionTokenRef.current) {
+      console.log('🔍 DEBUG: Session already exists, returning early to prevent duplicates');
+      return;
+    }
 
     // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
     // This prevents false positives from stale state
