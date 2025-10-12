@@ -135,42 +135,25 @@ export default function FSPSimulationScreen() {
               console.log(`🎤 FSP: Monitoring audio track ${index + 1}`);
               
               track.addEventListener('ended', () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} ended - call likely finished`);
-                
-                // Check current timer state from the React ref
-                const currentTimerActive = timerInterval.current !== null;
-                console.log(`🔍 FSP: Track ended - checking timer interval:`, {
-                  timerIntervalExists: !!timerInterval.current,
-                  shouldStopTimer: currentTimerActive
-                });
-                
-                if (currentTimerActive) {
-                  console.log('🔇 FSP: Audio track ended - stopping timer');
-                  stopSimulationTimer();
-                } else {
-                  console.log('⏰ FSP: Timer already stopped, no action needed');
-                }
+                console.log(`🔇 FSP: Audio track ${index + 1} ended - but NOT stopping timer`);
+                console.log(`ℹ️ FSP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
+
+                // DO NOT automatically stop the timer!
+                // The user should control when the simulation ends via:
+                // 1. "Ich bin fertig" button
+                // 2. 20-minute timer expiration
+                // 3. Manual navigation away from page
               });
 
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
               track.stop = () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually`);
+                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually - but NOT stopping timer`);
+                console.log(`ℹ️ FSP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
                 originalStop();
-                
-                // Check current timer state immediately
-                const currentTimerActive = timerInterval.current !== null;
-                console.log(`🔍 FSP: Track stopped - checking timer interval:`, {
-                  timerIntervalExists: !!timerInterval.current,
-                  shouldStopTimer: currentTimerActive
-                });
-                
-                if (currentTimerActive) {
-                  console.log('🔇 FSP: Audio track stopped - stopping timer');
-                  stopSimulationTimer();
-                } else {
-                  console.log('⏰ FSP: Timer already stopped, no action needed');
-                }
+
+                // DO NOT automatically stop the timer!
+                // Let the timer run until user explicitly ends the simulation
               };
             });
 
