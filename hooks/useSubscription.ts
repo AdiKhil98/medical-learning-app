@@ -150,18 +150,18 @@ export const useSubscription = (userId: string | undefined) => {
     switch (subscriptionTier) {
       case 'basis':
         planName = 'Basis-Plan';
-        usageText = `${displayUsed}/${simulationLimit} simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
         break;
       case 'profi':
         planName = 'Profi-Plan';
-        usageText = `${displayUsed}/${simulationLimit} simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
         break;
       case 'unlimited':
         planName = 'Unlimited-Plan';
-        usageText = `${displayUsed} simulations used`;
+        usageText = `${displayUsed} Simulationen genutzt`;
         break;
       default:
-        usageText = `${displayUsed}/${simulationLimit} free simulations used`;
+        usageText = `${displayUsed}/${simulationLimit} kostenlose Simulationen genutzt`;
     }
 
     return {
