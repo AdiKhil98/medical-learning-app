@@ -71,7 +71,7 @@ export default function KPSimulationScreen() {
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
-      if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
         console.log('🏥 KP: Initializing medical simulation');
 
         // Stop global cleanup to allow widget

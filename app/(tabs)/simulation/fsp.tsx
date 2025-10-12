@@ -71,7 +71,7 @@ export default function FSPSimulationScreen() {
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
-      if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
         console.log('🏥 FSP: Initializing medical simulation');
 
         // Stop global cleanup to allow widget
