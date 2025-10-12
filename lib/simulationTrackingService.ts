@@ -236,6 +236,79 @@ class SimulationTrackingService {
       return [];
     }
   }
+
+  // ============================================================================
+  // BACKWARD COMPATIBILITY METHODS
+  // These methods provide compatibility with the old API used by KP/FSP screens
+  // TODO: Remove these once KP and FSP screens are updated to use the new API
+  // ============================================================================
+
+  /**
+   * @deprecated Use markSimulationCounted() instead
+   * Backward compatibility wrapper for old API
+   */
+  async markSimulationUsed(
+    sessionToken: string,
+    clientElapsedSeconds?: number
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
+    console.log('📊 Client reported:', clientElapsedSeconds, 'seconds (ignored - using server time)');
+
+    // Call the new method
+    const result = await this.markSimulationCounted(sessionToken);
+
+    return {
+      success: result.success,
+      error: result.error
+    };
+  }
+
+  /**
+   * @deprecated Use endSimulation() instead
+   * Backward compatibility wrapper for old API
+   */
+  async updateSimulationStatus(
+    sessionToken: string,
+    status: string,
+    durationSeconds?: number,
+    metadata?: Record<string, any>
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log('⚠️ DEPRECATED: updateSimulationStatus() called. Use endSimulation() instead.');
+    console.log('📊 Status:', status, 'Duration:', durationSeconds, 'Metadata:', metadata);
+
+    // Just end the simulation - the database will determine if it should be counted
+    const result = await this.endSimulation(sessionToken);
+
+    return {
+      success: result.success,
+      error: result.error
+    };
+  }
+
+  /**
+   * @deprecated Heartbeat is no longer needed in the new system
+   * This is a no-op for backward compatibility
+   */
+  async sendHeartbeat(sessionToken: string): Promise<{ success: boolean; error?: string }> {
+    // No-op - heartbeat is not used in the simplified system
+    return { success: true };
+  }
+
+  /**
+   * @deprecated Use the appropriate method instead
+   * Backward compatibility wrapper
+   */
+  async canStartSimulation(simulationType: SimulationType): Promise<{
+    allowed: boolean;
+    reason?: string;
+    message?: string;
+  }> {
+    // In the simplified system, we always allow starting
+    // The user's subscription limits are checked elsewhere
+    return {
+      allowed: true
+    };
+  }
 }
 
 export const simulationTracker = new SimulationTrackingService();
