@@ -379,16 +379,12 @@ export default function FSPSimulationScreen() {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
         console.log('✅ FSP: Simulation usage recorded in database with server validation');
+        console.log('✅ FSP: Counter automatically incremented by database function');
 
-        // Also record subscription usage
-        console.log('💳 Recording subscription usage...');
-        const subscriptionRecorded = await recordUsage();
-        if (subscriptionRecorded) {
-          console.log('✅ FSP: Subscription usage recorded successfully');
-        } else {
-          console.error('❌ FSP: Failed to record subscription usage');
-        }
-      } else {
+        // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
+        // already increments the counter in the database. Calling recordUsage() would
+        // result in double-counting (incrementing the counter twice).
+      } else{
         console.error('❌ FSP: Failed to mark simulation as used:', result.error);
         // If server-side validation fails, this could be a security issue
         if (result.error?.includes('Server validation')) {

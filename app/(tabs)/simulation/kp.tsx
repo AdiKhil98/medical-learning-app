@@ -401,15 +401,11 @@ export default function KPSimulationScreen() {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
         console.log('✅ KP: Simulation usage recorded in database with server validation');
+        console.log('✅ KP: Counter automatically incremented by database function');
 
-        // Also record subscription usage
-        console.log('💳 Recording subscription usage...');
-        const subscriptionRecorded = await recordUsage();
-        if (subscriptionRecorded) {
-          console.log('✅ KP: Subscription usage recorded successfully');
-        } else {
-          console.error('❌ KP: Failed to record subscription usage');
-        }
+        // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
+        // already increments the counter in the database. Calling recordUsage() would
+        // result in double-counting (incrementing the counter twice).
       } else {
         console.error('❌ KP: Failed to mark simulation as used:', result.error);
         
