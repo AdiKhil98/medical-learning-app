@@ -275,6 +275,15 @@ export default function FSPSimulationScreen() {
           }
         }
 
+        // DEBUG: Check Voiceflow controller state before sending variables
+        console.log('🔍 Voiceflow controller check:', {
+          exists: !!voiceflowController.current,
+          type: typeof voiceflowController.current,
+          hasMethod: voiceflowController.current?.updateSessionVariables !== undefined,
+          hasSessionToken: !!result.sessionToken,
+          hasUserId: !!user?.id
+        });
+
         // Send session variables to Voiceflow
         if (result.sessionToken && user?.id && voiceflowController.current) {
           try {
