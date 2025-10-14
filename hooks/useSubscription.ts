@@ -78,65 +78,83 @@ export const useSubscription = (userId: string | undefined) => {
         freeUsed: user.free_simulations_used
       });
 
+      // CRITICAL: Validate and sanitize data to handle edge cases
+      const sanitizedData = {
+        tier: user.subscription_tier || 'free',
+        status: user.subscription_status || 'inactive',
+        limit: Math.max(0, user.simulation_limit || 0),
+        usedMonthly: Math.max(0, user.simulations_used_this_month || 0),
+        usedFree: Math.max(0, user.free_simulations_used || 0)
+      };
+
       // Determine access based on subscription tier
       let canUse = false;
       let remaining = 0;
       let shouldUpgrade = false;
       let message = '';
-      let tier = user.subscription_tier || 'free';
+      let totalLimit = 0;
+      let usedCount = 0;
+      let tier = sanitizedData.tier;
 
-      if (!user.subscription_tier || user.subscription_status !== 'active') {
-        // ===== FREE TIER =====
-        const freeUsed = user.free_simulations_used || 0;
-        remaining = Math.max(0, 3 - freeUsed);
+      if (!sanitizedData.tier || sanitizedData.tier === 'free' || sanitizedData.status !== 'active') {
+        // ===== FREE TIER: Always 3 simulations (lifetime) =====
+        totalLimit = 3;
+        usedCount = sanitizedData.usedFree;
+        remaining = Math.max(0, totalLimit - usedCount);
         canUse = remaining > 0;
 
         if (!canUse) {
           shouldUpgrade = true;
-          message = 'Sie haben alle 3 kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!';
-          console.log('[Access Control] FREE TIER - LIMIT REACHED');
+          message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!`;
+          console.log(`[Access Control] FREE TIER - LIMIT REACHED (${usedCount}/${totalLimit})`);
         } else {
-          message = `${remaining} kostenlose Simulationen verbleibend`;
-          console.log(`[Access Control] FREE TIER - ${remaining} remaining`);
+          message = `${remaining} von ${totalLimit} kostenlosen Simulationen verbleibend`;
+          console.log(`[Access Control] FREE TIER - ${remaining} remaining (${usedCount}/${totalLimit})`);
         }
-      } else if (user.subscription_tier === 'unlimited') {
-        // ===== UNLIMITED TIER =====
+      } else if (sanitizedData.tier === 'unlimited') {
+        // ===== UNLIMITED TIER: No limit =====
+        totalLimit = 999999;
+        usedCount = sanitizedData.usedMonthly;
+        remaining = 999999;
         canUse = true;
-        remaining = 999999; // Unlimited
         message = 'Unbegrenzte Simulationen verfügbar';
-        console.log('[Access Control] UNLIMITED TIER - Access granted');
+        console.log(`[Access Control] UNLIMITED TIER - Access granted (used: ${usedCount})`);
       } else {
-        // ===== PAID TIER (basis/profi) =====
-        const limit = user.simulation_limit || 0;
-        const used = user.simulations_used_this_month || 0;
-        remaining = Math.max(0, limit - used);
+        // ===== PAID TIER: Dynamic limit from database (works for 5, 30, 50, 100, any value) =====
+        totalLimit = sanitizedData.limit;
+        usedCount = sanitizedData.usedMonthly;
+
+        // CRITICAL: Dynamic calculation - works for ANY limit value
+        remaining = Math.max(0, totalLimit - usedCount);
         canUse = remaining > 0;
 
         if (!canUse) {
           shouldUpgrade = true;
-          message = `Sie haben alle ${limit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
-          console.log('[Access Control] PAID TIER - LIMIT REACHED');
+          message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
+          console.log(`[Access Control] PAID TIER - LIMIT REACHED (${usedCount}/${totalLimit})`);
         } else {
-          message = `${remaining} Simulationen verbleibend in diesem Monat`;
-          console.log(`[Access Control] PAID TIER - ${remaining} remaining`);
+          message = `${remaining} von ${totalLimit} Simulationen verbleibend`;
+          console.log(`[Access Control] PAID TIER - ${remaining} remaining (${usedCount}/${totalLimit})`);
         }
       }
 
       const status = {
         canUseSimulation: canUse,
-        simulationsUsed: tier === 'free' ? user.free_simulations_used : user.simulations_used_this_month,
-        simulationLimit: tier === 'free' ? 3 : (tier === 'unlimited' ? 999999 : user.simulation_limit),
+        simulationsUsed: usedCount,
+        simulationLimit: totalLimit,
         subscriptionTier: tier,
         message,
         shouldUpgrade,
         remainingSimulations: remaining
       };
 
-      console.log('[Access Control] Result:', {
-        canStart: canUse,
+      console.log('[Access Control] Final Result:', {
+        tier,
+        totalLimit,
+        usedCount,
         remaining,
-        shouldUpgrade,
-        tier
+        canStart: canUse,
+        shouldUpgrade
       });
 
       setSubscriptionStatus(status);
@@ -206,6 +224,7 @@ export const useSubscription = (userId: string | undefined) => {
 
   /**
    * Get subscription display info for dashboard
+   * UNIVERSAL: Works for any tier and any limit value
    */
   const getSubscriptionInfo = useCallback(() => {
     if (!subscriptionStatus) return null;
@@ -217,33 +236,39 @@ export const useSubscription = (userId: string | undefined) => {
       ? simulationsUsed + optimisticDeduction
       : simulationsUsed;
 
-    // Format display text
-    let planName = 'Free Plan';
-    let usageText = '';
+    // UNIVERSAL: Map tier to display name (works for any tier)
+    const tierDisplayNames: Record<string, string> = {
+      'free': 'Kostenlos',
+      'basis': 'Basis-Plan',
+      'profi': 'Profi-Plan',
+      'unlimited': 'Unlimited-Plan',
+      // Add any custom tiers here
+      'custom_5': 'Custom 5',
+      'custom_50': 'Custom 50',
+      'custom_100': 'Custom 100'
+    };
 
-    switch (subscriptionTier) {
-      case 'basis':
-        planName = 'Basis-Plan';
-        usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
-        break;
-      case 'profi':
-        planName = 'Profi-Plan';
-        usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
-        break;
-      case 'unlimited':
-        planName = 'Unlimited-Plan';
-        usageText = `${displayUsed} Simulationen genutzt`;
-        break;
-      default:
-        usageText = `${displayUsed}/${simulationLimit} kostenlose Simulationen genutzt`;
+    const planName = tierDisplayNames[subscriptionTier || 'free'] || `${subscriptionTier}-Plan`;
+
+    // UNIVERSAL: Format usage text based on tier (works for any limit)
+    let usageText = '';
+    if (subscriptionTier === 'unlimited') {
+      usageText = `${displayUsed} Simulationen genutzt`;
+    } else {
+      // Works for 3, 5, 30, 50, 100, or ANY limit value
+      usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
     }
 
     return {
       planName,
       usageText,
       message,
-      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis',
-      isUnlimited: subscriptionTier === 'unlimited'
+      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis' || subscriptionTier === 'profi',
+      isUnlimited: subscriptionTier === 'unlimited',
+      // Additional info for universal handling
+      displayUsed,
+      totalLimit: simulationLimit,
+      remaining: simulationLimit ? simulationLimit - displayUsed : 0
     };
   }, [subscriptionStatus, hasOptimisticState, optimisticDeduction]);
 

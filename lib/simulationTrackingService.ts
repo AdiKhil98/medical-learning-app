@@ -296,16 +296,18 @@ class SimulationTrackingService {
 
   /**
    * Check if user can start a simulation
-   * Performs backend validation of subscription limits
+   * UNIVERSAL: Performs backend validation for ALL subscription tiers and limits
    */
   async canStartSimulation(simulationType: SimulationType): Promise<{
     allowed: boolean;
     reason?: string;
     message?: string;
     shouldUpgrade?: boolean;
+    remaining?: number;
+    totalLimit?: number;
   }> {
     try {
-      console.log('[Backend Validation] Checking if simulation can start:', simulationType);
+      console.log('[Backend Validation] UNIVERSAL CHECK - Simulation type:', simulationType);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -313,11 +315,13 @@ class SimulationTrackingService {
         return {
           allowed: false,
           reason: 'not_authenticated',
-          message: 'Nicht angemeldet'
+          message: 'Nicht angemeldet',
+          remaining: 0,
+          totalLimit: 0
         };
       }
 
-      // Get user's current subscription data
+      // Get user's current subscription data with FRESH query
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('subscription_tier, subscription_status, simulation_limit, simulations_used_this_month, free_simulations_used')
@@ -329,77 +333,104 @@ class SimulationTrackingService {
         return {
           allowed: false,
           reason: 'database_error',
-          message: 'Fehler beim Abrufen der Benutzerdaten'
+          message: 'Fehler beim Abrufen der Benutzerdaten',
+          remaining: 0,
+          totalLimit: 0
         };
       }
 
-      console.log('[Backend Validation] User data:', {
-        tier: userData.subscription_tier,
-        status: userData.subscription_status,
-        limit: userData.simulation_limit,
-        used: userData.simulations_used_this_month,
-        freeUsed: userData.free_simulations_used
-      });
+      // CRITICAL: Sanitize and validate data to handle edge cases
+      const sanitizedData = {
+        tier: userData.subscription_tier || 'free',
+        status: userData.subscription_status || 'inactive',
+        limit: Math.max(0, userData.simulation_limit || 0),
+        usedMonthly: Math.max(0, userData.simulations_used_this_month || 0),
+        usedFree: Math.max(0, userData.free_simulations_used || 0)
+      };
 
-      // Check limits based on subscription tier
+      console.log('[Backend Validation] Sanitized data:', sanitizedData);
+
+      // UNIVERSAL: Calculate limits for ANY tier
       let canStart = false;
       let reason = '';
       let message = '';
       let shouldUpgrade = false;
+      let totalLimit = 0;
+      let usedCount = 0;
+      let remaining = 0;
 
-      if (!userData.subscription_tier || userData.subscription_status !== 'active') {
-        // FREE TIER
-        const freeUsed = userData.free_simulations_used || 0;
-        canStart = freeUsed < 3;
+      if (!sanitizedData.tier || sanitizedData.tier === 'free' || sanitizedData.status !== 'active') {
+        // ===== FREE TIER: Always 3 simulations (lifetime) =====
+        totalLimit = 3;
+        usedCount = sanitizedData.usedFree;
+        remaining = Math.max(0, totalLimit - usedCount);
+        canStart = remaining > 0;
 
         if (!canStart) {
           reason = 'free_limit_reached';
-          message = 'Sie haben alle 3 kostenlosen Simulationen verbraucht';
+          message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht`;
           shouldUpgrade = true;
-          console.log('[Backend Validation] FREE TIER - BLOCKED');
+          console.log(`[Backend Validation] FREE TIER - BLOCKED (${usedCount}/${totalLimit})`);
         } else {
-          console.log(`[Backend Validation] FREE TIER - Allowed (${3 - freeUsed} remaining)`);
+          console.log(`[Backend Validation] FREE TIER - Allowed (${remaining}/${totalLimit} remaining)`);
         }
-      } else if (userData.subscription_tier === 'unlimited') {
-        // UNLIMITED TIER
+      } else if (sanitizedData.tier === 'unlimited') {
+        // ===== UNLIMITED TIER: No limit =====
+        totalLimit = 999999;
+        usedCount = sanitizedData.usedMonthly;
+        remaining = 999999;
         canStart = true;
-        console.log('[Backend Validation] UNLIMITED TIER - Allowed');
+        console.log(`[Backend Validation] UNLIMITED TIER - Always allowed (used: ${usedCount})`);
       } else {
-        // PAID TIER
-        const used = userData.simulations_used_this_month || 0;
-        const limit = userData.simulation_limit || 0;
-        canStart = used < limit;
+        // ===== PAID TIER: UNIVERSAL - Works for 5, 30, 50, 100, ANY limit value =====
+        totalLimit = sanitizedData.limit;
+        usedCount = sanitizedData.usedMonthly;
+
+        // CRITICAL: Dynamic calculation works for ANY limit
+        remaining = Math.max(0, totalLimit - usedCount);
+        canStart = remaining > 0;
 
         if (!canStart) {
           reason = 'monthly_limit_reached';
-          message = `Sie haben alle ${limit} Simulationen dieses Monats verbraucht`;
+          message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht`;
           shouldUpgrade = true;
-          console.log('[Backend Validation] PAID TIER - BLOCKED');
+          console.log(`[Backend Validation] PAID TIER - BLOCKED (${usedCount}/${totalLimit})`);
         } else {
-          console.log(`[Backend Validation] PAID TIER - Allowed (${limit - used} remaining)`);
+          console.log(`[Backend Validation] PAID TIER - Allowed (${remaining}/${totalLimit} remaining)`);
         }
       }
 
-      // Check for active concurrent sessions
+      // Check for active concurrent sessions (only if limit check passed)
       if (canStart) {
         const hasActiveSession = await this.hasActiveSession(user.id);
         if (hasActiveSession) {
-          console.log('[Backend Validation] BLOCKED - Active session exists');
+          console.log('[Backend Validation] BLOCKED - Concurrent session detected');
           return {
             allowed: false,
             reason: 'concurrent_session',
-            message: 'Sie haben bereits eine aktive Simulation'
+            message: 'Sie haben bereits eine aktive Simulation',
+            remaining,
+            totalLimit
           };
         }
       }
 
-      console.log('[Backend Validation] Final result:', canStart ? 'ALLOWED' : 'BLOCKED');
+      console.log('[Backend Validation] FINAL RESULT:', {
+        allowed: canStart,
+        tier: sanitizedData.tier,
+        totalLimit,
+        usedCount,
+        remaining,
+        shouldUpgrade
+      });
 
       return {
         allowed: canStart,
         reason,
         message,
-        shouldUpgrade
+        shouldUpgrade,
+        remaining,
+        totalLimit
       };
 
     } catch (error: any) {
@@ -407,7 +438,9 @@ class SimulationTrackingService {
       return {
         allowed: false,
         reason: 'system_error',
-        message: 'Systemfehler bei der Validierung'
+        message: 'Systemfehler bei der Validierung',
+        remaining: 0,
+        totalLimit: 0
       };
     }
   }
@@ -436,6 +469,102 @@ class SimulationTrackingService {
       console.error('[hasActiveSession] Exception:', error);
       return false;
     }
+  }
+
+  /**
+   * EDGE CASE HANDLING: Validate and fix data inconsistencies
+   * Call this periodically or when suspicious data is detected
+   */
+  async validateAndFixUserData(userId: string): Promise<{
+    fixed: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
+
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error || !user) {
+        issues.push('User not found');
+        return { fixed: false, issues };
+      }
+
+      let needsUpdate = false;
+      const updates: any = {};
+
+      // CASE 1: NULL or 0 simulation_limit for paid tier
+      if (user.subscription_tier && user.subscription_tier !== 'free' && user.subscription_tier !== 'unlimited') {
+        if (!user.simulation_limit || user.simulation_limit <= 0) {
+          const defaultLimit = this.getDefaultLimitForTier(user.subscription_tier);
+          updates.simulation_limit = defaultLimit;
+          issues.push(`Fixed NULL/0 limit for ${user.subscription_tier}: set to ${defaultLimit}`);
+          needsUpdate = true;
+        }
+      }
+
+      // CASE 2: Used count exceeds limit (should never happen)
+      if (user.simulation_limit && user.simulations_used_this_month > user.simulation_limit) {
+        updates.simulations_used_this_month = user.simulation_limit;
+        issues.push(`Fixed used count exceeding limit: capped at ${user.simulation_limit}`);
+        needsUpdate = true;
+      }
+
+      // CASE 3: Negative usage counts (data corruption)
+      if (user.simulations_used_this_month < 0) {
+        updates.simulations_used_this_month = 0;
+        issues.push('Fixed negative monthly usage count');
+        needsUpdate = true;
+      }
+
+      if (user.free_simulations_used < 0) {
+        updates.free_simulations_used = 0;
+        issues.push('Fixed negative free usage count');
+        needsUpdate = true;
+      }
+
+      // Apply fixes if needed
+      if (needsUpdate) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('[Edge Case Fix] Error updating user:', updateError);
+          return { fixed: false, issues };
+        }
+
+        console.log('[Edge Case Fix] Applied fixes:', updates);
+        return { fixed: true, issues };
+      }
+
+      return { fixed: false, issues: ['No issues found'] };
+
+    } catch (error) {
+      console.error('[Edge Case Fix] Exception:', error);
+      return { fixed: false, issues: ['Exception occurred'] };
+    }
+  }
+
+  /**
+   * Get default limit for a subscription tier
+   * UNIVERSAL: Add custom tiers here as needed
+   */
+  private getDefaultLimitForTier(tier: string): number {
+    const defaults: Record<string, number> = {
+      'basis': 30,
+      'profi': 60,
+      'unlimited': 999999,
+      // Custom tiers
+      'custom_5': 5,
+      'custom_50': 50,
+      'custom_100': 100
+    };
+    return defaults[tier] || 30; // Default to 30 if unknown
   }
 }
 
