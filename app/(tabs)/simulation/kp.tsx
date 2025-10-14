@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
+import { UpgradeRequiredModal } from '@/components/ui/UpgradeRequiredModal';
 
 export default function KPSimulationScreen() {
   const router = useRouter();
@@ -57,6 +58,9 @@ export default function KPSimulationScreen() {
   // Early completion state
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
+
+  // Upgrade required modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -213,21 +217,8 @@ export default function KPSimulationScreen() {
         }
       }
 
-      // Show alert with upgrade option
-      Alert.alert(
-        'Simulationslimit erreicht',
-        accessStatus?.message || 'Sie haben Ihr Simulationslimit erreicht.',
-        [
-          {
-            text: accessStatus?.shouldUpgrade ? 'Jetzt upgraden' : 'OK',
-            onPress: () => {
-              if (accessStatus?.shouldUpgrade) {
-                router.push('/subscription');
-              }
-            }
-          }
-        ]
-      );
+      // Show upgrade modal instead of alert
+      setShowUpgradeModal(true);
 
       // DO NOT PROCEED - Exit function
       return;
@@ -311,21 +302,8 @@ export default function KPSimulationScreen() {
           }
         }
 
-        // Show alert with upgrade option
-        Alert.alert(
-          'Simulationslimit erreicht',
-          canStart.message || 'Simulation kann nicht gestartet werden',
-          [
-            {
-              text: canStart.shouldUpgrade ? 'Jetzt upgraden' : 'OK',
-              onPress: () => {
-                if (canStart.shouldUpgrade) {
-                  router.push('/subscription');
-                }
-              }
-            }
-          ]
-        );
+        // Show upgrade modal instead of alert
+        setShowUpgradeModal(true);
 
         // DO NOT PROCEED
         return;
@@ -1793,6 +1771,15 @@ export default function KPSimulationScreen() {
           </View>
         </View>
       )}
+
+      {/* Upgrade Required Modal */}
+      <UpgradeRequiredModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentTier={subscriptionStatus?.subscriptionTier || null}
+        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
+        totalLimit={subscriptionStatus?.simulationLimit || 0}
+      />
     </SafeAreaView>
   );
 }
