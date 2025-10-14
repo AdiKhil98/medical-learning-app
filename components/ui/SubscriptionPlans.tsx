@@ -21,7 +21,7 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  yearlyPrice: number;
+  quarterlyPrice: number;  // Changed from yearlyPrice to quarterlyPrice
   currency: string;
   period: string;
   simulations: number | string;
@@ -37,7 +37,7 @@ interface SubscriptionPlan {
 
 export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
   const { colors, isDarkMode } = useTheme();
-  const [isYearly, setIsYearly] = useState(false);
+  const [isQuarterly, setIsQuarterly] = useState(false);  // Changed from isYearly to isQuarterly
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   const plans: SubscriptionPlan[] = [
@@ -45,7 +45,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       id: 'free',
       name: 'Kostenlos',
       price: 0,
-      yearlyPrice: 0,
+      quarterlyPrice: 0,
       currency: '€',
       period: 'Einmalig',
       simulations: '3',
@@ -71,25 +71,25 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       id: 'basic',
       name: 'Basis-Plan',
       price: 50,
-      yearlyPrice: 35,
+      quarterlyPrice: 125,  // €125 for 3 months
       currency: '€',
       period: 'Monat',
       simulations: '30',
       badge: '30',
       recommended: true,
       ctaText: 'Jetzt starten',
-      savings: 'Sparen Sie €180 jährlich',
+      savings: 'Sparen Sie €25 pro Quartal',  // 50*3=150, 150-125=25 savings
       icon: Crown,
       gradient: ['#B15740', '#A04A35'],
       keyFeatures: [
-        '30 Simulationen pro Monat',
-        '14-Tage kostenlose Testversion',
+        '90 Simulationen pro Quartal',  // Changed from monthly to quarterly
+        '14 Tage kostenlose Testversion',
         'E-Mail Support',
         'Mobile App Zugang',
       ],
       allFeatures: [
-        { text: '30 Medizinische Simulationen pro Monat', included: true },
-        { text: '14-Tage kostenlose Testversion', included: true },
+        { text: '90 Medizinische Simulationen pro Quartal', included: true },  // 30*3=90
+        { text: '14 Tage kostenlose Testversion', included: true },
         { text: 'Grundlegende Analysen', included: true },
         { text: 'E-Mail Support', included: true },
         { text: 'Mobile App Zugang', included: true },
@@ -102,15 +102,15 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       id: 'unlimited',
       name: 'Unlimited',
       price: 150,
-      yearlyPrice: 105,
+      quarterlyPrice: 350,  // €350 for 3 months
       currency: '€',
       period: 'Monat',
       simulations: 'Unbegrenzt',
       badge: '∞',
-      ctaText: 'Jetzt starten',  // Changed from "upgraden" to "starten"
-      savings: 'Sparen Sie €540 jährlich',
+      ctaText: 'Jetzt starten',
+      savings: 'Sparen Sie €100 pro Quartal',  // 150*3=450, 450-350=100 savings
       icon: Infinity,
-      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient (was purple)
+      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient
       keyFeatures: [
         'Unbegrenzte Simulationen',
         'VIP Support & Account Manager',
@@ -119,7 +119,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       ],
       allFeatures: [
         { text: 'Unbegrenzte Simulationen', included: true },
-        { text: '14-Tage kostenlose Testversion', included: true },
+        { text: '14 Tage kostenlose Testversion', included: true },
         { text: 'Vollständige Analytics Suite', included: true },
         { text: 'VIP Support & Account Manager', included: true },
         { text: 'Alle Plattformen', included: true },
@@ -131,14 +131,14 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
   ];
 
   const getPrice = (plan: SubscriptionPlan) => {
-    return isYearly ? plan.yearlyPrice : plan.price;
+    return isQuarterly ? plan.quarterlyPrice : plan.price;
   };
 
-  const getYearlySavingsPercent = () => {
-    // Calculate based on Basis plan
-    const monthlyTotal = plans[1].price * 12;
-    const yearlyTotal = plans[1].yearlyPrice * 12;
-    return Math.round(((monthlyTotal - yearlyTotal) / monthlyTotal) * 100);
+  const getQuarterlySavingsPercent = () => {
+    // Calculate based on Basis plan: Monthly price * 3 vs Quarterly price
+    const monthlyTotal = plans[1].price * 3;  // €50 * 3 = €150
+    const quarterlyTotal = plans[1].quarterlyPrice;  // €125
+    return Math.round(((monthlyTotal - quarterlyTotal) / monthlyTotal) * 100);  // (150-125)/150 = 16.67% ≈ 17%
   };
 
   const handleSelectPlan = (planId: string) => {
@@ -473,27 +473,27 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
           {/* Toggle Switch */}
           <View style={dynamicStyles.toggleContainer}>
             <TouchableOpacity
-              style={[dynamicStyles.toggleOption, !isYearly && dynamicStyles.toggleOptionActive]}
-              onPress={() => setIsYearly(false)}
+              style={[dynamicStyles.toggleOption, !isQuarterly && dynamicStyles.toggleOptionActive]}
+              onPress={() => setIsQuarterly(false)}
             >
-              <Text style={[dynamicStyles.toggleText, !isYearly && dynamicStyles.toggleTextActive]}>
+              <Text style={[dynamicStyles.toggleText, !isQuarterly && dynamicStyles.toggleTextActive]}>
                 MONATLICH
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[dynamicStyles.toggleOption, isYearly && dynamicStyles.toggleOptionActive]}
-              onPress={() => setIsYearly(true)}
+              style={[dynamicStyles.toggleOption, isQuarterly && dynamicStyles.toggleOptionActive]}
+              onPress={() => setIsQuarterly(true)}
             >
-              <Text style={[dynamicStyles.toggleText, isYearly && dynamicStyles.toggleTextActive]}>
-                JÄHRLICH
+              <Text style={[dynamicStyles.toggleText, isQuarterly && dynamicStyles.toggleTextActive]}>
+                3 MONATE
               </Text>
             </TouchableOpacity>
           </View>
 
-          {isYearly && (
+          {isQuarterly && (
             <View style={dynamicStyles.savingsBadge}>
               <Text style={dynamicStyles.savingsBadgeText}>
-                ✨ SPAREN SIE BIS ZU {getYearlySavingsPercent()}%
+                ✨ SPAREN SIE BIS ZU {getQuarterlySavingsPercent()}%
               </Text>
             </View>
           )}
@@ -540,11 +540,13 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
                         {plan.id === 'free' ? 'Frei' : `${plan.currency}${getPrice(plan)}`}
                       </Text>
                       {plan.id !== 'free' && (
-                        <Text style={dynamicStyles.planPeriod}>/Monat</Text>
+                        <Text style={dynamicStyles.planPeriod}>
+                          {isQuarterly ? '/3 Monate' : '/Monat'}
+                        </Text>
                       )}
                     </View>
                   </View>
-                  {isYearly && plan.savings && (
+                  {isQuarterly && plan.savings && (
                     <Text style={dynamicStyles.savings}>{plan.savings}</Text>
                   )}
                 </View>
