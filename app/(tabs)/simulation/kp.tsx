@@ -191,6 +191,51 @@ export default function KPSimulationScreen() {
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
+    // ========================================================================
+    // CHECKPOINT 1: ACCESS CONTROL - Check subscription limits BEFORE starting
+    // ========================================================================
+    console.log('[Access Control] CHECKPOINT 1: Verifying subscription access...');
+
+    const accessStatus = await checkAccess();
+
+    if (!accessStatus || !accessStatus.canUseSimulation) {
+      console.error('[Access Control] ❌ BLOCKED - User cannot start simulation');
+      console.error('[Access Control] Reason:', accessStatus?.message || 'Unknown');
+
+      // Stop and close Voiceflow widget if it started
+      if (window.voiceflow?.chat) {
+        console.log('[Access Control] Closing Voiceflow widget due to access denial');
+        try {
+          window.voiceflow.chat.close();
+          window.voiceflow.chat.hide();
+        } catch (e) {
+          console.error('[Access Control] Error closing widget:', e);
+        }
+      }
+
+      // Show alert with upgrade option
+      Alert.alert(
+        'Simulationslimit erreicht',
+        accessStatus?.message || 'Sie haben Ihr Simulationslimit erreicht.',
+        [
+          {
+            text: accessStatus?.shouldUpgrade ? 'Jetzt upgraden' : 'OK',
+            onPress: () => {
+              if (accessStatus?.shouldUpgrade) {
+                router.push('/subscription');
+              }
+            }
+          }
+        ]
+      );
+
+      // DO NOT PROCEED - Exit function
+      return;
+    }
+
+    console.log('[Access Control] ✅ CHECKPOINT 1 PASSED - Access granted');
+    console.log('[Access Control] Remaining simulations:', accessStatus.remainingSimulations);
+
     // CRITICAL: Check if a session already exists to prevent duplicate database sessions
     if (sessionTokenRef.current) {
       console.log('🔍 DEBUG: Session already exists, returning early to prevent duplicates');
@@ -238,18 +283,55 @@ export default function KPSimulationScreen() {
     previousTimeRef.current = 20 * 60;
 
     try {
-      console.log('🔍 DEBUG: About to check if can start simulation');
+      // ========================================================================
+      // CHECKPOINT 2: BACKEND VALIDATION - Double-check with backend
+      // ========================================================================
+      console.log('[Access Control] CHECKPOINT 2: Backend validation...');
 
-      // Check if user can start simulation and get session token
       const canStart = await simulationTracker.canStartSimulation('kp');
-      console.log('🔍 DEBUG: canStart result:', canStart);
+      console.log('[Access Control] Backend result:', canStart);
 
       if (!canStart.allowed) {
-        console.error('❌ DEBUG: Cannot start simulation, showing alert');
-        Alert.alert('Simulationslimit', canStart.message || 'Simulation kann nicht gestartet werden');
-        // Don't return - continue with timer for UX
+        console.error('[Access Control] ❌ BLOCKED by backend');
+        console.error('[Access Control] Reason:', canStart.message);
+
+        // Stop timer that was started
+        setTimerActive(false);
+        timerActiveRef.current = false;
+        clearInterval(timerInterval.current!);
+        timerInterval.current = null;
+
+        // Close Voiceflow widget
+        if (window.voiceflow?.chat) {
+          try {
+            window.voiceflow.chat.close();
+            window.voiceflow.chat.hide();
+          } catch (e) {
+            console.error('[Access Control] Error closing widget:', e);
+          }
+        }
+
+        // Show alert with upgrade option
+        Alert.alert(
+          'Simulationslimit erreicht',
+          canStart.message || 'Simulation kann nicht gestartet werden',
+          [
+            {
+              text: canStart.shouldUpgrade ? 'Jetzt upgraden' : 'OK',
+              onPress: () => {
+                if (canStart.shouldUpgrade) {
+                  router.push('/subscription');
+                }
+              }
+            }
+          ]
+        );
+
+        // DO NOT PROCEED
+        return;
       }
 
+      console.log('[Access Control] ✅ CHECKPOINT 2 PASSED - Backend approved');
       console.log('🔍 DEBUG: About to start simulation in database');
 
       // Start simulation tracking in database

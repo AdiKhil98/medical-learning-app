@@ -7,6 +7,8 @@ interface SubscriptionStatus {
   simulationLimit: number | null;
   subscriptionTier: string | null;
   message: string;
+  shouldUpgrade?: boolean;
+  remainingSimulations?: number;
 }
 
 export const useSubscription = (userId: string | undefined) => {
@@ -19,16 +21,28 @@ export const useSubscription = (userId: string | undefined) => {
   const [hasOptimisticState, setHasOptimisticState] = useState<boolean>(false);
 
   /**
-   * Check if user can start a simulation
+   * Check if user can start a simulation - STRICT ACCESS CONTROL
+   * Returns detailed information for blocking and upgrade prompts
    */
   const checkAccess = useCallback(async () => {
-    if (!userId) return null;
+    if (!userId) {
+      console.log('[Access Control] No user ID - access denied');
+      return {
+        canUseSimulation: false,
+        simulationsUsed: 0,
+        simulationLimit: 0,
+        subscriptionTier: null,
+        message: 'Nicht angemeldet',
+        shouldUpgrade: false,
+        remainingSimulations: 0
+      };
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // Simple direct Supabase query without SubscriptionManager
+      // Fetch FRESH data from database to prevent stale state
       const { data: user, error } = await supabase
         .from('users')
         .select(`
@@ -43,42 +57,102 @@ export const useSubscription = (userId: string | undefined) => {
         .single();
 
       if (error || !user) {
-        console.error('Error fetching user subscription:', error);
-        return null;
+        console.error('[Access Control] Error fetching user subscription:', error);
+        setError('Fehler beim Abrufen des Abonnementstatus');
+        return {
+          canUseSimulation: false,
+          simulationsUsed: 0,
+          simulationLimit: 0,
+          subscriptionTier: null,
+          message: 'Fehler beim Abrufen des Abonnementstatus',
+          shouldUpgrade: false,
+          remainingSimulations: 0
+        };
       }
 
-      // Simple logic for access control
-      let canUse = true;
-      let message = 'Ready to start simulation';
+      console.log('[Access Control] User data:', {
+        tier: user.subscription_tier,
+        status: user.subscription_status,
+        limit: user.simulation_limit,
+        used: user.simulations_used_this_month,
+        freeUsed: user.free_simulations_used
+      });
+
+      // Determine access based on subscription tier
+      let canUse = false;
+      let remaining = 0;
+      let shouldUpgrade = false;
+      let message = '';
+      let tier = user.subscription_tier || 'free';
 
       if (!user.subscription_tier || user.subscription_status !== 'active') {
-        // Free tier
-        canUse = user.free_simulations_used < 3;
-        message = canUse
-          ? `${3 - user.free_simulations_used} kostenlose Simulationen verbleibend`
-          : 'Kostenlose Simulationen aufgebraucht. Bitte upgraden.';
-      } else if (user.subscription_tier !== 'unlimited') {
-        // Paid tier with limits
-        canUse = user.simulations_used_this_month < user.simulation_limit;
-        message = canUse
-          ? `${user.simulation_limit - user.simulations_used_this_month} Simulationen verbleibend in diesem Monat`
-          : 'Monatliches Simulationslimit erreicht.';
+        // ===== FREE TIER =====
+        const freeUsed = user.free_simulations_used || 0;
+        remaining = Math.max(0, 3 - freeUsed);
+        canUse = remaining > 0;
+
+        if (!canUse) {
+          shouldUpgrade = true;
+          message = 'Sie haben alle 3 kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!';
+          console.log('[Access Control] FREE TIER - LIMIT REACHED');
+        } else {
+          message = `${remaining} kostenlose Simulationen verbleibend`;
+          console.log(`[Access Control] FREE TIER - ${remaining} remaining`);
+        }
+      } else if (user.subscription_tier === 'unlimited') {
+        // ===== UNLIMITED TIER =====
+        canUse = true;
+        remaining = 999999; // Unlimited
+        message = 'Unbegrenzte Simulationen verfügbar';
+        console.log('[Access Control] UNLIMITED TIER - Access granted');
+      } else {
+        // ===== PAID TIER (basis/profi) =====
+        const limit = user.simulation_limit || 0;
+        const used = user.simulations_used_this_month || 0;
+        remaining = Math.max(0, limit - used);
+        canUse = remaining > 0;
+
+        if (!canUse) {
+          shouldUpgrade = true;
+          message = `Sie haben alle ${limit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
+          console.log('[Access Control] PAID TIER - LIMIT REACHED');
+        } else {
+          message = `${remaining} Simulationen verbleibend in diesem Monat`;
+          console.log(`[Access Control] PAID TIER - ${remaining} remaining`);
+        }
       }
 
-      const status: SubscriptionStatus = {
+      const status = {
         canUseSimulation: canUse,
-        simulationsUsed: user.subscription_tier ? user.simulations_used_this_month : user.free_simulations_used,
-        simulationLimit: user.subscription_tier ? user.simulation_limit : 3,
-        subscriptionTier: user.subscription_tier || 'free',
-        message
+        simulationsUsed: tier === 'free' ? user.free_simulations_used : user.simulations_used_this_month,
+        simulationLimit: tier === 'free' ? 3 : (tier === 'unlimited' ? 999999 : user.simulation_limit),
+        subscriptionTier: tier,
+        message,
+        shouldUpgrade,
+        remainingSimulations: remaining
       };
+
+      console.log('[Access Control] Result:', {
+        canStart: canUse,
+        remaining,
+        shouldUpgrade,
+        tier
+      });
 
       setSubscriptionStatus(status);
       return status;
     } catch (err) {
-      console.error('Error checking subscription access:', err);
-      setError('Error checking subscription status');
-      return null;
+      console.error('[Access Control] Exception:', err);
+      setError('Fehler beim Überprüfen des Abonnementstatus');
+      return {
+        canUseSimulation: false,
+        simulationsUsed: 0,
+        simulationLimit: 0,
+        subscriptionTier: null,
+        message: 'Fehler beim Überprüfen des Abonnementstatus',
+        shouldUpgrade: false,
+        remainingSimulations: 0
+      };
     } finally {
       setLoading(false);
     }

@@ -295,19 +295,147 @@ class SimulationTrackingService {
   }
 
   /**
-   * @deprecated Use the appropriate method instead
-   * Backward compatibility wrapper
+   * Check if user can start a simulation
+   * Performs backend validation of subscription limits
    */
   async canStartSimulation(simulationType: SimulationType): Promise<{
     allowed: boolean;
     reason?: string;
     message?: string;
+    shouldUpgrade?: boolean;
   }> {
-    // In the simplified system, we always allow starting
-    // The user's subscription limits are checked elsewhere
-    return {
-      allowed: true
-    };
+    try {
+      console.log('[Backend Validation] Checking if simulation can start:', simulationType);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('[Backend Validation] Not authenticated');
+        return {
+          allowed: false,
+          reason: 'not_authenticated',
+          message: 'Nicht angemeldet'
+        };
+      }
+
+      // Get user's current subscription data
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('subscription_tier, subscription_status, simulation_limit, simulations_used_this_month, free_simulations_used')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        console.error('[Backend Validation] Error fetching user:', userError);
+        return {
+          allowed: false,
+          reason: 'database_error',
+          message: 'Fehler beim Abrufen der Benutzerdaten'
+        };
+      }
+
+      console.log('[Backend Validation] User data:', {
+        tier: userData.subscription_tier,
+        status: userData.subscription_status,
+        limit: userData.simulation_limit,
+        used: userData.simulations_used_this_month,
+        freeUsed: userData.free_simulations_used
+      });
+
+      // Check limits based on subscription tier
+      let canStart = false;
+      let reason = '';
+      let message = '';
+      let shouldUpgrade = false;
+
+      if (!userData.subscription_tier || userData.subscription_status !== 'active') {
+        // FREE TIER
+        const freeUsed = userData.free_simulations_used || 0;
+        canStart = freeUsed < 3;
+
+        if (!canStart) {
+          reason = 'free_limit_reached';
+          message = 'Sie haben alle 3 kostenlosen Simulationen verbraucht';
+          shouldUpgrade = true;
+          console.log('[Backend Validation] FREE TIER - BLOCKED');
+        } else {
+          console.log(`[Backend Validation] FREE TIER - Allowed (${3 - freeUsed} remaining)`);
+        }
+      } else if (userData.subscription_tier === 'unlimited') {
+        // UNLIMITED TIER
+        canStart = true;
+        console.log('[Backend Validation] UNLIMITED TIER - Allowed');
+      } else {
+        // PAID TIER
+        const used = userData.simulations_used_this_month || 0;
+        const limit = userData.simulation_limit || 0;
+        canStart = used < limit;
+
+        if (!canStart) {
+          reason = 'monthly_limit_reached';
+          message = `Sie haben alle ${limit} Simulationen dieses Monats verbraucht`;
+          shouldUpgrade = true;
+          console.log('[Backend Validation] PAID TIER - BLOCKED');
+        } else {
+          console.log(`[Backend Validation] PAID TIER - Allowed (${limit - used} remaining)`);
+        }
+      }
+
+      // Check for active concurrent sessions
+      if (canStart) {
+        const hasActiveSession = await this.hasActiveSession(user.id);
+        if (hasActiveSession) {
+          console.log('[Backend Validation] BLOCKED - Active session exists');
+          return {
+            allowed: false,
+            reason: 'concurrent_session',
+            message: 'Sie haben bereits eine aktive Simulation'
+          };
+        }
+      }
+
+      console.log('[Backend Validation] Final result:', canStart ? 'ALLOWED' : 'BLOCKED');
+
+      return {
+        allowed: canStart,
+        reason,
+        message,
+        shouldUpgrade
+      };
+
+    } catch (error: any) {
+      console.error('[Backend Validation] Exception:', error);
+      return {
+        allowed: false,
+        reason: 'system_error',
+        message: 'Systemfehler bei der Validierung'
+      };
+    }
+  }
+
+  /**
+   * Check if user has an active simulation session
+   */
+  private async hasActiveSession(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('simulation_usage_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .is('ended_at', null)
+        .limit(1);
+
+      if (error) {
+        console.error('[hasActiveSession] Error:', error);
+        return false;
+      }
+
+      const hasActive = (data && data.length > 0);
+      console.log('[hasActiveSession]', hasActive ? 'Found active session' : 'No active session');
+      return hasActive;
+    } catch (error) {
+      console.error('[hasActiveSession] Exception:', error);
+      return false;
+    }
   }
 }
 
