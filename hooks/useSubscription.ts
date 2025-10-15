@@ -79,10 +79,32 @@ export const useSubscription = (userId: string | undefined) => {
       });
 
       // CRITICAL: Validate and sanitize data to handle edge cases
+      // FIX: If limit is NULL for paid tier, calculate from tier name
+      let calculatedLimit = user.simulation_limit;
+
+      if (calculatedLimit === null && user.subscription_tier && user.subscription_status === 'active') {
+        // Auto-calculate limit from tier name if missing
+        if (user.subscription_tier === 'basis') {
+          calculatedLimit = 30;
+        } else if (user.subscription_tier === 'profi') {
+          calculatedLimit = 60;
+        } else if (user.subscription_tier === 'unlimited') {
+          calculatedLimit = 999999;
+        } else if (user.subscription_tier.startsWith('custom_')) {
+          // Extract number from custom_X tier names
+          const match = user.subscription_tier.match(/custom_(\d+)/);
+          calculatedLimit = match ? parseInt(match[1]) : 30;
+        } else {
+          calculatedLimit = 30; // Default fallback
+        }
+
+        console.warn(`[Access Control] NULL limit detected for ${user.subscription_tier}, auto-calculated: ${calculatedLimit}`);
+      }
+
       const sanitizedData = {
         tier: user.subscription_tier || 'free',
         status: user.subscription_status || 'inactive',
-        limit: Math.max(0, user.simulation_limit || 0),
+        limit: Math.max(0, calculatedLimit || 0),
         usedMonthly: Math.max(0, user.simulations_used_this_month || 0),
         usedFree: Math.max(0, user.free_simulations_used || 0)
       };
