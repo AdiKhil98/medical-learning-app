@@ -10,7 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
-import { UpgradeRequiredModal } from '@/components/ui/UpgradeRequiredModal';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -59,8 +58,6 @@ export default function FSPSimulationScreen() {
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
-  // Upgrade required modal state
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -194,38 +191,6 @@ export default function FSPSimulationScreen() {
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
-    // ========================================================================
-    // CHECKPOINT 1: ACCESS CONTROL - Check subscription limits BEFORE starting
-    // ========================================================================
-    console.log('[Access Control] CHECKPOINT 1: Verifying subscription access...');
-
-    const accessStatus = await checkAccess();
-
-    if (!accessStatus || !accessStatus.canUseSimulation) {
-      console.error('[Access Control] ❌ BLOCKED - User cannot start simulation');
-      console.error('[Access Control] Reason:', accessStatus?.message || 'Unknown');
-
-      // Stop and close Voiceflow widget if it started
-      if (window.voiceflow?.chat) {
-        console.log('[Access Control] Closing Voiceflow widget due to access denial');
-        try {
-          window.voiceflow.chat.close();
-          window.voiceflow.chat.hide();
-        } catch (e) {
-          console.error('[Access Control] Error closing widget:', e);
-        }
-      }
-
-      // Show upgrade modal instead of alert
-      setShowUpgradeModal(true);
-
-      // DO NOT PROCEED - Exit function
-      return;
-    }
-
-    console.log('[Access Control] ✅ CHECKPOINT 1 PASSED - Access granted');
-    console.log('[Access Control] Remaining simulations:', accessStatus.remainingSimulations);
-
     // CRITICAL: Check if a session already exists to prevent duplicate database sessions
     if (sessionTokenRef.current) {
       console.log('🔍 DEBUG: Session already exists, returning early to prevent duplicates');
@@ -276,43 +241,6 @@ export default function FSPSimulationScreen() {
     console.log('✅ FSP: Timer activated BEFORE database calls');
 
     try {
-      // ========================================================================
-      // CHECKPOINT 2: BACKEND VALIDATION - Double-check with backend
-      // ========================================================================
-      console.log('[Access Control] CHECKPOINT 2: Backend validation...');
-
-      const canStart = await simulationTracker.canStartSimulation('fsp');
-      console.log('[Access Control] Backend result:', canStart);
-
-      if (!canStart.allowed) {
-        console.error('[Access Control] ❌ BLOCKED by backend');
-        console.error('[Access Control] Reason:', canStart.message);
-
-        // Stop timer that was started
-        setTimerActive(false);
-        timerActiveRef.current = false;
-        clearInterval(timerInterval.current!);
-        timerInterval.current = null;
-
-        // Close Voiceflow widget
-        if (window.voiceflow?.chat) {
-          try {
-            window.voiceflow.chat.close();
-            window.voiceflow.chat.hide();
-          } catch (e) {
-            console.error('[Access Control] Error closing widget:', e);
-          }
-        }
-
-        // Show upgrade modal instead of alert
-        setShowUpgradeModal(true);
-
-        // DO NOT PROCEED
-        return;
-      }
-
-      console.log('[Access Control] ✅ CHECKPOINT 2 PASSED - Backend approved');
-
       // Start simulation tracking in database
       const result = await simulationTracker.startSimulation('fsp');
       if (result.success) {
@@ -844,28 +772,6 @@ export default function FSPSimulationScreen() {
     };
   }, []);
 
-  // Check simulation access on page load
-  useEffect(() => {
-    if (user && !canUseSimulation) {
-      const info = getSubscriptionInfo();
-      Alert.alert(
-        'Simulationslimit erreicht',
-        subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit erreicht.',
-        [
-          {
-            text: info?.canUpgrade ? 'Plan upgraden' : 'OK',
-            onPress: () => {
-              if (info?.canUpgrade) {
-                router.push('/subscription');
-              } else {
-                router.back();
-              }
-            }
-          }
-        ]
-      );
-    }
-  }, [user, canUseSimulation]); // Removed subscriptionStatus and getSubscriptionInfo to prevent re-render loop
 
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {
@@ -1801,15 +1707,6 @@ export default function FSPSimulationScreen() {
         </View>
       )}
 
-      {/* Upgrade Required Modal */}
-      <UpgradeRequiredModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        currentTier={subscriptionStatus?.subscriptionTier || null}
-        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
-        totalLimit={subscriptionStatus?.simulationLimit || 0}
-        simulationsUsed={subscriptionStatus?.simulationsUsed || 0}
-      />
     </SafeAreaView>
   );
 }
