@@ -1808,6 +1808,7 @@ export default function FSPSimulationScreen() {
         currentTier={subscriptionStatus?.subscriptionTier || null}
         remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
         totalLimit={subscriptionStatus?.simulationLimit || 0}
+        simulationsUsed={subscriptionStatus?.simulationsUsed || 0}
       />
     </SafeAreaView>
   );

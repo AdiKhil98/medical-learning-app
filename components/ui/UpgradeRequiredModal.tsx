@@ -9,6 +9,7 @@ interface UpgradeRequiredModalProps {
   currentTier: string | null;
   remainingSimulations: number;
   totalLimit: number;
+  simulationsUsed?: number;  // Add used count prop
 }
 
 export function UpgradeRequiredModal({
@@ -16,7 +17,8 @@ export function UpgradeRequiredModal({
   onClose,
   currentTier,
   remainingSimulations,
-  totalLimit
+  totalLimit,
+  simulationsUsed
 }: UpgradeRequiredModalProps) {
   const router = useRouter();
 
@@ -116,7 +118,7 @@ export function UpgradeRequiredModal({
                   />
                 </View>
                 <View style={styles.usageTextContainer}>
-                  <Text style={styles.usageUsed}>{totalLimit}</Text>
+                  <Text style={styles.usageUsed}>{simulationsUsed !== undefined ? simulationsUsed : totalLimit}</Text>
                   <Text style={styles.usageSeparator}>/</Text>
                   <Text style={styles.usageTotal}>{totalLimit}</Text>
                   <Text style={styles.usageLabel}>Simulationen verbraucht</Text>
