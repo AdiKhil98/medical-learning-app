@@ -11,6 +11,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 import { UpgradeRequiredModal } from '@/components/ui/UpgradeRequiredModal';
+import { QuickDiagnostic } from '@/components/QuickDiagnostic';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -1562,6 +1563,9 @@ export default function FSPSimulationScreen() {
           </View>
         </View>
       )}
+
+      {/* Emergency Diagnostic Component */}
+      <QuickDiagnostic />
 
       {/* Timer display - only show when active */}
       {timerActive && (
