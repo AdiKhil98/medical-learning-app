@@ -122,41 +122,43 @@ export const useSubscription = (userId: string | undefined) => {
         // ===== FREE TIER: Always 3 simulations (lifetime) =====
         totalLimit = 3;
         usedCount = sanitizedData.usedFree;
+
+        // SIMPLE LOCK RULE: Block when used >= limit (e.g., 3/3, 2/3 allows, 3/3 blocks)
+        canUse = usedCount < totalLimit;
         remaining = Math.max(0, totalLimit - usedCount);
-        canUse = remaining > 0;
 
         if (!canUse) {
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] FREE TIER - LIMIT REACHED (${usedCount}/${totalLimit})`);
+          console.log(`[Access Control] ❌ FREE TIER BLOCKED - Used: ${usedCount}/${totalLimit}`);
         } else {
           message = `${remaining} von ${totalLimit} kostenlosen Simulationen verbleibend`;
-          console.log(`[Access Control] FREE TIER - ${remaining} remaining (${usedCount}/${totalLimit})`);
+          console.log(`[Access Control] ✅ FREE TIER ALLOWED - Used: ${usedCount}/${totalLimit}, Remaining: ${remaining}`);
         }
       } else if (sanitizedData.tier === 'unlimited') {
         // ===== UNLIMITED TIER: No limit =====
         totalLimit = 999999;
         usedCount = sanitizedData.usedMonthly;
         remaining = 999999;
-        canUse = true;
+        canUse = true; // Always allow
         message = 'Unbegrenzte Simulationen verfügbar';
-        console.log(`[Access Control] UNLIMITED TIER - Access granted (used: ${usedCount})`);
+        console.log(`[Access Control] ✅ UNLIMITED TIER - Always allowed (used: ${usedCount})`);
       } else {
         // ===== PAID TIER: Dynamic limit from database (works for 5, 30, 50, 100, any value) =====
         totalLimit = sanitizedData.limit;
         usedCount = sanitizedData.usedMonthly;
 
-        // CRITICAL: Dynamic calculation - works for ANY limit value
+        // SIMPLE LOCK RULE: Block when used >= limit (e.g., 30/30 blocks, 4/30 allows)
+        canUse = usedCount < totalLimit;
         remaining = Math.max(0, totalLimit - usedCount);
-        canUse = remaining > 0;
 
         if (!canUse) {
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] PAID TIER - LIMIT REACHED (${usedCount}/${totalLimit})`);
+          console.log(`[Access Control] ❌ PAID TIER BLOCKED - Used: ${usedCount}/${totalLimit}`);
         } else {
           message = `${remaining} von ${totalLimit} Simulationen verbleibend`;
-          console.log(`[Access Control] PAID TIER - ${remaining} remaining (${usedCount}/${totalLimit})`);
+          console.log(`[Access Control] ✅ PAID TIER ALLOWED - Used: ${usedCount}/${totalLimit}, Remaining: ${remaining}`);
         }
       }
 
