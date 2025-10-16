@@ -296,7 +296,8 @@ class SimulationTrackingService {
 
   /**
    * Check if user can start a simulation
-   * UNIVERSAL: Performs backend validation for ALL subscription tiers and limits
+   * Uses database function for consistent validation logic
+   * CRITICAL: Block only when remaining === 0
    */
   async canStartSimulation(simulationType: SimulationType): Promise<{
     allowed: boolean;
@@ -307,7 +308,7 @@ class SimulationTrackingService {
     totalLimit?: number;
   }> {
     try {
-      console.log('[Backend Validation] UNIVERSAL CHECK - Simulation type:', simulationType);
+      console.log('[Backend Validation] Checking simulation access for type:', simulationType);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -321,116 +322,65 @@ class SimulationTrackingService {
         };
       }
 
-      // Get user's current subscription data with FRESH query
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('subscription_tier, subscription_status, simulation_limit, simulations_used_this_month, free_simulations_used')
-        .eq('id', user.id)
+      // Use database function for validation
+      const { data, error } = await supabase
+        .rpc('check_simulation_limit_before_start', { p_user_id: user.id })
         .single();
 
-      if (userError || !userData) {
-        console.error('[Backend Validation] Error fetching user:', userError);
+      if (error) {
+        console.error('[Backend Validation] Error checking limit:', error);
         return {
           allowed: false,
           reason: 'database_error',
-          message: 'Fehler beim Abrufen der Benutzerdaten',
+          message: 'Fehler bei der Überprüfung',
           remaining: 0,
           totalLimit: 0
         };
       }
 
-      // CRITICAL: Sanitize and validate data to handle edge cases
-      const sanitizedData = {
-        tier: userData.subscription_tier || 'free',
-        status: userData.subscription_status || 'inactive',
-        limit: Math.max(0, userData.simulation_limit || 0),
-        usedMonthly: Math.max(0, userData.simulations_used_this_month || 0),
-        usedFree: Math.max(0, userData.free_simulations_used || 0)
-      };
-
-      console.log('[Backend Validation] Sanitized data:', sanitizedData);
-
-      // UNIVERSAL: Calculate limits for ANY tier
-      let canStart = false;
-      let reason = '';
-      let message = '';
-      let shouldUpgrade = false;
-      let totalLimit = 0;
-      let usedCount = 0;
-      let remaining = 0;
-
-      if (!sanitizedData.tier || sanitizedData.tier === 'free' || sanitizedData.status !== 'active') {
-        // ===== FREE TIER: Always 3 simulations (lifetime) =====
-        totalLimit = 3;
-        usedCount = sanitizedData.usedFree;
-        remaining = Math.max(0, totalLimit - usedCount);
-        canStart = remaining > 0;
-
-        if (!canStart) {
-          reason = 'free_limit_reached';
-          message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht`;
-          shouldUpgrade = true;
-          console.log(`[Backend Validation] FREE TIER - BLOCKED (${usedCount}/${totalLimit})`);
-        } else {
-          console.log(`[Backend Validation] FREE TIER - Allowed (${remaining}/${totalLimit} remaining)`);
-        }
-      } else if (sanitizedData.tier === 'unlimited') {
-        // ===== UNLIMITED TIER: No limit =====
-        totalLimit = 999999;
-        usedCount = sanitizedData.usedMonthly;
-        remaining = 999999;
-        canStart = true;
-        console.log(`[Backend Validation] UNLIMITED TIER - Always allowed (used: ${usedCount})`);
-      } else {
-        // ===== PAID TIER: UNIVERSAL - Works for 5, 30, 50, 100, ANY limit value =====
-        totalLimit = sanitizedData.limit;
-        usedCount = sanitizedData.usedMonthly;
-
-        // CRITICAL: Dynamic calculation works for ANY limit
-        remaining = Math.max(0, totalLimit - usedCount);
-        canStart = remaining > 0;
-
-        if (!canStart) {
-          reason = 'monthly_limit_reached';
-          message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht`;
-          shouldUpgrade = true;
-          console.log(`[Backend Validation] PAID TIER - BLOCKED (${usedCount}/${totalLimit})`);
-        } else {
-          console.log(`[Backend Validation] PAID TIER - Allowed (${remaining}/${totalLimit} remaining)`);
-        }
-      }
-
-      // Check for active concurrent sessions (only if limit check passed)
-      if (canStart) {
-        const hasActiveSession = await this.hasActiveSession(user.id);
-        if (hasActiveSession) {
-          console.log('[Backend Validation] BLOCKED - Concurrent session detected');
-          return {
-            allowed: false,
-            reason: 'concurrent_session',
-            message: 'Sie haben bereits eine aktive Simulation',
-            remaining,
-            totalLimit
-          };
-        }
-      }
-
-      console.log('[Backend Validation] FINAL RESULT:', {
-        allowed: canStart,
-        tier: sanitizedData.tier,
-        totalLimit,
-        usedCount,
-        remaining,
-        shouldUpgrade
+      console.log('[Backend Validation] Limit check result:', {
+        canStart: data.can_start,
+        remaining: data.remaining,
+        totalLimit: data.total_limit,
+        used: data.used_count,
+        calculation: `${data.total_limit} - ${data.used_count} = ${data.remaining}`
       });
 
+      // CRITICAL: Only block if remaining === 0
+      if (!data.can_start || data.remaining === 0) {
+        console.error('[Backend Validation] ❌ BLOCKED - Limit reached:', data.reason);
+        return {
+          allowed: false,
+          reason: data.remaining === 0 ? 'limit_reached' : 'blocked',
+          message: data.reason,
+          shouldUpgrade: data.remaining === 0,
+          remaining: data.remaining,
+          totalLimit: data.total_limit
+        };
+      }
+
+      // Check for existing active sessions (concurrency check)
+      const hasActiveSession = await this.hasActiveSession(user.id);
+      if (hasActiveSession) {
+        console.error('[Backend Validation] ❌ BLOCKED - User has active session');
+        return {
+          allowed: false,
+          reason: 'concurrent_session',
+          message: 'Sie haben bereits eine aktive Simulation',
+          remaining: data.remaining,
+          totalLimit: data.total_limit
+        };
+      }
+
+      // All checks passed
+      console.log('[Backend Validation] ✅ ALLOWED - Remaining:', data.remaining);
       return {
-        allowed: canStart,
-        reason,
-        message,
-        shouldUpgrade,
-        remaining,
-        totalLimit
+        allowed: true,
+        reason: 'allowed',
+        message: data.reason,
+        shouldUpgrade: false,
+        remaining: data.remaining,
+        totalLimit: data.total_limit
       };
 
     } catch (error: any) {
