@@ -8,6 +8,7 @@ import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
@@ -58,6 +59,8 @@ export default function FSPSimulationScreen() {
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -190,6 +193,34 @@ export default function FSPSimulationScreen() {
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+
+    // STEP 7: SAFETY CHECK - Verify access before starting timer
+    console.log('[Timer] Attempting to start timer...');
+    const accessCheck = await checkAccess();
+
+    console.log('[Timer] Access check:', {
+      canStart: accessCheck?.canUseSimulation,
+      remaining: accessCheck?.remainingSimulations,
+      total: accessCheck?.simulationLimit
+    });
+
+    // CRITICAL: Block if remaining === 0
+    if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+      console.error('[Timer] BLOCKED - Cannot start timer. Remaining:', accessCheck?.remainingSimulations);
+
+      // Show upgrade modal
+      setShowUpgradeModal(true);
+
+      // Stop any started processes (Voiceflow, widget, etc.)
+      if (window.voiceflow) {
+        window.voiceflow.chat.close();
+      }
+
+      return; // EXIT - DO NOT START TIMER
+    }
+
+    // Access granted - proceed with timer
+    console.log('[Timer] Access GRANTED - Starting timer...');
 
     // CRITICAL: Check if a session already exists to prevent duplicate database sessions
     if (sessionTokenRef.current) {
@@ -1706,6 +1737,15 @@ export default function FSPSimulationScreen() {
           </View>
         </View>
       )}
+
+      {/* Upgrade Required Modal */}
+      <UpgradeRequiredModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentTier={subscriptionStatus?.subscriptionTier || 'free'}
+        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
+        totalLimit={subscriptionStatus?.simulationLimit || 0}
+      />
 
     </SafeAreaView>
   );
