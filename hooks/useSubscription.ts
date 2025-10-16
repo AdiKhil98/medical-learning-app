@@ -23,6 +23,7 @@ export const useSubscription = (userId: string | undefined) => {
   /**
    * Check if user can start a simulation - STRICT ACCESS CONTROL
    * Returns detailed information for blocking and upgrade prompts
+   * CRITICAL: Block only when remaining === 0
    */
   const checkAccess = useCallback(async () => {
     if (!userId) {
@@ -123,17 +124,20 @@ export const useSubscription = (userId: string | undefined) => {
         totalLimit = 3;
         usedCount = sanitizedData.usedFree;
 
-        // SIMPLE LOCK RULE: Block when used >= limit (e.g., 3/3, 2/3 allows, 3/3 blocks)
-        canUse = usedCount < totalLimit;
-        remaining = Math.max(0, totalLimit - usedCount);
+        // CRITICAL: Calculate remaining = limit - used
+        remaining = totalLimit - usedCount;
 
-        if (!canUse) {
+        // CRITICAL: Can only start if remaining > 0
+        canUse = remaining > 0;
+
+        if (canUse) {
+          message = `${remaining} von ${totalLimit} kostenlosen Simulationen verbleibend`;
+          console.log(`[Access Control] ✅ FREE TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
+        } else {
+          // remaining === 0, limit reached
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] ❌ FREE TIER BLOCKED - Used: ${usedCount}/${totalLimit}`);
-        } else {
-          message = `${remaining} von ${totalLimit} kostenlosen Simulationen verbleibend`;
-          console.log(`[Access Control] ✅ FREE TIER ALLOWED - Used: ${usedCount}/${totalLimit}, Remaining: ${remaining}`);
+          console.log(`[Access Control] ❌ FREE TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
         }
       } else if (sanitizedData.tier === 'unlimited') {
         // ===== UNLIMITED TIER: No limit =====
@@ -148,17 +152,20 @@ export const useSubscription = (userId: string | undefined) => {
         totalLimit = sanitizedData.limit;
         usedCount = sanitizedData.usedMonthly;
 
-        // SIMPLE LOCK RULE: Block when used >= limit (e.g., 30/30 blocks, 4/30 allows)
-        canUse = usedCount < totalLimit;
-        remaining = Math.max(0, totalLimit - usedCount);
+        // CRITICAL: Calculate remaining = limit - used
+        remaining = totalLimit - usedCount;
 
-        if (!canUse) {
+        // CRITICAL: Can only start if remaining > 0
+        canUse = remaining > 0;
+
+        if (canUse) {
+          message = `${remaining} von ${totalLimit} Simulationen verbleibend`;
+          console.log(`[Access Control] ✅ PAID TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
+        } else {
+          // remaining === 0, limit reached
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] ❌ PAID TIER BLOCKED - Used: ${usedCount}/${totalLimit}`);
-        } else {
-          message = `${remaining} von ${totalLimit} Simulationen verbleibend`;
-          console.log(`[Access Control] ✅ PAID TIER ALLOWED - Used: ${usedCount}/${totalLimit}, Remaining: ${remaining}`);
+          console.log(`[Access Control] ❌ PAID TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
         }
       }
 
@@ -177,6 +184,7 @@ export const useSubscription = (userId: string | undefined) => {
         totalLimit,
         usedCount,
         remaining,
+        calculation: `${totalLimit} - ${usedCount} = ${remaining}`,
         canStart: canUse,
         shouldUpgrade
       });
