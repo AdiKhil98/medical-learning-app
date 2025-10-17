@@ -167,65 +167,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     explanation: "Aktive Wiederholung aktiviert mehrere Gehirnregionen und festigt das Wissen nachhaltig."
   };
 
-  // Animated background blobs
-  const blob1Anim = useRef(new Animated.Value(0)).current;
-  const blob2Anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    // Animate blob 1
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(blob1Anim, {
-          toValue: 1,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(blob1Anim, {
-          toValue: 0,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Animate blob 2 with delay
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(blob2Anim, {
-          toValue: 1,
-          duration: 5000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(blob2Anim, {
-          toValue: 0,
-          duration: 5000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  const blob1Opacity = blob1Anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.15, 0.25],
-  });
-
-  const blob2Opacity = blob2Anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.2, 0.3],
-  });
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* Animated background gradient */}
+      {/* Clean gradient background - removed distracting blobs */}
       <LinearGradient
         colors={['#F8F9FA', '#FFFFFF', '#F1F5F9']}
         style={styles.backgroundGradient}
       />
-
-      {/* Animated background blobs */}
-      <Animated.View style={[styles.blob1, { opacity: blob1Opacity }]} />
-      <Animated.View style={[styles.blob2, { opacity: blob2Opacity }]} />
 
       {/* Modern Glassmorphism Header */}
       <View style={styles.modernHeader}>
@@ -612,24 +560,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     height: screenHeight,
-  },
-  blob1: {
-    position: 'absolute',
-    top: 80,
-    left: -50,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#E2827F',
-  },
-  blob2: {
-    position: 'absolute',
-    bottom: 100,
-    right: -80,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: '#B87E70',
   },
   scrollView: {
     flex: 1,
