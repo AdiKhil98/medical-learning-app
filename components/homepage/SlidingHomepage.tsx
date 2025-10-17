@@ -254,7 +254,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     colors={['#B87E70', '#B15740']}
                     style={styles.heroIconGradient}
                   >
-                    <BookOpen size={screenWidth < 600 ? 40 : 48} color="#FFFFFF" />
+                    <BookOpen size={screenWidth < 600 ? 32 : 40} color="#FFFFFF" />
                   </LinearGradient>
                 </View>
 
@@ -654,13 +654,11 @@ const styles = StyleSheet.create({
   },
   // Modern Hero Section Styles
   heroSection: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    paddingTop: screenWidth < 600 ? 20 : 40,
-    paddingBottom: screenWidth < 600 ? 32 : 48,
-    minHeight: screenHeight - 160, // Account for header and potential bottom nav
+    paddingTop: screenWidth < 600 ? 12 : 24,
+    paddingBottom: screenWidth < 600 ? 12 : 24,
   },
   heroCard: {
     borderRadius: 32,
@@ -676,76 +674,76 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroCardGradient: {
-    paddingHorizontal: screenWidth < 600 ? 24 : 48,
-    paddingTop: screenWidth < 600 ? 32 : 40,
-    paddingBottom: screenWidth < 600 ? 36 : 48,
+    paddingHorizontal: screenWidth < 600 ? 20 : 40,
+    paddingTop: screenWidth < 600 ? 24 : 32,
+    paddingBottom: screenWidth < 600 ? 24 : 32,
     alignItems: 'center',
   },
   heroIconContainer: {
-    marginBottom: screenWidth < 600 ? 24 : 32,
+    marginBottom: screenWidth < 600 ? 16 : 20,
   },
   heroIconGradient: {
-    width: screenWidth < 600 ? 80 : 96,
-    height: screenWidth < 600 ? 80 : 96,
-    borderRadius: screenWidth < 600 ? 24 : 28,
+    width: screenWidth < 600 ? 64 : 80,
+    height: screenWidth < 600 ? 64 : 80,
+    borderRadius: screenWidth < 600 ? 20 : 24,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: 'rgba(184,126,112,0.4)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 6,
   },
   heroTitle: {
-    fontSize: screenWidth < 600 ? 28 : 36,
+    fontSize: screenWidth < 600 ? 22 : 30,
     fontWeight: '800',
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: screenWidth < 600 ? 36 : 48,
+    marginBottom: 12,
+    lineHeight: screenWidth < 600 ? 30 : 40,
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: screenWidth < 600 ? 16 : 18,
+    fontSize: screenWidth < 600 ? 14 : 16,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: screenWidth < 600 ? 36 : 48,
-    lineHeight: screenWidth < 600 ? 24 : 28,
+    marginBottom: screenWidth < 600 ? 20 : 28,
+    lineHeight: screenWidth < 600 ? 20 : 24,
     fontWeight: '500',
   },
   ctaButtonContainer: {
     flexDirection: 'column',
-    gap: screenWidth < 600 ? 14 : 16,
+    gap: screenWidth < 600 ? 10 : 12,
     width: '100%',
     alignItems: 'center',
   },
   ctaButtonWrapper: {
     width: screenWidth < 600 ? '100%' : 280,
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
     shadowColor: 'rgba(184,126,112,0.4)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowRadius: 16,
+    elevation: 6,
   },
   ctaButton: {
-    paddingVertical: screenWidth < 600 ? 18 : 20,
-    paddingHorizontal: 32,
+    paddingVertical: screenWidth < 600 ? 14 : 16,
+    paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: screenWidth < 600 ? 16 : 18,
+    fontSize: screenWidth < 600 ? 15 : 17,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   ctaButtonOutline: {
     width: screenWidth < 600 ? '100%' : 280,
-    paddingVertical: screenWidth < 600 ? 18 : 20,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingVertical: screenWidth < 600 ? 14 : 16,
+    paddingHorizontal: 28,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: '#B87E70',
     backgroundColor: 'transparent',
@@ -754,9 +752,9 @@ const styles = StyleSheet.create({
   },
   ctaButtonOutlineText: {
     color: '#B15740',
-    fontSize: screenWidth < 600 ? 16 : 18,
+    fontSize: screenWidth < 600 ? 15 : 17,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   // Recent Content Section Styles
   recentContentSection: {
