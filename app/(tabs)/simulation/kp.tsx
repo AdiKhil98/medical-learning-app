@@ -8,6 +8,7 @@ import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
 
@@ -58,6 +59,38 @@ export default function KPSimulationScreen() {
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
 
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
+  useEffect(() => {
+    const checkPageAccess = async () => {
+      console.log('[Page Access] Checking if user can access simulation page...');
+      const accessCheck = await checkAccess();
+
+      console.log('[Page Access] Access check result:', {
+        canUse: accessCheck?.canUseSimulation,
+        remaining: accessCheck?.remainingSimulations,
+        total: accessCheck?.simulationLimit
+      });
+
+      // CRITICAL: Block page access if remaining === 0
+      if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+        console.error('[Page Access] BLOCKED - User cannot access simulation page. Remaining:', accessCheck?.remainingSimulations);
+
+        // Show upgrade modal immediately
+        setShowUpgradeModal(true);
+
+        // Prevent any further interaction on this page
+        return;
+      }
+
+      console.log('[Page Access] ✅ Access GRANTED - User can access simulation page');
+    };
+
+    checkPageAccess();
+  }, [checkAccess]);
+
   // Check for existing simulation on mount
   useEffect(() => {
     checkExistingSimulation();
@@ -72,6 +105,13 @@ export default function KPSimulationScreen() {
   useEffect(() => {
     const initializeVoiceflow = async () => {
       if (typeof window !== 'undefined') {
+        // CRITICAL: Check access before initializing widget
+        const accessCheck = await checkAccess();
+        if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+          console.log('🚫 KP: Blocking Voiceflow initialization - no simulations remaining');
+          return; // Do NOT initialize widget
+        }
+
         console.log('🏥 KP: Initializing medical simulation');
 
         // Stop global cleanup to allow widget
@@ -80,12 +120,12 @@ export default function KPSimulationScreen() {
         // Create and load controller
         const controller = createKPController();
         voiceflowController.current = controller;
-        
+
         try {
           const loaded = await controller.loadWidget();
           if (loaded) {
             console.log('✅ KP: Voiceflow widget loaded successfully');
-            
+
             // Make sure widget is visible and functional
             setTimeout(() => {
               if (window.voiceflow?.chat) {
@@ -93,7 +133,7 @@ export default function KPSimulationScreen() {
                 console.log('👁️ KP: Widget made visible');
               }
             }, 1000);
-            
+
             // Set up conversation monitoring
             setupConversationMonitoring();
           }
@@ -104,7 +144,7 @@ export default function KPSimulationScreen() {
     };
 
     initializeVoiceflow();
-  }, []);
+  }, [checkAccess]);
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
@@ -190,6 +230,34 @@ export default function KPSimulationScreen() {
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+
+    // STEP 7: SAFETY CHECK - Verify access before starting timer
+    console.log('[Timer] Attempting to start timer...');
+    const accessCheck = await checkAccess();
+
+    console.log('[Timer] Access check:', {
+      canStart: accessCheck?.canUseSimulation,
+      remaining: accessCheck?.remainingSimulations,
+      total: accessCheck?.simulationLimit
+    });
+
+    // CRITICAL: Block if remaining === 0
+    if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+      console.error('[Timer] BLOCKED - Cannot start timer. Remaining:', accessCheck?.remainingSimulations);
+
+      // Show upgrade modal
+      setShowUpgradeModal(true);
+
+      // Stop any started processes (Voiceflow, widget, etc.)
+      if (window.voiceflow) {
+        window.voiceflow.chat.close();
+      }
+
+      return; // EXIT - DO NOT START TIMER
+    }
+
+    // Access granted - proceed with timer
+    console.log('[Timer] Access GRANTED - Starting timer...');
 
     // CRITICAL: Check if a session already exists to prevent duplicate database sessions
     if (sessionTokenRef.current) {
@@ -1675,6 +1743,15 @@ export default function KPSimulationScreen() {
           </View>
         </View>
       )}
+
+      {/* Upgrade Required Modal */}
+      <UpgradeRequiredModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentTier={subscriptionStatus?.subscriptionTier || 'free'}
+        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
+        totalLimit={subscriptionStatus?.simulationLimit || 0}
+      />
 
     </SafeAreaView>
   );

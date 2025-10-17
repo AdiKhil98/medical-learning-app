@@ -62,6 +62,35 @@ export default function FSPSimulationScreen() {
   // Upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
+  useEffect(() => {
+    const checkPageAccess = async () => {
+      console.log('[Page Access] Checking if user can access simulation page...');
+      const accessCheck = await checkAccess();
+
+      console.log('[Page Access] Access check result:', {
+        canUse: accessCheck?.canUseSimulation,
+        remaining: accessCheck?.remainingSimulations,
+        total: accessCheck?.simulationLimit
+      });
+
+      // CRITICAL: Block page access if remaining === 0
+      if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+        console.error('[Page Access] BLOCKED - User cannot access simulation page. Remaining:', accessCheck?.remainingSimulations);
+
+        // Show upgrade modal immediately
+        setShowUpgradeModal(true);
+
+        // Prevent any further interaction on this page
+        return;
+      }
+
+      console.log('[Page Access] ✅ Access GRANTED - User can access simulation page');
+    };
+
+    checkPageAccess();
+  }, [checkAccess]);
+
   // Check for existing simulation on mount
   useEffect(() => {
     checkExistingSimulation();
@@ -76,6 +105,13 @@ export default function FSPSimulationScreen() {
   useEffect(() => {
     const initializeVoiceflow = async () => {
       if (typeof window !== 'undefined') {
+        // CRITICAL: Check access before initializing widget
+        const accessCheck = await checkAccess();
+        if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+          console.log('🚫 FSP: Blocking Voiceflow initialization - no simulations remaining');
+          return; // Do NOT initialize widget
+        }
+
         console.log('🏥 FSP: Initializing medical simulation');
 
         // Stop global cleanup to allow widget
@@ -108,7 +144,7 @@ export default function FSPSimulationScreen() {
     };
 
     initializeVoiceflow();
-  }, []);
+  }, [checkAccess]);
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
