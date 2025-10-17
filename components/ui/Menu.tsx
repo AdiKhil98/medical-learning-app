@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark, User, LogOut, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,9 +50,34 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   };
 
   const menuItems = [
-    { icon: Settings, label: 'Profil', route: '/profile' },
-    { icon: Bell, label: 'Updates', route: '/updates' },
-    { icon: Crown, label: 'Subscription', route: '/subscription' },
+    {
+      icon: User,
+      label: 'Profil',
+      subtitle: 'Ihre persönlichen Daten',
+      route: '/profile',
+      gradientColors: ['#60A5FA', '#3B82F6'] // Blue
+    },
+    {
+      icon: Bell,
+      label: 'Updates',
+      subtitle: 'Neuigkeiten & Hinweise',
+      route: '/updates',
+      gradientColors: ['#A78BFA', '#8B5CF6'] // Purple
+    },
+    {
+      icon: Crown,
+      label: 'Subscription',
+      subtitle: 'Ihr Abonnement verwalten',
+      route: '/subscription',
+      gradientColors: ['#FBBF24', '#F59E0B'] // Amber
+    },
+    {
+      icon: Bookmark,
+      label: 'Bookmarks',
+      subtitle: 'Gespeicherte Inhalte',
+      route: '/bookmarks',
+      gradientColors: ['#F472B6', '#EC4899'] // Pink
+    },
   ];
 
 
@@ -81,9 +106,20 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     outputRange: [0, submenuItems.length * 44],
   });
 
-  const gradientColors = isDarkMode 
+  const gradientColors = isDarkMode
     ? ['#1F2937', '#111827', '#0F172A']
-    : ['#ffffff', '#f8f9fa', '#ffffff'];
+    : ['#ffffff', '#f1f5f9', '#e2e8f0'];
+
+  const getUserInitials = () => {
+    if (!user?.email) return '?';
+    const email = user.email;
+    return email.substring(0, 2).toUpperCase();
+  };
+
+  const handleLogout = () => {
+    onClose();
+    router.push('/login');
+  };
 
   const dynamicStyles = StyleSheet.create({
     menu: {
@@ -161,15 +197,29 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
           colors={gradientColors}
           style={styles.menuGradient}
         />
-        
-        <View style={styles.header}>
-          <View />
-          <TouchableOpacity onPress={onClose} style={dynamicStyles.closeButton}>
-            <X size={24} color={colors.text} />
+
+        {/* Close Button */}
+        <View style={styles.closeButtonContainer}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <X size={24} color="#64748B" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView 
+        {/* User Header Section */}
+        <View style={styles.userHeader}>
+          <LinearGradient
+            colors={['#10B981', '#059669']}
+            style={styles.userAvatar}
+          >
+            <Text style={styles.userAvatarText}>{getUserInitials()}</Text>
+          </LinearGradient>
+          <View style={styles.userInfo}>
+            <Text style={styles.userWelcome}>Willkommen</Text>
+            <Text style={styles.userSubtitle}>Ihr KP Med Profil</Text>
+          </View>
+        </View>
+
+        <ScrollView
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -179,56 +229,99 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={dynamicStyles.menuItem}
+                style={styles.modernMenuItem}
                 onPress={() => handleMenuItemPress(item.route)}
+                activeOpacity={0.7}
               >
-                <item.icon size={20} color={colors.text} />
-                <Text style={dynamicStyles.menuItemText}>{item.label}</Text>
+                <LinearGradient
+                  colors={item.gradientColors}
+                  style={styles.menuIconGradient}
+                >
+                  <item.icon size={24} color="#FFFFFF" />
+                </LinearGradient>
+                <View style={styles.menuTextContainer}>
+                  <Text style={styles.menuItemLabel}>{item.label}</Text>
+                  <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                </View>
+                <ChevronRight size={20} color="#94A3B8" />
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity
-              style={dynamicStyles.menuItem}
-              onPress={() => handleMenuItemPress('/bookmarks')}
-            >
-              <Bookmark size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Bookmarks</Text>
-            </TouchableOpacity>
-
             {user?.role === 'admin' && (
               <TouchableOpacity
-                style={dynamicStyles.menuItem}
+                style={styles.modernMenuItem}
                 onPress={() => handleMenuItemPress('/admin')}
+                activeOpacity={0.7}
               >
-                <Shield size={20} color={colors.text} />
-                <Text style={dynamicStyles.menuItemText}>Admin Panel</Text>
+                <LinearGradient
+                  colors={['#EF4444', '#DC2626']}
+                  style={styles.menuIconGradient}
+                >
+                  <Shield size={24} color="#FFFFFF" />
+                </LinearGradient>
+                <View style={styles.menuTextContainer}>
+                  <Text style={styles.menuItemLabel}>Admin Panel</Text>
+                  <Text style={styles.menuItemSubtitle}>Verwaltung & Einstellungen</Text>
+                </View>
+                <ChevronRight size={20} color="#94A3B8" />
               </TouchableOpacity>
             )}
 
+            {/* Kontakt & Info - Expandable */}
             <TouchableOpacity
-              style={dynamicStyles.menuItem}
+              style={styles.modernMenuItem}
               onPress={toggleSubmenu}
+              activeOpacity={0.7}
             >
-              <Info size={20} color={colors.text} />
-              <Text style={dynamicStyles.menuItemText}>Kontakt & Info</Text>
+              <LinearGradient
+                colors={['#06B6D4', '#0284C7']}
+                style={styles.menuIconGradient}
+              >
+                <Info size={24} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.menuTextContainer}>
+                <Text style={styles.menuItemLabel}>Kontakt & Info</Text>
+                <Text style={styles.menuItemSubtitle}>Hilfe & Support</Text>
+              </View>
               <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                <ChevronDown size={20} color={colors.text} />
+                <ChevronDown size={20} color="#94A3B8" />
               </Animated.View>
             </TouchableOpacity>
 
+            {/* Submenu */}
             <Animated.View style={[styles.submenu, { height: submenuHeightInterpolate }]}>
               {submenuItems.map((item, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={dynamicStyles.submenuItem}
+                  style={styles.submenuItem}
                   onPress={() => handleMenuItemPress(item.route)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={dynamicStyles.submenuText}>{item.label}</Text>
+                  <Text style={styles.submenuText}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </Animated.View>
           </View>
         </ScrollView>
+
+        {/* Logout Button at Bottom */}
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              style={styles.logoutGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <LogOut size={20} color="#FFFFFF" />
+              <Text style={styles.logoutText}>Abmelden</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
     </View>
   );
@@ -249,7 +342,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   menuGradient: {
     position: 'absolute',
@@ -258,31 +351,161 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  header: {
+  closeButtonContainer: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  userHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 48,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 32,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(226, 232, 240, 0.5)',
+  },
+  userAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  userAvatarText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  userInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  userWelcome: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  userSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
   },
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingTop: 24,
+    paddingBottom: 100, // Space for logout button
   },
   menuItems: {
     gap: 8,
   },
+  modernMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  menuIconGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  menuTextContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  menuItemLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  menuItemSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+  },
   submenu: {
     overflow: 'hidden',
+    marginTop: 8,
+    marginLeft: 64,
   },
-  colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
+  submenuItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 4,
+  },
+  submenuText: {
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  logoutContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(226, 232, 240, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  },
+  logoutButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoutGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
