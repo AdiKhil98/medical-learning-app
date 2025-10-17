@@ -18,7 +18,7 @@ interface MenuProps {
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
@@ -116,9 +116,16 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     return email.substring(0, 2).toUpperCase();
   };
 
-  const handleLogout = () => {
-    onClose();
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      onClose();
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // If logout fails, still try to navigate to login for security
+      router.push('/login');
+    }
   };
 
   const dynamicStyles = StyleSheet.create({
