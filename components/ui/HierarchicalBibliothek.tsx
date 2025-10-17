@@ -349,24 +349,30 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header matching homepage */}
-      <LinearGradient
-        colors={['#F8F3E8', '#E5877E']}  // Light gradient - White Linen to Tonys Pink
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.modernHeader}
-      >
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setMenuOpen(true)}
-          >
-            <MenuIcon size={24} color="#B87E70" />  {/* Old Rose for light background */}
-          </TouchableOpacity>
-          <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
-          <UserAvatar size="medium" />
-        </View>
-      </LinearGradient>
+      {/* Header matching homepage - Modern Glassmorphism */}
+      <View style={styles.modernHeader}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['rgba(184,126,112,0.15)', 'rgba(184,126,112,0.10)']}
+                style={styles.menuButtonGradient}
+              >
+                <MenuIcon size={24} color="#B87E70" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
+            <UserAvatar size="medium" />
+          </View>
+        </LinearGradient>
+      </View>
 
       {/* Breadcrumb Navigation */}
       {renderBreadcrumbs()}
@@ -423,9 +429,6 @@ const styles = StyleSheet.create({
   },
   // Header Styles (matching homepage)
   modernHeader: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    paddingTop: 24,
     shadowColor: 'rgba(181,87,64,0.15)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
@@ -433,15 +436,23 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 1000,
   },
+  headerGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   menuButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  menuButtonGradient: {
     padding: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(184,126,112,0.15)',
     shadowColor: 'rgba(0,0,0,0.1)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
