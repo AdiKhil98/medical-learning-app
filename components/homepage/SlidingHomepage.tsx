@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  Dimensions, 
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
   Animated,
-  SafeAreaView
+  SafeAreaView,
+  StyleSheet
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -166,29 +167,90 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     explanation: "Aktive Wiederholung aktiviert mehrere Gehirnregionen und festigt das Wissen nachhaltig."
   };
 
+  // Animated background blobs
+  const blob1Anim = useRef(new Animated.Value(0)).current;
+  const blob2Anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Animate blob 1
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(blob1Anim, {
+          toValue: 1,
+          duration: 4000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(blob1Anim, {
+          toValue: 0,
+          duration: 4000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Animate blob 2 with delay
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(blob2Anim, {
+          toValue: 1,
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(blob2Anim, {
+          toValue: 0,
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const blob1Opacity = blob1Anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.15, 0.25],
+  });
+
+  const blob2Opacity = blob2Anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.2, 0.3],
+  });
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Subtle off-white background with warm undertone */}
-      <View style={styles.whiteBackground} />
-
-      {/* Header with Menu */}
+      {/* Animated background gradient */}
       <LinearGradient
-        colors={['#F8F3E8', '#E5877E']}  // Lighter gradient - White Linen to Tonys Pink
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.modernHeader}
-      >
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setMenuOpen(true)}
-          >
-            <MenuIcon size={24} color="#B87E70" />  {/* Old Rose for light background */}
-          </TouchableOpacity>
-          <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
-          <UserAvatar size="medium" />
-        </View>
-      </LinearGradient>
+        colors={['#F8F9FA', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
+      />
+
+      {/* Animated background blobs */}
+      <Animated.View style={[styles.blob1, { opacity: blob1Opacity }]} />
+      <Animated.View style={[styles.blob2, { opacity: blob2Opacity }]} />
+
+      {/* Modern Glassmorphism Header */}
+      <View style={styles.modernHeader}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['rgba(184,126,112,0.15)', 'rgba(184,126,112,0.10)']}
+                style={styles.menuButtonGradient}
+              >
+                <MenuIcon size={24} color="#B87E70" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Logo size="medium" variant="medical" textColor="#B15740" animated={true} />
+            <UserAvatar size="medium" />
+          </View>
+        </LinearGradient>
+      </View>
 
       {/* Navigation Arrows - Hidden on mobile for cleaner interface */}
       {screenWidth >= 600 && currentSection > 0 && (
@@ -230,47 +292,74 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* Section 1: Hero */}
+        {/* Section 1: Modern Hero */}
         <View style={styles.section}>
           <View style={styles.heroSection}>
-            <LinearGradient
-              colors={['rgba(248, 243, 232, 0.98)', 'rgba(248, 243, 232, 0.95)']}  // Nearly opaque White Linen
-              style={styles.heroCard}
-            >
-              <View style={styles.heroIcon}>
-                <BookOpen size={screenWidth < 600 ? 48 : 64} color="#B87E70" />  {/* Responsive icon size */}
-              </View>
-              <Text style={styles.heroTitle}>Bestehen Sie Ihre KP & FSP Prüfung beim ersten Versuch</Text>
-              <Text style={styles.heroSubtitle}>
-                Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
-              </Text>
+            <View style={styles.heroCard}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.98)', 'rgba(255,255,255,0.92)']}
+                style={styles.heroCardGradient}
+              >
+                {/* Modern Icon with Gradient Background */}
+                <View style={styles.heroIconContainer}>
+                  <LinearGradient
+                    colors={['#B87E70', '#B15740']}
+                    style={styles.heroIconGradient}
+                  >
+                    <BookOpen size={screenWidth < 600 ? 40 : 48} color="#FFFFFF" />
+                  </LinearGradient>
+                </View>
 
-              <View style={styles.ctaButtonContainer}>
-                <TouchableOpacity
-                  style={styles.ctaButton}
-                  onPress={() => router.push('/(tabs)/simulation')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.ctaButtonText}>Simulation testen</Text>
-                </TouchableOpacity>
+                {/* Hero Title with Gradient Text Effect */}
+                <Text style={styles.heroTitle}>
+                  Bestehen Sie Ihre KP & FSP Prüfung beim ersten Versuch
+                </Text>
 
-                <TouchableOpacity
-                  style={styles.ctaButton}
-                  onPress={() => router.push('/subscription')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.ctaButtonText}>Abonnieren</Text>
-                </TouchableOpacity>
+                <Text style={styles.heroSubtitle}>
+                  Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
+                </Text>
 
-                <TouchableOpacity
-                  style={styles.ctaButton}
-                  onPress={() => setShowAboutUs(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.ctaButtonText}>Über KP Med</Text>
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
+                <View style={styles.ctaButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.ctaButtonWrapper}
+                    onPress={() => router.push('/(tabs)/simulation')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#B87E70', '#B15740']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.ctaButton}
+                    >
+                      <Text style={styles.ctaButtonText}>Simulation testen</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.ctaButtonWrapper}
+                    onPress={() => router.push('/subscription')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#E2827F', '#B87E70']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.ctaButton}
+                    >
+                      <Text style={styles.ctaButtonText}>Abonnieren</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.ctaButtonOutline}
+                    onPress={() => setShowAboutUs(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.ctaButtonOutlineText}>Über KP Med</Text>
+                  </TouchableOpacity>
+                </View>
+              </LinearGradient>
+            </View>
 
             {/* Subscription Status Card - Temporarily Disabled */}
             {user && false && (
@@ -512,18 +601,35 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',  // Soft off-white background
+    backgroundColor: '#F8F9FA',
   },
-  whiteBackground: {
-    position: 'absolute' as const,
+  backgroundGradient: {
+    position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     height: screenHeight,
-    backgroundColor: '#FAFAFA',  // Consistent soft off-white
+  },
+  blob1: {
+    position: 'absolute',
+    top: 80,
+    left: -50,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#E2827F',
+  },
+  blob2: {
+    position: 'absolute',
+    bottom: 100,
+    right: -80,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: '#B87E70',
   },
   scrollView: {
     flex: 1,
@@ -560,50 +666,53 @@ const styles = {
     elevation: 5,
   },
   sectionTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#2D2D2D',  // Dark gray for white background
+    fontSize: screenWidth < 600 ? 32 : 40,
+    fontWeight: '800',
+    color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 30,
-    textShadowColor: 'rgba(0,0,0,0.05)',  // Subtle shadow
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 36,
+    letterSpacing: -0.5,
   },
   tipSectionTitle: {
-    fontSize: 24,
-    fontWeight: '500',
-    color: '#2D2D2D',  // Dark gray for white background
+    fontSize: screenWidth < 600 ? 28 : 36,
+    fontWeight: '800',
+    color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 24,
-    textShadowColor: 'rgba(0,0,0,0.05)',  // Subtle shadow
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 32,
+    letterSpacing: -0.5,
   },
-  // Header Styles
+  // Modern Header Styles
   modernHeader: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,  // Increased for better spacing
-    paddingTop: 24,  // Enhanced top padding
-    shadowColor: 'rgba(181,87,64,0.15)',  // Premium Brown Rust shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
     zIndex: 1000,
   },
+  headerGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    shadowColor: 'rgba(0,0,0,0.08)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   headerContent: {
-    flexDirection: 'row' as const,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   menuButton: {
-    padding: 12,  // Enhanced padding for better touch target
-    borderRadius: 12,
-    backgroundColor: 'rgba(184,126,112,0.15)',  // Old Rose tint for light background
-    shadowColor: 'rgba(0,0,0,0.1)',  // Subtle shadow
-    shadowOffset: { width: 0, height: 1 },
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  menuButtonGradient: {
+    padding: 14,
+    borderRadius: 16,
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
   },
   loadingText: {
@@ -612,88 +721,107 @@ const styles = {
     textAlign: 'center' as const,
     padding: 20,
   },
-  // Hero Section Styles
+  // Modern Hero Section Styles
   heroSection: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 20,  // Add vertical padding to prevent clipping
+    paddingVertical: 30,
   },
   heroCard: {
-    borderRadius: 16,  // Modern corner radius
-    padding: screenWidth < 600 ? 24 : 40,  // Mobile: 24px, Desktop: 40px
-    paddingTop: screenWidth < 600 ? 32 : 40,  // Extra top padding on mobile
-    paddingBottom: screenWidth < 600 ? 32 : 40,
-    alignItems: 'center',
-    width: screenWidth < 600 ? '90%' : '100%',  // 90% on mobile for better viewport usage
-    maxWidth: 480,  // Increased max width
-    minHeight: 'auto',  // Auto height to fit content
+    borderRadius: 32,
+    width: screenWidth < 600 ? '92%' : '100%',
+    maxWidth: 520,
     borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.3)',  // Enhanced Old Rose border for white background
-    shadowColor: 'rgba(181, 87, 64, 0.15)',  // Stronger shadow for white background
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: 'rgba(177, 87, 64, 0.25)',
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 12,
-    backgroundColor: 'transparent',  // Ensure gradient shows through
-    overflow: 'visible',  // Ensure content isn't clipped
-    marginVertical: 20,  // Add margin to prevent viewport clipping
+    shadowRadius: 32,
+    elevation: 16,
+    overflow: 'hidden',
   },
-  heroIcon: {
-    marginBottom: screenWidth < 600 ? 20 : 24,  // Slightly less spacing on mobile
+  heroCardGradient: {
+    padding: screenWidth < 600 ? 32 : 48,
+    alignItems: 'center',
   },
-  heroTitle: {
-    fontSize: screenWidth < 600 ? 22 : 28,  // Mobile: 22px, Desktop: 28px
-    fontWeight: 'bold',
-    color: '#A04A35',  // Darker shade for more authority
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: screenWidth < 600 ? 28 : 36,  // Mobile: 1.27, Desktop: 1.28 line-height ratio
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',  // Subtle shadow for contrast
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  heroIconContainer: {
+    marginBottom: screenWidth < 600 ? 24 : 32,
   },
-  heroSubtitle: {
-    fontSize: screenWidth < 600 ? 14 : 16,  // Mobile: 14px, Desktop: 16px
-    color: '#555555',  // Medium gray for readability
-    textAlign: 'center',
-    marginBottom: screenWidth < 600 ? 32 : 40,  // Mobile: 32px, Desktop: 40px
-    lineHeight: screenWidth < 600 ? 21 : 24,  // Mobile: 1.5, Desktop: 1.5 line-height ratio
-    fontWeight: '500',  // Medium weight for better hierarchy
-  },
-  ctaButtonContainer: {
-    display: 'flex',
-    flexDirection: 'column',  // Always stack vertically for 3 buttons
-    gap: screenWidth < 600 ? 12 : 14,  // Mobile: 12px, Desktop: 14px spacing
+  heroIconGradient: {
+    width: screenWidth < 600 ? 80 : 96,
+    height: screenWidth < 600 ? 80 : 96,
+    borderRadius: screenWidth < 600 ? 24 : 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 0,
-    marginBottom: 0,
-    width: '100%',
-  },
-  ctaButton: {
-    // UNIFIED BUTTON STYLE - Responsive for mobile
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    width: screenWidth < 600 ? '100%' : 260,
-    maxWidth: screenWidth < 600 ? 280 : 260,  // Mobile: 280px max, Desktop: 260px max
-    height: screenWidth < 600 ? 52 : 56,  // Mobile: 52px, Desktop: 56px
-    backgroundColor: '#B15740',  // Brown Rust - unified color for all buttons
-    shadowColor: 'rgba(177, 87, 64, 0.3)',
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: 'rgba(184,126,112,0.4)',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 8,
   },
+  heroTitle: {
+    fontSize: screenWidth < 600 ? 28 : 36,
+    fontWeight: '800',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: screenWidth < 600 ? 36 : 48,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: screenWidth < 600 ? 16 : 18,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: screenWidth < 600 ? 36 : 48,
+    lineHeight: screenWidth < 600 ? 24 : 28,
+    fontWeight: '500',
+  },
+  ctaButtonContainer: {
+    flexDirection: 'column',
+    gap: screenWidth < 600 ? 14 : 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  ctaButtonWrapper: {
+    width: screenWidth < 600 ? '100%' : 280,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: 'rgba(184,126,112,0.4)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  ctaButton: {
+    paddingVertical: screenWidth < 600 ? 18 : 20,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: screenWidth < 600 ? 15 : 16,  // Mobile: 15px, Desktop: 16px
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.3,
+    fontSize: screenWidth < 600 ? 16 : 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  ctaButtonOutline: {
+    width: screenWidth < 600 ? '100%' : 280,
+    paddingVertical: screenWidth < 600 ? 18 : 20,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#B87E70',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaButtonOutlineText: {
+    color: '#B15740',
+    fontSize: screenWidth < 600 ? 16 : 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   // Recent Content Section Styles
   recentContentSection: {
@@ -770,15 +898,15 @@ const styles = {
     marginBottom: 8,
   },
   recentContentCard: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#B87E70',  // Old Rose border
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: 'rgba(184,126,112,0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 6,
   },
   recentContentHeader: {
     flexDirection: 'row',
@@ -857,22 +985,22 @@ const styles = {
     flex: 1,
     textAlign: 'center',
   },
-  // Tip Section Styles
+  // Modern Tip Section Styles
   tipSection: {
     flex: 1,
     justifyContent: 'center',
     width: '100%',
   },
   tipCard: {
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 32,
+    padding: 32,
     borderWidth: 1,
-    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: 'rgba(184,126,112,0.2)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 12,
   },
   tipHeader: {
     flexDirection: 'row',
@@ -925,22 +1053,22 @@ const styles = {
     fontSize: 14,
     fontWeight: '600',
   },
-  // Question Section Styles
+  // Modern Question Section Styles
   questionSection: {
     flex: 1,
     justifyContent: 'center',
     width: '100%',
   },
   questionCard: {
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 32,
+    padding: 32,
     borderWidth: 1,
-    borderColor: '#B87E70',  // Old Rose border - DRAMATIC accent
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: 'rgba(184,126,112,0.2)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    elevation: 12,
   },
   questionHeader: {
     flexDirection: 'row',
@@ -1099,4 +1227,4 @@ const styles = {
     color: '#B87E70',
     flex: 1,
   },
-};
+});
