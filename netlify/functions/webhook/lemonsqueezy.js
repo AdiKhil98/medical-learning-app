@@ -209,6 +209,8 @@ exports.handler = async (event, context) => {
       case 'subscription_created':
         console.log(`Creating subscription for user ${userId}`);
 
+        // CRITICAL: Reset monthly counter when upgrading from free to paid
+        // This ensures users start fresh with their new plan limits
         await updateUserSubscription(userId, {
           subscription_id: subscriptionId,
           variant_id: variantId,
@@ -216,13 +218,14 @@ exports.handler = async (event, context) => {
           subscription_tier: tier,
           subscription_variant_name: tierConfig.name,
           simulation_limit: tierConfig.simulationLimit,
+          simulations_used_this_month: 0, // RESET monthly counter on upgrade
           lemon_squeezy_customer_email: customerEmail,
           subscription_created_at: new Date().toISOString(),
           subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
         });
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`Subscription created successfully for user ${userId}`);
+        console.log(`Subscription created successfully for user ${userId} - monthly counter reset to 0`);
         break;
 
       case 'subscription_updated':
@@ -232,7 +235,9 @@ exports.handler = async (event, context) => {
         const newTier = determineSubscriptionTier(variantName, variantId);
         const newTierConfig = SUBSCRIPTION_TIERS[newTier];
 
-        await updateUserSubscription(userId, {
+        // Check if tier changed - if so, reset monthly counter
+        const tierChanged = user.subscription_tier !== newTier;
+        const updates = {
           subscription_id: subscriptionId,
           variant_id: variantId,
           subscription_status: status === 'active' ? 'active' : status,
@@ -240,7 +245,15 @@ exports.handler = async (event, context) => {
           subscription_variant_name: newTierConfig.name,
           simulation_limit: newTierConfig.simulationLimit,
           subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        };
+
+        // CRITICAL: Reset counter if tier changed (upgrade/downgrade)
+        if (tierChanged) {
+          updates.simulations_used_this_month = 0;
+          console.log(`Tier changed from ${user.subscription_tier} to ${newTier} - resetting monthly counter`);
+        }
+
+        await updateUserSubscription(userId, updates);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
         console.log(`Subscription updated successfully for user ${userId}`);
