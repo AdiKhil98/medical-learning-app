@@ -570,6 +570,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 16, // Add vertical padding to prevent cutoff
   },
   navigationArrow: {
     position: 'absolute' as const,
@@ -657,7 +658,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 30,
+    paddingTop: screenWidth < 600 ? 20 : 40,
+    paddingBottom: screenWidth < 600 ? 32 : 48,
+    minHeight: screenHeight - 160, // Account for header and potential bottom nav
   },
   heroCard: {
     borderRadius: 32,
@@ -673,7 +676,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroCardGradient: {
-    padding: screenWidth < 600 ? 32 : 48,
+    paddingHorizontal: screenWidth < 600 ? 24 : 48,
+    paddingTop: screenWidth < 600 ? 32 : 40,
+    paddingBottom: screenWidth < 600 ? 36 : 48,
     alignItems: 'center',
   },
   heroIconContainer: {
