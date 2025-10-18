@@ -246,10 +246,10 @@ export default function ProgressScreen() {
             data={currentChartData}
             style={{
               data: {
-                fill: activeTab === 'KP' ? 'rgba(184, 126, 112, 0.2)' : 'rgba(226, 130, 127, 0.2)', 
+                fill: activeTab === 'KP' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(236, 72, 153, 0.15)',
                 fillOpacity: 1,
-                stroke: activeTab === 'KP' ? '#B87E70' : '#E2827F',
-                strokeWidth: 2.5
+                stroke: activeTab === 'KP' ? '#6366F1' : '#EC4899',
+                strokeWidth: 3
               }
             }}
             animate={{
@@ -284,10 +284,10 @@ export default function ProgressScreen() {
           {/* Data point circles */}
           <VictoryScatter
             data={currentChartData}
-            size={4}
+            size={6}
             style={{
-              data: { 
-                fill: activeTab === 'KP' ? '#B87E70' : '#E2827F',
+              data: {
+                fill: activeTab === 'KP' ? '#6366F1' : '#EC4899',
                 stroke: '#fff',
                 strokeWidth: 2
               }
@@ -744,38 +744,41 @@ export default function ProgressScreen() {
         {/* Stats Overview Cards */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              style={styles.statIconContainer}
-            >
-              <Trophy size={20} color="white" />
-            </LinearGradient>
-            <Text style={styles.statValue}>{averageScore}%</Text>
-            <Text style={styles.statLabel}>Durchschnitt</Text>
+            <View style={styles.statCardContent}>
+              <View style={styles.statIconWrapper}>
+                <Award size={28} color="#A855F7" />
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statValue}>{averageScore}%</Text>
+                <Text style={styles.statLabel}>Durchschnitt</Text>
+              </View>
+            </View>
           </View>
-          
+
           <View style={styles.statCard}>
-            <LinearGradient
-              colors={['#f093fb', '#f5576c']}
-              style={styles.statIconContainer}
-            >
-              <Target size={20} color="white" />
-            </LinearGradient>
-            <Text style={styles.statValue}>{passedCount}/{totalAttempts}</Text>
-            <Text style={styles.statLabel}>Bestanden</Text>
+            <View style={styles.statCardContent}>
+              <View style={styles.statIconWrapper}>
+                <Target size={28} color="#EC4899" />
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statValue}>{passedCount}/{totalAttempts}</Text>
+                <Text style={styles.statLabel}>Bestanden</Text>
+              </View>
+            </View>
           </View>
-          
+
           <View style={styles.statCard}>
-            <LinearGradient
-              colors={['#4facfe', '#00f2fe']}
-              style={styles.statIconContainer}
-            >
-              <TrendingUp size={20} color="white" />
-            </LinearGradient>
-            <Text style={styles.statValue}>
-              {chartData ? (chartData.KP?.length || 0) + (chartData.FSP?.length || 0) : 0}
-            </Text>
-            <Text style={styles.statLabel}>Versuche</Text>
+            <View style={styles.statCardContent}>
+              <View style={styles.statIconWrapper}>
+                <TrendingUp size={28} color="#06B6D4" />
+              </View>
+              <View style={styles.statTextContainer}>
+                <Text style={styles.statValue}>
+                  {chartData ? (chartData.KP?.length || 0) + (chartData.FSP?.length || 0) : 0}
+                </Text>
+                <Text style={styles.statLabel}>Versuche</Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -789,8 +792,8 @@ export default function ProgressScreen() {
             <View style={styles.chartLegend}>
               <View style={styles.legendItem}>
                 <View style={[
-                  styles.legendDot, 
-                  { backgroundColor: activeTab === 'KP' ? '#667eea' : '#9c27b0' }
+                  styles.legendDot,
+                  { backgroundColor: activeTab === 'KP' ? '#6366F1' : '#EC4899' }
                 ]} />
                 <Text style={styles.legendText}>{activeTab} Score</Text>
               </View>
@@ -914,73 +917,80 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 32,
-    gap: 12,
+    gap: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#F9F6F2',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: 'rgba(181,87,64,0.15)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
     borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  statIconContainer: {
-    width: 40,
-    height: 40,
+  statCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  statIconWrapper: {
+    width: 56,
+    height: 56,
     borderRadius: 12,
+    backgroundColor: 'rgba(168, 85, 247, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+  },
+  statTextContainer: {
+    flex: 1,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
-    marginBottom: 4,
+    color: '#1F2937',
+    marginBottom: 2,
+    letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#6b7280',
-    textAlign: 'center',
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
   },
 
   // Modern Chart
   modernChartContainer: {
     marginHorizontal: 20,
     marginBottom: 32,
-    backgroundColor: '#F9F6F2',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    shadowColor: 'rgba(181,87,64,0.15)',
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowRadius: 24,
     elevation: 8,
+    padding: 32,
     borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   chartHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingBottom: 16,
+    marginBottom: 24,
   },
   chartTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   chartTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
+    color: '#1F2937',
   },
   chartLegend: {
     flexDirection: 'row',
@@ -989,17 +999,17 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#6b7280',
+    color: '#6B7280',
   },
 
   // Enhanced Chart Styles
@@ -1026,39 +1036,38 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
-    marginBottom: 16,
-    letterSpacing: -0.3,
+    color: '#1F2937',
+    marginBottom: 24,
+    letterSpacing: -0.5,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F9F6F2',
-    borderRadius: 16,
-    padding: 4,
+    gap: 16,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
   },
   activeTab: {
-    backgroundColor: '#E2827F',
-    shadowColor: 'rgba(226, 130, 127, 0.4)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: '#EC4899',
+    shadowColor: 'rgba(236, 72, 153, 0.4)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
-    color: '#6b7280',
+    color: '#64748B',
   },
   activeTabText: {
-    color: 'white',
+    color: '#FFFFFF',
   },
 
   // Modern Cards
@@ -1067,20 +1076,20 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernEvaluationCard: {
-    marginBottom: 20, // Increased from 16px for better breathing room
-    borderRadius: 20,
+    marginBottom: 16,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
   modernCardGradient: {
-    borderRadius: 20,
-    padding: 24, // Increased from 20px for better breathing room
+    borderRadius: 16,
+    padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.2)',
-    backgroundColor: '#F9F6F2',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: '#FFFFFF',
   },
   modernCardHeader: {
     flexDirection: 'row',
@@ -1145,34 +1154,34 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   progressBar: {
-    height: 6,
-    backgroundColor: '#F9F6F2',
-    borderRadius: 3,
-    marginBottom: 6,
+    height: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 4,
+    marginBottom: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   progressText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
-    color: '#6b7280',
+    color: '#64748B',
   },
   modernViewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(226, 130, 127, 0.1)',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     gap: 6,
   },
   modernViewText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: 'Inter-SemiBold',
-    color: '#E2827F',
+    color: '#EF4444',
   },
   chevron: {
     transform: [{ rotate: '90deg' }],
