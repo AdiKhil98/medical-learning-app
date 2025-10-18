@@ -200,34 +200,28 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </LinearGradient>
       </View>
 
-      {/* Navigation Arrows - Hidden on mobile for cleaner interface */}
-      {screenWidth >= 600 && currentSection > 0 && (
+      {/* Navigation Arrows */}
+      {currentSection > 0 && (
         <TouchableOpacity
           style={[styles.navigationArrow, styles.leftArrow]}
           onPress={scrollToPrevious}
           activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={['rgba(184,126,112,0.9)', 'rgba(184,126,112,0.7)']}  // Old Rose gradient for visibility
-            style={styles.arrowButton}
-          >
-            <ArrowLeft size={20} color="#FFFFFF" />
-          </LinearGradient>
+          <View style={styles.arrowButton}>
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
       )}
 
-      {screenWidth >= 600 && currentSection < sections.length - 1 && (
+      {currentSection < sections.length - 1 && (
         <TouchableOpacity
           style={[styles.navigationArrow, styles.rightArrow]}
           onPress={scrollToNext}
           activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={['rgba(184,126,112,0.9)', 'rgba(184,126,112,0.7)']}  // Old Rose gradient for visibility
-            style={styles.arrowButton}
-          >
-            <ArrowRight size={20} color="#FFFFFF" />
-          </LinearGradient>
+          <View style={styles.arrowButton}>
+            <ArrowRight size={24} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
       )}
 
@@ -274,9 +268,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     activeOpacity={0.8}
                   >
                     <LinearGradient
-                      colors={['#B87E70', '#B15740']}
+                      colors={['#F28B82', '#EF9A9A']}
                       start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
+                      end={{ x: 1, y: 0 }}
                       style={styles.ctaButton}
                     >
                       <Text style={styles.ctaButtonText}>Simulation testen</Text>
@@ -288,14 +282,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                     onPress={() => router.push('/subscription')}
                     activeOpacity={0.8}
                   >
-                    <LinearGradient
-                      colors={['#E2827F', '#B87E70']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.ctaButton}
-                    >
-                      <Text style={styles.ctaButtonText}>Abonnieren</Text>
-                    </LinearGradient>
+                    <View style={styles.ctaButtonSecondary}>
+                      <Text style={styles.ctaButtonSecondaryText}>Abonnieren</Text>
+                    </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -576,25 +565,26 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     top: '50%',
     zIndex: 10,
-    marginTop: -25,
+    marginTop: -28,
   },
   leftArrow: {
-    left: 20,
+    left: screenWidth < 600 ? 16 : 16,
   },
   rightArrow: {
-    right: 20,
+    right: screenWidth < 600 ? 16 : 16,
   },
   arrowButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(242, 139, 130, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowColor: 'rgba(242, 139, 130, 0.5)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   sectionTitle: {
     fontSize: screenWidth < 600 ? 32 : 40,
@@ -713,46 +703,63 @@ const styles = StyleSheet.create({
   },
   ctaButtonContainer: {
     flexDirection: 'column',
-    gap: screenWidth < 600 ? 10 : 12,
+    gap: screenWidth < 600 ? 16 : 20,
     width: '100%',
     alignItems: 'center',
   },
   ctaButtonWrapper: {
     width: screenWidth < 600 ? '100%' : 280,
-    borderRadius: 14,
+    borderRadius: 30,
     overflow: 'hidden',
-    shadowColor: 'rgba(184,126,112,0.4)',
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: 'rgba(242, 139, 130, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 6,
   },
   ctaButton: {
-    paddingVertical: screenWidth < 600 ? 14 : 16,
-    paddingHorizontal: 28,
+    height: 60,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: screenWidth < 600 ? 15 : 17,
+    fontSize: screenWidth < 600 ? 16 : 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  ctaButtonSecondary: {
+    height: 60,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#C99487',
+    borderRadius: 30,
+  },
+  ctaButtonSecondaryText: {
+    color: '#FFFFFF',
+    fontSize: screenWidth < 600 ? 16 : 18,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
   ctaButtonOutline: {
     width: screenWidth < 600 ? '100%' : 280,
-    paddingVertical: screenWidth < 600 ? 14 : 16,
-    paddingHorizontal: 28,
-    borderRadius: 14,
+    height: 60,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
     borderWidth: 2,
-    borderColor: '#B87E70',
+    borderColor: '#F28B82',
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaButtonOutlineText: {
-    color: '#B15740',
-    fontSize: screenWidth < 600 ? 15 : 17,
+    color: '#F28B82',
+    fontSize: screenWidth < 600 ? 16 : 18,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
