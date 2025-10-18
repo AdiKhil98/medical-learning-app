@@ -1,41 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Mic, Brain, Play, Target, TrendingUp, Clock, Users, Award } from 'lucide-react-native';
+import { ChevronRight, Mic, Brain, Play, Target, TrendingUp, Clock, Users, Award, Menu as MenuIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import Menu from '@/components/ui/Menu';
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function SimulationScreen() {
   const router = useRouter();
-
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Clean white background */}
       <View style={styles.cleanBackground} />
-      
-      {/* Clean header with coral branding */}
-      <View style={styles.cleanHeader}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.modernTitle}>Prüfungs-Simulation</Text>
-            <Text style={styles.modernSubtitle}>
-              Bereiten Sie sich optimal auf Ihre medizinische Prüfung vor
-            </Text>
-          </View>
-          
-          {/* Coral accent element */}
-          <View style={styles.headerAccent}>
-            <LinearGradient
-              colors={['#E2827F', '#B87E70']}
-              style={styles.accentGradient}
+
+      {/* Modern Header - Same as Homepage */}
+      <View style={styles.modernHeader}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+              activeOpacity={0.7}
             >
-              <Target size={20} color="white" />
-            </LinearGradient>
+              <LinearGradient
+                colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
+                style={styles.menuButtonGradient}
+              >
+                <MenuIcon size={24} color="#FB923C" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Logo size="medium" variant="medical" textColor="#FB923C" animated={true} />
+            <UserAvatar size="medium" />
           </View>
-        </View>
+        </LinearGradient>
+      </View>
+
+      {/* Page Title Section */}
+      <View style={styles.pageTitleSection}>
+        <Text style={styles.pageTitle}>Prüfungs-Simulation</Text>
+        <Text style={styles.pageSubtitle}>
+          Bereiten Sie sich optimal auf Ihre medizinische Prüfung vor
+        </Text>
       </View>
 
       {/* Stats Section */}
@@ -162,6 +176,9 @@ export default function SimulationScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Menu */}
+      <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -179,56 +196,60 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#FFFFFF',
   },
-  
-  // Clean Header Styles
-  cleanHeader: {
+
+  // Modern Header Styles (Same as Homepage)
+  modernHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    zIndex: 1000,
+  },
+  headerGradient: {
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    paddingVertical: 40,
-    paddingTop: 60,
-    backgroundColor: '#FFFFFF',
-    shadowColor: 'rgba(181,87,64,0.15)',
+    paddingTop: 24,
+    shadowColor: 'rgba(0,0,0,0.08)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 1,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 8,
   },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  headerTextContainer: {
-    flex: 1,
+  menuButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  modernTitle: {
-    fontSize: 32,
+  menuButtonGradient: {
+    padding: 14,
+    borderRadius: 16,
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  // Page Title Section
+  pageTitleSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    backgroundColor: '#FFFFFF',
+  },
+  pageTitle: {
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: -0.5,
   },
-  modernSubtitle: {
-    fontSize: 16,
+  pageSubtitle: {
+    fontSize: 15,
     color: '#6B7280',
     lineHeight: 22,
     fontFamily: 'Inter-Regular',
-    maxWidth: '85%',
-  },
-  headerAccent: {
-    width: 60,
-    height: 60,
-  },
-  accentGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: 'rgba(181,87,64,0.3)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
 
   // Stats Section
