@@ -104,7 +104,7 @@ export default function KPSimulationScreen() {
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && user?.id) {
         // CRITICAL: Check access before initializing widget
         const accessCheck = await checkAccess();
         if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
@@ -117,34 +117,55 @@ export default function KPSimulationScreen() {
         // Stop global cleanup to allow widget
         stopGlobalVoiceflowCleanup();
 
-        // Create and load controller
-        const controller = createKPController();
-        voiceflowController.current = controller;
-
+        // CRITICAL FIX: Generate session token BEFORE initializing Voiceflow
+        // This ensures variables are available from the first message
+        console.log('🔑 KP: Generating session token before Voiceflow initialization');
         try {
-          const loaded = await controller.loadWidget();
-          if (loaded) {
-            console.log('✅ KP: Voiceflow widget loaded successfully');
+          const result = await simulationTracker.startSimulation('kp');
+          console.log('🔍 DEBUG: Pre-initialization session token result:', result);
 
-            // Make sure widget is visible and functional
-            setTimeout(() => {
-              if (window.voiceflow?.chat) {
-                window.voiceflow.chat.show();
-                console.log('👁️ KP: Widget made visible');
-              }
-            }, 1000);
+          if (result.success && result.sessionToken) {
+            console.log('✅ DEBUG: Got session token for initialization:', result.sessionToken);
+            setSessionToken(result.sessionToken);
+            sessionTokenRef.current = result.sessionToken;
 
-            // Set up conversation monitoring
+            // Create controller and initialize WITH credentials
+            const controller = createKPController();
+            voiceflowController.current = controller;
+
+            // Initialize with user_id and session_token
+            const initialized = await controller.initialize(user.id, result.sessionToken);
+
+            if (initialized) {
+              console.log('✅ KP: Voiceflow initialized with user credentials');
+
+              // Make sure widget is visible and functional
+              setTimeout(() => {
+                if (window.voiceflow?.chat) {
+                  window.voiceflow.chat.show();
+                  console.log('👁️ KP: Widget made visible');
+                }
+              }, 1000);
+
+              // Set up conversation monitoring
+              setupConversationMonitoring();
+            }
+          } else {
+            console.error('❌ DEBUG: Failed to get session token for initialization:', result.error);
+            // Still initialize widget without credentials as fallback
+            const controller = createKPController();
+            voiceflowController.current = controller;
+            await controller.loadWidget();
             setupConversationMonitoring();
           }
         } catch (error) {
-          console.error('❌ KP: Failed to load Voiceflow widget:', error);
+          console.error('❌ KP: Error during initialization:', error);
         }
       }
     };
 
     initializeVoiceflow();
-  }, [checkAccess]);
+  }, [checkAccess, user]);
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
@@ -259,11 +280,13 @@ export default function KPSimulationScreen() {
     // Access granted - proceed with timer
     console.log('[Timer] Access GRANTED - Starting timer...');
 
-    // CRITICAL: Check if a session already exists to prevent duplicate database sessions
-    if (sessionTokenRef.current) {
-      console.log('🔍 DEBUG: Session already exists, returning early to prevent duplicates');
+    // CRITICAL: Check if session token already exists (generated during initialization)
+    if (!sessionTokenRef.current) {
+      console.error('❌ KP: No session token found - this should have been generated during initialization');
       return;
     }
+
+    console.log('✅ KP: Using existing session token from initialization:', sessionTokenRef.current);
 
     // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
     // This prevents false positives from stale state
@@ -285,7 +308,7 @@ export default function KPSimulationScreen() {
     console.log('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
 
     // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
-    console.log('🔍 DEBUG: Setting timer active IMMEDIATELY before database calls');
+    console.log('🔍 DEBUG: Setting timer active IMMEDIATELY');
 
     // Set ref FIRST to prevent race conditions
     timerActiveRef.current = true;
@@ -306,70 +329,32 @@ export default function KPSimulationScreen() {
     previousTimeRef.current = 20 * 60;
 
     try {
-      // Start simulation tracking in database
-      const result = await simulationTracker.startSimulation('kp');
-      console.log('🔍 DEBUG: startSimulation result:', result);
+      // Apply optimistic counter deduction (show immediate feedback to user)
+      applyOptimisticDeduction();
 
-      if (result.success && result.sessionToken) {
-        console.log('✅ DEBUG: Successfully got session token:', result.sessionToken);
-        setSessionToken(result.sessionToken);
-        sessionTokenRef.current = result.sessionToken; // Store in ref for timer closure
-        setUsageMarked(false);
-        usageMarkedRef.current = false; // Initialize ref
-
-        // Apply optimistic counter deduction (show immediate feedback to user)
-        applyOptimisticDeduction();
-
-        // Save simulation state to localStorage
-        if (typeof window !== 'undefined' && window.localStorage) {
-          try {
-            localStorage.setItem('sim_start_time_kp', startTime.toString());
-            localStorage.setItem('sim_end_time_kp', endTime.toString());
-            localStorage.setItem('sim_session_token_kp', result.sessionToken);
-            localStorage.setItem('sim_duration_ms_kp', duration.toString());
-            if (user?.id) {
-              localStorage.setItem('sim_user_id_kp', user.id);
-            }
-            console.log('💾 KP: Saved simulation state to localStorage');
-          } catch (error) {
-            console.error('❌ KP: Error saving to localStorage:', error);
-          }
-        }
-      } else {
-        console.error('❌ DEBUG: Failed to start simulation tracking:', result.error);
-        // Continue with timer anyway for UX
-      }
-
-      // DEBUG: Check Voiceflow controller state before sending variables
-      console.log('🔍 Voiceflow controller check:', {
-        exists: !!voiceflowController.current,
-        type: typeof voiceflowController.current,
-        hasMethod: voiceflowController.current?.updateSessionVariables !== undefined,
-        hasSessionToken: !!result.sessionToken,
-        hasUserId: !!user?.id
-      });
-
-      // Send session variables to Voiceflow
-      if (result.sessionToken && user?.id && voiceflowController.current) {
+      // Save simulation state to localStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
         try {
-          console.log('📤 KP: Sending session variables to Voiceflow...');
-          const variablesUpdated = await voiceflowController.current.updateSessionVariables(
-            user.id,
-            result.sessionToken
-          );
-          if (variablesUpdated) {
-            console.log('✅ KP: Session variables successfully sent to Voiceflow');
-          } else {
-            console.warn('⚠️ KP: Failed to send session variables to Voiceflow');
+          localStorage.setItem('sim_start_time_kp', startTime.toString());
+          localStorage.setItem('sim_end_time_kp', endTime.toString());
+          localStorage.setItem('sim_session_token_kp', sessionTokenRef.current);
+          localStorage.setItem('sim_duration_ms_kp', duration.toString());
+          if (user?.id) {
+            localStorage.setItem('sim_user_id_kp', user.id);
           }
+          console.log('💾 KP: Saved simulation state to localStorage');
         } catch (error) {
-          console.error('❌ KP: Error sending variables to Voiceflow:', error);
+          console.error('❌ KP: Error saving to localStorage:', error);
         }
       }
+
+      setUsageMarked(false);
+      usageMarkedRef.current = false; // Initialize ref
+
+      console.log('✅ KP: Timer started with existing session token');
 
     } catch (error) {
-      console.error('❌ KP: Failed to start simulation tracking:', error);
-      // Continue with timer anyway for UX, but log the error
+      console.error('❌ KP: Error during timer setup:', error);
     }
 
     console.log('🔍 DEBUG: Timer already active, now starting heartbeat and interval');
