@@ -20,6 +20,14 @@ export class VoiceflowController {
     this.config = config;
   }
 
+  // Initialize with optional user credentials
+  async initialize(userId?: string, sessionToken?: string): Promise<boolean> {
+    this.userId = userId || null;
+    this.sessionToken = sessionToken || null;
+
+    return this.loadWidget();
+  }
+
   // Load Voiceflow script and initialize hidden widget
   async loadWidget(): Promise<boolean> {
     return new Promise((resolve, reject) => {
@@ -44,7 +52,7 @@ export class VoiceflowController {
         const script = document.createElement('script');
         script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
         script.type = 'text/javascript';
-        
+
         script.onload = () => {
           console.log('✅ Voiceflow script loaded from CDN');
           this.initializeWidget()
@@ -57,7 +65,7 @@ export class VoiceflowController {
               reject(error);
             });
         };
-        
+
         script.onerror = (error) => {
           console.error('❌ Failed to load Voiceflow script:', error);
           reject(new Error('Failed to load Voiceflow script'));
@@ -84,15 +92,35 @@ export class VoiceflowController {
     }
 
     try {
-      // Use the exact same configuration that works in the test page
-      window.voiceflow.chat.load({
+      // Build configuration with user credentials if available
+      const config: any = {
         verify: { projectID: this.config.projectID },
         url: 'https://general-runtime.voiceflow.com',
         versionID: 'production',
         voice: {
           url: "https://runtime-api.voiceflow.com"
         }
-      });
+      };
+
+      // Add userID if available
+      if (this.userId) {
+        config.userID = this.userId;
+      }
+
+      // Add launch event with payload if user credentials are available
+      if (this.userId || this.sessionToken) {
+        config.launch = {
+          event: {
+            type: 'launch',
+            payload: {
+              user_id: this.userId || 'unknown',
+              session_token: this.sessionToken || ''
+            }
+          }
+        };
+      }
+
+      window.voiceflow.chat.load(config);
 
       this.widget = window.voiceflow.chat;
       this.isLoaded = true;
