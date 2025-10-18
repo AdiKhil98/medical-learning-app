@@ -164,69 +164,17 @@ export default function Logo({
       case 'medical':
         return (
           <Container style={styles.container} onPress={onPress}>
-            <Animated.View style={[styles.medicalContainer, { transform: [{ scale: pulseAnim }] }]}>
-              {/* Premium gradient background for logo area */}
-              <LinearGradient
-                colors={['#B15740', '#B87E70']}  // Brown Rust to Old Rose gradient
-                style={styles.medicalBackground}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                {/* Outer hexagon */}
-                <View style={[styles.hexagonOuter, { width: iconSize, height: iconSize }]}>
-                  <LinearGradient
-                    colors={['#E2827F', '#B15740', '#B15740']}
-                    style={[styles.hexagonGradient, { width: iconSize, height: iconSize }]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                  {/* Inner hexagon with medical cross */}
-                  <View style={[styles.hexagonInner, { width: iconSize * 0.7, height: iconSize * 0.7 }]}>
-                    {/* Medical cross - vertical bar */}
-                    <View style={[styles.crossVertical, { 
-                      width: iconSize * 0.08, 
-                      height: iconSize * 0.4,
-                      backgroundColor: 'white'
-                    }]} />
-                    {/* Medical cross - horizontal bar */}
-                    <View style={[styles.crossHorizontal, { 
-                      width: iconSize * 0.4, 
-                      height: iconSize * 0.08,
-                      backgroundColor: 'white'
-                    }]} />
-                    {/* Corner accent dots */}
-                    <View style={[styles.accentDot, styles.dotTopLeft, { 
-                      width: iconSize * 0.06, 
-                      height: iconSize * 0.06 
-                    }]} />
-                    <View style={[styles.accentDot, styles.dotTopRight, { 
-                      width: iconSize * 0.06, 
-                      height: iconSize * 0.06 
-                    }]} />
-                    <View style={[styles.accentDot, styles.dotBottomLeft, { 
-                      width: iconSize * 0.06, 
-                      height: iconSize * 0.06 
-                    }]} />
-                    <View style={[styles.accentDot, styles.dotBottomRight, { 
-                      width: iconSize * 0.06, 
-                      height: iconSize * 0.06 
-                    }]} />
-                  </View>
-                </LinearGradient>
-              </View>
-              {/* Logo text with enhanced styling */}
-              {showText && (
-                <View style={styles.medicalTextContainer}>
+            <Animated.View style={[styles.medicalContainer, { transform: [{ scale: animated ? pulseAnim : 1 }] }]}>
+              {/* Simple solid background matching reference image */}
+              <View style={styles.medicalBackground}>
+                {showText && (
                   <Text style={[styles.medicalTitle, {
-                    color: '#FFFFFF',  // Force white for authority
-                    fontSize: size === 'small' ? 22 : size === 'large' ? 36 : 28,
-                    fontWeight: '700',  // Enhanced font weight for authority
+                    fontSize: size === 'small' ? 18 : size === 'large' ? 24 : 20,
                   }]}>
-                    KP MED
+                    + KP MED
                   </Text>
-                </View>
-              )}
-              </LinearGradient>
+                )}
+              </View>
             </Animated.View>
           </Container>
         );
@@ -392,92 +340,29 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   
-  // Medical Variant (AMBOSS-style)
+  // Medical Variant - Simple button style matching reference image
   medicalContainer: {
-    marginRight: 12,
     position: 'relative',
   },
   medicalBackground: {
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',  // Subtle white border
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: 'rgba(181,87,64,0.15)',  // Premium shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  hexagonOuter: {
-    position: 'relative',
+    backgroundColor: '#FB923C',  // Orange-400, closest to brownish-terracotta #B8846A
+    borderRadius: 12,  // rounded-xl
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    transform: [{ rotate: '30deg' }],
-  },
-  hexagonGradient: {
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#E2827F',
+    shadowColor: 'rgba(251, 146, 60, 0.4)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 12,
     elevation: 8,
-    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-  },
-  hexagonInner: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    transform: [{ rotate: '-30deg' }],
-  },
-  crossVertical: {
-    position: 'absolute',
-    borderRadius: 2,
-  },
-  crossHorizontal: {
-    position: 'absolute',
-    borderRadius: 2,
-  },
-  accentDot: {
-    position: 'absolute',
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  dotTopLeft: {
-    top: '15%',
-    left: '15%',
-  },
-  dotTopRight: {
-    top: '15%',
-    right: '15%',
-  },
-  dotBottomLeft: {
-    bottom: '15%',
-    left: '15%',
-  },
-  dotBottomRight: {
-    bottom: '15%',
-    right: '15%',
-  },
-  medicalTextContainer: {
-    alignItems: 'flex-start',
   },
   medicalTitle: {
     fontFamily: 'System',
-    fontWeight: '800',
-    letterSpacing: -1,
-    lineHeight: 32,
-  },
-  medicalSubtitle: {
-    fontFamily: 'System',
-    fontWeight: '600',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    opacity: 0.7,
-    marginTop: -4,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+    textAlign: 'center',
   },
 
   // Premium Variant
