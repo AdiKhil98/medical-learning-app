@@ -4,7 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight, X, Maximize2 } from 'lucide-react-native';
+import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight, X, Maximize2, Menu as MenuIcon } from 'lucide-react-native';
+import Menu from '@/components/ui/Menu';
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -72,6 +75,7 @@ export default function ProgressScreen() {
   const [expandedEvaluation, setExpandedEvaluation] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   
   console.log('ProgressScreen: Rendering, evaluations count:', evaluations.length);
   console.log('ProgressScreen: chartData:', chartData);
@@ -702,12 +706,37 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={styles.modernContainer}>
       <View style={styles.gradientBackground} />
-      
+
+      {/* Modern Header - Same as Homepage */}
+      <View style={styles.appHeader}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
+                style={styles.menuButtonGradient}
+              >
+                <MenuIcon size={24} color="#FB923C" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <Logo size="medium" variant="medical" textColor="#FB923C" animated={true} />
+            <UserAvatar size="medium" />
+          </View>
+        </LinearGradient>
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-        {/* Modern Header */}
-        <View style={styles.modernHeader}>
-          <Text style={styles.modernTitle}>Lernfortschritt</Text>
-          <Text style={styles.modernSubtitle}>
+        {/* Page Title Section */}
+        <View style={styles.pageTitleSection}>
+          <Text style={styles.pageTitle}>Lernfortschritt</Text>
+          <Text style={styles.pageSubtitle}>
             Verfolgen Sie Ihre Entwicklung in der medizinischen Ausbildung
           </Text>
         </View>
@@ -798,9 +827,12 @@ export default function ProgressScreen() {
         
         <View style={styles.bottomSpacer} />
       </ScrollView>
-      
+
       {/* Evaluation Modal */}
       {renderEvaluationModal()}
+
+      {/* Menu */}
+      <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -821,25 +853,60 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  
-  // Modern Header
-  modernHeader: {
+
+  // App Header Styles (Same as Homepage)
+  appHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    zIndex: 1000,
+  },
+  headerGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    shadowColor: 'rgba(0,0,0,0.08)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  menuButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  menuButtonGradient: {
+    padding: 14,
+    borderRadius: 16,
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  // Page Title Section
+  pageTitleSection: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
-  modernTitle: {
-    fontSize: 32,
+  pageTitle: {
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#B8755C',
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: -0.5,
   },
-  modernSubtitle: {
-    fontSize: 16,
+  pageSubtitle: {
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
-    lineHeight: 24,
+    lineHeight: 22,
   },
 
   // Stats Grid
