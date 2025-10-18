@@ -95,8 +95,8 @@ export class VoiceflowController {
       // Build configuration with user credentials if available
       const config: any = {
         verify: { projectID: this.config.projectID },
+        versionID: this.config.versionID,
         url: 'https://general-runtime.voiceflow.com',
-        versionID: 'production',
         voice: {
           url: "https://runtime-api.voiceflow.com"
         }
