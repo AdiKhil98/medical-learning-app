@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Mic, Brain, Play, Target, TrendingUp, Clock, Users, Award, Menu as MenuIcon } from 'lucide-react-native';
+import { ChevronRight, Mic, Brain, Play, Target, Clock, Menu as MenuIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import Menu from '@/components/ui/Menu';
@@ -50,29 +50,6 @@ export default function SimulationScreen() {
         <Text style={styles.pageSubtitle}>
           Bereiten Sie sich optimal auf Ihre medizinische Prüfung vor
         </Text>
-      </View>
-
-      {/* Stats Section */}
-      <View style={styles.statsSection}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Clock size={18} color="#B87E70" />
-            <Text style={styles.statNumber}>25 Min</Text>
-            <Text style={styles.statLabel}>Durchschnitt</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Users size={18} color="#E2827F" />
-            <Text style={styles.statNumber}>120</Text>
-            <Text style={styles.statLabel}>Teilnehmer</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Award size={18} color="#B15740" />
-            <Text style={styles.statNumber}>91%</Text>
-            <Text style={styles.statLabel}>Erfolgsrate</Text>
-          </View>
-        </View>
       </View>
       
       <ScrollView 
@@ -250,47 +227,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 22,
     fontFamily: 'Inter-Regular',
-  },
-
-  // Stats Section
-  statsSection: {
-    marginTop: -20,
-    paddingHorizontal: 20,
-    zIndex: 10,
-  },
-  statsContainer: {
-    backgroundColor: '#F9F6F2',
-    borderRadius: 20,
-    flexDirection: 'row',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    shadowColor: 'rgba(181,87,64,0.15)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(184, 126, 112, 0.2)',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statNumber: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#1f2937',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6b7280',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: 'rgba(184, 126, 112, 0.3)',
-    marginHorizontal: 16,
   },
 
   // Content Styles
