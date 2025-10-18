@@ -1,389 +1,588 @@
- import React, { useState, useEffect } from 'react';
-  import {
-    View,
-    Text,
-    TouchableOpacity,
-    Alert,
-    StyleSheet,
-    SafeAreaView,
-    ScrollView,
-    Platform
-  } from 'react-native';
-  import { useRouter, Link } from 'expo-router';
-  import { LinearGradient } from 'expo-linear-gradient';
-  import { Mail, Lock, Eye, EyeOff, BriefcaseMedical } from 'lucide-react-native';
-  import { useAuth } from '@/contexts/AuthContext';
-  import Input from '@/components/ui/Input';
-  import Logo from '@/components/ui/Logo';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Platform,
+  Dimensions,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
+import { useRouter, Link } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Mail, Lock, Eye, EyeOff, Stethoscope, Heart, Shield, Sparkles } from 'lucide-react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import Input from '@/components/ui/Input';
 
-  export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [emailError, setEmailError] = useState('');
-    const [emailTouched, setEmailTouched] = useState(false);
-    const [loginError, setLoginError] = useState('');
-    const router = useRouter();
-    const { signIn, session } = useAuth();
+const { width: screenWidth } = Dimensions.get('window');
 
-    // Email validation function
-    const validateEmailFormat = (email: string) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    };
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const router = useRouter();
+  const { signIn, session } = useAuth();
 
-    // Handle email input with validation
-    const handleEmailChange = (text: string) => {
-      setEmail(text);
-      setLoginError(''); // Clear login error when user types
-      
-      if (emailTouched && text.length > 0) {
-        if (!validateEmailFormat(text)) {
-          setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
-        } else {
-          setEmailError('');
-        }
+  // Email validation function
+  const validateEmailFormat = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Handle email input with validation
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    setLoginError('');
+
+    if (emailTouched && text.length > 0) {
+      if (!validateEmailFormat(text)) {
+        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      } else {
+        setEmailError('');
       }
-    };
+    }
+  };
 
-    // Handle email blur event
-    const handleEmailBlur = () => {
+  // Handle email blur event
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    if (email.length > 0 && !validateEmailFormat(email)) {
+      setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+    }
+  };
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      router.replace('/(tabs)');
+    }
+  }, [session, router]);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
+      return;
+    }
+
+    if (!validateEmailFormat(email)) {
       setEmailTouched(true);
-      if (email.length > 0 && !validateEmailFormat(email)) {
-        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email.trim(), password);
+      setEmail('');
+      setPassword('');
+    } catch (error: any) {
+      if (error.message?.includes('Invalid login credentials')) {
+        setLoginError('E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben.');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setLoginError('Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.');
+      } else if (error.message?.includes('Too many requests')) {
+        setLoginError('Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment.');
+      } else if (error.message?.includes('Account locked')) {
+        setLoginError('Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
+      } else if (error.message?.includes('Network')) {
+        setLoginError('Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
+      } else {
+        setLoginError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Redirect if already logged in
-    useEffect(() => {
-      if (session) {
-        router.replace('/(tabs)');
-      }
-    }, [session, router]);
+  return (
+    <View style={styles.container}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
+      />
 
-    const handleLogin = async () => {
-      if (!email || !password) {
-        Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
-        return;
-      }
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <LinearGradient
+                colors={['#B8846A', '#A07560']}
+                style={styles.logoGradient}
+              >
+                <Stethoscope size={40} color="#FFFFFF" strokeWidth={2} />
+              </LinearGradient>
+            </View>
+            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandTagline}>Professional Medical Training</Text>
+          </View>
 
-      // Check for email validation errors
-      if (!validateEmailFormat(email)) {
-        setEmailTouched(true);
-        setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
-        return;
-      }
+          {/* Welcome Message */}
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Setzen Sie Ihre medizinische Lernreise fort
+            </Text>
+          </View>
 
-      const startTime = performance.now();
-      
-      setLoading(true);
-      try {
-        const loginStartTime = performance.now();
-        
-        await signIn(email.trim(), password);
-        
-        const loginEndTime = performance.now();
-
-        // Success - the AuthContext will handle navigation via useEffect
-
-        // Clear form
-        setEmail('');
-        setPassword('');
-
-      } catch (error: any) {
-        const errorTime = performance.now();
-        
-        // Set red error message instead of Alert
-        if (error.message?.includes('Invalid login credentials')) {
-          setLoginError('E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben.');
-        } else if (error.message?.includes('Email not confirmed')) {
-          setLoginError('Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.');
-        } else if (error.message?.includes('Too many requests')) {
-          setLoginError('Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment.');
-        } else if (error.message?.includes('Account locked')) {
-          setLoginError('Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
-        } else if (error.message?.includes('Network')) {
-          setLoginError('Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
-        } else {
-          setLoginError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
-        }
-      } finally {
-        const finalTime = performance.now();
-        setLoading(false);
-      }
-    };
-
-
-    return (
-      <View style={styles.gradientBackground}>
-        <SafeAreaView style={styles.container}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.loginCard}>
-              <View style={styles.header}>
-                <View style={styles.logoSection}>
-                  <Logo size="large" textColor="#1F2937" variant="premium" />
-                  <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
+          {/* Login Card */}
+          <View style={styles.loginCard}>
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>E-Mail Adresse</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.inputIconLeft}>
+                  <Mail size={20} color="#94A3B8" />
                 </View>
-                <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
-                <Text style={styles.subtitle}>
-                  Melden Sie sich bei Ihrer medizinischen Lernplattform an
-                </Text>
-              </View>
-
-              <View style={styles.form}>
                 <Input
-                  label="E-Mail"
-                  placeholder="E-Mail eingeben"
+                  placeholder="ihre.email@beispiel.de"
                   value={email}
                   onChangeText={handleEmailChange}
                   onBlur={handleEmailBlur}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  autoFocus={true}
-                  leftIcon={<Mail size={20} color="#6B7280" />}
                   editable={!loading}
-                  containerStyle={styles.inputContainer}
                   error={emailError}
+                  containerStyle={styles.inputContainer}
                 />
+              </View>
+            </View>
 
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Passwort</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.inputIconLeft}>
+                  <Lock size={20} color="#94A3B8" />
+                </View>
                 <Input
-                  label="Passwort"
-                  placeholder="Passwort eingeben"
+                  placeholder="••••••••"
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
-                    setLoginError(''); // Clear login error when user types
+                    setLoginError('');
                   }}
                   secureTextEntry={!showPassword}
-                  leftIcon={<Lock size={20} color="#6B7280" />}
                   rightIcon={
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ?
-                        <EyeOff size={20} color="#6B7280" /> :
-                        <Eye size={20} color="#6B7280" />
-                      }
+                      {showPassword ? (
+                        <EyeOff size={20} color="#94A3B8" />
+                      ) : (
+                        <Eye size={20} color="#94A3B8" />
+                      )}
                     </TouchableOpacity>
                   }
                   editable={!loading}
                   containerStyle={styles.inputContainer}
                 />
-
-                {loginError ? (
-                  <Text style={styles.loginErrorText}>{loginError}</Text>
-                ) : null}
-
-                <View style={styles.optionsRow}>
-                  <TouchableOpacity
-                    style={styles.rememberRow}
-                    onPress={() => setRememberMe(!rememberMe)}
-                  >
-                    <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                      {rememberMe && <Text style={styles.checkmark}>✓</Text>}
-                    </View>
-                    <Text style={styles.rememberText}>Für 30 Tage merken</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => router.push('/auth/forgot-password')}>
-                    <Text style={styles.forgotPassword}>Passwort vergessen?</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <LinearGradient
-                  colors={['#B8755C', '#E2827F']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.signInButtonGradient}
-                >
-                  <TouchableOpacity
-                    style={styles.signInButton}
-                    onPress={handleLogin}
-                    disabled={loading}
-                  >
-                    <Text style={styles.signInButtonText}>
-                      {loading ? 'Wird angemeldet...' : 'Anmelden'}
-                    </Text>
-                  </TouchableOpacity>
-                </LinearGradient>
-
-
-                <View style={styles.signUpRow}>
-                  <Text style={styles.signUpText}>Noch kein Konto? </Text>
-                  <Link href="/auth/register" asChild>
-                    <TouchableOpacity>
-                      <Text style={styles.signUpLink}>Registrieren</Text>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
               </View>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
-  const styles = StyleSheet.create({
-    gradientBackground: {
-      flex: 1,
-      backgroundColor: '#FFFFFF',
-    },
-    container: {
-      flex: 1,
-    },
-    scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      padding: 24,
-      minHeight: '100%',
-    },
-    loginCard: {
-      backgroundColor: '#F9F6F2',
-      borderRadius: 24,
-      padding: 32,
-      marginHorizontal: 'auto',
-      maxWidth: 440,
-      width: '100%',
-      alignSelf: 'center',
-      shadowColor: 'rgba(181,87,64,0.15)',
-      shadowOffset: {
-        width: 0,
-        height: 6,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 20,
-      elevation: 8,
-      borderWidth: 1,
-      borderColor: 'rgba(184, 126, 112, 0.2)',
-    },
-    header: {
-      marginBottom: 32,
-      alignItems: 'center',
-    },
-    logoSection: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 24,
-      justifyContent: 'center',
-    },
-    caduceusIcon: {
-      marginLeft: 16,
-    },
-    welcomeTitle: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: '#B8755C',
-      marginBottom: 8,
-      textAlign: 'center',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    subtitle: {
-      fontSize: 16,
-      color: '#6B7280',
-      lineHeight: 24,
-      textAlign: 'center',
-      marginBottom: 4,
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    form: {
-      gap: 20,
-    },
-    inputContainer: {
-      marginBottom: 4,
-    },
-    optionsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginTop: 8,
-      marginBottom: 8,
-    },
-    rememberRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    checkbox: {
-      width: 20,
-      height: 20,
-      borderWidth: 2,
-      borderColor: '#D1D5DB',
-      borderRadius: 4,
-      marginRight: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: '#B87E70',
-      borderColor: '#B87E70',
-    },
-    checkmark: {
-      color: 'white',
-      fontSize: 12,
-      fontWeight: 'bold',
-    },
-    rememberText: {
-      fontSize: 14,
-      color: '#374151',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    forgotPassword: {
-      fontSize: 14,
-      color: '#B87E70',
-      fontWeight: '500',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    signInButtonGradient: {
-      borderRadius: 12,
-      marginTop: 8,
-      shadowColor: 'rgba(184, 117, 92, 0.4)',
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    signInButton: {
-      paddingVertical: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    signInButtonText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: '600',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    signUpRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 24,
-    },
-    signUpText: {
-      fontSize: 14,
-      color: '#6B7280',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    signUpLink: {
-      fontSize: 14,
-      color: '#B87E70',
-      fontWeight: '600',
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-    loginErrorText: {
-      fontSize: 14,
-      color: '#EF4444',
-      textAlign: 'center',
-      marginTop: 12,
-      marginBottom: 8,
-      paddingHorizontal: 16,
-      fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    },
-  });
+            {/* Error Message */}
+            {loginError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{loginError}</Text>
+              </View>
+            ) : null}
+
+            {/* Remember Me & Forgot Password */}
+            <View style={styles.optionsRow}>
+              <TouchableOpacity
+                style={styles.rememberMeRow}
+                onPress={() => setRememberMe(!rememberMe)}
+                disabled={loading}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.rememberMeText}>Angemeldet bleiben</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => router.push('/auth/forgot-password')}
+                disabled={loading}
+              >
+                <Text style={styles.forgotPasswordLink}>Passwort vergessen?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Login Button */}
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#FB923C', '#F97316', '#EF4444']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.loginButtonGradient}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Jetzt anmelden</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>oder</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Register Link */}
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>Noch kein Konto? </Text>
+              <Link href="/auth/register" asChild>
+                <TouchableOpacity disabled={loading}>
+                  <Text style={styles.registerLink}>Jetzt registrieren</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </View>
+
+          {/* Feature Cards */}
+          <View style={styles.featuresSection}>
+            <View style={styles.featureCard}>
+              <View style={[styles.featureIcon, styles.featureIconCyan]}>
+                <Shield size={20} color="#06B6D4" />
+              </View>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Sichere Plattform</Text>
+                <Text style={styles.featureDescription}>Ihre Daten sind geschützt</Text>
+              </View>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={[styles.featureIcon, styles.featureIconOrange]}>
+                <Sparkles size={20} color="#F97316" />
+              </View>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>KI-gestütztes Lernen</Text>
+                <Text style={styles.featureDescription}>Personalisiert für Sie</Text>
+              </View>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={[styles.featureIcon, styles.featureIconGreen]}>
+                <Heart size={20} color="#10B981" />
+              </View>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Gemeinschaft</Text>
+                <Text style={styles.featureDescription}>Lernen mit Tausenden</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              © 2025 KP MED. Exzellenz in medizinischer Ausbildung.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 32,
+  },
+
+  // Logo Section
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoContainer: {
+    marginBottom: 16,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#B8846A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  brandName: {
+    fontSize: 36,
+    fontFamily: 'Inter-Bold',
+    color: '#1F2937',
+    letterSpacing: -1,
+    marginBottom: 4,
+  },
+  brandTagline: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+    letterSpacing: 0.5,
+  },
+
+  // Welcome Section
+  welcomeSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: '#B8846A',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+  // Login Card
+  loginCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+
+  // Input Styles
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1F2937',
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  inputIconLeft: {
+    position: 'absolute',
+    left: 16,
+    top: 16,
+    zIndex: 1,
+  },
+  inputContainer: {
+    marginBottom: 0,
+  },
+
+  // Error
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#EF4444',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // Options Row
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  rememberMeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    borderRadius: 6,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#FB923C',
+    borderColor: '#FB923C',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+  },
+  rememberMeText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#475569',
+  },
+  forgotPasswordLink: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#B8846A',
+  },
+
+  // Login Button
+  loginButtonGradient: {
+    borderRadius: 16,
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FB923C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+
+  // Divider
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#94A3B8',
+    marginHorizontal: 16,
+  },
+
+  // Register Row
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  registerText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+  },
+  registerLink: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: '#B8846A',
+  },
+
+  // Features Section
+  featuresSection: {
+    gap: 12,
+    marginBottom: 32,
+  },
+  featureCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    padding: 16,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureIconCyan: {
+    backgroundColor: '#CFFAFE',
+  },
+  featureIconOrange: {
+    backgroundColor: '#FED7AA',
+  },
+  featureIconGreen: {
+    backgroundColor: '#D1FAE5',
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  featureDescription: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+  },
+
+  // Footer
+  footer: {
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#94A3B8',
+    textAlign: 'center',
+  },
+});
