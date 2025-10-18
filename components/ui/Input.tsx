@@ -41,20 +41,21 @@ export default function Input({
       color: '#374151',
     },
     inputContainer: {
-      borderWidth: 2,
-      borderColor: error ? '#EF4444' : (isFocused ? '#B8755C' : '#E5E7EB'),
-      borderRadius: 12,
+      borderWidth: isFocused ? 2 : 1,
+      borderColor: error ? '#EF4444' : (isFocused ? '#D4A574' : '#E5E7EB'),
+      borderRadius: 14,
       backgroundColor: '#ffffff',
       flexDirection: 'row',
       alignItems: 'center',
+      height: 58,
     },
     input: {
       flex: 1,
       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-      fontSize: 16,
+      fontSize: 17,
       color: '#1F2937',
-      paddingVertical: 14,
-      paddingHorizontal: 16,
+      paddingVertical: 0,
+      paddingHorizontal: 18,
       backgroundColor: 'transparent',
       shadowColor: 'transparent',
       shadowOffset: { width: 0, height: 0 },
@@ -68,16 +69,16 @@ export default function Input({
       }),
     },
     inputWithLeftIcon: {
-      paddingLeft: 8,
+      paddingLeft: 12,
     },
     inputWithRightIcon: {
-      paddingRight: 8,
+      paddingRight: 12,
     },
     leftIcon: {
-      paddingLeft: 16,
+      paddingLeft: 18,
     },
     rightIcon: {
-      paddingRight: 16,
+      paddingRight: 14,
     },
     inputDisabled: {
       backgroundColor: '#F3F4F6',
@@ -109,17 +110,17 @@ export default function Input({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           underlineColorAndroid="transparent"
-          selectionColor="#B8755C"
+          selectionColor="#D4A574"
           textContentType="none"
           importantForAutofill="no"
-          // Remove web focus outline and ensure coral accent
+          // Remove web focus outline and ensure brown accent
           {...(Platform.OS === 'web' && {
             //@ts-ignore
             style: {
               outline: 'none',
               outlineStyle: 'none',
               boxShadow: 'none',
-              accentColor: '#B8755C',
+              accentColor: '#D4A574',
             }
           })}
           {...props}

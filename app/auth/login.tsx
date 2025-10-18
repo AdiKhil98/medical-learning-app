@@ -121,7 +121,7 @@ export default function Login() {
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
               <LinearGradient
-                colors={['#B8846A', '#A07560']}
+                colors={['#D4A574', '#C19A6B']}
                 style={styles.logoGradient}
               >
                 <Stethoscope size={40} color="#FFFFFF" strokeWidth={2} />
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#B8846A',
+    shadowColor: '#D4A574',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 32,
     fontFamily: 'Inter-Bold',
-    color: '#B8846A',
+    color: '#D4A574',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
 
   // Input Styles
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
@@ -408,8 +408,8 @@ const styles = StyleSheet.create({
   },
   inputIconLeft: {
     position: 'absolute',
-    left: 16,
-    top: 16,
+    left: 18,
+    top: 19,
     zIndex: 1,
   },
   inputContainer: {
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   forgotPasswordLink: {
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: '#B8846A',
+    color: '#D4A574',
   },
 
   // Login Button
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   registerLink: {
     fontSize: 14,
     fontFamily: 'Inter-Bold',
-    color: '#B8846A',
+    color: '#D4A574',
   },
 
   // Features Section
