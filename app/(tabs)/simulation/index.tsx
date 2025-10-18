@@ -67,12 +67,6 @@ export default function SimulationScreen() {
       >
         {/* Hero Section with Animated Background */}
         <View style={styles.heroSection}>
-          {/* Animated Background Blobs */}
-          <View style={styles.animatedBlobsContainer}>
-            <View style={[styles.blob, styles.blob1]} />
-            <View style={[styles.blob, styles.blob2]} />
-          </View>
-
           {/* Badge */}
           <View style={styles.badge}>
             <Sparkles size={16} color="#F97316" />
@@ -361,34 +355,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
     position: 'relative',
-  },
-  animatedBlobsContainer: {
-    position: 'absolute',
-    top: -50,
-    left: 0,
-    right: 0,
-    height: 300,
-    zIndex: -1,
-    opacity: 0.2,
-  },
-  blob: {
-    position: 'absolute',
-    borderRadius: 9999,
-    backgroundColor: '#93C5FD',
-  },
-  blob1: {
-    width: 256,
-    height: 256,
-    top: 0,
-    left: '25%',
-    backgroundColor: '#93C5FD',
-  },
-  blob2: {
-    width: 256,
-    height: 256,
-    top: 40,
-    right: '25%',
-    backgroundColor: '#C4B5FD',
   },
   badge: {
     flexDirection: 'row',
