@@ -745,7 +745,7 @@ export default function ProgressScreen() {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <View style={styles.statIconWrapperPurple}>
-              <Award size={20} color="#A855F7" />
+              <Award size={28} color="#8B5CF6" />
             </View>
             <View style={styles.statTextContent}>
               <Text style={styles.statValue}>{averageScore}%</Text>
@@ -755,7 +755,7 @@ export default function ProgressScreen() {
 
           <View style={styles.statCard}>
             <View style={styles.statIconWrapperPink}>
-              <Target size={20} color="#EC4899" />
+              <Target size={28} color="#EC4899" />
             </View>
             <View style={styles.statTextContent}>
               <Text style={styles.statValue}>{passedCount}/{totalAttempts}</Text>
@@ -765,7 +765,7 @@ export default function ProgressScreen() {
 
           <View style={styles.statCard}>
             <View style={styles.statIconWrapperCyan}>
-              <TrendingUp size={20} color="#06B6D4" />
+              <TrendingUp size={28} color="#06B6D4" />
             </View>
             <View style={styles.statTextContent}>
               <Text style={styles.statValue}>
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 28,
     fontFamily: 'Inter-Bold',
-    color: '#B8755C',
+    color: '#B8846A',
     marginBottom: 6,
     letterSpacing: -0.5,
   },
@@ -926,14 +926,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   statIconWrapperPurple: {
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    backgroundColor: '#F3E8FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -941,7 +939,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: 'rgba(236, 72, 153, 0.15)',
+    backgroundColor: '#FCE7F3',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -949,7 +947,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: 'rgba(6, 182, 212, 0.15)',
+    backgroundColor: '#CFFAFE',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -982,8 +980,6 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 8,
     padding: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   chartHeader: {
     flexDirection: 'row',
@@ -1096,8 +1092,6 @@ const styles = StyleSheet.create({
   modernCardGradient: {
     borderRadius: 16,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
     backgroundColor: '#FFFFFF',
   },
   modernCardHeader: {
@@ -1163,9 +1157,9 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   progressBar: {
-    height: 8,
+    height: 6,
     backgroundColor: '#F1F5F9',
-    borderRadius: 4,
+    borderRadius: 3,
     marginBottom: 8,
     overflow: 'hidden',
   },
