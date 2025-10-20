@@ -170,10 +170,10 @@ export default function SimulationScreen() {
                 </View>
 
                 {/* Button */}
-                <TouchableOpacity style={styles.cardButton}>
+                <View style={styles.cardButton}>
                   <Text style={styles.cardButtonText}>Jetzt starten</Text>
                   <ChevronRight size={20} color="#6366F1" />
-                </TouchableOpacity>
+                </View>
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -234,10 +234,10 @@ export default function SimulationScreen() {
                 </View>
 
                 {/* Button */}
-                <TouchableOpacity style={styles.cardButton}>
+                <View style={styles.cardButton}>
                   <Text style={styles.cardButtonText}>Jetzt starten</Text>
                   <ChevronRight size={20} color="#F97316" />
-                </TouchableOpacity>
+                </View>
               </View>
             </LinearGradient>
           </TouchableOpacity>
