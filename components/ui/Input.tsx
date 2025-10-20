@@ -69,16 +69,18 @@ export default function Input({
       }),
     },
     inputWithLeftIcon: {
-      paddingLeft: 12,
+      paddingLeft: 8,
     },
     inputWithRightIcon: {
-      paddingRight: 12,
+      paddingRight: 8,
     },
     leftIcon: {
-      paddingLeft: 18,
+      paddingLeft: 16,
+      paddingRight: 8,
     },
     rightIcon: {
-      paddingRight: 14,
+      paddingLeft: 8,
+      paddingRight: 16,
     },
     inputDisabled: {
       backgroundColor: '#F3F4F6',

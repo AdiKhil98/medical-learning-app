@@ -143,54 +143,46 @@ export default function Login() {
           <View style={styles.loginCard}>
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>E-Mail Adresse</Text>
-              <View style={styles.inputWrapper}>
-                <View style={styles.inputIconLeft}>
-                  <Mail size={20} color="#94A3B8" />
-                </View>
-                <Input
-                  placeholder="ihre.email@beispiel.de"
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  onBlur={handleEmailBlur}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!loading}
-                  error={emailError}
-                  containerStyle={styles.inputContainer}
-                />
-              </View>
+              <Input
+                label="E-Mail Adresse"
+                placeholder="ihre.email@beispiel.de"
+                value={email}
+                onChangeText={handleEmailChange}
+                onBlur={handleEmailBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+                error={emailError}
+                leftIcon={<Mail size={20} color="#94A3B8" />}
+                containerStyle={styles.inputContainer}
+              />
             </View>
 
             {/* Password Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Passwort</Text>
-              <View style={styles.inputWrapper}>
-                <View style={styles.inputIconLeft}>
-                  <Lock size={20} color="#94A3B8" />
-                </View>
-                <Input
-                  placeholder="••••••••"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    setLoginError('');
-                  }}
-                  secureTextEntry={!showPassword}
-                  rightIcon={
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ? (
-                        <EyeOff size={20} color="#94A3B8" />
-                      ) : (
-                        <Eye size={20} color="#94A3B8" />
-                      )}
-                    </TouchableOpacity>
-                  }
-                  editable={!loading}
-                  containerStyle={styles.inputContainer}
-                />
-              </View>
+              <Input
+                label="Passwort"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setLoginError('');
+                }}
+                secureTextEntry={!showPassword}
+                leftIcon={<Lock size={20} color="#94A3B8" />}
+                rightIcon={
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    {showPassword ? (
+                      <EyeOff size={20} color="#94A3B8" />
+                    ) : (
+                      <Eye size={20} color="#94A3B8" />
+                    )}
+                  </TouchableOpacity>
+                }
+                editable={!loading}
+                containerStyle={styles.inputContainer}
+              />
             </View>
 
             {/* Error Message */}
@@ -395,22 +387,6 @@ const styles = StyleSheet.create({
   // Input Styles
   inputGroup: {
     marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
-    marginBottom: 8,
-    letterSpacing: 0.2,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  inputIconLeft: {
-    position: 'absolute',
-    left: 18,
-    top: 19,
-    zIndex: 1,
   },
   inputContainer: {
     marginBottom: 0,
