@@ -34,22 +34,16 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('🔄 Fetching medical content for slug:', slug);
-        
-        // First, let's check if Supabase connection works at all
-        const { data: testConnection, error: connectionError } = await supabase
-          .from('sections')
-          .select('slug, title')
-          .limit(1);
-          
-        if (connectionError) {
-          console.error('❌ Supabase connection failed:', connectionError);
-          setError(`Database connection error: ${connectionError.message}`);
+        // If currentSection is already provided, use it directly (avoids duplicate fetch)
+        if (currentSection) {
+          console.log('✅ Using cached section data from parent');
+          setData(currentSection);
+          setLoading(false);
           return;
         }
-        
-        console.log('✅ Supabase connection successful, testing query...');
-        
+
+        console.log('🔄 Fetching medical content for slug:', slug);
+
         const { data: result, error } = await supabase
           .from('sections')
           .select('*')
@@ -58,17 +52,7 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
 
         if (error) {
           console.error('❌ Supabase query error:', error);
-          console.error('❌ Error details:', { code: error.code, hint: error.hint, details: error.details });
-          
-          // Try to find similar slugs if exact match fails
-          const { data: similarSlugs } = await supabase
-            .from('sections')
-            .select('slug, title')
-            .ilike('slug', `%${slug}%`)
-            .limit(5);
-            
-          console.log('🔍 Similar slugs found:', similarSlugs);
-          setError(`Database error: ${error.message}. Similar slugs: ${similarSlugs?.map(s => s.slug).join(', ') || 'none'}`);
+          setError(`Database error: ${error.message}`);
           return;
         }
 
@@ -78,9 +62,9 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
           return;
         }
 
-        console.log('✅ Data fetched successfully:', result);
+        console.log('✅ Data fetched successfully');
         setData(result);
-        
+
       } catch (err) {
         console.error('❌ Unexpected error:', err);
         setError(`Unexpected error: ${err}`);
@@ -90,7 +74,7 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
     };
 
     fetchData();
-  }, [slug]);
+  }, [slug, currentSection]);
 
   if (loading) {
     return (
