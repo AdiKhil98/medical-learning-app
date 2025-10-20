@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Platform, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect } from 'expo-router';
-import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder, ArrowLeft, Home } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
-import Card from '@/components/ui/folder';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -14,7 +13,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const getColumnsForScreen = () => {
   if (SCREEN_WIDTH >= 1024) return 3; // xl: 3 columns
   if (SCREEN_WIDTH >= 768) return 2;  // md: 2 columns
-  return 1; // sm: 1 column
+  return 2; // sm: 2 columns for mobile
 };
 
 const COLUMNS = getColumnsForScreen();
@@ -34,24 +33,27 @@ interface Section {
   content_html?: string;
 }
 
-// Enhanced Medical Color Palette with Rich Gradients
+// ============================================================================
+// PRESERVE ALL EXISTING COLOR AND ICON LOGIC - DO NOT CHANGE
+// ============================================================================
+
 const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   const normalizedTitle = title.toLowerCase();
-  
+
   // Default vibrant medical teal
   let baseColor = '#06b6d4'; // Cyan-500
   let gradient = ['#06b6d4', '#0891b2', '#0e7490']; // Rich cyan gradient
   let hoverGradient = ['#22d3ee', '#06b6d4', '#0891b2']; // Bright cyan hover
-  
+
   // Enhanced color distribution by medical specialty
   if (parentSlug) {
     switch (parentSlug) {
-      case 'chirurgie': 
+      case 'chirurgie':
         baseColor = '#dc2626'; // Surgical Red-600
         gradient = ['#ef4444', '#dc2626', '#b91c1c']; // Vibrant red gradient
         hoverGradient = ['#f87171', '#ef4444', '#dc2626'];
         break;
-      case 'innere-medizin': 
+      case 'innere-medizin':
         baseColor = '#E2827F'; // Coral for internal medicine
         gradient = ['#E2827F', '#E2827F', '#B15740'];
         hoverGradient = ['#E5877E', '#E2827F', '#E2827F'];
@@ -81,22 +83,22 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
         gradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
         hoverGradient = ['#a78bfa', '#8b5cf6', '#7c3aed'];
         break;
-      case 'notfallmedizin': 
+      case 'notfallmedizin':
         baseColor = '#dc2626'; // Emergency Red-600
         gradient = ['#f59e0b', '#dc2626', '#b91c1c']; // Amber to red gradient
         hoverGradient = ['#fbbf24', '#f59e0b', '#dc2626'];
         break;
-      case 'infektiologie': 
+      case 'infektiologie':
         baseColor = '#059669'; // Emerald-600 for infectious diseases
         gradient = ['#10b981', '#059669', '#047857'];
         hoverGradient = ['#34d399', '#10b981', '#059669'];
         break;
-      case 'urologie': 
+      case 'urologie':
         baseColor = '#7c2d12'; // Brown-800 for urology
         gradient = ['#a16207', '#7c2d12', '#92400e'];
         hoverGradient = ['#d97706', '#a16207', '#7c2d12'];
         break;
-      case 'radiologie': 
+      case 'radiologie':
         baseColor = '#4338ca'; // Indigo-700 for radiology
         gradient = ['#6366f1', '#4338ca', '#3730a3'];
         hoverGradient = ['#818cf8', '#6366f1', '#4338ca'];
@@ -118,83 +120,57 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
         break;
     }
   }
-  
+
   // Dynamic color distribution for items without specific parent categories
-  // This creates visual variety when folders don't match specific medical specialties
   if (!parentSlug || (parentSlug && ![
-    'chirurgie', 'innere-medizin', 'kardiologie', 'pneumologie', 'gastroenterologie', 
-    'nephrologie', 'endokrinologie-und-stoffwechsel', 'notfallmedizin', 'infektiologie', 
+    'chirurgie', 'innere-medizin', 'kardiologie', 'pneumologie', 'gastroenterologie',
+    'nephrologie', 'endokrinologie-und-stoffwechsel', 'notfallmedizin', 'infektiologie',
     'urologie', 'radiologie', 'dermatologie', 'neurologie', 'orthopädie'
   ].includes(parentSlug))) {
-    // Assign colors based on content keywords for better visual distribution
+    // Assign colors based on content keywords
     if (normalizedTitle.includes('diagnos') || normalizedTitle.includes('befund')) {
-      baseColor = '#7c3aed'; // Purple for diagnostics
+      baseColor = '#7c3aed';
       gradient = ['#8b5cf6', '#7c3aed', '#6d28d9'];
       hoverGradient = ['#a78bfa', '#8b5cf6', '#7c3aed'];
     } else if (normalizedTitle.includes('therap') || normalizedTitle.includes('behandl')) {
-      baseColor = '#059669'; // Green for therapy
+      baseColor = '#059669';
       gradient = ['#10b981', '#059669', '#047857'];
       hoverGradient = ['#34d399', '#10b981', '#059669'];
     } else if (normalizedTitle.includes('medikament') || normalizedTitle.includes('pharma')) {
-      baseColor = '#ea580c'; // Orange for medications
+      baseColor = '#ea580c';
       gradient = ['#f97316', '#ea580c', '#c2410c'];
       hoverGradient = ['#fb923c', '#f97316', '#ea580c'];
     } else if (normalizedTitle.includes('labor') || normalizedTitle.includes('wert')) {
-      baseColor = '#E2827F'; // Coral for lab values
+      baseColor = '#E2827F';
       gradient = ['#E2827F', '#B15740', '#B15740'];
       hoverGradient = ['#E5877E', '#E2827F', '#B15740'];
     } else if (normalizedTitle.includes('symptom') || normalizedTitle.includes('klinik')) {
-      baseColor = '#be185d'; // Pink for symptoms
+      baseColor = '#be185d';
       gradient = ['#ec4899', '#be185d', '#9d174d'];
       hoverGradient = ['#f472b6', '#ec4899', '#be185d'];
     } else {
-      // Use a rotating color scheme based on title hash for consistent variety
       const titleHash = normalizedTitle.split('').reduce((hash, char) => {
         return hash + char.charCodeAt(0);
       }, 0);
       const colorIndex = titleHash % 6;
-      
+
       const colorPalettes = [
-        { // Teal
-          baseColor: '#0891b2',
-          gradient: ['#14b8a6', '#0891b2', '#0e7490'],
-          hoverGradient: ['#2dd4bf', '#14b8a6', '#0891b2']
-        },
-        { // Indigo
-          baseColor: '#4f46e5',
-          gradient: ['#6366f1', '#4f46e5', '#4338ca'],
-          hoverGradient: ['#818cf8', '#6366f1', '#4f46e5']
-        },
-        { // Rose
-          baseColor: '#e11d48',
-          gradient: ['#f43f5e', '#e11d48', '#be185d'],
-          hoverGradient: ['#fb7185', '#f43f5e', '#e11d48']
-        },
-        { // Amber
-          baseColor: '#d97706',
-          gradient: ['#f59e0b', '#d97706', '#b45309'],
-          hoverGradient: ['#fbbf24', '#f59e0b', '#d97706']
-        },
-        { // Emerald
-          baseColor: '#059669',
-          gradient: ['#10b981', '#059669', '#047857'],
-          hoverGradient: ['#34d399', '#10b981', '#059669']
-        },
-        { // Violet
-          baseColor: '#7c3aed',
-          gradient: ['#8b5cf6', '#7c3aed', '#6d28d9'],
-          hoverGradient: ['#a78bfa', '#8b5cf6', '#7c3aed']
-        }
+        { baseColor: '#0891b2', gradient: ['#14b8a6', '#0891b2', '#0e7490'], hoverGradient: ['#2dd4bf', '#14b8a6', '#0891b2'] },
+        { baseColor: '#4f46e5', gradient: ['#6366f1', '#4f46e5', '#4338ca'], hoverGradient: ['#818cf8', '#6366f1', '#4f46e5'] },
+        { baseColor: '#e11d48', gradient: ['#f43f5e', '#e11d48', '#be185d'], hoverGradient: ['#fb7185', '#f43f5e', '#e11d48'] },
+        { baseColor: '#d97706', gradient: ['#f59e0b', '#d97706', '#b45309'], hoverGradient: ['#fbbf24', '#f59e0b', '#d97706'] },
+        { baseColor: '#059669', gradient: ['#10b981', '#059669', '#047857'], hoverGradient: ['#34d399', '#10b981', '#059669'] },
+        { baseColor: '#7c3aed', gradient: ['#8b5cf6', '#7c3aed', '#6d28d9'], hoverGradient: ['#a78bfa', '#8b5cf6', '#7c3aed'] }
       ];
-      
+
       const selectedPalette = colorPalettes[colorIndex];
       baseColor = selectedPalette.baseColor;
       gradient = selectedPalette.gradient;
       hoverGradient = selectedPalette.hoverGradient;
     }
   }
-  
-  // Enhanced icon distribution based on content and medical specialty
+
+  // Enhanced icon distribution
   let icon = 'Folder';
   if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz') || normalizedTitle.includes('koronar')) {
     icon = 'Heart';
@@ -221,7 +197,7 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
   } else {
     icon = 'Folder';
   }
-  
+
   return { icon, color: baseColor, gradient, hoverGradient };
 };
 
@@ -242,64 +218,145 @@ const getIconComponent = (iconName: string) => {
   }
 };
 
+// ============================================================================
+// NEW: Enhanced Category Card Component
+// ============================================================================
 
-// Optimized Folder Card Component with memoized calculations
-const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
-  // Memoize expensive calculations
+const EnhancedCategoryCard = React.memo(({
+  childItem,
+  parentSlug,
+  onPress,
+  isFavorite,
+  onToggleFavorite
+}: {
+  childItem: Section;
+  parentSlug: string;
+  onPress: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+}) => {
   const itemDetails = useMemo(() => {
     return getItemDetails(childItem.title, childItem.type, parentSlug);
   }, [childItem.title, childItem.type, parentSlug]);
-  
+
   const IconComponent = useMemo(() => {
     return getIconComponent(itemDetails.icon);
   }, [itemDetails.icon]);
-  
+
   const hasContent = useMemo(() => {
-    return childItem.content_improved && 
+    return childItem.content_improved &&
            (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
   }, [childItem.content_improved]);
 
+  const gradientColors = itemDetails.gradient || ['#64748B', '#475569'];
+
   return (
-    <View style={{ width: CARD_WIDTH }}>
-      <Card
-        title={childItem.title}
-        icon={IconComponent}
-        gradient={itemDetails.gradient}
-        hoverGradient={itemDetails.hoverGradient}
-        hasContent={Boolean(hasContent)}
-        onPress={onPress}
-        size="medium"
-        showBadge={true}
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.enhancedCard}
+      activeOpacity={0.8}
+    >
+      {/* Gradient Top Stripe */}
+      <LinearGradient
+        colors={gradientColors as [string, string, ...string[]]}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 0}}
+        style={styles.cardTopStripe}
       />
-    </View>
+
+      <View style={styles.cardContent}>
+        {/* Header: Icon + Title + Heart */}
+        <View style={styles.cardHeader}>
+          <View style={styles.cardTitleRow}>
+            {/* Gradient Icon */}
+            <LinearGradient
+              colors={gradientColors as [string, string, ...string[]]}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.cardIcon}
+            >
+              <IconComponent size={24} color="#FFFFFF" strokeWidth={2} />
+            </LinearGradient>
+
+            {/* Title and Count */}
+            <View style={styles.cardTitleContainer}>
+              <Text style={styles.cardTitle} numberOfLines={2}>
+                {childItem.title}
+              </Text>
+              <View style={styles.cardMeta}>
+                <Text style={styles.cardMetaText}>
+                  {hasContent ? 'Inhalt verfügbar' : 'Weitere Themen'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Heart Favorite Button */}
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            style={styles.favoriteButton}
+          >
+            <Heart
+              size={20}
+              color={isFavorite ? '#EF4444' : '#CBD5E1'}
+              fill={isFavorite ? '#EF4444' : 'none'}
+              strokeWidth={2}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Description */}
+        {childItem.description && (
+          <Text style={styles.cardDescription} numberOfLines={2}>
+            {childItem.description}
+          </Text>
+        )}
+
+        {/* Footer */}
+        <View style={styles.cardFooter}>
+          <Text style={styles.cardFooterText}>
+            {hasContent ? 'Inhalt ansehen' : 'Thema öffnen'}
+          </Text>
+          <ChevronRight size={20} color="#94A3B8" strokeWidth={2} />
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 });
+
+// ============================================================================
+// MAIN COMPONENT - PRESERVE ALL STATE MANAGEMENT AND DATABASE LOGIC
+// ============================================================================
 
 export default function SectionDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const { session, loading: authLoading } = useAuth();
-  
+
+  // PRESERVE ALL EXISTING STATE
   const [currentItem, setCurrentItem] = useState<Section | null>(null);
   const [childItems, setChildItems] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showContent, setShowContent] = useState(false);
-  
-  // Cache to prevent re-fetching on tab switches
-  const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Optimized fetch with caching
+  // PRESERVE EXISTING CACHE
+  const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
+  const CACHE_DURATION = 5 * 60 * 1000;
+
+  // PRESERVE ALL EXISTING DATABASE FETCH LOGIC - DO NOT CHANGE
   const fetchItemData = useCallback(async (forceRefresh = false) => {
     if (!slug || typeof slug !== 'string') return;
 
-    // Check cache first
     const cacheKey = `${slug}-${session?.user?.id || 'anonymous'}`;
     const cached = dataCache.current.get(cacheKey);
     const now = Date.now();
-    
+
     if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
       console.log('Using cached data for:', slug);
       setCurrentItem(cached.item);
@@ -310,13 +367,13 @@ export default function SectionDetailScreen() {
 
     try {
       setLoading(true);
-      
+
       if (!session) {
         setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
         return;
       }
 
-      // Optimized: Fetch both current item and children in parallel
+      // PRESERVE: Fetch both current item and children in parallel
       const [itemResult, childrenResult] = await Promise.all([
         supabase
           .from('sections')
@@ -333,51 +390,33 @@ export default function SectionDetailScreen() {
       const { data: itemData, error: itemError } = itemResult;
       const { data: childItemsData, error: childItemsError } = childrenResult;
 
-      if (itemError) {
-        throw itemError;
-      }
-
+      if (itemError) throw itemError;
       if (!itemData) {
         setError('Inhalt nicht gefunden.');
         return;
       }
-
-      if (childItemsError) {
-        throw childItemsError;
-      }
+      if (childItemsError) throw childItemsError;
 
       setCurrentItem(itemData);
-      
-      // Update navigation title with the actual title
-      navigation.setOptions({
-        headerTitle: itemData.title || slug,
-      });
+      navigation.setOptions({ headerTitle: itemData.title || slug });
 
       const children = childItemsData || [];
       setChildItems(children);
-      
 
-      // Cache the results
       dataCache.current.set(cacheKey, {
         item: itemData,
         children: children,
         timestamp: now
       });
 
-      // Determine if we should show content
-      const hasChildren = children.length > 0;
-      // Check multiple content sources - content_improved, content_html, or content_details
       const hasContent = !!(
-        (itemData.content_improved && 
-         (typeof itemData.content_improved === 'object' || 
+        (itemData.content_improved &&
+         (typeof itemData.content_improved === 'object' ||
           (typeof itemData.content_improved === 'string' && itemData.content_improved.trim()))) ||
         (itemData.content_html && itemData.content_html.trim()) ||
         (itemData.content_details && itemData.content_details.trim())
       );
-      
-      
-      // Show content if there IS content, regardless of children
-      // This allows pages to have both navigation and content
+
       setShowContent(hasContent);
 
     } catch (e) {
@@ -388,7 +427,7 @@ export default function SectionDetailScreen() {
     }
   }, [slug, session]);
 
-  // Use focus effect instead of useEffect to handle tab switching properly
+  // PRESERVE: Focus effect and initial load
   useFocusEffect(
     useCallback(() => {
       if (!authLoading && session) {
@@ -397,62 +436,48 @@ export default function SectionDetailScreen() {
     }, [fetchItemData, authLoading, session])
   );
 
-  // Initial load effect (only runs once)
   useEffect(() => {
     if (!authLoading && session) {
       fetchItemData();
     }
-  }, []); // Empty dependency array for initial load only
+  }, []);
 
+  // PRESERVE: Navigation logic - DO NOT CHANGE
   const navigateToChild = useCallback(async (childSlug: string, childItem?: Section) => {
     const currentPath = `/(tabs)/bibliothek/${slug}`;
-    
-    // Check if child has any content (improved, html, or details)
+
     const hasContent = childItem && !!(
-      (childItem.content_improved && 
-       (typeof childItem.content_improved === 'object' || 
+      (childItem.content_improved &&
+       (typeof childItem.content_improved === 'object' ||
         (typeof childItem.content_improved === 'string' && childItem.content_improved.trim()))) ||
       (childItem.content_html && childItem.content_html.trim()) ||
       (childItem.content_details && childItem.content_details.trim())
     );
-    
-    // Check if child has children (subdivisions) first - this is the key fix
+
     try {
       const { data: childrenData, error: childrenError } = await supabase
         .from('sections')
         .select('id')
         .eq('parent_slug', childSlug)
         .limit(1);
-      
+
       if (childrenError) {
         console.warn('Error checking for children:', childrenError);
       }
-      
+
       const hasSubdivisions = childrenData && childrenData.length > 0;
-      
-      console.log('Navigation decision for:', childSlug, {
-        hasContent,
-        hasSubdivisions,
-        decision: hasSubdivisions ? 'category-page' : (hasContent ? 'content-page' : 'category-page')
-      });
-      
-      // FIXED LOGIC: Priority is subdivisions over content
-      // If has children/subdivisions, always go to category page for navigation
-      // Only go to content page if it has content but no children
+
       if (hasSubdivisions) {
-        console.log('Navigating to category page for subdivisions:', childSlug);
         router.push({
           pathname: `/(tabs)/bibliothek/${childSlug}` as any,
           params: { previousPage: currentPath }
         });
       } else if (hasContent) {
-        console.log('Navigating to content page (no subdivisions):', childSlug);
         router.push({
           pathname: `/(tabs)/bibliothek/content/${childSlug}` as any,
           params: { previousPage: currentPath }
         });
       } else {
-        console.log('Navigating to category page (no content or children):', childSlug);
         router.push({
           pathname: `/(tabs)/bibliothek/${childSlug}` as any,
           params: { previousPage: currentPath }
@@ -460,13 +485,12 @@ export default function SectionDetailScreen() {
       }
     } catch (error) {
       console.error('Error in navigateToChild:', error);
-      // Fallback to category page on error
       router.push({
         pathname: `/(tabs)/bibliothek/${childSlug}`,
         params: { previousPage: currentPath }
       });
     }
-  }, [router, slug, supabase]);
+  }, [router, slug]);
 
   const handleBackPress = useCallback(() => {
     try {
@@ -480,45 +504,46 @@ export default function SectionDetailScreen() {
     }
   }, [navigation, router]);
 
+  const toggleFavorite = useCallback((itemId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(itemId)) {
+        newFavorites.delete(itemId);
+      } else {
+        newFavorites.add(itemId);
+      }
+      return newFavorites;
+    });
+  }, []);
+
+  // LOADING STATE
   if (authLoading || loading) {
     return (
-      <SafeAreaView style={styles.modernContainer}>
+      <SafeAreaView style={styles.container}>
         <LinearGradient
-          colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
-          style={styles.modernGradientBackground}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          style={styles.backgroundGradient}
         />
-        
-        <View style={styles.modernHeader}>
-          <View style={styles.skeletonBackButton} />
+
+        {/* Skeleton Loading */}
+        <View style={styles.stickyHeader}>
+          <View style={styles.headerContent}>
+            <View style={styles.skeletonBackButton} />
+          </View>
         </View>
-        
-        <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.sectionPanel}>
-            <LinearGradient
-              colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
-              style={styles.sectionPanelGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.skeletonTitle} />
-              <View style={styles.foldersGrid}>
-                {[...Array(6)].map((_, index) => (
-                  <View key={index} style={[{ width: CARD_WIDTH }, styles.skeletonCard]}>
-                    <View style={styles.skeletonFolderTab} />
-                    <View style={styles.skeletonFolderBody} />
-                    <View style={styles.skeletonFolderLabel} />
-                  </View>
-                ))}
-              </View>
-            </LinearGradient>
+
+        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.heroSection}>
+            <View style={[styles.skeletonBox, { width: 120, height: 32, marginBottom: 16 }]} />
+            <View style={[styles.skeletonBox, { width: '80%', height: 40, marginBottom: 12 }]} />
+            <View style={[styles.skeletonBox, { width: '60%', height: 20 }]} />
           </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
+  // ERROR STATE
   if (error) {
     return (
       <SafeAreaView style={styles.errorContainer}>
@@ -543,401 +568,537 @@ export default function SectionDetailScreen() {
     );
   }
 
+  // ============================================================================
+  // MAIN RENDER - NEW MODERN UI
+  // ============================================================================
+
   return (
-    <SafeAreaView style={styles.modernContainer}>
-      {/* Modern Background */}
+    <SafeAreaView style={styles.container}>
+      {/* Background Gradient */}
       <LinearGradient
-        colors={['#f8fafc', '#f1f5f9', '#e2e8f0', '#ffffff']}
-        style={styles.modernGradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
       />
-      
-      {/* Modern Header */}
-      <View style={styles.modernHeader}>
-        <TouchableOpacity 
-          onPress={handleBackPress}
-          style={styles.modernBackButton}
-        >
-          <LinearGradient
-            colors={['#0891b2', '#0e7490']}
-            style={styles.backButtonGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+
+      {/* Modern Sticky Header */}
+      <View style={styles.stickyHeader}>
+        <View style={styles.headerContent}>
+          {/* Back Button */}
+          <TouchableOpacity
+            onPress={handleBackPress}
+            style={styles.backButton}
           >
-            <ChevronLeft size={20} color="white" />
-          </LinearGradient>
-          <Text style={styles.modernBackText}>Zurück</Text>
-        </TouchableOpacity>
-        
+            <View style={styles.backButtonCircle}>
+              <ArrowLeft size={20} color="#475569" strokeWidth={2} />
+            </View>
+            <Text style={styles.backButtonText}>Zurück</Text>
+          </TouchableOpacity>
+
+          {/* Breadcrumb Center */}
+          <View style={styles.breadcrumbCenter}>
+            <Home size={16} color="#94A3B8" />
+            <ChevronRight size={14} color="#94A3B8" style={styles.breadcrumbSeparator} />
+            <Text style={styles.breadcrumbText}>Bibliothek</Text>
+            <ChevronRight size={14} color="#94A3B8" style={styles.breadcrumbSeparator} />
+            <Text style={styles.breadcrumbActive} numberOfLines={1}>
+              {currentItem.title}
+            </Text>
+          </View>
+
+          {/* Spacer for balance */}
+          <View style={styles.headerSpacer} />
+        </View>
       </View>
 
-      <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroLeft}>
+              {/* Category Badge */}
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryBadgeText}>Kategorie</Text>
+              </View>
+
+              {/* Title */}
+              <Text style={styles.heroTitle}>{currentItem.title}</Text>
+
+              {/* Description */}
+              {currentItem.description && (
+                <Text style={styles.heroDescription}>{currentItem.description}</Text>
+              )}
+            </View>
+
+            {/* Update Date */}
+            <View style={styles.updateInfo}>
+              <Text style={styles.updateLabel}>Aktualisiert</Text>
+              <Text style={styles.updateDate}>Juni 2025</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <View style={[styles.statIconContainer, { backgroundColor: '#DBEAFE' }]}>
+              <Folder size={20} color="#2563EB" strokeWidth={2} />
+            </View>
+            <View>
+              <Text style={styles.statNumber}>{childItems.length}</Text>
+              <Text style={styles.statLabel}>Themen</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={[styles.statIconContainer, { backgroundColor: '#D1FAE5' }]}>
+              <FileText size={20} color="#059669" strokeWidth={2} />
+            </View>
+            <View>
+              <Text style={styles.statNumber}>{showContent ? '1' : '—'}</Text>
+              <Text style={styles.statLabel}>Inhalte</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={[styles.statIconContainer, { backgroundColor: '#FEE2E2' }]}>
+              <Heart size={20} color="#EF4444" strokeWidth={2} />
+            </View>
+            <View>
+              <Text style={styles.statNumber}>{favorites.size}</Text>
+              <Text style={styles.statLabel}>Favoriten</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Content Renderer if applicable */}
         {showContent && (
-          // Modern Content Display
-          <View style={styles.modernContentCard}>
-            <LinearGradient
-              colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
-              style={styles.contentCardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.modernContentHeader}>
-                <LinearGradient
-                  colors={['#0891b2', '#0e7490']}
-                  style={styles.contentHeaderIcon}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <FileText size={20} color="white" />
-                </LinearGradient>
-              </View>
-              <View style={styles.contentBody}>
-                <MedicalContentRenderer
-                  htmlContent={currentItem.content_html}
-                  jsonContent={currentItem.content_improved}
-                  plainTextContent={currentItem.content_details}
-                  title={currentItem.title}
-                  category={currentItem.type || 'Medizin'}
-                  lastUpdated="Juni 2025"
-                  completionStatus="Vollständiger Leitfaden"
+          <View style={styles.contentSection}>
+            <MedicalContentRenderer
+              htmlContent={currentItem.content_html}
+              jsonContent={currentItem.content_improved}
+              plainTextContent={currentItem.content_details}
+              title={currentItem.title}
+              category={currentItem.type || 'Medizin'}
+              lastUpdated="Juni 2025"
+              completionStatus="Vollständiger Leitfaden"
+            />
+          </View>
+        )}
+
+        {/* Enhanced Category Cards Grid */}
+        {childItems.length > 0 && (
+          <View style={styles.cardsSection}>
+            <Text style={styles.sectionTitle}>Unterkategorien</Text>
+            <FlatList
+              data={childItems}
+              renderItem={({ item }) => (
+                <EnhancedCategoryCard
+                  childItem={item}
+                  parentSlug={slug as string}
+                  onPress={() => navigateToChild(item.slug, item)}
+                  isFavorite={favorites.has(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
                 />
-              </View>
-            </LinearGradient>
+              )}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={styles.gridRow}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
           </View>
         )}
-        
-        {childItems.length > 0 ? (
-          // Navigation Grid for Children
-          <View style={styles.sectionPanel}>
-            <LinearGradient
-              colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
-              style={styles.sectionPanelGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.foldersGrid}>
-                {childItems.map((childItem) => (
-                  <FolderCard
-                    key={childItem.slug}
-                    childItem={childItem}
-                    parentSlug={slug as string}
-                    onPress={() => navigateToChild(childItem.slug, childItem)}
-                  />
-                ))}
-              </View>
-            </LinearGradient>
-          </View>
-        ) : null}
-        
-        {/* Empty state shown only when no content AND no children */}
+
+        {/* Empty State */}
         {!showContent && childItems.length === 0 && (
-          <View style={styles.modernEmptyState}>
-            <LinearGradient
-              colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
-              style={styles.emptyStateGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <BookOpen size={48} color="#94a3b8" />
-              <Text style={styles.modernEmptyStateText}>
-                Keine Inhalte oder Unterkategorien verfügbar.
-              </Text>
-            </LinearGradient>
+          <View style={styles.emptyState}>
+            <BookOpen size={48} color="#94A3B8" strokeWidth={2} />
+            <Text style={styles.emptyStateText}>
+              Keine Inhalte oder Unterkategorien verfügbar.
+            </Text>
           </View>
         )}
-        
+
         <View style={styles.bottomPadding} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ============================================================================
+// STYLES - NEW MODERN DESIGN
+// ============================================================================
+
 const styles = StyleSheet.create({
-  // Modern Container
-  modernContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
   },
-  modernGradientBackground: {
+  backgroundGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
-    height: '100%',
+    bottom: 0,
   },
-  
-  // Loading & Error States
-  loadingContainer: {
+
+  // Sticky Header
+  stickyHeader: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#475569',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  breadcrumbCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
   },
-  loadingText: {
-    marginTop: 16,
+  breadcrumbSeparator: {
+    marginHorizontal: 4,
+  },
+  breadcrumbText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  breadcrumbActive: {
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '600',
+    maxWidth: 150,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  headerSpacer: {
+    width: 128,
+  },
+
+  // Scroll Container
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 32,
+  },
+
+  // Hero Section
+  heroSection: {
+    padding: 24,
+    backgroundColor: '#FFFFFF',
+  },
+  heroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  heroLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  categoryBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400E',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  heroDescription: {
     fontSize: 16,
-    color: '#64748b',
-    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+    lineHeight: 24,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
+  updateInfo: {
+    alignItems: 'flex-end',
+  },
+  updateLabel: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  updateDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+
+  // Content Section
+  contentSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+
+  // Cards Section
+  cardsSection: {
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 16,
+  },
+
+  // Enhanced Category Card
+  enhancedCard: {
+    width: (SCREEN_WIDTH - 64) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTopStripe: {
+    height: 4,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    flex: 1,
+  },
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitleContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    lineHeight: 22,
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cardMetaText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  favoriteButton: {
+    padding: 4,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  cardFooterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginTop: 16,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+
+  // Error States
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     padding: 20,
   },
   errorTitle: {
     fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#ef4444',
+    fontWeight: 'bold',
+    color: '#EF4444',
     marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   errorText: {
     fontSize: 16,
-    color: '#64748b',
+    color: '#64748B',
     textAlign: 'center',
     marginBottom: 24,
-    fontFamily: 'Inter-Regular',
     lineHeight: 24,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   retryButton: {
-    backgroundColor: '#0891b2',
+    backgroundColor: '#0891B2',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
-    shadowColor: '#0891b2',
+    shadowColor: '#0891B2',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
   retryButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
-  // Modern Header
-  modernHeader: {
-    padding: 20,
-    paddingBottom: 24,
-  },
-  modernBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  backButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    shadowColor: '#0891b2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  modernBackText: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  headerContent: {
-    zIndex: 1,
-  },
-  modernTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 28,
-    color: '#1e293b',
-    marginBottom: 8,
-    letterSpacing: -0.3,
-    lineHeight: 34,
-  },
-  modernSubtitle: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#64748b',
-    lineHeight: 22,
-  },
-
-  // Modern Content
-  modernContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-
-  // Modern Content Card
-  modernContentCard: {
-    marginBottom: 20,
-  },
-  contentCardGradient: {
+  // Skeleton
+  skeletonBackButton: {
+    width: 100,
+    height: 40,
     borderRadius: 20,
-    padding: 2,
+    backgroundColor: '#E2E8F0',
   },
-  modernContentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    padding: 20,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-  },
-  contentHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  modernContentTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#1e293b',
-  },
-  contentBody: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-  contentText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#475569',
-    lineHeight: 26,
-  },
-  contentSection: {
-    marginBottom: 24,
-  },
-  contentSectionTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#1e293b',
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(8, 145, 178, 0.2)',
-  },
-
-  // Section Panel with Gradient Background
-  sectionPanel: {
-    marginBottom: 24,
-  },
-  sectionPanelGradient: {
-    borderRadius: 16,
-    padding: 24,
-  },
-  sectionTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 20,
-    color: '#1e293b',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-
-  // Responsive Folders Grid (3/2/1 columns)
-  foldersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-
-  // Folder card styles are now handled by the reusable Card component
-
-  // Modern Empty State
-  modernEmptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyStateGradient: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-    width: '100%',
-  },
-  modernEmptyStateText: {
-    fontSize: 16,
-    color: '#64748b',
-    fontFamily: 'Inter-Regular',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginTop: 16,
+  skeletonBox: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 8,
   },
 
   bottomPadding: {
     height: 40,
-  },
-
-  // Skeleton Loading Styles
-  skeletonBackButton: {
-    width: 80,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#e2e8f0',
-  },
-  skeletonTitle: {
-    width: 200,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#e2e8f0',
-    marginBottom: 20,
-    alignSelf: 'center',
-  },
-  skeletonCard: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  skeletonFolderTab: {
-    width: '65%',
-    height: 16,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    backgroundColor: '#cbd5e1',
-    marginBottom: -2,
-  },
-  skeletonFolderBody: {
-    width: '100%',
-    height: 90,
-    borderRadius: 14,
-    backgroundColor: '#cbd5e1',
-    marginBottom: 12,
-  },
-  skeletonFolderLabel: {
-    width: '80%',
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#e2e8f0',
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#1e293b',
-    marginTop: 16,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  backToMainButton: {
-    backgroundColor: '#0891b2',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  backToMainText: {
-    color: 'white',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
   },
 });
