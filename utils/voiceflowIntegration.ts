@@ -118,6 +118,7 @@ export class VoiceflowController {
             }
           }
         };
+        console.log('🔄 Initializing with launch payload:', config.launch.event.payload);
       }
 
       window.voiceflow.chat.load(config);
