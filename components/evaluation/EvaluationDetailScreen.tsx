@@ -28,11 +28,63 @@ interface Props {
 }
 
 export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
+  // Safety check for evaluation data
+  useEffect(() => {
+    console.log('EvaluationDetailScreen mounted');
+    console.log('Evaluation data:', JSON.stringify(evaluation, null, 2));
+  }, []);
+
+  if (!evaluation) {
+    console.error('EvaluationDetailScreen: No evaluation data provided');
+    return (
+      <View style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Ionicons name="alert-circle" size={64} color="#EF4444" />
+          <Text style={{ fontSize: 18, fontFamily: 'Inter-Bold', color: '#1E293B', marginTop: 16, textAlign: 'center' }}>
+            Fehler beim Laden der Evaluierung
+          </Text>
+          <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: '#64748B', marginTop: 8, textAlign: 'center' }}>
+            Keine Evaluierungsdaten verfügbar
+          </Text>
+          <TouchableOpacity onPress={onClose} style={{ marginTop: 24, backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+            <Text style={{ fontSize: 16, fontFamily: 'Inter-SemiBold', color: '#FFFFFF' }}>Schließen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (!evaluation.score || !evaluation.scoreBreakdown || !evaluation.criticalErrors) {
+    console.error('EvaluationDetailScreen: Incomplete evaluation data');
+    console.error('Missing fields:', {
+      score: !evaluation.score,
+      scoreBreakdown: !evaluation.scoreBreakdown,
+      criticalErrors: !evaluation.criticalErrors,
+    });
+    return (
+      <View style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Ionicons name="alert-circle" size={64} color="#EF4444" />
+          <Text style={{ fontSize: 18, fontFamily: 'Inter-Bold', color: '#1E293B', marginTop: 16, textAlign: 'center' }}>
+            Fehler beim Laden der Evaluierung
+          </Text>
+          <Text style={{ fontSize: 14, fontFamily: 'Inter-Regular', color: '#64748B', marginTop: 8, textAlign: 'center' }}>
+            Unvollständige Evaluierungsdaten
+          </Text>
+          <TouchableOpacity onPress={onClose} style={{ marginTop: 24, backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+            <Text style={{ fontSize: 16, fontFamily: 'Inter-SemiBold', color: '#FFFFFF' }}>Schließen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const [expandedErrors, setExpandedErrors] = useState<Set<number>>(new Set([0]));
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    console.log('Starting animations');
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,

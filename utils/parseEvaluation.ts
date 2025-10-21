@@ -4,6 +4,19 @@ import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep } 
  * Parses the raw evaluation text from Supabase into structured data
  */
 export function parseEvaluation(rawText: string, id: string = '', timestamp: string = new Date().toISOString()): Evaluation {
+  // Safety check: handle null/undefined rawText
+  if (!rawText || typeof rawText !== 'string') {
+    console.error('parseEvaluation: Invalid rawText provided:', rawText);
+    rawText = ''; // Fallback to empty string
+  }
+
+  console.log('parseEvaluation called with:', {
+    rawTextLength: rawText.length,
+    rawTextPreview: rawText.substring(0, 100),
+    id,
+    timestamp,
+  });
+
   // Extract evaluation type
   const typeMatch = rawText.match(/ARZT-PATIENT GESPRÄCH BEWERTUNG - (.+?)(?:\n|$)/);
   const evaluationType = typeMatch ? typeMatch[1].trim() : 'KP PRÜFUNG';
