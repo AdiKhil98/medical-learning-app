@@ -156,6 +156,7 @@ export default function Login() {
                 error={emailError}
                 leftIcon={<Mail size={20} color="#94A3B8" />}
                 containerStyle={styles.inputContainer}
+                returnKeyType="next"
               />
             </View>
 
@@ -182,6 +183,8 @@ export default function Login() {
                 }
                 editable={!loading}
                 containerStyle={styles.inputContainer}
+                returnKeyType="go"
+                onSubmitEditing={handleLogin}
               />
             </View>
 
