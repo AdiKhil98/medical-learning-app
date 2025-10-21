@@ -8,6 +8,9 @@ import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, C
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
+import EvaluationDetailScreen from '@/components/evaluation/EvaluationDetailScreen';
+import { parseEvaluation } from '@/utils/parseEvaluation';
+import type { Evaluation as ParsedEvaluation } from '@/types/evaluation';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -416,9 +419,27 @@ export default function ProgressScreen() {
   const renderEvaluationModal = () => {
     if (!selectedEvaluation) return null;
 
-    const scoreColor = selectedEvaluation.score >= 60 ? '#10b981' : '#ef4444';
-    const scoreBgColor = selectedEvaluation.score >= 60 ? '#dcfce7' : '#fee2e2';
-    const passStatus = selectedEvaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
+    // Determine which evaluation text to use (priority: patient_evaluation > examiner_evaluation > evaluation)
+    const evaluationText = selectedEvaluation.patient_evaluation ||
+                          selectedEvaluation.examiner_evaluation ||
+                          selectedEvaluation.evaluation ||
+                          '';
+
+    // Parse the evaluation text into structured data
+    const parsedEvaluation = parseEvaluation(
+      evaluationText,
+      selectedEvaluation.id,
+      selectedEvaluation.created_at
+    );
+
+    // Override the evaluation type with the actual exam type
+    parsedEvaluation.evaluationType = `${selectedEvaluation.exam_type} - ${
+      selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
+    }`;
+
+    // Override the score with the actual score from the database
+    parsedEvaluation.score.total = selectedEvaluation.score;
+    parsedEvaluation.score.percentage = selectedEvaluation.score;
 
     return (
       <Modal
@@ -426,112 +447,12 @@ export default function ProgressScreen() {
         transparent={false}
         visible={modalVisible}
         onRequestClose={closeEvaluationModal}
+        presentationStyle="fullScreen"
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <LinearGradient
-            colors={['#f8fafc', '#e2e8f0', '#ffffff']}
-            style={styles.modalGradient}
-          />
-          
-          {/* Modal Header */}
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderLeft}>
-              <Maximize2 size={24} color="#E2827F" />
-              <Text style={styles.modalTitle}>Bewertung Details</Text>
-            </View>
-            <TouchableOpacity 
-              onPress={closeEvaluationModal}
-              style={styles.modalCloseButton}
-            >
-              <X size={24} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Modal Content */}
-          <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
-            {/* Score Section */}
-            <View style={styles.modalScoreSection}>
-              <LinearGradient
-                colors={[scoreColor, scoreColor + '90']}
-                style={styles.modalScoreGradient}
-              >
-                <View style={styles.modalScoreContent}>
-                  <Award size={32} color="white" />
-                  <View style={styles.modalScoreTextContainer}>
-                    <Text style={styles.modalScoreText}>{selectedEvaluation.score}/100</Text>
-                    <Text style={styles.modalScoreStatus}>{passStatus}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
-
-            {/* Evaluation Info */}
-            <View style={styles.modalInfoCard}>
-              <LinearGradient
-                colors={['#ffffff', '#fafbfc']}
-                style={styles.modalInfoGradient}
-              >
-                <View style={styles.modalInfoRow}>
-                  <Calendar size={20} color="#6b7280" />
-                  <Text style={styles.modalInfoText}>
-                    {format(new Date(selectedEvaluation.created_at), 'dd.MM.yyyy • HH:mm')}
-                  </Text>
-                </View>
-                <View style={styles.modalInfoRow}>
-                  <Target size={20} color="#6b7280" />
-                  <Text style={styles.modalInfoText}>
-                    {selectedEvaluation.exam_type} - {selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
-                  </Text>
-                </View>
-              </LinearGradient>
-            </View>
-
-            {/* Detailed Evaluations */}
-            {selectedEvaluation.patient_evaluation && (
-              <View style={styles.modalEvaluationSection}>
-                <View style={styles.modalSectionHeader}>
-                  <View style={styles.modalSectionIconContainer}>
-                    <Text style={styles.modalSectionIcon}>📋</Text>
-                  </View>
-                  <Text style={styles.modalSectionTitle}>Detaillierte Bewertung</Text>
-                </View>
-                <View style={styles.modalContentCard}>
-                  {renderParsedEvaluation(selectedEvaluation.patient_evaluation)}
-                </View>
-              </View>
-            )}
-
-            {selectedEvaluation.examiner_evaluation && (
-              <View style={styles.modalEvaluationSection}>
-                <View style={styles.modalSectionHeader}>
-                  <View style={styles.modalSectionIconContainer}>
-                    <Text style={styles.modalSectionIcon}>👨‍⚕️</Text>
-                  </View>
-                  <Text style={styles.modalSectionTitle}>Prüfer-Feedback</Text>
-                </View>
-                <View style={styles.modalContentCard}>
-                  {renderParsedEvaluation(selectedEvaluation.examiner_evaluation)}
-                </View>
-              </View>
-            )}
-
-            {selectedEvaluation.evaluation && (
-              <View style={styles.modalEvaluationSection}>
-                <View style={styles.modalSectionHeader}>
-                  <View style={styles.modalSectionIconContainer}>
-                    <Text style={styles.modalSectionIcon}>📊</Text>
-                  </View>
-                  <Text style={styles.modalSectionTitle}>Zusammenfassung</Text>
-                </View>
-                <View style={styles.modalContentCard}>
-                  {renderParsedEvaluation(selectedEvaluation.evaluation)}
-                </View>
-              </View>
-            )}
-            
-            <View style={styles.modalBottomSpacer} />
-          </ScrollView>
-        </SafeAreaView>
+        <EvaluationDetailScreen
+          evaluation={parsedEvaluation}
+          onClose={closeEvaluationModal}
+        />
       </Modal>
     );
   };
