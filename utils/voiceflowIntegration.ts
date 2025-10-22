@@ -96,7 +96,7 @@ export class VoiceflowController {
       const config: any = {
         verify: { projectID: this.config.projectID },
         url: 'https://general-runtime.voiceflow.com',
-        versionID: '68f148dc23d1c4b1ad26411b',
+        versionID: 'production',
         voice: {
           url: "https://runtime-api.voiceflow.com"
         }
