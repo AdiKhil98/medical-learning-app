@@ -121,6 +121,12 @@ export class VoiceflowController {
         console.log('🔄 Initializing with launch payload:', config.launch.event.payload);
       }
 
+      console.log('🔍 Voiceflow config:', {
+        projectID: config.verify.projectID,
+        versionID: config.versionID,
+        hasLaunchPayload: !!config.launch
+      });
+
       window.voiceflow.chat.load(config);
 
       this.widget = window.voiceflow.chat;
