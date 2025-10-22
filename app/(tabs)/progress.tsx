@@ -425,36 +425,110 @@ export default function ProgressScreen() {
                           selectedEvaluation.evaluation ||
                           '';
 
-    // Parse the evaluation text into structured data
-    const parsedEvaluation = parseEvaluation(
-      evaluationText,
-      selectedEvaluation.id,
-      selectedEvaluation.created_at
-    );
+    console.log('Selected Evaluation:', selectedEvaluation);
+    console.log('Evaluation fields:', {
+      hasPatientEval: !!selectedEvaluation.patient_evaluation,
+      hasExaminerEval: !!selectedEvaluation.examiner_evaluation,
+      hasEvaluation: !!selectedEvaluation.evaluation,
+      patientEvalLength: selectedEvaluation.patient_evaluation?.length || 0,
+      examinerEvalLength: selectedEvaluation.examiner_evaluation?.length || 0,
+      evaluationLength: selectedEvaluation.evaluation?.length || 0,
+    });
+    console.log('Evaluation Text Length:', evaluationText?.length || 0);
+    console.log('Evaluation Text Preview:', evaluationText ? evaluationText.substring(0, 200) : 'NO TEXT');
 
-    // Override the evaluation type with the actual exam type
-    parsedEvaluation.evaluationType = `${selectedEvaluation.exam_type} - ${
-      selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
-    }`;
+    // If no evaluation text exists, show error modal
+    if (!evaluationText || evaluationText.trim().length === 0) {
+      console.error('No evaluation text found in selectedEvaluation');
+      return (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={closeEvaluationModal}
+          presentationStyle="fullScreen"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Keine Bewertung verfügbar</Text>
+              <TouchableOpacity onPress={closeEvaluationModal}>
+                <X size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+              <Text style={{ fontSize: 16, fontFamily: 'Inter-Regular', color: '#6B7280', textAlign: 'center' }}>
+                Für diese Prüfung ist keine Bewertung vorhanden.
+              </Text>
+              <TouchableOpacity onPress={closeEvaluationModal} style={{ marginTop: 24, backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+                <Text style={{ fontSize: 16, fontFamily: 'Inter-SemiBold', color: '#FFFFFF' }}>Schließen</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </Modal>
+      );
+    }
 
-    // Override the score with the actual score from the database
-    parsedEvaluation.score.total = selectedEvaluation.score;
-    parsedEvaluation.score.percentage = selectedEvaluation.score;
+    try {
+      // Parse the evaluation text into structured data
+      const parsedEvaluation = parseEvaluation(
+        evaluationText,
+        selectedEvaluation.id,
+        selectedEvaluation.created_at
+      );
 
-    return (
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={modalVisible}
-        onRequestClose={closeEvaluationModal}
-        presentationStyle="fullScreen"
-      >
-        <EvaluationDetailScreen
-          evaluation={parsedEvaluation}
-          onClose={closeEvaluationModal}
-        />
-      </Modal>
-    );
+      console.log('Parsed Evaluation:', parsedEvaluation);
+
+      // Override the evaluation type with the actual exam type
+      parsedEvaluation.evaluationType = `${selectedEvaluation.exam_type} - ${
+        selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
+      }`;
+
+      // Override the score with the actual score from the database
+      parsedEvaluation.score.total = selectedEvaluation.score;
+      parsedEvaluation.score.percentage = selectedEvaluation.score;
+
+      return (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={closeEvaluationModal}
+          presentationStyle="fullScreen"
+        >
+          <EvaluationDetailScreen
+            evaluation={parsedEvaluation}
+            onClose={closeEvaluationModal}
+          />
+        </Modal>
+      );
+    } catch (error) {
+      console.error('Error parsing evaluation:', error);
+
+      // Fallback to old modal if parsing fails
+      return (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={closeEvaluationModal}
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bewertung Details</Text>
+              <TouchableOpacity onPress={closeEvaluationModal}>
+                <X size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              <View style={styles.modalContentCard}>
+                <Text style={styles.modalInfoText}>Score: {selectedEvaluation.score}/100</Text>
+                <Text style={styles.parsedSectionContent}>{evaluationText}</Text>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      );
+    }
   };
 
   const renderTabs = () => (

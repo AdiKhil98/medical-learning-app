@@ -2,21 +2,88 @@ import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep } 
 
 /**
  * Parses the raw evaluation text from Supabase into structured data
+ * Supports STRUCTURED TAG FORMAT (SECTION:, CATEGORY_1_NAME:, etc.)
  */
 export function parseEvaluation(rawText: string, id: string = '', timestamp: string = new Date().toISOString()): Evaluation {
-  // Extract evaluation type
-  const typeMatch = rawText.match(/ARZT-PATIENT GESPRÄCH BEWERTUNG - (.+?)(?:\n|$)/);
-  const evaluationType = typeMatch ? typeMatch[1].trim() : 'KP PRÜFUNG';
+  // Safety check: handle null/undefined rawText
+  if (!rawText || typeof rawText !== 'string') {
+    console.error('parseEvaluation: Invalid rawText provided:', rawText);
+    return getEmptyEvaluation(id, timestamp);
+  }
 
-  // Extract overall impression
-  const impressionMatch = rawText.match(/GESAMTEINDRUCK:\s*(.+?)(?:\n\n|\n(?=[A-Z]{3,}))/s);
-  const mainIssue = impressionMatch ? impressionMatch[1].trim() : '';
+  console.log('parseEvaluation called with:', {
+    rawTextLength: rawText.length,
+    rawTextPreview: rawText.substring(0, 200),
+    id,
+    timestamp,
+  });
 
-  // Extract score
-  const scoreMatch = rawText.match(/GESAMTPUNKTZAHL:\s*(\d+)\/(\d+)\s*PUNKTE/);
-  const total = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-  const maxScore = scoreMatch ? parseInt(scoreMatch[2]) : 100;
-  const percentage = maxScore > 0 ? Math.round((total / maxScore) * 100) : 0;
+  try {
+    // Parse score
+    const score = parseScore(rawText);
+
+    // Parse overview
+    const mainIssue = parseOverview(rawText);
+
+    // Parse categories
+    const scoreBreakdown = parseCategories(rawText, score.total);
+
+    // Parse critical errors
+    const criticalErrors = parseCriticalErrors(rawText);
+
+    // Parse positives (strengths)
+    const positives = parseStrengths(rawText);
+
+    // Parse next steps
+    const nextSteps = parseNextSteps(rawText);
+
+    // Parse motivational message
+    const motivationalMessage = parseMotivation(rawText);
+
+    console.log('Parsed evaluation successfully:', {
+      score: score.total,
+      categoriesCount: scoreBreakdown.length,
+      errorsCount: criticalErrors.length,
+      positivesCount: positives.length,
+      nextStepsCount: nextSteps.length
+    });
+
+    return {
+      id,
+      timestamp,
+      type: 'KP',
+      evaluationType: 'KP PRÜFUNG',
+      score,
+      summary: {
+        mainIssue,
+        strengths: positives,
+        criticalGapsCount: criticalErrors.filter(e => e.severity === 'critical').length,
+      },
+      scoreBreakdown,
+      criticalErrors,
+      positives,
+      nextSteps,
+      motivationalMessage,
+      rawText,
+    };
+  } catch (error) {
+    console.error('Error parsing evaluation:', error);
+    return getEmptyEvaluation(id, timestamp);
+  }
+}
+
+/**
+ * Parse score from STRUCTURED TAG FORMAT
+ */
+function parseScore(text: string): EvaluationScore {
+  // Try to extract from SECTION: SCORE_SUMMARY format
+  const totalMatch = text.match(/TOTAL_SCORE:\s*(\d+)/i);
+  const maxMatch = text.match(/MAX_SCORE:\s*(\d+)/i);
+  const percentMatch = text.match(/PERCENTAGE:\s*(\d+)/i);
+
+  const total = totalMatch ? parseInt(totalMatch[1]) : 0;
+  const maxScore = maxMatch ? parseInt(maxMatch[1]) : 100;
+  const percentage = percentMatch ? parseInt(percentMatch[1]) : (maxScore > 0 ? Math.round((total / maxScore) * 100) : 0);
 
   // Determine status
   let status: EvaluationScore['status'];
@@ -41,14 +108,22 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     statusEmoji = '✗';
   }
 
-  // Override with text from evaluation if present
-  const statusTextMatch = rawText.match(/\*\*(MEHR ÜBUNG NÖTIG|GUT GEMACHT|AUSGEZEICHNET|DRINGEND ÜBERARBEITEN)\s*([★✓✗↑])\*\*/i);
-  if (statusTextMatch) {
-    statusText = statusTextMatch[1];
-    statusEmoji = statusTextMatch[2] || statusEmoji;
+  // Try to extract actual status from text
+  const statusMatch = text.match(/PASS_STATUS:\s*(\w+)/i);
+  if (statusMatch) {
+    const passStatus = statusMatch[1].toUpperCase();
+    if (passStatus === 'BESTANDEN') {
+      if (percentage >= 85) {
+        statusText = 'Ausgezeichnet';
+        statusEmoji = '★';
+      } else {
+        statusText = 'Gut gemacht';
+        statusEmoji = '✓';
+      }
+    }
   }
 
-  const score: EvaluationScore = {
+  return {
     total,
     maxScore,
     percentage,
@@ -56,96 +131,178 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     statusText,
     statusEmoji,
   };
-
-  // Extract critical errors
-  const criticalErrors = parseCriticalErrors(rawText);
-
-  // Extract positive aspects
-  const positives = parsePositives(rawText);
-
-  // Extract next steps
-  const nextSteps = parseNextSteps(rawText);
-
-  // Extract motivational message
-  const motivationalMessage = parseMotivationalMessage(rawText);
-
-  // Create score breakdown (inferred from errors or default)
-  const scoreBreakdown = createScoreBreakdown(total, maxScore, criticalErrors);
-
-  return {
-    id,
-    timestamp,
-    type: 'KP',
-    evaluationType,
-    score,
-    summary: {
-      mainIssue,
-      strengths: positives,
-      criticalGapsCount: criticalErrors.filter(e => e.severity === 'critical').length,
-    },
-    scoreBreakdown,
-    criticalErrors,
-    positives,
-    nextSteps,
-    motivationalMessage,
-    rawText,
-  };
 }
 
 /**
- * Parses critical errors from the evaluation text
+ * Parse overview/summary
  */
-function parseCriticalErrors(rawText: string): CriticalError[] {
-  const errors: CriticalError[] = [];
+function parseOverview(text: string): string {
+  // Extract SECTION: OVERVIEW -> SUMMARY: ...
+  const summaryMatch = text.match(/SUMMARY:\s*(.+?)(?=\n(?:SECTION|$))/is);
 
-  // Match error sections like "1. **KRITISCHER SPRACHFEHLER**:"
-  const errorSectionRegex = /(\d+)\.\s*\*\*(.+?)\*\*:\s*\n([\s\S]+?)(?=\n\d+\.\s*\*\*|\nGESAMTPUNKTZAHL:|$)/g;
-  let match;
+  if (summaryMatch) {
+    return summaryMatch[1].trim();
+  }
 
-  while ((match = errorSectionRegex.exec(rawText)) !== null) {
-    const title = match[2].trim();
-    const content = match[3].trim();
+  return '';
+}
 
-    // Extract point deduction
-    const pointMatch = content.match(/Punktabzug:\s*-(\d+)\s*Punkte/i);
-    const pointDeduction = pointMatch ? parseInt(pointMatch[1]) : 0;
+/**
+ * Parse categories from STRUCTURED TAG FORMAT
+ */
+function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
+  const categories: ScoreBreakdown[] = [];
 
-    // Determine severity based on point deduction
-    let severity: CriticalError['severity'];
-    if (pointDeduction >= 15) {
-      severity = 'critical';
-    } else if (pointDeduction >= 8) {
-      severity = 'major';
-    } else {
-      severity = 'minor';
+  const categoryIcons: { [key: string]: string } = {
+    'vollständigkeit': 'medical',
+    'logik': 'bulb',
+    'sprach': 'chatbubble-ellipses',
+    'empathie': 'heart',
+    'systematik': 'list',
+    'kommunikation': 'people',
+  };
+
+  const categoryColors: { [key: string]: string } = {
+    'vollständigkeit': '#10b981',
+    'logik': '#3b82f6',
+    'sprach': '#8b5cf6',
+    'empathie': '#ef4444',
+    'systematik': '#f59e0b',
+    'kommunikation': '#06b6d4',
+  };
+
+  // Try structured format first (CATEGORY_1_NAME, etc.)
+  for (let i = 1; i <= 6; i++) {
+    const nameMatch = text.match(new RegExp(`CATEGORY_${i}_NAME:\\s*(.+?)(?=\\n|$)`, 'i'));
+    if (!nameMatch) continue;
+
+    const name = nameMatch[1].trim();
+    const scoreMatch = text.match(new RegExp(`CATEGORY_${i}_SCORE:\\s*(\\d+)`, 'i'));
+    const maxMatch = text.match(new RegExp(`CATEGORY_${i}_MAX:\\s*(\\d+)`, 'i'));
+    const percentMatch = text.match(new RegExp(`CATEGORY_${i}_PERCENTAGE:\\s*(\\d+)`, 'i'));
+
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+    const maxScore = maxMatch ? parseInt(maxMatch[1]) : 100;
+    const percentage = percentMatch ? parseInt(percentMatch[1]) : Math.round((score / maxScore) * 100);
+
+    // Find matching icon and color
+    let icon = 'stats-chart';
+    let color = '#64748b';
+    for (const [key, val] of Object.entries(categoryIcons)) {
+      if (name.toLowerCase().includes(key)) {
+        icon = val;
+        color = categoryColors[key];
+        break;
+      }
     }
 
-    // Extract incorrect example
-    const incorrectMatch = content.match(/Was falsch gemacht wurde:\s*"?(.+?)"?(?:\n|$)/);
-    const incorrect = incorrectMatch ? incorrectMatch[1].trim().replace(/^"|"$/g, '') : '';
+    categories.push({
+      category: name,
+      score,
+      maxScore,
+      percentage,
+      icon,
+      color,
+    });
+  }
 
-    // Extract correct example
-    const correctMatch = content.match(/Besserer Ansatz:\s*"?(.+?)"?(?:\n|$)/);
-    const correct = correctMatch ? correctMatch[1].trim().replace(/^"|"$/g, '') : '';
+  // If no structured categories found, create defaults
+  if (categories.length === 0) {
+    categories.push(
+      {
+        category: 'Medizinische Vollständigkeit',
+        score: Math.round(totalPoints * 0.4),
+        maxScore: 40,
+        percentage: Math.round((totalPoints * 0.4) / 40 * 100),
+        icon: 'medical',
+        color: '#10b981',
+      },
+      {
+        category: 'Fragenrelevanz & Logik',
+        score: Math.round(totalPoints * 0.25),
+        maxScore: 25,
+        percentage: Math.round((totalPoints * 0.25) / 25 * 100),
+        icon: 'bulb',
+        color: '#3b82f6',
+      },
+      {
+        category: 'Sprachqualität',
+        score: Math.round(totalPoints * 0.2),
+        maxScore: 20,
+        percentage: Math.round((totalPoints * 0.2) / 20 * 100),
+        icon: 'chatbubble-ellipses',
+        color: '#8b5cf6',
+      },
+      {
+        category: 'Empathie',
+        score: Math.round(totalPoints * 0.15),
+        maxScore: 15,
+        percentage: Math.round((totalPoints * 0.15) / 15 * 100),
+        icon: 'heart',
+        color: '#ef4444',
+      }
+    );
+  }
 
-    // Extract explanation
-    const explanationMatch = content.match(/Warum das problematisch ist:\s*(.+?)(?:\n•|\nPunktabzug:|$)/s);
-    const explanation = explanationMatch ? explanationMatch[1].trim() : '';
+  return categories;
+}
 
-    const whyProblematicMatch = content.match(/Warum das problematisch ist:\s*(.+?)(?:\n|$)/);
-    const whyProblematic = whyProblematicMatch ? whyProblematicMatch[1].trim() : '';
+/**
+ * Parse critical issues from STRUCTURED TAG FORMAT
+ */
+function parseCriticalErrors(text: string): CriticalError[] {
+  const errors: CriticalError[] = [];
 
-    const betterApproachMatch = content.match(/Besserer Ansatz:\s*(.+?)(?:\n|$)/);
-    const betterApproach = betterApproachMatch ? betterApproachMatch[1].trim() : '';
+  // Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
+  for (let i = 1; i <= 10; i++) {
+    const titleMatch = text.match(new RegExp(`ISSUE_${i}_TITLE:\\s*(.+?)(?=\\n|$)`, 'i'));
+    if (!titleMatch) continue;
+
+    const title = titleMatch[1].trim();
+    const pointsMatch = text.match(new RegExp(`ISSUE_${i}_POINTS_LOST:\\s*(\\d+)`, 'i'));
+    const pointsLost = pointsMatch ? parseInt(pointsMatch[1]) : 0;
+
+    // Determine severity
+    let severity: CriticalError['severity'] = 'minor';
+    if (pointsLost >= 15 || title.toLowerCase().includes('kritisch')) {
+      severity = 'critical';
+    } else if (pointsLost >= 8 || title.toLowerCase().includes('wichtig')) {
+      severity = 'major';
+    }
+
+    // Extract examples from ISSUE_X_EXAMPLES field
+    const examplesMatch = text.match(new RegExp(`ISSUE_${i}_EXAMPLES:\\s*(.+?)(?=\\n(?:ISSUE_|SECTION|$))`, 'is'));
+    const examples: Array<{ incorrect: string; correct: string }> = [];
+
+    if (examplesMatch) {
+      const examplesText = examplesMatch[1].trim();
+      // Parse "Falsch: ... → Richtig: ..." pattern
+      const examplePairs = examplesText.split('|');
+      examplePairs.forEach(pair => {
+        const wrongMatch = pair.match(/Falsch:\s*"?([^"→]+)"?\s*→/i);
+        const rightMatch = pair.match(/→\s*Richtig:\s*"?([^"|]+)"?/i);
+
+        if (wrongMatch && rightMatch) {
+          examples.push({
+            incorrect: wrongMatch[1].trim(),
+            correct: rightMatch[1].trim(),
+          });
+        }
+      });
+    }
+
+    // Extract impact
+    const impactMatch = text.match(new RegExp(`ISSUE_${i}_IMPACT:\\s*(.+?)(?=\\n(?:ISSUE_|SECTION|MISSING_|$))`, 'is'));
+    const impact = impactMatch ? impactMatch[1].trim() : '';
 
     errors.push({
       severity,
       title,
-      pointDeduction,
-      examples: incorrect && correct ? [{ incorrect, correct }] : [],
-      explanation: explanation || content.split('\n')[0],
-      whyProblematic,
-      betterApproach,
+      pointDeduction: pointsLost,
+      examples,
+      explanation: impact || title,
+      whyProblematic: impact,
+      betterApproach: examples.length > 0 ? examples[0].correct : '',
     });
   }
 
@@ -153,161 +310,140 @@ function parseCriticalErrors(rawText: string): CriticalError[] {
 }
 
 /**
- * Parses positive aspects from the evaluation text
+ * Parse strengths from STRUCTURED TAG FORMAT
  */
-function parsePositives(rawText: string): string[] {
-  const positives: string[] = [];
+function parseStrengths(text: string): string[] {
+  const strengths: string[] = [];
 
-  // Look for positive sections
-  const positiveSection = rawText.match(/WAS GUT GEMACHT WURDE:|POSITIVE ASPEKTE:|STÄRKEN:([\s\S]+?)(?=\n[A-Z]{3,}:|$)/i);
-  if (positiveSection) {
-    const content = positiveSection[1];
-    const bulletPoints = content.match(/[•\-]\s*(.+?)(?:\n|$)/g);
-    if (bulletPoints) {
-      positives.push(...bulletPoints.map(p => p.replace(/^[•\-]\s*/, '').trim()));
+  // Try structured format: STRENGTH_1, STRENGTH_2, etc.
+  for (let i = 1; i <= 10; i++) {
+    const strengthMatch = text.match(new RegExp(`STRENGTH_${i}:\\s*(.+?)(?=\\n(?:STRENGTH_|SECTION|$))`, 'is'));
+    if (!strengthMatch) continue;
+
+    const content = strengthMatch[1].trim();
+    // Format: "Title | Beispiel: ... | Gut weil: ..."
+    const parts = content.split('|').map(p => p.trim());
+
+    if (parts.length >= 1) {
+      const title = parts[0];
+      const example = parts[1] ? parts[1].replace(/^Beispiel:\s*/i, '') : '';
+      const reason = parts[2] ? parts[2].replace(/^Gut weil:\s*/i, '') : '';
+
+      if (example && reason) {
+        strengths.push(`${title} (${example} - ${reason})`);
+      } else if (example) {
+        strengths.push(`${title} (${example})`);
+      } else {
+        strengths.push(title);
+      }
     }
   }
 
-  // Default positives if none found
-  if (positives.length === 0) {
-    positives.push('Prüfung vollständig absolviert');
-    positives.push('Bereitschaft zur Verbesserung gezeigt');
+  // Default strengths if none found
+  if (strengths.length === 0) {
+    strengths.push('Prüfung vollständig absolviert');
+    strengths.push('Bereitschaft zur Verbesserung gezeigt');
   }
 
-  return positives;
+  return strengths;
 }
 
 /**
- * Parses next steps from the evaluation text
+ * Parse next steps from STRUCTURED TAG FORMAT
  */
-function parseNextSteps(rawText: string): NextStep[] {
+function parseNextSteps(text: string): NextStep[] {
   const steps: NextStep[] = [];
 
-  // Look for next steps section
-  const stepsSection = rawText.match(/KONKRETE NÄCHSTE SCHRITTE:|EMPFEHLUNGEN:|WAS SIE TUN SOLLTEN:([\s\S]+?)(?=\n[A-Z]{3,}:|$)/i);
-  if (stepsSection) {
-    const content = stepsSection[1];
-    const numberedSteps = content.match(/(\d+)\.\s*(.+?)(?:\n(?:\d+\.|\n|$))/gs);
+  // Try structured format: STEP_1, STEP_2, STEP_3
+  for (let i = 1; i <= 3; i++) {
+    const stepMatch = text.match(new RegExp(`STEP_${i}:\\s*(.+?)(?=\\n(?:STEP_|SECTION|$))`, 'is'));
+    if (!stepMatch) continue;
 
-    if (numberedSteps) {
-      numberedSteps.forEach((step, index) => {
-        const stepMatch = step.match(/(\d+)\.\s*(.+)/s);
-        if (stepMatch) {
-          const action = stepMatch[2].split('\n')[0].trim();
-          const details = stepMatch[2].split('\n').slice(1).join(' ').trim() || action;
+    const content = stepMatch[1].trim();
+    // Format: "Focus | Aktion: ... | Zeitrahmen: ..."
+    const parts = content.split('|').map(p => p.trim());
 
-          steps.push({
-            priority: index + 1,
-            action,
-            details,
-          });
-        }
+    if (parts.length >= 2) {
+      const focus = parts[0];
+      const action = parts[1].replace(/^Aktion:\s*/i, '');
+      const timeframe = parts[2] ? parts[2].replace(/^Zeitrahmen:\s*/i, '') : 'In den nächsten Tagen';
+
+      steps.push({
+        priority: i,
+        action: focus,
+        details: action,
       });
     }
   }
 
-  // Default steps if none found
-  if (steps.length === 0) {
+  // Ensure we have at least 3 steps
+  while (steps.length < 3) {
     steps.push({
-      priority: 1,
-      action: 'Fehleranalyse durchführen',
-      details: 'Analysieren Sie die oben genannten Fehler im Detail und verstehen Sie die Ursachen.',
-    });
-    steps.push({
-      priority: 2,
-      action: 'Gezielte Übung',
-      details: 'Üben Sie die kritischen Bereiche mit ähnlichen Fallbeispielen.',
-    });
-    steps.push({
-      priority: 3,
-      action: 'Erneute Prüfung',
-      details: 'Wiederholen Sie die Simulation nach der Übungsphase.',
+      priority: steps.length + 1,
+      action: 'Weiter üben',
+      details: 'Führen Sie weitere Simulationen durch und achten Sie auf die genannten Punkte.',
     });
   }
 
-  return steps;
+  return steps.slice(0, 3);
 }
 
 /**
- * Parses motivational message from the evaluation text
+ * Parse motivation message from STRUCTURED TAG FORMAT
  */
-function parseMotivationalMessage(rawText: string): string {
-  // Look for motivational message at the end
-  const lines = rawText.split('\n').filter(l => l.trim());
-  const lastLines = lines.slice(-3).join(' ');
+function parseMotivation(text: string): string {
+  // Look for SECTION: MOTIVATION -> ENCOURAGEMENT: ...
+  const encouragementMatch = text.match(/ENCOURAGEMENT:\s*(.+?)(?=\n(?:SECTION|END_OF_EVALUATION|$))/is);
 
-  if (lastLines.length > 20 && lastLines.length < 200) {
+  if (encouragementMatch) {
+    return encouragementMatch[1].trim();
+  }
+
+  // Try to get last paragraph after sections
+  const lines = text.split('\n').filter(l => l.trim() && !l.includes('SECTION:') && !l.includes('END_OF'));
+  const lastLines = lines.slice(-2).join(' ');
+
+  if (lastLines.length > 20 && lastLines.length < 500) {
     return lastLines;
   }
 
-  return 'Jeder Fehler ist eine Chance zum Lernen. Mit gezielter Übung werden Sie sich stetig verbessern!';
+  // Default motivational message
+  return 'Mit gezielter Übung und Fokus auf die genannten Bereiche werden Sie sich stetig verbessern. Jeder Fehler ist eine Lernmöglichkeit!';
 }
 
 /**
- * Creates score breakdown based on total score and errors
+ * Get empty evaluation structure
  */
-function createScoreBreakdown(total: number, maxScore: number, errors: CriticalError[]): ScoreBreakdown[] {
-  // Calculate deductions by category
-  let sprachDeduction = 0;
-  let logikDeduction = 0;
-  let empathieDeduction = 0;
-  let systematikDeduction = 0;
-
-  errors.forEach(error => {
-    if (error.title.toLowerCase().includes('sprach') || error.title.toLowerCase().includes('kommunikation')) {
-      sprachDeduction += error.pointDeduction;
-    } else if (error.title.toLowerCase().includes('logik') || error.title.toLowerCase().includes('medizin')) {
-      logikDeduction += error.pointDeduction;
-    } else if (error.title.toLowerCase().includes('empathie') || error.title.toLowerCase().includes('patient')) {
-      empathieDeduction += error.pointDeduction;
-    } else {
-      systematikDeduction += error.pointDeduction;
-    }
-  });
-
-  // Create breakdown with max scores
-  const sprachMax = 30;
-  const logikMax = 25;
-  const empathieMax = 20;
-  const systematikMax = 25;
-
-  const sprachScore = Math.max(0, sprachMax - sprachDeduction);
-  const logikScore = Math.max(0, logikMax - logikDeduction);
-  const empathieScore = Math.max(0, empathieMax - empathieDeduction);
-  const systematikScore = Math.max(0, systematikMax - systematikDeduction);
-
-  return [
-    {
-      category: 'Sprachqualität',
-      score: sprachScore,
-      maxScore: sprachMax,
-      percentage: Math.round((sprachScore / sprachMax) * 100),
-      color: '#EF4444',
-      icon: 'chatbubble-ellipses',
+function getEmptyEvaluation(id: string, timestamp: string): Evaluation {
+  return {
+    id,
+    timestamp,
+    type: 'KP',
+    evaluationType: 'KP PRÜFUNG',
+    score: {
+      total: 0,
+      maxScore: 100,
+      percentage: 0,
+      status: 'critical',
+      statusText: 'Keine Daten',
+      statusEmoji: '?',
     },
-    {
-      category: 'Medizinische Logik',
-      score: logikScore,
-      maxScore: logikMax,
-      percentage: Math.round((logikScore / logikMax) * 100),
-      color: '#F59E0B',
-      icon: 'medical',
+    summary: {
+      mainIssue: 'Keine Auswertung verfügbar',
+      strengths: [],
+      criticalGapsCount: 0,
     },
-    {
-      category: 'Empathie',
-      score: empathieScore,
-      maxScore: empathieMax,
-      percentage: Math.round((empathieScore / empathieMax) * 100),
-      color: '#3B82F6',
-      icon: 'heart',
-    },
-    {
-      category: 'Systematik',
-      score: systematikScore,
-      maxScore: systematikMax,
-      percentage: Math.round((systematikScore / systematikMax) * 100),
-      color: '#8B5CF6',
-      icon: 'list',
-    },
-  ];
+    scoreBreakdown: [],
+    criticalErrors: [],
+    positives: [],
+    nextSteps: [
+      {
+        priority: 1,
+        action: 'Erneut versuchen',
+        details: 'Starten Sie eine neue Simulation um Feedback zu erhalten.',
+      },
+    ],
+    motivationalMessage: '',
+    rawText: '',
+  };
 }

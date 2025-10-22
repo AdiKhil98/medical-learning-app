@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluierung Details - KP Prüfung</title>
+    <link rel="stylesheet" href="evaluation-detail.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="evaluation-header" role="banner">
+        <div class="header-container">
+            <button class="back-button" aria-label="Zurück zur Übersicht">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Zurück</span>
+            </button>
+
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <ol>
+                    <li><a href="/progress">Auswertungen</a></li>
+                    <li><a href="/progress?type=KP">KP-Prüfung</a></li>
+                    <li aria-current="page">Details</li>
+                </ol>
+            </nav>
+
+            <div class="header-actions">
+                <button class="action-button" aria-label="Teilen">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M15 6.66667C16.3807 6.66667 17.5 5.54738 17.5 4.16667C17.5 2.78595 16.3807 1.66667 15 1.66667C13.6193 1.66667 12.5 2.78595 12.5 4.16667C12.5 5.54738 13.6193 6.66667 15 6.66667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5 12.5C6.38071 12.5 7.5 11.3807 7.5 10C7.5 8.61929 6.38071 7.5 5 7.5C3.61929 7.5 2.5 8.61929 2.5 10C2.5 11.3807 3.61929 12.5 5 12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 18.3333C16.3807 18.3333 17.5 17.214 17.5 15.8333C17.5 14.4526 16.3807 13.3333 15 13.3333C13.6193 13.3333 12.5 14.4526 12.5 15.8333C12.5 17.214 13.6193 18.3333 15 18.3333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.15833 11.175L12.85 14.6583" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12.8417 5.34167L7.15833 8.825" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="action-button" aria-label="Als PDF herunterladen">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M17.5 12.5V15.8333C17.5 16.2754 17.3244 16.6993 17.0118 17.0118C16.6993 17.3244 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5.83333 8.33333L10 12.5L14.1667 8.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 12.5V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="evaluation-main">
+        <div class="container">
+            <div class="content-wrapper">
+                <!-- Main Content Area -->
+                <article class="main-content">
+                    <!-- Score Hero Card -->
+                    <section class="score-hero" data-status="good">
+                        <div class="score-hero-content">
+                            <div class="score-hero-left">
+                                <span class="status-badge" data-status="good">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Bestanden
+                                </span>
+                                <h1 class="score-hero-title">Gute Leistung!</h1>
+                                <p class="score-hero-summary">
+                                    Sie haben die Prüfung erfolgreich bestanden. Besonders stark waren Sie in der medizinischen Vollständigkeit und Fragenrelevanz.
+                                </p>
+                                <div class="quick-stats">
+                                    <div class="stat-pill">
+                                        <span class="stat-value">90%</span>
+                                        <span class="stat-label">Med. Vollständigkeit</span>
+                                    </div>
+                                    <div class="stat-pill">
+                                        <span class="stat-value">96%</span>
+                                        <span class="stat-label">Fragenrelevanz</span>
+                                    </div>
+                                    <div class="stat-pill">
+                                        <span class="stat-value">1</span>
+                                        <span class="stat-label">Kritische Fehler</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="score-hero-right">
+                                <div class="circular-progress" data-percentage="82">
+                                    <svg class="progress-ring" width="180" height="180">
+                                        <circle class="progress-ring-bg" cx="90" cy="90" r="80" />
+                                        <circle class="progress-ring-fill" cx="90" cy="90" r="80" />
+                                    </svg>
+                                    <div class="progress-content">
+                                        <span class="progress-percentage">82%</span>
+                                        <span class="progress-score">82/100</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Category Cards Grid -->
+                    <section class="category-section">
+                        <h2 class="section-title">Bewertung nach Kategorien</h2>
+                        <div class="category-grid" id="categoryGrid">
+                            <!-- Categories will be rendered here by JS -->
+                        </div>
+                    </section>
+
+                    <!-- Critical Issues Section -->
+                    <section class="issues-section">
+                        <div class="section-header">
+                            <h2 class="section-title">Hauptfehler</h2>
+                            <span class="count-badge">1</span>
+                        </div>
+                        <div class="issues-list" id="issuesList">
+                            <!-- Issues will be rendered here by JS -->
+                        </div>
+                    </section>
+
+                    <!-- Missing Questions Section -->
+                    <section class="missing-questions-section" id="missingQuestionsSection">
+                        <div class="section-header">
+                            <h2 class="section-title">Verpasste essenzielle Fragen</h2>
+                            <span class="count-badge count-badge-warning">2</span>
+                        </div>
+                        <div class="missing-questions-list" id="missingQuestionsList">
+                            <!-- Missing questions will be rendered here by JS -->
+                        </div>
+                    </section>
+
+                    <!-- Strengths Section -->
+                    <section class="strengths-section">
+                        <h2 class="section-title">Was gut war</h2>
+                        <div class="strengths-card">
+                            <div class="strengths-content" id="strengthsList">
+                                <!-- Strengths will be rendered here by JS -->
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Next Steps Section -->
+                    <section class="next-steps-section">
+                        <h2 class="section-title">Konkrete nächste Schritte</h2>
+                        <div class="steps-list" id="stepsList">
+                            <!-- Steps will be rendered here by JS -->
+                        </div>
+                    </section>
+
+                    <!-- Motivation Card -->
+                    <section class="motivation-section">
+                        <div class="motivation-card">
+                            <div class="motivation-icon">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 2L31.09 16.26L46 18.27L35 29L37.18 44L24 37.77L10.82 44L13 29L2 18.27L16.91 16.26L24 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <h2 class="motivation-title">Sie sind auf dem richtigen Weg!</h2>
+                            <p class="motivation-text" id="motivationText">
+                                Mit gezielter Übung im Bereich Empathie können Sie Ihre ohnehin schon starke Leistung noch weiter verbessern. Ihre systematische Vorgehensweise und medizinische Kompetenz sind bereits ausgezeichnet.
+                            </p>
+                            <button class="cta-button">
+                                <span>Weiter üben</span>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </section>
+                </article>
+
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <!-- Summary Card -->
+                    <div class="sidebar-card summary-card">
+                        <h3 class="sidebar-card-title">Übersicht</h3>
+                        <dl class="summary-list">
+                            <div class="summary-item">
+                                <dt>Prüfungstyp</dt>
+                                <dd>KP-Prüfung Patientengespräch</dd>
+                            </div>
+                            <div class="summary-item">
+                                <dt>Datum</dt>
+                                <dd>02.09.2025, 19:33</dd>
+                            </div>
+                            <div class="summary-item">
+                                <dt>Gesamtpunktzahl</dt>
+                                <dd class="summary-score">82/100</dd>
+                            </div>
+                            <div class="summary-item">
+                                <dt>Status</dt>
+                                <dd class="summary-status" data-status="passed">Bestanden</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Actions Card -->
+                    <div class="sidebar-card actions-card">
+                        <h3 class="sidebar-card-title">Aktionen</h3>
+                        <div class="actions-list">
+                            <button class="sidebar-action-button">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M17.5 12.5V15.8333C17.5 16.2754 17.3244 16.6993 17.0118 17.0118C16.6993 17.3244 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M5.83333 8.33333L10 12.5L14.1667 8.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 12.5V2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Als PDF herunterladen</span>
+                            </button>
+                            <button class="sidebar-action-button">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M7.5 2.5H4.16667C3.72464 2.5 3.30072 2.67559 2.98816 2.98816C2.67559 3.30072 2.5 3.72464 2.5 4.16667V15.8333C2.5 16.2754 2.67559 16.6993 2.98816 17.0118C3.30072 17.3244 3.72464 17.5 4.16667 17.5H15.8333C16.2754 17.5 16.6993 17.3244 17.0118 17.0118C17.3244 16.6993 17.5 16.2754 17.5 15.8333V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16.25 1.25L10 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12.5 1.25H16.25V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Link teilen</span>
+                            </button>
+                            <button class="sidebar-action-button">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M5 7.5H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M5 10H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M5 12.5H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M15.8333 2.5H4.16667C3.24619 2.5 2.5 3.24619 2.5 4.16667V15.8333C2.5 16.7538 3.24619 17.5 4.16667 17.5H15.8333C16.7538 17.5 17.5 16.7538 17.5 15.8333V4.16667C17.5 3.24619 16.7538 2.5 15.8333 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Drucken</span>
+                            </button>
+                            <button class="sidebar-action-button">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M14.1667 17.5V9.16667C14.1667 8.72464 13.9911 8.30072 13.6785 7.98816C13.366 7.67559 12.9421 7.5 12.5 7.5H7.5C7.05797 7.5 6.63405 7.67559 6.32149 7.98816C6.00893 8.30072 5.83333 8.72464 5.83333 9.16667V17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 12.5V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 2.5V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2.5 17.5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Zu Favoriten hinzufügen</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Tracker -->
+                    <div class="sidebar-card progress-tracker-card">
+                        <h3 class="sidebar-card-title">Fortschritt</h3>
+                        <div class="progress-tracker">
+                            <div class="progress-item">
+                                <div class="progress-dot" data-status="completed"></div>
+                                <div class="progress-info">
+                                    <span class="progress-date">28.08.2025</span>
+                                    <span class="progress-score-small">75/100</span>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-dot" data-status="completed"></div>
+                                <div class="progress-info">
+                                    <span class="progress-date">30.08.2025</span>
+                                    <span class="progress-score-small">78/100</span>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-dot" data-status="current"></div>
+                                <div class="progress-info">
+                                    <span class="progress-date">02.09.2025</span>
+                                    <span class="progress-score-small">82/100</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-trend">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 10L6 6L8 8L14 2" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M10 2H14V6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>+7 Punkte Verbesserung</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <script src="evaluation-detail.js"></script>
+</body>
+</html>
