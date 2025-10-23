@@ -101,71 +101,297 @@ export default function KPSimulationScreen() {
     resetOptimisticCount();
   }, []);
 
+  // Add state for initialization tracking
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const initializationAttemptsRef = useRef(0);
+  const maxRetryAttempts = 3;
+
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
-      if (typeof window !== 'undefined' && user?.id) {
-        // CRITICAL: Check access before initializing widget
+      const timestamp = new Date().toISOString();
+
+      // ============================================
+      // STEP 1: VALIDATE USER DATA
+      // ============================================
+      console.log(`🔐 [${timestamp}] Step 1: Validating user data...`);
+
+      if (typeof window === 'undefined') {
+        console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
+        setInitializationError('Initialization failed: Not running in browser environment');
+        return;
+      }
+
+      if (!user) {
+        console.error(`❌ [${timestamp}] No user object found`);
+        setInitializationError('User not authenticated');
+        Alert.alert(
+          'Authentifizierungsfehler',
+          'Bitte melden Sie sich an, um fortzufahren.',
+          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
+        );
+        return;
+      }
+
+      if (!user.id) {
+        console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
+        setInitializationError('User ID not found');
+        Alert.alert(
+          'Authentifizierungsfehler',
+          'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.',
+          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
+        );
+        return;
+      }
+
+      console.log(`✅ [${timestamp}] User validated - ID: ${user.id}`);
+
+      // ============================================
+      // STEP 2: CHECK ACCESS PERMISSIONS
+      // ============================================
+      console.log(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
+
+      try {
         const accessCheck = await checkAccess();
-        if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-          console.log('🚫 KP: Blocking Voiceflow initialization - no simulations remaining');
+
+        if (!accessCheck) {
+          console.error(`❌ [${timestamp}] Access check returned null/undefined`);
+          setInitializationError('Failed to verify access permissions');
+          Alert.alert(
+            'Zugriffsfehler',
+            'Zugriffsberechtigungen konnten nicht überprüft werden. Bitte versuchen Sie es erneut.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+
+        console.log(`📊 [${timestamp}] Access check result:`, {
+          canUse: accessCheck.canUseSimulation,
+          remaining: accessCheck.remainingSimulations,
+          limit: accessCheck.simulationLimit
+        });
+
+        if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
+          console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
+          setInitializationError('No simulations remaining');
           return; // Do NOT initialize widget
         }
 
-        console.log('🏥 KP: Initializing medical simulation');
+        console.log(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
 
-        // Stop global cleanup to allow widget
-        stopGlobalVoiceflowCleanup();
-
-        // CRITICAL FIX: Generate session token BEFORE initializing Voiceflow
-        // This ensures variables are available from the first message
-        console.log('🔑 KP: Generating session token before Voiceflow initialization');
-        try {
-          const result = await simulationTracker.startSimulation('kp');
-          console.log('🔍 DEBUG: Pre-initialization session token result:', result);
-
-          if (result.success && result.sessionToken) {
-            console.log('✅ DEBUG: Got session token for initialization:', result.sessionToken);
-            setSessionToken(result.sessionToken);
-            sessionTokenRef.current = result.sessionToken;
-
-            // Create controller and initialize WITH credentials
-            const controller = createKPController();
-            voiceflowController.current = controller;
-
-            // Initialize with user_id and session_token
-            const initialized = await controller.initialize(user.id, result.sessionToken);
-
-            if (initialized) {
-              console.log('✅ KP: Voiceflow initialized with user credentials');
-
-              // Make sure widget is visible and functional
-              setTimeout(() => {
-                if (window.voiceflow?.chat) {
-                  window.voiceflow.chat.show();
-                  console.log('👁️ KP: Widget made visible');
-                }
-              }, 1000);
-
-              // Set up conversation monitoring
-              setupConversationMonitoring();
-            }
-          } else {
-            console.error('❌ DEBUG: Failed to get session token for initialization:', result.error);
-            // Still initialize widget without credentials as fallback
-            const controller = createKPController();
-            voiceflowController.current = controller;
-            await controller.loadWidget();
-            setupConversationMonitoring();
-          }
-        } catch (error) {
-          console.error('❌ KP: Error during initialization:', error);
-        }
+      } catch (accessError) {
+        console.error(`❌ [${timestamp}] Error checking access:`, accessError);
+        setInitializationError('Access check failed');
+        Alert.alert(
+          'Zugriffsfehler',
+          'Fehler beim Überprüfen der Zugriffsberechtigungen. Bitte versuchen Sie es erneut.',
+          [{ text: 'OK' }]
+        );
+        return;
       }
+
+      // ============================================
+      // STEP 3: INITIALIZE WITH RETRY LOGIC
+      // ============================================
+      console.log(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
+
+      await initializeWithRetry(user.id, timestamp);
     };
 
     initializeVoiceflow();
   }, [checkAccess, user]);
+
+  // Enhanced initialization with retry logic and exponential backoff
+  const initializeWithRetry = async (userId: string, initialTimestamp: string) => {
+    for (let attempt = 1; attempt <= maxRetryAttempts; attempt++) {
+      const timestamp = new Date().toISOString();
+
+      try {
+        console.log(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
+        setIsInitializing(true);
+        setInitializationError(null);
+        initializationAttemptsRef.current = attempt;
+
+        // Stop global cleanup to allow widget
+        console.log(`🛑 [${timestamp}] Stopping global Voiceflow cleanup`);
+        stopGlobalVoiceflowCleanup();
+
+        // ============================================
+        // STEP 3A: GENERATE SESSION TOKEN
+        // ============================================
+        console.log(`🔑 [${timestamp}] Step 3a: Generating session token before Voiceflow initialization`);
+
+        const result = await simulationTracker.startSimulation('kp');
+
+        console.log(`📋 [${timestamp}] Session token generation result:`, {
+          success: result.success,
+          hasToken: !!result.sessionToken,
+          error: result.error || 'none'
+        });
+
+        if (!result.success || !result.sessionToken) {
+          throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
+        }
+
+        console.log(`✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`);
+
+        setSessionToken(result.sessionToken);
+        sessionTokenRef.current = result.sessionToken;
+
+        // ============================================
+        // STEP 3B: CREATE VOICEFLOW CONTROLLER
+        // ============================================
+        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller`);
+
+        const controller = createKPController();
+
+        if (!controller) {
+          throw new Error('Failed to create Voiceflow controller - returned null/undefined');
+        }
+
+        voiceflowController.current = controller;
+        console.log(`✅ [${timestamp}] Voiceflow controller created successfully`);
+
+        // ============================================
+        // STEP 3C: INITIALIZE VOICEFLOW WITH CREDENTIALS
+        // ============================================
+        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with user credentials`);
+        console.log(`📤 [${timestamp}] Payload: user_id=${userId}, session_token=${result.sessionToken.substring(0, 8)}...`);
+
+        const initialized = await controller.initialize(userId, result.sessionToken);
+
+        if (!initialized) {
+          throw new Error('Voiceflow initialization returned false');
+        }
+
+        console.log(`✅ [${timestamp}] Voiceflow initialized successfully with user credentials`);
+
+        // ============================================
+        // STEP 3D: VERIFY VOICEFLOW API AVAILABILITY
+        // ============================================
+        console.log(`🔍 [${timestamp}] Step 3d: Verifying Voiceflow API availability`);
+
+        if (!window.voiceflow) {
+          throw new Error('Voiceflow API not available on window object after initialization');
+        }
+
+        if (!window.voiceflow.chat) {
+          throw new Error('Voiceflow chat API not available after initialization');
+        }
+
+        console.log(`✅ [${timestamp}] Voiceflow API verified and available`);
+
+        // ============================================
+        // STEP 3E: MAKE WIDGET VISIBLE
+        // ============================================
+        console.log(`👁️ [${timestamp}] Step 3e: Making widget visible`);
+
+        setTimeout(() => {
+          try {
+            if (window.voiceflow?.chat) {
+              window.voiceflow.chat.show();
+              console.log(`✅ [${timestamp}] Widget made visible successfully`);
+            } else {
+              console.warn(`⚠️ [${timestamp}] Voiceflow chat API not available during visibility check`);
+            }
+          } catch (visibilityError) {
+            console.error(`❌ [${timestamp}] Error making widget visible:`, visibilityError);
+          }
+        }, 1000);
+
+        // ============================================
+        // STEP 3F: SET UP CONVERSATION MONITORING
+        // ============================================
+        console.log(`📡 [${timestamp}] Step 3f: Setting up conversation monitoring`);
+        setupConversationMonitoring();
+        console.log(`✅ [${timestamp}] Conversation monitoring initialized`);
+
+        // ============================================
+        // STEP 3G: ADD VOICEFLOW MESSAGE LISTENER
+        // ============================================
+        console.log(`🎧 [${timestamp}] Step 3g: Adding Voiceflow message event listener`);
+
+        if (window.voiceflow?.chat) {
+          // Listen for Voiceflow events (if available in the API)
+          const voiceflowEventListener = (event: any) => {
+            console.log(`💬 [${new Date().toISOString()}] Voiceflow event received:`, {
+              type: event.type,
+              timestamp: new Date().toISOString(),
+              hasUserData: !!event.user_id,
+              hasSessionToken: !!event.session_token
+            });
+          };
+
+          // Try to add event listener if supported
+          try {
+            if (typeof window.voiceflow.chat.on === 'function') {
+              window.voiceflow.chat.on('message', voiceflowEventListener);
+              console.log(`✅ [${timestamp}] Voiceflow message listener added`);
+            } else {
+              console.log(`ℹ️ [${timestamp}] Voiceflow event listener API not available`);
+            }
+          } catch (listenerError) {
+            console.warn(`⚠️ [${timestamp}] Could not add Voiceflow event listener:`, listenerError);
+          }
+        }
+
+        // ============================================
+        // SUCCESS - RESET ERROR STATE
+        // ============================================
+        console.log(`🎉 [${timestamp}] ========================================`);
+        console.log(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
+        console.log(`🎉 [${timestamp}] User ID: ${userId}`);
+        console.log(`🎉 [${timestamp}] Session Token: ${result.sessionToken.substring(0, 8)}...`);
+        console.log(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
+        console.log(`🎉 [${timestamp}] ========================================`);
+
+        setIsInitializing(false);
+        setInitializationError(null);
+        return; // Success - exit retry loop
+
+      } catch (error) {
+        const timestamp = new Date().toISOString();
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        console.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
+          error: errorMessage,
+          stack: error instanceof Error ? error.stack : undefined
+        });
+
+        // If this was the last attempt, show error to user
+        if (attempt === maxRetryAttempts) {
+          console.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
+
+          setIsInitializing(false);
+          setInitializationError(errorMessage);
+
+          Alert.alert(
+            'Initialisierungsfehler',
+            `Voiceflow konnte nach ${maxRetryAttempts} Versuchen nicht initialisiert werden.\n\nFehler: ${errorMessage}\n\nBitte versuchen Sie es später erneut.`,
+            [
+              { text: 'Schließen', style: 'cancel' },
+              {
+                text: 'Erneut versuchen',
+                onPress: () => {
+                  initializationAttemptsRef.current = 0;
+                  initializeWithRetry(userId, timestamp);
+                }
+              }
+            ]
+          );
+
+          return; // Exit - all attempts exhausted
+        }
+
+        // Calculate exponential backoff delay (1s, 2s, 3s)
+        const delay = attempt * 1000;
+        console.log(`⏳ [${timestamp}] Waiting ${delay}ms before retry attempt ${attempt + 1}...`);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
