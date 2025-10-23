@@ -231,6 +231,56 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
             </View>
           )}
 
+          {/* Fehlende Fragen (Missing Questions) */}
+          {evaluation.missedQuestions && evaluation.missedQuestions.length > 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionIcon, styles.sectionIconWarning]}>
+                  <Text style={styles.iconEmoji}>❓</Text>
+                </View>
+                <Text style={styles.sectionTitle}>
+                  Fehlende Fragen ({evaluation.missedQuestions.length})
+                </Text>
+              </View>
+
+              {evaluation.missedQuestions.map((question, index) => (
+                <View key={index} style={styles.missingQuestionItem}>
+                  <View style={styles.missingQuestionHeader}>
+                    <View style={[
+                      styles.importanceBadge,
+                      question.importance === 'critical' && styles.importanceCritical,
+                      question.importance === 'important' && styles.importanceImportant,
+                      question.importance === 'recommended' && styles.importanceRecommended,
+                    ]}>
+                      <Text style={styles.importanceText}>
+                        {question.importance === 'critical' ? 'Kritisch' :
+                         question.importance === 'important' ? 'Wichtig' : 'Empfohlen'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.missingQuestionCategory}>{question.category}</Text>
+
+                  <View style={styles.missingQuestionDetail}>
+                    <Text style={styles.missingQuestionLabel}>Warum wichtig: </Text>
+                    <Text style={styles.missingQuestionText}>{question.reason}</Text>
+                  </View>
+
+                  {question.correctFormulations.length > 0 && (
+                    <View style={styles.missingQuestionDetail}>
+                      <Text style={styles.missingQuestionLabel}>Richtige Formulierung: </Text>
+                      {question.correctFormulations.map((formulation, fIndex) => (
+                        <Text key={fIndex} style={styles.formulationText}>
+                          • {formulation}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Score Breakdown (Categories) */}
           {evaluation.scoreBreakdown.length > 0 && (
             <View style={styles.sectionCard}>
@@ -586,6 +636,77 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+
+  // Missing Questions
+  missingQuestionItem: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+
+  missingQuestionHeader: {
+    marginBottom: 12,
+  },
+
+  importanceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+
+  importanceCritical: {
+    backgroundColor: '#EF4444',
+  },
+
+  importanceImportant: {
+    backgroundColor: '#F59E0B',
+  },
+
+  importanceRecommended: {
+    backgroundColor: '#3B82F6',
+  },
+
+  importanceText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+
+  missingQuestionCategory: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 8,
+  },
+
+  missingQuestionDetail: {
+    marginBottom: 8,
+  },
+
+  missingQuestionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+
+  missingQuestionText: {
+    fontSize: 13,
+    color: '#1E293B',
+    marginTop: 2,
+  },
+
+  formulationText: {
+    fontSize: 13,
+    color: '#065F46',
+    marginTop: 4,
+    marginLeft: 8,
+    fontStyle: 'italic',
   },
 
   // Category List

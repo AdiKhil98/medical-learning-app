@@ -1,4 +1,4 @@
-import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep } from '@/types/evaluation';
+import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep, MissedQuestion } from '@/types/evaluation';
 
 /**
  * Parses the raw evaluation text from Supabase into structured data
@@ -31,6 +31,9 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     // Parse critical errors
     const criticalErrors = parseCriticalErrors(rawText);
 
+    // Parse missing questions
+    const missedQuestions = parseMissingQuestions(rawText);
+
     // Parse positives (strengths)
     const positives = parseStrengths(rawText);
 
@@ -44,6 +47,7 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
       score: score.total,
       categoriesCount: scoreBreakdown.length,
       errorsCount: criticalErrors.length,
+      missedQuestionsCount: missedQuestions.length,
       positivesCount: positives.length,
       nextStepsCount: nextSteps.length
     });
@@ -61,6 +65,7 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
       },
       scoreBreakdown,
       criticalErrors,
+      missedQuestions,
       positives,
       nextSteps,
       motivationalMessage,
@@ -254,7 +259,7 @@ function parseCriticalErrors(text: string): CriticalError[] {
   const errors: CriticalError[] = [];
 
   // Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 20; i++) {
     const titleMatch = text.match(new RegExp(`ISSUE_${i}_TITLE:\\s*(.+?)(?=\\n|$)`, 'i'));
     if (!titleMatch) continue;
 
@@ -310,13 +315,59 @@ function parseCriticalErrors(text: string): CriticalError[] {
 }
 
 /**
+ * Parse missing questions from STRUCTURED TAG FORMAT
+ */
+function parseMissingQuestions(text: string): MissedQuestion[] {
+  const missedQuestions: MissedQuestion[] = [];
+
+  // Try structured format: MISSING_1, MISSING_2, etc.
+  for (let i = 1; i <= 15; i++) {
+    const missingMatch = text.match(new RegExp(`MISSING_${i}:\\s*(.+?)(?=\\n(?:MISSING_|SECTION|$))`, 'is'));
+    if (!missingMatch) continue;
+
+    const content = missingMatch[1].trim();
+    // Format: "Question | Wichtig weil: ... | Richtig: ..."
+    const parts = content.split('|').map(p => p.trim());
+
+    if (parts.length >= 2) {
+      const category = parts[0];
+      const reason = parts[1].replace(/^(Wichtig weil|Importance):\s*/i, '');
+      const formulationsText = parts[2] ? parts[2].replace(/^(Richtig|Correct):\s*/i, '') : '';
+
+      // Parse multiple correct formulations (separated by "oder" or commas)
+      const formulations = formulationsText
+        .split(/\s+oder\s+|,\s*/)
+        .map(f => f.trim().replace(/^["']|["']$/g, ''))
+        .filter(f => f.length > 0);
+
+      // Determine importance based on keywords or default to 'important'
+      let importance: 'critical' | 'important' | 'recommended' = 'important';
+      if (category.toLowerCase().includes('kritisch') || reason.toLowerCase().includes('essentiell')) {
+        importance = 'critical';
+      } else if (reason.toLowerCase().includes('empfohlen') || reason.toLowerCase().includes('hilfreich')) {
+        importance = 'recommended';
+      }
+
+      missedQuestions.push({
+        importance,
+        category,
+        reason,
+        correctFormulations: formulations,
+      });
+    }
+  }
+
+  return missedQuestions;
+}
+
+/**
  * Parse strengths from STRUCTURED TAG FORMAT
  */
 function parseStrengths(text: string): string[] {
   const strengths: string[] = [];
 
   // Try structured format: STRENGTH_1, STRENGTH_2, etc.
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 20; i++) {
     const strengthMatch = text.match(new RegExp(`STRENGTH_${i}:\\s*(.+?)(?=\\n(?:STRENGTH_|SECTION|$))`, 'is'));
     if (!strengthMatch) continue;
 
@@ -354,8 +405,8 @@ function parseStrengths(text: string): string[] {
 function parseNextSteps(text: string): NextStep[] {
   const steps: NextStep[] = [];
 
-  // Try structured format: STEP_1, STEP_2, STEP_3
-  for (let i = 1; i <= 3; i++) {
+  // Try structured format: STEP_1, STEP_2, STEP_3, STEP_4, STEP_5
+  for (let i = 1; i <= 5; i++) {
     const stepMatch = text.match(new RegExp(`STEP_${i}:\\s*(.+?)(?=\\n(?:STEP_|SECTION|$))`, 'is'));
     if (!stepMatch) continue;
 
@@ -376,16 +427,8 @@ function parseNextSteps(text: string): NextStep[] {
     }
   }
 
-  // Ensure we have at least 3 steps
-  while (steps.length < 3) {
-    steps.push({
-      priority: steps.length + 1,
-      action: 'Weiter üben',
-      details: 'Führen Sie weitere Simulationen durch und achten Sie auf die genannten Punkte.',
-    });
-  }
-
-  return steps.slice(0, 3);
+  // Return all found steps (up to 5)
+  return steps;
 }
 
 /**
@@ -435,14 +478,9 @@ function getEmptyEvaluation(id: string, timestamp: string): Evaluation {
     },
     scoreBreakdown: [],
     criticalErrors: [],
+    missedQuestions: [],
     positives: [],
-    nextSteps: [
-      {
-        priority: 1,
-        action: 'Erneut versuchen',
-        details: 'Starten Sie eine neue Simulation um Feedback zu erhalten.',
-      },
-    ],
+    nextSteps: [],
     motivationalMessage: '',
     rawText: '',
   };
