@@ -105,12 +105,21 @@ export default function KPSimulationScreen() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const initializationAttemptsRef = useRef(0);
+  const hasInitializedRef = useRef(false); // Prevent double initialization
   const maxRetryAttempts = 3;
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
     const initializeVoiceflow = async () => {
       const timestamp = new Date().toISOString();
+
+      // ============================================
+      // PREVENT DOUBLE INITIALIZATION
+      // ============================================
+      if (hasInitializedRef.current) {
+        console.log(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        return;
+      }
 
       // ============================================
       // STEP 1: VALIDATE USER DATA
@@ -200,6 +209,11 @@ export default function KPSimulationScreen() {
     };
 
     initializeVoiceflow();
+
+    // Cleanup function to reset initialization flag on unmount
+    return () => {
+      hasInitializedRef.current = false;
+    };
   }, [checkAccess, user]);
 
   // Enhanced initialization with retry logic and exponential backoff
@@ -345,6 +359,9 @@ export default function KPSimulationScreen() {
         console.log(`🎉 [${timestamp}] Session Token: ${result.sessionToken.substring(0, 8)}...`);
         console.log(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
         console.log(`🎉 [${timestamp}] ========================================`);
+
+        // Mark as successfully initialized to prevent re-initialization
+        hasInitializedRef.current = true;
 
         setIsInitializing(false);
         setInitializationError(null);
