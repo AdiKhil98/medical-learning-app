@@ -521,11 +521,13 @@ export default function FSPSimulationScreen() {
     // Access granted - proceed with timer
     console.log('[Timer] Access GRANTED - Starting timer...');
 
-    // CRITICAL: Check if a session already exists to prevent duplicate database sessions
-    if (sessionTokenRef.current) {
-      console.log('🔍 DEBUG: Session already exists, returning early to prevent duplicates');
+    // CRITICAL: Check if session token already exists (generated during initialization)
+    if (!sessionTokenRef.current) {
+      console.error('❌ FSP: No session token found - this should have been generated during initialization');
       return;
     }
+
+    console.log('✅ FSP: Using existing session token from initialization:', sessionTokenRef.current);
 
     // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
     // This prevents false positives from stale state
