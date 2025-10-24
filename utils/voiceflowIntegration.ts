@@ -294,11 +294,106 @@ export class VoiceflowController {
     }
   }
 
+  // Stop all active media streams (microphone, audio calls)
+  private stopAllMediaStreams(): void {
+    try {
+      console.log('🔇 Stopping all active media streams...');
+
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+        // Get all active media streams and stop them
+        // Note: navigator.mediaDevices.getUserMedia() creates streams that need to be stopped manually
+
+        // Method 1: Stop streams via getTracks if available
+        if ((navigator as any).mediaDevices.enumerateDevices) {
+          (navigator as any).mediaDevices.enumerateDevices()
+            .then((devices: MediaDeviceInfo[]) => {
+              devices.forEach((device: MediaDeviceInfo) => {
+                console.log('🎤 Found device:', device.kind, device.label);
+              });
+            })
+            .catch((error: Error) => {
+              console.warn('⚠️ Could not enumerate devices:', error);
+            });
+        }
+      }
+
+      // Method 2: Search for audio/video elements in Voiceflow widget and pause them
+      const audioElements = document.querySelectorAll('audio, video');
+      audioElements.forEach((element: Element) => {
+        const mediaElement = element as HTMLMediaElement;
+        if (!mediaElement.paused) {
+          mediaElement.pause();
+          mediaElement.srcObject = null;
+          console.log('⏸️ Paused media element:', mediaElement.tagName);
+        }
+      });
+
+      // Method 3: Try to access and stop MediaStream objects directly
+      // This requires the streams to be stored somewhere accessible
+      const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [id*="voiceflow"]');
+      voiceflowElements.forEach((element: Element) => {
+        const htmlElement = element as any;
+
+        // Check if element has srcObject (common for media streams)
+        if (htmlElement.srcObject && typeof htmlElement.srcObject.getTracks === 'function') {
+          const tracks = htmlElement.srcObject.getTracks();
+          tracks.forEach((track: MediaStreamTrack) => {
+            track.stop();
+            console.log('🛑 Stopped media track:', track.kind, track.label);
+          });
+          htmlElement.srcObject = null;
+        }
+      });
+
+      // Method 4: Search for MediaStream objects in window scope (aggressive cleanup)
+      // This is a last resort to find and stop any orphaned streams
+      if (typeof window !== 'undefined' && (window as any).voiceflow) {
+        const vfWidget = (window as any).voiceflow;
+
+        // Recursively search for MediaStream objects and stop them
+        const stopMediaStreamsInObject = (obj: any, depth = 0) => {
+          if (depth > 3 || !obj || typeof obj !== 'object') return;
+
+          try {
+            Object.keys(obj).forEach(key => {
+              const value = obj[key];
+
+              // Check if it's a MediaStream
+              if (value && typeof value === 'object' && typeof value.getTracks === 'function') {
+                const tracks = value.getTracks();
+                tracks.forEach((track: MediaStreamTrack) => {
+                  track.stop();
+                  console.log('🛑 Stopped nested media track:', track.kind);
+                });
+              }
+
+              // Recurse into nested objects
+              if (value && typeof value === 'object') {
+                stopMediaStreamsInObject(value, depth + 1);
+              }
+            });
+          } catch (error) {
+            // Ignore errors from accessing protected properties
+          }
+        };
+
+        stopMediaStreamsInObject(vfWidget);
+      }
+
+      console.log('✅ Media stream cleanup completed');
+    } catch (error) {
+      console.warn('⚠️ Error stopping media streams:', error);
+    }
+  }
+
   // Clean up widget properly
   destroy(): void {
     console.log('🧹 VoiceflowController: Starting cleanup...');
-    
+
     if (typeof window !== 'undefined') {
+      // Step 0: Stop all active media streams FIRST
+      this.stopAllMediaStreams();
+
       // Step 1: Call Voiceflow API cleanup methods
       if (window.voiceflow?.chat) {
         try {
