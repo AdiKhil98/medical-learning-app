@@ -828,6 +828,13 @@ export default function FSPSimulationScreen() {
     // Clear localStorage
     clearSimulationStorage();
 
+    // CRITICAL: Destroy Voiceflow controller to stop active conversations and media streams
+    if (voiceflowController.current) {
+      console.log('🛑 FSP: Destroying Voiceflow controller to stop active conversation');
+      voiceflowController.current.destroy();
+      voiceflowController.current = null;
+    }
+
     // Reset simulation state to allow restart
     resetSimulationState();
 

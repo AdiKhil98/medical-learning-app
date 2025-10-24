@@ -803,9 +803,16 @@ export default function KPSimulationScreen() {
         console.error('❌ KP: Error updating simulation status:', error);
       }
     }
-    
+
     // Clear localStorage
     clearSimulationStorage();
+
+    // CRITICAL: Destroy Voiceflow controller to stop active conversations and media streams
+    if (voiceflowController.current) {
+      console.log('🛑 KP: Destroying Voiceflow controller to stop active conversation');
+      voiceflowController.current.destroy();
+      voiceflowController.current = null;
+    }
 
     // Reset simulation state to allow restart
     resetSimulationState();
