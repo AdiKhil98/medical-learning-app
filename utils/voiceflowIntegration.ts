@@ -409,8 +409,8 @@ export class VoiceflowController {
 // Helper function to create controller for KP simulation
 export function createKPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68f148dc23d1c4b1ad26411a',  // KP57 Project ID
-    versionID: '68f148dc23d1c4b1ad26411b',  // KP57 Version ID
+    projectID: '68fb50ea29100126ffc5a30e',  // KP57 Project ID (New Account)
+    versionID: '68fb50ea29100126ffc5a30f',  // KP57 Version ID (New Account)
     url: 'https://general-runtime.voiceflow.com',
     voice: {
       url: 'https://runtime-api.voiceflow.com'
