@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -34,6 +35,203 @@ interface Category {
   iconName: string;
   slug: string;
 }
+
+// Animated Stats Grid Component
+const AnimatedStatsGrid: React.FC<{ favorites: number }> = ({ favorites }) => {
+  const statCards = [
+    { number: '6', label: 'Fachgebiete', color: '#B8846A' },
+    { number: '52', label: 'Kategorien', color: '#3B82F6' },
+    { number: '1.2k', label: 'Fragen', color: '#10B981' },
+    { number: favorites.toString(), label: 'Favoriten', color: '#F97316' },
+  ];
+
+  return (
+    <View style={styles.statsGrid}>
+      {statCards.map((stat, index) => {
+        const scaleAnim = useRef(new Animated.Value(0)).current;
+        const fadeAnim = useRef(new Animated.Value(0)).current;
+
+        useEffect(() => {
+          Animated.parallel([
+            Animated.spring(scaleAnim, {
+              toValue: 1,
+              delay: index * 80,
+              friction: 4,
+              tension: 40,
+              useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 300,
+              delay: index * 80,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }, []);
+
+        return (
+          <Animated.View
+            key={index}
+            style={[
+              styles.statCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <Text style={[styles.statNumber, { color: stat.color }]}>{stat.number}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
+};
+
+// Enhanced Category Card Component with Animations
+const AnimatedCategoryCard: React.FC<{
+  category: Category;
+  isFavorite: boolean;
+  onPress: () => void;
+  onToggleFavorite: () => void;
+  index: number;
+}> = ({ category, isFavorite, onPress, onToggleFavorite, index }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const iconPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Staggered fade-in animation on mount
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      delay: index * 100,
+      useNativeDriver: true,
+    }).start();
+
+    // Subtle continuous pulse for icon
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(iconPulse, {
+          toValue: 1.1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(iconPulse, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const iconProps = { size: 32, color: '#FFFFFF', strokeWidth: 2 };
+    switch (iconName) {
+      case 'stethoscope':
+        return <Stethoscope {...iconProps} />;
+      case 'heart':
+        return <Heart {...iconProps} />;
+      case 'alert':
+        return <AlertTriangle {...iconProps} />;
+      case 'activity':
+        return <Activity {...iconProps} />;
+      case 'droplet':
+        return <Droplet {...iconProps} />;
+      case 'scan':
+        return <Scan {...iconProps} />;
+      default:
+        return <Stethoscope {...iconProps} />;
+    }
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.categoryCardWrapper,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+      >
+        <LinearGradient
+          colors={category.gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.categoryCard}
+        >
+          {/* Background Pattern */}
+          <View style={styles.bgPattern}>
+            <View style={[styles.bgCircle, styles.bgCircle1]} />
+            <View style={[styles.bgCircle, styles.bgCircle2]} />
+          </View>
+
+          {/* Content */}
+          <View style={styles.cardContent}>
+            {/* Favorite Button */}
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={onToggleFavorite}
+              activeOpacity={0.7}
+            >
+              <Heart
+                size={24}
+                color="rgba(255,255,255,0.9)"
+                fill={isFavorite ? 'rgba(255,255,255,0.9)' : 'none'}
+              />
+            </TouchableOpacity>
+
+            {/* Icon Container with Pulse */}
+            <Animated.View
+              style={[
+                styles.iconContainer,
+                {
+                  transform: [{ scale: iconPulse }],
+                },
+              ]}
+            >
+              {getIconComponent(category.iconName)}
+            </Animated.View>
+
+            {/* Title */}
+            <Text style={styles.cardTitle}>{category.title}</Text>
+
+            {/* Count and Arrow */}
+            <View style={styles.cardFooter}>
+              <Text style={styles.cardCount}>{category.count} Kategorien</Text>
+              <ChevronRight size={24} color="rgba(255,255,255,0.7)" />
+            </View>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
@@ -103,27 +301,6 @@ const BibliothekIndex: React.FC = () => {
       slug: 'radiologie',
     },
   ];
-
-  // Get icon component by name
-  const getIconComponent = (iconName: string, size: number = 32, color: string = '#FFFFFF') => {
-    const iconProps = { size, color, strokeWidth: 2 };
-    switch (iconName) {
-      case 'stethoscope':
-        return <Stethoscope {...iconProps} />;
-      case 'heart':
-        return <Heart {...iconProps} />;
-      case 'alert':
-        return <AlertTriangle {...iconProps} />;
-      case 'activity':
-        return <Activity {...iconProps} />;
-      case 'droplet':
-        return <Droplet {...iconProps} />;
-      case 'scan':
-        return <Scan {...iconProps} />;
-      default:
-        return <Stethoscope {...iconProps} />;
-    }
-  };
 
   // Toggle favorite
   const toggleFavorite = (categoryId: number) => {
@@ -199,88 +376,23 @@ const BibliothekIndex: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Stats Grid */}
-          <View style={styles.statsGrid}>
-            {/* Stat 1 */}
-            <View style={styles.statCard}>
-              <Text style={[styles.statNumber, { color: '#B8846A' }]}>6</Text>
-              <Text style={styles.statLabel}>Fachgebiete</Text>
-            </View>
-
-            {/* Stat 2 */}
-            <View style={styles.statCard}>
-              <Text style={[styles.statNumber, { color: '#3B82F6' }]}>52</Text>
-              <Text style={styles.statLabel}>Kategorien</Text>
-            </View>
-
-            {/* Stat 3 */}
-            <View style={styles.statCard}>
-              <Text style={[styles.statNumber, { color: '#10B981' }]}>1.2k</Text>
-              <Text style={styles.statLabel}>Fragen</Text>
-            </View>
-
-            {/* Stat 4 */}
-            <View style={styles.statCard}>
-              <Text style={[styles.statNumber, { color: '#F97316' }]}>{favorites.length}</Text>
-              <Text style={styles.statLabel}>Favoriten</Text>
-            </View>
-          </View>
+          {/* Stats Grid - Animated */}
+          <AnimatedStatsGrid favorites={favorites.length} />
 
           {/* Section Header */}
           <Text style={styles.sectionHeader}>Alle Fachgebiete</Text>
 
           {/* Category Cards Grid */}
           <View style={styles.categoryGrid}>
-            {filteredCategories.map((category) => (
-              <TouchableOpacity
+            {filteredCategories.map((category, index) => (
+              <AnimatedCategoryCard
                 key={category.id}
-                style={styles.categoryCardWrapper}
+                category={category}
+                isFavorite={favorites.includes(category.id)}
                 onPress={() => handleCategoryPress(category.slug)}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={category.gradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.categoryCard}
-                >
-                  {/* Background Pattern */}
-                  <View style={styles.bgPattern}>
-                    <View style={[styles.bgCircle, styles.bgCircle1]} />
-                    <View style={[styles.bgCircle, styles.bgCircle2]} />
-                  </View>
-
-                  {/* Content */}
-                  <View style={styles.cardContent}>
-                    {/* Favorite Button */}
-                    <TouchableOpacity
-                      style={styles.favoriteButton}
-                      onPress={() => toggleFavorite(category.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Heart
-                        size={24}
-                        color="rgba(255,255,255,0.9)"
-                        fill={favorites.includes(category.id) ? 'rgba(255,255,255,0.9)' : 'none'}
-                      />
-                    </TouchableOpacity>
-
-                    {/* Icon Container */}
-                    <View style={styles.iconContainer}>
-                      {getIconComponent(category.iconName)}
-                    </View>
-
-                    {/* Title */}
-                    <Text style={styles.cardTitle}>{category.title}</Text>
-
-                    {/* Count and Arrow */}
-                    <View style={styles.cardFooter}>
-                      <Text style={styles.cardCount}>{category.count} Kategorien</Text>
-                      <ChevronRight size={24} color="rgba(255,255,255,0.7)" />
-                    </View>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
+                onToggleFavorite={() => toggleFavorite(category.id)}
+                index={index}
+              />
             ))}
           </View>
 
@@ -467,10 +579,10 @@ const styles = StyleSheet.create({
     padding: 24,
     minHeight: 200,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 12,
     overflow: 'hidden',
   },
   bgPattern: {
