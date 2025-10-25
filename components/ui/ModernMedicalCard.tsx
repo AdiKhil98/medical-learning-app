@@ -21,30 +21,68 @@ export default function ModernMedicalCard({
 }: ModernMedicalCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const iconRotate = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 400,
+      duration: 500,
       useNativeDriver: true,
     }).start();
+
+    // Subtle glow pulse animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.96,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.97,
+        useNativeDriver: true,
+      }),
+      Animated.timing(iconRotate, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 3,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(iconRotate, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
+
+  const rotation = iconRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '5deg'],
+  });
 
   return (
     <Animated.View
@@ -63,53 +101,78 @@ export default function ModernMedicalCard({
         activeOpacity={1}
         style={styles.touchable}
       >
-        <LinearGradient
-          colors={gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.card}
-        >
-          {/* Decorative elements */}
-          <View style={styles.decorativeCircle1} />
-          <View style={styles.decorativeCircle2} />
-          <View style={styles.decorativeCircle3} />
+        <View style={styles.cardContainer}>
+          {/* Glow effect behind card */}
+          <Animated.View style={[styles.glowLayer, { opacity: glowAnim }]} />
 
-          {/* Subtle overlay for depth */}
           <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'transparent', 'rgba(0,0,0,0.3)']}
+            colors={gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.overlay}
-          />
-
-          {/* Ready Badge - Top Right */}
-          {hasContent && (
-            <View style={styles.readyBadge}>
-              <View style={styles.readyDot} />
-              <Text style={styles.readyText}>BEREIT</Text>
+            style={styles.card}
+          >
+            {/* Decorative elements with glassmorphism */}
+            <View style={styles.decorativeCircle1} />
+            <View style={styles.decorativeCircle2} />
+            <View style={styles.decorativePattern}>
+              <View style={styles.patternDot} />
+              <View style={[styles.patternDot, { marginLeft: 8 }]} />
+              <View style={[styles.patternDot, { marginLeft: 8 }]} />
             </View>
-          )}
 
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Large Icon Badge with Glass Effect */}
-            <View style={styles.iconContainer}>
-              <View style={styles.iconBadge}>
-                <View style={styles.iconInnerRing}>
-                  <IconComponent size={40} color="#FFFFFF" strokeWidth={2} />
+            {/* Glassmorphism overlay */}
+            <LinearGradient
+              colors={['rgba(255,255,255,0.15)', 'transparent', 'rgba(0,0,0,0.25)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.overlay}
+            />
+
+            {/* Ready Badge - Top Right */}
+            {hasContent && (
+              <View style={styles.readyBadge}>
+                <View style={styles.readyDot} />
+                <Text style={styles.readyText}>BEREIT</Text>
+              </View>
+            )}
+
+            {/* Content */}
+            <View style={styles.content}>
+              {/* Enhanced Icon with Animation */}
+              <Animated.View style={[styles.iconContainer, { transform: [{ rotate: rotation }] }]}>
+                <View style={styles.iconBadge}>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.iconGradient}
+                  >
+                    <View style={styles.iconInnerRing}>
+                      <IconComponent size={44} color="#FFFFFF" strokeWidth={2.2} />
+                    </View>
+                  </LinearGradient>
+                </View>
+              </Animated.View>
+
+              {/* Title Section */}
+              <View style={styles.titleSection}>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.title} numberOfLines={2}>
+                    {title}
+                  </Text>
+                </View>
+
+                {/* Bottom row with accent and arrow */}
+                <View style={styles.bottomRow}>
+                  <View style={styles.accentLine} />
+                  <View style={styles.arrowIndicator}>
+                    <View style={styles.arrowDot} />
+                  </View>
                 </View>
               </View>
             </View>
-
-            {/* Title with Better Spacing */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.title} numberOfLines={2}>
-                {title}
-              </Text>
-              <View style={styles.accentLine} />
-            </View>
-          </View>
-        </LinearGradient>
+          </LinearGradient>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -117,50 +180,73 @@ export default function ModernMedicalCard({
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   touchable: {
-    borderRadius: 24,
-    overflow: 'hidden',
+    borderRadius: 28,
+  },
+  cardContainer: {
+    position: 'relative',
+    borderRadius: 28,
+  },
+  glowLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
   },
   card: {
-    height: 200,
-    borderRadius: 24,
-    padding: 24,
+    height: 220,
+    borderRadius: 28,
+    padding: 26,
     position: 'relative',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.4,
+    shadowRadius: 30,
+    elevation: 20,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   decorativeCircle1: {
     position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -50,
-    right: -50,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    top: -60,
+    right: -60,
   },
   decorativeCircle2: {
     position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    bottom: -30,
-    left: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    bottom: -40,
+    left: -40,
   },
-  decorativeCircle3: {
+  decorativePattern: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    top: '50%',
-    right: 20,
+    bottom: 24,
+    right: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  patternDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   overlay: {
     position: 'absolute',
@@ -172,82 +258,117 @@ const styles = StyleSheet.create({
   },
   readyBadge: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: 18,
+    right: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 14,
     zIndex: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 6,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
   },
   readyDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#10B981',
-    marginRight: 6,
+    marginRight: 7,
   },
   readyText: {
     color: '#10B981',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   content: {
     flex: 1,
     zIndex: 10,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   iconContainer: {
-    marginBottom: 16,
+    alignSelf: 'flex-start',
   },
   iconBadge: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.3)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  iconGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 24,
+  },
+  iconInnerRing: {
+    width: 76,
+    height: 76,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'rgba(0,0,0,0.2)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  iconInnerRing: {
-    width: 68,
-    height: 68,
+  titleSection: {
+    gap: 12,
+  },
+  titleContainer: {
+    gap: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    lineHeight: 28,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
+    letterSpacing: 0.5,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  accentLine: {
+    width: 50,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 2,
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+  },
+  arrowIndicator: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleContainer: {
-    gap: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 26,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-    letterSpacing: 0.3,
-  },
-  accentLine: {
-    width: 40,
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 2,
+  arrowDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
 });
