@@ -84,9 +84,15 @@ export default function KPSimulationScreen() {
         total: accessCheck?.simulationLimit
       });
 
-      // CRITICAL: Block page access if remaining === 0
-      if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-        console.error('[Page Access] BLOCKED - User cannot access simulation page. Remaining:', accessCheck?.remainingSimulations);
+      // CRITICAL: Block page access ONLY if remaining === 0
+      // Don't check canUseSimulation flag as it may be false during initial load
+      if (!accessCheck) {
+        console.error('[Page Access] No access check result - skipping modal');
+        return;
+      }
+
+      if (accessCheck.remainingSimulations === 0) {
+        console.error('[Page Access] BLOCKED - User has 0 simulations remaining');
 
         // Show upgrade modal immediately
         setShowUpgradeModal(true);
@@ -510,9 +516,14 @@ export default function KPSimulationScreen() {
       total: accessCheck?.simulationLimit
     });
 
-    // CRITICAL: Block if remaining === 0
-    if (!accessCheck || !accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-      console.error('[Timer] BLOCKED - Cannot start timer. Remaining:', accessCheck?.remainingSimulations);
+    // CRITICAL: Block ONLY if remaining === 0
+    if (!accessCheck) {
+      console.error('[Timer] No access check result - cannot start timer');
+      return;
+    }
+
+    if (accessCheck.remainingSimulations === 0) {
+      console.error('[Timer] BLOCKED - User has 0 simulations remaining');
 
       // Show upgrade modal
       setShowUpgradeModal(true);
