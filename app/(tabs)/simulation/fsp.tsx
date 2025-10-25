@@ -63,9 +63,20 @@ export default function FSPSimulationScreen() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
+  // Reset optimistic count FIRST on page mount/refresh to show actual backend count
+  useEffect(() => {
+    console.log('[Mount] Resetting optimistic count to show actual backend data...');
+    resetOptimisticCount();
+  }, [resetOptimisticCount]);
+
+  // THEN check page access after optimistic reset
   useEffect(() => {
     const checkPageAccess = async () => {
       console.log('[Page Access] Checking if user can access simulation page...');
+
+      // Small delay to ensure optimistic count has been reset
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const accessCheck = await checkAccess();
 
       console.log('[Page Access] Access check result:', {
@@ -89,16 +100,11 @@ export default function FSPSimulationScreen() {
     };
 
     checkPageAccess();
-  }, [checkAccess]);
+  }, [checkAccess, resetOptimisticCount]);
 
   // Check for existing simulation on mount
   useEffect(() => {
     checkExistingSimulation();
-  }, []);
-
-  // Reset optimistic count on page mount/refresh to show actual backend count
-  useEffect(() => {
-    resetOptimisticCount();
   }, []);
 
   // Add state for initialization tracking

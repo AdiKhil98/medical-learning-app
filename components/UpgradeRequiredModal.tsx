@@ -88,7 +88,7 @@ export function UpgradeRequiredModal({
                 <View style={[styles.usageBarFill, { width: '100%' }]} />
               </View>
               <Text style={styles.usageText}>
-                <Text style={styles.usageUsed}>{totalLimit}</Text>
+                <Text style={styles.usageUsed}>{totalLimit - remainingSimulations}</Text>
                 <Text style={styles.usageSeparator}>/</Text>
                 <Text style={styles.usageTotal}>{totalLimit}</Text>
                 <Text style={styles.usageLabel}> Simulationen verbraucht</Text>
