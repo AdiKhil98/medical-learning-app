@@ -62,59 +62,11 @@ export default function KPSimulationScreen() {
   // Upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Reset optimistic count FIRST on page mount/refresh to show actual backend count
+  // Reset optimistic count on page mount/refresh to show actual backend count
   useEffect(() => {
     console.log('[Mount] Resetting optimistic count to show actual backend data...');
     resetOptimisticCount();
   }, [resetOptimisticCount]);
-
-  // PAGE-LEVEL ACCESS CONTROL: Check access when page loads AFTER optimistic reset
-  useEffect(() => {
-    const checkPageAccess = async () => {
-      console.log('[Page Access] Checking if user can access simulation page...');
-
-      // Small delay to ensure optimistic count has been reset
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const accessCheck = await checkAccess();
-
-      console.log('[Page Access] Access check result:', {
-        canUse: accessCheck?.canUseSimulation,
-        remaining: accessCheck?.remainingSimulations,
-        total: accessCheck?.simulationLimit
-      });
-
-      // CRITICAL: Block page access ONLY if remaining === 0
-      // Don't check canUseSimulation flag as it may be false during initial load
-      if (!accessCheck) {
-        console.error('[Page Access] No access check result - skipping modal');
-        return;
-      }
-
-      // EXTRA SAFETY: Ensure remainingSimulations is a valid number and explicitly 0
-      const remaining = accessCheck.remainingSimulations;
-
-      console.log('[Page Access] Final decision - Remaining value:', remaining, 'Type:', typeof remaining);
-
-      if (typeof remaining === 'number' && remaining === 0) {
-        console.error('[Page Access] BLOCKED - User has exactly 0 simulations remaining');
-
-        // Show upgrade modal immediately
-        setShowUpgradeModal(true);
-
-        // Prevent any further interaction on this page
-        return;
-      }
-
-      if (typeof remaining !== 'number' || remaining > 0) {
-        console.log('[Page Access] ✅ Access GRANTED - User has simulations remaining or invalid data');
-      }
-
-      console.log('[Page Access] ✅ Access GRANTED - User can access simulation page');
-    };
-
-    checkPageAccess();
-  }, [checkAccess, resetOptimisticCount]);
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -525,24 +477,14 @@ export default function KPSimulationScreen() {
       total: accessCheck?.simulationLimit
     });
 
-    // CRITICAL: Block ONLY if remaining === 0
+    // Log access check for debugging (but don't block)
     if (!accessCheck) {
-      console.error('[Timer] No access check result - cannot start timer');
-      return;
-    }
-
-    if (accessCheck.remainingSimulations === 0) {
-      console.error('[Timer] BLOCKED - User has 0 simulations remaining');
-
-      // Show upgrade modal
-      setShowUpgradeModal(true);
-
-      // Stop any started processes (Voiceflow, widget, etc.)
-      if (window.voiceflow) {
-        window.voiceflow.chat.close();
-      }
-
-      return; // EXIT - DO NOT START TIMER
+      console.warn('[Timer] No access check result - proceeding anyway');
+    } else {
+      console.log('[Timer] Access check result:', {
+        remaining: accessCheck.remainingSimulations,
+        total: accessCheck.simulationLimit
+      });
     }
 
     // Access granted - proceed with timer
