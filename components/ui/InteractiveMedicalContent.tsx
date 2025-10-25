@@ -577,9 +577,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   }
 
   return (
-    <Animated.View style={[styles.appContainer, { opacity: fadeAnim, backgroundColor: '#FFFFFF' }]}>
-      {/* Clean White Background */}
-      <View style={styles.whiteBackground} />
+    <Animated.View style={[styles.appContainer, { opacity: fadeAnim }]}>
+      {/* Premium Gradient Background */}
+      <LinearGradient
+        colors={['#FFF5F0', '#FFFFFF', '#FFF8F5']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientBackground}
+      />
 
       {/* Single ScrollView for entire content including header */}
       <ScrollView
@@ -594,110 +599,130 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         scrollEventThrottle={2000} // Only trigger every 2 seconds to avoid excessive calls
       >
 
-        {/* Scrollable Header Section - Now part of scrollable content */}
-        <View style={[styles.scrollableHeader, { backgroundColor: 'transparent' }]}>
-          {/* Navigation Bar with Back Button and Modal */}
+        {/* Modern Header Section */}
+        <LinearGradient
+          colors={['#FB923C', '#F97316', '#EA580C']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modernHeader}
+        >
+          {/* Navigation Bar */}
           <View style={styles.navigationBar}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={onBackPress}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <ChevronLeft size={20} color={colors.primary} />
-              <Text style={[styles.backText, { color: colors.primary }]}>Zurück</Text>
+              <View style={styles.backButtonInner}>
+                <ChevronLeft size={22} color="#FFFFFF" />
+                <Text style={styles.backText}>Zurück</Text>
+              </View>
             </TouchableOpacity>
 
             {onOpenModal && currentSection && (
               <TouchableOpacity
-                style={[styles.modalButtonCompact, { backgroundColor: colors.card }]}
+                style={styles.modalButtonModern}
                 onPress={onOpenModal}
-                activeOpacity={0.7}
+                activeOpacity={0.8}
               >
-                <Maximize2 size={16} color={colors.primary} />
+                <Maximize2 size={18} color="#FFFFFF" />
               </TouchableOpacity>
             )}
           </View>
 
-          <View style={styles.titleContainer}>
-            <Text style={[styles.mainTitle, { color: '#B15740' }]}>  {/* Brown Rust for coral branding */}
+          {/* Title Section */}
+          <View style={styles.modernTitleContainer}>
+            <Text style={styles.modernTitle}>
               {supabaseRow?.title || 'Medizinischer Inhalt'}
             </Text>
             <TableOfContents
               sections={tableOfContentsItems}
               onNavigateToSection={handleNavigateToSection}
-              iconSize={18}
+              iconSize={20}
             />
           </View>
 
-          <View style={styles.metaInfo}>
-            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>  {/* Light beige background */}
-              <Text style={[styles.metaItem, { color: '#B15740' }]}>  {/* Brown Rust text */}
+          {/* Meta Info Badges */}
+          <View style={styles.modernMetaInfo}>
+            <View style={styles.modernMetaBadge}>
+              <Text style={styles.modernMetaText}>
                 📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
               </Text>
             </View>
-            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
-              <Text style={[styles.metaItem, { color: '#B15740' }]}>
+            <View style={styles.modernMetaBadge}>
+              <Text style={styles.modernMetaText}>
                 ⏱️ {formatDate(supabaseRow?.last_updated)}
               </Text>
             </View>
-            <View style={[styles.metaBadge, { backgroundColor: 'rgba(248, 243, 232, 0.8)' }]}>
-              <Text style={[styles.metaItem, { color: '#B15740' }]}>
+            <View style={styles.modernMetaBadge}>
+              <Text style={styles.modernMetaText}>
                 📖 {filteredSections.length} Abschnitte
               </Text>
             </View>
           </View>
+        </LinearGradient>
 
-          {/* Enhanced Search Bar - Now scrolls with content */}
-          <View style={[styles.enhancedSearchContainer, {
-            borderColor: 'rgba(184, 126, 112, 0.3)',
-            backgroundColor: '#FFFFFF',
-            shadowColor: 'rgba(181, 87, 64, 0.1)',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 1,
-            shadowRadius: 8,
-            elevation: 4,
-          }]}>
-            <Search size={20} color="#B87E70" style={styles.searchIcon} />
+        {/* Search and Study Controls Container */}
+        <View style={styles.controlsContainer}>
+
+          {/* Modern Search Bar */}
+          <View style={styles.modernSearchContainer}>
+            <Search size={22} color="#F97316" />
             <TextInput
-              style={[styles.enhancedSearchBox, {
-                color: '#333333',
-                backgroundColor: 'transparent',
-                fontSize: 16,
-              }]}
-              placeholder="Durchsuche medizinische Inhalte..."
-              placeholderTextColor="#6B7280"
+              style={styles.modernSearchInput}
+              placeholder="Inhalte durchsuchen..."
+              placeholderTextColor="#9CA3AF"
               value={searchTerm}
               onChangeText={handleSearch}
             />
             {searchTerm.length > 0 && (
-              <TouchableOpacity onPress={() => {
-                handleSearch('');
-                triggerActivity();
-              }} style={styles.clearSearch}>
-                <Text style={[styles.clearSearchText, { color: '#B87E70' }]}>✕</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  handleSearch('');
+                  triggerActivity();
+                }}
+                style={styles.modernClearButton}
+              >
+                <Text style={styles.modernClearText}>✕</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Study Controls - Now scroll with content */}
-          <View style={styles.studyControls}>
+          {/* Modern Study Controls */}
+          <View style={styles.modernStudyControls}>
             <TouchableOpacity
-              style={[styles.studyToggle, studyMode && styles.studyToggleActive]}
+              style={[styles.modernStudyButton, studyMode && styles.modernStudyButtonActive]}
               onPress={() => setStudyMode(!studyMode)}
+              activeOpacity={0.8}
             >
-              <Eye size={16} color={studyMode ? '#FFFFFF' : '#B87E70'} />
-              <Text style={[styles.studyToggleText, studyMode && styles.studyToggleTextActive]}>
-                Study Mode
-              </Text>
+              <LinearGradient
+                colors={studyMode ? ['#F97316', '#EA580C'] : ['#FFFFFF', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modernStudyButtonGradient}
+              >
+                <Eye size={20} color={studyMode ? '#FFFFFF' : '#F97316'} />
+                <Text style={[styles.modernStudyButtonText, studyMode && styles.modernStudyButtonTextActive]}>
+                  Study Mode
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.fontSizeToggle, fontSize === 'large' && styles.fontSizeToggleActive]}
+              style={[styles.modernFontButton, fontSize === 'large' && styles.modernFontButtonActive]}
               onPress={() => setFontSize(fontSize === 'normal' ? 'large' : 'normal')}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.fontSizeText, fontSize === 'large' && styles.fontSizeTextActive]}>
-                Aa
-              </Text>
+              <LinearGradient
+                colors={fontSize === 'large' ? ['#F97316', '#EA580C'] : ['#FFFFFF', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modernFontButtonGradient}
+              >
+                <Text style={[styles.modernFontButtonText, fontSize === 'large' && styles.modernFontButtonTextActive]}>
+                  Aa
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -818,14 +843,190 @@ const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
   },
-  whiteBackground: {
+  gradientBackground: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: '#FFFFFF',
     zIndex: -1,
+  },
+  // Modern Header Styles
+  modernHeader: {
+    padding: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  backButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  backText: {
+    marginLeft: 6,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalButtonModern: {
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modernTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  modernTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    flex: 1,
+    lineHeight: 34,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  modernMetaInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  modernMetaBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  modernMetaText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // Controls Container
+  controlsContainer: {
+    padding: 20,
+    paddingBottom: 16,
+  },
+  // Modern Search
+  modernSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    marginBottom: 16,
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#FED7AA',
+  },
+  modernSearchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+    marginLeft: 12,
+    padding: 0,
+  },
+  modernClearButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modernClearText: {
+    fontSize: 16,
+    color: '#F97316',
+    fontWeight: '700',
+  },
+  // Modern Study Controls
+  modernStudyControls: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modernStudyButton: {
+    flex: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modernStudyButtonActive: {
+    shadowOpacity: 0.3,
+  },
+  modernStudyButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: '#FED7AA',
+    borderRadius: 14,
+  },
+  modernStudyButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#F97316',
+  },
+  modernStudyButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  modernFontButton: {
+    width: 56,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modernFontButtonActive: {
+    shadowOpacity: 0.3,
+  },
+  modernFontButtonGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderWidth: 2,
+    borderColor: '#FED7AA',
+    borderRadius: 14,
+  },
+  modernFontButtonText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F97316',
+  },
+  modernFontButtonTextActive: {
+    color: '#FFFFFF',
   },
   errorContainer: {
     flex: 1,
