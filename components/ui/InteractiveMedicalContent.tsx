@@ -23,7 +23,12 @@ import {
   Eye,
   Heart,
   ChevronLeft,
-  Maximize2
+  Maximize2,
+  CheckCircle,
+  Circle,
+  Clock,
+  ChevronRight,
+  StickyNote
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -59,6 +64,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const [studyMode, setStudyMode] = useState(false);
   const [highlightedText, setHighlightedText] = useState<Set<string>>(new Set());
   const [bookmarkedSections, setBookmarkedSections] = useState<Set<number>>(new Set());
+  const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [fontSize, setFontSize] = useState<'normal' | 'large'>('normal');
   const [readingProgress, setReadingProgress] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -206,6 +212,36 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       return 'Unbekannt';
     }
   };
+
+  // Calculate reading time for a section (assuming 200 words per minute)
+  const calculateReadingTime = (content: string): number => {
+    const words = content.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / 200);
+    return Math.max(1, minutes); // Minimum 1 minute
+  };
+
+  // Calculate total reading time for all sections
+  const totalReadingTime = React.useMemo(() => {
+    return parsedSections.reduce((total, section) => {
+      return total + calculateReadingTime(section.content);
+    }, 0);
+  }, [parsedSections]);
+
+  // Calculate completion percentage
+  const completionPercentage = React.useMemo(() => {
+    if (parsedSections.length === 0) return 0;
+    return Math.round((completedSections.size / parsedSections.length) * 100);
+  }, [completedSections.size, parsedSections.length]);
+
+  // Calculate remaining reading time
+  const remainingReadingTime = React.useMemo(() => {
+    return parsedSections.reduce((total, section, index) => {
+      if (!completedSections.has(index)) {
+        return total + calculateReadingTime(section.content);
+      }
+      return total;
+    }, 0);
+  }, [parsedSections, completedSections]);
 
   // Filter sections based on search
   const filteredSections = React.useMemo(() => {
@@ -651,16 +687,34 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </View>
             <View style={styles.modernMetaBadge}>
               <Text style={styles.modernMetaText}>
-                ⏱️ {formatDate(supabaseRow?.last_updated)}
+                ⏱️ {totalReadingTime} Min. Lesezeit
               </Text>
             </View>
             <View style={styles.modernMetaBadge}>
               <Text style={styles.modernMetaText}>
-                📖 {filteredSections.length} Abschnitte
+                📖 {parsedSections.length} Abschnitte
               </Text>
             </View>
           </View>
         </LinearGradient>
+
+        {/* Progress Tracking Section */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>
+              Fortschritt: {completedSections.size}/{parsedSections.length} Abschnitte
+            </Text>
+            <Text style={styles.progressPercentage}>{completionPercentage}%</Text>
+          </View>
+          <View style={styles.progressBarTrack}>
+            <LinearGradient
+              colors={['#F97316', '#EA580C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.progressBarFill, { width: `${completionPercentage}%` }]}
+            />
+          </View>
+        </View>
 
         {/* Search and Study Controls Container */}
         <View style={styles.controlsContainer}>
@@ -733,101 +787,217 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </Text>
         )}
 
-        {/* Enhanced Sections - Now directly in main scroll */}
+        {/* Modern E-Learning Section Cards */}
         {filteredSections.map((section, index) => {
           const contentStyle = getContentTypeStyle(section.title, section.content);
           const IconComponent = contentStyle.icon;
+          const isCompleted = completedSections.has(index);
+          const isExpanded = expandedSections[index];
+          const readingTime = calculateReadingTime(section.content);
 
           return (
-            <View
+            <TouchableOpacity
               key={index}
               ref={(ref) => { sectionRefs.current[index] = ref; }}
-              style={[styles.enhancedContentSection, {
-                backgroundColor: contentStyle.backgroundColor,
-                borderLeftWidth: 4,
-                borderLeftColor: contentStyle.borderColor,
-                borderColor: 'rgba(184, 126, 112, 0.2)',
-                shadowColor: 'rgba(181, 87, 64, 0.1)',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 1,
-                shadowRadius: 12,
-                elevation: 8,
-                marginHorizontal: 20,
-              }]}
+              activeOpacity={0.95}
+              onPress={() => {
+                setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
+                triggerActivity();
+              }}
+              style={[
+                styles.modernSectionCard,
+                isExpanded && styles.modernSectionCardExpanded,
+              ]}
             >
-              {/* Enhanced Section Header */}
-              <TouchableOpacity
-                style={styles.enhancedSectionHeader}
-                onPress={() => {
-                  setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
-                  triggerActivity();
-                }}
-                accessibilityLabel={`${expandedSections[index] ? 'Collapse' : 'Expand'} ${section.title}`}
-                accessibilityRole="button"
-              >
-                <View style={styles.sectionHeaderLeft}>
-                  <IconComponent size={20} color={contentStyle.iconColor} />
-                  <Text style={[styles.enhancedSectionTitle, { fontSize: fontSize === 'large' ? 20 : 18 }]}>
-                    {section.title}
-                  </Text>
+              {/* Section Card Header */}
+              <View style={styles.modernSectionCardHeader}>
+                {/* Left Side: Icon Container */}
+                <View style={[
+                  styles.modernIconContainer,
+                  isCompleted ? styles.modernIconContainerCompleted : styles.modernIconContainerIncomplete
+                ]}>
+                  <IconComponent
+                    size={24}
+                    color={isCompleted ? '#10B981' : '#F97316'}
+                    strokeWidth={2.5}
+                  />
                 </View>
 
-                <View style={styles.sectionHeaderRight}>
+                {/* Center: Title and Meta */}
+                <View style={styles.modernSectionInfo}>
+                  <Text style={[styles.modernSectionCardTitle, { fontSize: fontSize === 'large' ? 20 : 18 }]}>
+                    {section.title}
+                  </Text>
+                  <View style={styles.modernSectionMeta}>
+                    <View style={styles.modernMetaItem}>
+                      <Clock size={14} color="#6B7280" />
+                      <Text style={styles.modernMetaItemText}>{readingTime} Min.</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Right Side: Completion Status and Expand Arrow */}
+                <View style={styles.modernSectionActions}>
                   <TouchableOpacity
-                    style={styles.bookmarkButton}
                     onPress={(e) => {
                       e.stopPropagation();
-                      const newBookmarks = new Set(bookmarkedSections);
-                      if (newBookmarks.has(index)) {
-                        newBookmarks.delete(index);
+                      const newCompleted = new Set(completedSections);
+                      if (newCompleted.has(index)) {
+                        newCompleted.delete(index);
                       } else {
-                        newBookmarks.add(index);
+                        newCompleted.add(index);
                       }
-                      setBookmarkedSections(newBookmarks);
+                      setCompletedSections(newCompleted);
+                      triggerActivity();
                     }}
+                    style={styles.modernCompletionButton}
                   >
-                    <Bookmark
-                      size={16}
-                      color={bookmarkedSections.has(index) ? '#F59E0B' : '#9CA3AF'}
-                      fill={bookmarkedSections.has(index) ? '#F59E0B' : 'none'}
-                    />
+                    {isCompleted ? (
+                      <CheckCircle size={24} color="#10B981" fill="#10B981" />
+                    ) : (
+                      <Circle size={24} color="#D1D5DB" strokeWidth={2} />
+                    )}
                   </TouchableOpacity>
-
                   <ChevronDown
                     size={20}
-                    color="#6B7280"
+                    color="#9CA3AF"
                     style={[
-                      styles.chevronIcon,
-                      expandedSections[index] && { transform: [{ rotate: '180deg' }] }
+                      styles.modernChevronIcon,
+                      isExpanded && { transform: [{ rotate: '180deg' }] }
                     ]}
                   />
                 </View>
-              </TouchableOpacity>
+              </View>
 
-              {/* Key Points Box (when study mode is active) */}
-              {studyMode && expandedSections[index] && (
-                <View style={[styles.keyPointsBox, { borderColor: contentStyle.borderColor }]}>
-                  <View style={styles.keyPointsHeader}>
-                    <Lightbulb size={16} color={contentStyle.iconColor} />
-                    <Text style={[styles.keyPointsTitle, { color: contentStyle.iconColor }]}>
-                      Wichtige Punkte
-                    </Text>
+              {/* Expanded Content */}
+              {isExpanded && (
+                <View style={styles.modernSectionExpandedContent}>
+                  {/* Key Points Box */}
+                  {studyMode && (
+                    <View style={styles.modernKeyPointsBox}>
+                      <View style={styles.modernKeyPointsHeader}>
+                        <Lightbulb size={18} color="#3B82F6" />
+                        <Text style={styles.modernKeyPointsTitle}>Wichtige Punkte</Text>
+                      </View>
+                      <Text style={styles.modernKeyPointsText}>
+                        • Automatisch erkannte Schlüsselkonzepte werden hervorgehoben
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Main Content */}
+                  <View style={styles.modernContentBody}>
+                    {renderFormattedContent(section.content)}
                   </View>
-                  <Text style={styles.keyPointsText}>
-                    • Automatisch erkannte Schlüsselkonzepte werden hervorgehoben
-                  </Text>
-                </View>
-              )}
 
-              {/* Section Content */}
-              {expandedSections[index] && (
-                <View style={styles.enhancedSectionContent}>
-                  {renderFormattedContent(section.content)}
+                  {/* Action Buttons */}
+                  <View style={styles.modernActionButtons}>
+                    <TouchableOpacity
+                      style={styles.modernPrimaryButton}
+                      onPress={() => {
+                        // Mark as complete and move to next section
+                        const newCompleted = new Set(completedSections);
+                        newCompleted.add(index);
+                        setCompletedSections(newCompleted);
+
+                        // Expand next section if available
+                        if (index < filteredSections.length - 1) {
+                          setExpandedSections(prev => ({
+                            ...prev,
+                            [index]: false,
+                            [index + 1]: true
+                          }));
+                        }
+                        triggerActivity();
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['#F97316', '#EA580C']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.modernButtonGradient}
+                      >
+                        <Text style={styles.modernPrimaryButtonText}>Weiter</Text>
+                        <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.modernSecondaryButton}
+                      onPress={() => {
+                        // Toggle bookmark for this section
+                        const newBookmarks = new Set(bookmarkedSections);
+                        if (newBookmarks.has(index)) {
+                          newBookmarks.delete(index);
+                        } else {
+                          newBookmarks.add(index);
+                        }
+                        setBookmarkedSections(newBookmarks);
+                        triggerActivity();
+                      }}
+                    >
+                      <StickyNote size={18} color="#6B7280" strokeWidth={2} />
+                      <Text style={styles.modernSecondaryButtonText}>
+                        {bookmarkedSections.has(index) ? 'Notiz entfernen' : 'Notizen'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           );
         })}
+
+        {/* Learning Summary Stats */}
+        <View style={styles.learningSummaryCard}>
+          <Text style={styles.learningSummaryTitle}>Lernzusammenfassung</Text>
+
+          <View style={styles.learningSummaryStats}>
+            {/* Completed Sections */}
+            <View style={styles.summaryStatItem}>
+              <View style={[styles.summaryStatIcon, { backgroundColor: '#DCFCE7' }]}>
+                <CheckCircle size={24} color="#10B981" />
+              </View>
+              <View style={styles.summaryStatContent}>
+                <Text style={styles.summaryStatValue}>{completedSections.size}</Text>
+                <Text style={styles.summaryStatLabel}>Abgeschlossen</Text>
+              </View>
+            </View>
+
+            {/* Remaining Sections */}
+            <View style={styles.summaryStatItem}>
+              <View style={[styles.summaryStatIcon, { backgroundColor: '#FEF3C7' }]}>
+                <Circle size={24} color="#F59E0B" strokeWidth={2} />
+              </View>
+              <View style={styles.summaryStatContent}>
+                <Text style={styles.summaryStatValue}>
+                  {parsedSections.length - completedSections.size}
+                </Text>
+                <Text style={styles.summaryStatLabel}>Verbleibend</Text>
+              </View>
+            </View>
+
+            {/* Total Reading Time */}
+            <View style={styles.summaryStatItem}>
+              <View style={[styles.summaryStatIcon, { backgroundColor: '#FED7AA' }]}>
+                <Clock size={24} color="#F97316" />
+              </View>
+              <View style={styles.summaryStatContent}>
+                <Text style={styles.summaryStatValue}>{remainingReadingTime}</Text>
+                <Text style={styles.summaryStatLabel}>Min. übrig</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Progress Summary Text */}
+          <View style={styles.summaryProgressText}>
+            <Text style={styles.summaryProgressDescription}>
+              {completionPercentage === 100
+                ? '🎉 Herzlichen Glückwunsch! Sie haben alle Abschnitte abgeschlossen.'
+                : `Du hast ${completedSections.size} von ${parsedSections.length} Abschnitten abgeschlossen. Mach weiter so!`}
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -1393,6 +1563,276 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+
+  // Progress Section Styles
+  progressSection: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: -12,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  progressPercentage: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F97316',
+  },
+  progressBarTrack: {
+    height: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+
+  // Modern Section Card Styles
+  modernSectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  modernSectionCardExpanded: {
+    borderColor: '#F97316',
+    shadowColor: '#F97316',
+    shadowOpacity: 0.15,
+  },
+  modernSectionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    gap: 16,
+  },
+  modernIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modernIconContainerCompleted: {
+    backgroundColor: '#DCFCE7',
+  },
+  modernIconContainerIncomplete: {
+    backgroundColor: '#FED7AA',
+  },
+  modernSectionInfo: {
+    flex: 1,
+  },
+  modernSectionCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1F2937',
+    lineHeight: 24,
+    marginBottom: 6,
+  },
+  modernSectionMeta: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modernMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  modernMetaItemText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  modernSectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modernCompletionButton: {
+    padding: 4,
+  },
+  modernChevronIcon: {
+    transition: 'transform 0.3s ease',
+  },
+
+  // Modern Expanded Content Styles
+  modernSectionExpandedContent: {
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
+  modernKeyPointsBox: {
+    backgroundColor: '#EFF6FF',
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  modernKeyPointsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  modernKeyPointsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  modernKeyPointsText: {
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 22,
+  },
+  modernContentBody: {
+    marginBottom: 24,
+  },
+  modernActionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modernPrimaryButton: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modernButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  modernPrimaryButtonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  modernSecondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    gap: 8,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  modernSecondaryButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+
+  // Learning Summary Card Styles
+  learningSummaryCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#F3F4F6',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  learningSummaryTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  learningSummaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  summaryStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  summaryStatIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  summaryStatContent: {
+    alignItems: 'center',
+  },
+  summaryStatValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  summaryStatLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  summaryProgressText: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  summaryProgressDescription: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#92400E',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 
