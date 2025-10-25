@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
-import Card from '@/components/ui/folder';
+import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -261,15 +261,13 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
 
   return (
     <View style={{ width: CARD_WIDTH }}>
-      <Card
+      <ModernMedicalCard
         title={childItem.title}
         icon={IconComponent}
         gradient={itemDetails.gradient}
         hoverGradient={itemDetails.hoverGradient}
         hasContent={Boolean(hasContent)}
         onPress={onPress}
-        size="medium"
-        showBadge={true}
       />
     </View>
   );
