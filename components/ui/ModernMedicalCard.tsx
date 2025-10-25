@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronRight } from 'lucide-react-native';
 
 interface ModernMedicalCardProps {
   title: string;
@@ -20,19 +21,36 @@ export default function ModernMedicalCard({
   onPress,
 }: ModernMedicalCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+  const iconRotateAnim = useRef(new Animated.Value(0)).current;
+  const iconScaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const iconRotate = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const arrowAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const [isPressed, setIsPressed] = useState(false);
+
+  // Calculate progress (mock - in real app, this would come from props)
+  const progress = hasContent ? 100 : 0;
 
   useEffect(() => {
-    // Fade in animation
+    // Initial fade in
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,
       useNativeDriver: true,
     }).start();
 
-    // Subtle glow pulse animation
+    // Animate progress bar
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 1000,
+      delay: 200,
+      useNativeDriver: false,
+    }).start();
+
+    // Continuous glow pulse
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
@@ -47,15 +65,34 @@ export default function ModernMedicalCard({
         }),
       ])
     ).start();
-  }, []);
+  }, [progress]);
 
   const handlePressIn = () => {
+    setIsPressed(true);
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: 0.97,
+        toValue: 1.02,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 300,
+      }),
+      Animated.spring(translateYAnim, {
+        toValue: -12,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 300,
+      }),
+      Animated.timing(iconRotateAnim, {
+        toValue: 1,
+        duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(iconRotate, {
+      Animated.spring(iconScaleAnim, {
+        toValue: 1.15,
+        useNativeDriver: true,
+        friction: 6,
+      }),
+      Animated.timing(arrowAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
@@ -64,14 +101,31 @@ export default function ModernMedicalCard({
   };
 
   const handlePressOut = () => {
+    setIsPressed(false);
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 4,
-        tension: 50,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 300,
+      }),
+      Animated.spring(translateYAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 300,
+      }),
+      Animated.timing(iconRotateAnim, {
+        toValue: 0,
+        duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(iconRotate, {
+      Animated.spring(iconScaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 6,
+      }),
+      Animated.timing(arrowAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
@@ -79,9 +133,29 @@ export default function ModernMedicalCard({
     ]).start();
   };
 
-  const rotation = iconRotate.interpolate({
+  const iconRotate = iconRotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '5deg'],
+    outputRange: ['0deg', '6deg'],
+  });
+
+  const arrowTranslate = arrowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 6],
+  });
+
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  const glowScale = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.3],
+  });
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
   });
 
   return (
@@ -90,7 +164,10 @@ export default function ModernMedicalCard({
         styles.cardWrapper,
         {
           opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
+          transform: [
+            { scale: scaleAnim },
+            { translateY: translateYAnim },
+          ],
         },
       ]}
     >
@@ -102,76 +179,109 @@ export default function ModernMedicalCard({
         style={styles.touchable}
       >
         <View style={styles.cardContainer}>
-          {/* Glow effect behind card */}
-          <Animated.View style={[styles.glowLayer, { opacity: glowAnim }]} />
-
+          {/* Main Gradient Card */}
           <LinearGradient
-            colors={gradient}
+            colors={isPressed ? hoverGradient : gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.card}
           >
-            {/* Decorative elements with glassmorphism */}
-            <View style={styles.decorativeCircle1} />
-            <View style={styles.decorativeCircle2} />
-            <View style={styles.decorativePattern}>
-              <View style={styles.patternDot} />
-              <View style={[styles.patternDot, { marginLeft: 8 }]} />
-              <View style={[styles.patternDot, { marginLeft: 8 }]} />
-            </View>
+            {/* Grid Pattern Overlay */}
+            <View style={styles.gridPattern} />
 
-            {/* Glassmorphism overlay */}
-            <LinearGradient
-              colors={['rgba(255,255,255,0.15)', 'transparent', 'rgba(0,0,0,0.25)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.overlay}
+            {/* Glowing Orb Effect */}
+            <Animated.View
+              style={[
+                styles.glowingOrb,
+                {
+                  opacity: glowOpacity,
+                  transform: [{ scale: glowScale }],
+                },
+              ]}
             />
 
-            {/* Ready Badge - Top Right */}
+            {/* BEREIT Corner Badge */}
             {hasContent && (
-              <View style={styles.readyBadge}>
-                <View style={styles.readyDot} />
-                <Text style={styles.readyText}>BEREIT</Text>
+              <View style={styles.cornerBadge}>
+                <Text style={styles.cornerBadgeText}>BEREIT</Text>
               </View>
             )}
 
             {/* Content */}
             <View style={styles.content}>
-              {/* Enhanced Icon with Animation */}
-              <Animated.View style={[styles.iconContainer, { transform: [{ rotate: rotation }] }]}>
-                <View style={styles.iconBadge}>
-                  <LinearGradient
-                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.iconGradient}
-                  >
-                    <View style={styles.iconInnerRing}>
-                      <IconComponent size={44} color="#FFFFFF" strokeWidth={2.2} />
-                    </View>
-                  </LinearGradient>
+              {/* Glass Morphism Icon Container */}
+              <Animated.View
+                style={[
+                  styles.iconContainer,
+                  {
+                    transform: [
+                      { rotate: iconRotate },
+                      { scale: iconScaleAnim },
+                    ],
+                  },
+                ]}
+              >
+                <View style={styles.iconGlass}>
+                  <IconComponent size={56} color="#FFFFFF" strokeWidth={2} />
                 </View>
               </Animated.View>
 
-              {/* Title Section */}
-              <View style={styles.titleSection}>
-                <View style={styles.titleContainer}>
-                  <Text style={styles.title} numberOfLines={2}>
-                    {title}
-                  </Text>
-                </View>
+              {/* Title */}
+              <Text style={styles.title} numberOfLines={2}>
+                {title}
+              </Text>
 
-                {/* Bottom row with accent and arrow */}
-                <View style={styles.bottomRow}>
-                  <View style={styles.accentLine} />
-                  <View style={styles.arrowIndicator}>
-                    <View style={styles.arrowDot} />
-                  </View>
+              {/* Description (optional) */}
+              <Text style={styles.description} numberOfLines={2}>
+                Medizinische Kategorie
+              </Text>
+
+              {/* Progress Bar */}
+              <View style={styles.progressContainer}>
+                <View style={styles.progressTrack}>
+                  <Animated.View
+                    style={[
+                      styles.progressFill,
+                      { width: progressWidth },
+                    ]}
+                  />
                 </View>
+                <Text style={styles.progressText}>{progress}%</Text>
+              </View>
+
+              {/* Modern Button */}
+              <View style={styles.button}>
+                <LinearGradient
+                  colors={isPressed ? ['#FFFFFF', '#FFFFFF'] : ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={[styles.buttonText, isPressed && styles.buttonTextPressed]}>
+                    {hasContent ? 'BEREIT' : 'ANSEHEN'}
+                  </Text>
+                  <Animated.View
+                    style={{
+                      transform: [{ translateX: arrowTranslate }],
+                    }}
+                  >
+                    <ChevronRight size={20} color={isPressed ? gradient[0] : '#FFFFFF'} strokeWidth={3} />
+                  </Animated.View>
+                </LinearGradient>
               </View>
             </View>
           </LinearGradient>
+
+          {/* Enhanced Shadow (outside gradient for better effect) */}
+          <Animated.View
+            style={[
+              styles.shadowLayer,
+              {
+                shadowColor: gradient[1],
+                shadowOpacity: isPressed ? 0.5 : 0.3,
+              },
+            ]}
+          />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -183,192 +293,166 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   touchable: {
-    borderRadius: 28,
+    borderRadius: 24,
   },
   cardContainer: {
     position: 'relative',
-    borderRadius: 28,
-  },
-  glowLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    borderRadius: 24,
   },
   card: {
-    height: 220,
-    borderRadius: 28,
-    padding: 26,
+    minHeight: 320,
+    borderRadius: 24,
+    padding: 32,
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
-    elevation: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
-  decorativeCircle1: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    top: -60,
-    right: -60,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    bottom: -40,
-    left: -40,
-  },
-  decorativePattern: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  patternDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  overlay: {
+  shadowLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 1,
+    borderRadius: 24,
+    shadowOffset: { width: 0, height: 16 },
+    shadowRadius: 40,
+    elevation: 20,
+    zIndex: -1,
   },
-  readyBadge: {
+  // Grid Pattern
+  gridPattern: {
     position: 'absolute',
-    top: 18,
-    right: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.1,
+    backgroundColor: 'transparent',
+    // You could add a pattern image here if needed
+  },
+  // Glowing Orb
+  glowingOrb: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 40,
+    shadowOpacity: 0.8,
+  },
+  // Corner Badge
+  cornerBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 14,
-    zIndex: 20,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    paddingVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    zIndex: 10,
   },
-  readyDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-    marginRight: 7,
-  },
-  readyText: {
-    color: '#10B981',
+  cornerBadgeText: {
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
+  // Content
   content: {
     flex: 1,
-    zIndex: 10,
     justifyContent: 'space-between',
+    zIndex: 5,
   },
+  // Glass Morphism Icon
   iconContainer: {
     alignSelf: 'flex-start',
+    marginBottom: 20,
   },
-  iconBadge: {
-    width: 90,
-    height: 90,
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: 'rgba(0,0,0,0.3)',
+  iconGlass: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: 'rgba(0, 0, 0, 0.2)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 8,
   },
-  iconGradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    borderRadius: 24,
-  },
-  iconInnerRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  titleSection: {
-    gap: 12,
-  },
-  titleContainer: {
-    gap: 4,
-  },
+  // Title
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
     color: '#FFFFFF',
-    lineHeight: 28,
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
-    letterSpacing: 0.5,
+    lineHeight: 30,
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
-  bottomRow: {
+  // Description
+  description: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  // Progress Bar
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.9)',
+    minWidth: 40,
+  },
+  // Modern Button
+  button: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  accentLine: {
-    width: 50,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 2,
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-  },
-  arrowIndicator: {
-    width: 32,
-    height: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  arrowDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  buttonTextPressed: {
+    color: '#EF4444',
   },
 });
