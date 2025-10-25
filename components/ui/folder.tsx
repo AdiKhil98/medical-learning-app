@@ -204,13 +204,13 @@ const getSizeStyles = (size: 'small' | 'medium' | 'large') => {
     case 'medium':
     default:
       return {
-        container: { width: 110 },
-        tab: { height: 16 },
-        body: { height: 90 },
-        iconBadge: { width: 56, height: 56 },
-        iconRing: { width: 48, height: 48 },
-        iconSize: 28,
-        label: { fontSize: 13 }
+        container: { width: 120 },
+        tab: { height: 18 },
+        body: { height: 100 },
+        iconBadge: { width: 62, height: 62 },
+        iconRing: { width: 52, height: 52 },
+        iconSize: 30,
+        label: { fontSize: 14 }
       };
   }
 };
@@ -219,12 +219,12 @@ const styles = StyleSheet.create({
   // Modern Polished Folder Card Styles with Enhanced Shadows
   folderCard: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
   folderCardButton: {
     width: '100%',
@@ -264,15 +264,15 @@ const styles = StyleSheet.create({
   // Enhanced Folder Body with Rich Gradients
   modernFolderBody: {
     width: '100%',
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
     position: 'relative',
   },
   overlayGradient: {
@@ -353,9 +353,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#1e293b',
     textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 12,
+    lineHeight: 20,
+    marginTop: 14,
     paddingHorizontal: 8,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
+    fontWeight: '600',
   },
 });

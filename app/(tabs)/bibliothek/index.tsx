@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Platform,
   Animated,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -34,6 +35,7 @@ interface Category {
   gradientColors: string[];
   iconName: string;
   slug: string;
+  imageUrl?: string;
 }
 
 // Animated Stats Grid Component
@@ -179,21 +181,25 @@ const AnimatedCategoryCard: React.FC<{
         onPressOut={handlePressOut}
         activeOpacity={1}
       >
-        <LinearGradient
-          colors={category.gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.categoryCard}
-        >
-          {/* Background Pattern */}
-          <View style={styles.bgPattern}>
-            <View style={[styles.bgCircle, styles.bgCircle1]} />
-            <View style={[styles.bgCircle, styles.bgCircle2]} />
-          </View>
+        <View style={styles.categoryCard}>
+          {/* Background Image */}
+          {category.imageUrl && (
+            <Image
+              source={{ uri: category.imageUrl }}
+              style={styles.categoryCardImage}
+              resizeMode="cover"
+            />
+          )}
 
-          {/* Dark gradient overlay for better contrast */}
+          {/* Gradient overlay for text readability */}
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.15)']}
+            colors={[
+              'rgba(0,0,0,0.3)',
+              'rgba(0,0,0,0.5)',
+              ...category.gradientColors.map(c => c + 'CC')
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.cardGradientOverlay}
           />
 
@@ -233,7 +239,7 @@ const AnimatedCategoryCard: React.FC<{
               <ChevronRight size={24} color="rgba(255,255,255,0.7)" />
             </View>
           </View>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -256,7 +262,7 @@ const BibliothekIndex: React.FC = () => {
     };
   }, []);
 
-  // Category data with gradients and icons
+  // Category data with gradients, icons, and background images
   const categories: Category[] = [
     {
       id: 1,
@@ -265,6 +271,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#3B82F6', '#06B6D4', '#38BDF8'],
       iconName: 'stethoscope',
       slug: 'chirurgie',
+      imageUrl: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=400&fit=crop&q=80',
     },
     {
       id: 2,
@@ -273,6 +280,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#818CF8', '#3B82F6', '#9333EA'],
       iconName: 'heart',
       slug: 'innere-medizin',
+      imageUrl: 'https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?w=600&h=400&fit=crop&q=80',
     },
     {
       id: 3,
@@ -281,6 +289,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#34D399', '#10B981', '#14B8A6'],
       iconName: 'alert',
       slug: 'notfallmedizin',
+      imageUrl: 'https://images.unsplash.com/photo-1587745416684-47953f16f02f?w=600&h=400&fit=crop&q=80',
     },
     {
       id: 4,
@@ -289,6 +298,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#F87171', '#F97316', '#EC4899'],
       iconName: 'activity',
       slug: 'infektiologie',
+      imageUrl: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&h=400&fit=crop&q=80',
     },
     {
       id: 5,
@@ -297,6 +307,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#FBBF24', '#F97316', '#EAB308'],
       iconName: 'droplet',
       slug: 'urologie',
+      imageUrl: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop&q=80',
     },
     {
       id: 6,
@@ -305,6 +316,7 @@ const BibliothekIndex: React.FC = () => {
       gradientColors: ['#EA580C', '#DC2626', '#F43F5E'],
       iconName: 'scan',
       slug: 'radiologie',
+      imageUrl: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&h=400&fit=crop&q=80',
     },
   ];
 
@@ -593,6 +605,16 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 16,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  categoryCardImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   bgPattern: {
     position: 'absolute',
@@ -608,7 +630,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 1,
+    zIndex: 2,
   },
   bgCircle: {
     position: 'absolute',
@@ -629,7 +651,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     position: 'relative',
-    zIndex: 15,
+    zIndex: 10,
   },
   favoriteButton: {
     position: 'absolute',
