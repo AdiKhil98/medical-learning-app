@@ -92,14 +92,23 @@ export default function FSPSimulationScreen() {
         return;
       }
 
-      if (accessCheck.remainingSimulations === 0) {
-        console.error('[Page Access] BLOCKED - User has 0 simulations remaining');
+      // EXTRA SAFETY: Ensure remainingSimulations is a valid number and explicitly 0
+      const remaining = accessCheck.remainingSimulations;
+
+      console.log('[Page Access] Final decision - Remaining value:', remaining, 'Type:', typeof remaining);
+
+      if (typeof remaining === 'number' && remaining === 0) {
+        console.error('[Page Access] BLOCKED - User has exactly 0 simulations remaining');
 
         // Show upgrade modal immediately
         setShowUpgradeModal(true);
 
         // Prevent any further interaction on this page
         return;
+      }
+
+      if (typeof remaining !== 'number' || remaining > 0) {
+        console.log('[Page Access] ✅ Access GRANTED - User has simulations remaining or invalid data');
       }
 
       console.log('[Page Access] ✅ Access GRANTED - User can access simulation page');
