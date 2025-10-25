@@ -144,7 +144,7 @@ const AnimatedCategoryCard: React.FC<{
   };
 
   const getIconComponent = (iconName: string) => {
-    const iconProps = { size: 32, color: '#FFFFFF', strokeWidth: 2 };
+    const iconProps = { size: 36, color: '#FFFFFF', strokeWidth: 2.5 };
     switch (iconName) {
       case 'stethoscope':
         return <Stethoscope {...iconProps} />;
@@ -190,6 +190,12 @@ const AnimatedCategoryCard: React.FC<{
             <View style={[styles.bgCircle, styles.bgCircle1]} />
             <View style={[styles.bgCircle, styles.bgCircle2]} />
           </View>
+
+          {/* Dark gradient overlay for better contrast */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.15)']}
+            style={styles.cardGradientOverlay}
+          />
 
           {/* Content */}
           <View style={styles.cardContent}>
@@ -532,26 +538,29 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   statNumber: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontWeight: '500',
   },
 
   // Section Header
@@ -572,17 +581,17 @@ const styles = StyleSheet.create({
   },
   categoryCardWrapper: {
     width: '48%',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   categoryCard: {
-    borderRadius: 24,
-    padding: 24,
-    minHeight: 200,
+    borderRadius: 28,
+    padding: 28,
+    minHeight: 220,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 16,
     overflow: 'hidden',
   },
   bgPattern: {
@@ -592,6 +601,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     opacity: 0.1,
+  },
+  cardGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   bgCircle: {
     position: 'absolute',
@@ -612,7 +629,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     position: 'relative',
-    zIndex: 10,
+    zIndex: 15,
   },
   favoriteButton: {
     position: 'absolute',
@@ -621,20 +638,28 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 16,
+    width: 72,
+    height: 72,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 12,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   cardFooter: {
     flexDirection: 'row',
