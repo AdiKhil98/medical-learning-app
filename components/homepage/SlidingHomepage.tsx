@@ -761,11 +761,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#CBD5E1',
     transition: 'all 0.3s ease',
+    cursor: 'default',
   },
   indicatorDotActive: {
     width: 24,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#FB923C',
+    cursor: 'default',
   },
 });
