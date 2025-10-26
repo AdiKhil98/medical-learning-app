@@ -1,14 +1,18 @@
 import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, Platform, Dimensions } from 'react-native';
 import { Home, BookOpen, BarChart, Activity } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function TabLayout() {
   const { colors, isDarkMode } = useTheme();
   const { session, loading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Initialize session timeout monitoring for authenticated screens
   const { triggerActivity } = useSessionTimeout({
@@ -43,7 +47,10 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 60,
+          borderTopWidth: 1,
+          height: screenWidth < 600 ? 56 + insets.bottom : 60,
+          paddingBottom: screenWidth < 600 ? Math.max(8, insets.bottom) : 4,
+          paddingTop: screenWidth < 600 ? 6 : 4,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: isDarkMode ? 0.3 : 0.05,
@@ -52,11 +59,12 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontFamily: 'Inter-Medium',
-          fontSize: 12,
-          marginBottom: 4,
+          fontSize: screenWidth < 600 ? 10 : 12,
+          marginBottom: screenWidth < 600 ? 0 : 4,
+          fontWeight: '500',
         },
         tabBarIconStyle: {
-          marginTop: 4,
+          marginTop: screenWidth < 600 ? 2 : 4,
         },
         headerShown: false,
       }}
@@ -75,28 +83,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Home size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="bibliothek"
         options={{
           title: 'Bibliothek',
-          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
+          tabBarIcon: ({ color }) => <BookOpen size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="simulation"
         options={{
           title: 'Simulation',
-          tabBarIcon: ({ color, size }) => <Activity size={size} color={color} />,
+          tabBarIcon: ({ color }) => <Activity size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Fortschritt',
-          tabBarIcon: ({ color, size }) => <BarChart size={size} color={color} />,
+          tabBarIcon: ({ color }) => <BarChart size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}
       />
     </Tabs>

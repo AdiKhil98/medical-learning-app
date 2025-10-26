@@ -348,16 +348,16 @@ const styles = StyleSheet.create({
     height: screenHeight,
   },
 
-  // Header Styles
+  // Header Styles - Enhanced for Mobile
   modernHeader: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
     zIndex: 1000,
   },
   headerGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingVertical: screenWidth < 600 ? 12 : 16,
+    paddingHorizontal: screenWidth < 600 ? 16 : 20,
+    paddingTop: screenWidth < 600 ? 16 : 24,
     shadowColor: 'rgba(0,0,0,0.08)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
@@ -368,19 +368,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 48, // Touch target minimum
   },
   menuButton: {
-    borderRadius: 16,
+    borderRadius: screenWidth < 600 ? 12 : 16,
     overflow: 'hidden',
+    minWidth: 48, // Touch target minimum
+    minHeight: 48,
   },
   menuButtonGradient: {
-    padding: 14,
-    borderRadius: 16,
+    padding: screenWidth < 600 ? 12 : 14,
+    borderRadius: screenWidth < 600 ? 12 : 16,
     shadowColor: 'rgba(0,0,0,0.05)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 4,
     elevation: 2,
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // Navigation Arrows - ALWAYS VISIBLE with z-index 50
@@ -412,15 +419,16 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
 
-  // Main Content Styles
+  // Main Content Styles - Enhanced Spacing
   mainContent: {
     flex: 1,
   },
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: screenWidth < 600 ? 20 : 16,
+    paddingVertical: screenWidth < 600 ? 32 : 24,
+    paddingBottom: screenWidth < 600 ? 80 : 24, // Extra space for bottom nav on mobile
   },
   slideContainer: {
     width: '100%',
@@ -428,27 +436,27 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 
-  // Slide 0 - Hero Card Styles
+  // Slide 0 - Hero Card Styles - Enhanced for Mobile
   heroCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: screenWidth < 600 ? 32 : 40,
+    borderRadius: screenWidth < 600 ? 20 : 24,
+    padding: screenWidth < 600 ? 28 : 40,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 20 },
+    shadowOffset: { width: 0, height: screenWidth < 600 ? 12 : 20 },
     shadowOpacity: 1,
-    shadowRadius: 40,
+    shadowRadius: screenWidth < 600 ? 24 : 40,
     elevation: 20,
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: 24,
+    marginBottom: screenWidth < 600 ? 20 : 24,
   },
   iconGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
+    width: screenWidth < 600 ? 100 : 80,
+    height: screenWidth < 600 ? 100 : 80,
+    borderRadius: screenWidth < 600 ? 24 : 16,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: 'rgba(251, 146, 60, 0.4)',
@@ -458,61 +466,66 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   heading: {
-    fontSize: screenWidth < 600 ? 24 : 30,
-    fontWeight: 'bold',
+    fontSize: screenWidth < 600 ? 22 : 30,
+    fontWeight: '700',
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: screenWidth < 600 ? 32 : 40,
+    marginBottom: screenWidth < 600 ? 12 : 16,
+    lineHeight: screenWidth < 600 ? 30 : 40,
     letterSpacing: -0.5,
+    paddingHorizontal: screenWidth < 600 ? 4 : 0,
   },
   subheading: {
-    fontSize: screenWidth < 600 ? 16 : 18,
+    fontSize: screenWidth < 600 ? 14 : 18,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: screenWidth < 600 ? 24 : 28,
+    marginBottom: screenWidth < 600 ? 28 : 32,
+    lineHeight: screenWidth < 600 ? 22 : 28,
     fontWeight: '400',
+    paddingHorizontal: screenWidth < 600 ? 8 : 0,
   },
   buttonsContainer: {
     width: '100%',
-    gap: 16,
+    gap: screenWidth < 600 ? 12 : 16,
   },
   buttonWrapper: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: screenWidth < 600 ? 14 : 16,
     overflow: 'hidden',
     shadowColor: 'rgba(251, 146, 60, 0.3)',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: screenWidth < 600 ? 6 : 4 },
     shadowOpacity: 1,
     shadowRadius: 12,
     elevation: 6,
   },
   primaryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingVertical: screenWidth < 600 ? 16 : 16,
+    paddingHorizontal: screenWidth < 600 ? 24 : 32,
+    borderRadius: screenWidth < 600 ? 14 : 16,
+    minHeight: 52, // Enhanced touch target (> 48px)
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingVertical: screenWidth < 600 ? 16 : 16,
+    paddingHorizontal: screenWidth < 600 ? 24 : 32,
+    borderRadius: screenWidth < 600 ? 14 : 16,
+    minHeight: 52, // Enhanced touch target
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: screenWidth < 600 ? 16 : 18,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   outlineButton: {
     width: '100%',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingVertical: screenWidth < 600 ? 16 : 16,
+    paddingHorizontal: screenWidth < 600 ? 24 : 32,
+    borderRadius: screenWidth < 600 ? 14 : 16,
+    minHeight: 52, // Enhanced touch target
     borderWidth: 2,
     borderColor: '#FB923C',
     backgroundColor: 'transparent',
@@ -521,7 +534,7 @@ const styles = StyleSheet.create({
   },
   outlineButtonText: {
     color: '#FB923C',
-    fontSize: 18,
+    fontSize: screenWidth < 600 ? 16 : 18,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
