@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,9 @@ import {
   SafeAreaView,
   StyleSheet,
   Dimensions,
-  ScrollView
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -36,16 +38,32 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
 
   const totalSlides = 4;
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    const nextIndex = (currentSlide + 1) % totalSlides;
+    scrollViewRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
+    setCurrentSlide(nextIndex);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+    const prevIndex = (currentSlide - 1 + totalSlides) % totalSlides;
+    scrollViewRef.current?.scrollTo({ x: prevIndex * screenWidth, animated: true });
+    setCurrentSlide(prevIndex);
+  };
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / screenWidth);
+    setCurrentSlide(index);
+  };
+
+  const scrollToSlide = (index: number) => {
+    scrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
+    setCurrentSlide(index);
   };
 
   return (
@@ -106,14 +124,24 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </>
       )}
 
-      {/* Main Content - Centered Carousel */}
+      {/* Main Content - Horizontal Scrollable Carousel */}
       <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         style={styles.mainContent}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalContentContainer}
       >
         {/* SLIDE 0 - Welcome Card */}
-        {currentSlide === 0 && (
+        <View style={styles.slideWrapper}>
+          <ScrollView
+            style={styles.verticalScroll}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.slideContainer}>
             <View style={styles.heroCard}>
               {/* Icon Container */}
@@ -183,10 +211,16 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </View>
             </View>
           </View>
-        )}
+          </ScrollView>
+        </View>
 
         {/* SLIDE 1 - Zuletzt angesehen (Recently Viewed) */}
-        {currentSlide === 1 && (
+        <View style={styles.slideWrapper}>
+          <ScrollView
+            style={styles.verticalScroll}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.slideContainer}>
             <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
 
@@ -265,10 +299,16 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               <ChevronRight size={20} color="#FB923C" />
             </TouchableOpacity>
           </View>
-        )}
+          </ScrollView>
+        </View>
 
         {/* SLIDE 2 - Tipp des Tages */}
-        {currentSlide === 2 && (
+        <View style={styles.slideWrapper}>
+          <ScrollView
+            style={styles.verticalScroll}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.slideContainer}>
             <Text style={styles.slideTitle}>Tipp des Tages</Text>
 
@@ -287,10 +327,16 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </View>
             </View>
           </View>
-        )}
+          </ScrollView>
+        </View>
 
         {/* SLIDE 3 - Frage des Tages */}
-        {currentSlide === 3 && (
+        <View style={styles.slideWrapper}>
+          <ScrollView
+            style={styles.verticalScroll}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.slideContainer}>
             <Text style={styles.slideTitle}>Frage des Tages</Text>
 
@@ -324,7 +370,8 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </View>
             </View>
           </View>
-        )}
+          </ScrollView>
+        </View>
       </ScrollView>
 
       {/* Carousel Indicators - Dots (visible on mobile) */}
@@ -333,7 +380,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           {[0, 1, 2, 3].map((index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => setCurrentSlide(index)}
+              onPress={() => scrollToSlide(index)}
               activeOpacity={0.8}
             >
               <View
@@ -443,8 +490,18 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
 
-  // Main Content Styles - Enhanced Spacing
+  // Main Content Styles - Horizontal Scrollable
   mainContent: {
+    flex: 1,
+  },
+  horizontalContentContainer: {
+    flexDirection: 'row',
+  },
+  slideWrapper: {
+    width: screenWidth,
+    height: '100%',
+  },
+  verticalScroll: {
     flex: 1,
   },
   contentContainer: {
