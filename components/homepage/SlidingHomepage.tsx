@@ -81,26 +81,30 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </LinearGradient>
       </View>
 
-      {/* Navigation Arrows - ALWAYS VISIBLE */}
-      <TouchableOpacity
-        style={styles.leftArrow}
-        onPress={prevSlide}
-        activeOpacity={0.8}
-      >
-        <View style={styles.arrowButton}>
-          <ChevronLeft size={28} color="#FFFFFF" strokeWidth={3} />
-        </View>
-      </TouchableOpacity>
+      {/* Navigation Arrows - Hidden on mobile */}
+      {screenWidth >= 600 && (
+        <>
+          <TouchableOpacity
+            style={styles.leftArrow}
+            onPress={prevSlide}
+            activeOpacity={0.8}
+          >
+            <View style={styles.arrowButton}>
+              <ChevronLeft size={28} color="#FFFFFF" strokeWidth={3} />
+            </View>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.rightArrow}
-        onPress={nextSlide}
-        activeOpacity={0.8}
-      >
-        <View style={styles.arrowButton}>
-          <ChevronRight size={28} color="#FFFFFF" strokeWidth={3} />
-        </View>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.rightArrow}
+            onPress={nextSlide}
+            activeOpacity={0.8}
+          >
+            <View style={styles.arrowButton}>
+              <ChevronRight size={28} color="#FFFFFF" strokeWidth={3} />
+            </View>
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* Main Content - Centered Carousel */}
       <ScrollView
@@ -322,6 +326,26 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           </View>
         )}
       </ScrollView>
+
+      {/* Carousel Indicators - Dots (visible on mobile) */}
+      {screenWidth < 600 && (
+        <View style={styles.carouselIndicators}>
+          {[0, 1, 2, 3].map((index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => setCurrentSlide(index)}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.indicatorDot,
+                  currentSlide === index && styles.indicatorDotActive,
+                ]}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -716,5 +740,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#374151',
     flex: 1,
+  },
+
+  // Carousel Indicators (Dots) - Mobile Only
+  carouselIndicators: {
+    position: 'absolute',
+    bottom: screenWidth < 600 ? 90 : 40, // Above bottom nav on mobile
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    zIndex: 100,
+  },
+  indicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#CBD5E1',
+    transition: 'all 0.3s ease',
+  },
+  indicatorDotActive: {
+    width: 24,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FB923C',
   },
 });
