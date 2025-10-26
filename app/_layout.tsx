@@ -4,12 +4,40 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 
 export default function RootLayout() {
   console.log('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
+
+  // Fix mobile viewport on web
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Add mobile viewport fix styles
+      const style = document.createElement('style');
+      style.id = 'mobile-viewport-fix';
+      style.textContent = `
+        html {
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
+          width: 100%;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+      `;
+      if (!document.getElementById('mobile-viewport-fix')) {
+        document.head.appendChild(style);
+        console.log('✅ Mobile viewport fix applied');
+      }
+    }
+  }, []);
 
   // Run global Voiceflow cleanup on app start (but not on simulation pages)
   useEffect(() => {
