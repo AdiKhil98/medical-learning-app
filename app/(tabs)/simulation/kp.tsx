@@ -62,6 +62,9 @@ export default function KPSimulationScreen() {
   // Upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  // Cleanup coordination flag
+  const isCleaningUpRef = useRef(false);
+
   // Reset optimistic count on page mount/refresh to show actual backend count
   useEffect(() => {
     console.log('[Mount] Resetting optimistic count to show actual backend data...');
@@ -719,12 +722,12 @@ export default function KPSimulationScreen() {
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     console.log('🛑 KP: Stopping simulation timer');
 
-    // If graceful shutdown is in progress, skip voiceflow close
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+
+    // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
       // Just update database
       try {
-        const elapsedSeconds = (20 * 60) - timeRemaining;
-
         if (sessionToken) {
           await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds);
           console.log(`📊 KP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
@@ -738,48 +741,32 @@ export default function KPSimulationScreen() {
       return;
     }
 
-    // Update status in database if we have a session token
-    if (sessionToken) {
-      try {
-        const elapsedSeconds = (20 * 60) - timeRemaining;
-        
-        // Determine the appropriate status based on usage and reason
-        let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
-        
-        if (reason === 'completed') {
-          // If completed naturally (timer finished), it's completed
-          finalStatus = 'completed';
-        } else if (reason === 'aborted') {
-          // If aborted, check if it was before 10-minute mark
-          if (!usageMarked && elapsedSeconds < 300) {
-            finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
-            console.log('📊 KP: Marking as incomplete - ended before 5-minute mark');
+    // Determine the appropriate status based on usage and reason
+    let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
 
-            // Reset optimistic counter since simulation ended before being charged
-            console.log('🔄 KP: Resetting optimistic count - simulation ended before being charged');
-            resetOptimisticCount();
-          } else {
-            finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 KP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
-          }
-        }
-        
-        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus as any, elapsedSeconds);
-        console.log(`📊 KP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
-      } catch (error) {
-        console.error('❌ KP: Error updating simulation status:', error);
+    if (reason === 'completed') {
+      finalStatus = 'completed';
+    } else if (reason === 'aborted') {
+      // If aborted, check if it was before 5-minute mark
+      if (!usageMarked && elapsedSeconds < 300) {
+        finalStatus = 'incomplete';
+        console.log('📊 KP: Marking as incomplete - ended before 5-minute mark');
+
+        // Reset optimistic counter since simulation ended before being charged
+        console.log('🔄 KP: Resetting optimistic count - simulation ended before being charged');
+        resetOptimisticCount();
+      } else {
+        finalStatus = 'aborted';
+        console.log('📊 KP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
       }
     }
 
-    // Clear localStorage
-    clearSimulationStorage();
-
-    // CRITICAL: Destroy Voiceflow controller to stop active conversations and media streams
-    if (voiceflowController.current) {
-      console.log('🛑 KP: Destroying Voiceflow controller to stop active conversation');
-      voiceflowController.current.destroy();
-      voiceflowController.current = null;
-    }
+    // Use centralized cleanup
+    await cleanupVoiceflowWidget({
+      finalStatus: finalStatus,
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
 
     // Reset simulation state to allow restart
     resetSimulationState();
@@ -833,33 +820,29 @@ export default function KPSimulationScreen() {
   };
 
   // Execute simulation end
-  const executeSimulationEnd = () => {
+  const executeSimulationEnd = async () => {
     console.log('🏁 KP: Executing simulation end');
 
     // Hide final warning modal
     setShowFinalWarningModal(false);
 
-    // Give Voiceflow 2 seconds to flush any pending messages
+    // Calculate elapsed time
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+
+    // Use centralized cleanup with database update
+    await cleanupVoiceflowWidget({
+      finalStatus: 'completed',
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
+
+    // Reset simulation state
+    resetSimulationState();
+
+    // Show completion modal after cleanup
     setTimeout(() => {
-      // Close Voiceflow conversation
-      if (window.voiceflow?.chat) {
-        try {
-          console.log('🔚 KP: Closing Voiceflow widget');
-          window.voiceflow.chat.close && window.voiceflow.chat.close();
-          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
-        } catch (error) {
-          console.error('❌ KP: Error closing voiceflow:', error);
-        }
-      }
-
-      // Stop timer with completed status
-      stopSimulationTimer('completed');
-
-      // Show completion modal after brief delay
-      setTimeout(() => {
-        showCompletionModal();
-      }, 500);
-    }, 2000);
+      showCompletionModal();
+    }, 500);
   };
 
   // Show completion modal
@@ -905,100 +888,82 @@ export default function KPSimulationScreen() {
   };
 
   const executeEarlyCompletion = async (elapsedSeconds: number) => {
-    try {
-      console.log('🔄 KP: Executing early completion sequence');
+    console.log('🏁 KP: Executing early completion');
 
-      // Mark as graceful shutdown to prevent conflicts
-      setIsGracefulShutdown(true);
+    // Set graceful shutdown flag
+    setIsGracefulShutdown(true);
 
-      // Stop the timer
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
-        timerInterval.current = null;
-      }
+    // Set timer state to inactive
+    setTimerActive(false);
+    timerActiveRef.current = false;
 
-      if (heartbeatInterval.current) {
-        clearInterval(heartbeatInterval.current);
-        heartbeatInterval.current = null;
-      }
+    // Use centralized cleanup with custom metadata
+    await cleanupVoiceflowWidget({
+      finalStatus: 'completed',
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
 
-      // Update timer state
-      setTimerActive(false);
-      timerActiveRef.current = false;
-
-      // Give Voiceflow 2 seconds to flush any pending messages
-      setTimeout(async () => {
-        console.log('💬 KP: Closing Voiceflow conversation');
-
-        // Close Voiceflow conversation
-        if (typeof window !== 'undefined' && (window as any).voiceflow) {
-          try {
-            (window as any).voiceflow.chat.close();
-          } catch (error) {
-            console.error('❌ KP: Error closing voiceflow:', error);
+    // Handle early completion specific logic
+    if (sessionToken) {
+      try {
+        // Update with metadata about early completion
+        await simulationTracker.updateSimulationStatus(
+          sessionToken,
+          'completed',
+          elapsedSeconds,
+          {
+            completion_type: 'early',
+            completion_reason: earlyCompletionReason || 'user_finished_early'
           }
+        );
+        console.log(`📊 KP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
+
+        // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
+        if (!usageMarked && elapsedSeconds < 300) {
+          console.log('🔄 KP: Early completion before 5-minute mark - resetting optimistic count');
+          resetOptimisticCount();
+        } else if (elapsedSeconds >= 300) {
+          console.log('✅ KP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
         }
-
-        // Update database with early completion status
-        try {
-          if (sessionToken) {
-            console.log('💾 KP: Updating database with early completion status');
-            await simulationTracker.updateSimulationStatus(
-              sessionToken,
-              'completed',
-              elapsedSeconds,
-              {
-                completion_type: 'early',
-                completion_reason: earlyCompletionReason || 'user_finished_early'
-              }
-            );
-
-            // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-            if (!usageMarked && elapsedSeconds < 300) {
-              console.log('🔄 KP: Early completion before 5-minute mark - resetting optimistic count');
-              resetOptimisticCount();
-            } else if (elapsedSeconds >= 300) {
-              console.log('✅ KP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
-            }
-          }
-        } catch (error) {
-          console.error('❌ KP: Error updating session for early completion:', error);
-        }
-
-        // Clear localStorage
-        clearSimulationStorage();
-
-        // Show completion modal after brief delay
-        setTimeout(() => {
-          showCompletionModal();
-        }, 500);
-
-      }, 2000);
-
-    } catch (error) {
-      console.error('❌ KP: Error in early completion:', error);
-      // Fallback to normal stop
-      stopSimulationTimer();
+      } catch (error) {
+        console.error('❌ KP: Error updating early completion status:', error);
+      }
     }
+
+    // Reset simulation state
+    resetSimulationState();
+
+    // Show completion modal after cleanup
+    setTimeout(() => {
+      showCompletionModal();
+    }, 500);
   };
 
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
-      console.log('🧹 KP: Cleanup started');
+      console.log('🧹 KP: Component unmount cleanup started');
 
-      // Stop timer and mark status based on whether usage was recorded
-      if (timerActiveRef.current && sessionToken) {
-        // CRITICAL: If usage was already marked at 5-minute mark, treat as completed
-        // This prevents silent refund from incorrectly refunding the counter
-        const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
-        console.log(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+      // Determine final status based on whether usage was recorded
+      const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
+      const elapsedSeconds = (20 * 60) - timeRemaining;
 
-        simulationTracker.updateSimulationStatus(sessionToken, finalStatus, (20 * 60) - timeRemaining)
-          .then(() => console.log(`📊 KP: Session marked as ${finalStatus} during cleanup`))
-          .catch(error => console.error('❌ KP: Error during cleanup:', error));
+      console.log(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+
+      // Use centralized cleanup (async but don't wait for it in cleanup)
+      if (timerActiveRef.current && sessionTokenRef.current) {
+        cleanupVoiceflowWidget({
+          finalStatus: finalStatus,
+          elapsedSeconds: elapsedSeconds,
+          skipDatabaseUpdate: false
+        }).then(() => {
+          console.log('✅ KP: Cleanup completed successfully');
+        }).catch(error => {
+          console.error('❌ KP: Error during cleanup:', error);
+        });
       }
-      
+
       // Remove event listeners
       if ((window as any).kpClickListener) {
         document.removeEventListener('click', (window as any).kpClickListener, true);
@@ -1010,21 +975,14 @@ export default function KPSimulationScreen() {
         navigator.mediaDevices.getUserMedia = (window as any).kpOriginalGetUserMedia;
         delete (window as any).kpOriginalGetUserMedia;
       }
-      
-      // Cleanup Voiceflow controller
-      if (voiceflowController.current) {
-        console.log('🔧 KP: Cleaning up Voiceflow controller');
-        voiceflowController.current.destroy();
-        voiceflowController.current = null;
-      }
-      
+
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
         console.log('🌍 KP: Running global Voiceflow cleanup with force=true');
-        globalVoiceflowCleanup(true); // Force cleanup even on simulation page
+        globalVoiceflowCleanup(true);
       }
-      
-      console.log('✅ KP: Cleanup completed');
+
+      console.log('✅ KP: Component unmount cleanup initiated');
     };
   }, []);
 
@@ -1238,6 +1196,124 @@ export default function KPSimulationScreen() {
       }
     } catch (error) {
       console.error('❌ KP: Error clearing localStorage:', error);
+    }
+  };
+
+  // ============================================
+  // CENTRALIZED VOICEFLOW WIDGET CLEANUP
+  // ============================================
+  const cleanupVoiceflowWidget = async (options: {
+    skipDatabaseUpdate?: boolean;
+    finalStatus?: 'completed' | 'aborted' | 'incomplete';
+    elapsedSeconds?: number;
+  } = {}) => {
+    // Prevent concurrent cleanup operations
+    if (isCleaningUpRef.current) {
+      console.log('⚠️ KP: Cleanup already in progress, skipping...');
+      return;
+    }
+
+    console.log('🧹 KP: Starting centralized widget cleanup...');
+    isCleaningUpRef.current = true;
+
+    try {
+      // Step 1: Stop all intervals immediately
+      console.log('🛑 KP: Step 1 - Clearing all intervals...');
+      if (timerInterval.current) {
+        clearInterval(timerInterval.current);
+        timerInterval.current = null;
+      }
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+        warningTimeoutRef.current = null;
+      }
+      if (finalCountdownInterval.current) {
+        clearInterval(finalCountdownInterval.current);
+        finalCountdownInterval.current = null;
+      }
+
+      // Step 2: Wait briefly for any pending operations to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 3: Close Voiceflow widget
+      console.log('🔚 KP: Step 3 - Closing Voiceflow widget...');
+      if (window.voiceflow?.chat) {
+        try {
+          window.voiceflow.chat.close && window.voiceflow.chat.close();
+          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+          console.log('✅ KP: Voiceflow widget closed');
+        } catch (error) {
+          console.error('❌ KP: Error closing Voiceflow widget:', error);
+        }
+      }
+
+      // Step 4: Wait for widget to close
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 5: Destroy controller
+      console.log('🔧 KP: Step 5 - Destroying controller...');
+      if (voiceflowController.current) {
+        try {
+          voiceflowController.current.destroy();
+          voiceflowController.current = null;
+          console.log('✅ KP: Controller destroyed');
+        } catch (error) {
+          console.error('❌ KP: Error destroying controller:', error);
+        }
+      }
+
+      // Step 6: Force remove DOM elements
+      console.log('🗑️ KP: Step 6 - Force removing DOM elements...');
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        try {
+          const widgetSelectors = [
+            '[id*="voiceflow"]',
+            '[class*="voiceflow"]',
+            '[data-voiceflow]',
+            'iframe[src*="voiceflow"]',
+          ];
+
+          widgetSelectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+              el.remove();
+              console.log(`✅ KP: Removed element: ${selector}`);
+            });
+          });
+        } catch (error) {
+          console.error('❌ KP: Error removing DOM elements:', error);
+        }
+      }
+
+      // Step 7: Update database if needed
+      if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
+        console.log('📊 KP: Step 7 - Updating database...');
+        try {
+          await simulationTracker.updateSimulationStatus(
+            sessionToken,
+            options.finalStatus,
+            options.elapsedSeconds || 0
+          );
+          console.log(`✅ KP: Database updated with status: ${options.finalStatus}`);
+        } catch (error) {
+          console.error('❌ KP: Error updating database:', error);
+        }
+      }
+
+      // Step 8: Clear localStorage
+      console.log('💾 KP: Step 8 - Clearing localStorage...');
+      clearSimulationStorage();
+
+      console.log('✅ KP: Centralized cleanup completed successfully');
+    } catch (error) {
+      console.error('❌ KP: Error during centralized cleanup:', error);
+    } finally {
+      // Always reset the cleanup flag
+      isCleaningUpRef.current = false;
     }
   };
 

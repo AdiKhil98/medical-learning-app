@@ -62,6 +62,9 @@ export default function FSPSimulationScreen() {
   // Upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  // Cleanup coordination flag
+  const isCleaningUpRef = useRef(false);
+
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
   // Reset optimistic count on page mount/refresh to show actual backend count
   useEffect(() => {
@@ -738,12 +741,12 @@ export default function FSPSimulationScreen() {
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     console.log('🛑 FSP: Stopping simulation timer');
 
-    // If graceful shutdown is in progress, skip voiceflow close
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+
+    // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
       // Just update database
       try {
-        const elapsedSeconds = (20 * 60) - timeRemaining;
-
         if (sessionToken) {
           await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds);
           console.log(`📊 FSP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
@@ -757,51 +760,32 @@ export default function FSPSimulationScreen() {
       return;
     }
 
-    // Stop heartbeat monitoring
-    stopHeartbeat();
-    
-    // Update status in database if we have a session token
-    if (sessionToken) {
-      try {
-        const elapsedSeconds = (20 * 60) - timeRemaining;
-        
-        // Determine the appropriate status based on usage and reason
-        let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
-        
-        if (reason === 'completed') {
-          // If completed naturally (timer finished), it's completed
-          finalStatus = 'completed';
-        } else if (reason === 'aborted') {
-          // If aborted, check if it was before 10-minute mark
-          if (!usageMarked && elapsedSeconds < 300) {
-            finalStatus = 'incomplete'; // Ended before reaching 10-minute usage mark
-            console.log('📊 FSP: Marking as incomplete - ended before 5-minute mark');
+    // Determine the appropriate status based on usage and reason
+    let finalStatus: 'completed' | 'aborted' | 'incomplete' = reason;
 
-            // Reset optimistic counter since simulation ended before being charged
-            console.log('🔄 FSP: Resetting optimistic count - simulation ended before being charged');
-            resetOptimisticCount();
-          } else {
-            finalStatus = 'aborted'; // Ended after 10-minute mark, still counts as used
-            console.log('📊 FSP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
-          }
-        }
-        
-        await simulationTracker.updateSimulationStatus(sessionToken, finalStatus as any, elapsedSeconds);
-        console.log(`📊 FSP: Simulation marked as ${finalStatus} in database (${elapsedSeconds}s elapsed)`);
-      } catch (error) {
-        console.error('❌ FSP: Error updating simulation status:', error);
+    if (reason === 'completed') {
+      finalStatus = 'completed';
+    } else if (reason === 'aborted') {
+      // If aborted, check if it was before 5-minute mark
+      if (!usageMarked && elapsedSeconds < 300) {
+        finalStatus = 'incomplete';
+        console.log('📊 FSP: Marking as incomplete - ended before 5-minute mark');
+
+        // Reset optimistic counter since simulation ended before being charged
+        console.log('🔄 FSP: Resetting optimistic count - simulation ended before being charged');
+        resetOptimisticCount();
+      } else {
+        finalStatus = 'aborted';
+        console.log('📊 FSP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
       }
     }
 
-    // Clear localStorage
-    clearSimulationStorage();
-
-    // CRITICAL: Destroy Voiceflow controller to stop active conversations and media streams
-    if (voiceflowController.current) {
-      console.log('🛑 FSP: Destroying Voiceflow controller to stop active conversation');
-      voiceflowController.current.destroy();
-      voiceflowController.current = null;
-    }
+    // Use centralized cleanup
+    await cleanupVoiceflowWidget({
+      finalStatus: finalStatus,
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
 
     // Reset simulation state to allow restart
     resetSimulationState();
@@ -855,33 +839,29 @@ export default function FSPSimulationScreen() {
   };
 
   // Execute simulation end
-  const executeSimulationEnd = () => {
+  const executeSimulationEnd = async () => {
     console.log('🏁 FSP: Executing simulation end');
 
     // Hide final warning modal
     setShowFinalWarningModal(false);
 
-    // Give Voiceflow 2 seconds to flush any pending messages
+    // Calculate elapsed time
+    const elapsedSeconds = (20 * 60) - timeRemaining;
+
+    // Use centralized cleanup with database update
+    await cleanupVoiceflowWidget({
+      finalStatus: 'completed',
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
+
+    // Reset simulation state
+    resetSimulationState();
+
+    // Show completion modal after cleanup
     setTimeout(() => {
-      // Close Voiceflow conversation
-      if (window.voiceflow?.chat) {
-        try {
-          console.log('🔚 FSP: Closing Voiceflow widget');
-          window.voiceflow.chat.close && window.voiceflow.chat.close();
-          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
-        } catch (error) {
-          console.error('❌ FSP: Error closing voiceflow:', error);
-        }
-      }
-
-      // Stop timer with completed status
-      stopSimulationTimer('completed');
-
-      // Show completion modal after brief delay
-      setTimeout(() => {
-        showCompletionModal();
-      }, 500);
-    }, 2000);
+      showCompletionModal();
+    }, 500);
   };
 
   // Show completion modal
@@ -931,90 +911,77 @@ export default function FSPSimulationScreen() {
     // Set graceful shutdown flag
     setIsGracefulShutdown(true);
 
-    // Stop timer
-    if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-      timerInterval.current = null;
-    }
-
-    // Stop heartbeat
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
-
+    // Set timer state to inactive
     setTimerActive(false);
     timerActiveRef.current = false;
 
-    // Give Voiceflow 2 seconds to flush any pending messages
-    setTimeout(async () => {
-      // Close Voiceflow conversation
-      if (window.voiceflow?.chat) {
-        try {
-          console.log('🔚 FSP: Closing Voiceflow widget');
-          window.voiceflow.chat.close && window.voiceflow.chat.close();
-          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
-        } catch (error) {
-          console.error('❌ FSP: Error closing voiceflow:', error);
-        }
-      }
+    // Use centralized cleanup with custom metadata
+    await cleanupVoiceflowWidget({
+      finalStatus: 'completed',
+      elapsedSeconds: elapsedSeconds,
+      skipDatabaseUpdate: false
+    });
 
-      // Update database with early completion status
-      if (sessionToken) {
-        try {
-          await simulationTracker.updateSimulationStatus(
-            sessionToken,
-            'completed',
-            elapsedSeconds,
-            {
-              completion_type: 'early',
-              completion_reason: earlyCompletionReason || 'user_finished_early'
-            }
-          );
-          console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
-
-          // Reset optimistic counter if simulation ended before being charged (< 10 minutes)
-          if (!usageMarked && elapsedSeconds < 300) {
-            console.log('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
-            resetOptimisticCount();
-          } else if (elapsedSeconds >= 300) {
-            console.log('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
+    // Handle early completion specific logic
+    if (sessionToken) {
+      try {
+        // Update with metadata about early completion
+        await simulationTracker.updateSimulationStatus(
+          sessionToken,
+          'completed',
+          elapsedSeconds,
+          {
+            completion_type: 'early',
+            completion_reason: earlyCompletionReason || 'user_finished_early'
           }
-        } catch (error) {
-          console.error('❌ FSP: Error updating early completion status:', error);
+        );
+        console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
+
+        // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
+        if (!usageMarked && elapsedSeconds < 300) {
+          console.log('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
+          resetOptimisticCount();
+        } else if (elapsedSeconds >= 300) {
+          console.log('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
         }
+      } catch (error) {
+        console.error('❌ FSP: Error updating early completion status:', error);
       }
+    }
 
-      // Clear localStorage
-      clearSimulationStorage();
+    // Reset simulation state
+    resetSimulationState();
 
-      // Show completion modal after brief delay
-      setTimeout(() => {
-        showCompletionModal();
-      }, 500);
-    }, 2000);
+    // Show completion modal after cleanup
+    setTimeout(() => {
+      showCompletionModal();
+    }, 500);
   };
 
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
-      console.log('🧹 FSP: Cleanup started');
+      console.log('🧹 FSP: Component unmount cleanup started');
 
-      // Stop heartbeat monitoring
-      stopHeartbeat();
+      // Determine final status based on whether usage was recorded
+      const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
+      const elapsedSeconds = (20 * 60) - timeRemaining;
 
-      // Stop timer and mark status based on whether usage was recorded
-      if (timerActive && sessionToken) {
-        // CRITICAL: If usage was already marked at 5-minute mark, treat as completed
-        // This prevents silent refund from incorrectly refunding the counter
-        const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
-        console.log(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+      console.log(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
 
-        simulationTracker.updateSimulationStatus(sessionToken, finalStatus, (20 * 60) - timeRemaining)
-          .then(() => console.log(`📊 FSP: Session marked as ${finalStatus} during cleanup`))
-          .catch(error => console.error('❌ FSP: Error during cleanup:', error));
+      // Use centralized cleanup (async but don't wait for it in cleanup)
+      if (timerActiveRef.current && sessionTokenRef.current) {
+        cleanupVoiceflowWidget({
+          finalStatus: finalStatus,
+          elapsedSeconds: elapsedSeconds,
+          skipDatabaseUpdate: false
+        }).then(() => {
+          console.log('✅ FSP: Cleanup completed successfully');
+        }).catch(error => {
+          console.error('❌ FSP: Error during cleanup:', error);
+        });
       }
-      
+
       // Remove event listeners
       if ((window as any).fspClickListener) {
         document.removeEventListener('click', (window as any).fspClickListener, true);
@@ -1026,21 +993,14 @@ export default function FSPSimulationScreen() {
         navigator.mediaDevices.getUserMedia = (window as any).fspOriginalGetUserMedia;
         delete (window as any).fspOriginalGetUserMedia;
       }
-      
-      // Cleanup Voiceflow controller
-      if (voiceflowController.current) {
-        console.log('🔧 FSP: Cleaning up Voiceflow controller');
-        voiceflowController.current.destroy();
-        voiceflowController.current = null;
-      }
-      
+
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
         console.log('🌍 FSP: Running global Voiceflow cleanup with force=true');
-        globalVoiceflowCleanup(true); // Force cleanup even on simulation page
+        globalVoiceflowCleanup(true);
       }
-      
-      console.log('✅ FSP: Cleanup completed');
+
+      console.log('✅ FSP: Component unmount cleanup initiated');
     };
   }, []);
 
@@ -1254,6 +1214,124 @@ export default function FSPSimulationScreen() {
       }
     } catch (error) {
       console.error('❌ FSP: Error clearing localStorage:', error);
+    }
+  };
+
+  // ============================================
+  // CENTRALIZED VOICEFLOW WIDGET CLEANUP
+  // ============================================
+  const cleanupVoiceflowWidget = async (options: {
+    skipDatabaseUpdate?: boolean;
+    finalStatus?: 'completed' | 'aborted' | 'incomplete';
+    elapsedSeconds?: number;
+  } = {}) => {
+    // Prevent concurrent cleanup operations
+    if (isCleaningUpRef.current) {
+      console.log('⚠️ FSP: Cleanup already in progress, skipping...');
+      return;
+    }
+
+    console.log('🧹 FSP: Starting centralized widget cleanup...');
+    isCleaningUpRef.current = true;
+
+    try {
+      // Step 1: Stop all intervals immediately
+      console.log('🛑 FSP: Step 1 - Clearing all intervals...');
+      if (timerInterval.current) {
+        clearInterval(timerInterval.current);
+        timerInterval.current = null;
+      }
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+        warningTimeoutRef.current = null;
+      }
+      if (finalCountdownInterval.current) {
+        clearInterval(finalCountdownInterval.current);
+        finalCountdownInterval.current = null;
+      }
+
+      // Step 2: Wait briefly for any pending operations to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 3: Close Voiceflow widget
+      console.log('🔚 FSP: Step 3 - Closing Voiceflow widget...');
+      if (window.voiceflow?.chat) {
+        try {
+          window.voiceflow.chat.close && window.voiceflow.chat.close();
+          window.voiceflow.chat.hide && window.voiceflow.chat.hide();
+          console.log('✅ FSP: Voiceflow widget closed');
+        } catch (error) {
+          console.error('❌ FSP: Error closing Voiceflow widget:', error);
+        }
+      }
+
+      // Step 4: Wait for widget to close
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 5: Destroy controller
+      console.log('🔧 FSP: Step 5 - Destroying controller...');
+      if (voiceflowController.current) {
+        try {
+          voiceflowController.current.destroy();
+          voiceflowController.current = null;
+          console.log('✅ FSP: Controller destroyed');
+        } catch (error) {
+          console.error('❌ FSP: Error destroying controller:', error);
+        }
+      }
+
+      // Step 6: Force remove DOM elements
+      console.log('🗑️ FSP: Step 6 - Force removing DOM elements...');
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        try {
+          const widgetSelectors = [
+            '[id*="voiceflow"]',
+            '[class*="voiceflow"]',
+            '[data-voiceflow]',
+            'iframe[src*="voiceflow"]',
+          ];
+
+          widgetSelectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+              el.remove();
+              console.log(`✅ FSP: Removed element: ${selector}`);
+            });
+          });
+        } catch (error) {
+          console.error('❌ FSP: Error removing DOM elements:', error);
+        }
+      }
+
+      // Step 7: Update database if needed
+      if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
+        console.log('📊 FSP: Step 7 - Updating database...');
+        try {
+          await simulationTracker.updateSimulationStatus(
+            sessionToken,
+            options.finalStatus,
+            options.elapsedSeconds || 0
+          );
+          console.log(`✅ FSP: Database updated with status: ${options.finalStatus}`);
+        } catch (error) {
+          console.error('❌ FSP: Error updating database:', error);
+        }
+      }
+
+      // Step 8: Clear localStorage
+      console.log('💾 FSP: Step 8 - Clearing localStorage...');
+      clearSimulationStorage();
+
+      console.log('✅ FSP: Centralized cleanup completed successfully');
+    } catch (error) {
+      console.error('❌ FSP: Error during centralized cleanup:', error);
+    } finally {
+      // Always reset the cleanup flag
+      isCleaningUpRef.current = false;
     }
   };
 
