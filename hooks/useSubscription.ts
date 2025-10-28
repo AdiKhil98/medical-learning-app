@@ -333,6 +333,41 @@ export const useSubscription = (userId: string | undefined) => {
     }
   }, [userId, checkAccess]);
 
+  // Real-time subscription to usage changes
+  useEffect(() => {
+    if (!userId) return;
+
+    console.log('[Real-time] Setting up subscription listener for user:', userId);
+
+    // Subscribe to changes in the users table for this specific user
+    const subscription = supabase
+      .channel(`user-usage-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('[Real-time] Usage update detected:', payload);
+
+          // Re-check access when usage changes
+          checkAccess();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Real-time] Subscription status:', status);
+      });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('[Real-time] Cleaning up subscription listener');
+      subscription.unsubscribe();
+    };
+  }, [userId, checkAccess]);
+
   return {
     subscriptionStatus,
     loading,

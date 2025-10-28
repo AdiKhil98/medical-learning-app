@@ -65,12 +65,48 @@ export default function FSPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
+  // Lock state for when limit is reached
+  const [isSimulationLocked, setIsSimulationLocked] = useState(false);
+
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
-  // Reset optimistic count on page mount/refresh to show actual backend count
+  // Reset optimistic count on page mount/refresh to show actual backend data
   useEffect(() => {
     console.log('[Mount] Resetting optimistic count to show actual backend data...');
     resetOptimisticCount();
   }, [resetOptimisticCount]);
+
+  // Monitor subscription status for lock state
+  useEffect(() => {
+    console.log('[Lock Monitor] FSP: useEffect triggered', {
+      hasSubscriptionStatus: !!subscriptionStatus,
+      canUse: subscriptionStatus?.canUseSimulation,
+      remaining: subscriptionStatus?.remainingSimulations,
+      currentLockState: isSimulationLocked
+    });
+
+    if (subscriptionStatus) {
+      const shouldLock = !subscriptionStatus.canUseSimulation;
+      console.log('[Lock Monitor] FSP: Subscription status changed:', {
+        canUse: subscriptionStatus.canUseSimulation,
+        remaining: subscriptionStatus.remainingSimulations,
+        shouldLock,
+        willUpdateLockState: shouldLock !== isSimulationLocked
+      });
+
+      if (shouldLock !== isSimulationLocked) {
+        console.log(`[Lock Monitor] FSP: 🔒 Setting lock state to: ${shouldLock}`);
+        setIsSimulationLocked(shouldLock);
+      }
+
+      // If locked and timer is active, show warning
+      if (shouldLock && timerActive) {
+        console.warn('[Lock Monitor] FSP: ⚠️ User ran out of simulations during active session!');
+        // Note: Don't stop the current simulation, just prevent new ones
+      }
+    } else {
+      console.warn('[Lock Monitor] FSP: No subscription status available yet');
+    }
+  }, [subscriptionStatus, timerActive, isSimulationLocked]);
 
   // Check for existing simulation on mount
   useEffect(() => {
@@ -469,7 +505,7 @@ export default function FSPSimulationScreen() {
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
-    // STEP 7: SAFETY CHECK - Verify access before starting timer
+    // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
     console.log('[Timer] Attempting to start timer...');
     const accessCheck = await checkAccess();
 
@@ -479,18 +515,32 @@ export default function FSPSimulationScreen() {
       total: accessCheck?.simulationLimit
     });
 
-    // Log access check for debugging (but don't block)
-    if (!accessCheck) {
-      console.warn('[Timer] No access check result - proceeding anyway');
-    } else {
-      console.log('[Timer] Access check result:', {
-        remaining: accessCheck.remainingSimulations,
-        total: accessCheck.simulationLimit
-      });
+    // CRITICAL: Block if access is denied
+    if (!accessCheck || !accessCheck.canUseSimulation) {
+      console.error('[Timer] ❌ ACCESS DENIED - Cannot start simulation');
+      console.error('[Timer] Reason:', accessCheck?.message || 'Unknown');
+
+      // Show upgrade modal
+      setShowUpgradeModal(true);
+      setIsSimulationLocked(true);
+
+      Alert.alert(
+        'Simulationslimit erreicht',
+        accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
+        [
+          {
+            text: 'Upgrade',
+            onPress: () => router.push('/(tabs)/profile')
+          },
+          { text: 'OK' }
+        ]
+      );
+
+      return; // BLOCK timer start
     }
 
     // Access granted - proceed with timer
-    console.log('[Timer] Access GRANTED - Starting timer...');
+    console.log('[Timer] ✅ Access GRANTED - Starting timer...');
 
     // CRITICAL: Check if session token already exists (generated during initialization)
     if (!sessionTokenRef.current) {
@@ -1016,7 +1066,18 @@ export default function FSPSimulationScreen() {
     };
 
     // Enhanced visibility change handler for navigation blocking
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
+      // When tab becomes visible again, re-validate access
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ FSP: Tab became visible, re-validating access...');
+        const accessCheck = await checkAccess();
+
+        if (!accessCheck.canUseSimulation && !timerActive) {
+          console.log('🔒 FSP: Access validation failed - locking simulation');
+          setIsSimulationLocked(true);
+        }
+      }
+
       if (timerActive && (document.visibilityState === 'hidden' || document.hidden)) {
         console.log('🚫 FSP: Attempted to leave page during simulation - BLOCKED');
         // For mobile apps, prevent backgrounding during simulation
@@ -1788,6 +1849,36 @@ export default function FSPSimulationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Lock Overlay - Shows when simulation limit is reached */}
+      {isSimulationLocked && (
+        <View style={styles.lockOverlay}>
+          <View style={styles.lockOverlayContent}>
+            <View style={styles.lockIconContainer}>
+              <Text style={styles.lockIcon}>🔒</Text>
+            </View>
+            <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
+            <Text style={styles.lockMessage}>
+              {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
+            </Text>
+            <Text style={styles.lockSubMessage}>
+              Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.
+            </Text>
+            <TouchableOpacity
+              style={styles.lockUpgradeButton}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.lockBackButton}
+              onPress={() => router.push('/(tabs)/simulation')}
+            >
+              <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Header with back button and title */}
       <LinearGradient
         colors={['#ef4444', '#dc2626']}
@@ -2074,6 +2165,97 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  // Lock Overlay Styles
+  lockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    zIndex: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  lockOverlayContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    maxWidth: 400,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  lockIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  lockIcon: {
+    fontSize: 40,
+  },
+  lockTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  lockMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginBottom: 8,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  lockSubMessage: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  lockUpgradeButton: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    width: '100%',
+    marginBottom: 12,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lockUpgradeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  lockBackButton: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    width: '100%',
+  },
+  lockBackButtonText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
