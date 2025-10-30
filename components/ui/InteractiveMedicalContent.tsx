@@ -34,6 +34,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import TableOfContents from './TableOfContents';
+import SectionNotesModal from './SectionNotesModal';
+import Toast from './Toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { saveNote, loadNote, deleteNote } from '@/lib/notesService';
 
 interface SupabaseRow {
   idx: number;
@@ -59,6 +63,7 @@ interface InteractiveMedicalContentProps {
 const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow, onBackPress, onOpenModal, currentSection }) => {
   const { colors, isDarkMode } = useTheme();
   const { triggerActivity } = useSessionTimeout();
+  const { user } = useAuth();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
   const [searchTerm, setSearchTerm] = useState('');
   const [studyMode, setStudyMode] = useState(false);
@@ -70,6 +75,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<{ [key: number]: View | null }>({});
+
+  // Notes state
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [currentNoteSection, setCurrentNoteSection] = useState<{ id: string; title: string } | null>(null);
+  const [sectionNotes, setSectionNotes] = useState<Map<string, string>>(new Map());
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Parse content sections
   const parsedSections = React.useMemo(() => {
@@ -195,6 +207,82 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
+
+  // Load notes for all sections when component mounts
+  useEffect(() => {
+    const loadAllNotes = async () => {
+      if (!user?.id || !parsedSections.length) return;
+
+      const notesMap = new Map<string, string>();
+
+      for (let i = 0; i < parsedSections.length; i++) {
+        const section = parsedSections[i];
+        const sectionId = `${supabaseRow.slug || supabaseRow.title}_section_${i}`;
+
+        const { note } = await loadNote(user.id, sectionId);
+        if (note && note.note_content) {
+          notesMap.set(sectionId, note.note_content);
+        }
+      }
+
+      setSectionNotes(notesMap);
+    };
+
+    loadAllNotes();
+  }, [user?.id, parsedSections.length, supabaseRow.slug, supabaseRow.title]);
+
+  // Handle save note
+  const handleSaveNote = async (sectionId: string, noteContent: string) => {
+    if (!user?.id) return;
+
+    const sectionTitle = currentNoteSection?.title || '';
+    const result = await saveNote(user.id, sectionId, sectionTitle, noteContent);
+
+    if (result.success) {
+      // Update local state
+      setSectionNotes(prev => {
+        const newMap = new Map(prev);
+        if (noteContent.trim()) {
+          newMap.set(sectionId, noteContent);
+        } else {
+          newMap.delete(sectionId);
+        }
+        return newMap;
+      });
+
+      // Show success toast
+      setToastMessage('Erfolgreich gespeichert! Du kannst sie im Seitenmenü unter \'Gespeicherte Notizen\' überprüfen.');
+      setToastVisible(true);
+    } else {
+      // Show error
+      setToastMessage('Fehler beim Speichern der Notiz. Bitte versuche es erneut.');
+      setToastVisible(true);
+    }
+  };
+
+  // Handle delete note
+  const handleDeleteNote = async (sectionId: string) => {
+    if (!user?.id) return;
+
+    const result = await deleteNote(user.id, sectionId);
+
+    if (result.success) {
+      // Update local state
+      setSectionNotes(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(sectionId);
+        return newMap;
+      });
+
+      // Show success toast
+      setToastMessage('Notiz erfolgreich gelöscht.');
+      setToastVisible(true);
+    } else {
+      // Show error
+      setToastMessage('Fehler beim Löschen der Notiz. Bitte versuche es erneut.');
+      setToastVisible(true);
+    }
+  };
 
   // Simple search handler
   const handleSearch = (text: string) => {
@@ -925,20 +1013,22 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     <TouchableOpacity
                       style={styles.modernSecondaryButton}
                       onPress={() => {
-                        // Toggle bookmark for this section
-                        const newBookmarks = new Set(bookmarkedSections);
-                        if (newBookmarks.has(index)) {
-                          newBookmarks.delete(index);
-                        } else {
-                          newBookmarks.add(index);
-                        }
-                        setBookmarkedSections(newBookmarks);
+                        // Open notes modal for this section
+                        const sectionId = `${supabaseRow.slug || supabaseRow.title}_section_${index}`;
+                        const sectionTitle = section.title;
+                        setCurrentNoteSection({ id: sectionId, title: sectionTitle });
+                        setNotesModalVisible(true);
                         triggerActivity();
                       }}
                     >
-                      <StickyNote size={18} color="#6B7280" strokeWidth={2} />
+                      <StickyNote
+                        size={18}
+                        color={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? '#F97316' : '#6B7280'}
+                        strokeWidth={2}
+                        fill={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? '#FED7AA' : 'none'}
+                      />
                       <Text style={styles.modernSecondaryButtonText}>
-                        {bookmarkedSections.has(index) ? 'Notiz entfernen' : 'Notizen'}
+                        {sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? 'Notiz bearbeiten' : 'Notizen'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1002,6 +1092,26 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         <View style={styles.bottomPadding} />
       </ScrollView>
 
+      {/* Notes Modal */}
+      <SectionNotesModal
+        isVisible={notesModalVisible}
+        sectionTitle={currentNoteSection?.title || ''}
+        sectionId={currentNoteSection?.id || ''}
+        currentNote={currentNoteSection ? sectionNotes.get(currentNoteSection.id) || '' : ''}
+        onSave={handleSaveNote}
+        onDelete={handleDeleteNote}
+        onClose={() => {
+          setNotesModalVisible(false);
+          setCurrentNoteSection(null);
+        }}
+      />
+
+      {/* Success Toast */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        onHide={() => setToastVisible(false)}
+      />
     </Animated.View>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark, User, LogOut, ChevronRight } from 'lucide-react-native';
+import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark, User, LogOut, ChevronRight, StickyNote } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -77,6 +77,13 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       subtitle: 'Gespeicherte Inhalte',
       route: '/bookmarks',
       gradientColors: ['#F472B6', '#EC4899'] // Pink
+    },
+    {
+      icon: StickyNote,
+      label: 'Gespeicherte Notizen',
+      subtitle: 'Ihre persönlichen Notizen',
+      route: '/gespeicherte-notizen',
+      gradientColors: ['#F97316', '#EA580C'] // Orange
     },
   ];
 
