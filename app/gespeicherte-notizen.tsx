@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Edit3, Trash2, Calendar, FileText } from 'lucide-react-native';
@@ -29,6 +30,8 @@ export default function GespeicherteNotizenPage() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<UserNote | null>(null);
 
   useEffect(() => {
     loadNotes();
@@ -67,34 +70,31 @@ export default function GespeicherteNotizenPage() {
   };
 
   const handleDelete = (note: UserNote) => {
-    Alert.alert(
-      'Notiz löschen',
-      'Möchten Sie diese Notiz wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
-      [
-        {
-          text: 'Abbrechen',
-          style: 'cancel',
-        },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: async () => {
-            if (!user?.id) return;
+    setNoteToDelete(note);
+    setDeleteConfirmVisible(true);
+  };
 
-            const result = await deleteNote(user.id, note.lesson_id);
+  const confirmDelete = async () => {
+    if (!user?.id || !noteToDelete) return;
 
-            if (result.success) {
-              setNotes(prev => prev.filter(n => n.id !== note.id));
-              setToastMessage('Notiz erfolgreich gelöscht.');
-              setToastVisible(true);
-            } else {
-              setToastMessage('Fehler beim Löschen der Notiz.');
-              setToastVisible(true);
-            }
-          },
-        },
-      ]
-    );
+    const result = await deleteNote(user.id, noteToDelete.lesson_id);
+
+    if (result.success) {
+      setNotes(prev => prev.filter(n => n.id !== noteToDelete.id));
+      setToastMessage('Notiz erfolgreich gelöscht.');
+      setToastVisible(true);
+    } else {
+      setToastMessage('Fehler beim Löschen der Notiz.');
+      setToastVisible(true);
+    }
+
+    setDeleteConfirmVisible(false);
+    setNoteToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmVisible(false);
+    setNoteToDelete(null);
   };
 
   const handleSaveNote = async (sectionId: string, noteContent: string) => {
@@ -461,6 +461,107 @@ export default function GespeicherteNotizenPage() {
         message={toastMessage}
         onHide={() => setToastVisible(false)}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteConfirmVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={cancelDelete}
+      >
+        <Pressable style={styles.confirmOverlay} onPress={cancelDelete}>
+          <Pressable style={styles.confirmModal} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.confirmHeader}>
+              <Trash2 size={32} color="#EF4444" />
+              <Text style={styles.confirmTitle}>Notiz löschen</Text>
+            </View>
+            <Text style={styles.confirmMessage}>
+              Möchten Sie diese Notiz wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.cancelButton]}
+                onPress={cancelDelete}
+              >
+                <Text style={styles.cancelButtonText}>Abbrechen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.deleteConfirmButton]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.deleteConfirmButtonText}>Löschen</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  confirmModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  confirmHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#EF4444',
+  },
+  deleteConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+});
