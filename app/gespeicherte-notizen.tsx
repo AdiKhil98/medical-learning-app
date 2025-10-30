@@ -130,6 +130,20 @@ export default function GespeicherteNotizenPage() {
     }
   };
 
+  const extractLessonName = (lessonId: string): string => {
+    // Extract lesson name from lesson_id (e.g., "notfallmanagement_section_0" -> "Notfallmanagement")
+    const parts = lessonId.split('_section_');
+    if (parts.length > 0) {
+      const lessonSlug = parts[0];
+      // Convert slug to readable name (capitalize and replace hyphens with spaces)
+      return lessonSlug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    return lessonId;
+  };
+
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -235,17 +249,22 @@ export default function GespeicherteNotizenPage() {
     },
     noteTitleRow: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       marginBottom: 8,
     },
     noteIcon: {
       marginRight: 10,
     },
     noteTitle: {
-      flex: 1,
       fontSize: 18,
       fontWeight: '700',
       color: '#1F2937',
+      marginBottom: 4,
+    },
+    noteSectionTitle: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#6B7280',
     },
     noteDateRow: {
       flexDirection: 'row',
@@ -377,9 +396,14 @@ export default function GespeicherteNotizenPage() {
                       color="#FFFFFF"
                       style={dynamicStyles.noteIcon}
                     />
-                    <Text style={[dynamicStyles.noteTitle, { color: '#FFFFFF' }]}>
-                      {note.lesson_title}
-                    </Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[dynamicStyles.noteTitle, { color: '#FFFFFF' }]}>
+                        {extractLessonName(note.lesson_id)}
+                      </Text>
+                      <Text style={[dynamicStyles.noteSectionTitle, { color: 'rgba(255,255,255,0.85)' }]}>
+                        {note.lesson_title}
+                      </Text>
+                    </View>
                   </View>
                   <View style={dynamicStyles.noteDateRow}>
                     <Calendar size={14} color="rgba(255,255,255,0.8)" />
@@ -437,7 +461,7 @@ export default function GespeicherteNotizenPage() {
       {editingNote && (
         <SectionNotesModal
           isVisible={modalVisible}
-          sectionTitle={editingNote.lesson_title}
+          sectionTitle={`${extractLessonName(editingNote.lesson_id)} - ${editingNote.lesson_title}`}
           sectionId={editingNote.lesson_id}
           currentNote={editingNote.note_content}
           onSave={handleSaveNote}
