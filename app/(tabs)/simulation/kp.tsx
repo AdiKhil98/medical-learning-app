@@ -246,12 +246,18 @@ export default function KPSimulationScreen() {
         console.log(`✅ [${timestamp}] Voiceflow controller created successfully`);
 
         // ============================================
-        // STEP 3C: INITIALIZE VOICEFLOW WITH CREDENTIALS
+        // STEP 3C: INITIALIZE VOICEFLOW WITH PERSISTENT IDS
         // ============================================
-        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with user credentials`);
-        console.log(`📤 [${timestamp}] Payload: user_id=${userId}, session_token=${result.sessionToken.substring(0, 8)}...`);
+        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent IDs from localStorage`);
 
-        const initialized = await controller.initialize(userId, result.sessionToken);
+        // Get persistent IDs that will be used
+        const persistentIds = controller.getIds();
+        console.log(`📤 [${timestamp}] Persistent IDs:`, {
+          user_id: persistentIds.user_id,
+          session_id: persistentIds.session_id
+        });
+
+        const initialized = await controller.initialize();
 
         if (!initialized) {
           throw new Error('Voiceflow initialization returned false');
