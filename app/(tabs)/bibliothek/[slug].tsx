@@ -5,7 +5,6 @@ import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shi
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import MedicalContentRenderer from '@/components/ui/MedicalContentRenderer';
 import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -214,7 +213,6 @@ export default function SectionDetailScreen() {
   const [childItems, setChildItems] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showContent, setShowContent] = useState(false);
   
   // Cache to prevent re-fetching on tab switches
   const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
@@ -284,7 +282,6 @@ export default function SectionDetailScreen() {
 
       const children = childItemsData || [];
       setChildItems(children);
-      
 
       // Cache the results
       dataCache.current.set(cacheKey, {
@@ -292,22 +289,6 @@ export default function SectionDetailScreen() {
         children: children,
         timestamp: now
       });
-
-      // Determine if we should show content
-      const hasChildren = children.length > 0;
-      // Check multiple content sources - content_improved, content_html, or content_details
-      const hasContent = !!(
-        (itemData.content_improved && 
-         (typeof itemData.content_improved === 'object' || 
-          (typeof itemData.content_improved === 'string' && itemData.content_improved.trim()))) ||
-        (itemData.content_html && itemData.content_html.trim()) ||
-        (itemData.content_details && itemData.content_details.trim())
-      );
-      
-      
-      // Show content if there IS content, regardless of children
-      // This allows pages to have both navigation and content
-      setShowContent(hasContent);
 
     } catch (e) {
       console.error('Error fetching item data:', e);
@@ -502,41 +483,7 @@ export default function SectionDetailScreen() {
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
-        
-        {showContent && (
-          // Modern Content Display
-          <View style={styles.modernContentCard}>
-            <LinearGradient
-              colors={['rgba(102, 126, 234, 0.08)', 'rgba(118, 75, 162, 0.05)']}
-              style={styles.contentCardGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.modernContentHeader}>
-                <LinearGradient
-                  colors={['#0891b2', '#0e7490']}
-                  style={styles.contentHeaderIcon}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <FileText size={20} color="white" />
-                </LinearGradient>
-              </View>
-              <View style={styles.contentBody}>
-                <MedicalContentRenderer
-                  htmlContent={currentItem.content_html}
-                  jsonContent={currentItem.content_improved}
-                  plainTextContent={currentItem.content_details}
-                  title={currentItem.title}
-                  category={currentItem.type || 'Medizin'}
-                  lastUpdated="Juni 2025"
-                  completionStatus="Vollständiger Leitfaden"
-                />
-              </View>
-            </LinearGradient>
-          </View>
-        )}
-        
+
         {childItems.length > 0 ? (
           // Navigation Grid for Children
           <View style={styles.sectionPanel}>
@@ -559,9 +506,9 @@ export default function SectionDetailScreen() {
             </LinearGradient>
           </View>
         ) : null}
-        
-        {/* Empty state shown only when no content AND no children */}
-        {!showContent && childItems.length === 0 && (
+
+        {/* Empty state shown only when no children */}
+        {childItems.length === 0 && (
           <View style={styles.modernEmptyState}>
             <LinearGradient
               colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
@@ -698,62 +645,6 @@ const styles = StyleSheet.create({
   modernContent: {
     flex: 1,
     paddingHorizontal: 20,
-  },
-
-  // Modern Content Card
-  modernContentCard: {
-    marginBottom: 20,
-  },
-  contentCardGradient: {
-    borderRadius: 20,
-    padding: 2,
-  },
-  modernContentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    padding: 20,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-  },
-  contentHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  modernContentTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#1e293b',
-  },
-  contentBody: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-  contentText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 16,
-    color: '#475569',
-    lineHeight: 26,
-  },
-  contentSection: {
-    marginBottom: 24,
-  },
-  contentSectionTitle: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    color: '#1e293b',
-    marginBottom: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(8, 145, 178, 0.2)',
   },
 
   // Section Panel with Gradient Background
