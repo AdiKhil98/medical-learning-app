@@ -1,34 +1,56 @@
-// Utility functions for integrating with hidden Voiceflow widget
+/**
+ * Modern Voiceflow Widget Integration with Persistent ID Management
+ *
+ * This implementation ensures:
+ * - Persistent user_id and session_id across page reloads
+ * - Proper tracking through Patient and Examiner evaluation flows
+ * - Separate IDs for KP and FSP simulations
+ * - Modern Voiceflow widget configuration
+ */
+
+import { getPersistentIds, resetSimulation, logCurrentIds, SimulationType } from './persistentIdManager';
 
 export interface VoiceflowConfig {
   projectID: string;
-  versionID: string;
+  versionID?: string;
   url?: string;
-  voice?: {
-    url: string;
-  };
+  simulationType: SimulationType;
+  title?: string;
+  imageUrl?: string;
 }
 
 export class VoiceflowController {
   private config: VoiceflowConfig;
   private isLoaded = false;
   private widget: any = null;
-  private userId: string | null = null;
-  private sessionToken: string | null = null;
+  private userId: string;
+  private sessionId: string;
 
   constructor(config: VoiceflowConfig) {
     this.config = config;
+
+    // Get or create persistent IDs immediately
+    const persistentIds = getPersistentIds(config.simulationType);
+    this.userId = persistentIds.user_id;
+    this.sessionId = persistentIds.session_id;
+
+    console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
+      user_id: this.userId,
+      session_id: this.sessionId,
+      projectID: config.projectID
+    });
   }
 
-  // Initialize with optional user credentials
-  async initialize(userId?: string, sessionToken?: string): Promise<boolean> {
-    this.userId = userId || null;
-    this.sessionToken = sessionToken || null;
-
+  /**
+   * Initialize Voiceflow widget with persistent IDs
+   */
+  async initialize(): Promise<boolean> {
     return this.loadWidget();
   }
 
-  // Load Voiceflow script and initialize hidden widget
+  /**
+   * Load Voiceflow script and initialize widget with modern configuration
+   */
   async loadWidget(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
@@ -44,7 +66,8 @@ export class VoiceflowController {
         return;
       }
 
-      console.log('📦 Voiceflow: Loading widget for project:', this.config.projectID);
+      console.log(`📦 Voiceflow: Loading widget for ${this.config.simulationType.toUpperCase()}...`);
+      logCurrentIds(this.config.simulationType);
 
       // Load script if not present
       if (!document.querySelector('script[src*="voiceflow.com"]')) {
@@ -86,67 +109,84 @@ export class VoiceflowController {
     });
   }
 
+  /**
+   * Initialize widget with modern Voiceflow configuration
+   */
   private async initializeWidget(): Promise<void> {
     if (!window.voiceflow?.chat) {
       throw new Error('Voiceflow not available');
     }
 
     try {
-      // Build configuration with user credentials if available
-      const config: any = {
-        verify: { projectID: this.config.projectID },
-        url: 'https://general-runtime.voiceflow.com',
-        versionID: 'production',
+      // Log IDs being sent to Voiceflow
+      console.log('🔐 Initializing Voiceflow with persistent IDs:', {
+        user_id: this.userId,
+        session_id: this.sessionId,
+        simulation: this.config.simulationType.toUpperCase()
+      });
+
+      // Modern Voiceflow configuration with persistent IDs
+      const widgetConfig: any = {
+        verify: {
+          projectID: this.config.projectID
+        },
+        url: this.config.url || 'https://general-runtime.voiceflow.com',
+        versionID: this.config.versionID || 'production',
+
+        // User configuration with persistent IDs
+        user: {
+          id: this.userId,
+          data: {
+            session_id: this.sessionId
+          }
+        },
+
+        // Assistant configuration for UI and persistence
+        assistant: {
+          persistence: 'localStorage', // Enable conversation persistence
+          header: {
+            title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation Assistant`,
+            imageUrl: this.config.imageUrl || undefined
+          },
+          inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
+        },
+
+        // Voice configuration
         voice: {
-          url: "https://runtime-api.voiceflow.com"
+          url: 'https://runtime-api.voiceflow.com'
         }
       };
 
-      // Add userID if available
-      if (this.userId) {
-        config.userID = this.userId;
-      }
-
-      // Add launch event with payload if user credentials are available
-      if (this.userId || this.sessionToken) {
-        config.launch = {
-          event: {
-            type: 'launch',
-            payload: {
-              user_id: this.userId || 'unknown',
-              session_token: this.sessionToken || ''
-            }
-          }
-        };
-        console.log('🔄 Initializing with launch payload:', config.launch.event.payload);
-      }
-
-      console.log('🔍 Voiceflow config:', {
-        projectID: config.verify.projectID,
-        versionID: config.versionID,
-        hasLaunchPayload: !!config.launch
+      console.log('📤 Voiceflow configuration:', {
+        projectID: widgetConfig.verify.projectID,
+        versionID: widgetConfig.versionID,
+        user_id: widgetConfig.user.id,
+        session_id: widgetConfig.user.data.session_id,
+        persistence: widgetConfig.assistant.persistence
       });
 
-      window.voiceflow.chat.load(config);
+      // Load the widget
+      window.voiceflow.chat.load(widgetConfig);
 
       this.widget = window.voiceflow.chat;
       this.isLoaded = true;
 
-      // Add event listeners for widget interactions
+      // Setup event listeners
       this.setupEventListeners();
 
-      console.log('✅ Widget loaded and ready');
+      console.log('✅ Widget loaded and ready with persistent IDs');
 
     } catch (error) {
-      console.error('Failed to initialize Voiceflow widget:', error);
+      console.error('❌ Failed to initialize Voiceflow widget:', error);
       throw error;
     }
   }
 
-  // Set up event listeners for widget interactions
+  /**
+   * Setup event listeners for widget interactions
+   */
   private setupEventListeners(): void {
     try {
-      // Listen for widget events to detect simulation start
       if (this.widget && this.widget.listen) {
         this.widget.listen('open', () => {
           console.log('🎯 Voiceflow: Widget opened');
@@ -164,7 +204,7 @@ export class VoiceflowController {
         });
       }
 
-      // Alternative: Monitor DOM changes for widget activity
+      // DOM observer for widget activity
       if (typeof window !== 'undefined') {
         const observer = new MutationObserver((mutations) => {
           mutations.forEach((mutation) => {
@@ -185,7 +225,6 @@ export class VoiceflowController {
           subtree: true
         });
 
-        // Store observer for cleanup
         (window as any).voiceflowObserver = observer;
       }
     } catch (error) {
@@ -193,88 +232,26 @@ export class VoiceflowController {
     }
   }
 
-  // Start simulation programmatically
-  async startSimulation(): Promise<boolean> {
-    try {
-      if (!this.isLoaded || !this.widget) {
-        throw new Error('Widget not loaded');
-      }
-
-      // Send the "Simulation starten" message programmatically
-      if (this.widget.interact) {
-        await this.widget.interact({
-          type: 'text',
-          payload: 'Simulation starten'
-        });
-      } else if (this.widget.send) {
-        await this.widget.send({
-          type: 'text',
-          payload: 'Simulation starten'
-        });
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Failed to start simulation:', error);
-      return false;
-    }
+  /**
+   * Get current persistent IDs
+   */
+  getIds(): { user_id: string; session_id: string } {
+    return {
+      user_id: this.userId,
+      session_id: this.sessionId
+    };
   }
 
-  // Check if widget is ready
+  /**
+   * Check if widget is ready
+   */
   isReady(): boolean {
     return this.isLoaded && !!this.widget;
   }
 
-  // Update session variables in an active Voiceflow session
-  // Call this when session token is generated after widget is loaded
-  async updateSessionVariables(userId: string, sessionToken: string): Promise<boolean> {
-    this.userId = userId;
-    this.sessionToken = sessionToken;
-
-    console.log('🔄 Updating Voiceflow session variables:', { userId, sessionToken });
-
-    if (!this.isReady()) {
-      console.error('❌ Voiceflow widget not ready for variable update');
-      return false;
-    }
-
-    try {
-      // Method 1: Try using interact to set variables
-      if (this.widget.interact) {
-        await this.widget.interact({
-          type: 'launch',
-          payload: {
-            user_id: userId,
-            session_token: sessionToken
-          }
-        });
-        console.log('✅ Session variables updated via interact method');
-        return true;
-      }
-
-      // Method 2: Try using send method as fallback
-      if (this.widget.send) {
-        await this.widget.send({
-          type: 'launch',
-          payload: {
-            user_id: userId,
-            session_token: sessionToken
-          }
-        });
-        console.log('✅ Session variables updated via send method');
-        return true;
-      }
-
-      console.error('❌ No suitable method found to update Voiceflow variables');
-      return false;
-
-    } catch (error) {
-      console.error('❌ Failed to update Voiceflow session variables:', error);
-      return false;
-    }
-  }
-
-  // Open the widget
+  /**
+   * Open the widget
+   */
   open(): void {
     if (this.isReady()) {
       this.widget.show();
@@ -284,7 +261,9 @@ export class VoiceflowController {
     }
   }
 
-  // Close the widget
+  /**
+   * Close the widget
+   */
   close(): void {
     if (this.isReady()) {
       this.widget.hide();
@@ -294,30 +273,14 @@ export class VoiceflowController {
     }
   }
 
-  // Stop all active media streams (microphone, audio calls)
+  /**
+   * Stop all active media streams (microphone, audio calls)
+   */
   private stopAllMediaStreams(): void {
     try {
       console.log('🔇 Stopping all active media streams...');
 
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
-        // Get all active media streams and stop them
-        // Note: navigator.mediaDevices.getUserMedia() creates streams that need to be stopped manually
-
-        // Method 1: Stop streams via getTracks if available
-        if ((navigator as any).mediaDevices.enumerateDevices) {
-          (navigator as any).mediaDevices.enumerateDevices()
-            .then((devices: MediaDeviceInfo[]) => {
-              devices.forEach((device: MediaDeviceInfo) => {
-                console.log('🎤 Found device:', device.kind, device.label);
-              });
-            })
-            .catch((error: Error) => {
-              console.warn('⚠️ Could not enumerate devices:', error);
-            });
-        }
-      }
-
-      // Method 2: Search for audio/video elements in Voiceflow widget and pause them
+      // Stop audio/video elements
       const audioElements = document.querySelectorAll('audio, video');
       audioElements.forEach((element: Element) => {
         const mediaElement = element as HTMLMediaElement;
@@ -328,13 +291,11 @@ export class VoiceflowController {
         }
       });
 
-      // Method 3: Try to access and stop MediaStream objects directly
-      // This requires the streams to be stored somewhere accessible
+      // Stop MediaStream tracks in Voiceflow elements
       const voiceflowElements = document.querySelectorAll('[class*="vfrc"], [id*="voiceflow"]');
       voiceflowElements.forEach((element: Element) => {
         const htmlElement = element as any;
 
-        // Check if element has srcObject (common for media streams)
         if (htmlElement.srcObject && typeof htmlElement.srcObject.getTracks === 'function') {
           const tracks = htmlElement.srcObject.getTracks();
           tracks.forEach((track: MediaStreamTrack) => {
@@ -345,56 +306,23 @@ export class VoiceflowController {
         }
       });
 
-      // Method 4: Search for MediaStream objects in window scope (aggressive cleanup)
-      // This is a last resort to find and stop any orphaned streams
-      if (typeof window !== 'undefined' && (window as any).voiceflow) {
-        const vfWidget = (window as any).voiceflow;
-
-        // Recursively search for MediaStream objects and stop them
-        const stopMediaStreamsInObject = (obj: any, depth = 0) => {
-          if (depth > 3 || !obj || typeof obj !== 'object') return;
-
-          try {
-            Object.keys(obj).forEach(key => {
-              const value = obj[key];
-
-              // Check if it's a MediaStream
-              if (value && typeof value === 'object' && typeof value.getTracks === 'function') {
-                const tracks = value.getTracks();
-                tracks.forEach((track: MediaStreamTrack) => {
-                  track.stop();
-                  console.log('🛑 Stopped nested media track:', track.kind);
-                });
-              }
-
-              // Recurse into nested objects
-              if (value && typeof value === 'object') {
-                stopMediaStreamsInObject(value, depth + 1);
-              }
-            });
-          } catch (error) {
-            // Ignore errors from accessing protected properties
-          }
-        };
-
-        stopMediaStreamsInObject(vfWidget);
-      }
-
       console.log('✅ Media stream cleanup completed');
     } catch (error) {
       console.warn('⚠️ Error stopping media streams:', error);
     }
   }
 
-  // Clean up widget properly
+  /**
+   * Clean up widget properly
+   */
   destroy(): void {
-    console.log('🧹 VoiceflowController: Starting cleanup...');
+    console.log(`🧹 VoiceflowController: Starting cleanup for ${this.config.simulationType.toUpperCase()}...`);
 
     if (typeof window !== 'undefined') {
-      // Step 0: Stop all active media streams FIRST
+      // Stop all media streams
       this.stopAllMediaStreams();
 
-      // Step 1: Call Voiceflow API cleanup methods
+      // Call Voiceflow API cleanup methods
       if (window.voiceflow?.chat) {
         try {
           console.log('🔧 Calling Voiceflow cleanup methods...');
@@ -406,13 +334,13 @@ export class VoiceflowController {
         }
       }
 
-      // Step 2: Remove all Voiceflow DOM elements
+      // Remove Voiceflow DOM elements
       this.removeAllVoiceflowElements();
 
-      // Step 3: Remove Voiceflow scripts
+      // Remove Voiceflow scripts
       this.removeVoiceflowScripts();
 
-      // Step 4: Clean up observers
+      // Clean up observers
       if ((window as any).voiceflowObserver) {
         try {
           (window as any).voiceflowObserver.disconnect();
@@ -423,7 +351,7 @@ export class VoiceflowController {
         }
       }
 
-      // Step 5: Clear global Voiceflow object
+      // Clear global Voiceflow object
       if (window.voiceflow) {
         try {
           delete (window as any).voiceflow;
@@ -433,19 +361,19 @@ export class VoiceflowController {
         }
       }
     }
-    
+
     this.isLoaded = false;
     this.widget = null;
-    this.userId = null;
-    this.sessionToken = null;
     console.log('✅ VoiceflowController cleanup completed');
   }
 
-  // Remove all Voiceflow DOM elements
+  /**
+   * Remove all Voiceflow DOM elements
+   */
   private removeAllVoiceflowElements(): void {
     const selectors = [
       '[id*="voiceflow"]',
-      '[class*="voiceflow"]', 
+      '[class*="voiceflow"]',
       '[class*="vf-"]',
       '[class*="VF"]',
       '[class*="vfrc"]',
@@ -453,8 +381,6 @@ export class VoiceflowController {
       '[aria-label*="chat"]',
       'iframe[src*="voiceflow"]',
       'iframe[src*="general-runtime"]',
-      'div[style*="z-index: 1000"]',
-      'div[style*="position: fixed"]',
       '.widget-container',
       '#voiceflow-chat',
       '.vfrc-widget',
@@ -466,8 +392,7 @@ export class VoiceflowController {
     selectors.forEach(selector => {
       const elements = document.querySelectorAll(selector);
       elements.forEach((element: Element) => {
-        // Check if it's actually a Voiceflow element
-        const isVoiceflowElement = 
+        const isVoiceflowElement =
           element.id.includes('voiceflow') ||
           element.className.includes('voiceflow') ||
           element.className.includes('vfrc') ||
@@ -480,60 +405,72 @@ export class VoiceflowController {
         }
       });
     });
-    
+
     console.log(`🗑️ Removed ${removedCount} Voiceflow DOM elements`);
   }
 
-  // Remove Voiceflow scripts
+  /**
+   * Remove Voiceflow scripts
+   */
   private removeVoiceflowScripts(): void {
     const scripts = document.querySelectorAll('script[src*="voiceflow"]');
     scripts.forEach(script => {
       script.remove();
-      console.log('🗑️ Removed Voiceflow script:', script.getAttribute('src'));
     });
 
-    // Remove our injected style
     const styleElement = document.getElementById('hide-voiceflow-aggressive');
     if (styleElement) {
       styleElement.remove();
-      console.log('🗑️ Removed injected Voiceflow hiding styles');
     }
   }
 }
 
-// Helper function to create controller for KP simulation
+/**
+ * Create controller for KP simulation
+ */
 export function createKPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68fb50ea29100126ffc5a30e',  // KP57 Project ID (New Account)
-    versionID: '68fb50ea29100126ffc5a30f',  // KP57 Version ID (New Account)
+    projectID: '68fb50ea29100126ffc5a30e',
+    versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
-    voice: {
-      url: 'https://runtime-api.voiceflow.com'
-    }
+    simulationType: 'kp',
+    title: 'KP Simulation Assistant'
   });
 }
 
-// Helper function to create controller for FSP simulation
+/**
+ * Create controller for FSP simulation
+ */
 export function createFSPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68fb50f929100126ffc5a318',  // FSP57 Project ID (New Account)
-    versionID: '68fb50f929100126ffc5a319',  // FSP57 Version ID (New Account)
+    projectID: '68fb50f929100126ffc5a318',
+    versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
-    voice: {
-      url: 'https://runtime-api.voiceflow.com'
-    }
+    simulationType: 'fsp',
+    title: 'FSP Simulation Assistant'
   });
 }
 
-// Global cleanup utility function
+/**
+ * Reset simulation (clear persistent IDs)
+ */
+export function resetKPSimulation(): void {
+  resetSimulation('kp');
+}
+
+export function resetFSPSimulation(): void {
+  resetSimulation('fsp');
+}
+
+/**
+ * Global cleanup utility function
+ */
 export function globalVoiceflowCleanup(): void {
   console.log('🌍 Global Voiceflow cleanup started...');
-  
+
   if (typeof window !== 'undefined') {
-    // Step 1: Call Voiceflow API cleanup methods
     if (window.voiceflow?.chat) {
       try {
-        console.log('🔧 Global cleanup: Calling Voiceflow methods...');
         window.voiceflow.chat.hide && window.voiceflow.chat.hide();
         window.voiceflow.chat.close && window.voiceflow.chat.close();
         window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
@@ -542,86 +479,34 @@ export function globalVoiceflowCleanup(): void {
       }
     }
 
-    // Step 2: Remove all Voiceflow elements
+    // Remove all Voiceflow elements
     const selectors = [
       '[id*="voiceflow"]',
-      '[class*="voiceflow"]', 
-      '[class*="vf-"]',
-      '[class*="VF"]',
+      '[class*="voiceflow"]',
       '[class*="vfrc"]',
-      '[data-testid*="chat"]',
-      '[aria-label*="chat"]',
       'iframe[src*="voiceflow"]',
-      'iframe[src*="general-runtime"]',
-      'div[style*="z-index: 1000"]',
-      'div[style*="position: fixed"]',
-      '.widget-container',
-      '#voiceflow-chat',
-      '.vfrc-widget',
-      '.vfrc-chat',
-      '.vfrc-launcher'
+      '.vfrc-widget'
     ];
 
-    let removedCount = 0;
     selectors.forEach(selector => {
       try {
         const elements = document.querySelectorAll(selector);
-        elements.forEach((element: Element) => {
-          // Check if it's actually a Voiceflow element
-          const elementHTML = element as HTMLElement;
-          const isVoiceflowElement = 
-            element.id.includes('voiceflow') ||
-            element.className.includes('voiceflow') ||
-            element.className.includes('vfrc') ||
-            elementHTML.innerHTML?.includes('voiceflow') ||
-            (element as HTMLIFrameElement).src?.includes('voiceflow') ||
-            (element as HTMLIFrameElement).src?.includes('general-runtime');
-
-          if (isVoiceflowElement || selector.includes('voiceflow') || selector.includes('vfrc')) {
-            element.remove();
-            removedCount++;
-          }
-        });
+        elements.forEach((element: Element) => element.remove());
       } catch (error) {
         console.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
       }
     });
-    
-    console.log(`🗑️ Global cleanup: Removed ${removedCount} Voiceflow DOM elements`);
 
-    // Step 3: Remove scripts
-    try {
-      const scripts = document.querySelectorAll('script[src*="voiceflow"]');
-      scripts.forEach(script => {
-        script.remove();
-        console.log('🗑️ Global cleanup: Removed Voiceflow script');
-      });
-    } catch (error) {
-      console.warn('⚠️ Error removing Voiceflow scripts:', error);
-    }
+    // Remove scripts
+    const scripts = document.querySelectorAll('script[src*="voiceflow"]');
+    scripts.forEach(script => script.remove());
 
-    // Step 4: Remove injected styles
-    try {
-      const styleElement = document.getElementById('hide-voiceflow-aggressive');
-      if (styleElement) {
-        styleElement.remove();
-        console.log('🗑️ Global cleanup: Removed injected styles');
-      }
-    } catch (error) {
-      console.warn('⚠️ Error removing injected styles:', error);
-    }
-
-    // Step 5: Clear global objects
-    try {
-      if (window.voiceflow) {
-        delete (window as any).voiceflow;
-        console.log('✅ Global cleanup: Cleared global voiceflow object');
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not clear global voiceflow object:', error);
+    // Clear global objects
+    if (window.voiceflow) {
+      delete (window as any).voiceflow;
     }
   }
-  
+
   console.log('✅ Global Voiceflow cleanup completed');
 }
 
