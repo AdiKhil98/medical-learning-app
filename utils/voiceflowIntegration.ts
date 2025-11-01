@@ -425,7 +425,7 @@ export class VoiceflowController {
  */
 export function createKPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68fb50ea29100126ffc5a30e',
+    projectID: '690664399c414573ccceb427',  // New KP Project ID
     versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'kp',
@@ -438,7 +438,7 @@ export function createKPController(): VoiceflowController {
  */
 export function createFSPController(): VoiceflowController {
   return new VoiceflowController({
-    projectID: '68fb50f929100126ffc5a318',
+    projectID: '690664339c414573ccceb410',  // New FSP Project ID
     versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'fsp',

@@ -84,7 +84,7 @@ const controller = createKPController();
 **Modern Widget Configuration:**
 ```javascript
 window.voiceflow.chat.load({
-  verify: { projectID: '68fb50ea29100126ffc5a30e' }, // KP project
+  verify: { projectID: '690664399c414573ccceb427' }, // KP project
   url: 'https://general-runtime.voiceflow.com',
   versionID: 'production',
   user: {
@@ -152,7 +152,7 @@ controller.destroy()                    // Cleanup widget and media streams
     });
 
     window.voiceflow.chat.load({
-      verify: { projectID: '68fb50ea29100126ffc5a30e' },
+      verify: { projectID: '690664399c414573ccceb427' },
       url: 'https://general-runtime.voiceflow.com',
       versionID: 'production',
       user: {
@@ -212,7 +212,7 @@ controller.destroy()                    // Cleanup widget and media streams
     });
 
     window.voiceflow.chat.load({
-      verify: { projectID: '68fb50f929100126ffc5a318' },
+      verify: { projectID: '690664339c414573ccceb410' },
       url: 'https://general-runtime.voiceflow.com',
       versionID: 'production',
       user: {
@@ -361,10 +361,10 @@ Both evaluations will share the same `session_id`, allowing Make.com to:
 
 ## 📊 Project IDs Reference
 
-| Simulation | Project ID | Version |
-|-----------|------------|---------|
-| **KP** | `68fb50ea29100126ffc5a30e` | production |
-| **FSP** | `68fb50f929100126ffc5a318` | production |
+| Simulation | Project ID | Version ID | Version |
+|-----------|------------|------------|---------|
+| **KP** | `690664399c414573ccceb427` | `690664399c414573ccceb428` | production |
+| **FSP** | `690664339c414573ccceb410` | `690664339c414573ccceb411` | production |
 
 ---
 
