@@ -157,13 +157,8 @@ export class VoiceflowController {
         }
       };
 
-      console.log('📤 Voiceflow configuration:', {
-        projectID: widgetConfig.verify.projectID,
-        versionID: widgetConfig.versionID,
-        user_id: widgetConfig.user.id,
-        session_id: widgetConfig.user.data.session_id,
-        persistence: widgetConfig.assistant.persistence
-      });
+      // Log the ACTUAL configuration being sent to Voiceflow (not flattened)
+      console.log('📤 Voiceflow configuration (ACTUAL STRUCTURE):', JSON.parse(JSON.stringify(widgetConfig)));
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
