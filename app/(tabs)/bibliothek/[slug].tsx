@@ -204,7 +204,7 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
 });
 
 export default function SectionDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const { session, loading: authLoading } = useAuth();
@@ -380,15 +380,25 @@ export default function SectionDetailScreen() {
 
   const handleBackPress = useCallback(() => {
     try {
+      // Priority 1: Use previousPage parameter if available
+      if (previousPage && typeof previousPage === 'string') {
+        router.push(previousPage as any);
+        return;
+      }
+
+      // Priority 2: Use navigation history if available
       if (navigation.canGoBack()) {
         navigation.goBack();
-      } else {
-        router.push('/(tabs)/bibliothek');
+        return;
       }
+
+      // Priority 3: Fallback to main bibliothek
+      router.push('/(tabs)/bibliothek');
     } catch (error) {
+      // Final fallback - replace current route
       router.replace('/(tabs)/bibliothek');
     }
-  }, [navigation, router]);
+  }, [navigation, router, previousPage]);
 
   if (authLoading || loading) {
     return (
