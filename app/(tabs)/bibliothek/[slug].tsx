@@ -146,7 +146,7 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
     icon = 'Scan';
   } else if (normalizedTitle.includes('anamnes') || normalizedTitle.includes('untersuch') || normalizedTitle.includes('klinik')) {
     icon = 'Stethoscope';
-  } else if (type.toLowerCase().includes('content') || normalizedTitle.includes('content')) {
+  } else if ((type && type.toLowerCase().includes('content')) || normalizedTitle.includes('content')) {
     icon = 'FileText';
   } else {
     icon = 'Folder';
