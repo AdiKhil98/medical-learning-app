@@ -143,7 +143,7 @@ export class VoiceflowController {
 
         // Assistant configuration for UI and persistence
         assistant: {
-          persistence: 'localStorage', // Enable conversation persistence
+          persistence: false, // CRITICAL: Disable Voiceflow's persistence to use our custom IDs
           header: {
             title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation Assistant`,
             imageUrl: this.config.imageUrl || undefined

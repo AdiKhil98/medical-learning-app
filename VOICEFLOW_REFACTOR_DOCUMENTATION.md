@@ -16,7 +16,7 @@ This document describes the refactored Voiceflow widget integration with persist
 ### ✅ Modern Voiceflow Configuration
 - Uses `window.voiceflow.chat.load({...})` with modern API
 - Implements `user.data.session_id` for proper Make.com webhook integration
-- Enables `assistant.persistence: 'localStorage'` for conversation stability
+- Disables `assistant.persistence` to ensure our custom IDs are used (not Voiceflow's auto-generated ones)
 
 ### ✅ Automatic ID Management
 - IDs are automatically created and retrieved from localStorage
@@ -94,7 +94,7 @@ window.voiceflow.chat.load({
     }
   },
   assistant: {
-    persistence: 'localStorage',
+    persistence: false,  // CRITICAL: Disabled to use our custom IDs
     header: {
       title: 'KP Simulation Assistant'
     },
@@ -162,7 +162,7 @@ controller.destroy()                    // Cleanup widget and media streams
         }
       },
       assistant: {
-        persistence: 'localStorage',
+        persistence: false,  // CRITICAL: Disabled to use our custom user_id/session_id
         header: {
           title: 'KP Simulation Assistant'
         },
@@ -222,7 +222,7 @@ controller.destroy()                    // Cleanup widget and media streams
         }
       },
       assistant: {
-        persistence: 'localStorage',
+        persistence: false,  // CRITICAL: Disabled to use our custom user_id/session_id
         header: {
           title: 'FSP Simulation Assistant'
         },
@@ -239,6 +239,8 @@ controller.destroy()                    // Cleanup widget and media streams
 })(document, 'script');
 </script>
 ```
+
+**⚠️ CRITICAL NOTE:** `persistence` is set to `false` to ensure Voiceflow uses our custom user_id and session_id instead of generating its own IDs.
 
 ---
 
