@@ -380,25 +380,22 @@ export default function SectionDetailScreen() {
 
   const handleBackPress = useCallback(() => {
     try {
-      // Priority 1: Use previousPage parameter if available
-      if (previousPage && typeof previousPage === 'string') {
-        router.push(previousPage as any);
+      // Priority 1: If we have currentItem with parent_slug, navigate to parent
+      if (currentItem?.parent_slug) {
+        console.log('Navigating to parent:', currentItem.parent_slug);
+        router.push(`/(tabs)/bibliothek/${currentItem.parent_slug}` as any);
         return;
       }
 
-      // Priority 2: Use navigation history if available
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-        return;
-      }
-
-      // Priority 3: Fallback to main bibliothek
+      // Priority 2: Fallback to main bibliothek
+      console.log('No parent found, going to main bibliothek');
       router.push('/(tabs)/bibliothek');
     } catch (error) {
+      console.error('Error in back navigation:', error);
       // Final fallback - replace current route
       router.replace('/(tabs)/bibliothek');
     }
-  }, [navigation, router, previousPage]);
+  }, [currentItem, router]);
 
   if (authLoading || loading) {
     return (
