@@ -25,19 +25,22 @@ export class VoiceflowController {
   private widget: any = null;
   private userId: string;
   private sessionId: string;
+  private supabaseUserId?: string;
 
-  constructor(config: VoiceflowConfig) {
+  constructor(config: VoiceflowConfig, supabaseUserId?: string) {
     this.config = config;
+    this.supabaseUserId = supabaseUserId;
 
-    // Get or create persistent IDs immediately
-    const persistentIds = getPersistentIds(config.simulationType);
+    // Get or create persistent IDs, using Supabase user ID if provided
+    const persistentIds = getPersistentIds(config.simulationType, supabaseUserId);
     this.userId = persistentIds.user_id;
     this.sessionId = persistentIds.session_id;
 
     console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
       user_id: this.userId,
       session_id: this.sessionId,
-      projectID: config.projectID
+      projectID: config.projectID,
+      supabase_synced: !!supabaseUserId
     });
   }
 
@@ -149,11 +152,6 @@ export class VoiceflowController {
             imageUrl: this.config.imageUrl || undefined
           },
           inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
-        },
-
-        // Voice configuration
-        voice: {
-          url: 'https://runtime-api.voiceflow.com'
         }
       };
 
@@ -423,27 +421,27 @@ export class VoiceflowController {
 /**
  * Create controller for KP simulation
  */
-export function createKPController(): VoiceflowController {
+export function createKPController(supabaseUserId?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '690664399c414573ccceb427',  // New KP Project ID
     versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'kp',
     title: 'KP Simulation Assistant'
-  });
+  }, supabaseUserId);
 }
 
 /**
  * Create controller for FSP simulation
  */
-export function createFSPController(): VoiceflowController {
+export function createFSPController(supabaseUserId?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '690664339c414573ccceb410',  // New FSP Project ID
     versionID: 'production',
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'fsp',
     title: 'FSP Simulation Assistant'
-  });
+  }, supabaseUserId);
 }
 
 /**

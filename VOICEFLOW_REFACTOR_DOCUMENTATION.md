@@ -9,9 +9,11 @@ This document describes the refactored Voiceflow widget integration with persist
 ## 🎯 Key Features
 
 ### ✅ Persistent ID Management
-- **user_id** and **session_id** persist across page reloads using localStorage
+- **user_id** synced with authenticated Supabase user ID
+- **session_id** persists across page reloads using localStorage
 - Separate storage keys for KP and FSP simulations
 - IDs maintain consistency throughout Patient → Examiner evaluation flow
+- Voiceflow data can be matched to actual Supabase users in database
 
 ### ✅ Modern Voiceflow Configuration
 - Uses `window.voiceflow.chat.load({...})` with modern API
@@ -48,8 +50,8 @@ app/(tabs)/simulation/
 **Key Functions:**
 
 ```typescript
-// Get or create persistent IDs
-getPersistentIds(simulationType: 'kp' | 'fsp'): { user_id: string; session_id: string }
+// Get or create persistent IDs (with optional Supabase user ID sync)
+getPersistentIds(simulationType: 'kp' | 'fsp', supabaseUserId?: string): { user_id: string; session_id: string }
 
 // Reset simulation (clear both IDs)
 resetSimulation(simulationType: 'kp' | 'fsp'): void
@@ -76,9 +78,10 @@ getCurrentIds(simulationType: 'kp' | 'fsp'): { user_id: string; session_id: stri
 
 **Constructor Behavior:**
 ```typescript
-const controller = createKPController();
-// Automatically loads/creates persistent IDs from localStorage
-// No need to pass user_id or session_id manually
+const controller = createKPController(user.id);
+// Uses authenticated Supabase user ID as Voiceflow user_id
+// Session ID is automatically generated and persisted in localStorage
+// Voiceflow data can now be matched to Supabase users
 ```
 
 **Modern Widget Configuration:**
@@ -99,10 +102,8 @@ window.voiceflow.chat.load({
       title: 'KP Simulation Assistant'
     },
     inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
-  },
-  voice: {
-    url: 'https://runtime-api.voiceflow.com'
   }
+  // Note: voice parameter removed - not supported in new project schema
 });
 ```
 
@@ -167,9 +168,6 @@ controller.destroy()                    // Cleanup widget and media streams
           title: 'KP Simulation Assistant'
         },
         inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
-      },
-      voice: {
-        url: 'https://runtime-api.voiceflow.com'
       }
     });
   };
@@ -227,9 +225,6 @@ controller.destroy()                    // Cleanup widget and media streams
           title: 'FSP Simulation Assistant'
         },
         inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
-      },
-      voice: {
-        url: 'https://runtime-api.voiceflow.com'
       }
     });
   };
@@ -240,7 +235,9 @@ controller.destroy()                    // Cleanup widget and media streams
 </script>
 ```
 
-**⚠️ CRITICAL NOTE:** `persistence` is set to `false` to ensure Voiceflow uses our custom user_id and session_id instead of generating its own IDs.
+**⚠️ CRITICAL NOTES:**
+- `persistence` is set to `false` to ensure Voiceflow uses our custom user_id and session_id instead of generating its own IDs.
+- `voice` parameter has been removed as it's not supported in the new project schema (was causing ZodError)
 
 ---
 
@@ -255,13 +252,79 @@ await controller.initialize(userId, sessionToken);
 
 ### After (New Implementation)
 ```typescript
-// Automatic ID management
-const controller = createKPController();
-await controller.initialize(); // IDs loaded automatically from localStorage
+// Automatic ID management with Supabase sync
+const { user } = useAuth();
+const controller = createKPController(user.id); // Passes Supabase user ID
+await controller.initialize(); // IDs loaded automatically, user_id synced with Supabase
 
 // Get IDs if needed
 const { user_id, session_id } = controller.getIds();
 console.log('Using IDs:', user_id, session_id);
+// user_id will match the Supabase user.id
+```
+
+---
+
+## 🔗 Supabase User ID Synchronization
+
+### How It Works
+
+The system now synchronizes Voiceflow's `user_id` with the authenticated Supabase user ID. This ensures that:
+
+1. **Voiceflow data can be matched to actual users**: When Make.com receives webhooks with `user_id`, it matches the authenticated Supabase user
+2. **Consistent identity across systems**: Same user ID used in both Voiceflow conversations and Supabase database
+3. **No duplicate ID systems**: Eliminates the previous problem of having separate random UUIDs for Voiceflow
+
+### Implementation Flow
+
+```typescript
+// 1. User authenticates with Supabase
+const { user } = useAuth(); // user.id = "550e8400-e29b-41d4-a716-446655440000"
+
+// 2. Create Voiceflow controller with Supabase user ID
+const controller = createKPController(user.id);
+// This passes user.id to VoiceflowController constructor
+
+// 3. VoiceflowController uses Supabase user ID as Voiceflow user_id
+constructor(config: VoiceflowConfig, supabaseUserId?: string) {
+  const persistentIds = getPersistentIds(config.simulationType, supabaseUserId);
+  this.userId = persistentIds.user_id; // Will be Supabase user.id
+  // ...
+}
+
+// 4. Voiceflow widget receives the Supabase user ID
+window.voiceflow.chat.load({
+  user: {
+    id: user.id, // Supabase user ID: "550e8400-e29b-41d4-a716-446655440000"
+    data: {
+      session_id: "session_1698765432_a1b2c3d4e5" // Generated session ID
+    }
+  }
+});
+```
+
+### localStorage Behavior
+
+When a Supabase user ID is provided:
+- **user_id**: Always uses the provided Supabase user ID and stores it in localStorage (e.g., `kp_user_id`)
+- **session_id**: Generated once and persists across page reloads in localStorage (e.g., `kp_session_id`)
+
+This means:
+- ✅ Same user_id for authenticated user across all sessions
+- ✅ Same session_id for current simulation (persists across page reloads)
+- ✅ Make.com webhooks can match to Supabase users
+- ✅ Different localStorage keys for KP vs FSP simulations
+
+### Console Output Example
+
+```javascript
+🎮 VoiceflowController created for KP:
+{
+  user_id: "550e8400-e29b-41d4-a716-446655440000",  // Supabase user ID
+  session_id: "session_1698765432_a1b2c3d4e5",
+  projectID: "690664399c414573ccceb427",
+  supabase_synced: true  // Indicates Supabase sync is active
+}
 ```
 
 ---
@@ -269,31 +332,39 @@ console.log('Using IDs:', user_id, session_id);
 ## 🧪 Testing Checklist
 
 ### ✅ Persistence Tests
-- [ ] Reload page → Same user_id and session_id
+- [ ] Reload page → Same user_id (Supabase) and session_id
 - [ ] Navigate between Patient/Examiner evaluations → Same session_id
-- [ ] Clear localStorage → New IDs generated
+- [ ] user_id matches authenticated Supabase user.id
+- [ ] Clear localStorage → New session_id generated, but user_id remains Supabase user.id
 - [ ] KP and FSP use different localStorage keys
 
 ### ✅ Console Verification
 ```javascript
 // In browser console:
-localStorage.getItem('kp_user_id')      // Should return UUID
+localStorage.getItem('kp_user_id')      // Should return Supabase user.id (e.g., "550e8400-e29b-41d4-a716-446655440000")
 localStorage.getItem('kp_session_id')   // Should return session_TIMESTAMP_RANDOM
-localStorage.getItem('fsp_user_id')     // Should return different UUID
-localStorage.getItem('fsp_session_id')  // Should return different session ID
+localStorage.getItem('fsp_user_id')     // Should return SAME Supabase user.id
+localStorage.getItem('fsp_session_id')  // Should return different session ID (FSP has separate sessions)
+
+// Verify Supabase sync:
+// The user_id in localStorage should match the authenticated user's Supabase ID
 ```
 
 ### ✅ Voiceflow Function Tests
 ```javascript
 // In Voiceflow function:
-console.log('User ID:', args.inputVars.user_id);      // Should match localStorage
+console.log('User ID:', args.inputVars.user_id);      // Should match Supabase user.id
 console.log('Session ID:', args.inputVars.session_id); // Should match localStorage
+
+// Verify the user_id is a Supabase user ID, not a random UUID
 ```
 
 ### ✅ Make.com Webhook Tests
-- [ ] Patient evaluation sends user_id and session_id
+- [ ] Patient evaluation sends user_id (Supabase) and session_id
 - [ ] Examiner evaluation sends SAME user_id and session_id
 - [ ] Both webhooks can be matched by session_id
+- [ ] user_id in webhook matches authenticated Supabase user
+- [ ] Webhook data can be linked back to Supabase users table
 
 ---
 
@@ -402,16 +473,22 @@ Both evaluations will share the same `session_id`, allowing Make.com to:
 
 The implementation is successful when:
 
-1. ✅ user_id persists across page reloads
+1. ✅ user_id matches authenticated Supabase user.id
 2. ✅ session_id persists across page reloads
-3. ✅ Patient and Examiner evaluations use SAME session_id
-4. ✅ KP and FSP simulations use separate localStorage keys
-5. ✅ Make.com receives matching session_id from both evaluations
+3. ✅ Patient and Examiner evaluations use SAME user_id and session_id
+4. ✅ KP and FSP simulations use separate localStorage keys for sessions
+5. ✅ Make.com receives user_id (Supabase) and session_id from both evaluations
 6. ✅ Widget loads without console errors
-7. ✅ Conversation history persists with `localStorage` persistence
+7. ✅ Voiceflow data can be matched to actual Supabase users
+8. ✅ Console shows `supabase_synced: true` when controller is created
 
 ---
 
-**Last Updated:** October 31, 2025
+**Last Updated:** November 3, 2025
 **Author:** Claude Code
-**Version:** 2.0 (Refactored with Persistent IDs)
+**Version:** 2.1.1 (Refactored with Persistent IDs + Supabase Sync)
+
+**Changelog:**
+- v2.1.1: Removed `voice` parameter to fix ZodError with new Voiceflow project schema
+- v2.1.0: Added Supabase user ID synchronization
+- v2.0.0: Initial refactor with persistent ID management

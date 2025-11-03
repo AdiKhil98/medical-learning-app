@@ -17,8 +17,15 @@ export interface PersistentIds {
 /**
  * Get or create persistent user_id and session_id for a simulation type
  * Uses localStorage to maintain IDs across page reloads
+ *
+ * IMPORTANT: If supabaseUserId is provided, it will be used as the user_id
+ * to sync with Supabase authentication. This ensures Voiceflow data can be
+ * matched to actual Supabase users in the database.
  */
-export function getPersistentIds(simulationType: SimulationType): PersistentIds {
+export function getPersistentIds(
+  simulationType: SimulationType,
+  supabaseUserId?: string
+): PersistentIds {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     console.warn('⚠️ localStorage not available - generating temporary IDs');
     return generateTemporaryIds();
@@ -27,14 +34,20 @@ export function getPersistentIds(simulationType: SimulationType): PersistentIds 
   const userKey = `${simulationType}_user_id`;
   const sessionKey = `${simulationType}_session_id`;
 
-  // Get or create user_id
-  let userId = localStorage.getItem(userKey);
-  if (!userId) {
-    userId = generateUserId();
+  // Use Supabase user ID if provided, otherwise fall back to localStorage
+  let userId: string;
+  if (supabaseUserId) {
+    userId = supabaseUserId;
     localStorage.setItem(userKey, userId);
-    console.log(`✅ Created new ${simulationType.toUpperCase()} user_id:`, userId);
+    console.log(`✅ Using Supabase user ID for ${simulationType.toUpperCase()}:`, userId);
   } else {
-    console.log(`✅ Retrieved existing ${simulationType.toUpperCase()} user_id:`, userId);
+    userId = localStorage.getItem(userKey) || generateUserId();
+    if (!localStorage.getItem(userKey)) {
+      localStorage.setItem(userKey, userId);
+      console.log(`✅ Created new ${simulationType.toUpperCase()} user_id:`, userId);
+    } else {
+      console.log(`✅ Retrieved existing ${simulationType.toUpperCase()} user_id:`, userId);
+    }
   }
 
   // Get or create session_id
