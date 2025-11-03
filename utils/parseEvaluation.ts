@@ -78,16 +78,55 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
 }
 
 /**
- * Parse score from STRUCTURED TAG FORMAT
+ * Parse score - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - TOTAL_SCORE: 68
+ * - **SCORE: 68/100**
+ * - Score: 68 von 100
+ * - 68/100 Punkte
+ * - ENDSCORE: 68/100
  */
 function parseScore(text: string): EvaluationScore {
-  // Try to extract from SECTION: SCORE_SUMMARY format
-  const totalMatch = text.match(/TOTAL_SCORE:\s*(\d+)/i);
-  const maxMatch = text.match(/MAX_SCORE:\s*(\d+)/i);
-  const percentMatch = text.match(/PERCENTAGE:\s*(\d+)/i);
+  let total = 0;
+  let maxScore = 100;
 
-  const total = totalMatch ? parseInt(totalMatch[1]) : 0;
-  const maxScore = maxMatch ? parseInt(maxMatch[1]) : 100;
+  // Pattern 1: SCORE: X/Y or **SCORE: X/Y**
+  const scoreSlashMatch = text.match(/\*{0,2}(?:SCORE|ENDSCORE|PUNKTE|PUNKTZAHL)[\s:]*(\d+)\s*\/\s*(\d+)/i);
+  if (scoreSlashMatch) {
+    total = parseInt(scoreSlashMatch[1]);
+    maxScore = parseInt(scoreSlashMatch[2]);
+  }
+
+  // Pattern 2: TOTAL_SCORE: X and MAX_SCORE: Y (structured format)
+  if (total === 0) {
+    const totalMatch = text.match(/TOTAL_SCORE:\s*(\d+)/i);
+    const maxMatch = text.match(/MAX_SCORE:\s*(\d+)/i);
+    if (totalMatch) {
+      total = parseInt(totalMatch[1]);
+      maxScore = maxMatch ? parseInt(maxMatch[1]) : 100;
+    }
+  }
+
+  // Pattern 3: X von Y or X of Y
+  if (total === 0) {
+    const ofMatch = text.match(/(?:Score|Punkte)[\s:]*(\d+)\s*(?:von|of|aus)\s*(\d+)/i);
+    if (ofMatch) {
+      total = parseInt(ofMatch[1]);
+      maxScore = parseInt(ofMatch[2]);
+    }
+  }
+
+  // Pattern 4: Just a number with SCORE nearby
+  if (total === 0) {
+    const simpleMatch = text.match(/(?:SCORE|PUNKTE)[\s:]+(\d+)/i);
+    if (simpleMatch) {
+      total = parseInt(simpleMatch[1]);
+      maxScore = 100;
+    }
+  }
+
+  // Calculate percentage
+  const percentMatch = text.match(/PERCENTAGE:\s*(\d+)/i);
   const percentage = percentMatch ? parseInt(percentMatch[1]) : (maxScore > 0 ? Math.round((total / maxScore) * 100) : 0);
 
   // Determine status
@@ -139,45 +178,81 @@ function parseScore(text: string): EvaluationScore {
 }
 
 /**
- * Parse overview/summary
+ * Parse overview/summary - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - SUMMARY: ...
+ * - **ZUSAMMENFASSUNG:** ...
+ * - Overview: ...
+ * - First paragraph of evaluation
  */
 function parseOverview(text: string): string {
-  // Extract SECTION: OVERVIEW -> SUMMARY: ...
+  // Pattern 1: Structured SUMMARY: format
   const summaryMatch = text.match(/SUMMARY:\s*(.+?)(?=\n(?:SECTION|$))/is);
-
   if (summaryMatch) {
     return summaryMatch[1].trim();
+  }
+
+  // Pattern 2: **ZUSAMMENFASSUNG:** format (German)
+  const zusammenfassungMatch = text.match(/\*{0,2}(?:ZUSAMMENFASSUNG|OVERVIEW|SUMMARY)[\s:*]+(.+?)(?=\n\*{0,2}(?:BESTANDEN|SCORE|PUNKTEVERTEILUNG)|$)/is);
+  if (zusammenfassungMatch) {
+    return zusammenfassungMatch[1].trim();
+  }
+
+  // Pattern 3: First substantial paragraph (at least 50 characters)
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const cleaned = line.replace(/^\*+|\*+$/g, '').trim();
+    if (cleaned.length > 50 && !cleaned.includes(':') && !cleaned.match(/^\d+\./)) {
+      return cleaned;
+    }
   }
 
   return '';
 }
 
 /**
- * Parse categories from STRUCTURED TAG FORMAT
+ * Parse categories - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - CATEGORY_1_NAME: Med. Korrektheit
+ * - 1. Med. Korrektheit: 25/40
+ * - **1. Med. Korrektheit:** 25/40
+ * - Med. Korrektheit: 25 von 40
  */
 function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
   const categories: ScoreBreakdown[] = [];
 
   const categoryIcons: { [key: string]: string } = {
     'vollständigkeit': 'medical',
+    'korrektheit': 'medical',
     'logik': 'bulb',
     'sprach': 'chatbubble-ellipses',
     'empathie': 'heart',
     'systematik': 'list',
     'kommunikation': 'people',
+    'anamnese': 'clipboard',
+    'untersuchung': 'pulse',
+    'therapie': 'medkit',
+    'professionalität': 'star',
+    'professional': 'star',
   };
 
   const categoryColors: { [key: string]: string } = {
     'vollständigkeit': '#10b981',
+    'korrektheit': '#10b981',
     'logik': '#3b82f6',
     'sprach': '#8b5cf6',
     'empathie': '#ef4444',
     'systematik': '#f59e0b',
     'kommunikation': '#06b6d4',
+    'anamnese': '#8b5cf6',
+    'untersuchung': '#10b981',
+    'therapie': '#3b82f6',
+    'professionalität': '#f59e0b',
+    'professional': '#f59e0b',
   };
 
-  // Try structured format first (CATEGORY_1_NAME, etc.)
-  for (let i = 1; i <= 6; i++) {
+  // Pattern 1: Try structured format first (CATEGORY_1_NAME, etc.)
+  for (let i = 1; i <= 10; i++) {
     const nameMatch = text.match(new RegExp(`CATEGORY_${i}_NAME:\\s*(.+?)(?=\\n|$)`, 'i'));
     if (!nameMatch) continue;
 
@@ -209,6 +284,39 @@ function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
       icon,
       color,
     });
+  }
+
+  // Pattern 2: Numbered list format with scores
+  // Examples: "1. Med. Korrektheit: 25/40" or "**1. Med. Korrektheit:** 25/40"
+  if (categories.length === 0) {
+    const numberedPattern = /\*{0,2}\d+\.\s*([^:*\n]+?)[\s:*]+(\d+)\s*[\/:]?\s*(\d+)/g;
+    let match;
+    while ((match = numberedPattern.exec(text)) !== null) {
+      const name = match[1].trim();
+      const score = parseInt(match[2]);
+      const maxScore = parseInt(match[3]);
+      const percentage = Math.round((score / maxScore) * 100);
+
+      // Find matching icon and color
+      let icon = 'stats-chart';
+      let color = '#64748b';
+      for (const [key, val] of Object.entries(categoryIcons)) {
+        if (name.toLowerCase().includes(key)) {
+          icon = val;
+          color = categoryColors[key];
+          break;
+        }
+      }
+
+      categories.push({
+        category: name,
+        score,
+        maxScore,
+        percentage,
+        icon,
+        color,
+      });
+    }
   }
 
   // If no structured categories found, create defaults
@@ -315,12 +423,18 @@ function parseCriticalErrors(text: string): CriticalError[] {
 }
 
 /**
- * Parse missing questions from STRUCTURED TAG FORMAT
+ * Parse missing questions - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - MISSING_1: Question | Wichtig weil: ... | Richtig: ...
+ * - **❓ FEHLENDE ÜBERLEGUNGEN:**
+ *   - Bullet point items
+ * - Missing considerations:
+ *   * Bullet items
  */
 function parseMissingQuestions(text: string): MissedQuestion[] {
   const missedQuestions: MissedQuestion[] = [];
 
-  // Try structured format: MISSING_1, MISSING_2, etc.
+  // Pattern 1: Try structured format first: MISSING_1, MISSING_2, etc.
   for (let i = 1; i <= 15; i++) {
     const missingMatch = text.match(new RegExp(`MISSING_${i}:\\s*(.+?)(?=\\n(?:MISSING_|SECTION|$))`, 'is'));
     if (!missingMatch) continue;
@@ -357,16 +471,64 @@ function parseMissingQuestions(text: string): MissedQuestion[] {
     }
   }
 
+  // Pattern 2: Look for sections with missing/gaps indicators
+  if (missedQuestions.length === 0) {
+    const sections = [
+      /\*{0,2}❓\s*(?:FEHLENDE ÜBERLEGUNGEN|MISSING|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\n\*{0,2}[✅📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+      /\*{0,2}(?:FEHLENDE ÜBERLEGUNGEN|MISSING CONSIDERATIONS|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\n\*{0,2}[✅📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+    ];
+
+    for (const pattern of sections) {
+      const match = text.match(pattern);
+      if (match) {
+        const content = match[1];
+        // Extract bullet points (-, *, •)
+        const bullets = content.match(/(?:^|\n)\s*[-*•]\s*(.+?)(?=\n|$)/g);
+        if (bullets) {
+          bullets.forEach(bullet => {
+            const cleaned = bullet.replace(/^\s*[-*•]\s*/, '').trim();
+            if (cleaned.length > 10) {
+              // Try to split into topic and reason if contains parentheses or keywords
+              let category = cleaned;
+              let reason = 'Wichtig für vollständige Anamnese';
+
+              // Check if it starts with specific keywords
+              const topicMatch = cleaned.match(/^(Keine|Kein|Fehlende?)\s+([^(]+?)(?:\s*\(|$)/i);
+              if (topicMatch) {
+                category = topicMatch[2].trim();
+                reason = cleaned;
+              }
+
+              missedQuestions.push({
+                importance: 'important',
+                category,
+                reason,
+                correctFormulations: [],
+              });
+            }
+          });
+        }
+        break;
+      }
+    }
+  }
+
   return missedQuestions;
 }
 
 /**
- * Parse strengths from STRUCTURED TAG FORMAT
+ * Parse strengths - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - STRENGTH_1: Good questioning
+ * - **✅ RICHTIG GEMACHT:**
+ *   - Bullet point items
+ * - ✅ Das haben Sie gut gemacht:
+ *   * Bullet items
  */
 function parseStrengths(text: string): string[] {
   const strengths: string[] = [];
 
-  // Try structured format: STRENGTH_1, STRENGTH_2, etc.
+  // Pattern 1: Try structured format first: STRENGTH_1, STRENGTH_2, etc.
   for (let i = 1; i <= 20; i++) {
     const strengthMatch = text.match(new RegExp(`STRENGTH_${i}:\\s*(.+?)(?=\\n(?:STRENGTH_|SECTION|$))`, 'is'));
     if (!strengthMatch) continue;
@@ -390,6 +552,46 @@ function parseStrengths(text: string): string[] {
     }
   }
 
+  // Pattern 2: Look for sections with checkmarks/positive indicators
+  if (strengths.length === 0) {
+    const sections = [
+      /\*{0,2}✅\s*(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\n\*{0,2}[❓📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+      /\*{0,2}(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\n\*{0,2}[❓📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+    ];
+
+    for (const pattern of sections) {
+      const match = text.match(pattern);
+      if (match) {
+        const content = match[1];
+        // Extract bullet points (-, *, •, or numbered)
+        const bullets = content.match(/(?:^|\n)\s*[-*•]\s*(.+?)(?=\n|$)/g);
+        if (bullets) {
+          bullets.forEach(bullet => {
+            const cleaned = bullet.replace(/^\s*[-*•]\s*/, '').trim();
+            if (cleaned.length > 5) {
+              strengths.push(cleaned);
+            }
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  // Pattern 3: Extract from "Das haben Sie gut gemacht" or similar sections
+  if (strengths.length === 0) {
+    const positiveSectionMatch = text.match(/(?:gut gemacht|positiv|stärken)[\s:]+(.+?)(?=\n\n|\*{2}|$)/is);
+    if (positiveSectionMatch) {
+      const lines = positiveSectionMatch[1].split('\n');
+      lines.forEach(line => {
+        const cleaned = line.replace(/^\s*[-*•]\s*/, '').trim();
+        if (cleaned.length > 10 && !cleaned.includes('**')) {
+          strengths.push(cleaned);
+        }
+      });
+    }
+  }
+
   // Default strengths if none found
   if (strengths.length === 0) {
     strengths.push('Prüfung vollständig absolviert');
@@ -400,12 +602,20 @@ function parseStrengths(text: string): string[] {
 }
 
 /**
- * Parse next steps from STRUCTURED TAG FORMAT
+ * Parse next steps - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - STEP_1: Focus | Aktion: ... | Zeitrahmen: ...
+ * - **📚 LERNPRIORITÄTEN:**
+ *   🔴 DRINGEND: ...
+ *   🟡 WICHTIG: ...
+ * - **💪 KONKRETE NÄCHSTE SCHRITTE:**
+ *   1. Step one
+ *   2. Step two
  */
 function parseNextSteps(text: string): NextStep[] {
   const steps: NextStep[] = [];
 
-  // Try structured format: STEP_1, STEP_2, STEP_3, STEP_4, STEP_5
+  // Pattern 1: Try structured format first: STEP_1, STEP_2, etc.
   for (let i = 1; i <= 5; i++) {
     const stepMatch = text.match(new RegExp(`STEP_${i}:\\s*(.+?)(?=\\n(?:STEP_|SECTION|$))`, 'is'));
     if (!stepMatch) continue;
@@ -427,8 +637,84 @@ function parseNextSteps(text: string): NextStep[] {
     }
   }
 
-  // Return all found steps (up to 5)
-  return steps;
+  // Pattern 2: Look for priority-based learning sections with emojis
+  if (steps.length === 0) {
+    const priorityPatterns = [
+      { regex: /🔴\s*(?:DRINGEND|URGENT|KRITISCH):\s*(.+?)(?=🟡|🟢|\n\*{0,2}[💪📖✅❓]|$)/gi, priority: 1 },
+      { regex: /🟡\s*(?:WICHTIG|IMPORTANT):\s*(.+?)(?=🔴|🟢|\n\*{0,2}[💪📖✅❓]|$)/gi, priority: 2 },
+      { regex: /🟢\s*(?:OPTIONAL|EMPFOHLEN|RECOMMENDED):\s*(.+?)(?=🔴|🟡|\n\*{0,2}[💪📖✅❓]|$)/gi, priority: 3 },
+    ];
+
+    priorityPatterns.forEach(({ regex, priority }) => {
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const action = match[1].trim();
+        // Stop at the first line break or before other emoji markers
+        const firstLine = action.split(/\n/)[0].trim();
+        if (firstLine.length > 5) {
+          steps.push({
+            priority,
+            action: firstLine,
+            details: firstLine,
+          });
+        }
+      }
+    });
+  }
+
+  // Pattern 3: Look for numbered concrete steps sections
+  if (steps.length === 0) {
+    const stepsSections = [
+      /\*{0,2}💪\s*(?:KONKRETE NÄCHSTE SCHRITTE|NEXT STEPS|NÄCHSTE SCHRITTE)[\s:*]+(.+?)(?=\n\*{0,2}[✅❓📚📖🔴🟡🟢]|$)/is,
+      /\*{0,2}(?:NÄCHSTE SCHRITTE|NEXT STEPS|EMPFEHLUNGEN|RECOMMENDATIONS)[\s:*]+(.+?)(?=\n\*{0,2}[✅❓📚📖🔴🟡🟢]|$)/is,
+    ];
+
+    for (const pattern of stepsSections) {
+      const match = text.match(pattern);
+      if (match) {
+        const content = match[1];
+        // Extract numbered items (1., 2., etc.) - each on its own line
+        const lines = content.split('\n');
+        lines.forEach((line, index) => {
+          const numberMatch = line.match(/^\s*(\d+)\.\s*(.+?)$/);
+          if (numberMatch) {
+            const cleaned = numberMatch[2].trim();
+            if (cleaned.length > 5) {
+              steps.push({
+                priority: parseInt(numberMatch[1]),
+                action: cleaned,
+                details: cleaned,
+              });
+            }
+          }
+        });
+        if (steps.length > 0) break;
+      }
+    }
+  }
+
+  // Pattern 4: Look for bullet points in improvement sections
+  if (steps.length === 0) {
+    const improvementMatch = text.match(/(?:verbessern|improve|lernen|learn|üben|practice)[\s:]+(.+?)(?=\n\n|\*{2}|$)/is);
+    if (improvementMatch) {
+      const bullets = improvementMatch[1].match(/(?:^|\n)\s*[-*•]\s*(.+?)(?=\n|$)/g);
+      if (bullets) {
+        bullets.forEach((bullet, index) => {
+          const cleaned = bullet.replace(/^\s*[-*•]\s*/, '').trim();
+          if (cleaned.length > 10) {
+            steps.push({
+              priority: index + 1,
+              action: cleaned,
+              details: cleaned,
+            });
+          }
+        });
+      }
+    }
+  }
+
+  // Return all found steps (up to 10)
+  return steps.slice(0, 10);
 }
 
 /**
