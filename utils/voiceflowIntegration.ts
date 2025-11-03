@@ -424,7 +424,7 @@ export class VoiceflowController {
 export function createKPController(supabaseUserId?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '690664399c414573ccceb427',  // New KP Project ID
-    versionID: 'production',
+    versionID: '690664399c414573ccceb428',  // Actual version ID (not 'production')
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'kp',
     title: 'KP Simulation Assistant'
@@ -437,7 +437,7 @@ export function createKPController(supabaseUserId?: string): VoiceflowController
 export function createFSPController(supabaseUserId?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '690664339c414573ccceb410',  // New FSP Project ID
-    versionID: 'production',
+    versionID: '690664339c414573ccceb411',  // Actual version ID (not 'production')
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'fsp',
     title: 'FSP Simulation Assistant'
