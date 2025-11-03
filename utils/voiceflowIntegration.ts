@@ -128,30 +128,18 @@ export class VoiceflowController {
         simulation: this.config.simulationType.toUpperCase()
       });
 
-      // Modern Voiceflow configuration with persistent IDs
+      // Minimal Voiceflow configuration with persistent IDs
       const widgetConfig: any = {
         verify: {
           projectID: this.config.projectID
         },
-        url: this.config.url || 'https://general-runtime.voiceflow.com',
         versionID: this.config.versionID || 'production',
-
-        // User configuration with persistent IDs
         user: {
-          id: this.userId,
-          data: {
-            session_id: this.sessionId
-          }
+          name: this.userId,
+          userID: this.userId
         },
-
-        // Assistant configuration for UI and persistence
-        assistant: {
-          persistence: false, // CRITICAL: Disable Voiceflow's persistence to use our custom IDs
-          header: {
-            title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation Assistant`,
-            imageUrl: this.config.imageUrl || undefined
-          },
-          inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
+        config: {
+          disablePersistence: true
         }
       };
 
