@@ -193,9 +193,17 @@ function parseOverview(text: string): string {
   }
 
   // Pattern 2: **ZUSAMMENFASSUNG:** format (German)
-  const zusammenfassungMatch = text.match(/\*{0,2}(?:ZUSAMMENFASSUNG|OVERVIEW|SUMMARY)[\s:*]+(.+?)(?=\n\*{0,2}(?:BESTANDEN|SCORE|PUNKTEVERTEILUNG)|$)/is);
+  // Match only until the next **SECTION** or line break with ---
+  const zusammenfassungMatch = text.match(/\*{2,}(?:ZUSAMMENFASSUNG|OVERVIEW|SUMMARY)[\s:*]+(.+?)(?=\s*\*{2,}(?:BESTANDEN|SCORE|PUNKTEVERTEILUNG)|---|\n\n|$)/is);
   if (zusammenfassungMatch) {
-    return zusammenfassungMatch[1].trim();
+    // Return only the first sentence or until first double space
+    const summary = zusammenfassungMatch[1].trim();
+    // Stop at the first period followed by multiple spaces or at "**"
+    const sentenceEnd = summary.search(/\.\s{2,}|\*{2,}/);
+    if (sentenceEnd > 0) {
+      return summary.substring(0, sentenceEnd + 1).trim();
+    }
+    return summary;
   }
 
   // Pattern 3: First substantial paragraph (at least 50 characters)
@@ -474,29 +482,33 @@ function parseMissingQuestions(text: string): MissedQuestion[] {
   // Pattern 2: Look for sections with missing/gaps indicators
   if (missedQuestions.length === 0) {
     const sections = [
-      /\*{0,2}❓\s*(?:FEHLENDE ÜBERLEGUNGEN|MISSING|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\n\*{0,2}[✅📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
-      /\*{0,2}(?:FEHLENDE ÜBERLEGUNGEN|MISSING CONSIDERATIONS|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\n\*{0,2}[✅📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+      /\*{2,}❓\s*(?:FEHLENDE ÜBERLEGUNGEN|MISSING|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\s*\*{2,}[✅📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
+      /\*{2,}(?:FEHLENDE ÜBERLEGUNGEN|MISSING CONSIDERATIONS|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\s*\*{2,}[✅📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
     ];
 
     for (const pattern of sections) {
       const match = text.match(pattern);
       if (match) {
         const content = match[1];
-        // Extract bullet points (-, *, •)
-        const bullets = content.match(/(?:^|\n)\s*[-*•]\s*(.+?)(?=\n|$)/g);
-        if (bullets) {
+        // Extract bullet points - handle both newline-separated and inline bullets
+        const bullets = content.split(/\s*-\s*/).filter(b => b.trim().length > 0);
+        if (bullets && bullets.length > 0) {
           bullets.forEach(bullet => {
-            const cleaned = bullet.replace(/^\s*[-*•]\s*/, '').trim();
-            if (cleaned.length > 10) {
+            const cleaned = bullet.trim();
+            // Stop if we hit another section marker or emoji
+            const endMarker = cleaned.search(/[\*]{2,}|[✅❓📚🔴🟡🟢✗❌💪📖]/);
+            const finalText = endMarker > 0 ? cleaned.substring(0, endMarker).trim() : cleaned;
+
+            if (finalText.length > 10 && !finalText.match(/^\*{2,}/)) {
               // Try to split into topic and reason if contains parentheses or keywords
-              let category = cleaned;
+              let category = finalText;
               let reason = 'Wichtig für vollständige Anamnese';
 
               // Check if it starts with specific keywords
-              const topicMatch = cleaned.match(/^(Keine|Kein|Fehlende?)\s+([^(]+?)(?:\s*\(|$)/i);
+              const topicMatch = finalText.match(/^(Keine|Kein|Fehlende?)\s+([^(]+?)(?:\s*\(|$)/i);
               if (topicMatch) {
                 category = topicMatch[2].trim();
-                reason = cleaned;
+                reason = finalText;
               }
 
               missedQuestions.push({
@@ -555,21 +567,26 @@ function parseStrengths(text: string): string[] {
   // Pattern 2: Look for sections with checkmarks/positive indicators
   if (strengths.length === 0) {
     const sections = [
-      /\*{0,2}✅\s*(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\n\*{0,2}[❓📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
-      /\*{0,2}(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\n\*{0,2}[❓📚🔴🟡🟢✗❌]|\n\n\*{0,2}\w+:|$)/is,
+      /\*{2,}✅\s*(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
+      /\*{2,}(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
     ];
 
     for (const pattern of sections) {
       const match = text.match(pattern);
       if (match) {
         const content = match[1];
-        // Extract bullet points (-, *, •, or numbered)
-        const bullets = content.match(/(?:^|\n)\s*[-*•]\s*(.+?)(?=\n|$)/g);
-        if (bullets) {
+        // Extract bullet points - handle both newline-separated and inline bullets
+        // Pattern: "- Item1 - Item2" or "\n- Item1\n- Item2"
+        const bullets = content.split(/\s*-\s*/).filter(b => b.trim().length > 0);
+        if (bullets && bullets.length > 0) {
           bullets.forEach(bullet => {
-            const cleaned = bullet.replace(/^\s*[-*•]\s*/, '').trim();
-            if (cleaned.length > 5) {
-              strengths.push(cleaned);
+            const cleaned = bullet.trim();
+            // Stop if we hit another section marker or emoji
+            const endMarker = cleaned.search(/[\*]{2,}|[✅❓📚🔴🟡🟢✗❌💪📖]/);
+            const finalText = endMarker > 0 ? cleaned.substring(0, endMarker).trim() : cleaned;
+
+            if (finalText.length > 10 && !finalText.match(/^\*{2,}/)) {
+              strengths.push(finalText);
             }
           });
         }
