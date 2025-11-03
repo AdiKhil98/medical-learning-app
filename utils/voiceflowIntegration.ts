@@ -128,7 +128,7 @@ export class VoiceflowController {
         simulation: this.config.simulationType.toUpperCase()
       });
 
-      // Minimal Voiceflow configuration with persistent IDs
+      // Voiceflow configuration with persistent IDs
       const widgetConfig: any = {
         verify: {
           projectID: this.config.projectID
@@ -138,8 +138,14 @@ export class VoiceflowController {
           name: this.userId,
           userID: this.userId
         },
-        config: {
-          disablePersistence: true
+        render: {
+          mode: 'embedded'
+        },
+        autostart: false,
+        assistant: {
+          title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation`,
+          description: '',
+          image: this.config.imageUrl || ''
         }
       };
 
