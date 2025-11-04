@@ -515,6 +515,7 @@ function parseCriticalErrors(text: string): CriticalError[] {
       whyProblematic: impact,
       betterApproach: examples.length > 0 ? examples[0].correct : '',
     });
+    }
   }
 
   return errors;
