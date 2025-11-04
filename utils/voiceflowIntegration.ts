@@ -129,23 +129,39 @@ export class VoiceflowController {
       });
 
       // Voiceflow configuration with persistent IDs
+      // Based on official docs: https://docs.voiceflow.com/docs/customization-configuration
       const widgetConfig: any = {
         verify: {
           projectID: this.config.projectID
         },
+        url: this.config.url || 'https://general-runtime.voiceflow.com',
         versionID: this.config.versionID || 'production',
-        user: {
-          name: this.userId,
-          userID: this.userId
+
+        // User ID - tracked across sessions
+        userID: this.userId,
+
+        // Pass session_id as custom variable via launch event
+        launch: {
+          event: {
+            type: 'launch',
+            payload: {
+              session_id: this.sessionId
+            }
+          }
         },
-        render: {
-          mode: 'embedded'
+
+        // Voice is REQUIRED - widget crashes without it
+        voice: {
+          url: 'https://runtime-api.voiceflow.com'
         },
-        autostart: false,
+
+        // Assistant configuration
         assistant: {
-          title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation`,
-          description: '',
-          image: this.config.imageUrl || ''
+          persistence: 'memory', // Use 'memory' to reset on refresh (not 'localStorage')
+          header: {
+            title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation`
+          },
+          inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
         }
       };
 
