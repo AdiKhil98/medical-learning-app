@@ -125,6 +125,26 @@ function parseScore(text: string): EvaluationScore {
     }
   }
 
+  // Pattern 5: Extract from category totals if no explicit score found
+  // Format: **📊 KOMMUNIKATIV:** 32/35 (91%)
+  if (total === 0) {
+    const categoryScores: Array<{score: number, max: number}> = [];
+    const emojiCategoryPattern = /\*{2,}📊\s*[^:*]+?[\s:*]+(\d+)\/(\d+)\s*\((\d+)%\)/g;
+    let categoryMatch;
+    while ((categoryMatch = emojiCategoryPattern.exec(text)) !== null) {
+      categoryScores.push({
+        score: parseInt(categoryMatch[1]),
+        max: parseInt(categoryMatch[2])
+      });
+    }
+
+    if (categoryScores.length > 0) {
+      // Sum all category scores
+      total = categoryScores.reduce((sum, cat) => sum + cat.score, 0);
+      maxScore = categoryScores.reduce((sum, cat) => sum + cat.max, 0);
+    }
+  }
+
   // Calculate percentage
   const percentMatch = text.match(/PERCENTAGE:\s*(\d+)/i);
   const percentage = percentMatch ? parseInt(percentMatch[1]) : (maxScore > 0 ? Math.round((total / maxScore) * 100) : 0);
@@ -327,6 +347,39 @@ function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
     }
   }
 
+  // Pattern 3: Emoji-based detailed categories
+  // Examples: **📊 KOMMUNIKATIV:** 32/35 (91%)
+  if (categories.length === 0) {
+    const emojiPattern = /\*{2,}📊\s*([^:*]+?)[\s:*]+(\d+)\/(\d+)\s*\((\d+)%\)/g;
+    let match;
+    while ((match = emojiPattern.exec(text)) !== null) {
+      const name = match[1].trim();
+      const score = parseInt(match[2]);
+      const maxScore = parseInt(match[3]);
+      const percentage = parseInt(match[4]);
+
+      // Find matching icon and color
+      let icon = 'stats-chart';
+      let color = '#64748b';
+      for (const [key, val] of Object.entries(categoryIcons)) {
+        if (name.toLowerCase().includes(key)) {
+          icon = val;
+          color = categoryColors[key];
+          break;
+        }
+      }
+
+      categories.push({
+        category: name,
+        score,
+        maxScore,
+        percentage,
+        icon,
+        color,
+      });
+    }
+  }
+
   // If no structured categories found, create defaults
   if (categories.length === 0) {
     categories.push(
@@ -369,19 +422,56 @@ function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
 }
 
 /**
- * Parse critical issues from STRUCTURED TAG FORMAT
+ * Parse critical issues - FLEXIBLE FORMAT SUPPORT
+ * Supports multiple formats:
+ * - ISSUE_1_TITLE: Title | ISSUE_1_POINTS_LOST: 10
+ * - **HAUPTFEHLER:**
+ *   **1. TITLE:** -X Punkte
  */
 function parseCriticalErrors(text: string): CriticalError[] {
   const errors: CriticalError[] = [];
 
-  // Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
-  for (let i = 1; i <= 20; i++) {
-    const titleMatch = text.match(new RegExp(`ISSUE_${i}_TITLE:\\s*(.+?)(?=\\n|$)`, 'i'));
-    if (!titleMatch) continue;
+  // Pattern 1: HAUPTFEHLER format
+  // **1. FEHLENDE ALLERGIEABFRAGE:** -3 Punkte
+  const hauptfehlerMatch = text.match(/\*{2,}HAUPTFEHLER[\s:(]*(.+?)(?=\s*\*{2,}(?:VERPASSTE|✓|✨|GESPRÄCHS)|---|\n\n|$)/is);
+  if (hauptfehlerMatch) {
+    const content = hauptfehlerMatch[1];
+    // Extract numbered errors: **1. TITLE:** -X Punkte
+    const errorPattern = /\*{2,}(\d+)\.\s*([^:*]+?)[\s:*]+\-?\s*(\d+)\s*Punkte/g;
+    let match;
+    while ((match = errorPattern.exec(content)) !== null) {
+      const title = match[2].trim();
+      const pointsLost = parseInt(match[3]);
 
-    const title = titleMatch[1].trim();
-    const pointsMatch = text.match(new RegExp(`ISSUE_${i}_POINTS_LOST:\\s*(\\d+)`, 'i'));
-    const pointsLost = pointsMatch ? parseInt(pointsMatch[1]) : 0;
+      // Determine severity
+      let severity: CriticalError['severity'] = 'minor';
+      if (pointsLost >= 15 || title.toLowerCase().includes('kritisch')) {
+        severity = 'critical';
+      } else if (pointsLost >= 8 || title.toLowerCase().includes('wichtig')) {
+        severity = 'major';
+      }
+
+      errors.push({
+        severity,
+        title,
+        pointDeduction: pointsLost,
+        examples: [],
+        explanation: title,
+        whyProblematic: '',
+        betterApproach: '',
+      });
+    }
+  }
+
+  // Pattern 2: Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
+  if (errors.length === 0) {
+    for (let i = 1; i <= 20; i++) {
+      const titleMatch = text.match(new RegExp(`ISSUE_${i}_TITLE:\\s*(.+?)(?=\\n|$)`, 'i'));
+      if (!titleMatch) continue;
+
+      const title = titleMatch[1].trim();
+      const pointsMatch = text.match(new RegExp(`ISSUE_${i}_POINTS_LOST:\\s*(\\d+)`, 'i'));
+      const pointsLost = pointsMatch ? parseInt(pointsMatch[1]) : 0;
 
     // Determine severity
     let severity: CriticalError['severity'] = 'minor';
@@ -483,7 +573,7 @@ function parseMissingQuestions(text: string): MissedQuestion[] {
   if (missedQuestions.length === 0) {
     const sections = [
       /\*{2,}❓\s*(?:FEHLENDE ÜBERLEGUNGEN|MISSING|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\s*\*{2,}[✅📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
-      /\*{2,}(?:FEHLENDE ÜBERLEGUNGEN|MISSING CONSIDERATIONS|GAPS|FEHLENDE FRAGEN)[\s:*]+(.+?)(?=\s*\*{2,}[✅📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
+      /\*{2,}(?:FEHLENDE ÜBERLEGUNGEN|MISSING CONSIDERATIONS|GAPS|FEHLENDE FRAGEN|VERPASSTE CHANCEN)[\s:*]+(.+?)(?=\s*\*{2,}[✅📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
     ];
 
     for (const pattern of sections) {
@@ -568,6 +658,8 @@ function parseStrengths(text: string): string[] {
   if (strengths.length === 0) {
     const sections = [
       /\*{2,}✅\s*(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
+      /\*{2,}✓\s*(?:GUT GEMACHT|RICHTIG GEMACHT|STÄRKEN)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖✨]|---|\n\n|$)/is,
+      /\*{2,}✨\s*(?:IHRE STÄRKEN|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
       /\*{2,}(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
     ];
 
