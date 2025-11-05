@@ -50,19 +50,33 @@ export interface EvaluationScore {
   statusEmoji: string;
 }
 
+export interface LearningPriority {
+  level: 'DRINGEND' | 'WICHTIG' | 'OPTIONAL';
+  emoji: string;
+  text: string;
+}
+
 export interface Evaluation {
   id: string;
   timestamp: string;
   type: string;
   evaluationType: string; // "KP - Patientengespräch", "FSP - Anamnese", etc.
+  phase: string | null; // e.g., "ANAMNESE", "VOLLSTÄNDIGE KONSULTATION"
+  passed: boolean; // Whether the evaluation passed
   score: EvaluationScore;
   summary: EvaluationSummary;
   scoreBreakdown: ScoreBreakdown[];
+  deductions: number | null; // Points deducted
   criticalErrors: CriticalError[];
   missedQuestions?: MissedQuestion[];
   positives: string[];
   nextSteps: NextStep[];
+  priorities: LearningPriority[]; // Learning priorities with color coding
+  resources: string[]; // Recommended guidelines/resources
+  contextHint: string | null; // Helpful context message
   motivationalMessage: string;
+  hasDangerousError: boolean; // Flag for dangerous errors
+  dangerousErrorText?: string; // Text for dangerous error
   rawText?: string;
 }
 

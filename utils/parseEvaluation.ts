@@ -1,4 +1,4 @@
-import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep, MissedQuestion } from '@/types/evaluation';
+import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep, MissedQuestion, LearningPriority } from '@/types/evaluation';
 
 /**
  * Parses the raw evaluation text from Supabase into structured data
@@ -22,11 +22,20 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     // Parse score
     const score = parseScore(rawText);
 
+    // Parse phase
+    const phase = parsePhase(rawText);
+
+    // Parse passed status
+    const passed = parsePassed(rawText, score.percentage);
+
     // Parse overview
     const mainIssue = parseOverview(rawText);
 
     // Parse categories
     const scoreBreakdown = parseCategories(rawText, score.total);
+
+    // Parse deductions
+    const deductions = parseDeductions(rawText);
 
     // Parse critical errors
     const criticalErrors = parseCriticalErrors(rawText);
@@ -40,16 +49,32 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     // Parse next steps
     const nextSteps = parseNextSteps(rawText);
 
+    // Parse priorities
+    const priorities = parsePriorities(rawText);
+
+    // Parse resources
+    const resources = parseResources(rawText);
+
+    // Parse context hint
+    const contextHint = parseContextHint(rawText);
+
     // Parse motivational message
     const motivationalMessage = parseMotivation(rawText);
 
+    // Check for dangerous errors
+    const { hasDangerousError, dangerousErrorText } = parseDangerousError(rawText);
+
     console.log('Parsed evaluation successfully:', {
       score: score.total,
+      phase,
+      passed,
       categoriesCount: scoreBreakdown.length,
       errorsCount: criticalErrors.length,
       missedQuestionsCount: missedQuestions.length,
       positivesCount: positives.length,
-      nextStepsCount: nextSteps.length
+      nextStepsCount: nextSteps.length,
+      prioritiesCount: priorities.length,
+      resourcesCount: resources.length
     });
 
     return {
@@ -57,6 +82,8 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
       timestamp,
       type: 'KP',
       evaluationType: 'KP PRÜFUNG',
+      phase,
+      passed,
       score,
       summary: {
         mainIssue,
@@ -64,11 +91,17 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
         criticalGapsCount: criticalErrors.filter(e => e.severity === 'critical').length,
       },
       scoreBreakdown,
+      deductions,
       criticalErrors,
       missedQuestions,
       positives,
       nextSteps,
+      priorities,
+      resources,
+      contextHint,
       motivationalMessage,
+      hasDangerousError,
+      dangerousErrorText,
       rawText,
     };
   } catch (error) {
@@ -851,6 +884,172 @@ function parseMotivation(text: string): string {
 }
 
 /**
+ * Parse phase - NEW FUNCTION
+ * Extract phase like "ANAMNESE", "VOLLSTÄNDIGE KONSULTATION"
+ */
+function parsePhase(text: string): string | null {
+  // Pattern 1: **GESPRÄCHSPHASE:** ANAMNESE
+  const phaseMatch = text.match(/\*{2,}(?:GESPRÄCHSPHASE|PHASE)[\s:*]+([A-ZÄÖÜ\s]+?)(?=\n|\*{2}|$)/i);
+  if (phaseMatch) {
+    return phaseMatch[1].trim();
+  }
+
+  // Pattern 2: Look for common phase names anywhere in first few lines
+  const firstLines = text.substring(0, 500);
+  const phasePatterns = ['ANAMNESE', 'VOLLSTÄNDIGE KONSULTATION', 'DIAGNOSE', 'THERAPIE', 'AUFKLÄRUNG'];
+  for (const phase of phasePatterns) {
+    if (firstLines.toUpperCase().includes(phase)) {
+      return phase;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Parse passed status - NEW FUNCTION
+ * Determine if the evaluation passed
+ */
+function parsePassed(text: string, percentage: number): boolean {
+  // Pattern 1: Look for explicit BESTANDEN tag
+  const bestandenMatch = text.match(/\*{2,}BESTANDEN[\s:*]+(JA|NEIN|YES|NO)/i);
+  if (bestandenMatch) {
+    const status = bestandenMatch[1].toUpperCase();
+    return status === 'JA' || status === 'YES';
+  }
+
+  // Pattern 2: Based on percentage (>= 60% is pass)
+  return percentage >= 60;
+}
+
+/**
+ * Parse deductions - NEW FUNCTION
+ * Extract total points deducted
+ */
+function parseDeductions(text: string): number | null {
+  // Pattern 1: **Abzüge:** -5 Punkte
+  const deductionsMatch = text.match(/\*{2,}(?:Abzüge|Deductions)[\s:*]+\-?\s*(\d+)\s*Punkte?/i);
+  if (deductionsMatch) {
+    return parseInt(deductionsMatch[1]);
+  }
+
+  // Pattern 2: Sum up all point deductions from errors
+  let totalDeductions = 0;
+  const pointsPattern = /\-\s*(\d+)\s*Punkte?/g;
+  let match;
+  while ((match = pointsPattern.exec(text)) !== null) {
+    totalDeductions += parseInt(match[1]);
+  }
+
+  return totalDeductions > 0 ? totalDeductions : null;
+}
+
+/**
+ * Parse priorities - NEW FUNCTION
+ * Extract learning priorities with emoji indicators
+ */
+function parsePriorities(text: string): LearningPriority[] {
+  const priorities: LearningPriority[] = [];
+
+  // Pattern: Look for 📚 LERNPRIORITÄTEN section
+  const prioritiesSection = text.match(/\*{0,2}📚\s*(?:LERNPRIORITÄTEN|PRIORITIES)[\s:*]+(.+?)(?=\n\*{0,2}[💪📖✅❓🔴🟡🟢]|$)/is);
+
+  if (prioritiesSection) {
+    const content = prioritiesSection[1];
+
+    // Extract each priority level
+    const patterns = [
+      { regex: /🔴\s*(?:DRINGEND|URGENT|KRITISCH):\s*(.+?)(?=🟡|🟢|\n\*{0,2}[💪📖✅❓]|$)/gi, level: 'DRINGEND' as const, emoji: '🔴' },
+      { regex: /🟡\s*(?:WICHTIG|IMPORTANT):\s*(.+?)(?=🔴|🟢|\n\*{0,2}[💪📖✅❓]|$)/gi, level: 'WICHTIG' as const, emoji: '🟡' },
+      { regex: /🟢\s*(?:OPTIONAL|EMPFOHLEN|RECOMMENDED):\s*(.+?)(?=🔴|🟡|\n\*{0,2}[💪📖✅❓]|$)/gi, level: 'OPTIONAL' as const, emoji: '🟢' },
+    ];
+
+    patterns.forEach(({ regex, level, emoji }) => {
+      let match;
+      while ((match = regex.exec(content)) !== null) {
+        const text = match[1].trim();
+        // Stop at the first line break or before other emoji markers
+        const firstLine = text.split(/\n/)[0].trim();
+        if (firstLine.length > 5) {
+          priorities.push({
+            level,
+            emoji,
+            text: firstLine,
+          });
+        }
+      }
+    });
+  }
+
+  return priorities;
+}
+
+/**
+ * Parse resources - NEW FUNCTION
+ * Extract recommended resources/guidelines
+ */
+function parseResources(text: string): string[] {
+  const resources: string[] = [];
+
+  // Pattern: Look for 📖 EMPFOHLENE RESSOURCEN/LEITLINIEN section
+  const resourcesSection = text.match(/\*{0,2}📖\s*(?:EMPFOHLENE RESSOURCEN|EMPFOHLENE LEITLINIEN|RESOURCES|GUIDELINES)[\s:*]+(.+?)(?=\n\*{0,2}[💪📖✅❓🔴🟡🟢]|$)/is);
+
+  if (resourcesSection) {
+    const content = resourcesSection[1];
+
+    // Extract bullet points
+    const bullets = content.split(/\s*[-•]\s*/).filter(b => b.trim().length > 0);
+    bullets.forEach(bullet => {
+      const cleaned = bullet.trim();
+      // Stop if we hit another section marker
+      const endMarker = cleaned.search(/[\*]{2,}|[✅❓📚🔴🟡🟢✗❌💪📖]/);
+      const finalText = endMarker > 0 ? cleaned.substring(0, endMarker).trim() : cleaned;
+
+      if (finalText.length > 10 && !finalText.match(/^\*{2,}/)) {
+        resources.push(finalText);
+      }
+    });
+  }
+
+  return resources;
+}
+
+/**
+ * Parse context hint - NEW FUNCTION
+ * Extract helpful context message
+ */
+function parseContextHint(text: string): string | null {
+  // Pattern: **💡 KONTEXTHINWEIS:** or **CONTEXT:**
+  const contextMatch = text.match(/\*{2,}💡\s*(?:KONTEXTHINWEIS|CONTEXT|HINWEIS)[\s:*]+(.+?)(?=\n\*{0,2}[📖✅❓🔴🟡🟢✗❌💪📚]|---|\n\n|$)/is);
+
+  if (contextMatch) {
+    const hint = contextMatch[1].trim();
+    // Remove quotes if present
+    return hint.replace(/^["']|["']$/g, '');
+  }
+
+  return null;
+}
+
+/**
+ * Parse dangerous error - NEW FUNCTION
+ * Check for dangerous/critical errors at top of evaluation
+ */
+function parseDangerousError(text: string): { hasDangerousError: boolean; dangerousErrorText?: string } {
+  // Pattern: 🚨🚨🚨 GEFÄHRLICHER FEHLER
+  const dangerousMatch = text.match(/🚨🚨🚨\s*(?:GEFÄHRLICHER FEHLER|DANGEROUS ERROR)[\s:]*(.+?)(?=\n\*{2}|---|\n\n|$)/is);
+
+  if (dangerousMatch) {
+    return {
+      hasDangerousError: true,
+      dangerousErrorText: dangerousMatch[1].trim(),
+    };
+  }
+
+  return { hasDangerousError: false };
+}
+
+/**
  * Get empty evaluation structure
  */
 function getEmptyEvaluation(id: string, timestamp: string): Evaluation {
@@ -859,6 +1058,8 @@ function getEmptyEvaluation(id: string, timestamp: string): Evaluation {
     timestamp,
     type: 'KP',
     evaluationType: 'KP PRÜFUNG',
+    phase: null,
+    passed: false,
     score: {
       total: 0,
       maxScore: 100,
@@ -873,11 +1074,16 @@ function getEmptyEvaluation(id: string, timestamp: string): Evaluation {
       criticalGapsCount: 0,
     },
     scoreBreakdown: [],
+    deductions: null,
     criticalErrors: [],
     missedQuestions: [],
     positives: [],
     nextSteps: [],
+    priorities: [],
+    resources: [],
+    contextHint: null,
     motivationalMessage: '',
+    hasDangerousError: false,
     rawText: '',
   };
 }
