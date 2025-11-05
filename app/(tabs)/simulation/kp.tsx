@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
@@ -870,11 +871,42 @@ export default function KPSimulationScreen() {
     setShowSimulationCompleted(true);
   };
 
-  // Navigate to progress page
-  const navigateToProgress = () => {
-    setShowSimulationCompleted(false);
-    router.push('/(tabs)/progress');
+  // Navigate to evaluation page (fetch latest evaluation for this user)
+  const navigateToEvaluation = async () => {
+    try {
+      setShowSimulationCompleted(false);
+
+      console.log('Fetching latest KP evaluation for user...');
+
+      // Fetch the most recent KP evaluation for this user
+      const { data, error } = await supabase
+        .from('evaluation_scores')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('exam_type', 'KP')
+        .order('evaluation_timestamp', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching latest evaluation:', error);
+        // Fallback to progress page if evaluation not found
+        router.push('/(tabs)/progress');
+        return;
+      }
+
+      console.log('Found evaluation ID:', data.id);
+      // Navigate to evaluation detail page
+      router.push(`/evaluation/${data.id}` as any);
+    } catch (err) {
+      console.error('Exception fetching evaluation:', err);
+      // Fallback to progress page
+      router.push('/(tabs)/progress');
+    }
   };
+
+  // Keep old function name for backward compatibility
+  const navigateToProgress = navigateToEvaluation;
 
   // Close completion modal
   const closeCompletionModal = () => {

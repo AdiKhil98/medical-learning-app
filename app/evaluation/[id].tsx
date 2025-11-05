@@ -29,9 +29,9 @@ export default function EvaluationPage() {
 
       console.log('Fetching evaluation with ID:', id);
 
-      // Fetch from Supabase evaluations table
+      // Fetch from Supabase evaluation_scores table (existing webhook system)
       const { data, error: fetchError } = await supabase
-        .from('evaluations')
+        .from('evaluation_scores')
         .select('*')
         .eq('id', id)
         .single();
@@ -47,25 +47,23 @@ export default function EvaluationPage() {
 
       console.log('Raw evaluation data from Supabase:', data);
 
-      // Parse the evaluation_text field
+      // Parse the evaluation field (contains AI-generated evaluation text)
       const parsedEvaluation = parseEvaluation(
-        data.evaluation_text || data.raw_text || '',
+        data.evaluation || '',
         data.id,
-        data.created_at
+        data.evaluation_timestamp || data.created_at
       );
 
       // Override with database values if available
-      if (data.score !== null) {
+      if (data.score !== null && data.score !== undefined) {
         parsedEvaluation.score.total = data.score;
+        parsedEvaluation.score.percentage = Math.round(data.score);
       }
 
-      if (data.passed !== null) {
-        parsedEvaluation.score.statusText = data.passed ? 'Bestanden' : 'Nicht bestanden';
-        parsedEvaluation.score.status = data.passed ? 'good' : 'critical';
-      }
-
-      if (data.phase) {
-        parsedEvaluation.evaluationType = data.phase;
+      // Set exam type from database
+      if (data.exam_type) {
+        parsedEvaluation.type = data.exam_type;
+        parsedEvaluation.evaluationType = `${data.exam_type} ${data.conversation_type === 'patient' ? 'PATIENTENGESPRÄCH' : 'PRÜFERGESPRÄCH'}`;
       }
 
       console.log('Parsed evaluation:', parsedEvaluation);
