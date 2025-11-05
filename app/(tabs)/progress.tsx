@@ -75,7 +75,6 @@ export default function ProgressScreen() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
-  const [expandedEvaluation, setExpandedEvaluation] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -556,11 +555,6 @@ export default function ProgressScreen() {
     const scoreColor = evaluation.score >= 60 ? '#10b981' : '#ef4444';
     const scoreBgColor = evaluation.score >= 60 ? '#dcfce7' : '#fee2e2';
     const passStatus = evaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
-    const isExpanded = expandedEvaluation === evaluation.id;
-
-    const toggleExpansion = () => {
-      setExpandedEvaluation(isExpanded ? null : evaluation.id);
-    };
 
     return (
       <TouchableOpacity 
@@ -617,73 +611,6 @@ export default function ProgressScreen() {
               <Maximize2 size={16} color="#E2827F" />
             </View>
           </View>
-
-          {/* Expanded details with modern styling */}
-          {isExpanded && (
-            <View style={styles.modernEvaluationDetails}>
-              <LinearGradient
-                colors={['#f8fafc', '#f1f5f9']}
-                style={styles.detailsGradient}
-              >
-                <View style={styles.modernScoreSection}>
-                  <View style={[styles.modernScoreBadge, { backgroundColor: scoreColor }]}>
-                    <Award size={18} color="white" />
-                    <Text style={styles.modernScoreBadgeText}>
-                      {evaluation.score >= 60 ? 'BESTANDEN ✓' : 'NICHT BESTANDEN ✗'}
-                    </Text>
-                  </View>
-                </View>
-
-                {evaluation.patient_evaluation && (
-                  <View style={styles.modernEvaluationSection}>
-                    <View style={styles.sectionHeader}>
-                      <View style={styles.sectionIconContainer}>
-                        <Text style={styles.sectionIcon}>📋</Text>
-                      </View>
-                      <Text style={styles.modernSectionTitle}>Detaillierte Bewertung</Text>
-                    </View>
-                    <View style={styles.evaluationContentContainer}>
-                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                        {renderParsedEvaluation(evaluation.patient_evaluation)}
-                      </ScrollView>
-                    </View>
-                  </View>
-                )}
-                
-                {evaluation.examiner_evaluation && (
-                  <View style={styles.modernEvaluationSection}>
-                    <View style={styles.sectionHeader}>
-                      <View style={styles.sectionIconContainer}>
-                        <Text style={styles.sectionIcon}>👨‍⚕️</Text>
-                      </View>
-                      <Text style={styles.modernSectionTitle}>Prüfer-Feedback</Text>
-                    </View>
-                    <View style={styles.evaluationContentContainer}>
-                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                        {renderParsedEvaluation(evaluation.examiner_evaluation)}
-                      </ScrollView>
-                    </View>
-                  </View>
-                )}
-
-                {evaluation.evaluation && (
-                  <View style={styles.modernEvaluationSection}>
-                    <View style={styles.sectionHeader}>
-                      <View style={styles.sectionIconContainer}>
-                        <Text style={styles.sectionIcon}>📊</Text>
-                      </View>
-                      <Text style={styles.modernSectionTitle}>Zusammenfassung</Text>
-                    </View>
-                    <View style={styles.evaluationContentContainer}>
-                      <ScrollView style={styles.modernEvaluationScrollView} nestedScrollEnabled>
-                        {renderParsedEvaluation(evaluation.evaluation)}
-                      </ScrollView>
-                    </View>
-                  </View>
-                )}
-              </LinearGradient>
-            </View>
-          )}
         </View>
       </TouchableOpacity>
     );
