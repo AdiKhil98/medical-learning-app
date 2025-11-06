@@ -36,6 +36,18 @@ export default function RegisterScreen() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const { signUp } = useAuth();
 
+  // Cross-platform alert helper
+  const showAlert = (title: string, message: string, onOk?: () => void) => {
+    if (Platform.OS === 'web') {
+      // Use browser alert on web
+      window.alert(`${title}\n\n${message}`);
+      if (onOk) onOk();
+    } else {
+      // Use React Native Alert on mobile
+      Alert.alert(title, message, [{ text: 'OK', onPress: onOk }]);
+    }
+  };
+
   // Check registration status on mount
   useEffect(() => {
     async function checkStatus() {
@@ -47,15 +59,10 @@ export default function RegisterScreen() {
       if (status && !status.allowed) {
         // Redirect to waitlist immediately if registration is closed
         console.log('🚫 Registration closed, showing message...');
-        Alert.alert(
+        showAlert(
           'Registrierung geschlossen',
           `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nBitte tragen Sie sich in unsere Warteliste ein. Sie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-          [
-            {
-              text: 'Zur Warteliste',
-              onPress: () => router.replace('/waitlist')
-            }
-          ]
+          () => router.replace('/waitlist')
         );
         return;
       }
@@ -131,7 +138,7 @@ export default function RegisterScreen() {
     let hasErrors = false;
 
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Fehler', 'Bitte füllen Sie alle Felder aus.');
+      showAlert('Fehler', 'Bitte füllen Sie alle Felder aus.');
       return;
     }
 
@@ -176,27 +183,17 @@ export default function RegisterScreen() {
       setLoading(false);
 
       if (waitlistResult.success) {
-        Alert.alert(
+        showAlert(
           'Maximale Benutzeranzahl erreicht',
           `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
-          [
-            {
-              text: 'Verstanden',
-              onPress: () => router.replace('/auth/login')
-            }
-          ]
+          () => router.replace('/auth/login')
         );
       } else {
         // Email might already be on waitlist
-        Alert.alert(
+        showAlert(
           'Maximale Benutzeranzahl erreicht',
           `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-          [
-            {
-              text: 'Verstanden',
-              onPress: () => router.replace('/auth/login')
-            }
-          ]
+          () => router.replace('/auth/login')
         );
       }
       return;
@@ -204,7 +201,7 @@ export default function RegisterScreen() {
 
     if (!status) {
       console.error('⚠️ Could not verify registration status');
-      Alert.alert(
+      showAlert(
         'Fehler',
         'Die Registrierungsstatus konnte nicht überprüft werden. Bitte versuchen Sie es später erneut.'
       );
@@ -238,30 +235,20 @@ export default function RegisterScreen() {
         });
 
         if (waitlistResult.success) {
-          Alert.alert(
+          showAlert(
             'Maximale Benutzeranzahl erreicht',
             `Die maximale Anzahl von Benutzern wurde erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
-            [
-              {
-                text: 'Verstanden',
-                onPress: () => router.replace('/auth/login')
-              }
-            ]
+            () => router.replace('/auth/login')
           );
         } else {
-          Alert.alert(
+          showAlert(
             'Maximale Benutzeranzahl erreicht',
             `Die maximale Anzahl von Benutzern wurde erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-            [
-              {
-                text: 'Verstanden',
-                onPress: () => router.replace('/auth/login')
-              }
-            ]
+            () => router.replace('/auth/login')
           );
         }
       } else {
-        Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
+        showAlert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
       }
     } finally {
       setLoading(false);
