@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import { Mail, Lock, Eye, EyeOff, Stethoscope, User } from 'lucide-react-native'
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/ui/Input';
 import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator';
+import { RegistrationStatusBanner } from '@/components/RegistrationStatusBanner';
+import { checkRegistrationStatus } from '@/lib/registrationLimit';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -30,7 +32,23 @@ export default function RegisterScreen() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [registrationAllowed, setRegistrationAllowed] = useState(true);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const { signUp } = useAuth();
+
+  // Check registration status on mount
+  useEffect(() => {
+    async function checkStatus() {
+      const status = await checkRegistrationStatus();
+      if (status && !status.allowed) {
+        // Redirect to waitlist immediately if registration is closed
+        router.replace('/waitlist');
+      }
+      setRegistrationAllowed(status?.allowed ?? true);
+      setCheckingStatus(false);
+    }
+    checkStatus();
+  }, []);
 
   // Email validation function
   const validateEmailFormat = (email: string) => {
@@ -125,6 +143,13 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Double-check registration status before submitting
+    const status = await checkRegistrationStatus();
+    if (status && !status.allowed) {
+      router.replace('/waitlist');
+      return;
+    }
+
     setLoading(true);
     try {
       await signUp(email, password, name);
@@ -138,6 +163,9 @@ export default function RegisterScreen() {
             message: 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'
           }
         });
+      } else if (error.message && error.message.includes('USER_LIMIT_REACHED')) {
+        // Registration limit reached - redirect to waitlist
+        router.replace('/waitlist');
       } else {
         Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
       }
@@ -181,6 +209,9 @@ export default function RegisterScreen() {
               Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
             </Text>
           </View>
+
+          {/* Registration Status Banner */}
+          {!checkingStatus && <RegistrationStatusBanner />}
 
           {/* Registration Form */}
           <View style={styles.registerCard}>
