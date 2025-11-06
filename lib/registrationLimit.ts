@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export interface RegistrationStatus {
   allowed: boolean;
@@ -13,7 +13,6 @@ export interface RegistrationStatus {
 export async function checkRegistrationStatus(): Promise<RegistrationStatus | null> {
   try {
     console.log('🔍 Checking registration status...');
-    const supabase = createClient();
 
     const { data, error } = await supabase
       .rpc('can_register_new_user')
@@ -42,8 +41,6 @@ export async function joinWaitlist(data: {
   referral_code?: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = createClient();
-
     const { error } = await supabase
       .from('waitlist')
       .insert([{
@@ -74,8 +71,6 @@ export async function joinWaitlist(data: {
  */
 export async function getActiveUserCount(): Promise<number | null> {
   try {
-    const supabase = createClient();
-
     const { data, error } = await supabase
       .rpc('get_active_user_count');
 
