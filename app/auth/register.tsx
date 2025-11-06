@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/ui/Input';
 import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator';
 import { RegistrationStatusBanner } from '@/components/RegistrationStatusBanner';
-import { checkRegistrationStatus } from '@/lib/registrationLimit';
+import { checkRegistrationStatus, joinWaitlist } from '@/lib/registrationLimit';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -46,13 +46,13 @@ export default function RegisterScreen() {
 
       if (status && !status.allowed) {
         // Redirect to waitlist immediately if registration is closed
-        console.log('🚫 Registration closed, redirecting to waitlist...');
+        console.log('🚫 Registration closed, showing message...');
         Alert.alert(
           'Registrierung geschlossen',
-          'Wir haben unsere Benutzerlimit erreicht. Sie werden zur Warteliste weitergeleitet.',
+          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nBitte tragen Sie sich in unsere Warteliste ein. Sie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
           [
             {
-              text: 'OK',
+              text: 'Zur Warteliste',
               onPress: () => router.replace('/waitlist')
             }
           ]
@@ -165,17 +165,40 @@ export default function RegisterScreen() {
     console.log('📊 Status result:', status);
 
     if (status && !status.allowed) {
-      console.log('🚫 Registration not allowed, redirecting to waitlist');
-      Alert.alert(
-        'Registrierung geschlossen',
-        'Das Benutzerlimit wurde erreicht. Sie werden zur Warteliste weitergeleitet.',
-        [
-          {
-            text: 'Zur Warteliste',
-            onPress: () => router.replace('/waitlist')
-          }
-        ]
-      );
+      console.log('🚫 Registration not allowed, adding to waitlist');
+
+      // Automatically add user to waitlist
+      setLoading(true);
+      const waitlistResult = await joinWaitlist({
+        email: email.toLowerCase().trim(),
+        name: name.trim(),
+      });
+      setLoading(false);
+
+      if (waitlistResult.success) {
+        Alert.alert(
+          'Maximale Benutzeranzahl erreicht',
+          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
+          [
+            {
+              text: 'Verstanden',
+              onPress: () => router.replace('/auth/login')
+            }
+          ]
+        );
+      } else {
+        // Email might already be on waitlist
+        Alert.alert(
+          'Maximale Benutzeranzahl erreicht',
+          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
+          [
+            {
+              text: 'Verstanden',
+              onPress: () => router.replace('/auth/login')
+            }
+          ]
+        );
+      }
       return;
     }
 
@@ -206,18 +229,37 @@ export default function RegisterScreen() {
           }
         });
       } else if (error.message && (error.message.includes('USER_LIMIT_REACHED') || error.message.includes('user limit'))) {
-        // Registration limit reached - redirect to waitlist
-        console.log('🚫 Backend returned USER_LIMIT_REACHED');
-        Alert.alert(
-          'Limit erreicht',
-          'Die maximale Anzahl von Benutzern wurde erreicht. Sie werden zur Warteliste weitergeleitet.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/waitlist')
-            }
-          ]
-        );
+        // Registration limit reached - add to waitlist automatically
+        console.log('🚫 Backend returned USER_LIMIT_REACHED, adding to waitlist');
+
+        const waitlistResult = await joinWaitlist({
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
+        });
+
+        if (waitlistResult.success) {
+          Alert.alert(
+            'Maximale Benutzeranzahl erreicht',
+            `Die maximale Anzahl von Benutzern wurde erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
+            [
+              {
+                text: 'Verstanden',
+                onPress: () => router.replace('/auth/login')
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Maximale Benutzeranzahl erreicht',
+            `Die maximale Anzahl von Benutzern wurde erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
+            [
+              {
+                text: 'Verstanden',
+                onPress: () => router.replace('/auth/login')
+              }
+            ]
+          );
+        }
       } else {
         Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
       }
