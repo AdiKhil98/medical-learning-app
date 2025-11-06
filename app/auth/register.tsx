@@ -39,11 +39,27 @@ export default function RegisterScreen() {
   // Check registration status on mount
   useEffect(() => {
     async function checkStatus() {
+      console.log('📋 Register page: Checking registration status on mount...');
       const status = await checkRegistrationStatus();
+
+      console.log('📋 Register page: Status received:', status);
+
       if (status && !status.allowed) {
         // Redirect to waitlist immediately if registration is closed
-        router.replace('/waitlist');
+        console.log('🚫 Registration closed, redirecting to waitlist...');
+        Alert.alert(
+          'Registrierung geschlossen',
+          'Wir haben unsere Benutzerlimit erreicht. Sie werden zur Warteliste weitergeleitet.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/waitlist')
+            }
+          ]
+        );
+        return;
       }
+
       setRegistrationAllowed(status?.allowed ?? true);
       setCheckingStatus(false);
     }
@@ -144,17 +160,43 @@ export default function RegisterScreen() {
     }
 
     // Double-check registration status before submitting
+    console.log('🔄 Double-checking registration status before submission...');
     const status = await checkRegistrationStatus();
+    console.log('📊 Status result:', status);
+
     if (status && !status.allowed) {
-      router.replace('/waitlist');
+      console.log('🚫 Registration not allowed, redirecting to waitlist');
+      Alert.alert(
+        'Registrierung geschlossen',
+        'Das Benutzerlimit wurde erreicht. Sie werden zur Warteliste weitergeleitet.',
+        [
+          {
+            text: 'Zur Warteliste',
+            onPress: () => router.replace('/waitlist')
+          }
+        ]
+      );
       return;
     }
 
+    if (!status) {
+      console.error('⚠️ Could not verify registration status');
+      Alert.alert(
+        'Fehler',
+        'Die Registrierungsstatus konnte nicht überprüft werden. Bitte versuchen Sie es später erneut.'
+      );
+      return;
+    }
+
+    console.log('✅ Registration allowed, proceeding with signup...');
     setLoading(true);
     try {
       await signUp(email, password, name);
+      console.log('✅ Signup successful');
       router.replace('/(tabs)');
     } catch (error: any) {
+      console.error('❌ Signup error:', error);
+
       if (error.message === 'VERIFICATION_REQUIRED') {
         router.push({
           pathname: '/auth/verify-email',
@@ -163,9 +205,19 @@ export default function RegisterScreen() {
             message: 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'
           }
         });
-      } else if (error.message && error.message.includes('USER_LIMIT_REACHED')) {
+      } else if (error.message && (error.message.includes('USER_LIMIT_REACHED') || error.message.includes('user limit'))) {
         // Registration limit reached - redirect to waitlist
-        router.replace('/waitlist');
+        console.log('🚫 Backend returned USER_LIMIT_REACHED');
+        Alert.alert(
+          'Limit erreicht',
+          'Die maximale Anzahl von Benutzern wurde erreicht. Sie werden zur Warteliste weitergeleitet.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/waitlist')
+            }
+          ]
+        );
       } else {
         Alert.alert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
       }

@@ -12,6 +12,7 @@ export interface RegistrationStatus {
  */
 export async function checkRegistrationStatus(): Promise<RegistrationStatus | null> {
   try {
+    console.log('🔍 Checking registration status...');
     const supabase = createClient();
 
     const { data, error } = await supabase
@@ -19,13 +20,14 @@ export async function checkRegistrationStatus(): Promise<RegistrationStatus | nu
       .single();
 
     if (error) {
-      console.error('Error checking registration status:', error);
+      console.error('❌ Error checking registration status:', error);
       return null;
     }
 
+    console.log('✅ Registration status:', data);
     return data as RegistrationStatus;
   } catch (error) {
-    console.error('Exception checking registration:', error);
+    console.error('❌ Exception checking registration:', error);
     return null;
   }
 }
