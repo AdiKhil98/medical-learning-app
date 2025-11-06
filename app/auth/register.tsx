@@ -61,8 +61,8 @@ export default function RegisterScreen() {
         console.log('🚫 Registration closed, showing message...');
         showAlert(
           'Registrierung geschlossen',
-          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nBitte tragen Sie sich in unsere Warteliste ein. Sie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-          () => router.replace('/waitlist')
+          'Wir haben das Limit der Benutzer erreicht, die sich registrieren können. Bitte tragen Sie sich in unsere Warteliste ein. Wenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail. Vielen Dank für Ihre Geduld.',
+          () => router.push('/waitlist')
         );
         return;
       }
@@ -184,16 +184,16 @@ export default function RegisterScreen() {
 
       if (waitlistResult.success) {
         showAlert(
-          'Maximale Benutzeranzahl erreicht',
-          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
-          () => router.replace('/auth/login')
+          'Registrierungslimit erreicht',
+          'Wir haben das Limit der Benutzer erreicht, die sich registrieren können. Eine E-Mail wird in Kürze versendet und Sie werden unserer Warteliste hinzugefügt. Wenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail, um Sie darüber zu informieren, dass Sie sich erneut registrieren können. Vielen Dank für Ihre Geduld.',
+          () => router.push('/auth/login')
         );
       } else {
         // Email might already be on waitlist
         showAlert(
-          'Maximale Benutzeranzahl erreicht',
-          `Wir haben derzeit unser Limit von ${status.max_users} Benutzern erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-          () => router.replace('/auth/login')
+          'Registrierungslimit erreicht',
+          `${waitlistResult.error || 'Sie wurden unserer Warteliste hinzugefügt.'}\n\nWenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail. Vielen Dank für Ihre Geduld.`,
+          () => router.push('/auth/login')
         );
       }
       return;
@@ -236,15 +236,15 @@ export default function RegisterScreen() {
 
         if (waitlistResult.success) {
           showAlert(
-            'Maximale Benutzeranzahl erreicht',
-            `Die maximale Anzahl von Benutzern wurde erreicht.\n\nIhre E-Mail-Adresse ${email} wurde zur Warteliste hinzugefügt.\n\nSie erhalten eine E-Mail, sobald die Registrierung für neue Benutzer wieder geöffnet wird.`,
-            () => router.replace('/auth/login')
+            'Registrierungslimit erreicht',
+            'Wir haben das Limit der Benutzer erreicht, die sich registrieren können. Eine E-Mail wird in Kürze versendet und Sie werden unserer Warteliste hinzugefügt. Wenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail, um Sie darüber zu informieren, dass Sie sich erneut registrieren können. Vielen Dank für Ihre Geduld.',
+            () => router.push('/auth/login')
           );
         } else {
           showAlert(
-            'Maximale Benutzeranzahl erreicht',
-            `Die maximale Anzahl von Benutzern wurde erreicht.\n\n${waitlistResult.error || 'Ihre E-Mail wurde zur Warteliste hinzugefügt.'}\n\nSie erhalten eine E-Mail, sobald die Registrierung wieder geöffnet wird.`,
-            () => router.replace('/auth/login')
+            'Registrierungslimit erreicht',
+            `${waitlistResult.error || 'Sie wurden unserer Warteliste hinzugefügt.'}\n\nWenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail. Vielen Dank für Ihre Geduld.`,
+            () => router.push('/auth/login')
           );
         }
       } else {
