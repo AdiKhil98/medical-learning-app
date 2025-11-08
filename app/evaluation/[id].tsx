@@ -132,12 +132,10 @@ export default function EvaluationPage() {
     );
   }
 
-  // Success - Show Evaluation (use ExaminerEvaluationScreen for examiner, EvaluationDetailScreen for patient)
-  if (conversationType === 'examiner') {
-    return <ExaminerEvaluationScreen evaluation={evaluation} onClose={handleClose} />;
-  }
+  // Success - Show Evaluation (pass theme prop to use different color scheme)
+  const theme = conversationType === 'examiner' ? 'examiner' : 'patient';
 
-  return <EvaluationDetailScreen evaluation={evaluation} onClose={handleClose} />;
+  return <EvaluationDetailScreen evaluation={evaluation} onClose={handleClose} theme={theme} />;
 }
 
 const styles = StyleSheet.create({

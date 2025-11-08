@@ -20,14 +20,49 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface Props {
   evaluation: Evaluation;
   onClose: () => void;
+  theme?: 'patient' | 'examiner'; // Add theme prop
 }
 
-export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
+export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'patient' }: Props) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
+  // Theme colors
+  const isExaminer = theme === 'examiner';
+  const colors = {
+    // Hero background gradient
+    heroBg: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    // Category score badge gradient
+    categoryScore: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#667eea', '#764ba2'],
+    // Category progress bar gradient
+    categoryBar: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a'],
+    // Phase badge gradient
+    phaseBadge: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    // Primary button gradient
+    primaryBtn: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    // Primary button shadow color
+    primaryBtnShadow: isExaminer ? '#1e3a5f' : '#667eea',
+    // Secondary button border color
+    secondaryBtnBorder: isExaminer ? '#2c5aa0' : '#667eea',
+    // Secondary button text color
+    secondaryBtnText: isExaminer ? '#2c5aa0' : '#667eea',
+    // Resource card gradient
+    resourceCard: isExaminer ? ['#e8eaf6', '#c5cae9'] : ['#e3f2fd', '#bbdefb'],
+    // Resource card border
+    resourceCardBorder: isExaminer ? '#2c5aa0' : '#1976d2',
+    // Resource text color
+    resourceText: isExaminer ? '#2c5aa0' : '#1565c0',
+    // Context hint gradient
+    contextHint: isExaminer ? ['#e3f2fd', '#bbdefb'] : ['#e8f5e9', '#c8e6c9'],
+    // Context hint border
+    contextHintBorder: isExaminer ? '#2c5aa0' : '#4caf50',
+    // Context hint text
+    contextHintText: isExaminer ? '#1565c0' : '#1b5e20',
+  };
+
   useEffect(() => {
     console.log('EvaluationDetailScreen mounted with MODERN ENHANCED design');
+    console.log('Theme:', theme);
     console.log('Evaluation data:', JSON.stringify(evaluation, null, 2));
 
     // Entrance animation
@@ -97,7 +132,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={colors.heroBg}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -126,7 +161,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
             {/* Phase Badge */}
             {evaluation.phase && (
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={colors.phaseBadge}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.phaseBadge}
@@ -217,7 +252,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
                   <View style={styles.categoryHeader}>
                     <Text style={styles.categoryName}>{category.category}</Text>
                     <LinearGradient
-                      colors={['#667eea', '#764ba2']}
+                      colors={colors.categoryScore}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={{ borderRadius: 4 }}
@@ -229,7 +264,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
                   </View>
                   <View style={styles.categoryBar}>
                     <LinearGradient
-                      colors={['#4caf50', '#8bc34a']}
+                      colors={colors.categoryBar}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={[
@@ -349,13 +384,13 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
                 {evaluation.resources.map((resource, index) => (
                   <LinearGradient
                     key={index}
-                    colors={['#e3f2fd', '#bbdefb']}
+                    colors={colors.resourceCard}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.resourceCard}
                   >
                     <Text style={styles.resourceIcon}>📘</Text>
-                    <Text style={styles.resourceText}>{resource}</Text>
+                    <Text style={[styles.resourceText, { color: colors.resourceText }]}>{resource}</Text>
                   </LinearGradient>
                 ))}
               </View>
@@ -365,12 +400,12 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
           {/* 💡 CONTEXT HINT */}
           {evaluation.contextHint && (
             <LinearGradient
-              colors={['#e8f5e9', '#c8e6c9']}
+              colors={colors.contextHint}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.contextHint}
+              style={[styles.contextHint, { borderColor: colors.contextHintBorder }]}
             >
-              <Text style={styles.contextHintText}>
+              <Text style={[styles.contextHintText, { color: colors.contextHintText }]}>
                 💡 <Text style={{ fontWeight: '700' }}>Hinweis:</Text> {evaluation.contextHint}
               </Text>
             </LinearGradient>
@@ -380,16 +415,19 @@ export default function EvaluationDetailScreen({ evaluation, onClose }: Props) {
           <View style={styles.actions}>
             <TouchableOpacity onPress={handlePDFDownload}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={colors.primaryBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.btnPrimary}
+                style={[styles.btnPrimary, { shadowColor: colors.primaryBtnShadow }]}
               >
                 <Text style={styles.btnPrimaryText}>📥 Als PDF herunterladen</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleNewAttempt} style={styles.btnSecondary}>
-              <Text style={styles.btnSecondaryText}>🔄 Neuer Versuch</Text>
+            <TouchableOpacity
+              onPress={handleNewAttempt}
+              style={[styles.btnSecondary, { borderColor: colors.secondaryBtnBorder }]}
+            >
+              <Text style={[styles.btnSecondaryText, { color: colors.secondaryBtnText }]}>🔄 Neuer Versuch</Text>
             </TouchableOpacity>
           </View>
 
