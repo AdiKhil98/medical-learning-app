@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import EvaluationDetailScreen from '@/components/evaluation/EvaluationDetailScreen';
+import ExaminerEvaluationScreen from '@/components/examiner-evaluation/ExaminerEvaluationScreen';
 import { parseEvaluation } from '@/utils/parseEvaluation';
 import { supabase } from '@/lib/supabase';
 import { Evaluation } from '@/types/evaluation';
@@ -13,6 +14,7 @@ export default function EvaluationPage() {
   const router = useRouter();
 
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [conversationType, setConversationType] = useState<string>('patient');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +68,11 @@ export default function EvaluationPage() {
         parsedEvaluation.evaluationType = `${data.exam_type} ${data.conversation_type === 'patient' ? 'PATIENTENGESPRÄCH' : 'PRÜFERGESPRÄCH'}`;
       }
 
+      // Store conversation type to determine which screen to show
+      setConversationType(data.conversation_type || 'patient');
+
       console.log('Parsed evaluation:', parsedEvaluation);
+      console.log('Conversation type:', data.conversation_type);
 
       setEvaluation(parsedEvaluation);
     } catch (err: any) {
@@ -126,7 +132,11 @@ export default function EvaluationPage() {
     );
   }
 
-  // Success - Show Evaluation
+  // Success - Show Evaluation (use ExaminerEvaluationScreen for examiner, EvaluationDetailScreen for patient)
+  if (conversationType === 'examiner') {
+    return <ExaminerEvaluationScreen evaluation={evaluation} onClose={handleClose} />;
+  }
+
   return <EvaluationDetailScreen evaluation={evaluation} onClose={handleClose} />;
 }
 
