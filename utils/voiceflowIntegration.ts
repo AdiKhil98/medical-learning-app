@@ -166,7 +166,9 @@ export class VoiceflowController {
       };
 
       // Log the ACTUAL configuration being sent to Voiceflow (not flattened)
-      console.log('📤 Voiceflow configuration (ACTUAL STRUCTURE):', JSON.parse(JSON.stringify(widgetConfig)));
+      console.log(`📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`, JSON.parse(JSON.stringify(widgetConfig)));
+      console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
+      console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
