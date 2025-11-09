@@ -3,7 +3,7 @@ import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text, Link
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, X, AlertCircle } from 'lucide-react-native';
-import SubscriptionPlans from '../components/ui/SubscriptionPlans';
+import SubscriptionPlansEnhanced from '../components/ui/SubscriptionPlansEnhanced';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionService } from '@/services/subscriptionService';
@@ -329,7 +329,7 @@ export default function SubscriptionPage() {
           </View>
 
           <View style={dynamicStyles.content}>
-            <SubscriptionPlans onSelectPlan={handleSelectPlan} />
+            <SubscriptionPlansEnhanced onSelectPlan={handleSelectPlan} />
           </View>
         </View>
       </SafeAreaView>

@@ -1,0 +1,825 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Check, X, ChevronDown, ChevronUp, Shield, Zap, Target, Lock } from 'lucide-react-native';
+
+const { width } = Dimensions.get('window');
+const isMobile = width < 768;
+
+interface SubscriptionPlansEnhancedProps {
+  onSelectPlan?: (planId: string) => void;
+}
+
+interface Feature {
+  text: string;
+  included: boolean;
+}
+
+interface FeatureCategory {
+  title: string;
+  features: Feature[];
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  monthlyPrice: number;
+  quarterlyPrice: number;
+  originalQuarterlyPrice: number;
+  savings: number;
+  popular?: boolean;
+  ctaText: string;
+  mainFeatures: FeatureCategory[];
+  expandedFeatures: FeatureCategory[];
+}
+
+export default function SubscriptionPlansEnhanced({ onSelectPlan }: SubscriptionPlansEnhancedProps) {
+  const [isQuarterly, setIsQuarterly] = useState(false);
+  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+
+  const plans: Plan[] = [
+    {
+      id: 'free',
+      name: 'Frei',
+      icon: '🎯',
+      description: 'Perfekt zum Ausprobieren und ersten Üben',
+      monthlyPrice: 0,
+      quarterlyPrice: 0,
+      originalQuarterlyPrice: 0,
+      savings: 0,
+      ctaText: 'Jetzt starten',
+      mainFeatures: [
+        {
+          title: '✨ Grundfunktionen',
+          features: [
+            { text: '3 FSP-Simulationen pro Monat', included: true },
+            { text: '3 KP-Simulationen pro Monat', included: true },
+            { text: 'Zugang zu allen Fachgebieten', included: true },
+            { text: 'Basis-Evaluation mit Punktzahl', included: true },
+          ],
+        },
+        {
+          title: '🔒 Eingeschränkt',
+          features: [
+            { text: 'Detailliertes Feedback', included: false },
+            { text: 'Verlaufsübersicht', included: false },
+            { text: 'Lernressourcen & Tipps', included: false },
+          ],
+        },
+      ],
+      expandedFeatures: [],
+    },
+    {
+      id: 'basic',
+      name: 'Standard',
+      icon: '🚀',
+      description: 'Optimal für regelmäßiges und fokussiertes Training',
+      monthlyPrice: 49,
+      quarterlyPrice: 125,
+      originalQuarterlyPrice: 147,
+      savings: 22,
+      popular: true,
+      ctaText: 'Jetzt upgraden',
+      mainFeatures: [
+        {
+          title: '✨ Alles aus Frei, plus:',
+          features: [
+            { text: 'Unbegrenzte FSP-Simulationen', included: true },
+            { text: 'Unbegrenzte KP-Simulationen', included: true },
+            { text: 'Detailliertes Feedback nach jeder Simulation', included: true },
+            { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
+          ],
+        },
+        {
+          title: '📊 Fortschrittsverfolgung',
+          features: [
+            { text: 'Vollständige Verlaufsübersicht', included: true },
+            { text: 'Leistungsstatistiken im Dashboard', included: true },
+            { text: 'Vergleich deiner Entwicklung', included: true },
+          ],
+        },
+      ],
+      expandedFeatures: [
+        {
+          title: '📚 Lernmaterialien',
+          features: [
+            { text: 'Zugang zu Lernressourcen', included: true },
+            { text: 'Prüfungstipps & Best Practices', included: true },
+            { text: 'Musterbeispiele erfolgreicher Gespräche', included: true },
+          ],
+        },
+        {
+          title: '🎯 Support',
+          features: [
+            { text: 'E-Mail Support innerhalb 24h', included: true },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'unlimited',
+      name: 'Premium',
+      icon: '👑',
+      description: 'Maximale Vorbereitung mit persönlicher Betreuung',
+      monthlyPrice: 99,
+      quarterlyPrice: 252,
+      originalQuarterlyPrice: 297,
+      savings: 45,
+      ctaText: 'Premium werden',
+      mainFeatures: [
+        {
+          title: '✨ Alles aus Standard, plus:',
+          features: [
+            { text: 'Prioritäts-Support innerhalb 4h', included: true },
+            { text: 'Persönliche Lernplan-Erstellung', included: true },
+            { text: '1:1 Videokonsultation mit Experten (30 Min/Monat)', included: true },
+            { text: 'Individuelle Schwachstellen-Analyse', included: true },
+          ],
+        },
+        {
+          title: '🎓 Exklusiver Zugang',
+          features: [
+            { text: 'Premium-Fälle aus realen Prüfungen', included: true },
+            { text: 'Früher Zugang zu neuen Features', included: true },
+            { text: 'Spezial-Workshops & Webinare', included: true },
+            { text: 'Private Community-Zugang', included: true },
+          ],
+        },
+      ],
+      expandedFeatures: [
+        {
+          title: '📈 Erweiterte Analytik',
+          features: [
+            { text: 'Detaillierte Trend-Analysen', included: true },
+            { text: 'KI-gestützte Empfehlungen', included: true },
+            { text: 'Benchmark-Vergleich mit anderen Nutzern', included: true },
+          ],
+        },
+        {
+          title: '🎁 Bonus',
+          features: [
+            { text: 'Downloadbare PDF-Zusammenfassungen', included: true },
+            { text: 'Zertifikat nach Abschluss', included: true },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const faqs = [
+    {
+      question: 'Kann ich jederzeit kündigen?',
+      answer: 'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
+    },
+    {
+      question: 'Was passiert nach dem Ende meines kostenlosen Plans?',
+      answer: 'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
+    },
+    {
+      question: 'Wie funktioniert die 14-Tage Geld-zurück-Garantie?',
+      answer: 'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
+    },
+    {
+      question: 'Kann ich meinen Plan später ändern?',
+      answer: 'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
+    },
+  ];
+
+  const getPrice = (plan: Plan) => {
+    return isQuarterly ? plan.quarterlyPrice : plan.monthlyPrice;
+  };
+
+  const handleSelectPlan = (planId: string) => {
+    onSelectPlan?.(planId);
+  };
+
+  const toggleExpand = (planId: string) => {
+    setExpandedPlan(expandedPlan === planId ? null : planId);
+  };
+
+  const toggleFAQ = (index: number) => {
+    setExpandedFAQ(expandedFAQ === index ? null : index);
+  };
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <LinearGradient
+        colors={['#ff9a56', '#ff6b6b', '#ff8e53']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Wählen Sie Ihren perfekten Plan</Text>
+          <Text style={styles.headerSubtitle}>
+            Bereiten Sie sich optimal auf Ihre Fachsprachprüfung vor. Flexibel, umfassend und effektiv.
+          </Text>
+        </View>
+
+        {/* Billing Toggle */}
+        <View style={styles.billingToggle}>
+          <View style={styles.billingOptions}>
+            <TouchableOpacity
+              style={[styles.billingOption, !isQuarterly && styles.billingOptionActive]}
+              onPress={() => setIsQuarterly(false)}
+            >
+              <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>
+                MONATLICH
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.billingOption, isQuarterly && styles.billingOptionActive]}
+              onPress={() => setIsQuarterly(true)}
+            >
+              <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>
+                3 MONATE
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {isQuarterly && (
+            <View style={styles.savingsBadge}>
+              <Text style={styles.savingsBadgeText}>✨ SPARE 15%</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Pricing Cards */}
+        <View style={styles.pricingGrid}>
+          {plans.map((plan) => (
+            <View
+              key={plan.id}
+              style={[styles.pricingCard, plan.popular && styles.popularCard]}
+            >
+              {plan.popular && (
+                <View style={styles.popularBadge}>
+                  <Text style={styles.popularBadgeText}>⭐ BELIEBTESTE WAHL</Text>
+                </View>
+              )}
+
+              {/* Plan Header */}
+              <View style={styles.planHeader}>
+                <View style={styles.planIcon}>
+                  <Text style={styles.planIconText}>{plan.icon}</Text>
+                </View>
+                <Text style={styles.planName}>{plan.name}</Text>
+                <Text style={styles.planDescription}>{plan.description}</Text>
+              </View>
+
+              {/* Price Section */}
+              <View style={styles.priceSection}>
+                <View style={styles.priceRow}>
+                  {plan.id === 'free' ? (
+                    <Text style={styles.amount}>Frei</Text>
+                  ) : (
+                    <>
+                      {isQuarterly && plan.originalQuarterlyPrice > 0 && (
+                        <Text style={styles.originalPrice}>€{plan.originalQuarterlyPrice}</Text>
+                      )}
+                      <Text style={styles.currency}>€</Text>
+                      <Text style={styles.amount}>{getPrice(plan)}</Text>
+                      {plan.id !== 'free' && (
+                        <Text style={styles.period}>
+                          {isQuarterly ? '/3 Monate' : '/Monat'}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </View>
+                <Text style={styles.priceNote}>
+                  {plan.id === 'free'
+                    ? 'Kostenlos • Keine Kreditkarte erforderlich'
+                    : isQuarterly && plan.savings > 0
+                    ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
+                    : 'Monatlich kündbar'}
+                </Text>
+              </View>
+
+              {/* CTA Button */}
+              <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
+                <LinearGradient
+                  colors={plan.popular ? ['#ff7854', '#ff6b6b'] : ['#ff9a56', '#ff6b6b']}
+                  style={styles.ctaButton}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.ctaButtonText}>{plan.ctaText}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Features List */}
+              <View style={styles.featuresList}>
+                {plan.mainFeatures.map((category, catIndex) => (
+                  <View key={catIndex} style={styles.featureCategory}>
+                    <Text style={styles.categoryTitle}>{category.title}</Text>
+                    {category.features.map((feature, featIndex) => (
+                      <View
+                        key={featIndex}
+                        style={[
+                          styles.featureItem,
+                          !feature.included && styles.featureItemUnavailable,
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.featureIcon,
+                            !feature.included && styles.featureIconDisabled,
+                          ]}
+                        >
+                          <Text style={styles.featureIconText}>
+                            {feature.included ? '✓' : '✗'}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            styles.featureText,
+                            !feature.included && styles.featureTextDisabled,
+                          ]}
+                        >
+                          {feature.text}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ))}
+
+                {/* Expanded Features */}
+                {plan.expandedFeatures.length > 0 && (
+                  <>
+                    {expandedPlan === plan.id &&
+                      plan.expandedFeatures.map((category, catIndex) => (
+                        <View key={catIndex} style={styles.featureCategory}>
+                          <Text style={styles.categoryTitle}>{category.title}</Text>
+                          {category.features.map((feature, featIndex) => (
+                            <View key={featIndex} style={styles.featureItem}>
+                              <View style={styles.featureIcon}>
+                                <Text style={styles.featureIconText}>✓</Text>
+                              </View>
+                              <Text style={styles.featureText}>{feature.text}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      ))}
+
+                    <TouchableOpacity
+                      style={styles.expandButton}
+                      onPress={() => toggleExpand(plan.id)}
+                    >
+                      <Text style={styles.expandButtonText}>
+                        {expandedPlan === plan.id ? '− Weniger anzeigen' : '+ Alle Features anzeigen'}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Trust Section */}
+        <View style={styles.trustSection}>
+          <Text style={styles.trustTitle}>Vertrauen Sie unserer Expertise</Text>
+          <Text style={styles.trustSubtitle}>
+            Tausende Ärzte haben sich bereits erfolgreich vorbereitet
+          </Text>
+          <View style={styles.trustBadges}>
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIcon}>
+                <Lock size={28} color="#fff" />
+              </View>
+              <Text style={styles.trustText}>100% Datenschutz</Text>
+            </View>
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIcon}>
+                <Zap size={28} color="#fff" />
+              </View>
+              <Text style={styles.trustText}>Sofortiger Zugang</Text>
+            </View>
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIcon}>
+                <Text style={{ fontSize: 28 }}>💯</Text>
+              </View>
+              <Text style={styles.trustText}>14 Tage Geld-zurück</Text>
+            </View>
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIcon}>
+                <Target size={28} color="#fff" />
+              </View>
+              <Text style={styles.trustText}>Prüfungsnah</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* FAQ Section */}
+        <View style={styles.faqSection}>
+          <Text style={styles.faqTitle}>Häufig gestellte Fragen</Text>
+          <Text style={styles.faqSubtitle}>Alles, was Sie über unsere Pläne wissen müssen</Text>
+
+          <View style={styles.faqList}>
+            {faqs.map((faq, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.faqItem, expandedFAQ === index && styles.faqItemActive]}
+                onPress={() => toggleFAQ(index)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.faqQuestionText}>{faq.question}</Text>
+                  <View style={styles.faqIcon}>
+                    {expandedFAQ === index ? (
+                      <ChevronUp size={14} color="#fff" />
+                    ) : (
+                      <ChevronDown size={14} color="#fff" />
+                    )}
+                  </View>
+                </View>
+                {expandedFAQ === index && (
+                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2024 FSP & KP Simulation. Alle Rechte vorbehalten.</Text>
+          <Text style={styles.footerSubtext}>
+            Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de
+          </Text>
+        </View>
+      </LinearGradient>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+    padding: isMobile ? 20 : 40,
+    paddingTop: 40,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  headerTitle: {
+    fontSize: isMobile ? 32 : 52,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 16,
+    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 20,
+  },
+  headerSubtitle: {
+    fontSize: isMobile ? 16 : 20,
+    color: '#fff',
+    opacity: 0.95,
+    textAlign: 'center',
+    maxWidth: 700,
+    lineHeight: 28,
+  },
+  billingToggle: {
+    alignItems: 'center',
+    marginBottom: 40,
+    gap: 20,
+  },
+  billingOptions: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 50,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  billingOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 40,
+  },
+  billingOptionActive: {
+    backgroundColor: '#fff',
+  },
+  billingText: {
+    fontWeight: '600',
+    color: '#fff',
+    fontSize: 15,
+  },
+  billingTextActive: {
+    color: '#ff7854',
+  },
+  savingsBadge: {
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 30,
+  },
+  savingsBadgeText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  pricingGrid: {
+    flexDirection: isMobile ? 'column' : 'row',
+    gap: 30,
+    marginBottom: 60,
+    justifyContent: 'center',
+  },
+  pricingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 40,
+    flex: isMobile ? 0 : 1,
+    maxWidth: isMobile ? '100%' : 400,
+  },
+  popularCard: {
+    borderWidth: 3,
+    borderColor: '#ff7854',
+    transform: isMobile ? [] : [{ scale: 1.05 }],
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -15,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  popularBadgeText: {
+    backgroundColor: '#ff7854',
+    color: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 30,
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  planHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  planIcon: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#ff7854',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  planIconText: {
+    fontSize: 28,
+  },
+  planName: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  planDescription: {
+    color: '#6b7280',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  priceSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 30,
+    borderBottomWidth: 2,
+    borderBottomColor: '#f3f4f6',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 8,
+    gap: 5,
+  },
+  originalPrice: {
+    textDecorationLine: 'line-through',
+    color: '#9ca3af',
+    fontSize: 18,
+  },
+  currency: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ff7854',
+  },
+  amount: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: '#1f2937',
+  },
+  period: {
+    fontSize: 18,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  priceNote: {
+    color: '#9ca3af',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  ctaButton: {
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  ctaButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  featuresList: {
+    gap: 20,
+  },
+  featureCategory: {
+    gap: 12,
+  },
+  categoryTitle: {
+    fontWeight: '700',
+    color: '#1f2937',
+    fontSize: 14,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  featureItemUnavailable: {
+    opacity: 0.4,
+  },
+  featureIcon: {
+    width: 24,
+    height: 24,
+    backgroundColor: '#ff7854',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  featureIconDisabled: {
+    backgroundColor: '#e5e7eb',
+  },
+  featureIconText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  featureText: {
+    color: '#4b5563',
+    fontSize: 15,
+    lineHeight: 22,
+    flex: 1,
+  },
+  featureTextDisabled: {
+    color: '#9ca3af',
+  },
+  expandButton: {
+    width: '100%',
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    marginTop: 15,
+  },
+  expandButtonText: {
+    color: '#6b7280',
+    fontWeight: '600',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  trustSection: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 24,
+    padding: 40,
+    marginBottom: 60,
+    alignItems: 'center',
+  },
+  trustTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  trustSubtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  trustBadges: {
+    flexDirection: isMobile ? 'column' : 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: isMobile ? 20 : 50,
+  },
+  trustBadge: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  trustIcon: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#ff7854',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trustText: {
+    fontWeight: '600',
+    color: '#1f2937',
+    fontSize: 15,
+  },
+  faqSection: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 24,
+    padding: isMobile ? 20 : 40,
+    marginBottom: 60,
+  },
+  faqTitle: {
+    fontSize: isMobile ? 28 : 40,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  faqSubtitle: {
+    fontSize: 18,
+    color: '#6b7280',
+    marginBottom: 40,
+    textAlign: 'center',
+  },
+  faqList: {
+    gap: 16,
+  },
+  faqItem: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: '#f3f4f6',
+  },
+  faqItemActive: {
+    borderColor: '#ff7854',
+  },
+  faqQuestion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 20,
+  },
+  faqQuestionText: {
+    fontWeight: '700',
+    color: '#1f2937',
+    fontSize: 17,
+    flex: 1,
+  },
+  faqIcon: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#ff7854',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  faqAnswer: {
+    marginTop: 16,
+    color: '#6b7280',
+    fontSize: 15,
+    lineHeight: 24,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  footerText: {
+    color: '#fff',
+    fontSize: 14,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  footerSubtext: {
+    color: '#fff',
+    fontSize: 14,
+    opacity: 0.8,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+});
