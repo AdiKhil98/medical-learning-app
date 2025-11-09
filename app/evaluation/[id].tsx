@@ -133,7 +133,8 @@ export default function EvaluationPage() {
   }
 
   // Success - Show Evaluation (pass theme prop to use different color scheme)
-  const theme = conversationType === 'examiner' ? 'examiner' : 'patient';
+  // TEMPORARY: Force examiner theme for testing
+  const theme = 'examiner'; // conversationType === 'examiner' ? 'examiner' : 'patient';
 
   return <EvaluationDetailScreen evaluation={evaluation} onClose={handleClose} theme={theme} />;
 }

@@ -142,6 +142,21 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
         <Ionicons name="close" size={28} color="#ffffff" />
       </TouchableOpacity>
 
+      {/* TEMPORARY DEBUG: Show current theme */}
+      <View style={{
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 90 : 60,
+        left: 20,
+        backgroundColor: theme === 'examiner' ? '#1e3a5f' : '#667eea',
+        padding: 10,
+        borderRadius: 8,
+        zIndex: 100,
+      }}>
+        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>
+          THEME: {theme.toUpperCase()}
+        </Text>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
