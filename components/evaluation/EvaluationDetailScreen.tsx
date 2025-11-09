@@ -29,9 +29,23 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
 
   // Theme colors
   const isExaminer = theme === 'examiner';
+
+  // DEBUG LOGGING
+  console.log('='.repeat(50));
+  console.log('EvaluationDetailScreen RENDER');
+  console.log('Theme prop received:', theme);
+  console.log('isExaminer:', isExaminer);
+  console.log('='.repeat(50));
+
   const colors = {
     // Hero background gradient
     heroBg: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    // Hero top line
+    heroTopLine: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a'],
+    // Circle progress stroke
+    circleStroke: isExaminer ? '#2c5aa0' : '#4caf50',
+    // Circle score number
+    circleNumber: isExaminer ? '#1e3a5f' : '#4caf50',
     // Category score badge gradient
     categoryScore: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#667eea', '#764ba2'],
     // Category progress bar gradient
@@ -59,6 +73,11 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
     // Context hint text
     contextHintText: isExaminer ? '#1565c0' : '#1b5e20',
   };
+
+  console.log('Colors object created:');
+  console.log('  heroBg:', colors.heroBg);
+  console.log('  circleStroke:', colors.circleStroke);
+  console.log('  categoryBar:', colors.categoryBar);
 
   useEffect(() => {
     console.log('EvaluationDetailScreen mounted with MODERN ENHANCED design');
@@ -167,7 +186,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
           <View style={styles.heroCard}>
             {/* Top gradient line */}
             <LinearGradient
-              colors={['#4caf50', '#8bc34a']}
+              colors={colors.heroTopLine}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.heroTopLine}
@@ -204,7 +223,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                     cx="90"
                     cy="90"
                     r="80"
-                    stroke="#4caf50"
+                    stroke={colors.circleStroke}
                     strokeWidth="12"
                     fill="none"
                     strokeLinecap="round"
@@ -215,7 +234,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                   />
                 </Svg>
                 <View style={styles.scoreText}>
-                  <Text style={styles.scoreNumber}>{evaluation.score.total}</Text>
+                  <Text style={[styles.scoreNumber, { color: colors.circleNumber }]}>{evaluation.score.total}</Text>
                   <Text style={styles.scoreLabel}>/{evaluation.score.maxScore}</Text>
                 </View>
               </View>
