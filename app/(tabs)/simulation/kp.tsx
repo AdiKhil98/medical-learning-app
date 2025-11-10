@@ -52,9 +52,6 @@ export default function KPSimulationScreen() {
   const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Resume simulation state
-  const [showResumeModal, setShowResumeModal] = useState(false);
-  const [resumeTimeRemaining, setResumeTimeRemaining] = useState(0);
 
   // Early completion state
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
@@ -75,10 +72,6 @@ export default function KPSimulationScreen() {
     resetOptimisticCount();
   }, [resetOptimisticCount]);
 
-  // Check for existing simulation on mount
-  useEffect(() => {
-    checkExistingSimulation();
-  }, []);
 
   // Add state for initialization tracking
   const [isInitializing, setIsInitializing] = useState(false);
@@ -1261,10 +1254,6 @@ export default function KPSimulationScreen() {
     // Clear localStorage
     clearSimulationStorage();
 
-    // Reset resume modal states
-    setShowResumeModal(false);
-    setResumeTimeRemaining(0);
-
     // Reset early completion state
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
@@ -1432,209 +1421,6 @@ export default function KPSimulationScreen() {
   };
 
   // Initialize readiness checklist
-  // Check for existing simulation on mount
-  const checkExistingSimulation = () => {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) return;
-
-      const startTime = localStorage.getItem('sim_start_time_kp');
-      const endTime = localStorage.getItem('sim_end_time_kp');
-      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
-      const durationMs = localStorage.getItem('sim_duration_ms_kp');
-
-      // If no saved simulation, just return
-      if (!startTime || !savedSessionToken || !durationMs) {
-        return;
-      }
-
-      console.log('🔍 KP: Found existing simulation in localStorage');
-
-      // Calculate end time
-      let calculatedEndTime: number;
-      if (endTime) {
-        calculatedEndTime = parseInt(endTime);
-      } else {
-        const startTimeInt = parseInt(startTime);
-        const durationInt = parseInt(durationMs);
-        calculatedEndTime = startTimeInt + durationInt;
-      }
-
-      // Calculate remaining time
-      const remaining = calculatedEndTime - Date.now();
-
-      // Check if time has already expired
-      if (remaining <= 0) {
-        console.log('⏰ KP: Saved simulation has expired');
-        clearSimulationStorage();
-        showExpiredSimulationMessage();
-        setShowReadinessModal(true);
-        return;
-      }
-
-      // Time still remaining, offer to resume
-      const remainingSeconds = Math.floor(remaining / 1000);
-      console.log(`✅ KP: Can resume simulation with ${remainingSeconds}s remaining`);
-      setResumeTimeRemaining(remainingSeconds);
-
-      // Show resume modal
-      setShowResumeModal(true);
-
-    } catch (error) {
-      console.error('❌ KP: Error checking existing simulation:', error);
-      clearSimulationStorage();
-    }
-  };
-
-  // Resume simulation from localStorage
-  const resumeSimulation = () => {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) return;
-
-      const startTime = localStorage.getItem('sim_start_time_kp');
-      const savedEndTime = localStorage.getItem('sim_end_time_kp');
-      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
-      const durationMs = localStorage.getItem('sim_duration_ms_kp');
-
-      if (!startTime || !savedSessionToken || !durationMs) {
-        setShowResumeModal(false);
-        clearSimulationStorage();
-        return;
-      }
-
-      console.log('▶️ KP: Resuming simulation');
-
-      // Use saved end time if available, otherwise calculate
-      let endTime: number;
-      if (savedEndTime) {
-        endTime = parseInt(savedEndTime);
-      } else {
-        const startTimeInt = parseInt(startTime);
-        const durationInt = parseInt(durationMs);
-        endTime = startTimeInt + durationInt;
-      }
-
-      // Calculate remaining time
-      const remaining = endTime - Date.now();
-
-      if (remaining <= 0) {
-        setShowResumeModal(false);
-        clearSimulationStorage();
-        showExpiredSimulationMessage();
-        return;
-      }
-
-      // Set timer state
-      setTimerActive(true);
-      timerActiveRef.current = true; // Update ref for closures
-      const remainingSeconds = Math.floor(remaining / 1000);
-      setTimeRemaining(remainingSeconds);
-      setTimerEndTime(endTime); // Set absolute end time
-      setSessionToken(savedSessionToken);
-      sessionTokenRef.current = savedSessionToken; // Store in ref for timer closure
-      previousTimeRef.current = remainingSeconds; // Initialize ref for resume
-      timerEndTimeRef.current = endTime; // Store in ref for mobile reliability
-
-      // Start security heartbeat for resumed session
-      if (savedSessionToken) {
-        heartbeatInterval.current = setInterval(async () => {
-          try {
-            await simulationTracker.sendHeartbeat(savedSessionToken);
-            console.log('💓 DEBUG: Heartbeat sent');
-          } catch (error) {
-            console.error('❌ DEBUG: Heartbeat failed:', error);
-          }
-        }, 60000); // Every 60 seconds
-      }
-
-      // Start timer interval for resumed session with absolute time calculation
-      timerInterval.current = setInterval(() => {
-        // Calculate remaining time based on absolute end time (use ref for mobile reliability)
-        const currentEndTime = timerEndTimeRef.current || endTime;
-        const remaining = currentEndTime - Date.now();
-        const remainingSeconds = Math.floor(remaining / 1000);
-
-        // Get previous value for comparison
-        const prev = previousTimeRef.current;
-
-        // Update time remaining
-        if (remaining <= 0) {
-          setTimeRemaining(0);
-          previousTimeRef.current = 0;
-          clearInterval(timerInterval.current!);
-          timerInterval.current = null;
-          console.log('⏰ KP: Timer finished - 20 minutes elapsed');
-          console.log('🔚 KP: Initiating graceful end sequence');
-          initiateGracefulEnd();
-          return;
-        } else {
-          setTimeRemaining(remainingSeconds);
-          previousTimeRef.current = remainingSeconds;
-        }
-
-        // Log timer value every 10 seconds (only when value changes)
-        if (remainingSeconds % 10 === 0 && remainingSeconds !== prev) {
-          console.log('⏱️ DEBUG: Timer at', Math.floor(remainingSeconds / 60) + ':' + String(remainingSeconds % 60).padStart(2, '0'), `(${remainingSeconds} seconds)`);
-        }
-
-        // Mark as used at 5-minute mark (only trigger once)
-        // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
-        const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
-        if (prev > 900 && remainingSeconds <= 900 && !usageMarkedRef.current && currentSessionToken) {
-          const clientElapsed = (20 * 60) - remainingSeconds;
-          console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
-          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-          console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
-          markSimulationAsUsed(clientElapsed);
-        }
-
-        // Timer warnings (only trigger once per threshold)
-        if (prev > 300 && remainingSeconds <= 300) {
-          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
-        }
-        if (prev > 120 && remainingSeconds <= 120) {
-          showTimerWarning('2 Minuten verbleibend', 'orange', false);
-        }
-        if (prev > 60 && remainingSeconds <= 60) {
-          showTimerWarning('Nur noch 1 Minute!', 'red', false);
-        }
-        if (prev > 30 && remainingSeconds <= 30) {
-          showTimerWarning('30 Sekunden verbleibend', 'red', true);
-        }
-        if (prev > 10 && remainingSeconds <= 10) {
-          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
-        }
-      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
-
-      // Hide resume modal
-      setShowResumeModal(false);
-
-      console.log(`✅ KP: Resumed with ${Math.floor(remaining / 1000)}s remaining`);
-
-    } catch (error) {
-      console.error('❌ KP: Error resuming simulation:', error);
-      setShowResumeModal(false);
-      clearSimulationStorage();
-    }
-  };
-
-  // Decline to resume simulation
-  const declineResume = async () => {
-    console.log('❌ KP: User declined to resume simulation');
-    setShowResumeModal(false);
-
-    try {
-      // Mark session as abandoned in database
-      const savedSessionToken = localStorage.getItem('sim_session_token_kp');
-      if (savedSessionToken) {
-        await simulationTracker.updateSimulationStatus(savedSessionToken, 'aborted', 0);
-        console.log('📊 KP: Marked session as abandoned');
-      }
-    } catch (error) {
-      console.error('❌ KP: Error marking session as abandoned:', error);
-    }
-
-    clearSimulationStorage();
-  };
 
   // Show timer warning with color and message
   const showTimerWarning = (message: string, level: 'yellow' | 'orange' | 'red', isPulsing: boolean) => {
@@ -1962,21 +1748,6 @@ export default function KPSimulationScreen() {
               Simulation läuft: {formatTime(timeRemaining)}
             </Text>
           </View>
-
-          {/* "Ich bin fertig" Button */}
-          <TouchableOpacity
-            style={[styles.finishButton, timeRemaining > 1140 && styles.finishButtonDisabled]}
-            onPress={initiateEarlyCompletion}
-            disabled={timeRemaining > 1140}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.finishIcon}>✓</Text>
-            <Text style={styles.finishButtonText}>Ich bin fertig</Text>
-          </TouchableOpacity>
-
-          {timeRemaining > 1140 && (
-            <Text style={styles.finishButtonHint}>Verfügbar nach 1 Minute</Text>
-          )}
         </View>
       )}
 
@@ -2006,34 +1777,6 @@ export default function KPSimulationScreen() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Resume Simulation Modal */}
-      {showResumeModal && (
-        <View style={styles.resumeOverlay}>
-          <View style={styles.resumeModal}>
-            <Text style={styles.resumeIcon}>⏰</Text>
-            <Text style={styles.resumeTitle}>Simulation fortsetzen?</Text>
-            <Text style={styles.resumeMessage}>
-              Sie haben eine laufende Simulation.
-            </Text>
-            <View style={styles.timeRemainingBox}>
-              <Text style={styles.timeLabel}>Verbleibende Zeit:</Text>
-              <Text style={styles.timeValue}>{formatTimeDisplay(resumeTimeRemaining)}</Text>
-            </View>
-            <Text style={styles.resumeWarning}>
-              Wenn Sie nicht fortsetzen, wird die Simulation abgebrochen.
-            </Text>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.primaryButton} onPress={resumeSimulation}>
-                <Text style={styles.primaryButtonText}>Fortsetzen</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={declineResume}>
-                <Text style={styles.secondaryButtonText}>Abbrechen</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
 
       {/* Final Warning Modal */}
       {showFinalWarningModal && (
