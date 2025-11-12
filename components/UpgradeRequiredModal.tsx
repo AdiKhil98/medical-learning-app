@@ -47,8 +47,17 @@ export function UpgradeRequiredModal({
   };
 
   const handleUpgradeClick = () => {
+    console.log('🔄 Navigating to subscription page...');
     onClose();
-    router.push('/subscription');
+    // Use correct Expo Router syntax for navigation
+    try {
+      router.push('/subscription');
+      console.log('✅ Navigation to subscription page initiated');
+    } catch (error) {
+      console.error('❌ Error navigating to subscription:', error);
+      // Fallback navigation
+      router.replace('/subscription');
+    }
   };
 
   return (
