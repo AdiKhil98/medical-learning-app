@@ -528,7 +528,7 @@ export default function FSPSimulationScreen() {
         [
           {
             text: 'Upgrade',
-            onPress: () => router.push('/(tabs)/profile')
+            onPress: () => router.push('subscription' as any)
           },
           { text: 'OK' }
         ]
@@ -1672,7 +1672,7 @@ export default function FSPSimulationScreen() {
             </Text>
             <TouchableOpacity
               style={styles.lockUpgradeButton}
-              onPress={() => router.push('/(tabs)/profile')}
+              onPress={() => router.push('subscription' as any)}
             >
               <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
             </TouchableOpacity>

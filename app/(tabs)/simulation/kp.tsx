@@ -495,7 +495,7 @@ export default function KPSimulationScreen() {
         'Simulationslimit erreicht',
         accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
         [
-          { text: 'Upgrade', onPress: () => router.push('/(tabs)/profile') },
+          { text: 'Upgrade', onPress: () => router.push('subscription' as any) },
           { text: 'OK' }
         ]
       );
@@ -1678,7 +1678,7 @@ export default function KPSimulationScreen() {
             </Text>
             <TouchableOpacity
               style={styles.lockUpgradeButton}
-              onPress={() => router.push('/(tabs)/profile')}
+              onPress={() => router.push('subscription' as any)}
             >
               <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
             </TouchableOpacity>
