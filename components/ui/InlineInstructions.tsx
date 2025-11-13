@@ -89,7 +89,7 @@ export default function InlineInstructions({ tabs }: InlineInstructionsProps) {
       {/* Animated gradient background effect */}
       <View style={styles.gradientBackground}>
         <LinearGradient
-          colors={['rgba(120, 119, 198, 0.15)', 'rgba(139, 92, 246, 0.15)', 'rgba(167, 139, 250, 0.1)']}
+          colors={['rgba(139, 92, 246, 0.08)', 'rgba(236, 72, 153, 0.08)', 'rgba(167, 139, 250, 0.05)']}
           start={{ x: 0.2, y: 0.3 }}
           end={{ x: 0.8, y: 0.7 }}
           style={styles.gradientOverlay}
@@ -137,17 +137,17 @@ export default function InlineInstructions({ tabs }: InlineInstructionsProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(15, 15, 30, 0.95)',
+    backgroundColor: '#f5f7fa',
     borderRadius: 20,
     margin: 20,
-    shadowColor: 'rgba(139, 92, 246, 0.3)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 24,
+    shadowRadius: 20,
     elevation: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: '#e5e7eb',
   },
   gradientBackground: {
     position: 'absolute',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   gradientOverlay: {
     flex: 1,
-    opacity: 0.6,
+    opacity: 1,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: '#e5e7eb',
     zIndex: 1,
   },
   tabScrollContent: {
@@ -183,8 +183,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   activeTabGradient: {
     paddingVertical: 12,
@@ -201,11 +208,17 @@ const styles = StyleSheet.create({
   activeTab: {
     backgroundColor: 'transparent',
     padding: 0,
+    borderWidth: 0,
+    shadowColor: 'rgba(139, 92, 246, 0.4)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 8,
   },
   tabText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: '#6b7280',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
