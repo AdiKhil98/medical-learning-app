@@ -1467,29 +1467,52 @@ export default function KPSimulationScreen() {
       title: 'Überblick',
       content: (
         <InlineContent>
-          <Section title="🏥 Was ist die KP-Simulation?">
+          <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
             <Paragraph>
-              Willkommen zu Ihrem <BoldText>Krankenpräsentations-Training</BoldText>! Diese realistische Simulation bereitet Sie optimal auf professionelle Patientenvorstellungen vor.
+              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> und <BoldText>Kenntnisprüfung (KP)</BoldText> vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie möglich nachzubilden.
             </Paragraph>
+          </Section>
 
-            <HighlightBox type="info">
-              🎯 <BoldText>Hauptzweck:</BoldText> Systematische Krankenpräsentation unter realistischen Bedingungen trainieren
+          <Section title="🎯 Unser Versprechen an Sie">
+            <HighlightBox type="success">
+              ✓ <BoldText>Realistische Prüfungssimulation</BoldText>
             </HighlightBox>
 
             <Paragraph>
-              <BoldText>Ihre Vorteile auf einen Blick:</BoldText>
+              Wir haben großen Wert darauf gelegt, die Simulation so authentisch wie möglich zu gestalten:
             </Paragraph>
 
             <View style={{ marginLeft: 16 }}>
-              <Paragraph>• Strukturierte Patientenvorstellung</Paragraph>
-              <Paragraph>• Professionelle Kommunikation mit Kollegen</Paragraph>
-              <Paragraph>• Sofortiges, detailliertes Feedback</Paragraph>
-              <Paragraph>• Praxisnahe Fallbearbeitung</Paragraph>
+              <Paragraph>✓ Echte Prüfungsatmosphäre</Paragraph>
+              <Paragraph>✓ Realistische Patientengespräche</Paragraph>
+              <Paragraph>✓ Prüferfragen wie in der echten FSP/KP</Paragraph>
+              <Paragraph>✓ Faire und präzise Bewertung</Paragraph>
+              <Paragraph>✓ Konstruktives Feedback nach jedem Durchgang</Paragraph>
             </View>
 
             <InfoBox>
-              📋 Diese Simulation testet Ihre Fähigkeit zur systematischen Krankenpräsentation in der klinischen Praxis
+              💡 <BoldText>100x üben = 1x bestehen</BoldText>
+              {'\n\n'}Unser Ziel ist es, dass Sie durch intensives Training die Prüfung beim ersten Versuch bestehen:
+              {'\n'}• 🔄 Unbegrenzt üben (je nach Plan)
+              {'\n'}• 📊 Jede Simulation wird ehrlich bewertet
+              {'\n'}• 💡 Sie erhalten nach jedem Durchgang wertvolles Feedback
+              {'\n'}• 📈 Sie können Ihren Fortschritt über Zeit verfolgen
+              {'\n'}• 🎯 Sie gewinnen Sicherheit und Routine
             </InfoBox>
+          </Section>
+
+          <Section title="🚀 Kontinuierliche Verbesserung">
+            <Paragraph>
+              Wir arbeiten ständig daran, die Simulation zu optimieren:
+            </Paragraph>
+
+            <View style={{ marginLeft: 16 }}>
+              <Paragraph>⚡ Schnellere Ladezeiten</Paragraph>
+              <Paragraph>🎤 Bessere Sprachqualität</Paragraph>
+              <Paragraph>🧠 Intelligentere KI-Agenten</Paragraph>
+              <Paragraph>📋 Umfangreichere Fallbibliothek</Paragraph>
+              <Paragraph>🎯 Noch präzisere Evaluation</Paragraph>
+            </View>
           </Section>
         </InlineContent>
       )
@@ -1499,44 +1522,106 @@ export default function KPSimulationScreen() {
       title: 'Ablauf',
       content: (
         <InlineContent>
-          <Section title="📋 Simulation in 3 Schritten">
+          <Section title="📋 Ablauf der Simulation">
             <Step
               number="1"
-              title="🔐 Benutzer-ID Verifizierung"
-              description="Authentifizierung für personalisierte Auswertung"
-              details={[
-                "Eingabe Ihrer zugewiesenen ID",
-                "Sicherung der korrekten Ergebniszuordnung"
-              ]}
+              title="🔍 Fallauswahl"
+              description="Die Simulation beginnt mit der Auswahl eines medizinischen Falls. Sie haben zwei Möglichkeiten:"
+              details={[]}
             />
+
+            <InfoBox>
+              <BoldText>Option A: Kategorie-basierte Auswahl</BoldText>
+              {'\n'}1. Wählen Sie das Hauptfachgebiet (Innere Medizin, Chirurgie, Neurologie, Notfallmedizin)
+              {'\n'}2. Wählen Sie die Unterkategorie (z.B. Kardiologie, Gastroenterologie)
+              {'\n'}3. Der KI-Agent wählt zufällig einen passenden Fall
+            </InfoBox>
+
+            <InfoBox>
+              <BoldText>Option B: Direkte Fallauswahl</BoldText>
+              {'\n'}Sie können auch direkt einen Fall nennen:
+              {'\n'}• "Herzinfarkt"
+              {'\n'}• "Diabetes mellitus"
+              {'\n'}• "Akutes Abdomen"
+            </InfoBox>
+
+            <HighlightBox type="warning">
+              ⏳ <BoldText>Hinweis zur Ladezeit:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern. Bitte haben Sie einen Moment Geduld.
+            </HighlightBox>
 
             <Step
               number="2"
-              title="📂 Fallauswahl"
-              description="Auswahl eines geeigneten Patientenfalls"
-              details={[
-                "Verschiedene <BoldText>Fachbereiche</BoldText> verfügbar",
-                "Schwierigkeitsgrad entsprechend Ihrem Level"
-              ]}
+              title="💬 Anamnesegespräch mit dem Patienten"
+              description="Nach der Fallauswahl werden Sie direkt zum Patientengespräch weitergeleitet."
+              details={[]}
             />
+
+            <HighlightBox type="success">
+              ✅ <BoldText>Sie beginnen das Gespräch!</BoldText> Der Patient wartet auf Ihre Begrüßung. Stellen Sie sich vor und beginnen Sie die Anamnese.
+            </HighlightBox>
+
+            <HighlightBox type="warning">
+              🎤 <BoldText>Stimmen-Hinweis:</BoldText> Die Simulation verwendet derzeit eine weibliche KI-Stimme für alle Patientenrollen, auch bei männlichen Patienten.
+            </HighlightBox>
+
+            <Paragraph>
+              <BoldText>Führen Sie eine vollständige Anamnese durch:</BoldText>
+            </Paragraph>
+
+            <View style={{ marginLeft: 16 }}>
+              <Paragraph>• Aktuelle Beschwerden</Paragraph>
+              <Paragraph>• Vorerkrankungen</Paragraph>
+              <Paragraph>• Medikation</Paragraph>
+              <Paragraph>• Allergien</Paragraph>
+              <Paragraph>• Familienanamnese</Paragraph>
+              <Paragraph>• Sozialanamnese</Paragraph>
+            </View>
+
+            <InfoBox>
+              <BoldText>Beenden des Anamnesegesprächs:</BoldText>
+              {'\n\n'}Sagen Sie deutlich:
+              {'\n'}• "Ich bin fertig."
+              {'\n'}• "Ich habe keine weiteren Fragen."
+              {'\n'}• "Das war's von meiner Seite."
+              {'\n\n'}⚙️ Das System erkennt Ihren Abschlusswunsch automatisch und leitet Sie zum Prüfergespräch weiter.
+            </InfoBox>
 
             <Step
               number="3"
-              title="👩‍⚕️ Krankenpräsentation"
-              description={
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text>Strukturierte Patientenvorstellung</Text>
-                  <TimeBadge>(20 Min)</TimeBadge>
-                </View>
-              }
-              details={[
-                "<BoldText>Anamnese:</BoldText> Systematische Erhebung der Patientengeschichte",
-                "<BoldText>Befunde:</BoldText> Präsentation relevanter Untersuchungsergebnisse",
-                "<BoldText>Diagnose:</BoldText> Formulierung der Arbeits- oder Differentialdiagnose",
-                "<BoldText>Therapie:</BoldText> Behandlungsplan und weiteres Vorgehen",
-                "<BoldText>Ende:</BoldText> <BoldText>Sagen Sie 'Ich bin fertig'</BoldText> zum Abschluss"
-              ]}
+              title="👨‍⚕️ Prüfergespräch (Examiner)"
+              description="Sie führen ein Gespräch mit dem Prüfer (Dr. Hoffmann, leitender Oberarzt)."
+              details={[]}
             />
+
+            <HighlightBox type="success">
+              ✅ <BoldText>Begrüßen Sie den Prüfer!</BoldText> Beispiel: "Guten Tag, Herr Dr. Hoffmann!" Nach Ihrer Begrüßung beginnt der Prüfer automatisch.
+            </HighlightBox>
+
+            <Paragraph>
+              <BoldText>Ablauf des Prüfergesprächs:</BoldText>
+            </Paragraph>
+
+            <View style={{ marginLeft: 16 }}>
+              <Paragraph><BoldText>1. Persönliche Vorstellung:</BoldText></Paragraph>
+              <Paragraph>   • Seit wann sind Sie in Deutschland?</Paragraph>
+              <Paragraph>   • Was haben Sie bisher gemacht?</Paragraph>
+              <Paragraph>   • Was sind Ihre beruflichen Pläne?</Paragraph>
+              <Paragraph></Paragraph>
+              <Paragraph><BoldText>2. Fallbesprechung:</BoldText></Paragraph>
+              <Paragraph>   • Verdachtsdiagnose</Paragraph>
+              <Paragraph>   • Differentialdiagnosen</Paragraph>
+              <Paragraph>   • Geplante Diagnostik</Paragraph>
+              <Paragraph>   • Therapieoptionen</Paragraph>
+              <Paragraph>   • Patientenaufklärung</Paragraph>
+            </View>
+
+            <InfoBox>
+              <BoldText>Beenden des Prüfergesprächs:</BoldText>
+              {'\n\n'}Signalisieren Sie das Ende:
+              {'\n'}• "Ich bin fertig."
+              {'\n'}• "Ich habe nichts mehr hinzuzufügen."
+              {'\n\n'}📊 Das Gespräch wird gespeichert und automatisch ausgewertet.
+            </InfoBox>
           </Section>
         </InlineContent>
       )
@@ -1546,54 +1631,54 @@ export default function KPSimulationScreen() {
       title: 'Bewertung',
       content: (
         <InlineContent>
-          <Section title="📊 Ihre Auswertung">
+          <Section title="📈 Ihre Evaluation einsehen">
             <Paragraph>
-              Nach der Simulation erhalten Sie eine detaillierte Analyse im <BoldText>Fortschrittsbereich</BoldText> Ihres Kontos.
+              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) finden Sie Ihre <BoldText>detaillierte Bewertung</BoldText> im Bereich <BoldText>"Fortschritt"</BoldText>.
             </Paragraph>
+          </Section>
 
-            <HighlightBox type="success">
-              ⚡ <BoldText>Schnelle Auswertung:</BoldText> Ergebnisse innerhalb weniger Minuten verfügbar
-            </HighlightBox>
+          <Section title="📊 Was Sie in der Evaluation finden">
+            <View style={{ marginLeft: 16 }}>
+              <Paragraph>✅ Gesamtpunktzahl</Paragraph>
+              <Paragraph>✅ Kategorie-spezifische Bewertungen</Paragraph>
+              <Paragraph>✅ Detailliertes Feedback zu Stärken und Schwächen</Paragraph>
+              <Paragraph>✅ Konkrete Verbesserungsvorschläge</Paragraph>
+              <Paragraph>✅ Verlauf aller bisherigen Simulationen</Paragraph>
+            </View>
+          </Section>
 
-            <Step
-              number="✅"
-              title="Struktur-Analyse"
-              description="Bewertung Ihrer Präsentationsstruktur:"
-              details={[
-                "Vollständigkeit der Anamnese bewertet",
-                "Logischer Aufbau der Präsentation",
-                "Verwendung medizinischer Terminologie"
-              ]}
-            />
+          <Section title="📋 Was wird bewertet?">
+            <InfoBox>
+              <BoldText>🩺 Medizinisches Wissen</BoldText>
+              {'\n'}• Differentialdiagnosen entwickeln
+              {'\n'}• Diagnostik planen
+              {'\n'}• Therapieoptionen bewerten
+              {'\n'}• Prognose einschätzen
+            </InfoBox>
 
-            <Step
-              number="📈"
-              title="Verbesserungsfelder"
-              description="Gezielte Optimierungsempfehlungen:"
-              details={[
-                "Strukturelle Verbesserungsvorschläge",
-                "Fachsprachliche Korrekturen",
-                "Präsentationstechnik verfeinern"
-              ]}
-            />
+            <InfoBox>
+              <BoldText>💬 Kommunikationsfähigkeiten</BoldText>
+              {'\n'}• Strukturierte Vorstellung
+              {'\n'}• Fachsprache korrekt verwenden
+              {'\n'}• Relevante Informationen priorisieren
+              {'\n'}• Fragen kompetent beantworten
+            </InfoBox>
 
-            <Step
-              number="💡"
-              title="Entwicklungsplan"
-              description="Ihr persönlicher Erfolgsweg:"
-              details={[
-                "Spezifische Übungsempfehlungen",
-                "Weiterführende Ressourcen",
-                "Tipps für die klinische Praxis"
-              ]}
-            />
+            <InfoBox>
+              <BoldText>🧠 Klinisches Denken</BoldText>
+              {'\n'}• Symptome richtig interpretieren
+              {'\n'}• Zusammenhänge erkennen
+              {'\n'}• Prioritäten setzen
+              {'\n'}• Begründungen liefern
+            </InfoBox>
           </Section>
 
           <Section title="⏱️ Zeitplan im Überblick">
-            <View style={{ backgroundColor: 'rgba(75, 85, 176, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
-              <TimeItem label="📅 Gesamtdauer" time="20 Minuten" />
-              <TimeItem label="👩‍⚕️ Präsentation" time="Bis zu 20 Minuten" />
-              <TimeItem label="📊 Auswertung verfügbar" time="2-5 Minuten nach Abschluss" />
+            <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
+              <TimeItem label="📅 Gesamtdauer" time="20-30 Minuten" />
+              <TimeItem label="💬 Patientengespräch" time="Ca. 10-15 Minuten" />
+              <TimeItem label="👨‍⚕️ Prüfergespräch" time="Ca. 10-15 Minuten" />
+              <TimeItem label="📊 Auswertung verfügbar" time="Sofort nach Abschluss" />
             </View>
           </Section>
         </InlineContent>
@@ -1604,56 +1689,66 @@ export default function KPSimulationScreen() {
       title: 'Tipps',
       content: (
         <InlineContent>
-          <Section title="💡 Erfolgstipps">
-            <HighlightBox type="warning">
-              🎯 <BoldText>Profi-Strategien für optimale Krankenpräsentation</BoldText>
-            </HighlightBox>
-
-            <View style={{ marginVertical: 8 }}>
-              <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#22c55e' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#16a34a', marginBottom: 8 }}>1. 📋 Systematisch strukturieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>SOAP-Schema verwenden</BoldText> – Subjektiv, Objektiv, Assessment, Plan für klare Struktur.
-                </Text>
-              </View>
-
-              <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#3b82f6' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563eb', marginBottom: 8 }}>2. ⚕️ Präzise Fachsprache</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Medizinische Terminologie korrekt</BoldText> – verwenden Sie präzise Fachbegriffe souverän.
-                </Text>
-              </View>
-
-              <View style={{ backgroundColor: 'rgba(251, 146, 60, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#fb923c' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#ea580c', marginBottom: 8 }}>3. 🎯 Relevanz fokussieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Auf Wesentliches konzentrieren</BoldText> – wichtige Informationen priorisieren und hervorheben.
-                </Text>
-              </View>
-
-              <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#a855f7' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#9333ea', marginBottom: 8 }}>4. 🗣️ Klar kommunizieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Deutlich und verständlich</BoldText> – auch komplexe Sachverhalte strukturiert vermitteln.
-                </Text>
-              </View>
-            </View>
-          </Section>
-
-          <Section title="🚀 Jetzt starten?">
+          <Section title="⚠️ Bekannte technische Einschränkungen">
             <Paragraph>
-              Jede KP-Simulation verbessert Ihre Präsentationskompetenz. <BoldText>Nutzen Sie die Chance</BoldText> – systematisches Training macht den Unterschied!
+              Wir möchten transparent sein über aktuelle Limitierungen:
             </Paragraph>
 
-            <HighlightBox type="success">
-              🌟 <BoldText>Bereit für die Präsentation?</BoldText> Halten Sie Ihre Benutzer-ID bereit und beginnen Sie Ihr professionelles KP-Training!
+            <HighlightBox type="warning">
+              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern, während der KI-Agent den Fall abruft.
             </HighlightBox>
 
-            <View style={{ marginTop: 16, padding: 12, backgroundColor: 'rgba(75, 85, 176, 0.05)', borderRadius: 8 }}>
-              <Text style={{ fontSize: 13, fontStyle: 'italic', color: '#4338ca', lineHeight: 20 }}>
-                💼 Diese Simulation bietet realistische Krankenpräsentation mit sofortigem, professionellem Feedback für optimale Vorbereitung auf die klinische Praxis.
-              </Text>
-            </View>
+            <HighlightBox type="warning">
+              🎤 <BoldText>Stimmen:</BoldText> Derzeit wird eine weibliche Stimme für alle Patientenrollen verwendet, auch bei männlichen Patienten.
+            </HighlightBox>
+
+            <HighlightBox type="warning">
+              ⚡ <BoldText>Gelegentliche Verzögerungen:</BoldText> Bei hoher Serverauslastung kann es zu kurzen Verzögerungen kommen.
+            </HighlightBox>
+
+            <InfoBox>
+              💪 <BoldText>Wir arbeiten daran!</BoldText> Diese Punkte werden in zukünftigen Updates verbessert.
+            </InfoBox>
+          </Section>
+
+          <Section title="💬 Ihr Feedback ist wertvoll!">
+            <Paragraph>
+              Wir sind <BoldText>mehr als glücklich</BoldText>, von Ihnen zu hören:
+            </Paragraph>
+
+            <InfoBox>
+              <BoldText>📧 Kontakt</BoldText>
+              {'\n\n'}Feedback & Vorschläge:
+              {'\n'}feedback@fsp-kp-simulation.de
+              {'\n\n'}Technischer Support:
+              {'\n'}support@fsp-kp-simulation.de
+              {'\n\n'}Antwortzeit:
+              {'\n'}• Standard: Innerhalb von 24 Stunden
+              {'\n'}• Premium: Innerhalb von 4 Stunden
+            </InfoBox>
+
+            <HighlightBox type="success">
+              <BoldText>Was Sie uns mitteilen können:</BoldText>
+              {'\n'}• 💡 Verbesserungsvorschläge
+              {'\n'}• 🐛 Technische Probleme melden
+              {'\n'}• ⭐ Ihre Erfolgsgeschichten teilen
+              {'\n'}• 📝 Feedback zur Simulation
+              {'\n\n'}<BoldText>Ihre Meinung hilft uns</BoldText>, die Simulation noch besser zu machen!
+            </HighlightBox>
+          </Section>
+
+          <Section title="🚀 Bereit? Los geht's!">
+            <Paragraph>
+              Jetzt sind Sie bestens vorbereitet, um mit der Simulation zu starten.
+            </Paragraph>
+
+            <InfoBox>
+              "Ihre Prüfungsvorbereitung ist unser Erfolg. Wir glauben an Sie!" ✨
+            </InfoBox>
+
+            <HighlightBox type="success">
+              🎯 <BoldText>Viel Erfolg bei Ihrer Prüfungsvorbereitung!</BoldText>
+            </HighlightBox>
           </Section>
         </InlineContent>
       )

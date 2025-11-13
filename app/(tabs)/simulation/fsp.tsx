@@ -1444,29 +1444,27 @@ export default function FSPSimulationScreen() {
       title: 'Überblick',
       content: (
         <InlineContent>
-          <Section title="🏥 Was ist die FSP-Simulation?">
+          <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
             <Paragraph>
-              Willkommen zu Ihrem <BoldText>Fachsprachprüfungs-Training</BoldText>! Diese realistische Simulation bereitet Sie optimal auf die FSP vor.
+              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> und <BoldText>Kenntnisprüfung (KP)</BoldText> vorzubereiten. Sie bietet Ihnen realistische Prüfungsbedingungen mit direktem, KI-gestütztem Feedback.
             </Paragraph>
+            <Paragraph>
+              Durch kontinuierliche Wiederholung und das Lernen aus Ihrem Feedback entwickeln Sie sowohl Ihre medizinischen Fachkenntnisse als auch Ihre sprachlichen Fähigkeiten auf Deutsch. Die Simulation passt sich Ihrem Lernfortschritt an.
+            </Paragraph>
+          </Section>
 
-            <HighlightBox type="info">
-              🎯 <BoldText>Hauptzweck:</BoldText> Authentische Prüfungserfahrung sammeln und Selbstvertrauen aufbauen
+          <Section title="🎯 Unser Versprechen an Sie">
+            <HighlightBox type="success">
+              <BoldText>100x üben = 1x bestehen</BoldText>
+              {'\n\n'}
+              Je öfter Sie die Simulation durchlaufen, desto besser werden Sie vorbereitet sein und desto höher sind Ihre Chancen, die Prüfung beim ersten Versuch zu bestehen.
             </HighlightBox>
+          </Section>
 
+          <Section title="🔄 Kontinuierliche Verbesserung">
             <Paragraph>
-              <BoldText>Ihre Vorteile auf einen Blick:</BoldText>
+              Wir arbeiten ständig daran, die Qualität dieser Simulationen zu verbessern. Ihre Erfahrungen und Ihr Feedback helfen uns, die Simulation noch realistischer und hilfreicher zu gestalten.
             </Paragraph>
-
-            <View style={{ marginLeft: 16 }}>
-              <Paragraph>• Realistische Patientengespräche</Paragraph>
-              <Paragraph>• Professionelle Prüfersituationen</Paragraph>
-              <Paragraph>• Sofortiges, detailliertes Feedback</Paragraph>
-              <Paragraph>• Gezieltes Kompetenz-Training</Paragraph>
-            </View>
-
-            <InfoBox>
-              📋 Diese Simulation testet Ihre medizinische Kommunikationskompetenz in authentischen Situationen
-            </InfoBox>
           </Section>
         </InlineContent>
       )
@@ -1476,60 +1474,67 @@ export default function FSPSimulationScreen() {
       title: 'Ablauf',
       content: (
         <InlineContent>
-          <Section title="📋 Simulation in 4 Schritten">
+          <Section title="📋 So läuft die Simulation ab">
             <Step
               number="1"
-              title="🔐 Benutzer-ID Verifizierung"
-              description="Geben Sie zunächst Ihre zugewiesene Benutzer-ID an"
-              details={[
-                "Sichert korrekte Zuordnung zu Ihrem Konto",
-                "Ermöglicht personalisierte Fortschrittsverfolgung"
-              ]}
+              title="🔍 Fallauswahl"
+              description="Die Simulation beginnt mit der Auswahl eines medizinischen Falls. Sie haben zwei Möglichkeiten:"
             />
+
+            <InfoBox>
+              <BoldText>Option A: Kategorie-basierte Auswahl</BoldText>
+              {'\n\n'}
+              1. Wählen Sie das Hauptfachgebiet (z.B. Innere Medizin, Chirurgie, Neurologie){'\n'}
+              2. Wählen Sie eine Unterkategorie (z.B. Kardiologie, Gastroenterologie){'\n'}
+              3. Das System wählt automatisch einen passenden Fall aus dieser Kategorie aus
+            </InfoBox>
+
+            <InfoBox>
+              <BoldText>Option B: Direkte Fallauswahl</BoldText>
+              {'\n\n'}
+              Sie können auch direkt einen Fall nennen, z.B. "Ich möchte einen Fall zu Herzinfarkt" oder "Gib mir einen Pneumonie-Fall". Das System wird dann einen passenden Fall für Sie auswählen.
+            </InfoBox>
 
             <Step
               number="2"
-              title="📂 Fallauswahl"
-              description="Wählen Sie gezielt medizinische Fälle zum Training"
-              details={[
-                "Auswahl nach <BoldText>Fachgebiet</BoldText>: Innere Medizin, Notfall, Neurologie",
-                "Fokus auf persönliche Schwerpunkte möglich"
-              ]}
+              title="💬 Anamnesegespräch (10 Minuten)"
+              description="Nach der Fallauswahl startet automatisch das Gespräch mit dem virtuellen Patienten."
             />
+
+            <InfoBox>
+              <BoldText>Was Sie im Anamnesegespräch tun sollten:</BoldText>
+              {'\n\n'}
+              • Begrüßen Sie den Patienten professionell{'\n'}
+              • Erheben Sie systematisch die Anamnese (Hauptbeschwerde, Symptome, Vorgeschichte){'\n'}
+              • Fragen Sie nach Vorerkrankungen, Medikamenten und Allergien{'\n'}
+              • Zeigen Sie Empathie und professionelle Kommunikation{'\n'}
+              • Beenden Sie das Gespräch mit: <BoldText>"Ich bin fertig"</BoldText> oder <BoldText>"Können wir das beenden?"</BoldText>
+            </InfoBox>
+
+            <HighlightBox type="warning">
+              ⏱️ <BoldText>Wichtig:</BoldText> Nach 10 Minuten wird das Anamnesegespräch automatisch beendet. Sie können es aber jederzeit früher beenden, indem Sie die Abschlussphrasen verwenden.
+            </HighlightBox>
 
             <Step
               number="3"
-              title="👨‍⚕️ Patientenanamnese"
-              description={
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text>Führen Sie ein authentisches Patientengespräch</Text>
-                  <TimeBadge>(10 Min)</TimeBadge>
-                </View>
-              }
-              details={[
-                "<BoldText>Start:</BoldText> Professionelle Begrüßung auf Deutsch",
-                "<BoldText>Während:</BoldText> Vollständige Anamnese erheben (Hauptbeschwerde, Symptome, Vorgeschichte, Medikation, Allergien)",
-                "<BoldText>Ende:</BoldText> <BoldText>Sagen Sie 'Ich bin fertig'</BoldText> zum Abschluss",
-                "Automatische Übertragung zur Auswertung"
-              ]}
+              title="👨‍⚕️ Prüfergespräch (10 Minuten)"
+              description="Nach dem Anamnesegespräch werden Sie automatisch zum Prüfergespräch weitergeleitet."
             />
 
-            <Step
-              number="4"
-              title="👩‍⚕️ Prüfergespräch"
-              description={
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text>Gespräch mit Dr. Hoffmann (Oberarzt)</Text>
-                  <TimeBadge>(10 Min)</TimeBadge>
-                </View>
-              }
-              details={[
-                "<BoldText>Vorstellung:</BoldText> Berichten Sie über Ihren Hintergrund",
-                "<BoldText>Fallbesprechung:</BoldText> Diskutieren Sie Diagnose und Behandlung",
-                "<BoldText>Fachwissen:</BoldText> Medizinische Terminologie anwenden",
-                "<BoldText>Ende:</BoldText> <BoldText>Sagen Sie 'Ich bin fertig'</BoldText> oder <BoldText>'Können wir das beenden?'</BoldText>"
-              ]}
-            />
+            <InfoBox>
+              <BoldText>Was Sie im Prüfergespräch tun sollten:</BoldText>
+              {'\n\n'}
+              • Stellen Sie sich kurz vor (Name, Herkunftsland, beruflicher Hintergrund){'\n'}
+              • Präsentieren Sie den Fall strukturiert{'\n'}
+              • Nennen Sie Ihre Differentialdiagnosen{'\n'}
+              • Schlagen Sie diagnostische Schritte vor{'\n'}
+              • Diskutieren Sie mögliche Therapieoptionen{'\n'}
+              • Beenden Sie mit: <BoldText>"Ich bin fertig"</BoldText> oder <BoldText>"Können wir das beenden?"</BoldText>
+            </InfoBox>
+
+            <HighlightBox type="warning">
+              ⏱️ <BoldText>Wichtig:</BoldText> Nach 10 Minuten wird das Prüfergespräch automatisch beendet. Sie können es auch früher beenden.
+            </HighlightBox>
           </Section>
         </InlineContent>
       )
@@ -1539,56 +1544,46 @@ export default function FSPSimulationScreen() {
       title: 'Bewertung',
       content: (
         <InlineContent>
-          <Section title="📊 Ihre Auswertung">
+          <Section title="📈 Ihre Evaluation einsehen">
             <Paragraph>
-              Nach der Simulation erhalten Sie eine detaillierte Analyse im <BoldText>Fortschrittsbereich</BoldText> Ihres Kontos.
+              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) wird Ihre Leistung automatisch ausgewertet. Die Evaluation erscheint im <BoldText>Fortschrittsbereich</BoldText> unter dem Menüpunkt "Fortschritt".
             </Paragraph>
 
-            <HighlightBox type="success">
-              ⚡ <BoldText>Schnelle Auswertung:</BoldText> Ergebnisse innerhalb weniger Minuten verfügbar
+            <HighlightBox type="info">
+              ⏱️ <BoldText>Bearbeitungszeit:</BoldText> Die Auswertung kann einige Minuten dauern. Sie können die App schließen und später zurückkommen – Ihre Evaluation wird gespeichert.
             </HighlightBox>
-
-            <Step
-              number="✅"
-              title="Stärkenanalyse"
-              description="Ihre erkannten Kompetenzen:"
-              details={[
-                "Kommunikationsstärken identifiziert",
-                "Fachliche Kompetenz bestätigt",
-                "Erfolgreiche Gesprächsführung dokumentiert"
-              ]}
-            />
-
-            <Step
-              number="📈"
-              title="Optimierungsfelder"
-              description="Gezielte Verbesserungsempfehlungen:"
-              details={[
-                "Konkrete Sprachkorrekturen",
-                "Terminologie-Feedback",
-                "Kommunikationstechniken verfeinern"
-              ]}
-            />
-
-            <Step
-              number="💡"
-              title="Nächste Schritte"
-              description="Ihr persönlicher Erfolgsplan:"
-              details={[
-                "Individuell abgestimmte Übungen",
-                "Zusätzliche Lernressourcen",
-                "Praxis-Tipps für die echte Prüfung"
-              ]}
-            />
           </Section>
 
-          <Section title="⏱️ Zeitplan im Überblick">
-            <View style={{ backgroundColor: 'rgba(181, 87, 64, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
-              <TimeItem label="📅 Gesamtdauer" time="20 Minuten" />
-              <TimeItem label="👨‍⚕️ Patientenanamnese" time="10 Minuten" />
-              <TimeItem label="👩‍⚕️ Prüfergespräch" time="10 Minuten" />
-              <TimeItem label="📊 Auswertung verfügbar" time="2-5 Minuten nach Abschluss" />
-            </View>
+          <Section title="📋 Was wird bewertet?">
+            <InfoBox>
+              <BoldText>🩺 Medizinisches Wissen</BoldText>
+              {'\n\n'}
+              • Differentialdiagnosen entwickeln{'\n'}
+              • Relevante Fragen stellen{'\n'}
+              • Korrekte Diagnose und Therapievorschläge
+            </InfoBox>
+
+            <InfoBox>
+              <BoldText>💬 Kommunikationsfähigkeit</BoldText>
+              {'\n\n'}
+              • Strukturiertes Gespräch führen{'\n'}
+              • Empathie zeigen{'\n'}
+              • Professionelle Ausdrucksweise
+            </InfoBox>
+
+            <InfoBox>
+              <BoldText>🗣️ Sprachliche Kompetenz</BoldText>
+              {'\n\n'}
+              • Korrekte Verwendung medizinischer Fachbegriffe{'\n'}
+              • Verständliche Erklärungen{'\n'}
+              • Grammatik und Aussprache
+            </InfoBox>
+          </Section>
+
+          <Section title="🎯 Feedback nutzen">
+            <Paragraph>
+              Das Feedback zeigt Ihnen konkret, wo Ihre Stärken liegen und welche Bereiche Sie noch verbessern können. Nutzen Sie diese Hinweise für Ihre nächste Simulation.
+            </Paragraph>
           </Section>
         </InlineContent>
       )
@@ -1598,56 +1593,51 @@ export default function FSPSimulationScreen() {
       title: 'Tipps',
       content: (
         <InlineContent>
-          <Section title="💡 Erfolgstipps">
+          <Section title="⚠️ Bekannte technische Einschränkungen">
             <HighlightBox type="warning">
-              🎯 <BoldText>Profi-Strategien für maximalen Lernerfolg</BoldText>
+              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText>
+              {'\n\n'}
+              Das Laden eines Falls kann 20-30 Sekunden dauern. Dies ist normal und Teil des Prozesses. Das System bereitet in dieser Zeit den Fall und den virtuellen Patienten für Sie vor. Bitte haben Sie etwas Geduld.
             </HighlightBox>
 
-            <View style={{ marginVertical: 8 }}>
-              <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#22c55e' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#16a34a', marginBottom: 8 }}>1. 🗣️ Natürlich kommunizieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Sprechen Sie authentisch</BoldText> – führen Sie ein echtes Gespräch, kein auswendig gelerntes Skript.
-                </Text>
-              </View>
+            <HighlightBox type="warning">
+              🔄 <BoldText>Mehrfache Nachfragen zur Benutzer-ID:</BoldText>
+              {'\n\n'}
+              Manchmal fragt das System mehrmals nach Ihrer Benutzer-ID. Dies ist ein bekanntes Problem, an dem wir arbeiten. Geben Sie einfach jedes Mal Ihre ID ein – Ihre Daten werden korrekt zugeordnet.
+            </HighlightBox>
 
-              <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#3b82f6' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563eb', marginBottom: 8 }}>2. ⚕️ Fachsprache demonstrieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Zeigen Sie Ihr medizinisches Deutsch</BoldText> – verwenden Sie präzise Fachterminologie souverän.
-                </Text>
-              </View>
-
-              <View style={{ backgroundColor: 'rgba(251, 146, 60, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#fb923c' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#ea580c', marginBottom: 8 }}>3. ⏰ Effizient strukturieren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Gründlich, aber zeitbewusst</BoldText> – alle wichtigen Punkte in der verfügbaren Zeit abdecken.
-                </Text>
-              </View>
-
-              <View style={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#a855f7' }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#9333ea', marginBottom: 8 }}>4. 🧘‍♀️ Ruhe bewahren</Text>
-                <Text style={{ fontSize: 15, color: '#333333', lineHeight: 24 }}>
-                  <BoldText>Entspannt bleiben</BoldText> – die Simulation unterstützt Ihr Lernen und Ihre Entwicklung.
-                </Text>
-              </View>
-            </View>
+            <HighlightBox type="warning">
+              🎤 <BoldText>Spracherkennung:</BoldText>
+              {'\n\n'}
+              Die Spracherkennung funktioniert am besten in ruhiger Umgebung. Sprechen Sie deutlich und in moderatem Tempo. Bei Problemen mit der Erkennung versuchen Sie:{'\n'}
+              • Näher am Mikrofon zu sprechen{'\n'}
+              • Hintergrundgeräusche zu minimieren{'\n'}
+              • Deutlicher zu artikulieren
+            </HighlightBox>
           </Section>
 
-          <Section title="🚀 Jetzt starten?">
+          <Section title="💬 Ihr Feedback ist wertvoll!">
             <Paragraph>
-              Jede Simulation bringt Sie Ihrem FSP-Erfolg näher. <BoldText>Vertrauen Sie dem Prozess</BoldText> – jede Übung stärkt Ihre Kompetenz!
+              Wenn Sie technische Probleme bemerken oder Verbesserungsvorschläge haben, kontaktieren Sie uns bitte. Ihre Rückmeldung hilft uns, die Simulation für alle Nutzer zu verbessern.
+            </Paragraph>
+
+            <InfoBox>
+              <BoldText>📧 Kontakt</BoldText>
+              {'\n\n'}
+              feedback@fsp-kp-simulation.de
+              {'\n\n'}
+              Wir lesen jedes Feedback und arbeiten kontinuierlich an Verbesserungen.
+            </InfoBox>
+          </Section>
+
+          <Section title="🎯 Bleiben Sie dran!">
+            <Paragraph>
+              Denken Sie daran: <BoldText>100x üben = 1x bestehen.</BoldText> Jede Simulation bringt Sie Ihrem Ziel näher. Selbst wenn eine Simulation nicht perfekt läuft – das Wichtigste ist, dass Sie daraus lernen und beim nächsten Mal besser werden.
             </Paragraph>
 
             <HighlightBox type="success">
-              🌟 <BoldText>Bereit zum Training?</BoldText> Halten Sie Ihre Benutzer-ID bereit und starten Sie Ihr professionelles FSP-Training!
+              💪 <BoldText>Sie schaffen das!</BoldText> Mit jeder Übung werden Sie sicherer und kompetenter. Bleiben Sie motiviert!
             </HighlightBox>
-
-            <View style={{ marginTop: 16, padding: 12, backgroundColor: 'rgba(184, 126, 112, 0.05)', borderRadius: 8 }}>
-              <Text style={{ fontSize: 13, fontStyle: 'italic', color: '#B87E70', lineHeight: 20 }}>
-                💼 Diese Simulation bietet authentische Prüfungserfahrung mit sofortigem, professionellem Feedback für optimale FSP-Vorbereitung.
-              </Text>
-            </View>
           </Section>
         </InlineContent>
       )
