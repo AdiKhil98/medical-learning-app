@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface InlineContentProps {
   children: React.ReactNode;
@@ -14,7 +13,7 @@ interface SectionProps {
 interface StepProps {
   number: string;
   title: string;
-  description: string | React.ReactNode;
+  description: string;
   details?: string[];
 }
 
@@ -24,7 +23,7 @@ export function InlineContent({ children }: InlineContentProps) {
 
 export function Section({ title, children }: SectionProps) {
   return (
-    <View style={styles.glassCard}>
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
     </View>
@@ -43,21 +42,12 @@ export function Step({ number, title, description, details }: StepProps) {
   return (
     <View style={styles.step}>
       <View style={styles.stepHeader}>
-        <LinearGradient
-          colors={['#8b5cf6', '#7c3aed']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.stepNumber}
-        >
+        <View style={styles.stepNumber}>
           <Text style={styles.stepNumberText}>{number}</Text>
-        </LinearGradient>
+        </View>
         <Text style={styles.stepTitle}>{title}</Text>
       </View>
-      {typeof description === 'string' ? (
-        <Text style={styles.stepDescription}>{description}</Text>
-      ) : (
-        <View style={styles.stepDescription}>{description}</View>
-      )}
+      <Text style={styles.stepDescription}>{description}</Text>
       {details && (
         <View style={styles.detailsList}>
           {details.map((detail, index) => (
@@ -81,35 +71,9 @@ export function InfoBox({ children }: { children: React.ReactNode }) {
 }
 
 export function HighlightBox({ children, type = 'default' }: { children: React.ReactNode; type?: 'success' | 'warning' | 'info' | 'default' }) {
-  const getBoxStyle = () => {
-    switch (type) {
-      case 'success':
-        return styles.highlightBoxSuccess;
-      case 'warning':
-        return styles.highlightBoxWarning;
-      case 'info':
-        return styles.highlightBoxInfo;
-      default:
-        return styles.highlightBoxDefault;
-    }
-  };
-
-  const getTextStyle = () => {
-    switch (type) {
-      case 'success':
-        return styles.highlightTextSuccess;
-      case 'warning':
-        return styles.highlightTextWarning;
-      case 'info':
-        return styles.highlightTextInfo;
-      default:
-        return styles.highlightTextDefault;
-    }
-  };
-
   return (
-    <View style={[styles.highlightBox, getBoxStyle()]}>
-      <Text style={[styles.highlightText, getTextStyle()]}>{children}</Text>
+    <View style={[styles.highlightBox, styles[`highlightBox${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof typeof styles]]}>
+      <Text style={[styles.highlightText, styles[`highlightText${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof typeof styles]]}>{children}</Text>
     </View>
   );
 }
@@ -148,130 +112,126 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 20,
-    padding: 30,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginBottom: 15,
+    fontSize: 20, // Increased from 18px as requested
+    fontWeight: '700', // Increased from 600 to 700 as requested
+    color: '#B15740',
+    marginBottom: 24, // Increased from 12px to 24px as requested
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    letterSpacing: -0.5,
+    letterSpacing: -0.5, // Added for better readability
   },
   paragraph: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 26,
-    marginBottom: 16,
+    fontSize: 15, // Slightly increased for better readability
+    color: '#333333',
+    lineHeight: 24, // Improved line height (1.6 ratio)
+    marginBottom: 16, // Increased white space between concepts
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   boldText: {
-    fontWeight: '700',
-    color: '#c4b5fd',
+    fontWeight: '600',
+    color: '#B15740',
   },
   step: {
-    marginBottom: 30,
+    marginBottom: 16,
+    backgroundColor: 'rgba(184, 126, 112, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#B87E70',
   },
   stepHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    gap: 15,
+    marginBottom: 8,
   },
   stepNumber: {
-    width: 40,
-    height: 40,
+    width: 24,
+    height: 24,
     borderRadius: 12,
+    backgroundColor: '#B15740',
     justifyContent: 'center',
     alignItems: 'center',
-    flexShrink: 0,
+    marginRight: 12,
   },
   stepNumberText: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   stepTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#B87E70',
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   stepDescription: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 26,
-    marginLeft: 55,
-    marginBottom: 15,
+    fontSize: 14,
+    color: '#333333',
+    lineHeight: 21,
+    marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   detailsList: {
-    marginLeft: 55,
     marginTop: 8,
   },
   detailItem: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   bullet: {
-    fontSize: 16,
-    color: '#c4b5fd',
-    marginRight: 12,
+    fontSize: 14,
+    color: '#B87E70',
+    marginRight: 8,
     fontWeight: '600',
   },
   detailText: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 24,
+    fontSize: 13,
+    color: '#555555',
+    lineHeight: 19.5,
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   infoBox: {
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    padding: 20,
+    backgroundColor: 'rgba(226, 130, 127, 0.1)',
+    padding: 16,
     borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8b5cf6',
+    borderWidth: 1,
+    borderColor: 'rgba(184, 126, 112, 0.2)',
     marginVertical: 12,
   },
   infoText: {
-    fontSize: 15,
-    color: '#c4b5fd',
-    fontWeight: '600',
-    lineHeight: 24,
+    fontSize: 14,
+    color: '#B15740',
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 21,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   timeItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(181, 87, 64, 0.05)',
+    borderRadius: 8,
+    marginBottom: 6,
   },
   timeLabel: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    color: '#B87E70',
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   timeValue: {
-    fontSize: 15,
-    color: '#c4b5fd',
-    fontWeight: '700',
+    fontSize: 14,
+    color: '#B15740',
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   tipsList: {
@@ -279,67 +239,67 @@ const styles = StyleSheet.create({
   },
   tipItem: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   tipNumber: {
-    fontSize: 15,
-    color: '#8b5cf6',
-    fontWeight: '700',
-    marginRight: 12,
-    minWidth: 24,
+    fontSize: 14,
+    color: '#B15740',
+    fontWeight: '600',
+    marginRight: 8,
+    minWidth: 20,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   tipText: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.8)',
-    lineHeight: 24,
+    fontSize: 15, // Increased for better readability
+    color: '#333333',
+    lineHeight: 24, // Improved line height (1.6 ratio)
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  // Enhanced visual components with dark theme
+  // Enhanced visual components
   highlightBox: {
-    padding: 20,
+    padding: 16,
     borderRadius: 12,
     marginVertical: 12,
-    borderLeftWidth: 4,
+    borderWidth: 1,
   },
   highlightBoxDefault: {
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    borderLeftColor: '#8b5cf6',
+    backgroundColor: 'rgba(184, 126, 112, 0.08)',
+    borderColor: 'rgba(184, 126, 112, 0.3)',
   },
   highlightBoxSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderLeftColor: '#10b981',
+    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
   },
   highlightBoxWarning: {
-    backgroundColor: 'rgba(251, 191, 36, 0.15)',
-    borderLeftColor: '#fbbf24',
+    backgroundColor: 'rgba(251, 146, 60, 0.08)',
+    borderColor: 'rgba(251, 146, 60, 0.3)',
   },
   highlightBoxInfo: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderLeftColor: '#3b82f6',
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   highlightText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   highlightTextDefault: {
-    color: '#c4b5fd',
+    color: '#B15740',
   },
   highlightTextSuccess: {
-    color: '#6ee7b7',
+    color: '#16a34a',
   },
   highlightTextWarning: {
-    color: '#fcd34d',
+    color: '#ea580c',
   },
   highlightTextInfo: {
-    color: '#93c5fd',
+    color: '#2563eb',
   },
   timeBadge: {
     backgroundColor: '#10b981',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
     alignSelf: 'flex-start',
@@ -348,7 +308,7 @@ const styles = StyleSheet.create({
   timeBadgeText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
