@@ -460,43 +460,120 @@ function parseCategories(text: string, totalPoints: number): ScoreBreakdown[] {
  * - ISSUE_1_TITLE: Title | ISSUE_1_POINTS_LOST: 10
  * - **HAUPTFEHLER:**
  *   **1. TITLE:** -X Punkte
+ * - **❌ FEHLER, DIE SIE GEMACHT HABEN:**
+ *   **📋 Title**
+ *   explanation paragraph
  */
 function parseCriticalErrors(text: string): CriticalError[] {
   const errors: CriticalError[] = [];
 
-  // Pattern 1: HAUPTFEHLER format
-  // **1. FEHLENDE ALLERGIEABFRAGE:** -3 Punkte
-  const hauptfehlerMatch = text.match(/\*{2,}HAUPTFEHLER[\s:(]*(.+?)(?=\s*\*{2,}(?:VERPASSTE|✓|✨|GESPRÄCHS)|---|\n\n|$)/is);
-  if (hauptfehlerMatch) {
-    const content = hauptfehlerMatch[1];
-    // Extract numbered errors: **1. TITLE:** -X Punkte
-    const errorPattern = /\*{2,}(\d+)\.\s*([^:*]+?)[\s:*]+\-?\s*(\d+)\s*Punkte/g;
+  // Pattern 1: NEW emoji-based detailed format from Make.com
+  // **❌ FEHLER, DIE SIE GEMACHT HABEN:** ... **📋 Title** explanation
+  const detailedMatch = text.match(/\*{2,}❌\s*(?:FEHLER, DIE SIE GEMACHT HABEN|FEHLER|ERRORS)[\s:*]+(.+?)(?=\s*\*{2,}❓|---|\n\n\*{2,}[📚💪✅]|$)/is);
+
+  if (detailedMatch) {
+    const errorsText = detailedMatch[1];
+
+    // Split by emoji icons that start each error item
+    // Common emojis in error items: ⚠️📋💊🚨🔴💬🩺⚡✏️
+    const emojiPattern = /\*{2,}([⚠️📋💊🚨🔴💬🩺⚡✏️])\s+([^*]+?)\*{2,}/g;
+    const items: Array<{icon: string, title: string, rest: string}> = [];
+
     let match;
-    while ((match = errorPattern.exec(content)) !== null) {
+
+    while ((match = emojiPattern.exec(errorsText)) !== null) {
+      // Get the content after this match until the next match
+      const nextMatch = emojiPattern.exec(errorsText);
+      emojiPattern.lastIndex = match.index + match[0].length;
+
+      const icon = match[1];
       const title = match[2].trim();
-      const pointsLost = parseInt(match[3]);
 
-      // Determine severity
-      let severity: CriticalError['severity'] = 'minor';
-      if (pointsLost >= 15 || title.toLowerCase().includes('kritisch')) {
-        severity = 'critical';
-      } else if (pointsLost >= 8 || title.toLowerCase().includes('wichtig')) {
-        severity = 'major';
+      // Get content between this match and next match (or end)
+      const contentStart = match.index + match[0].length;
+      const contentEnd = nextMatch ? nextMatch.index : errorsText.length;
+      const content = errorsText.substring(contentStart, contentEnd).trim();
+
+      items.push({ icon, title, rest: content });
+
+      if (nextMatch) {
+        emojiPattern.lastIndex = nextMatch.index;
       }
+    }
 
-      errors.push({
-        severity,
-        title,
-        pointDeduction: pointsLost,
-        examples: [],
-        explanation: title,
-        whyProblematic: '',
-        betterApproach: '',
-      });
+    // Process each error item
+    items.forEach(item => {
+      try {
+        // Extract explanation (paragraph content)
+        const paragraphMatch = item.rest.match(/\n+(.+?)(?=\n\n\*{2}|$)/s);
+        const explanation = paragraphMatch ? paragraphMatch[1].trim() : item.rest.trim();
+
+        // Determine severity based on icon
+        let severity: CriticalError['severity'] = 'minor';
+        if (item.icon === '🚨' || item.icon === '🔴') {
+          severity = 'critical';
+        } else if (item.icon === '⚠️' || item.icon === '💊') {
+          severity = 'major';
+        }
+
+        // Try to extract point deduction from explanation text
+        const pointsMatch = explanation.match(/\-?\s*(\d+)\s*Punkte?/i);
+        const pointDeduction = pointsMatch ? parseInt(pointsMatch[1]) : 0;
+
+        if (explanation && explanation.length > 20) {
+          errors.push({
+            severity,
+            title: item.title,
+            pointDeduction,
+            examples: [],
+            explanation: explanation,
+            whyProblematic: explanation,
+            betterApproach: '',
+          });
+        }
+      } catch (e) {
+        console.warn('Error parsing error item:', e, item);
+      }
+    });
+
+    console.log(`Parsed ${errors.length} detailed error items`);
+  }
+
+  // Pattern 2: HAUPTFEHLER format
+  // **1. FEHLENDE ALLERGIEABFRAGE:** -3 Punkte
+  if (errors.length === 0) {
+    const hauptfehlerMatch = text.match(/\*{2,}HAUPTFEHLER[\s:(]*(.+?)(?=\s*\*{2,}(?:VERPASSTE|✓|✨|GESPRÄCHS)|---|\n\n|$)/is);
+    if (hauptfehlerMatch) {
+      const content = hauptfehlerMatch[1];
+      // Extract numbered errors: **1. TITLE:** -X Punkte
+      const errorPattern = /\*{2,}(\d+)\.\s*([^:*]+?)[\s:*]+\-?\s*(\d+)\s*Punkte/g;
+      let match;
+      while ((match = errorPattern.exec(content)) !== null) {
+        const title = match[2].trim();
+        const pointsLost = parseInt(match[3]);
+
+        // Determine severity
+        let severity: CriticalError['severity'] = 'minor';
+        if (pointsLost >= 15 || title.toLowerCase().includes('kritisch')) {
+          severity = 'critical';
+        } else if (pointsLost >= 8 || title.toLowerCase().includes('wichtig')) {
+          severity = 'major';
+        }
+
+        errors.push({
+          severity,
+          title,
+          pointDeduction: pointsLost,
+          examples: [],
+          explanation: title,
+          whyProblematic: '',
+          betterApproach: '',
+        });
+      }
     }
   }
 
-  // Pattern 2: Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
+  // Pattern 3: Try structured format: ISSUE_1_TITLE, ISSUE_1_POINTS_LOST, etc.
   if (errors.length === 0) {
     for (let i = 1; i <= 20; i++) {
       const titleMatch = text.match(new RegExp(`ISSUE_${i}_TITLE:\\s*(.+?)(?=\\n|$)`, 'i'));
@@ -660,35 +737,111 @@ function parseMissingQuestions(text: string): MissedQuestion[] {
  *   - Bullet point items
  * - ✅ Das haben Sie gut gemacht:
  *   * Bullet items
+ * - **✅ DAS HABEN SIE HERVORRAGEND GEMACHT:**
+ *   **🎯 Title**
+ *   **Im Gespräch:** quote
+ *   explanation paragraph
  */
 function parseStrengths(text: string): string[] {
   const strengths: string[] = [];
 
-  // Pattern 1: Try structured format first: STRENGTH_1, STRENGTH_2, etc.
-  for (let i = 1; i <= 20; i++) {
-    const strengthMatch = text.match(new RegExp(`STRENGTH_${i}:\\s*(.+?)(?=\\n(?:STRENGTH_|SECTION|$))`, 'is'));
-    if (!strengthMatch) continue;
+  // Pattern 1: Try emoji-based detailed format first (NEW FORMAT from Make.com)
+  // **✅ DAS HABEN SIE HERVORRAGEND GEMACHT:** ... **🎯 Title** explanation
+  const detailedMatch = text.match(/\*{2,}✅\s*(?:DAS HABEN SIE HERVORRAGEND GEMACHT|RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN)[\s:*]+(.+?)(?=\s*\*{2,}❌|---|\n\n\*{2,}❓|$)/is);
 
-    const content = strengthMatch[1].trim();
-    // Format: "Title | Beispiel: ... | Gut weil: ..."
-    const parts = content.split('|').map(p => p.trim());
+  if (detailedMatch) {
+    const strengthsText = detailedMatch[1];
 
-    if (parts.length >= 1) {
-      const title = parts[0];
-      const example = parts[1] ? parts[1].replace(/^Beispiel:\s*/i, '') : '';
-      const reason = parts[2] ? parts[2].replace(/^Gut weil:\s*/i, '') : '';
+    // Split by emoji icons that start each strength item
+    // Common emojis in strength items: 🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️
+    const emojiPattern = /\*{2,}([🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️])\s+([^*]+?)\*{2,}/g;
+    const items: Array<{icon: string, title: string, rest: string}> = [];
 
-      if (example && reason) {
-        strengths.push(`${title} (${example} - ${reason})`);
-      } else if (example) {
-        strengths.push(`${title} (${example})`);
-      } else {
-        strengths.push(title);
+    let match;
+    let lastIndex = 0;
+
+    while ((match = emojiPattern.exec(strengthsText)) !== null) {
+      // Get the content after this match until the next match
+      const nextMatch = emojiPattern.exec(strengthsText);
+      emojiPattern.lastIndex = match.index + match[0].length; // Reset for finding content
+
+      const icon = match[1];
+      const title = match[2].trim();
+
+      // Get content between this match and next match (or end)
+      const contentStart = match.index + match[0].length;
+      const contentEnd = nextMatch ? nextMatch.index : strengthsText.length;
+      const content = strengthsText.substring(contentStart, contentEnd).trim();
+
+      items.push({ icon, title, rest: content });
+
+      if (nextMatch) {
+        // Re-execute with the nextMatch
+        emojiPattern.lastIndex = nextMatch.index;
+      }
+    }
+
+    // Process each strength item
+    items.forEach(item => {
+      try {
+        // Extract quote if present: **Im Gespräch:** "quote text"
+        const quoteMatch = item.rest.match(/\*{2,}Im Gespräch:\*{2,}\s*[""]?([^""]+)[""]?(?=\n\n|\n\*{2}|$)/i);
+        const quote = quoteMatch ? quoteMatch[1].trim() : '';
+
+        // Extract explanation (paragraph after quote, or just the content if no quote)
+        let explanation = '';
+        if (quote) {
+          // Get text after the quote line
+          const afterQuote = item.rest.substring(item.rest.indexOf(quote) + quote.length).trim();
+          const paragraphMatch = afterQuote.match(/\n\n(.+?)(?=\n\n\*{2}|$)/s);
+          explanation = paragraphMatch ? paragraphMatch[1].trim() : afterQuote;
+        } else {
+          // No quote, explanation is just the content
+          const paragraphMatch = item.rest.match(/\n+(.+?)(?=\n\n\*{2}|$)/s);
+          explanation = paragraphMatch ? paragraphMatch[1].trim() : item.rest;
+        }
+
+        // Format as **Title:** Explanation (markdown format for rendering)
+        if (explanation && explanation.length > 20) {
+          strengths.push(`**${item.title}:** ${explanation}`);
+        } else if (item.title) {
+          strengths.push(`**${item.title}**`);
+        }
+      } catch (e) {
+        console.warn('Error parsing strength item:', e, item);
+      }
+    });
+
+    console.log(`Parsed ${strengths.length} detailed strength items`);
+  }
+
+  // Pattern 2: Try structured format: STRENGTH_1, STRENGTH_2, etc.
+  if (strengths.length === 0) {
+    for (let i = 1; i <= 20; i++) {
+      const strengthMatch = text.match(new RegExp(`STRENGTH_${i}:\\s*(.+?)(?=\\n(?:STRENGTH_|SECTION|$))`, 'is'));
+      if (!strengthMatch) continue;
+
+      const content = strengthMatch[1].trim();
+      // Format: "Title | Beispiel: ... | Gut weil: ..."
+      const parts = content.split('|').map(p => p.trim());
+
+      if (parts.length >= 1) {
+        const title = parts[0];
+        const example = parts[1] ? parts[1].replace(/^Beispiel:\s*/i, '') : '';
+        const reason = parts[2] ? parts[2].replace(/^Gut weil:\s*/i, '') : '';
+
+        if (example && reason) {
+          strengths.push(`${title} (${example} - ${reason})`);
+        } else if (example) {
+          strengths.push(`${title} (${example})`);
+        } else {
+          strengths.push(title);
+        }
       }
     }
   }
 
-  // Pattern 2: Look for sections with checkmarks/positive indicators
+  // Pattern 3: Look for sections with checkmarks/positive indicators (BULLET LIST)
   if (strengths.length === 0) {
     const sections = [
       /\*{2,}✅\s*(?:RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN|STRENGTHS)[\s:*]+(.+?)(?=\s*\*{2,}[❓📚🔴🟡🟢✗❌💪📖]|---|\n\n|$)/is,
@@ -721,7 +874,7 @@ function parseStrengths(text: string): string[] {
     }
   }
 
-  // Pattern 3: Extract from "Das haben Sie gut gemacht" or similar sections
+  // Pattern 4: Extract from "Das haben Sie gut gemacht" or similar sections
   if (strengths.length === 0) {
     const positiveSectionMatch = text.match(/(?:gut gemacht|positiv|stärken)[\s:]+(.+?)(?=\n\n|\*{2}|$)/is);
     if (positiveSectionMatch) {
