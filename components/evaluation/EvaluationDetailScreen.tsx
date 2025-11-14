@@ -324,37 +324,105 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
             </View>
           )}
 
-          {/* ✅ STRENGTHS */}
+          {/* ✅ STRENGTHS - Detailed Explanations */}
           {evaluation.positives.length > 0 && (
             <View style={styles.feedbackSection}>
-              <Text style={styles.sectionTitle}>✅ Das haben Sie hervorragend gemacht</Text>
-              <View style={styles.feedbackGrid}>
-                {evaluation.positives.map((positive, index) => {
-                  const match = positive.match(/^\*\*([^*:]+):\*\*\s*(.+)$/);
-                  return (
-                    <LinearGradient
-                      key={index}
-                      colors={['#f8f9fa', '#e9ecef']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.feedbackItem}
-                    >
-                      {match ? (
-                        <>
-                          <Text style={styles.feedbackStrong}>{match[1]}</Text>
-                          <Text style={styles.feedbackText}>{match[2]}</Text>
-                        </>
-                      ) : (
-                        <Text style={styles.feedbackText}>{positive}</Text>
-                      )}
-                    </LinearGradient>
-                  );
-                })}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                <Text style={styles.sectionTitle}>✅ Das haben Sie hervorragend gemacht</Text>
+              </View>
+              {evaluation.positives.map((positive, index) => {
+                // Parse markdown format: **Title:** Description
+                const match = positive.match(/^\*\*([^*:]+):\*\*\s*(.+)$/);
+                const title = match ? match[1] : 'Stärke';
+                const explanation = match ? match[2] : positive;
+
+                // Assign icon based on content
+                let icon = '🎯';
+                if (title.toLowerCase().includes('kommunikation') || title.toLowerCase().includes('gespräch')) {
+                  icon = '💬';
+                } else if (title.toLowerCase().includes('struktur') || title.toLowerCase().includes('systematisch')) {
+                  icon = '🔍';
+                } else if (title.toLowerCase().includes('empathie') || title.toLowerCase().includes('einfühlsam')) {
+                  icon = '❤️';
+                } else if (title.toLowerCase().includes('professionell') || title.toLowerCase().includes('professional')) {
+                  icon = '👔';
+                } else if (title.toLowerCase().includes('zeit') || title.toLowerCase().includes('effizient')) {
+                  icon = '⏱️';
+                } else if (title.toLowerCase().includes('wissen') || title.toLowerCase().includes('kenntnisse')) {
+                  icon = '📚';
+                } else if (title.toLowerCase().includes('vollständig') || title.toLowerCase().includes('komplett')) {
+                  icon = '🎯';
+                }
+
+                return (
+                  <View key={index} style={styles.detailedItem}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemIcon}>{icon}</Text>
+                      <Text style={styles.itemTitle}>{title}</Text>
+                    </View>
+                    <Text style={[styles.itemExplanation, SCREEN_WIDTH <= 768 && styles.itemExplanationNoMargin]}>
+                      {explanation}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* ❌ ERRORS - Detailed Explanations */}
+          {evaluation.criticalErrors && evaluation.criticalErrors.length > 0 && (
+            <View style={styles.feedbackSection}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                <Text style={styles.sectionTitle}>❌ Fehler, die Sie gemacht haben</Text>
+              </View>
+              {evaluation.criticalErrors.map((error, index) => {
+                // Assign icon based on severity
+                let icon = '⚠️';
+                if (error.severity === 'critical') {
+                  icon = '🚨';
+                } else if (error.severity === 'major') {
+                  icon = '⚠️';
+                } else if (error.severity === 'minor') {
+                  icon = '📋';
+                }
+
+                // Build detailed explanation
+                let fullExplanation = error.explanation || '';
+                if (error.whyProblematic) {
+                  fullExplanation += fullExplanation ? ' ' + error.whyProblematic : error.whyProblematic;
+                }
+                if (error.betterApproach) {
+                  fullExplanation += fullExplanation ? ' ' + error.betterApproach : error.betterApproach;
+                }
+
+                return (
+                  <View key={index} style={[styles.detailedItem, styles.detailedItemError]}>
+                    <View style={styles.itemHeader}>
+                      <Text style={styles.itemIcon}>{icon}</Text>
+                      <Text style={styles.itemTitle}>{error.title}</Text>
+                    </View>
+                    <Text style={[styles.itemExplanation, SCREEN_WIDTH <= 768 && styles.itemExplanationNoMargin]}>
+                      {fullExplanation}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {evaluation.criticalErrors && evaluation.criticalErrors.length === 0 && (
+            <View style={styles.feedbackSection}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                <Text style={styles.sectionTitle}>❌ Fehler, die Sie gemacht haben</Text>
+              </View>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>✨</Text>
+                <Text style={styles.emptyText}>Keine kritischen Fehler gefunden!</Text>
               </View>
             </View>
           )}
 
-          {/* ❓ MISSING QUESTIONS */}
+          {/* ❓ VERBESSERUNGSPOTENZIAL - Keep Compact */}
           {evaluation.missedQuestions && evaluation.missedQuestions.length > 0 && (
             <View style={styles.feedbackSection}>
               <Text style={styles.sectionTitle}>❓ Verbesserungspotenzial</Text>
@@ -752,6 +820,81 @@ const styles = StyleSheet.create({
     color: '#555',
     fontSize: 14,
     lineHeight: 22,
+  },
+
+  // Detailed Item Styles for Strengths and Errors
+  detailedItem: {
+    backgroundColor: '#f0fdf4',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+    borderRadius: 12,
+    padding: 25,
+    marginBottom: 20,
+    shadowColor: 'rgba(16, 185, 129, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  detailedItemError: {
+    backgroundColor: '#fef2f2',
+    borderLeftColor: '#ef4444',
+    shadowColor: 'rgba(239, 68, 68, 0.1)',
+  },
+
+  itemHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  itemIcon: {
+    fontSize: 24,
+    marginTop: 2,
+  },
+
+  itemTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    lineHeight: 25,
+    flex: 1,
+  },
+
+  itemExplanation: {
+    color: '#4b5563',
+    lineHeight: 26,
+    fontSize: 15,
+    marginLeft: 36,
+  },
+
+  itemExplanationNoMargin: {
+    marginLeft: 0,
+    marginTop: 10,
+  },
+
+  explanationStrong: {
+    color: '#1f2937',
+    fontWeight: '600',
+  },
+
+  // Empty state for errors
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
   },
 
   // Warning Items
