@@ -469,10 +469,17 @@ function parseCriticalErrors(text: string): CriticalError[] {
 
   // Pattern 1: NEW emoji-based detailed format from Make.com
   // **❌ FEHLER, DIE SIE GEMACHT HABEN:** ... **📋 Title** explanation
+  console.log('🔍 parseCriticalErrors: Checking for emoji-based format...');
+  console.log('   Text contains "❌ FEHLER, DIE SIE GEMACHT HABEN":', text.includes('❌ FEHLER, DIE SIE GEMACHT HABEN'));
+  console.log('   Text contains "❌":', text.includes('❌'));
+
   const detailedMatch = text.match(/\*{2,}❌\s*(?:FEHLER, DIE SIE GEMACHT HABEN|FEHLER|ERRORS)[\s:*]+(.+?)(?=\s*\*{2,}❓|---|\n\n\*{2,}[📚💪✅]|$)/is);
 
   if (detailedMatch) {
+    console.log('✅ Pattern 1 (emoji-based errors) MATCHED!');
     const errorsText = detailedMatch[1];
+    console.log('   Errors section length:', errorsText.length);
+    console.log('   Errors section preview:', errorsText.substring(0, 200));
 
     // Split by emoji icons that start each error item
     // Common emojis in error items: ⚠️📋💊🚨🔴💬🩺⚡✏️
@@ -495,11 +502,14 @@ function parseCriticalErrors(text: string): CriticalError[] {
       const content = errorsText.substring(contentStart, contentEnd).trim();
 
       items.push({ icon, title, rest: content });
+      console.log(`   Found error: ${icon} ${title}`);
 
       if (nextMatch) {
         emojiPattern.lastIndex = nextMatch.index;
       }
     }
+
+    console.log(`   Total error items found with emoji pattern: ${items.length}`);
 
     // Process each error item
     items.forEach(item => {
@@ -536,7 +546,9 @@ function parseCriticalErrors(text: string): CriticalError[] {
       }
     });
 
-    console.log(`Parsed ${errors.length} detailed error items`);
+    console.log(`✅ Parsed ${errors.length} detailed error items from Pattern 1`);
+  } else {
+    console.log('❌ Pattern 1 (emoji-based errors) did NOT match');
   }
 
   // Pattern 2: HAUPTFEHLER format
@@ -747,10 +759,17 @@ function parseStrengths(text: string): string[] {
 
   // Pattern 1: Try emoji-based detailed format first (NEW FORMAT from Make.com)
   // **✅ DAS HABEN SIE HERVORRAGEND GEMACHT:** ... **🎯 Title** explanation
+  console.log('🔍 parseStrengths: Checking for emoji-based format...');
+  console.log('   Text contains "✅ DAS HABEN SIE HERVORRAGEND GEMACHT":', text.includes('✅ DAS HABEN SIE HERVORRAGEND GEMACHT'));
+  console.log('   Text contains "✅":', text.includes('✅'));
+
   const detailedMatch = text.match(/\*{2,}✅\s*(?:DAS HABEN SIE HERVORRAGEND GEMACHT|RICHTIG GEMACHT|DAS HABEN SIE GUT GEMACHT|STÄRKEN)[\s:*]+(.+?)(?=\s*\*{2,}❌|---|\n\n\*{2,}❓|$)/is);
 
   if (detailedMatch) {
+    console.log('✅ Pattern 1 (emoji-based) MATCHED!');
     const strengthsText = detailedMatch[1];
+    console.log('   Strengths section length:', strengthsText.length);
+    console.log('   Strengths section preview:', strengthsText.substring(0, 200));
 
     // Split by emoji icons that start each strength item
     // Common emojis in strength items: 🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️
@@ -774,12 +793,15 @@ function parseStrengths(text: string): string[] {
       const content = strengthsText.substring(contentStart, contentEnd).trim();
 
       items.push({ icon, title, rest: content });
+      console.log(`   Found item: ${icon} ${title}`);
 
       if (nextMatch) {
         // Re-execute with the nextMatch
         emojiPattern.lastIndex = nextMatch.index;
       }
     }
+
+    console.log(`   Total items found with emoji pattern: ${items.length}`);
 
     // Process each strength item
     items.forEach(item => {
@@ -812,7 +834,9 @@ function parseStrengths(text: string): string[] {
       }
     });
 
-    console.log(`Parsed ${strengths.length} detailed strength items`);
+    console.log(`✅ Parsed ${strengths.length} detailed strength items from Pattern 1`);
+  } else {
+    console.log('❌ Pattern 1 (emoji-based) did NOT match');
   }
 
   // Pattern 2: Try structured format: STRENGTH_1, STRENGTH_2, etc.
