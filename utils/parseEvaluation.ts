@@ -522,8 +522,26 @@ function parseCriticalErrors(text: string): CriticalError[] {
     items.forEach(item => {
       try {
         // Extract explanation (paragraph content)
-        const paragraphMatch = item.rest.match(/\n+(.+?)(?=\n\n\*{2}|$)/s);
-        const explanation = paragraphMatch ? paragraphMatch[1].trim() : item.rest.trim();
+        let rawExplanation = item.rest.trim();
+
+        // Strip HTML tags
+        rawExplanation = rawExplanation.replace(/<\/?strong>/gi, '**');
+        rawExplanation = rawExplanation.replace(/<[^>]+>/g, '');
+
+        // Get first paragraph or sentence as explanation
+        const paragraphMatch = rawExplanation.match(/^(.+?)(?:\n\n|$)/s);
+        let explanation = paragraphMatch ? paragraphMatch[1].trim() : rawExplanation;
+
+        // Limit explanation length to ~300 characters (first 1-2 sentences)
+        if (explanation.length > 300) {
+          // Try to cut at sentence boundary
+          const sentenceEnd = explanation.substring(0, 300).lastIndexOf('.');
+          if (sentenceEnd > 100) {
+            explanation = explanation.substring(0, sentenceEnd + 1);
+          } else {
+            explanation = explanation.substring(0, 300) + '...';
+          }
+        }
 
         // Determine severity based on icon
         let severity: CriticalError['severity'] = 'minor';
@@ -544,7 +562,7 @@ function parseCriticalErrors(text: string): CriticalError[] {
             pointDeduction,
             examples: [],
             explanation: explanation,
-            whyProblematic: explanation,
+            whyProblematic: '', // Don't duplicate - display component concatenates these
             betterApproach: '',
           });
         }
