@@ -482,32 +482,39 @@ function parseCriticalErrors(text: string): CriticalError[] {
     console.log('   Errors section preview:', errorsText.substring(0, 200));
 
     // Split by emoji icons that start each error item
+    // Format: emoji Title** (no ** before emoji)
     // Common emojis in error items: ⚠️📋💊🚨🔴💬🩺⚡✏️
-    const emojiPattern = /\*{2,}([⚠️📋💊🚨🔴💬🩺⚡✏️])\s+([^*]+?)\*{2,}/g;
+    const emojiPattern = /([⚠️📋💊🚨🔴💬🩺⚡✏️])\s+([^*\n]+?)\*{2,}/g;
     const items: Array<{icon: string, title: string, rest: string}> = [];
 
     let match;
+    const matches: Array<{icon: string, title: string, index: number, endIndex: number}> = [];
 
+    // First, find all matches
     while ((match = emojiPattern.exec(errorsText)) !== null) {
-      // Get the content after this match until the next match
-      const nextMatch = emojiPattern.exec(errorsText);
-      emojiPattern.lastIndex = match.index + match[0].length;
+      matches.push({
+        icon: match[1],
+        title: match[2].trim(),
+        index: match.index,
+        endIndex: match.index + match[0].length
+      });
+    }
 
-      const icon = match[1];
-      const title = match[2].trim();
+    console.log(`   Found ${matches.length} error items with emoji pattern`);
 
-      // Get content between this match and next match (or end)
-      const contentStart = match.index + match[0].length;
-      const contentEnd = nextMatch ? nextMatch.index : errorsText.length;
+    // Now extract content for each match
+    matches.forEach((currentMatch, index) => {
+      const icon = currentMatch.icon;
+      const title = currentMatch.title;
+
+      // Get content from end of title until next item (or end of section)
+      const contentStart = currentMatch.endIndex;
+      const contentEnd = index < matches.length - 1 ? matches[index + 1].index : errorsText.length;
       const content = errorsText.substring(contentStart, contentEnd).trim();
 
       items.push({ icon, title, rest: content });
       console.log(`   Found error: ${icon} ${title}`);
-
-      if (nextMatch) {
-        emojiPattern.lastIndex = nextMatch.index;
-      }
-    }
+    });
 
     console.log(`   Total error items found with emoji pattern: ${items.length}`);
 
@@ -772,34 +779,39 @@ function parseStrengths(text: string): string[] {
     console.log('   Strengths section preview:', strengthsText.substring(0, 200));
 
     // Split by emoji icons that start each strength item
+    // Format: emoji Title** (no ** before emoji)
     // Common emojis in strength items: 🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️
-    const emojiPattern = /\*{2,}([🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️])\s+([^*]+?)\*{2,}/g;
+    const emojiPattern = /([🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️])\s+([^*\n]+?)\*{2,}/g;
     const items: Array<{icon: string, title: string, rest: string}> = [];
 
     let match;
-    let lastIndex = 0;
+    const matches: Array<{icon: string, title: string, index: number, endIndex: number}> = [];
 
+    // First, find all matches
     while ((match = emojiPattern.exec(strengthsText)) !== null) {
-      // Get the content after this match until the next match
-      const nextMatch = emojiPattern.exec(strengthsText);
-      emojiPattern.lastIndex = match.index + match[0].length; // Reset for finding content
+      matches.push({
+        icon: match[1],
+        title: match[2].trim(),
+        index: match.index,
+        endIndex: match.index + match[0].length
+      });
+    }
 
-      const icon = match[1];
-      const title = match[2].trim();
+    console.log(`   Found ${matches.length} items with emoji pattern`);
 
-      // Get content between this match and next match (or end)
-      const contentStart = match.index + match[0].length;
-      const contentEnd = nextMatch ? nextMatch.index : strengthsText.length;
+    // Now extract content for each match
+    matches.forEach((currentMatch, index) => {
+      const icon = currentMatch.icon;
+      const title = currentMatch.title;
+
+      // Get content from end of title until next item (or end of section)
+      const contentStart = currentMatch.endIndex;
+      const contentEnd = index < matches.length - 1 ? matches[index + 1].index : strengthsText.length;
       const content = strengthsText.substring(contentStart, contentEnd).trim();
 
       items.push({ icon, title, rest: content });
       console.log(`   Found item: ${icon} ${title}`);
-
-      if (nextMatch) {
-        // Re-execute with the nextMatch
-        emojiPattern.lastIndex = nextMatch.index;
-      }
-    }
+    });
 
     console.log(`   Total items found with emoji pattern: ${items.length}`);
 
