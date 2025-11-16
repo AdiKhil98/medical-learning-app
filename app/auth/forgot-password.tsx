@@ -150,117 +150,206 @@ export default function ForgotPassword() {
   }
 
   return (
-    <LinearGradient
-      colors={['#ffffff', '#f0f9f0']}
-      style={styles.gradientBackground}
-    >
-      <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
+      />
+
+      <SafeAreaView style={styles.safeArea}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.resetCard}>
-            <View style={styles.header}>
-              <TouchableOpacity
-                style={styles.backIcon}
-                onPress={handleBackToLogin}
-              >
-                <ArrowLeft size={24} color="#6B7280" />
-              </TouchableOpacity>
-
-              <View style={styles.logoSection}>
-                <Logo size="large" textColor="#1F2937" variant="premium" />
-                <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
-              </View>
-
-              <Text style={styles.title}>Passwort vergessen?</Text>
-              <Text style={styles.subtitle}>
-                Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.
-              </Text>
-            </View>
-
-            <View style={styles.form}>
-              <Input
-                label="E-Mail"
-                placeholder="E-Mail eingeben"
-                value={email}
-                onChangeText={handleEmailChange}
-                onBlur={handleEmailBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus={true}
-                leftIcon={<Mail size={20} color="#6B7280" />}
-                editable={!loading}
-                error={emailError}
-              />
-
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
               <LinearGradient
-                colors={['#B8755C', '#E2827F']}
+                colors={['#D4A574', '#C19A6B']}
+                style={styles.logoGradient}
+              >
+                <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
+              </LinearGradient>
+            </View>
+            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandTagline}>Professional Medical Training</Text>
+          </View>
+
+          {/* Welcome Message */}
+          <View style={styles.welcomeSection}>
+            <Text style={styles.title}>Passwort vergessen?</Text>
+            <Text style={styles.subtitle}>
+              Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.
+            </Text>
+          </View>
+
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            <Input
+              label="E-Mail"
+              placeholder="ihre.email@beispiel.de"
+              value={email}
+              onChangeText={handleEmailChange}
+              onBlur={handleEmailBlur}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus={true}
+              leftIcon={<Mail size={20} color="#94A3B8" />}
+              editable={!loading}
+              error={emailError}
+            />
+
+            {/* Reset Button */}
+            <TouchableOpacity
+              onPress={handleResetPassword}
+              disabled={loading}
+              activeOpacity={0.8}
+              style={styles.buttonSpacing}
+            >
+              <LinearGradient
+                colors={['#FB923C', '#F97316', '#EF4444']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.resetButtonGradient}
               >
-                <TouchableOpacity
-                  style={styles.resetButton}
-                  onPress={handleResetPassword}
-                  disabled={loading}
-                >
-                  <Text style={styles.resetButtonText}>
-                    {loading ? 'Wird gesendet...' : 'Link senden'}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.resetButtonText}>
+                  {loading ? 'Wird gesendet...' : 'Link senden'}
+                </Text>
               </LinearGradient>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleBackToLogin}
-              >
-                <Text style={styles.cancelButtonText}>Abbrechen</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Cancel Button */}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleBackToLogin}
+            >
+              <Text style={styles.cancelButtonText}>Abbrechen</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-  },
   container: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  content: {
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 24,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
-    minHeight: '100%',
-  },
-  resetCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    marginHorizontal: 'auto',
-    maxWidth: 440,
+    maxWidth: 480,
     width: '100%',
     alignSelf: 'center',
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoContainer: {
+    marginBottom: 16,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 5,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  brandTagline: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  welcomeSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    lineHeight: 24,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  formSection: {
+    gap: 20,
+  },
+  buttonSpacing: {
+    marginTop: 8,
+  },
+  resetButtonGradient: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  resetButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  cancelButtonText: {
+    color: '#64748B',
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  // Success screen styles
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
   },
   successCard: {
     backgroundColor: '#ffffff',
@@ -271,10 +360,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
@@ -283,44 +369,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  backIcon: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: 1,
-  },
-  logoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  iconContainer: {
     marginBottom: 24,
-    justifyContent: 'center',
   },
   caduceusIcon: {
     marginLeft: 16,
   },
-  iconContainer: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    lineHeight: 24,
-    textAlign: 'center',
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
   email: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#B87E70',
+    color: '#D4A574',
     marginBottom: 16,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -332,43 +390,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  form: {
-    gap: 20,
-  },
-  resetButtonGradient: {
-    borderRadius: 12,
-    marginTop: 8,
-    shadowColor: 'rgba(184, 117, 92, 0.4)',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  resetButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  cancelButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  cancelButtonText: {
-    color: '#6B7280',
-    fontSize: 16,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
   actions: {
     marginBottom: 24,
   },
@@ -376,15 +397,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: '#B87E70',
+    borderColor: '#D4A574',
     borderRadius: 12,
     paddingVertical: 16,
     gap: 8,
   },
   backButtonText: {
-    color: '#B87E70',
+    color: '#D4A574',
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
