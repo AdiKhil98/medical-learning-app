@@ -114,235 +114,289 @@ export default function ResetPassword() {
 
   if (resetSuccess) {
     return (
-      <LinearGradient
-        colors={['#ffffff', '#f0f9f0']}
-        style={styles.gradientBackground}
-      >
-        <SafeAreaView style={styles.container}>
-          <View style={styles.content}>
-            <View style={styles.successCard}>
-              <View style={styles.header}>
-                <View style={styles.logoSection}>
-                  <Logo size="large" textColor="#1F2937" />
-                  <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
-                </View>
-                
-                <View style={styles.iconContainer}>
-                  <Lock size={64} color="#10b981" />
-                </View>
+      <View style={styles.container}>
+        {/* Background Gradient */}
+        <LinearGradient
+          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          style={styles.backgroundGradient}
+        />
 
-                <Text style={styles.title}>Passwort erfolgreich geändert!</Text>
-                <Text style={styles.subtitle}>
-                  Ihr Passwort wurde erfolgreich aktualisiert.
-                </Text>
-                <Text style={styles.instructions}>
-                  Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
-                </Text>
-              </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleBackToLogin}
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Logo Section */}
+            <View style={styles.logoSection}>
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={['#D4A574', '#C19A6B']}
+                  style={styles.logoGradient}
                 >
-                  <Text style={styles.loginButtonText}>Zur Anmeldung</Text>
-                </TouchableOpacity>
+                  <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
+                </LinearGradient>
+              </View>
+              <Text style={styles.brandName}>KP MED</Text>
+              <Text style={styles.brandTagline}>Professional Medical Training</Text>
+            </View>
+
+            {/* Success Icon */}
+            <View style={styles.successIconContainer}>
+              <View style={styles.successIconCircle}>
+                <Lock size={48} color="#10b981" strokeWidth={2} />
               </View>
             </View>
-          </View>
+
+            {/* Success Message */}
+            <View style={styles.successMessageSection}>
+              <Text style={styles.successTitle}>Passwort erfolgreich geändert!</Text>
+              <Text style={styles.successSubtitle}>
+                Ihr Passwort wurde erfolgreich aktualisiert.
+              </Text>
+              <Text style={styles.instructions}>
+                Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
+              </Text>
+            </View>
+
+            {/* Login Button */}
+            <TouchableOpacity
+              onPress={handleBackToLogin}
+              activeOpacity={0.8}
+              style={styles.buttonSpacing}
+            >
+              <LinearGradient
+                colors={['#10b981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.loginButtonGradient}
+              >
+                <Text style={styles.loginButtonText}>Zur Anmeldung</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </ScrollView>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={['#ffffff', '#f0f9f0']}
-      style={styles.gradientBackground}
-    >
-      <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
+      />
+
+      <SafeAreaView style={styles.safeArea}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.resetCard}>
-            <View style={styles.header}>
-              <View style={styles.logoSection}>
-                <Logo size="large" textColor="#1F2937" />
-                <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
-              </View>
-
-              <Text style={styles.title}>Neues Passwort erstellen</Text>
-              <Text style={styles.subtitle}>
-                Erstellen Sie ein sicheres neues Passwort für Ihr Konto.
-              </Text>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <LinearGradient
+                colors={['#D4A574', '#C19A6B']}
+                style={styles.logoGradient}
+              >
+                <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
+              </LinearGradient>
             </View>
+            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandTagline}>Professional Medical Training</Text>
+          </View>
 
-            <View style={styles.form}>
-              <View>
-                <Input
-                  label="Neues Passwort"
-                  placeholder="Neues Passwort eingeben"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  autoFocus={true}
-                  leftIcon={<Lock size={20} color="#6B7280" />}
-                  rightIcon={
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ?
-                        <EyeOff size={20} color="#6B7280" /> :
-                        <Eye size={20} color="#6B7280" />
-                      }
-                    </TouchableOpacity>
-                  }
-                  editable={!loading}
-                />
-                <PasswordStrengthIndicator 
-                  password={password}
-                  visible={passwordFocused || password.length > 0}
-                />
-              </View>
+          {/* Welcome Message */}
+          <View style={styles.welcomeSection}>
+            <Text style={styles.title}>Neues Passwort erstellen</Text>
+            <Text style={styles.subtitle}>
+              Erstellen Sie ein sicheres neues Passwort für Ihr Konto.
+            </Text>
+          </View>
 
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            <View>
               <Input
-                label="Passwort bestätigen"
-                placeholder="Passwort wiederholen"
-                secureTextEntry={!showConfirmPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                leftIcon={<Lock size={20} color="#6B7280" />}
+                label="Neues Passwort"
+                placeholder="Neues Passwort eingeben"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+                autoFocus={true}
+                leftIcon={<Lock size={20} color="#94A3B8" />}
                 rightIcon={
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    {showConfirmPassword ?
-                      <EyeOff size={20} color="#6B7280" /> :
-                      <Eye size={20} color="#6B7280" />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    {showPassword ?
+                      <EyeOff size={20} color="#94A3B8" /> :
+                      <Eye size={20} color="#94A3B8" />
                     }
                   </TouchableOpacity>
                 }
                 editable={!loading}
-                error={
-                  confirmPassword.length > 0 && password !== confirmPassword
-                    ? 'Passwörter stimmen nicht überein'
-                    : ''
-                }
               />
+              <PasswordStrengthIndicator
+                password={password}
+                visible={passwordFocused || password.length > 0}
+              />
+            </View>
 
+            <Input
+              label="Passwort bestätigen"
+              placeholder="Passwort wiederholen"
+              secureTextEntry={!showConfirmPassword}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              leftIcon={<Lock size={20} color="#94A3B8" />}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  {showConfirmPassword ?
+                    <EyeOff size={20} color="#94A3B8" /> :
+                    <Eye size={20} color="#94A3B8" />
+                  }
+                </TouchableOpacity>
+              }
+              editable={!loading}
+              error={
+                confirmPassword.length > 0 && password !== confirmPassword
+                  ? 'Passwörter stimmen nicht überein'
+                  : ''
+              }
+            />
+
+            {/* Reset Button */}
+            <TouchableOpacity
+              onPress={handleResetPassword}
+              disabled={loading}
+              activeOpacity={0.8}
+              style={styles.buttonSpacing}
+            >
               <LinearGradient
-                colors={['#10b981', '#059669']}
+                colors={['#FB923C', '#F97316', '#EF4444']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.resetButtonGradient}
               >
-                <TouchableOpacity
-                  style={styles.resetButton}
-                  onPress={handleResetPassword}
-                  disabled={loading}
-                >
-                  <Text style={styles.resetButtonText}>
-                    {loading ? 'Wird aktualisiert...' : 'Passwort aktualisieren'}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.resetButtonText}>
+                  {loading ? 'Wird aktualisiert...' : 'Passwort aktualisieren'}
+                </Text>
               </LinearGradient>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleBackToLogin}
-              >
-                <Text style={styles.cancelButtonText}>Zurück zur Anmeldung</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Cancel Button */}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleBackToLogin}
+            >
+              <Text style={styles.cancelButtonText}>Zurück zur Anmeldung</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-  },
   container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  safeArea: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
-    minHeight: '100%',
-  },
-  resetCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    marginHorizontal: 'auto',
-    maxWidth: 440,
+    maxWidth: 480,
     width: '100%',
     alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  header: {
+  logoSection: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    justifyContent: 'center',
+  logoContainer: {
+    marginBottom: 16,
   },
-  caduceusIcon: {
-    marginLeft: 16,
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  brandTagline: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  welcomeSection: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
+    color: '#1E293B',
+    marginBottom: 12,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#64748B',
     lineHeight: 24,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  form: {
+  formSection: {
     gap: 20,
   },
-  resetButtonGradient: {
-    borderRadius: 12,
+  buttonSpacing: {
     marginTop: 8,
-    shadowColor: '#10b981',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
-  resetButton: {
+  resetButtonGradient: {
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   resetButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   cancelButton: {
@@ -351,59 +405,69 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   cancelButtonText: {
-    color: '#6B7280',
+    color: '#64748B',
     fontSize: 16,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  successCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    marginHorizontal: 'auto',
-    maxWidth: 440,
-    width: '100%',
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  iconContainer: {
-    marginBottom: 24,
+  // Success screen styles
+  successIconContainer: {
     alignItems: 'center',
+    marginBottom: 24,
+  },
+  successIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#D1FAE5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#10b981',
+  },
+  successMessageSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   instructions: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#64748B',
     lineHeight: 20,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    marginTop: 8,
   },
-  actions: {
-    marginTop: 24,
-  },
-  loginButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 12,
+  loginButtonGradient: {
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   loginButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
