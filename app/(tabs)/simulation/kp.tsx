@@ -1469,7 +1469,7 @@ export default function KPSimulationScreen() {
         <InlineContent>
           <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
             <Paragraph>
-              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> und <BoldText>Kenntnisprüfung (KP)</BoldText> vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie möglich nachzubilden.
+              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Kenntnisprüfung (KP)</BoldText> vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie möglich nachzubilden.
             </Paragraph>
           </Section>
 
@@ -1485,7 +1485,7 @@ export default function KPSimulationScreen() {
             <View style={{ marginLeft: 16 }}>
               <Paragraph>✓ Echte Prüfungsatmosphäre</Paragraph>
               <Paragraph>✓ Realistische Patientengespräche</Paragraph>
-              <Paragraph>✓ Prüferfragen wie in der echten FSP/KP</Paragraph>
+              <Paragraph>✓ Prüferfragen wie in der echten KP</Paragraph>
               <Paragraph>✓ Faire und präzise Bewertung</Paragraph>
               <Paragraph>✓ Konstruktives Feedback nach jedem Durchgang</Paragraph>
             </View>
@@ -1676,9 +1676,9 @@ export default function KPSimulationScreen() {
           <Section title="⏱️ Zeitplan im Überblick">
             <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
               <TimeItem label="📅 Gesamtdauer" time="20-30 Minuten" />
-              <TimeItem label="💬 Patientengespräch" time="Ca. 10-15 Minuten" />
-              <TimeItem label="👨‍⚕️ Prüfergespräch" time="Ca. 10-15 Minuten" />
-              <TimeItem label="📊 Auswertung verfügbar" time="Sofort nach Abschluss" />
+              <TimeItem label="💬 Patientengespräch" time="10-15 Minuten" />
+              <TimeItem label="👨‍⚕️ Prüfergespräch" time="10-15 Minuten" />
+              <TimeItem label="📊 Auswertung verfügbar" time="Einige Minuten nach Abschluss" />
             </View>
           </Section>
         </InlineContent>
