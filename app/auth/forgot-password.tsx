@@ -52,42 +52,59 @@ export default function ForgotPassword() {
   };
 
   const handleResetPassword = async () => {
+    console.log('🔵 handleResetPassword called with email:', email);
+
     if (!email) {
+      console.log('❌ Email is empty');
       Alert.alert('Fehler', 'Bitte geben Sie Ihre E-Mail-Adresse ein');
       return;
     }
 
     // Check for email validation errors
     if (!validateEmailFormat(email)) {
+      console.log('❌ Email validation failed');
       setEmailTouched(true);
       setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
       return;
     }
 
+    console.log('✅ Email validation passed');
     setLoading(true);
+
     try {
+      console.log('🔵 Calling Supabase resetPasswordForEmail...');
+      const redirectUrl = Platform.OS === 'web'
+        ? `${window.location.origin}/auth/reset-password`
+        : 'medicallearningapp://auth/reset-password';
+      console.log('🔵 Redirect URL:', redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: Platform.OS === 'web' 
-          ? `${window.location.origin}/auth/reset-password`
-          : 'medicallearningapp://auth/reset-password'
+        redirectTo: redirectUrl
       });
 
+      console.log('🔵 Supabase response received');
+
       if (error) {
+        console.log('❌ Supabase error:', error);
         throw error;
       }
 
+      console.log('✅ Password reset email sent successfully');
       setEmailSent(true);
     } catch (error: any) {
+      console.log('❌ Caught error:', error);
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
-      
+
       if (error.message?.includes('For security purposes')) {
         errorMessage = 'Aus Sicherheitsgründen können wir nicht bestätigen, ob diese E-Mail-Adresse in unserem System existiert. Falls sie existiert, haben Sie eine E-Mail erhalten.';
       } else if (error.message?.includes('Email rate limit exceeded')) {
         errorMessage = 'Sie haben zu viele E-Mails angefordert. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
       }
-      
+
+      console.log('🔵 Showing alert:', errorMessage);
       Alert.alert('Passwort zurücksetzen', errorMessage);
     } finally {
+      console.log('🔵 Finally block - setting loading to false');
       setLoading(false);
     }
   };
