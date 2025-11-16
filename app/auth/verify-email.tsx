@@ -87,173 +87,248 @@ export default function VerifyEmail() {
   };
 
   return (
-    <LinearGradient
-      colors={['#ffffff', '#f0f9f0']}
-      style={styles.gradientBackground}
-    >
-      <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        style={styles.backgroundGradient}
+      />
+
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
-          <View style={styles.verifyCard}>
-            <View style={styles.header}>
-              <View style={styles.logoSection}>
-                <Logo size="large" textColor="#1F2937" />
-                <BriefcaseMedical size={32} color="#10b981" style={styles.caduceusIcon} />
-              </View>
-              
-              <View style={styles.iconContainer}>
-                <Mail size={64} color="#10b981" />
-              </View>
-
-              {verificationStatus === 'success' ? (
-                <>
-                  <Text style={styles.title}>E-Mail erfolgreich bestätigt!</Text>
-                  <Text style={styles.subtitle}>
-                    Ihr Konto wurde erfolgreich verifiziert.
-                  </Text>
-                  <Text style={styles.instructions}>
-                    Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.title}>Registrierung erfolgreich!</Text>
-                  <Text style={styles.successMessage}>
-                    {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
-                  </Text>
-                  <Text style={styles.subtitle}>
-                    Wir haben einen Bestätigungslink gesendet an:
-                  </Text>
-                  <Text style={styles.email}>{params.email}</Text>
-                  
-                  <Text style={styles.instructions}>
-                    Klicken Sie auf den Link in Ihrer E-Mail, um Ihr Konto zu verifizieren und mit dem Lernen zu beginnen.
-                    Der Link läuft in 24 Stunden ab.
-                  </Text>
-                </>
-              )}
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <LinearGradient
+                colors={['#D4A574', '#C19A6B']}
+                style={styles.logoGradient}
+              >
+                <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
+              </LinearGradient>
             </View>
+            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandTagline}>Professional Medical Training</Text>
+          </View>
 
-            <View style={styles.actions}>
-              {verificationStatus === 'success' ? (
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleBackToLogin}
+          {/* Mail Icon */}
+          <View style={styles.mailIconContainer}>
+            <View style={styles.mailIconCircle}>
+              <Mail size={48} color="#10b981" strokeWidth={2} />
+            </View>
+          </View>
+
+          {/* Message Section */}
+          <View style={styles.messageSection}>
+            {verificationStatus === 'success' ? (
+              <>
+                <Text style={styles.title}>E-Mail erfolgreich bestätigt!</Text>
+                <Text style={styles.subtitle}>
+                  Ihr Konto wurde erfolgreich verifiziert.
+                </Text>
+                <Text style={styles.instructions}>
+                  Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>Registrierung erfolgreich!</Text>
+                <Text style={styles.successMessage}>
+                  {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
+                </Text>
+                <Text style={styles.subtitle}>
+                  Wir haben einen Bestätigungslink gesendet an:
+                </Text>
+                <View style={styles.emailContainer}>
+                  <Text style={styles.email}>{params.email}</Text>
+                </View>
+
+                <Text style={styles.instructions}>
+                  Klicken Sie auf den Link in Ihrer E-Mail, um Ihr Konto zu verifizieren und mit dem Lernen zu beginnen.
+                  Der Link läuft in 24 Stunden ab.
+                </Text>
+              </>
+            )}
+          </View>
+
+          {/* Actions */}
+          <View style={styles.actions}>
+            {verificationStatus === 'success' ? (
+              <TouchableOpacity
+                onPress={handleBackToLogin}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#10b981', '#059669']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.loginButtonGradient}
                 >
                   <Text style={styles.loginButtonText}>Zur Anmeldung</Text>
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.resendButton}
-                    onPress={handleResendVerification}
-                    disabled={resendLoading}
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity
+                  onPress={handleResendVerification}
+                  disabled={resendLoading}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#F0FDF4', '#DCFCE7']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.resendButtonGradient}
                   >
-                    <RefreshCw 
-                      size={20} 
-                      color="#10b981" 
+                    <RefreshCw
+                      size={20}
+                      color="#10b981"
                       style={resendLoading ? styles.spinning : undefined}
                     />
                     <Text style={styles.resendButtonText}>
                       {resendLoading ? 'Wird gesendet...' : 'E-Mail erneut senden'}
                     </Text>
-                  </TouchableOpacity>
+                  </LinearGradient>
+                </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={handleBackToLogin}
-                  >
-                    <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-
-            {verificationStatus !== 'success' && (
-              <View style={styles.helpSection}>
-                <Text style={styles.helpText}>
-                  E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder senden Sie die E-Mail erneut.
-                </Text>
-              </View>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={handleBackToLogin}
+                >
+                  <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
+                </TouchableOpacity>
+              </>
             )}
           </View>
+
+          {/* Help Section */}
+          {verificationStatus !== 'success' && (
+            <View style={styles.helpSection}>
+              <Text style={styles.helpText}>
+                E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder senden Sie die E-Mail erneut.
+              </Text>
+            </View>
+          )}
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-  },
   container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  safeArea: {
     flex: 1,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-  },
-  verifyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    marginHorizontal: 'auto',
-    maxWidth: 440,
+    maxWidth: 480,
     width: '100%',
     alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  header: {
+  logoSection: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoSection: {
-    flexDirection: 'row',
+  logoContainer: {
+    marginBottom: 16,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  brandTagline: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  mailIconContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  mailIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#D1FAE5',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#10b981',
   },
-  caduceusIcon: {
-    marginLeft: 16,
-  },
-  iconContainer: {
-    marginBottom: 24,
+  messageSection: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  successMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#059669',
+    marginBottom: 16,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#64748B',
     lineHeight: 24,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  emailContainer: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
   },
   email: {
     fontSize: 16,
     fontWeight: '600',
     color: '#10b981',
-    marginBottom: 16,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   instructions: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#64748B',
     lineHeight: 20,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -262,21 +337,39 @@ const styles = StyleSheet.create({
     gap: 16,
     marginBottom: 24,
   },
-  resendButton: {
+  resendButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 16,
     gap: 8,
+    borderRadius: 14,
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#10b981',
   },
   resendButtonText: {
     color: '#10b981',
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  loginButtonGradient: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   backButton: {
@@ -285,7 +378,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButtonText: {
-    color: '#6B7280',
+    color: '#64748B',
     fontSize: 16,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -304,26 +397,5 @@ const styles = StyleSheet.create({
   },
   spinning: {
     // Add animation if needed
-  },
-  successMessage: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#059669',
-    marginBottom: 16,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  loginButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
