@@ -32,6 +32,7 @@ export default function RegisterScreen() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [registrationAllowed, setRegistrationAllowed] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const { signUp } = useAuth();
@@ -135,10 +136,11 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     // Clear previous errors and validate all fields
+    setSubmitError('');
     let hasErrors = false;
 
     if (!name || !email || !password || !confirmPassword) {
-      showAlert('Fehler', 'Bitte füllen Sie alle Felder aus.');
+      setSubmitError('Bitte füllen Sie alle Felder aus.');
       return;
     }
 
@@ -248,7 +250,17 @@ export default function RegisterScreen() {
           );
         }
       } else {
-        showAlert('Registrierungsfehler', error.message || 'Ein Fehler ist aufgetreten.');
+        // Handle other errors including rate limit
+        const errorMsg = error?.message?.toLowerCase() || '';
+        let errorMessage = error.message || 'Ein Fehler ist aufgetreten.';
+
+        if (errorMsg.includes('rate limit')) {
+          errorMessage = 'Sie haben zu viele Registrierungsversuche gemacht. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
+        } else if (errorMsg.includes('already registered') || errorMsg.includes('user already exists')) {
+          errorMessage = 'Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail.';
+        }
+
+        setSubmitError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -381,6 +393,13 @@ export default function RegisterScreen() {
                 error={confirmPasswordError}
               />
             </View>
+
+            {/* Error Message */}
+            {submitError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{submitError}</Text>
+              </View>
+            ) : null}
 
             {/* Register Button */}
             <TouchableOpacity
@@ -520,6 +539,23 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 0,
+  },
+
+  // Error Display
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  errorText: {
+    color: '#991B1B',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Register Button
