@@ -475,9 +475,9 @@ function parseCriticalErrors(text: string): CriticalError[] {
     const errorsText = detailedMatch[1];
 
     // Split by emoji icons that start each error item
-    // Format: emoji Title** (no ** before emoji)
+    // Format: **emoji Title** (emoji inside ** markers)
     // Common emojis in error items: ⚠️📋💊🚨🔴💬🩺⚡✏️
-    const emojiPattern = /([⚠️📋💊🚨🔴💬🩺⚡✏️])\s+([^*\n]+?)\*{2,}/g;
+    const emojiPattern = /\*{2,}([⚠️📋💊🚨🔴💬🩺⚡✏️])\s+([^*]+?)\*{2,}/g;
     const items: Array<{icon: string, title: string, rest: string}> = [];
 
     let match;
@@ -774,9 +774,9 @@ function parseStrengths(text: string): string[] {
     const strengthsText = detailedMatch[1];
 
     // Split by emoji icons that start each strength item
-    // Format: emoji Title** (no ** before emoji)
+    // Format: **emoji Title** (emoji inside ** markers)
     // Common emojis in strength items: 🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️
-    const emojiPattern = /([🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️])\s+([^*\n]+?)\*{2,}/g;
+    const emojiPattern = /\*{2,}([🎯🚨📋💬🛡️✅📚🔍💊🧠👔⏱️❤️🗣️📝🎧])\s+([^*]+?)\*{2,}/g;
     const items: Array<{icon: string, title: string, rest: string}> = [];
 
     let match;
