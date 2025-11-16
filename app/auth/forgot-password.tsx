@@ -22,6 +22,7 @@ export default function ForgotPassword() {
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const router = useRouter();
 
   // Email validation function
@@ -53,10 +54,11 @@ export default function ForgotPassword() {
 
   const handleResetPassword = async () => {
     console.log('🔵 handleResetPassword called with email:', email);
+    setSubmitError(''); // Clear previous errors
 
     if (!email) {
       console.log('❌ Email is empty');
-      Alert.alert('Fehler', 'Bitte geben Sie Ihre E-Mail-Adresse ein');
+      setSubmitError('Bitte geben Sie Ihre E-Mail-Adresse ein');
       return;
     }
 
@@ -93,16 +95,17 @@ export default function ForgotPassword() {
       setEmailSent(true);
     } catch (error: any) {
       console.log('❌ Caught error:', error);
+      const errorMsg = error?.message?.toLowerCase() || '';
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
 
-      if (error.message?.includes('For security purposes')) {
+      if (errorMsg.includes('rate limit')) {
+        errorMessage = 'Sie haben zu viele E-Mails angefordert. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
+      } else if (errorMsg.includes('for security purposes')) {
         errorMessage = 'Aus Sicherheitsgründen können wir nicht bestätigen, ob diese E-Mail-Adresse in unserem System existiert. Falls sie existiert, haben Sie eine E-Mail erhalten.';
-      } else if (error.message?.includes('Email rate limit exceeded')) {
-        errorMessage = 'Sie haben zu viele E-Mails angefordert. Bitte warten Sie einen Moment und versuchen Sie es erneut.';
       }
 
-      console.log('🔵 Showing alert:', errorMessage);
-      Alert.alert('Passwort zurücksetzen', errorMessage);
+      console.log('🔵 Setting error message:', errorMessage);
+      setSubmitError(errorMessage);
     } finally {
       console.log('🔵 Finally block - setting loading to false');
       setLoading(false);
@@ -244,6 +247,13 @@ export default function ForgotPassword() {
               error={emailError}
             />
 
+            {/* Error Message */}
+            {submitError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{submitError}</Text>
+              </View>
+            ) : null}
+
             {/* Reset Button */}
             <TouchableOpacity
               onPress={handleResetPassword}
@@ -354,6 +364,20 @@ const styles = StyleSheet.create({
   },
   formSection: {
     gap: 20,
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 8,
+    padding: 12,
+  },
+  errorText: {
+    color: '#991B1B',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   buttonSpacing: {
     marginTop: 8,
