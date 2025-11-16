@@ -37,7 +37,7 @@ export default function EvaluationWebView({
   evaluationType = 'Evaluation',
   showLegacyWarning = false,
 }: Props) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Platform.OS !== 'web'); // No loading on web
   const [error, setError] = useState<string | null>(null);
   const webViewRef = useRef<WebView>(null);
 
@@ -223,6 +223,36 @@ export default function EvaluationWebView({
     );
   }
 
+  // WEB PLATFORM: Use iframe instead of WebView
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        {/* Header with close button */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>{evaluationType}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={28} color="#1f2937" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Iframe for web */}
+        <iframe
+          srcDoc={preparedHTML}
+          style={{
+            flex: 1,
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            backgroundColor: '#f5f7fa',
+          }}
+          sandbox="allow-same-origin"
+          title="Evaluation Report"
+        />
+      </View>
+    );
+  }
+
+  // MOBILE PLATFORM: Use WebView
   return (
     <View style={styles.container}>
       {/* Header with close button */}
