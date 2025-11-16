@@ -41,6 +41,7 @@
     "expo-system-ui": "~4.0.9",
     "expo-web-browser": "~14.0.2",
     "framer-motion": "^12.23.3",
+    "isomorphic-dompurify": "^2.32.0",
     "lottie-react-native": "7.1.0",
     "lucide-react-native": "^0.539.0",
     "nativewind": "^4.0.1",

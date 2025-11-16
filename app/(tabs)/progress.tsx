@@ -9,6 +9,7 @@ import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import EvaluationDetailScreen from '@/components/evaluation/EvaluationDetailScreen';
+import EvaluationWebView from '@/components/evaluation/EvaluationWebView';
 import { parseEvaluation } from '@/utils/parseEvaluation';
 import type { Evaluation as ParsedEvaluation } from '@/types/evaluation';
 // Platform-specific Victory imports
@@ -68,6 +69,7 @@ interface Evaluation {
   examiner_evaluation: string;
   evaluation_timestamp: string;
   created_at: string;
+  html_report?: string | null; // NEW: Pre-generated HTML report from Make.com
 }
 
 export default function ProgressScreen() {
@@ -418,13 +420,41 @@ export default function ProgressScreen() {
   const renderEvaluationModal = () => {
     if (!selectedEvaluation) return null;
 
-    // Determine which evaluation text to use (priority: patient_evaluation > examiner_evaluation > evaluation)
+    const evaluationType = `${selectedEvaluation.exam_type} - ${
+      selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
+    }`;
+
+    console.log('Selected Evaluation:', selectedEvaluation);
+    console.log('Has HTML Report:', !!selectedEvaluation.html_report);
+    console.log('HTML Report Length:', selectedEvaluation.html_report?.length || 0);
+
+    // NEW APPROACH: Try HTML report first (pre-generated from Make.com)
+    if (selectedEvaluation.html_report && selectedEvaluation.html_report.trim().length > 0) {
+      console.log('Using HTML Report (NEW)');
+      return (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={closeEvaluationModal}
+          presentationStyle="fullScreen"
+        >
+          <EvaluationWebView
+            htmlReport={selectedEvaluation.html_report}
+            onClose={closeEvaluationModal}
+            evaluationType={evaluationType}
+            showLegacyWarning={false}
+          />
+        </Modal>
+      );
+    }
+
+    // OLD APPROACH: Parse text evaluation (for backward compatibility)
     const evaluationText = selectedEvaluation.patient_evaluation ||
                           selectedEvaluation.examiner_evaluation ||
                           selectedEvaluation.evaluation ||
                           '';
 
-    console.log('Selected Evaluation:', selectedEvaluation);
     console.log('Evaluation fields:', {
       hasPatientEval: !!selectedEvaluation.patient_evaluation,
       hasExaminerEval: !!selectedEvaluation.examiner_evaluation,
@@ -433,12 +463,10 @@ export default function ProgressScreen() {
       examinerEvalLength: selectedEvaluation.examiner_evaluation?.length || 0,
       evaluationLength: selectedEvaluation.evaluation?.length || 0,
     });
-    console.log('Evaluation Text Length:', evaluationText?.length || 0);
-    console.log('Evaluation Text Preview:', evaluationText ? evaluationText.substring(0, 200) : 'NO TEXT');
 
-    // If no evaluation text exists, show error modal
+    // If no evaluation data at all, show error
     if (!evaluationText || evaluationText.trim().length === 0) {
-      console.error('No evaluation text found in selectedEvaluation');
+      console.error('No evaluation data found in selectedEvaluation');
       return (
         <Modal
           animationType="slide"
@@ -467,7 +495,32 @@ export default function ProgressScreen() {
       );
     }
 
+    // OLD EVALUATION: Show legacy warning (suggest re-running simulation for new format)
+    // Uncomment this block to show warning for old evaluations
+    /*
+    console.log('Using Legacy Text Evaluation (OLD) - showing warning');
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={closeEvaluationModal}
+        presentationStyle="fullScreen"
+      >
+        <EvaluationWebView
+          htmlReport=""
+          onClose={closeEvaluationModal}
+          evaluationType={evaluationType}
+          showLegacyWarning={true}
+        />
+      </Modal>
+    );
+    */
+
+    // FALLBACK: Use old parsing method for backward compatibility
     try {
+      console.log('Using Legacy Text Evaluation (OLD) - parsing with old method');
+
       // Parse the evaluation text into structured data
       const parsedEvaluation = parseEvaluation(
         evaluationText,
@@ -478,9 +531,7 @@ export default function ProgressScreen() {
       console.log('Parsed Evaluation:', parsedEvaluation);
 
       // Override the evaluation type with the actual exam type
-      parsedEvaluation.evaluationType = `${selectedEvaluation.exam_type} - ${
-        selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
-      }`;
+      parsedEvaluation.evaluationType = evaluationType;
 
       // Override the score with the actual score from the database
       parsedEvaluation.score.total = selectedEvaluation.score;
@@ -503,7 +554,7 @@ export default function ProgressScreen() {
     } catch (error) {
       console.error('Error parsing evaluation:', error);
 
-      // Fallback to old modal if parsing fails
+      // Fallback to raw text if parsing fails
       return (
         <Modal
           animationType="slide"
