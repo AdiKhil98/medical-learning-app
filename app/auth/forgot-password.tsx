@@ -98,54 +98,79 @@ export default function ForgotPassword() {
 
   if (emailSent) {
     return (
-      <LinearGradient
-        colors={['#ffffff', '#f0f9f0']}
-        style={styles.gradientBackground}
-      >
-        <SafeAreaView style={styles.container}>
-          <View style={styles.content}>
-            <View style={styles.successCard}>
-              <View style={styles.header}>
-                <View style={styles.logoSection}>
-                  <Logo size="large" textColor="#1F2937" variant="premium" />
-                  <BriefcaseMedical size={32} color="#B87E70" style={styles.caduceusIcon} />
-                </View>
-                
-                <View style={styles.iconContainer}>
-                  <Mail size={64} color="#B87E70" />
-                </View>
+      <View style={styles.container}>
+        {/* Background Gradient */}
+        <LinearGradient
+          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          style={styles.backgroundGradient}
+        />
 
-                <Text style={styles.title}>E-Mail versendet!</Text>
-                <Text style={styles.subtitle}>
-                  Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen des Passworts gesendet.
-                </Text>
-                <Text style={styles.email}>{email}</Text>
-                
-                <Text style={styles.instructions}>
-                  Überprüfen Sie Ihren Posteingang und klicken Sie auf den Link, um Ihr Passwort zurückzusetzen. 
-                  Der Link läuft in 1 Stunde ab.
-                </Text>
-              </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={handleBackToLogin}
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Logo Section */}
+            <View style={styles.logoSection}>
+              <View style={styles.logoContainer}>
+                <LinearGradient
+                  colors={['#D4A574', '#C19A6B']}
+                  style={styles.logoGradient}
                 >
-                  <ArrowLeft size={20} color="#B87E70" />
-                  <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
-                </TouchableOpacity>
+                  <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
+                </LinearGradient>
               </View>
+              <Text style={styles.brandName}>KP Med</Text>
+              <Text style={styles.brandTagline}>Professional Medical Training</Text>
+            </View>
 
-              <View style={styles.helpSection}>
-                <Text style={styles.helpText}>
-                  E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder versuchen Sie es in ein paar Minuten erneut.
-                </Text>
+            {/* Mail Icon */}
+            <View style={styles.successIconContainer}>
+              <View style={styles.successIconCircle}>
+                <Mail size={48} color="#D4A574" strokeWidth={2} />
               </View>
             </View>
-          </View>
+
+            {/* Success Message */}
+            <View style={styles.successMessageSection}>
+              <Text style={styles.successTitle}>E-Mail versendet!</Text>
+              <Text style={styles.successSubtitle}>
+                Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen des Passworts gesendet.
+              </Text>
+              <View style={styles.emailContainer}>
+                <Text style={styles.email}>{email}</Text>
+              </View>
+              <Text style={styles.instructions}>
+                Überprüfen Sie Ihren Posteingang und klicken Sie auf den Link, um Ihr Passwort zurückzusetzen. Der Link läuft in 1 Stunde ab.
+              </Text>
+            </View>
+
+            {/* Back to Login Button */}
+            <TouchableOpacity
+              onPress={handleBackToLogin}
+              activeOpacity={0.8}
+              style={styles.buttonSpacing}
+            >
+              <LinearGradient
+                colors={['#FEF3C7', '#FDE68A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.backToLoginGradient}
+              >
+                <ArrowLeft size={20} color="#D4A574" strokeWidth={2.5} />
+                <Text style={styles.backToLoginText}>Zurück zur Anmeldung</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Help Text */}
+            <View style={styles.helpSection}>
+              <Text style={styles.helpText}>
+                E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder versuchen Sie es in ein paar Minuten erneut.
+              </Text>
+            </View>
+          </ScrollView>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -420,6 +445,65 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     lineHeight: 20,
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  // Success screen styles (email sent confirmation)
+  successIconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  successIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#D4A574',
+  },
+  successMessageSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  emailContainer: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  backToLoginGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 16,
+    borderWidth: 2,
+    borderColor: '#D4A574',
+  },
+  backToLoginText: {
+    color: '#D4A574',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
