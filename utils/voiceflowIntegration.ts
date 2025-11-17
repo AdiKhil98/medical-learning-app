@@ -26,10 +26,12 @@ export class VoiceflowController {
   private userId: string;
   private sessionId: string;
   private supabaseUserId?: string;
+  private userEmail?: string;
 
-  constructor(config: VoiceflowConfig, supabaseUserId?: string) {
+  constructor(config: VoiceflowConfig, supabaseUserId?: string, userEmail?: string) {
     this.config = config;
     this.supabaseUserId = supabaseUserId;
+    this.userEmail = userEmail;
 
     // Get or create persistent IDs, using Supabase user ID if provided
     const persistentIds = getPersistentIds(config.simulationType, supabaseUserId);
@@ -39,6 +41,7 @@ export class VoiceflowController {
     console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
       user_id: this.userId,
       session_id: this.sessionId,
+      user_email: this.userEmail,
       projectID: config.projectID,
       supabase_synced: !!supabaseUserId
     });
@@ -125,6 +128,7 @@ export class VoiceflowController {
       console.log('🔐 Initializing Voiceflow with persistent IDs:', {
         user_id: this.userId,
         session_id: this.sessionId,
+        user_email: this.userEmail,
         simulation: this.config.simulationType.toUpperCase()
       });
 
@@ -140,12 +144,13 @@ export class VoiceflowController {
         // User ID - tracked across sessions
         userID: this.userId,
 
-        // Pass session_id as custom variable via launch event
+        // Pass session_id and user_email as custom variables via launch event
         launch: {
           event: {
             type: 'launch',
             payload: {
-              session_id: this.sessionId
+              session_id: this.sessionId,
+              user_email: this.userEmail
             }
           }
         },
@@ -433,27 +438,27 @@ export class VoiceflowController {
 /**
  * Create controller for KP simulation
  */
-export function createKPController(supabaseUserId?: string): VoiceflowController {
+export function createKPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '691393d3c41312f7df96eb3e',  // KP57 Project ID (updated 2025-01-11)
     versionID: '691393d3c41312f7df96eb3f',  // KP57 Version ID
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'kp',
     title: 'KP Simulation Assistant'
-  }, supabaseUserId);
+  }, supabaseUserId, userEmail);
 }
 
 /**
  * Create controller for FSP simulation
  */
-export function createFSPController(supabaseUserId?: string): VoiceflowController {
+export function createFSPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
   return new VoiceflowController({
     projectID: '691393da86c137355b067213',  // FSP57 Project ID (updated 2025-01-11)
     versionID: '691393da86c137355b067214',  // FSP57 Version ID
     url: 'https://general-runtime.voiceflow.com',
     simulationType: 'fsp',
     title: 'FSP Simulation Assistant'
-  }, supabaseUserId);
+  }, supabaseUserId, userEmail);
 }
 
 /**

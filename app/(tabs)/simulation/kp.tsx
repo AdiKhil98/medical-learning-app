@@ -228,9 +228,9 @@ export default function KPSimulationScreen() {
         // ============================================
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
         // ============================================
-        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID`);
+        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
 
-        const controller = createKPController(user.id);
+        const controller = createKPController(user.id, user.email);
 
         if (!controller) {
           throw new Error('Failed to create Voiceflow controller - returned null/undefined');

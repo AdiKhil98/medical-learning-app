@@ -260,9 +260,9 @@ export default function FSPSimulationScreen() {
         // ============================================
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
         // ============================================
-        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID`);
+        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
 
-        const controller = createFSPController(user.id);
+        const controller = createFSPController(user.id, user.email);
 
         if (!controller) {
           throw new Error('Failed to create Voiceflow controller - returned null/undefined');
