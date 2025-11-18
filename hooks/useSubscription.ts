@@ -252,18 +252,38 @@ export const useSubscription = (userId: string | undefined) => {
 
       if (!user.subscription_tier || !hasActiveSubscription) {
         // Free tier
-        const { error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
+        const { data, error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
+
         if (error) {
           console.error('Error updating free simulation usage:', error);
           return false;
         }
+
+        // Check response from function
+        if (data && !data.success) {
+          console.error('Free simulation increment failed:', data.error, data.message);
+          setError(data.message || 'Failed to record simulation usage');
+          return false;
+        }
+
+        console.log('✅ Free simulation recorded:', data);
       } else {
         // Paid tier
-        const { error } = await supabase.rpc('increment_monthly_simulations', { user_id: userId });
+        const { data, error } = await supabase.rpc('increment_monthly_simulations', { user_id: userId });
+
         if (error) {
           console.error('Error updating monthly simulation usage:', error);
           return false;
         }
+
+        // Check response from function
+        if (data && !data.success) {
+          console.error('Monthly simulation increment failed:', data.error, data.message);
+          setError(data.message || 'Failed to record simulation usage');
+          return false;
+        }
+
+        console.log('✅ Monthly simulation recorded:', data);
       }
 
       // Refresh the subscription status after recording usage
