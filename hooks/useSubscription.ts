@@ -43,7 +43,22 @@ export const useSubscription = (userId: string | undefined) => {
     setError(null);
 
     try {
-      // Fetch FRESH data from database to prevent stale state
+      // STEP 1: Check and reset monthly counter if in new billing period
+      console.log('[Access Control] Checking if monthly counter needs reset...');
+      try {
+        const { data: resetResult, error: resetError } = await supabase
+          .rpc('check_and_reset_monthly_counter', { user_id_input: userId });
+
+        if (resetError) {
+          console.warn('[Access Control] Counter reset check failed:', resetError);
+        } else if (resetResult) {
+          console.log('[Access Control] ✅ Monthly counter was automatically reset (new billing period)');
+        }
+      } catch (resetErr) {
+        console.warn('[Access Control] Counter reset error (non-critical):', resetErr);
+      }
+
+      // STEP 2: Fetch FRESH data from database to prevent stale state
       const { data: user, error } = await supabase
         .from('users')
         .select(`
@@ -83,7 +98,9 @@ export const useSubscription = (userId: string | undefined) => {
       // FIX: If limit is NULL for paid tier, calculate from tier name
       let calculatedLimit = user.simulation_limit;
 
-      if (calculatedLimit === null && user.subscription_tier && user.subscription_status === 'active') {
+      const isActiveStatus = ['active', 'on_trial', 'past_due'].includes(user.subscription_status);
+
+      if (calculatedLimit === null && user.subscription_tier && isActiveStatus) {
         // Auto-calculate limit from tier name if missing
         if (user.subscription_tier === 'basis') {
           calculatedLimit = 30;
@@ -119,7 +136,10 @@ export const useSubscription = (userId: string | undefined) => {
       let usedCount = 0;
       let tier = sanitizedData.tier;
 
-      if (!sanitizedData.tier || sanitizedData.tier === 'free' || sanitizedData.status !== 'active') {
+      // Check if subscription is active (includes on_trial and past_due for grace period)
+      const hasActiveSubscription = ['active', 'on_trial', 'past_due'].includes(sanitizedData.status);
+
+      if (!sanitizedData.tier || sanitizedData.tier === 'free' || !hasActiveSubscription) {
         // ===== FREE TIER: Always 3 simulations (lifetime) =====
         totalLimit = 3;
         usedCount = sanitizedData.usedFree;
@@ -228,7 +248,9 @@ export const useSubscription = (userId: string | undefined) => {
       }
 
       // Use the database functions we created
-      if (!user.subscription_tier || user.subscription_status !== 'active') {
+      const hasActiveSubscription = ['active', 'on_trial', 'past_due'].includes(user.subscription_status);
+
+      if (!user.subscription_tier || !hasActiveSubscription) {
         // Free tier
         const { error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
         if (error) {
