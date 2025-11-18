@@ -105,7 +105,7 @@ async function findUserByEmail(email) {
   return data;
 }
 
-// Helper function to update user subscription with retry logic
+// Helper function to update user subscription with retry logic (LEGACY - kept for backward compatibility)
 async function updateUserSubscription(userId, subscriptionData, retries = 3) {
   let lastError = null;
 
@@ -150,6 +150,67 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
   // All retries failed
   console.error(`❌ Failed to update subscription after ${retries} attempts`);
   throw lastError || new Error('Failed to update subscription');
+}
+
+// NEW: Helper function to upsert subscription using the multi-subscription system
+async function upsertSubscription(userId, subscriptionId, tier, status, variantId, variantName, customerEmail, tierConfig, subscriptionData, webhookEvent, retries = 3) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const { data, error } = await supabase.rpc('upsert_subscription_from_webhook', {
+        p_user_id: userId,
+        p_lemonsqueezy_subscription_id: subscriptionId,
+        p_tier: tier,
+        p_status: status,
+        p_variant_id: variantId?.toString() || null,
+        p_variant_name: variantName || tierConfig.name,
+        p_customer_email: customerEmail,
+        p_simulation_limit: tier === 'unlimited' ? 999999 : (tierConfig.simulationLimit || null),
+        p_created_at: subscriptionData.created_at || new Date().toISOString(),
+        p_updated_at: new Date().toISOString(),
+        p_expires_at: subscriptionData.ends_at || null,
+        p_renews_at: subscriptionData.renews_at || null,
+        p_period_start: subscriptionData.current_period_start || new Date().toISOString(),
+        p_period_end: subscriptionData.current_period_end || subscriptionData.renews_at || null,
+        p_webhook_event: webhookEvent
+      });
+
+      if (error) {
+        lastError = error;
+        console.error(`Attempt ${attempt}/${retries} - Error upserting subscription:`, error);
+
+        if (attempt < retries) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`Retrying in ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+      } else {
+        console.log(`✅ Successfully upserted subscription for user ${userId}`, data);
+
+        // Check if tier changed
+        const syncResult = data?.sync_result;
+        if (syncResult?.tier_changed) {
+          console.log(`📊 Tier changed from ${syncResult.old_tier} to ${syncResult.new_tier}, counter reset`);
+        }
+
+        return data;
+      }
+    } catch (err) {
+      lastError = err;
+      console.error(`Attempt ${attempt}/${retries} - Exception upserting subscription:`, err);
+
+      if (attempt < retries) {
+        const waitTime = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+    }
+  }
+
+  console.error(`❌ Failed to upsert subscription after ${retries} attempts`);
+  throw lastError || new Error('Failed to upsert subscription');
 }
 
 // Main webhook handler
@@ -219,184 +280,240 @@ async function handleWebhook(req, res) {
     const tier = determineSubscriptionTier(variantName, variantId);
     const tierConfig = SUBSCRIPTION_TIERS[tier];
 
-    // Handle different event types
+    // Handle different event types using the new multi-subscription system
     switch (eventType) {
       case 'subscription_created':
         console.log(`Creating subscription for user ${userId}`);
 
-        // Reset counters when creating a new subscription
-        await updateUserSubscription(userId, {
-          subscription_id: subscriptionId,
-          variant_id: variantId,
-          subscription_status: 'active',
-          subscription_type: tier,
-          subscription_tier: tier,
-          subscription_variant_name: tierConfig.name,
-          simulation_limit: tierConfig.simulationLimit,
-          simulations_used_this_month: 0, // Reset monthly counter
-          lemon_squeezy_customer_email: customerEmail,
-          subscription_created_at: new Date().toISOString(),
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
-          subscription_period_start: new Date().toISOString(),
-          subscription_period_end: subscriptionData.renews_at ? new Date(subscriptionData.renews_at).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          last_counter_reset: new Date().toISOString()
-        });
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'active',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_created'
+          );
 
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription created successfully for user ${userId}, counters reset`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription created successfully for user ${userId}`);
+        } catch (error) {
+          console.error('Error creating subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to create subscription' });
+        }
         break;
 
       case 'subscription_updated':
-        console.log(`Updating subscription for user ${userId}`);
+        console.log(`Updating subscription ${subscriptionId} for user ${userId}`);
 
-        // Get current tier to detect changes
-        const { data: currentUser, error: fetchError } = await supabase
-          .from('users')
-          .select('subscription_tier')
-          .eq('id', userId)
-          .single();
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            status,
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_updated'
+          );
 
-        if (fetchError) {
-          console.error(`Error fetching current user tier: ${fetchError.message}`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription updated successfully for user ${userId}`);
+        } catch (error) {
+          console.error('Error updating subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to update subscription' });
         }
-
-        // Determine new tier (in case of upgrade/downgrade)
-        const newTier = determineSubscriptionTier(variantName, variantId);
-        const newTierConfig = SUBSCRIPTION_TIERS[newTier];
-        const oldTier = currentUser?.subscription_tier;
-
-        // Prepare update data
-        const updateData = {
-          subscription_id: subscriptionId,
-          variant_id: variantId,
-          subscription_status: status === 'active' ? 'active' : status,
-          subscription_type: newTier,
-          subscription_tier: newTier,
-          subscription_variant_name: newTierConfig.name,
-          simulation_limit: newTierConfig.simulationLimit,
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        };
-
-        // Reset counter when tier changes (upgrade/downgrade)
-        if (oldTier && oldTier !== newTier) {
-          updateData.simulations_used_this_month = 0;
-          updateData.last_counter_reset = new Date().toISOString();
-          console.log(`Tier changed from ${oldTier} to ${newTier} - resetting counter for user ${userId}`);
-        }
-
-        // Reset counter when upgrading to unlimited tier (backup check)
-        if (newTier === 'unlimited') {
-          updateData.simulations_used_this_month = 0;
-          updateData.last_counter_reset = new Date().toISOString();
-          console.log(`Resetting simulation counter for unlimited tier (user ${userId})`);
-        }
-
-        await updateUserSubscription(userId, updateData);
-
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription updated successfully for user ${userId}`);
         break;
 
       case 'subscription_cancelled':
         console.log(`Cancelling subscription for user ${userId}`);
 
-        // Mark as cancelled but keep access until end of period
-        await updateUserSubscription(userId, {
-          subscription_status: 'cancelled',
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'cancelled',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_cancelled'
+          );
 
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription cancelled for user ${userId}, access until ${subscriptionData.ends_at}`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription cancelled for user ${userId}, access until ${subscriptionData.ends_at}`);
+        } catch (error) {
+          console.error('Error cancelling subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to cancel subscription' });
+        }
         break;
 
       case 'subscription_expired':
         console.log(`Expiring subscription for user ${userId}`);
 
-        // Remove access when subscription expires
-        await updateUserSubscription(userId, {
-          subscription_status: 'expired',
-          subscription_tier: null,
-          subscription_variant_name: null,
-          simulation_limit: null,
-          subscription_expires_at: new Date().toISOString()
-        });
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'expired',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_expired'
+          );
 
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription expired for user ${userId}, access removed`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription expired for user ${userId}`);
+        } catch (error) {
+          console.error('Error expiring subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to expire subscription' });
+        }
         break;
 
       case 'subscription_payment_success':
         console.log(`Payment successful for user ${userId} - resetting monthly counter`);
 
-        // Determine tier for this subscription
-        const paymentTier = determineSubscriptionTier(variantName, variantId);
-        const paymentTierConfig = SUBSCRIPTION_TIERS[paymentTier];
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'active',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_payment_success'
+          );
 
-        // Reset counter and update billing period on successful payment
-        await updateUserSubscription(userId, {
-          subscription_status: 'active',
-          simulations_used_this_month: 0, // Reset counter for new billing period
-          subscription_period_start: new Date().toISOString(),
-          subscription_period_end: subscriptionData.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null,
-          last_counter_reset: new Date().toISOString(),
-          subscription_tier: paymentTier,
-          subscription_variant_name: paymentTierConfig.name,
-          simulation_limit: paymentTierConfig.simulationLimit
-        });
-
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Payment successful for user ${userId}, counter reset for new billing period`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Payment successful for user ${userId}, counter reset for new billing period`);
+        } catch (error) {
+          console.error('Error processing payment success:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to process payment success' });
+        }
         break;
 
       case 'subscription_payment_failed':
         console.log(`Payment failed for user ${userId}`);
 
-        // Mark subscription as past_due but keep access temporarily (grace period)
-        await updateUserSubscription(userId, {
-          subscription_status: 'past_due'
-        });
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'past_due',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_payment_failed'
+          );
 
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Payment failed for user ${userId}, marked as past_due`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Payment failed for user ${userId}, marked as past_due`);
+        } catch (error) {
+          console.error('Error processing payment failure:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to process payment failure' });
+        }
         break;
 
       case 'subscription_payment_recovered':
         console.log(`Payment recovered for user ${userId}`);
 
-        // Reactivate subscription after failed payment is recovered
-        const recoveredTier = determineSubscriptionTier(variantName, variantId);
-        const recoveredTierConfig = SUBSCRIPTION_TIERS[recoveredTier];
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'active',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_payment_recovered'
+          );
 
-        await updateUserSubscription(userId, {
-          subscription_status: 'active',
-          subscription_tier: recoveredTier,
-          subscription_variant_name: recoveredTierConfig.name,
-          simulation_limit: recoveredTierConfig.simulationLimit
-        });
-
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Payment recovered for user ${userId}, subscription reactivated`);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Payment recovered for user ${userId}, subscription reactivated`);
+        } catch (error) {
+          console.error('Error processing payment recovery:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to process payment recovery' });
+        }
         break;
 
       case 'subscription_resumed':
         console.log(`Subscription resumed for user ${userId}`);
 
-        // Resume cancelled subscription
-        const resumedTier = determineSubscriptionTier(variantName, variantId);
-        const resumedTierConfig = SUBSCRIPTION_TIERS[resumedTier];
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'active',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_resumed'
+          );
 
-        await updateUserSubscription(userId, {
-          subscription_status: 'active',
-          subscription_tier: resumedTier,
-          subscription_variant_name: resumedTierConfig.name,
-          simulation_limit: resumedTierConfig.simulationLimit,
-          simulations_used_this_month: 0, // Reset counter on resume
-          last_counter_reset: new Date().toISOString()
-        });
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription resumed for user ${userId}`);
+        } catch (error) {
+          console.error('Error resuming subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to resume subscription' });
+        }
+        break;
 
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription resumed for user ${userId}, counter reset`);
+      case 'subscription_paused':
+        console.log(`Subscription paused for user ${userId}`);
+
+        try {
+          await upsertSubscription(
+            userId,
+            subscriptionId,
+            tier,
+            'paused',
+            variantId,
+            variantName,
+            customerEmail,
+            tierConfig,
+            subscriptionData,
+            'subscription_paused'
+          );
+
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+          console.log(`Subscription paused for user ${userId}`);
+        } catch (error) {
+          console.error('Error pausing subscription:', error);
+          await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', error.message);
+          return res.status(500).json({ error: 'Failed to pause subscription' });
+        }
         break;
 
       default:
