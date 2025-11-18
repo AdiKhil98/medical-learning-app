@@ -181,6 +181,7 @@ async function handleWebhook(req, res) {
       case 'subscription_created':
         console.log(`Creating subscription for user ${userId}`);
 
+        // Reset counters when creating a new subscription
         await updateUserSubscription(userId, {
           subscription_id: subscriptionId,
           variant_id: variantId,
@@ -189,13 +190,14 @@ async function handleWebhook(req, res) {
           subscription_tier: tier,
           subscription_variant_name: tierConfig.name,
           simulation_limit: tierConfig.simulationLimit,
+          simulations_used_this_month: 0, // Reset monthly counter
           lemon_squeezy_customer_email: customerEmail,
           subscription_created_at: new Date().toISOString(),
           subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
         });
 
         await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
-        console.log(`Subscription created successfully for user ${userId}`);
+        console.log(`Subscription created successfully for user ${userId}, counters reset`);
         break;
 
       case 'subscription_updated':
@@ -205,7 +207,8 @@ async function handleWebhook(req, res) {
         const newTier = determineSubscriptionTier(variantName, variantId);
         const newTierConfig = SUBSCRIPTION_TIERS[newTier];
 
-        await updateUserSubscription(userId, {
+        // Prepare update data
+        const updateData = {
           subscription_id: subscriptionId,
           variant_id: variantId,
           subscription_status: status === 'active' ? 'active' : status,
@@ -214,7 +217,15 @@ async function handleWebhook(req, res) {
           subscription_variant_name: newTierConfig.name,
           simulation_limit: newTierConfig.simulationLimit,
           subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        };
+
+        // Reset counter when upgrading to unlimited tier
+        if (newTier === 'unlimited') {
+          updateData.simulations_used_this_month = 0;
+          console.log(`Resetting simulation counter for unlimited upgrade (user ${userId})`);
+        }
+
+        await updateUserSubscription(userId, updateData);
 
         await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
         console.log(`Subscription updated successfully for user ${userId}`);
