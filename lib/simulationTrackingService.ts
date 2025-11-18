@@ -46,7 +46,35 @@ class SimulationTrackingService {
     try {
       console.log('📊 Starting simulation:', simulationType);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // DEBUG: Check session state
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔐 Session check:', {
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+        tokenLength: session?.access_token?.length,
+        expiresAt: session?.expires_at,
+        sessionError: sessionError?.message
+      });
+
+      // If no session, try to refresh
+      if (!session) {
+        console.log('⚠️ No session found, attempting refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData.session) {
+          console.error('❌ Session refresh failed:', refreshError);
+          return { success: false, error: 'Session expired - please log in again' };
+        }
+        console.log('✅ Session refreshed successfully');
+      }
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('👤 User check:', {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+        userError: userError?.message
+      });
+
       if (!user) {
         return { success: false, error: 'Not authenticated' };
       }
@@ -55,20 +83,35 @@ class SimulationTrackingService {
       console.log('🎫 Session token:', sessionToken);
 
       // Call database function to start session
+      console.log('📤 Calling RPC start_simulation_session with:', {
+        p_user_id: user.id,
+        p_simulation_type: simulationType,
+        p_session_token: sessionToken
+      });
+
       const { data, error } = await supabase.rpc('start_simulation_session', {
         p_user_id: user.id,
         p_simulation_type: simulationType,
         p_session_token: sessionToken
       });
 
+      console.log('📥 RPC response:', { data, error });
+
       if (error) {
         console.error('❌ Database error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         return { success: false, error: error.message };
       }
 
-      if (!data.success) {
+      if (!data || !data.success) {
         console.error('❌ Failed to start session:', data);
-        return { success: false, error: data.error || 'Unknown error' };
+        console.error('❌ Function returned error:', data?.error);
+        return { success: false, error: data?.error || 'Unknown error' };
       }
 
       console.log('✅ Simulation started:', data);
