@@ -1,224 +1,153 @@
-# 🔗 Webhook Integration Guide for Make.com
+# LemonSqueezy Webhook Integration Guide
+## Multi-Subscription Support
 
-## 📍 Webhook Endpoint
-
-### Production URL (Netlify) ✅ **FIXED & READY**
-```
-https://medical-learning-app.netlify.app/api/webhook-evaluation
-```
-
-> **Status**: ✅ All-Netlify configuration implemented and fixed
-> **Platform**: Netlify (functions in `/netlify/functions` directory)
-> **Last Updated**: August 30, 2025  
-> **Database**: Connected to Supabase with `evaluation_scores` and `evaluation_sessions` tables
-
-### Alternative URLs (all redirect to the same function)
-```
-https://medical-learning-app.netlify.app/api/webhook/evaluation
-https://medical-learning-app.netlify.app/.netlify/functions/webhook-evaluation
-```
-
-### Development URL
-```
-http://localhost:8888/.netlify/functions/webhook-evaluation (Netlify CLI)
-```
-
-## 🚀 Quick Setup for Make.com
-
-### 1. HTTP Module Configuration
-- **URL**: `https://medical-learning-app.netlify.app/api/webhook-evaluation`
-- **Method**: `POST`
-- **Headers**:
-  ```
-  Content-Type: application/json
-  ```
-
-### 2. Request Body (JSON)
-```json
-{
-  "user_id": "{{user_uuid}}",
-  "session_id": "{{unique_session_id}}",
-  "exam_type": "{{KP_or_FSP}}",
-  "conversation_type": "{{patient_or_examiner}}",
-  "score": {{numeric_score_0_to_100}},
-  "evaluation": "{{evaluation_text}}",
-  "timestamp": "{{current_timestamp}}"
-}
-```
-
-## 📋 Required Fields
-
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `user_id` | String (UUID) | User identifier | `"12345678-1234-1234-1234-123456789012"` |
-| `session_id` | String | Unique session ID | `"kp_session_001"` |
-| `exam_type` | String | Must be "KP" or "FSP" | `"KP"` |
-| `conversation_type` | String | Must be "patient" or "examiner" | `"patient"` |
-| `score` | Number/String | Score 0-100 (strings like "85/100" work) | `85` |
-| `evaluation` | String | Evaluation feedback text | `"Excellent communication..."` |
-| `timestamp` | String (optional) | ISO date string | `"2025-08-30T10:00:00.000Z"` |
-
-## ✅ Success Response (200)
-```json
-{
-  "success": true,
-  "message": "Evaluation stored successfully",
-  "data": {
-    "evaluation_id": "uuid-here",
-    "user_id": "user-uuid",
-    "session_id": "session_001",
-    "exam_type": "KP",
-    "conversation_type": "patient",
-    "score": 85,
-    "stored_at": "2025-08-30T10:00:00.000Z",
-    "webhook_source": "make.com",
-    "deployment": "Netlify"
-  },
-  "timestamp": "2025-08-30T10:00:00.000Z"
-}
-```
-
-## ❌ Error Response (400)
-```json
-{
-  "success": false,
-  "error": "Validation failed",
-  "errors": [
-    "user_id is required and must be a string",
-    "exam_type is required and must be \"KP\" or \"FSP\""
-  ],
-  "received_data": { ... }
-}
-```
-
-## 🧪 Testing Your Webhook
-
-### Method 1: Browser Test
-Visit: `https://medical-learning-app.netlify.app/api/webhook-evaluation`
-
-### Method 2: Test with curl
-```bash
-# Test GET (status check)
-curl -X GET https://medical-learning-app.netlify.app/api/webhook-evaluation
-
-# Test POST (send evaluation)
-curl -X POST https://medical-learning-app.netlify.app/api/webhook-evaluation \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "12345678-1234-1234-1234-123456789012",
-    "session_id": "test_session_001",
-    "exam_type": "KP",
-    "conversation_type": "patient",
-    "score": 85,
-    "evaluation": "Test evaluation feedback",
-    "timestamp": "2025-08-30T10:00:00.000Z"
-  }'
-```
-
-## 🔧 Make.com Specific Tips
-
-### Common Make.com Field Mappings
-```json
-{
-  "user_id": "{{1.user_id}}",
-  "session_id": "{{1.session_id}}",
-  "exam_type": "{{1.exam_type}}",
-  "conversation_type": "{{1.conversation_type}}",
-  "score": "{{1.score}}",
-  "evaluation": "{{1.evaluation}}",
-  "timestamp": "{{formatDate(now; \"YYYY-MM-DDTHH:mm:ss.000Z\")}}"
-}
-```
-
-### Error Handling in Make.com
-1. Add error handling to your Make.com scenario
-2. Check for `success: false` in response
-3. Handle different HTTP status codes:
-   - 200: Success
-   - 400: Validation error (check required fields)
-   - 500: Server error (retry or contact support)
-
-## 🏗️ Database Schema
-
-The webhook stores data in two tables:
-
-### evaluation_scores
-- Stores individual evaluation records
-- Automatically generates UUID and timestamps
-- Links to user via user_id
-
-### evaluation_sessions  
-- Stores session summaries
-- Updated automatically via database triggers
-- Calculates averages and completion status
-
-## 🚨 Troubleshooting
-
-### Common Issues:
-
-1. **"Method not allowed"**
-   - Make sure you're using POST method
-   - Check that the URL is correct
-
-2. **"Validation failed"**
-   - Verify all required fields are present
-   - Check field types (especially score as number)
-   - Ensure exam_type is exactly "KP" or "FSP"
-
-3. **"CORS error"**
-   - This shouldn't happen with the current setup
-   - If it does, check your Make.com webhook configuration
-
-4. **"Database error"**
-   - Check if user_id exists in the users table
-   - Verify Supabase connection is working
-
-### Debug Steps:
-1. Test GET endpoint first to verify webhook is accessible
-2. Check Make.com execution logs for detailed error messages
-3. Check Netlify deployment logs
-4. Monitor Netlify function logs for real-time debugging
-
-## 📊 Data Flow
-
-1. **Make.com** sends POST request to webhook
-2. **Webhook** validates incoming data
-3. **Webhook** stores data in Supabase `evaluation_scores` table
-4. **Database trigger** automatically updates `evaluation_sessions` table
-5. **App** displays evaluations in user's progress dashboard
-
-## ✅ **WEBHOOK STATUS: FULLY WORKING**
-
-### Recent Updates (August 30, 2025)
-- ✅ **MAJOR FIX**: Consolidated all deployment on Netlify (removed Vercel confusion)
-- ✅ Security fix: Removed hardcoded credentials
-- ✅ Fixed Netlify Functions configuration and dependencies
-- ✅ Database connection verified with Supabase
-- ✅ Full end-to-end testing completed successfully  
-- ✅ Evaluation data properly stored in `evaluation_scores` table
-- ✅ Session summaries automatically created in `evaluation_sessions` table
-- ✅ Proper error handling and validation implemented
-
-### Test Results
-```
-✅ GET endpoint: Working (returns status and documentation)
-✅ POST endpoint: Working (stores data successfully)
-✅ Database storage: Working (evaluation_scores table)
-✅ Session tracking: Working (evaluation_sessions table) 
-✅ Data validation: Working (proper error responses)
-✅ CORS headers: Working (Make.com compatible)
-✅ Netlify deployment: Fixed and configured properly
-```
-
-## 🎯 Next Steps
-
-After successful webhook integration:
-1. ✅ **COMPLETED**: Test webhook functionality locally and remotely
-2. Test with real Make.com scenarios  
-3. Monitor webhook logs in Netlify dashboard
-4. Set up alerts for failed webhook calls
-5. Consider adding webhook signature verification for additional security
+### Overview
+The subscription system has been updated to support **multiple active subscriptions** per user. The webhook code needs to be updated to use the new `upsert_subscription_from_webhook()` function instead of directly updating the `users` table.
 
 ---
 
-📧 **Need Help?** The webhook is fully functional. Check Netlify function logs for debugging or use the test endpoints above.
+## What Changed?
+
+### Before (OLD System)
+- Webhook directly updated `users` table
+- Only ONE subscription per user
+- Last webhook to fire would overwrite previous subscription
+- **Problem**: User could be downgraded if old subscription webhook fired
+
+### After (NEW System)
+- Webhook calls `upsert_subscription_from_webhook()` function
+- ALL subscriptions stored in `user_subscriptions` table
+- System automatically determines "primary" subscription
+- **Primary Selection Logic**:
+  1. Only active subscriptions (`active`, `on_trial`, `past_due`)
+  2. Highest tier wins (`unlimited` > `profi` > `basis`)
+  3. If same tier, most recently created wins
+
+---
+
+## Required Webhook Changes
+
+### Step 1: Update `subscription_created` Handler
+
+**NEW CODE** (replace existing handler in `api/webhook/lemonsqueezy/index.js`):
+```javascript
+case 'subscription_created':
+  console.log(`Creating subscription for user ${userId}`);
+
+  const { data: createResult, error: createError } = await supabase
+    .rpc('upsert_subscription_from_webhook', {
+      p_user_id: userId,
+      p_lemonsqueezy_subscription_id: subscriptionId,
+      p_tier: tier,
+      p_status: 'active',
+      p_variant_id: variantId,
+      p_variant_name: variantName || tierConfig.name,
+      p_customer_email: customerEmail,
+      p_simulation_limit: tier === 'unlimited' ? 999999 : (tierConfig.simulationLimit || null),
+      p_created_at: subscriptionData.created_at || new Date().toISOString(),
+      p_updated_at: new Date().toISOString(),
+      p_expires_at: subscriptionData.ends_at || null,
+      p_renews_at: subscriptionData.renews_at || null,
+      p_period_start: subscriptionData.current_period_start || new Date().toISOString(),
+      p_period_end: subscriptionData.current_period_end || subscriptionData.renews_at || null,
+      p_webhook_event: 'subscription_created'
+    });
+
+  if (createError) {
+    console.error('Error creating subscription:', createError);
+    await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', createError.message);
+    return res.status(500).json({ error: 'Failed to create subscription' });
+  }
+
+  console.log('Subscription created:', createResult);
+
+  // Check if this is now the primary subscription
+  const syncResult = createResult?.sync_result;
+  if (syncResult?.tier_changed) {
+    console.log(`✅ Tier changed from ${syncResult.old_tier} to ${syncResult.new_tier}, counter reset`);
+  }
+
+  await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+  console.log(`Subscription created successfully for user ${userId}`);
+  break;
+```
+
+### Step 2: Update `subscription_updated` Handler
+
+**NEW CODE**:
+```javascript
+case 'subscription_updated':
+  console.log(`Updating subscription ${subscriptionId} for user ${userId}`);
+
+  const { data: updateResult, error: updateError } = await supabase
+    .rpc('upsert_subscription_from_webhook', {
+      p_user_id: userId,
+      p_lemonsqueezy_subscription_id: subscriptionId,
+      p_tier: tier,
+      p_status: status,
+      p_variant_id: variantId,
+      p_variant_name: variantName || tierConfig.name,
+      p_customer_email: customerEmail,
+      p_simulation_limit: tier === 'unlimited' ? 999999 : (tierConfig.simulationLimit || null),
+      p_created_at: subscriptionData.created_at || new Date().toISOString(),
+      p_updated_at: new Date().toISOString(),
+      p_expires_at: subscriptionData.ends_at || null,
+      p_renews_at: subscriptionData.renews_at || null,
+      p_period_start: subscriptionData.current_period_start || new Date().toISOString(),
+      p_period_end: subscriptionData.current_period_end || subscriptionData.renews_at || null,
+      p_webhook_event: 'subscription_updated'
+    });
+
+  if (updateError) {
+    console.error('Error updating subscription:', updateError);
+    await logWebhookEvent(eventType, event, subscriptionId, userId, 'failed', updateError.message);
+    return res.status(500).json({ error: 'Failed to update subscription' });
+  }
+
+  console.log('Subscription updated:', updateResult);
+  await logWebhookEvent(eventType, event, subscriptionId, userId, 'processed');
+  break;
+```
+
+### Step 3: Apply to All Subscription Events
+
+The same pattern applies to:
+- `subscription_cancelled`
+- `subscription_expired`
+- `subscription_paused`
+- `subscription_resumed`
+- `subscription_payment_success`
+
+Just change the `p_status` and `p_webhook_event` parameters accordingly.
+
+---
+
+## Benefits
+
+✅ **Prevents downgrade bug**: User with Unlimited won't be downgraded by old Basis webhook
+✅ **Handles duplicates**: If user subscribes twice, highest tier is used
+✅ **Automatic tier management**: System determines primary subscription automatically
+✅ **Full audit trail**: All subscriptions tracked in `user_subscriptions` table
+✅ **Counter reset on upgrade**: Monthly counter automatically resets when tier changes
+
+---
+
+## Testing
+
+Run: `test_multiple_subscriptions.sql` for comprehensive tests
+
+---
+
+## Monitoring
+
+```sql
+-- Check users with multiple active subscriptions
+SELECT * FROM user_subscriptions_overview
+WHERE active_subscriptions > 1;
+```
+
+---
+
+## Migration Complete
+
+All existing subscriptions have been automatically migrated to the new `user_subscriptions` table.
