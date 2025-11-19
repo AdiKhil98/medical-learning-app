@@ -25,6 +25,11 @@ const SUBSCRIPTION_TIERS = {
 
 // Helper function to verify webhook signature
 function verifyWebhookSignature(payload, signature, secret) {
+  if (!payload || !signature || !secret) {
+    console.error('Missing required parameters for signature verification');
+    return false;
+  }
+
   const hmac = crypto.createHmac('sha256', secret);
   hmac.update(payload, 'utf8');
   const expectedSignature = hmac.digest('hex');
@@ -32,10 +37,26 @@ function verifyWebhookSignature(payload, signature, secret) {
   // Remove 'sha256=' prefix if present
   const cleanSignature = signature.replace(/^sha256=/, '');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'hex'),
-    Buffer.from(cleanSignature, 'hex')
-  );
+  // SECURITY FIX: Validate signature format (must be 64 hex characters for SHA-256)
+  if (!/^[a-f0-9]{64}$/i.test(cleanSignature)) {
+    console.error('Invalid signature format - not 64 hex characters:', cleanSignature.length);
+    return false;
+  }
+
+  if (!/^[a-f0-9]{64}$/i.test(expectedSignature)) {
+    console.error('Invalid expected signature format');
+    return false;
+  }
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'hex'),
+      Buffer.from(cleanSignature, 'hex')
+    );
+  } catch (error) {
+    console.error('Error comparing signatures:', error);
+    return false;
+  }
 }
 
 // Helper function to determine subscription tier from variant name or ID
@@ -222,10 +243,17 @@ async function handleWebhook(req, res) {
   }
 
   try {
-    // Get the raw body and signature
-    const payload = JSON.stringify(req.body);
+    // SECURITY FIX: Use raw body for signature verification if available
+    // This ensures the exact bytes sent by LemonSqueezy are used for verification
+    // req.rawBody is set by Vercel/Next.js when bodyParser is disabled
+    const payload = req.rawBody
+      ? (typeof req.rawBody === 'string' ? req.rawBody : req.rawBody.toString('utf8'))
+      : JSON.stringify(req.body);
+
     const signature = req.headers['x-signature'];
     const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+
+    console.log('Webhook payload type:', req.rawBody ? 'raw' : 'stringified');
 
     if (!webhookSecret) {
       console.error('LEMONSQUEEZY_WEBHOOK_SECRET not configured');

@@ -25,6 +25,9 @@ export interface SimulationUsageLog {
  */
 class SimulationTrackingService {
 
+  // Default timeout for RPC calls (10 seconds)
+  private readonly RPC_TIMEOUT_MS = 10000;
+
   /**
    * Generate unique session token
    */
@@ -32,6 +35,28 @@ class SimulationTrackingService {
     const timestamp = Date.now().toString(36);
     const randomPart = Math.random().toString(36).substr(2, 9);
     return `sim_${timestamp}_${randomPart}`;
+  }
+
+  /**
+   * Wrap a promise with a timeout to prevent UI hangs
+   */
+  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number = this.RPC_TIMEOUT_MS): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`RPC timeout after ${timeoutMs}ms`)), timeoutMs)
+      )
+    ]);
+  }
+
+  /**
+   * Validate session token format
+   */
+  private isValidSessionToken(token: string): boolean {
+    if (!token || typeof token !== 'string' || token.length < 10) {
+      return false;
+    }
+    return /^sim_[a-zA-Z0-9_]+$/.test(token);
   }
 
   /**
@@ -89,11 +114,13 @@ class SimulationTrackingService {
         p_session_token: sessionToken
       });
 
-      const { data, error } = await supabase.rpc('start_simulation_session', {
-        p_user_id: user.id,
-        p_simulation_type: simulationType,
-        p_session_token: sessionToken
-      });
+      const { data, error } = await this.withTimeout(
+        supabase.rpc('start_simulation_session', {
+          p_user_id: user.id,
+          p_simulation_type: simulationType,
+          p_session_token: sessionToken
+        })
+      );
 
       console.log('📥 RPC response:', { data, error });
 
@@ -230,18 +257,42 @@ class SimulationTrackingService {
    */
   async getSimulationStatus(sessionToken: string): Promise<SimulationUsageLog | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      // SECURITY FIX: Validate session token format
+      if (!this.isValidSessionToken(sessionToken)) {
+        console.error('❌ Invalid session token format');
+        return null;
+      }
 
-      const { data, error } = await supabase
-        .from('simulation_usage_logs')
-        .select('*')
-        .eq('session_token', sessionToken)
-        .eq('user_id', user.id)
-        .single();
+      // SECURITY FIX: Better auth validation
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError) {
+        console.error('❌ Auth error in getSimulationStatus:', authError.message);
+        return null;
+      }
+
+      if (!user || !user.id) {
+        console.error('❌ Not authenticated or missing user ID');
+        return null;
+      }
+
+      const { data, error } = await this.withTimeout(
+        supabase
+          .from('simulation_usage_logs')
+          .select('*')
+          .eq('session_token', sessionToken)
+          .eq('user_id', user.id)
+          .single()
+      );
 
       if (error) {
         console.error('❌ Error fetching simulation status:', error);
+        return null;
+      }
+
+      // Verify the returned data belongs to the authenticated user
+      if (data && data.user_id !== user.id) {
+        console.error('❌ Security violation: returned data does not belong to user');
         return null;
       }
 
