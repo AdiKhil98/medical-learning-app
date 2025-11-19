@@ -9,6 +9,7 @@ type AuthContextType = {
   session: Session | null;
   user: any | null;
   loading: boolean;
+  isEmailVerified: boolean; // SECURITY: Email verification status
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -465,7 +466,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{
+      session,
+      user,
+      loading,
+      // SECURITY FIX: Check email_confirmed_at to determine verification status
+      isEmailVerified: !!session?.user?.email_confirmed_at,
+      signIn,
+      signUp,
+      signOut
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,14 +11,12 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export default function TabLayout() {
   const { colors, isDarkMode } = useTheme();
-  const { session, loading } = useAuth();
+  const { session, loading, isEmailVerified } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Initialize session timeout monitoring for authenticated screens
+  // Uses default 30-minute timeout from hook (HIPAA compliant)
   const { triggerActivity } = useSessionTimeout({
-    timeoutDuration: 3 * 60 * 60 * 1000, // 3 hours (180 minutes)
-    warningDuration: 5 * 60 * 1000,  // 5 minutes warning (extended for longer session)
-    activityUpdateInterval: 15 * 60 * 1000, // 15 minutes database updates (reduced frequency)
     enabled: true,
   });
 
@@ -37,6 +35,23 @@ export default function TabLayout() {
   // If no session, redirect to login
   if (!session) {
     return <Redirect href="/auth/login" />;
+  }
+
+  // SECURITY FIX: Enforce email verification before app access
+  if (!isEmailVerified) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: 24 }}>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: 16, textAlign: 'center' }}>
+          E-Mail-Bestätigung erforderlich
+        </Text>
+        <Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 24 }}>
+          Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
+          Überprüfen Sie auch Ihren Spam-Ordner.
+        </Text>
+      </View>
+    );
   }
 
   return (
