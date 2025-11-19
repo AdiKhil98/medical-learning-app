@@ -108,7 +108,8 @@ class SimulationTrackingService {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !refreshData.session) {
           console.error('❌ Session refresh failed:', refreshError);
-          return { success: false, error: 'Session expired - please log in again' };
+          // ISSUE #18 FIX: Standardize to German
+          return { success: false, error: 'Sitzung abgelaufen - bitte erneut anmelden' };
         }
         console.log('✅ Session refreshed successfully');
       }
@@ -122,7 +123,8 @@ class SimulationTrackingService {
       });
 
       if (!user) {
-        return { success: false, error: 'Not authenticated' };
+        // ISSUE #18 FIX: Standardize to German
+        return { success: false, error: 'Nicht angemeldet' };
       }
 
       const sessionToken = this.generateSessionToken();
@@ -166,7 +168,8 @@ class SimulationTrackingService {
       if (!data.success) {
         console.error('❌ Failed to start session:', data);
         console.error('❌ Function returned error:', data.error);
-        return { success: false, error: data.error || 'Unknown error' };
+        // ISSUE #18 FIX: Standardize to German
+        return { success: false, error: data.error || 'Unbekannter Fehler' };
       }
 
       console.log('✅ Simulation started:', data);
@@ -174,7 +177,8 @@ class SimulationTrackingService {
 
     } catch (error: any) {
       console.error('❌ Exception in startSimulation:', error);
-      return { success: false, error: error.message || 'System error' };
+      // ISSUE #18 FIX: Standardize to German
+      return { success: false, error: error.message || 'Systemfehler' };
     }
   }
 
@@ -190,9 +194,16 @@ class SimulationTrackingService {
     try {
       console.log('✓ Marking simulation as counted:', sessionToken);
 
+      // ISSUE #19 FIX: Validate session token format
+      if (!this.isValidSessionToken(sessionToken)) {
+        console.error('❌ Invalid session token format in markSimulationCounted');
+        return { success: false, error: 'Ungültiges Sitzungstoken' };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        return { success: false, error: 'Not authenticated' };
+        // ISSUE #18 FIX: Standardize to German
+        return { success: false, error: 'Nicht angemeldet' };
       }
 
       // Call database function - it handles validation and counter increment
@@ -210,7 +221,8 @@ class SimulationTrackingService {
         console.error('❌ Failed to mark as counted:', data);
         return {
           success: false,
-          error: data.error || 'Validation failed',
+          // ISSUE #18 FIX: Standardize to German
+          error: data.error || 'Validierung fehlgeschlagen',
           alreadyCounted: data.already_counted
         };
       }
@@ -225,7 +237,8 @@ class SimulationTrackingService {
 
     } catch (error: any) {
       console.error('❌ Exception in markSimulationCounted:', error);
-      return { success: false, error: error.message || 'System error' };
+      // ISSUE #18 FIX: Standardize to German
+      return { success: false, error: error.message || 'Systemfehler' };
     }
   }
 
@@ -243,9 +256,16 @@ class SimulationTrackingService {
     try {
       console.log('🏁 Ending simulation:', sessionToken);
 
+      // ISSUE #19 FIX: Validate session token format
+      if (!this.isValidSessionToken(sessionToken)) {
+        console.error('❌ Invalid session token format in endSimulation');
+        return { success: false, error: 'Ungültiges Sitzungstoken' };
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        return { success: false, error: 'Not authenticated' };
+        // ISSUE #18 FIX: Standardize to German
+        return { success: false, error: 'Nicht angemeldet' };
       }
 
       // Call database function to end session
@@ -261,7 +281,8 @@ class SimulationTrackingService {
 
       if (!data.success) {
         console.error('❌ Failed to end session:', data);
-        return { success: false, error: data.error || 'Unknown error' };
+        // ISSUE #18 FIX: Standardize to German
+        return { success: false, error: data.error || 'Unbekannter Fehler' };
       }
 
       console.log('✅ Simulation ended:', data);
@@ -276,7 +297,8 @@ class SimulationTrackingService {
 
     } catch (error: any) {
       console.error('❌ Exception in endSimulation:', error);
-      return { success: false, error: error.message || 'System error' };
+      // ISSUE #18 FIX: Standardize to German
+      return { success: false, error: error.message || 'Systemfehler' };
     }
   }
 

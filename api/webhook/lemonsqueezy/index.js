@@ -120,13 +120,14 @@ async function findUserByEmail(email) {
     return null;
   }
 
-  // Normalize email to lowercase
-  const normalizedEmail = email.toLowerCase().trim();
+  // ISSUE #17 FIX: Trim whitespace only, use ilike for case-insensitive search
+  // This avoids redundant normalization since ilike handles case sensitivity
+  const trimmedEmail = email.trim();
 
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .ilike('email', normalizedEmail) // Case-insensitive search
+    .ilike('email', trimmedEmail) // Case-insensitive search handles casing
     .single();
 
   if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -135,7 +136,7 @@ async function findUserByEmail(email) {
   }
 
   if (!data) {
-    console.warn(`User not found for email: ${normalizedEmail}`);
+    console.warn(`User not found for email: ${trimmedEmail}`);
   }
 
   return data;

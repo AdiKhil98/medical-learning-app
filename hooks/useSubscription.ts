@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface SubscriptionStatus {
@@ -19,6 +19,9 @@ export const useSubscription = (userId: string | undefined) => {
   // Optimistic counter state
   const [optimisticDeduction, setOptimisticDeduction] = useState<number>(0);
   const [hasOptimisticState, setHasOptimisticState] = useState<boolean>(false);
+
+  // ISSUE #10 FIX: Use ref to store latest checkAccess to avoid dependency issues
+  const checkAccessRef = useRef<() => Promise<SubscriptionStatus>>();
 
   /**
    * Check if user can start a simulation - STRICT ACCESS CONTROL
@@ -253,6 +256,11 @@ export const useSubscription = (userId: string | undefined) => {
     }
   }, [userId]);
 
+  // ISSUE #10 FIX: Keep ref updated with latest checkAccess
+  useEffect(() => {
+    checkAccessRef.current = checkAccess;
+  }, [checkAccess]);
+
   /**
    * Record simulation usage
    */
@@ -401,6 +409,7 @@ export const useSubscription = (userId: string | undefined) => {
   }, [userId, checkAccess]);
 
   // Real-time subscription to usage changes
+  // ISSUE #10 FIX: Only depend on userId, use ref for checkAccess to prevent duplicate subscriptions
   useEffect(() => {
     if (!userId) return;
 
@@ -420,8 +429,10 @@ export const useSubscription = (userId: string | undefined) => {
         (payload) => {
           console.log('[Real-time] Usage update detected:', payload);
 
-          // Re-check access when usage changes
-          checkAccess();
+          // Re-check access when usage changes (use ref to get latest function)
+          if (checkAccessRef.current) {
+            checkAccessRef.current();
+          }
         }
       )
       .subscribe((status) => {
@@ -438,7 +449,7 @@ export const useSubscription = (userId: string | undefined) => {
         console.error('[Real-time] Error during unsubscribe:', error);
       }
     };
-  }, [userId, checkAccess]);
+  }, [userId]); // Only userId - checkAccess accessed via ref
 
   return {
     subscriptionStatus,
