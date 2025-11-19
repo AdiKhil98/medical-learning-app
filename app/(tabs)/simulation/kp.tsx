@@ -1303,22 +1303,6 @@ export default function KPSimulationScreen() {
     }, 500);
   };
 
-  // Clear simulation localStorage
-  const clearSimulationStorage = () => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem('sim_start_time_kp');
-        localStorage.removeItem('sim_end_time_kp');
-        localStorage.removeItem('sim_session_token_kp');
-        localStorage.removeItem('sim_duration_ms_kp');
-        localStorage.removeItem('sim_user_id_kp');
-        console.log('✅ KP: Cleared simulation localStorage');
-      }
-    } catch (error) {
-      console.error('❌ KP: Error clearing localStorage:', error);
-    }
-  };
-
   // ============================================
   // CENTRALIZED VOICEFLOW WIDGET CLEANUP
   // ============================================
