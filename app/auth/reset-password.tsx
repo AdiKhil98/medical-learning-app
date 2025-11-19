@@ -30,28 +30,63 @@ export default function ResetPassword() {
   const params = useLocalSearchParams();
 
   useEffect(() => {
-    // Check if we have the necessary parameters from the email link
-    const { access_token, refresh_token } = params;
-    
-    if (access_token && refresh_token) {
-      // Set the session with the tokens from the email link
-      supabase.auth.setSession({
-        access_token: access_token as string,
-        refresh_token: refresh_token as string
-      }).catch(error => {
-        // Error setting session
+    // SECURITY FIX: Properly handle password reset tokens
+    const handleTokens = async () => {
+      const { access_token, refresh_token, type, error: urlError, error_description } = params;
+
+      // Check for errors in URL params (from Supabase)
+      if (urlError) {
         Alert.alert(
           'Fehler',
-          'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.',
-          [
-            {
-              text: 'Zurück zur Anmeldung',
-              onPress: () => router.replace('/auth/login'),
-            },
-          ]
+          error_description as string || 'Der Reset-Link ist ungültig oder abgelaufen.',
+          [{ text: 'Zurück zur Anmeldung', onPress: () => router.replace('/auth/login') }]
         );
-      });
-    }
+        return;
+      }
+
+      // Validate token format before using (basic JWT format check)
+      const isValidToken = (token: string | string[] | undefined): boolean => {
+        if (!token || typeof token !== 'string') return false;
+        // JWT should have 3 parts separated by dots
+        const parts = token.split('.');
+        return parts.length === 3 && parts.every(part => part.length > 0);
+      };
+
+      if (access_token && refresh_token) {
+        // Validate token formats
+        if (!isValidToken(access_token) || !isValidToken(refresh_token)) {
+          Alert.alert(
+            'Fehler',
+            'Ungültiges Token-Format. Bitte fordern Sie einen neuen Reset-Link an.',
+            [{ text: 'Zurück zur Anmeldung', onPress: () => router.replace('/auth/login') }]
+          );
+          return;
+        }
+
+        try {
+          // Set the session with validated tokens
+          const { error } = await supabase.auth.setSession({
+            access_token: access_token as string,
+            refresh_token: refresh_token as string
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          // SECURITY: Clear sensitive params from memory
+          // Note: Can't clear URL params in React Native, but avoid logging them
+        } catch (error: any) {
+          Alert.alert(
+            'Fehler',
+            'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.',
+            [{ text: 'Zurück zur Anmeldung', onPress: () => router.replace('/auth/login') }]
+          );
+        }
+      }
+    };
+
+    handleTokens();
   }, [params, router]);
 
   const handleResetPassword = async () => {

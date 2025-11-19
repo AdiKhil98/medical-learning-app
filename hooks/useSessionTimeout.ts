@@ -5,17 +5,18 @@ import { supabase } from '@/lib/supabase';
 import { SecureLogger } from '@/lib/security';
 
 interface UseSessionTimeoutOptions {
-  timeoutDuration?: number; // in milliseconds, default 3 hours
+  timeoutDuration?: number; // in milliseconds, default 30 minutes (HIPAA compliant)
   warningDuration?: number; // warning time before timeout, default 5 minutes
-  activityUpdateInterval?: number; // database update interval, default 15 minutes
+  activityUpdateInterval?: number; // database update interval, default 10 minutes
   enabled?: boolean; // whether session timeout is enabled, default true
 }
 
 export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
   const {
-    timeoutDuration = 3 * 60 * 60 * 1000, // 3 hours (updated default)
-    warningDuration = 5 * 60 * 1000, // 5 minutes (updated default)
-    activityUpdateInterval = 15 * 60 * 1000, // 15 minutes (updated default)
+    // SECURITY FIX: Reduced timeout for medical app compliance (HIPAA)
+    timeoutDuration = 30 * 60 * 1000, // 30 minutes (medical compliance)
+    warningDuration = 5 * 60 * 1000, // 5 minutes warning
+    activityUpdateInterval = 10 * 60 * 1000, // 10 minutes
     enabled = true,
   } = options;
 

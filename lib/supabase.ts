@@ -3,29 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { SecureLogger } from './security';
 
-// Load configuration from environment variables with fallback for web deployment
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+// SECURITY FIX: Load configuration from environment variables only - no hardcoded fallbacks
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
-  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_URL) ||
-  'https://pavjavrijaihnwbydfrk.supabase.co'; // Temporary fallback for web deployment
-  
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
-  process.env.SUPABASE_ANON_KEY ||
-  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhdmphdnJpamFpaG53YnlkZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUxNDM4NjYsImV4cCI6MjA2MDcxOTg2Nn0.4VrlhzIdV6F8cypZlVuYwE61GspATdFcjh0ebViOHIs'; // Fallback
+  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_URL);
 
-// Debug logging for browser console
-console.log('🔍 SUPABASE CONFIG DEBUG:', {
-  url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
-  keyLength: supabaseAnonKey ? supabaseAnonKey.length : 0,
-  platform: Platform.OS,
-  envVars: {
-    EXPO_PUBLIC_SUPABASE_URL: !!process.env.EXPO_PUBLIC_SUPABASE_URL,
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    SUPABASE_URL: !!process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY
-  }
-});
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_SUPABASE_ANON_KEY);
+
+// SECURITY FIX: Remove debug logging that could expose configuration details
 
 SecureLogger.log('Supabase configuration loaded', {
   hasUrl: !!supabaseUrl,

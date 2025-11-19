@@ -85,18 +85,21 @@ export default function Login() {
       setEmail('');
       setPassword('');
     } catch (error: any) {
-      if (error.message?.includes('Invalid login credentials')) {
-        setLoginError('E-Mail-Adresse oder Passwort ist falsch. Bitte überprüfen Sie Ihre Eingaben.');
-      } else if (error.message?.includes('Email not confirmed')) {
-        setLoginError('Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.');
+      // SECURITY FIX: Use generic messages to prevent user enumeration
+      // Don't reveal whether email exists or is confirmed
+      if (error.message?.includes('Invalid login credentials') ||
+          error.message?.includes('Email not confirmed')) {
+        // Generic message for both invalid credentials AND unconfirmed email
+        // This prevents attackers from knowing if an email exists
+        setLoginError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten oder bestätigen Sie Ihre E-Mail-Adresse.');
       } else if (error.message?.includes('Too many requests')) {
-        setLoginError('Sie haben zu oft versucht, sich anzumelden. Bitte warten Sie einen Moment.');
+        setLoginError('Zu viele Anmeldeversuche. Bitte warten Sie einen Moment.');
       } else if (error.message?.includes('Account locked')) {
-        setLoginError('Ihr Konto wurde temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
+        setLoginError('Konto temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
       } else if (error.message?.includes('Network')) {
-        setLoginError('Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
+        setLoginError('Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.');
       } else {
-        setLoginError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+        setLoginError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es später erneut.');
       }
     } finally {
       setLoading(false);
