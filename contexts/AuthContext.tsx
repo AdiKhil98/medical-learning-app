@@ -267,16 +267,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(`Too many failed attempts. Account locked until ${lockoutEndsAt.toLocaleTimeString()}`);
       }
       
-      // Check server-side account lock
+      // SECURITY FIX: Check server-side rate limiting
       const serverLockStartTime = performance.now();
       try {
-        const { data: isLocked } = await supabase.rpc('check_account_lock', { email_input: email });
-        if (isLocked) {
-          throw new Error('Account locked. Try again in 30 minutes');
+        const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_login_rate_limit', {
+          p_email: email,
+          p_ip_address: null // IP not available in client
+        });
+
+        if (rateLimitError) {
+          SecureLogger.warn('Rate limit check error:', rateLimitError);
+        } else if (rateLimitResult && !rateLimitResult.allowed) {
+          throw new Error(rateLimitResult.message || 'Konto temporär gesperrt. Versuchen Sie es später erneut.');
+        } else if (rateLimitResult?.message) {
+          // Show warning about remaining attempts
+          SecureLogger.warn(rateLimitResult.message);
         }
-      } catch (rpcError) {
-        // If RPC doesn't exist, continue with login (backwards compatibility)
-        SecureLogger.log('Account lock check RPC not available, continuing');
+      } catch (rpcError: any) {
+        // If rate limit check fails with a lockout message, throw it
+        if (rpcError.message?.includes('gesperrt') || rpcError.message?.includes('locked')) {
+          throw rpcError;
+        }
+        // Otherwise continue with login (backwards compatibility)
+        SecureLogger.log('Rate limit check RPC not available, continuing');
       }
       
       // Actual Supabase authentication
@@ -286,18 +299,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         SecureLogger.warn('Sign in failed');
-        // Record failed attempt
+        // Record failed attempt (client-side)
         const failedAttemptStartTime = performance.now();
         await RateLimiter.recordFailedAttempt(email);
-        
-        // Also record on server if RPC exists
+
+        // SECURITY FIX: Record failed attempt on server
         const serverFailedStartTime = performance.now();
         try {
-          await supabase.rpc('increment_failed_login', { email_input: email });
+          await supabase.rpc('record_login_attempt', {
+            p_email: email,
+            p_success: false,
+            p_ip_address: null,
+            p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
+          });
         } catch (rpcError) {
-          SecureLogger.log('Failed login RPC not available');
+          SecureLogger.log('Record login attempt RPC not available');
         }
-        
+
         // Log failed login audit event
         const auditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_failed', undefined, { email, error: error.message });
@@ -306,23 +324,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data.user) {
         SecureLogger.log('Sign in successful');
-        
-        // Clear failed attempts on success
+
+        // Clear failed attempts on success (client-side)
         const clearAttemptsStartTime = performance.now();
         await RateLimiter.clearAttempts(email);
-        
-        // Also clear on server if RPC exists
+
+        // SECURITY FIX: Record successful login on server
         const serverClearStartTime = performance.now();
         try {
-          await supabase.rpc('reset_failed_login', { user_id_input: data.user.id });
+          await supabase.rpc('record_login_attempt', {
+            p_email: email,
+            p_success: true,
+            p_ip_address: null,
+            p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null
+          });
         } catch (rpcError) {
-          SecureLogger.log('Reset failed login RPC not available');
+          SecureLogger.log('Record login attempt RPC not available');
         }
-        
+
         // Update activity for session timeout
         const sessionTimeoutStartTime = performance.now();
         await SessionTimeoutManager.updateLastActivity();
-        
+
         // Log successful login audit event
         const successAuditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_success', data.user.id, { email });
@@ -345,11 +368,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Please enter a valid email address');
       }
       
-      // Validate password strength
+      // Validate password strength (client-side)
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.isValid) {
         const errorMessage = `Password requirements not met:\n${passwordValidation.errors.join('\n')}`;
         throw new Error(errorMessage);
+      }
+
+      // SECURITY FIX: Also validate password on server-side
+      try {
+        const { data: serverValidation, error: validationError } = await supabase.rpc('validate_password_strength', {
+          p_password: password
+        });
+
+        if (validationError) {
+          SecureLogger.warn('Server-side password validation error:', validationError);
+        } else if (serverValidation && !serverValidation.is_valid) {
+          const serverErrors = serverValidation.errors?.join('\n') || 'Password does not meet requirements';
+          throw new Error(serverErrors);
+        }
+      } catch (rpcError: any) {
+        // If server validation fails with specific errors, throw them
+        if (rpcError.message && !rpcError.message.includes('RPC')) {
+          throw rpcError;
+        }
+        // Otherwise continue (backwards compatibility)
+        SecureLogger.log('Server-side password validation not available');
       }
       
       // Validate name
