@@ -21,8 +21,25 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png",
+      "name": "KP Med - Medizinische Prüfungsvorbereitung",
+      "shortName": "KP Med",
+      "description": "Professionelle Vorbereitung für die Kenntnisprüfung (KP) und Fachsprachprüfung (FSP) für internationale Ärzte in Deutschland. Interaktive Simulationen und Lernmaterialien.",
+      "lang": "de",
+      "themeColor": "#D4A574",
+      "backgroundColor": "#F8FAFC",
       "meta": {
-        "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        "viewport": "width=device-width, initial-scale=1.0, maximum-scale=5.0",
+        "theme-color": "#D4A574",
+        "apple-mobile-web-app-capable": "yes",
+        "apple-mobile-web-app-status-bar-style": "default",
+        "og:type": "website",
+        "og:site_name": "KP Med",
+        "og:title": "KP Med - Medizinische Prüfungsvorbereitung für Ärzte",
+        "og:description": "Professionelle Vorbereitung für KP und FSP Prüfungen. Interaktive Simulationen für internationale Ärzte in Deutschland.",
+        "og:locale": "de_DE",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "KP Med - Medizinische Prüfungsvorbereitung",
+        "twitter:description": "Professionelle Vorbereitung für KP und FSP Prüfungen für internationale Ärzte."
       }
     },
     "plugins": [

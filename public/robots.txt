@@ -1,0 +1,40 @@
+# robots.txt for KP Med - Medical Learning Application
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow authentication and admin pages
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /api/
+
+# Disallow user-specific content
+Disallow: /progress/
+Disallow: /simulation/results/
+
+# Sitemap location
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /api/
+
+# Block bad bots (optional)
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
