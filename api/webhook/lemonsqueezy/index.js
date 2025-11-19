@@ -59,16 +59,31 @@ function verifyWebhookSignature(payload, signature, secret) {
   }
 }
 
+// Valid subscription tiers
+const VALID_TIERS = ['basis', 'profi', 'unlimited'];
+
+// Helper function to validate tier value
+function isValidTier(tier) {
+  return VALID_TIERS.includes(tier);
+}
+
 // Helper function to determine subscription tier from variant name or ID
 function determineSubscriptionTier(variantName, variantId) {
   const name = variantName?.toLowerCase() || '';
 
+  let tier = null;
+
   if (name.includes('basis') || name.includes('basic')) {
-    return 'basis';
+    tier = 'basis';
   } else if (name.includes('profi') || name.includes('pro')) {
-    return 'profi';
+    tier = 'profi';
   } else if (name.includes('unlimited') || name.includes('premium')) {
-    return 'unlimited';
+    tier = 'unlimited';
+  }
+
+  // Validate the determined tier
+  if (tier && isValidTier(tier)) {
+    return tier;
   }
 
   // Fallback based on variant ID or default
@@ -175,6 +190,12 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
 
 // NEW: Helper function to upsert subscription using the multi-subscription system
 async function upsertSubscription(userId, subscriptionId, tier, status, variantId, variantName, customerEmail, tierConfig, subscriptionData, webhookEvent, retries = 3) {
+  // ISSUE #14 FIX: Validate tier before database operation
+  if (!isValidTier(tier)) {
+    console.error(`❌ Invalid tier value: ${tier}. Must be one of: ${VALID_TIERS.join(', ')}`);
+    throw new Error(`Invalid subscription tier: ${tier}`);
+  }
+
   let lastError = null;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
