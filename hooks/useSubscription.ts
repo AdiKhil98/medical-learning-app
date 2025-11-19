@@ -406,7 +406,12 @@ export const useSubscription = (userId: string | undefined) => {
     // Cleanup subscription on unmount
     return () => {
       console.log('[Real-time] Cleaning up subscription listener');
-      subscription.unsubscribe();
+      try {
+        const result = subscription.unsubscribe();
+        console.log('[Real-time] Unsubscribe completed:', result);
+      } catch (error) {
+        console.error('[Real-time] Error during unsubscribe:', error);
+      }
     };
   }, [userId, checkAccess]);
 

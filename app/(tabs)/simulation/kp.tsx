@@ -392,12 +392,16 @@ export default function KPSimulationScreen() {
   const setupConversationMonitoring = () => {
     console.log('🔍 KP: Setting up passive microphone detection...');
 
+    // MEMORY LEAK FIX: Track listeners for cleanup
+    const trackListeners: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
+    (window as any).kpTrackListeners = trackListeners;
+
     // Method 1: Monitor for MediaStream creation and termination
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
       navigator.mediaDevices.getUserMedia = async function(constraints) {
         console.log('🎤 KP: MediaStream requested with constraints:', constraints);
-        
+
         if (constraints?.audio) {
           try {
             const stream = await originalGetUserMedia.call(this, constraints);
@@ -416,17 +420,15 @@ export default function KPSimulationScreen() {
             const audioTracks = stream.getAudioTracks();
             audioTracks.forEach((track, index) => {
               console.log(`🎤 KP: Monitoring audio track ${index + 1}`);
-              
-              track.addEventListener('ended', () => {
+
+              // Create handler and store for cleanup
+              const endedHandler = () => {
                 console.log(`🔇 KP: Audio track ${index + 1} ended - but NOT stopping timer`);
                 console.log(`ℹ️ KP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
+              };
 
-                // DO NOT automatically stop the timer!
-                // The user should control when the simulation ends via:
-                // 1. "Ich bin fertig" button
-                // 2. 20-minute timer expiration
-                // 3. Manual navigation away from page
-              });
+              track.addEventListener('ended', endedHandler);
+              trackListeners.push({ track, handler: endedHandler });
 
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
@@ -434,9 +436,6 @@ export default function KPSimulationScreen() {
                 console.log(`🔇 KP: Audio track ${index + 1} stopped manually - but NOT stopping timer`);
                 console.log(`ℹ️ KP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
                 originalStop();
-
-                // DO NOT automatically stop the timer!
-                // Let the timer run until user explicitly ends the simulation
               };
             });
 
@@ -446,7 +445,7 @@ export default function KPSimulationScreen() {
             throw error;
           }
         }
-        
+
         return originalGetUserMedia.call(this, constraints);
       };
     }
@@ -1012,6 +1011,21 @@ export default function KPSimulationScreen() {
       if ((window as any).kpClickListener) {
         document.removeEventListener('click', (window as any).kpClickListener, true);
         delete (window as any).kpClickListener;
+      }
+
+      // MEMORY LEAK FIX: Clean up tracked audio track listeners
+      if ((window as any).kpTrackListeners) {
+        const trackListeners = (window as any).kpTrackListeners;
+        trackListeners.forEach(({ track, handler }: { track: MediaStreamTrack; handler: () => void }) => {
+          try {
+            track.removeEventListener('ended', handler);
+            console.log('🧹 KP: Removed track event listener');
+          } catch (error) {
+            console.warn('⚠️ KP: Error removing track listener:', error);
+          }
+        });
+        trackListeners.length = 0; // Clear the array
+        delete (window as any).kpTrackListeners;
       }
 
       // Restore original getUserMedia function

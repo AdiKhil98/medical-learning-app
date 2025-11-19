@@ -13,11 +13,26 @@ export function useSimulationTimer({ isActive, onTimeUp }: UseSimulationTimerPro
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Track if component is still mounted to prevent state updates after unmount
+    let isMounted = true;
+
     if (isActive && timeRemaining > 0) {
+      // Clear any existing interval before creating new one (prevent duplicates)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
       intervalRef.current = setInterval(() => {
+        if (!isMounted) return; // Don't update if unmounted
+
         setTimeRemaining(prev => {
           if (prev <= 1) {
             // Time's up!
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
             handleTimeUp();
             return 0;
           }
@@ -32,8 +47,10 @@ export function useSimulationTimer({ isActive, onTimeUp }: UseSimulationTimerPro
     }
 
     return () => {
+      isMounted = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null; // MEMORY LEAK FIX: Set to null after clearing
       }
     };
   }, [isActive, timeRemaining]);
