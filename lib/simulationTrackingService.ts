@@ -60,6 +60,27 @@ class SimulationTrackingService {
   }
 
   /**
+   * ISSUE #9 FIX: Validate RPC response structure
+   */
+  private validateRpcResponse(data: any, requiredFields: string[] = ['success']): { valid: boolean; error?: string } {
+    if (data === null || data === undefined) {
+      return { valid: false, error: 'RPC returned null or undefined' };
+    }
+
+    if (typeof data !== 'object') {
+      return { valid: false, error: `RPC returned invalid type: ${typeof data}` };
+    }
+
+    for (const field of requiredFields) {
+      if (!(field in data)) {
+        return { valid: false, error: `Missing required field in response: ${field}` };
+      }
+    }
+
+    return { valid: true };
+  }
+
+  /**
    * Start a new simulation session
    * Simply creates a database row with started_at timestamp
    */
@@ -135,10 +156,17 @@ class SimulationTrackingService {
         return { success: false, error: error.message };
       }
 
-      if (!data || !data.success) {
+      // ISSUE #9 FIX: Validate RPC response structure
+      const validation = this.validateRpcResponse(data, ['success']);
+      if (!validation.valid) {
+        console.error('❌ Invalid RPC response:', validation.error);
+        return { success: false, error: validation.error };
+      }
+
+      if (!data.success) {
         console.error('❌ Failed to start session:', data);
-        console.error('❌ Function returned error:', data?.error);
-        return { success: false, error: data?.error || 'Unknown error' };
+        console.error('❌ Function returned error:', data.error);
+        return { success: false, error: data.error || 'Unknown error' };
       }
 
       console.log('✅ Simulation started:', data);

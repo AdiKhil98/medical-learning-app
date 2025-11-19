@@ -86,6 +86,31 @@ export const useSubscription = (userId: string | undefined) => {
         };
       }
 
+      // ISSUE #20 FIX: Validate required fields exist in user object
+      const requiredFields = [
+        'subscription_tier',
+        'subscription_status',
+        'simulation_limit',
+        'simulations_used_this_month',
+        'free_simulations_used'
+      ];
+
+      for (const field of requiredFields) {
+        if (!(field in user)) {
+          console.error(`[Access Control] Missing required field: ${field}`);
+          setError('Unvollständige Benutzerdaten');
+          return {
+            canUseSimulation: false,
+            simulationsUsed: 0,
+            simulationLimit: 0,
+            subscriptionTier: null,
+            message: 'Unvollständige Benutzerdaten - bitte Support kontaktieren',
+            shouldUpgrade: false,
+            remainingSimulations: 0
+          };
+        }
+      }
+
       console.log('[Access Control] User data:', {
         tier: user.subscription_tier,
         status: user.subscription_status,

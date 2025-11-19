@@ -66,6 +66,22 @@ export default function KPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
+  // ISSUE #15 FIX: Helper to clear simulation localStorage on error
+  const clearSimulationStorage = () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('sim_start_time_kp');
+        localStorage.removeItem('sim_end_time_kp');
+        localStorage.removeItem('sim_session_token_kp');
+        localStorage.removeItem('sim_duration_ms_kp');
+        localStorage.removeItem('sim_user_id_kp');
+        console.log('🧹 KP: Cleared simulation localStorage');
+      }
+    } catch (error) {
+      console.error('Error clearing simulation localStorage:', error);
+    }
+  };
+
   // Reset optimistic count on page mount/refresh to show actual backend count
   useEffect(() => {
     console.log('[Mount] Resetting optimistic count to show actual backend data...');
@@ -357,6 +373,9 @@ export default function KPSimulationScreen() {
         // If this was the last attempt, show error to user
         if (attempt === maxRetryAttempts) {
           console.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
+
+          // ISSUE #15 FIX: Clear localStorage on initialization failure
+          clearSimulationStorage();
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
