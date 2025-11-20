@@ -10,6 +10,8 @@ export interface MedicalContent {
   id: string;
   title: string;
   category?: string;
+  type?: string;
+  progress?: number;
   lastViewed: string;
 }
 
