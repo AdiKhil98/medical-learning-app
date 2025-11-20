@@ -27,6 +27,7 @@ import MedicalContentLoader from '@/components/ui/MedicalContentLoader';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import { recentContentService } from '@/lib/recentContentService';
 import { SecureLogger } from '@/lib/security';
+import { TimedLRUCache } from '@/lib/lruCache';
 
 // Define Section type directly
 interface Section {
@@ -79,9 +80,9 @@ const ContentSkeleton = memo(() => {
   );
 });
 
-// Content cache to prevent re-fetching
-const contentCache = new Map<string, { data: Section, timestamp: number }>();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+// FIX: Use LRU cache to prevent unbounded memory growth
+// Max 50 content entries, 10 minute TTL
+const contentCache = new TimedLRUCache<string, Section>(50, 10 * 60 * 1000);
 
 const ContentDetailScreen = memo(() => {
   const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
@@ -109,36 +110,35 @@ const ContentDetailScreen = memo(() => {
       return;
     }
     
-    // Check cache first
-    const cached = contentCache.get(slug);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      setCurrentSection(cached.data);
-      
+    // Check cache first (uses LRU with automatic expiration)
+    const cached = contentCache.getValue(slug);
+
+    if (cached) {
+      setCurrentSection(cached);
+
       // Update navigation title with the actual title
       navigation.setOptions({
-        headerTitle: cached.data.title || slug,
+        headerTitle: cached.title || slug,
       });
-      
+
       // Track content view for cached content too
       try {
         await recentContentService.trackContentView({
-          slug: cached.data.slug,
-          title: cached.data.title,
-          description: cached.data.description,
-          category: cached.data.category || cached.data.type,
-          type: cached.data.type,
-          icon: cached.data.icon,
-          color: cached.data.color
+          slug: cached.slug,
+          title: cached.title,
+          description: cached.description,
+          category: cached.category || cached.type,
+          type: cached.type,
+          icon: cached.icon,
+          color: cached.color
         });
-        SecureLogger.log('📖 Tracked cached content view:', cached.data.title);
+        SecureLogger.log('📖 Tracked cached content view:', cached.title);
       } catch (trackingError) {
         SecureLogger.warn('⚠️ Failed to track cached content view:', trackingError);
       }
-      
+
       // Auto-expand first section if content_improved exists
-      if (Array.isArray(cached.data.content_improved) && cached.data.content_improved.length > 0) {
+      if (Array.isArray(cached.content_improved) && cached.content_improved.length > 0) {
         setExpandedSections({ '0': true });
       }
       setLoading(false);
@@ -164,9 +164,9 @@ const ContentDetailScreen = memo(() => {
       navigation.setOptions({
         headerTitle: sectionData.title || slug,
       });
-      
-      // Cache the result
-      contentCache.set(slug, { data: sectionData, timestamp: now });
+
+      // Cache the result (LRU cache handles timestamp automatically)
+      contentCache.setValue(slug, sectionData);
       
       // Track content view for recent content
       try {

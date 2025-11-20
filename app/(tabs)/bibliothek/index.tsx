@@ -316,26 +316,38 @@ const BibliothekIndex: React.FC = () => {
         .order('display_order', { ascending: true });
 
       if (sectionsError) throw sectionsError;
+      if (!sections || sections.length === 0) {
+        setCategories([]);
+        return;
+      }
 
-      // For each section, count its children
-      const categoriesWithCounts = await Promise.all(
-        (sections || []).map(async (section) => {
-          const { count } = await supabase
-            .from('sections')
-            .select('id', { count: 'exact', head: true })
-            .eq('parent_slug', section.slug);
+      // FIX: Fetch all child counts in a SINGLE query instead of N queries
+      // Get all children where parent_slug matches any of our sections
+      const parentSlugs = sections.map(s => s.slug);
+      const { data: allChildren, error: childrenError } = await supabase
+        .from('sections')
+        .select('parent_slug')
+        .in('parent_slug', parentSlugs);
 
-          return {
-            id: section.id,
-            title: section.title,
-            slug: section.slug,
-            description: section.description,
-            count: count || 0,
-            gradientColors: getGradientForSlug(section.slug),
-            iconName: getIconForSlug(section.slug, section.title),
-          };
-        })
-      );
+      if (childrenError) throw childrenError;
+
+      // Create a map of parent_slug -> count for O(1) lookup
+      const childCountMap = new Map<string, number>();
+      (allChildren || []).forEach(child => {
+        const currentCount = childCountMap.get(child.parent_slug) || 0;
+        childCountMap.set(child.parent_slug, currentCount + 1);
+      });
+
+      // Map sections to categories with their counts
+      const categoriesWithCounts = sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        slug: section.slug,
+        description: section.description,
+        count: childCountMap.get(section.slug) || 0,
+        gradientColors: getGradientForSlug(section.slug),
+        iconName: getIconForSlug(section.slug, section.title),
+      }));
 
       setCategories(categoriesWithCounts);
     } catch (e) {

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
 import { SecureLogger } from '@/lib/security';
+import { TimedLRUCache } from '@/lib/lruCache';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -235,9 +236,9 @@ export default function SectionDetailScreen() {
   const ITEMS_PER_PAGE = 20;
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Cache to prevent re-fetching on tab switches
-  const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  // FIX: Use LRU cache to prevent unbounded memory growth
+  // Max 50 category pages cached, 5 minute TTL
+  const dataCache = useRef(new TimedLRUCache<string, { item: Section; children: Section[] }>(50, 5 * 60 * 1000));
 
   // FIX: Track navigation intent to prevent race conditions
   const navigationIntentRef = useRef<string | null>(null);
@@ -258,12 +259,11 @@ export default function SectionDetailScreen() {
   const fetchItemData = useCallback(async (forceRefresh = false) => {
     if (!slug || typeof slug !== 'string') return;
 
-    // Check cache first
+    // Check cache first (uses LRU with automatic expiration)
     const cacheKey = `${slug}-${session?.user?.id || 'anonymous'}`;
-    const cached = dataCache.current.get(cacheKey);
-    const now = Date.now();
-    
-    if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
+    const cached = dataCache.current.getValue(cacheKey);
+
+    if (!forceRefresh && cached) {
       setCurrentItem(cached.item);
       setChildItems(cached.children);
       setLoading(false);
@@ -345,11 +345,10 @@ export default function SectionDetailScreen() {
 
       setBreadcrumbs(trail);
 
-      // Cache the results
-      dataCache.current.set(cacheKey, {
+      // Cache the results (LRU cache handles timestamp automatically)
+      dataCache.current.setValue(cacheKey, {
         item: itemData,
-        children: children,
-        timestamp: now
+        children: children
       });
 
     } catch (e) {

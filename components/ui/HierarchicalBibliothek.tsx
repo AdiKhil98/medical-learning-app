@@ -28,6 +28,8 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { SecureLogger } from '@/lib/security';
+import { LRUCache } from '@/lib/lruCache';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -57,9 +59,10 @@ interface HierarchicalBibliothekProps {
   onNavigateToContent?: (slug: string) => void;
 }
 
-// Progressive loading cache
-const itemsCache = new Map<string, CategoryItem[]>();
-const childrenCache = new Map<string, boolean>();
+// FIX: Use LRU cache to prevent unbounded memory growth
+// Max 100 category levels cached, Max 200 children existence checks
+const itemsCache = new LRUCache<string, CategoryItem[]>(100);
+const childrenCache = new LRUCache<string, boolean>(200);
 
 const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavigateToContent }) => {
   const { colors } = useTheme();
@@ -159,7 +162,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       return processedItems;
       
     } catch (error) {
-      console.error('Error loading level data:', error);
+      SecureLogger.error('Error loading level data:', error);
       return [];
     }
   }, []);
@@ -186,7 +189,7 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       const items = await loadLevelData(parentSlug);
       setCurrentItems(items);
     } catch (error) {
-      console.error('Error fetching items:', error);
+      SecureLogger.error('Error fetching items:', error);
     } finally {
       setLoading(false);
     }
@@ -389,7 +392,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
         </ScrollView>
       ) : (
         <View style={styles.scrollContainer}>
-          {console.log('🔧 Rendering MobileBibliothekLayout with', currentItems.length, 'items')}
           <MobileBibliothekLayout
             sections={currentItems}
             title={breadcrumbs[breadcrumbs.length - 1].title}
