@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect, Href } from 'expo-router';
 import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -179,13 +179,13 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
   const itemDetails = useMemo(() => {
     return getItemDetails(childItem.title, childItem.type, parentSlug);
   }, [childItem.title, childItem.type, parentSlug]);
-  
+
   const IconComponent = useMemo(() => {
     return getIconComponent(itemDetails.icon);
   }, [itemDetails.icon]);
-  
+
   const hasContent = useMemo(() => {
-    return childItem.content_improved && 
+    return childItem.content_improved &&
            (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
   }, [childItem.content_improved]);
 
@@ -201,6 +201,14 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
       />
     </View>
   );
+}, (prevProps, nextProps) => {
+  // FIX: Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.childItem.slug === nextProps.childItem.slug &&
+    prevProps.childItem.title === nextProps.childItem.title &&
+    prevProps.childItem.type === nextProps.childItem.type &&
+    prevProps.parentSlug === nextProps.parentSlug
+  );
 });
 
 export default function SectionDetailScreen() {
@@ -208,15 +216,30 @@ export default function SectionDetailScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { session, loading: authLoading } = useAuth();
-  
+
   const [currentItem, setCurrentItem] = useState<Section | null>(null);
   const [childItems, setChildItems] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Cache to prevent re-fetching on tab switches
   const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+
+  // FIX: Track navigation intent to prevent race conditions
+  const navigationIntentRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // FIX: Cleanup on unmount - cancel any pending navigation
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      navigationIntentRef.current = null;
+    };
+  }, []);
 
   // Optimized fetch with caching
   const fetchItemData = useCallback(async (forceRefresh = false) => {
@@ -228,7 +251,6 @@ export default function SectionDetailScreen() {
     const now = Date.now();
     
     if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
-      console.log('Using cached data for:', slug);
       setCurrentItem(cached.item);
       setChildItems(cached.children);
       setLoading(false);
@@ -292,7 +314,20 @@ export default function SectionDetailScreen() {
 
     } catch (e) {
       console.error('Error fetching item data:', e);
-      setError(e instanceof Error ? e.message : 'Fehler beim Laden des Inhalts');
+      // FIX: Provide more specific error messages
+      let errorMessage = 'Fehler beim Laden des Inhalts';
+      if (e instanceof Error) {
+        if (e.message.includes('network') || e.message.includes('fetch')) {
+          errorMessage = 'Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.';
+        } else if (e.message.includes('timeout')) {
+          errorMessage = 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.';
+        } else if (e.message.includes('auth') || e.message.includes('permission')) {
+          errorMessage = 'Sie haben keine Berechtigung für diesen Inhalt.';
+        } else {
+          errorMessage = e.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -315,66 +350,93 @@ export default function SectionDetailScreen() {
   }, []); // Empty dependency array for initial load only
 
   const navigateToChild = useCallback(async (childSlug: string, childItem?: Section) => {
+    // FIX: Set navigation intent to track which navigation is intended
+    navigationIntentRef.current = childSlug;
+
+    // FIX: Cancel any previous ongoing navigation request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // FIX: Create new AbortController for this navigation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     const currentPath = `/(tabs)/bibliothek/${slug}`;
-    
+
     // Check if child has any content (improved, html, or details)
     const hasContent = childItem && !!(
-      (childItem.content_improved && 
-       (typeof childItem.content_improved === 'object' || 
+      (childItem.content_improved &&
+       (typeof childItem.content_improved === 'object' ||
         (typeof childItem.content_improved === 'string' && childItem.content_improved.trim()))) ||
       (childItem.content_html && childItem.content_html.trim()) ||
       (childItem.content_details && childItem.content_details.trim())
     );
-    
+
     // Check if child has children (subdivisions) first - this is the key fix
     try {
       const { data: childrenData, error: childrenError } = await supabase
         .from('sections')
         .select('id')
         .eq('parent_slug', childSlug)
-        .limit(1);
-      
+        .limit(1)
+        .abortSignal(abortController.signal);
+
+      // FIX: Check if navigation intent has changed (user clicked another item)
+      if (navigationIntentRef.current !== childSlug) {
+        return;
+      }
+
       if (childrenError) {
+        // Check if error is from abort
+        if (childrenError.message?.includes('aborted')) {
+          return;
+        }
         console.warn('Error checking for children:', childrenError);
       }
-      
+
       const hasSubdivisions = childrenData && childrenData.length > 0;
-      
-      console.log('Navigation decision for:', childSlug, {
-        hasContent,
-        hasSubdivisions,
-        decision: hasSubdivisions ? 'category-page' : (hasContent ? 'content-page' : 'category-page')
-      });
-      
+
+      // FIX: Final check before navigation - ensure intent hasn't changed
+      if (navigationIntentRef.current !== childSlug) {
+        return;
+      }
+
       // FIXED LOGIC: Priority is subdivisions over content
       // If has children/subdivisions, always go to category page for navigation
       // Only go to content page if it has content but no children
       if (hasSubdivisions) {
-        console.log('Navigating to category page for subdivisions:', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}` as any,
+          pathname: `/(tabs)/bibliothek/${childSlug}` as Href,
           params: { previousPage: currentPath }
         });
       } else if (hasContent) {
-        console.log('Navigating to content page (no subdivisions):', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/content/${childSlug}` as any,
+          pathname: `/(tabs)/bibliothek/content/${childSlug}` as Href,
           params: { previousPage: currentPath }
         });
       } else {
-        console.log('Navigating to category page (no content or children):', childSlug);
         router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}` as any,
+          pathname: `/(tabs)/bibliothek/${childSlug}` as Href,
           params: { previousPage: currentPath }
         });
       }
     } catch (error) {
+      // FIX: Check if error is from abort
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+
       console.error('Error in navigateToChild:', error);
-      // Fallback to category page on error
-      router.push({
-        pathname: `/(tabs)/bibliothek/${childSlug}`,
-        params: { previousPage: currentPath }
-      });
+
+      // FIX: Only fallback if intent hasn't changed
+      if (navigationIntentRef.current === childSlug) {
+        // Fallback to category page on error
+        router.push({
+          pathname: `/(tabs)/bibliothek/${childSlug}`,
+          params: { previousPage: currentPath }
+        });
+      }
     }
   }, [router, slug, supabase]);
 
@@ -382,20 +444,45 @@ export default function SectionDetailScreen() {
     try {
       // Priority 1: If we have currentItem with parent_slug, navigate to parent
       if (currentItem?.parent_slug) {
-        console.log('Navigating to parent:', currentItem.parent_slug);
-        router.push(`/(tabs)/bibliothek/${currentItem.parent_slug}` as any);
+        router.push(`/(tabs)/bibliothek/${currentItem.parent_slug}` as Href);
         return;
       }
 
       // Priority 2: Fallback to main bibliothek
-      console.log('No parent found, going to main bibliothek');
-      router.push('/(tabs)/bibliothek');
+      router.push('/(tabs)/bibliothek' as Href);
     } catch (error) {
       console.error('Error in back navigation:', error);
       // Final fallback - replace current route
-      router.replace('/(tabs)/bibliothek');
+      router.replace('/(tabs)/bibliothek' as Href);
     }
   }, [currentItem, router]);
+
+  // FIX: Memoize folder grid to prevent unnecessary re-renders
+  const folderGrid = useMemo(() => {
+    if (childItems.length === 0) return null;
+
+    return (
+      <View style={styles.sectionPanel}>
+        <LinearGradient
+          colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
+          style={styles.sectionPanelGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.foldersGrid}>
+            {childItems.map((childItem) => (
+              <FolderCard
+                key={childItem.slug}
+                childItem={childItem}
+                parentSlug={slug as string}
+                onPress={() => navigateToChild(childItem.slug, childItem)}
+              />
+            ))}
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }, [childItems, slug, navigateToChild]);
 
   if (authLoading || loading) {
     return (
@@ -491,28 +578,8 @@ export default function SectionDetailScreen() {
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
 
-        {childItems.length > 0 ? (
-          // Navigation Grid for Children
-          <View style={styles.sectionPanel}>
-            <LinearGradient
-              colors={['rgba(14, 165, 233, 0.08)', 'rgba(59, 130, 246, 0.05)', 'rgba(147, 197, 253, 0.03)']}
-              style={styles.sectionPanelGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.foldersGrid}>
-                {childItems.map((childItem) => (
-                  <FolderCard
-                    key={childItem.slug}
-                    childItem={childItem}
-                    parentSlug={slug as string}
-                    onPress={() => navigateToChild(childItem.slug, childItem)}
-                  />
-                ))}
-              </View>
-            </LinearGradient>
-          </View>
-        ) : null}
+        {/* FIX: Use memoized folder grid */}
+        {folderGrid}
 
         {/* Empty state shown only when no children */}
         {childItems.length === 0 && (
