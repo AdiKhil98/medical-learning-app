@@ -26,6 +26,7 @@ import Card from '@/components/ui/folder';
 import MedicalContentLoader from '@/components/ui/MedicalContentLoader';
 import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import { recentContentService } from '@/lib/recentContentService';
+import { SecureLogger } from '@/lib/security';
 
 // Define Section type directly
 interface Section {
@@ -131,9 +132,9 @@ const ContentDetailScreen = memo(() => {
           icon: cached.data.icon,
           color: cached.data.color
         });
-        console.log('📖 Tracked cached content view:', cached.data.title);
+        SecureLogger.log('📖 Tracked cached content view:', cached.data.title);
       } catch (trackingError) {
-        console.warn('⚠️ Failed to track cached content view:', trackingError);
+        SecureLogger.warn('⚠️ Failed to track cached content view:', trackingError);
       }
       
       // Auto-expand first section if content_improved exists
@@ -178,9 +179,9 @@ const ContentDetailScreen = memo(() => {
           icon: sectionData.icon,
           color: sectionData.color
         });
-        console.log('📖 Tracked content view:', sectionData.title);
+        SecureLogger.log('📖 Tracked content view:', sectionData.title);
       } catch (trackingError) {
-        console.warn('⚠️ Failed to track content view:', trackingError);
+        SecureLogger.warn('⚠️ Failed to track content view:', trackingError);
       }
       
       // Auto-expand first section if content_improved exists
@@ -204,10 +205,10 @@ const ContentDetailScreen = memo(() => {
           ]);
         }
       } catch (relatedError) {
-        console.warn('Could not fetch related sections:', relatedError);
+        SecureLogger.warn('Could not fetch related sections:', relatedError);
       }
     } catch (e: any) {
-      console.error(e);
+      SecureLogger.error(e);
       setError(e.message || 'Fehler beim Laden');
     } finally {
       setLoading(false);
@@ -225,12 +226,12 @@ const ContentDetailScreen = memo(() => {
     React.useCallback(() => {
       // Get the current navigation state to understand where we came from
       const state = navigation.getState();
-      console.log('🔍 Navigation state:', state);
-      
+      SecureLogger.log('🔍 Navigation state:', state);
+
       // Try to determine the previous route
       if (state?.routes && state.routes.length >= 2) {
         const previousRoute = state.routes[state.routes.length - 2];
-        console.log('🔍 Previous route:', previousRoute);
+        SecureLogger.log('🔍 Previous route:', previousRoute);
         setNavigationSource(previousRoute.name);
       }
     }, [navigation])
@@ -247,16 +248,16 @@ const ContentDetailScreen = memo(() => {
     try {
       // Priority 1: If we have currentSection with parent_slug, navigate to parent
       if (currentSection?.parent_slug) {
-        console.log('Navigating to parent:', currentSection.parent_slug);
+        SecureLogger.log('Navigating to parent:', currentSection.parent_slug);
         router.push(`/(tabs)/bibliothek/${currentSection.parent_slug}` as any);
         return;
       }
 
       // Priority 2: Fallback to main bibliothek
-      console.log('No parent found, going to main bibliothek');
+      SecureLogger.log('No parent found, going to main bibliothek');
       router.push('/(tabs)/bibliothek');
     } catch (error) {
-      console.error('Error in back navigation:', error);
+      SecureLogger.error('Error in back navigation:', error);
       // Final fallback - replace current route
       router.replace('/(tabs)/bibliothek');
     }

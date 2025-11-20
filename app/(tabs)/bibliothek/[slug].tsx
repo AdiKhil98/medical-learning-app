@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
+import { SecureLogger } from '@/lib/security';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -352,7 +353,7 @@ export default function SectionDetailScreen() {
       });
 
     } catch (e) {
-      console.error('Error fetching item data:', e);
+      SecureLogger.error('Error fetching item data:', e);
       // FIX: Provide more specific error messages
       let errorMessage = 'Fehler beim Laden des Inhalts';
       if (e instanceof Error) {
@@ -404,7 +405,7 @@ export default function SectionDetailScreen() {
       setOffset((prev) => prev + ITEMS_PER_PAGE);
       setHasMore(newItems.length === ITEMS_PER_PAGE);
     } catch (e) {
-      console.error('Error loading more items:', e);
+      SecureLogger.error('Error loading more items:', e);
     } finally {
       setLoadingMore(false);
     }
@@ -469,7 +470,7 @@ export default function SectionDetailScreen() {
         if (childrenError.message?.includes('aborted')) {
           return;
         }
-        console.warn('Error checking for children:', childrenError);
+        SecureLogger.warn('Error checking for children:', childrenError);
       }
 
       const hasSubdivisions = childrenData && childrenData.length > 0;
@@ -504,7 +505,7 @@ export default function SectionDetailScreen() {
         return;
       }
 
-      console.error('Error in navigateToChild:', error);
+      SecureLogger.error('Error in navigateToChild:', error);
 
       // FIX: Only fallback if intent hasn't changed
       if (navigationIntentRef.current === childSlug) {
@@ -528,7 +529,7 @@ export default function SectionDetailScreen() {
       // Priority 2: Fallback to main bibliothek
       router.push('/(tabs)/bibliothek' as Href);
     } catch (error) {
-      console.error('Error in back navigation:', error);
+      SecureLogger.error('Error in back navigation:', error);
       // Final fallback - replace current route
       router.replace('/(tabs)/bibliothek' as Href);
     }

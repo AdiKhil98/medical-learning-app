@@ -30,6 +30,7 @@ import { useRouter } from 'expo-router';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { SecureLogger } from '@/lib/security';
 
 interface Category {
   id: string;
@@ -338,7 +339,7 @@ const BibliothekIndex: React.FC = () => {
 
       setCategories(categoriesWithCounts);
     } catch (e) {
-      console.error('Error fetching categories:', e);
+      SecureLogger.error('Error fetching categories:', e);
       setError(e instanceof Error ? e.message : 'Fehler beim Laden der Kategorien');
     } finally {
       setLoading(false);
