@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Platform,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -26,21 +27,28 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Category {
-  id: number;
+  id: string;
   title: string;
   count: number;
   gradientColors: string[];
   iconName: string;
   slug: string;
+  description?: string;
 }
 
 // Animated Stats Grid Component
-const AnimatedStatsGrid: React.FC<{ favorites: number }> = ({ favorites }) => {
+const AnimatedStatsGrid: React.FC<{
+  favorites: number;
+  totalCategories: number;
+  totalSections: number;
+}> = ({ favorites, totalCategories, totalSections }) => {
   const statCards = [
-    { number: '6', label: 'Fachgebiete', color: '#B8846A' },
-    { number: '52', label: 'Kategorien', color: '#3B82F6' },
+    { number: totalCategories.toString(), label: 'Fachgebiete', color: '#B8846A' },
+    { number: totalSections.toString(), label: 'Kategorien', color: '#3B82F6' },
     { number: '1.2k', label: 'Fragen', color: '#10B981' },
     { number: favorites.toString(), label: 'Favoriten', color: '#F97316' },
   ];
@@ -228,77 +236,116 @@ const AnimatedCategoryCard: React.FC<{
   );
 };
 
+// Helper function to get gradient colors based on slug
+const getGradientForSlug = (slug: string): string[] => {
+  const gradientMap: Record<string, string[]> = {
+    'chirurgie': ['#ef4444', '#dc2626', '#b91c1c'],
+    'innere-medizin': ['#E2827F', '#E2827F', '#B15740'],
+    'kardiologie': ['#f43f5e', '#e11d48', '#be185d'],
+    'pneumologie': ['#E2827F', '#B15740', '#B15740'],
+    'gastroenterologie': ['#f97316', '#ea580c', '#c2410c'],
+    'nephrologie': ['#14b8a6', '#0891b2', '#0e7490'],
+    'endokrinologie-und-stoffwechsel': ['#8b5cf6', '#7c3aed', '#6d28d9'],
+    'notfallmedizin': ['#f59e0b', '#dc2626', '#b91c1c'],
+    'infektiologie': ['#10b981', '#059669', '#047857'],
+    'urologie': ['#a16207', '#7c2d12', '#92400e'],
+    'radiologie': ['#6366f1', '#4338ca', '#3730a3'],
+    'dermatologie': ['#ec4899', '#be185d', '#9d174d'],
+    'neurologie': ['#7c3aed', '#5b21b6', '#4c1d95'],
+    'orthopädie': ['#6b7280', '#374151', '#1f2937'],
+  };
+  return gradientMap[slug] || ['#06b6d4', '#0891b2', '#0e7490']; // Default teal
+};
+
+// Helper function to get icon name based on slug
+const getIconForSlug = (slug: string, title: string): string => {
+  const lowerTitle = title.toLowerCase();
+  const lowerSlug = slug.toLowerCase();
+
+  if (lowerSlug.includes('kardio') || lowerTitle.includes('herz')) return 'heart';
+  if (lowerSlug.includes('chirurg') || lowerSlug.includes('trauma')) return 'stethoscope';
+  if (lowerSlug.includes('notfall') || lowerSlug.includes('emergency')) return 'alert';
+  if (lowerSlug.includes('diagnostik') || lowerSlug.includes('radio')) return 'scan';
+  if (lowerSlug.includes('pneumo') || lowerTitle.includes('lunge')) return 'activity';
+  if (lowerSlug.includes('urolog') || lowerSlug.includes('niere')) return 'droplet';
+  if (lowerSlug.includes('infekt') || lowerSlug.includes('hygiene')) return 'activity';
+
+  return 'stethoscope'; // Default icon
+};
+
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
+  const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Ensure Voiceflow widget is cleaned up when entering Bibliothek
   useEffect(() => {
-    console.log('📚 Bibliothek page loaded - running Voiceflow cleanup');
     runGlobalVoiceflowCleanup();
-
     const timeout = setTimeout(() => runGlobalVoiceflowCleanup(), 500);
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    return () => clearTimeout(timeout);
   }, []);
 
-  // Category data with gradients and icons
-  const categories: Category[] = [
-    {
-      id: 1,
-      title: 'Chirurgie',
-      count: 5,
-      gradientColors: ['#3B82F6', '#06B6D4', '#38BDF8'],
-      iconName: 'stethoscope',
-      slug: 'chirurgie',
-    },
-    {
-      id: 2,
-      title: 'Innere Medizin',
-      count: 5,
-      gradientColors: ['#818CF8', '#3B82F6', '#9333EA'],
-      iconName: 'heart',
-      slug: 'innere-medizin',
-    },
-    {
-      id: 3,
-      title: 'Notfallmedizin',
-      count: 10,
-      gradientColors: ['#34D399', '#10B981', '#14B8A6'],
-      iconName: 'alert',
-      slug: 'notfallmedizin',
-    },
-    {
-      id: 4,
-      title: 'Infektiologie',
-      count: 8,
-      gradientColors: ['#F87171', '#F97316', '#EC4899'],
-      iconName: 'activity',
-      slug: 'infektiologie',
-    },
-    {
-      id: 5,
-      title: 'Urologie',
-      count: 7,
-      gradientColors: ['#FBBF24', '#F97316', '#EAB308'],
-      iconName: 'droplet',
-      slug: 'urologie',
-    },
-    {
-      id: 6,
-      title: 'Radiologie',
-      count: 15,
-      gradientColors: ['#EA580C', '#DC2626', '#F43F5E'],
-      iconName: 'scan',
-      slug: 'radiologie',
-    },
-  ];
+  // Fetch top-level categories from database
+  const fetchCategories = useCallback(async () => {
+    if (!session) {
+      setError('Sie müssen angemeldet sein.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch top-level sections (where parent_slug is null)
+      const { data: sections, error: sectionsError } = await supabase
+        .from('sections')
+        .select('id, slug, title, description, parent_slug')
+        .is('parent_slug', null)
+        .order('display_order', { ascending: true });
+
+      if (sectionsError) throw sectionsError;
+
+      // For each section, count its children
+      const categoriesWithCounts = await Promise.all(
+        (sections || []).map(async (section) => {
+          const { count } = await supabase
+            .from('sections')
+            .select('id', { count: 'exact', head: true })
+            .eq('parent_slug', section.slug);
+
+          return {
+            id: section.id,
+            title: section.title,
+            slug: section.slug,
+            description: section.description,
+            count: count || 0,
+            gradientColors: getGradientForSlug(section.slug),
+            iconName: getIconForSlug(section.slug, section.title),
+          };
+        })
+      );
+
+      setCategories(categoriesWithCounts);
+    } catch (e) {
+      console.error('Error fetching categories:', e);
+      setError(e instanceof Error ? e.message : 'Fehler beim Laden der Kategorien');
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Toggle favorite
-  const toggleFavorite = (categoryId: number) => {
+  const toggleFavorite = (categoryId: string) => {
     setFavorites((prev) =>
       prev.includes(categoryId)
         ? prev.filter((id) => id !== categoryId)
@@ -320,6 +367,48 @@ const BibliothekIndex: React.FC = () => {
   const filteredCategories = categories.filter((cat) =>
     cat.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Calculate total sections count
+  const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          style={styles.backgroundGradient}
+        />
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#B8846A" />
+            <Text style={styles.loadingText}>Kategorien werden geladen...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          style={styles.backgroundGradient}
+        />
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorTitle}>Fehler</Text>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchCategories}>
+              <Text style={styles.retryButtonText}>Erneut versuchen</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -372,23 +461,37 @@ const BibliothekIndex: React.FC = () => {
           </View>
 
           {/* Stats Grid - Animated */}
-          <AnimatedStatsGrid favorites={favorites.length} />
+          <AnimatedStatsGrid
+            favorites={favorites.length}
+            totalCategories={categories.length}
+            totalSections={totalSectionsCount}
+          />
 
           {/* Section Header */}
-          <Text style={styles.sectionHeader}>Alle Fachgebiete</Text>
+          <Text style={styles.sectionHeader}>
+            {searchQuery ? `Suchergebnisse (${filteredCategories.length})` : 'Alle Fachgebiete'}
+          </Text>
 
           {/* Category Cards Grid */}
           <View style={styles.categoryGrid}>
-            {filteredCategories.map((category, index) => (
-              <AnimatedCategoryCard
-                key={category.id}
-                category={category}
-                isFavorite={favorites.includes(category.id)}
-                onPress={() => handleCategoryPress(category.slug)}
-                onToggleFavorite={() => toggleFavorite(category.id)}
-                index={index}
-              />
-            ))}
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((category, index) => (
+                <AnimatedCategoryCard
+                  key={category.id}
+                  category={category}
+                  isFavorite={favorites.includes(category.id)}
+                  onPress={() => handleCategoryPress(category.slug)}
+                  onToggleFavorite={() => toggleFavorite(category.id)}
+                  index={index}
+                />
+              ))
+            ) : (
+              <View style={styles.noResultsContainer}>
+                <Text style={styles.noResultsText}>
+                  Keine Fachgebiete gefunden für "{searchQuery}"
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Call to Action Banner */}
@@ -436,6 +539,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 96,
+  },
+
+  // Loading & Error States
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#64748B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#EF4444',
+    marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  retryButton: {
+    backgroundColor: '#B8846A',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  noResultsContainer: {
+    width: '100%',
+    padding: 40,
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#64748B',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Hero Section
