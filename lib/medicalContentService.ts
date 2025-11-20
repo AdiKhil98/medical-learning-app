@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { SecureLogger } from './security';
+import { createCache, CacheManager } from './cacheManager';
 
 // Enhanced Section interface with all three content formats
 export interface MedicalSection {
@@ -41,13 +42,95 @@ export interface SearchResult {
   snippet?: string;
 }
 
-// Cache configuration
+// Cache configuration with memory limits and automatic cleanup
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-const sectionCache = new Map<string, { data: MedicalSection, timestamp: number }>();
-const listCache = new Map<string, { data: MedicalSection[], timestamp: number }>();
+const sectionCache: CacheManager<MedicalSection> = createCache({
+  maxSize: 100, // Max 100 cached sections
+  ttl: CACHE_DURATION,
+  cleanupInterval: 5 * 60 * 1000, // Cleanup every 5 minutes
+});
+
+const listCache: CacheManager<MedicalSection[]> = createCache({
+  maxSize: 50, // Max 50 cached lists
+  ttl: CACHE_DURATION,
+  cleanupInterval: 5 * 60 * 1000,
+});
 
 class MedicalContentService {
-  
+  /**
+   * Sanitize search input to prevent SQL injection and XSS
+   * @param query - Raw search query from user
+   * @returns Sanitized query string or null if invalid
+   */
+  private sanitizeSearchQuery(query: string): string | null {
+    // Check if query exists and is a string
+    if (typeof query !== 'string') {
+      SecureLogger.warn('Invalid search query type:', typeof query);
+      return null;
+    }
+
+    // Trim whitespace
+    let sanitized = query.trim();
+
+    // Reject empty queries
+    if (sanitized.length === 0) {
+      return null;
+    }
+
+    // Enforce maximum length (prevent DoS)
+    const MAX_QUERY_LENGTH = 100;
+    if (sanitized.length > MAX_QUERY_LENGTH) {
+      SecureLogger.warn(`Search query too long: ${sanitized.length} characters`);
+      sanitized = sanitized.substring(0, MAX_QUERY_LENGTH);
+    }
+
+    // Enforce minimum length (prevent single character queries)
+    const MIN_QUERY_LENGTH = 2;
+    if (sanitized.length < MIN_QUERY_LENGTH) {
+      return null;
+    }
+
+    // Remove potentially dangerous SQL keywords and special characters
+    // While Supabase uses parameterized queries, we add extra protection
+    const dangerousPatterns = [
+      /--/g,           // SQL comments
+      /\/\*/g,         // Multi-line comments start
+      /\*\//g,         // Multi-line comments end
+      /;/g,            // Statement terminators
+      /\bDROP\b/gi,    // DROP statements
+      /\bDELETE\b/gi,  // DELETE statements
+      /\bUPDATE\b/gi,  // UPDATE statements
+      /\bINSERT\b/gi,  // INSERT statements
+      /\bEXEC\b/gi,    // EXEC statements
+      /\bUNION\b/gi,   // UNION statements
+      /<script/gi,     // XSS attempts
+      /javascript:/gi, // XSS attempts
+      /on\w+=/gi,      // Event handlers (XSS)
+    ];
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(sanitized)) {
+        SecureLogger.warn('Dangerous pattern detected in search query:', pattern.toString());
+        sanitized = sanitized.replace(pattern, '');
+      }
+    }
+
+    // Remove excessive special characters (keep only alphanumeric, space, hyphen, underscore, umlauts)
+    // Allow German medical terms with umlauts: ä, ö, ü, ß
+    sanitized = sanitized.replace(/[^a-zA-Z0-9\sÄäÖöÜüß\-_]/g, '');
+
+    // Replace multiple spaces with single space
+    sanitized = sanitized.replace(/\s+/g, ' ').trim();
+
+    // Final check - if nothing left after sanitization, return null
+    if (sanitized.length === 0) {
+      return null;
+    }
+
+    return sanitized;
+  }
+
+
   /**
    * DEBUG METHOD: Test basic database connectivity
    */
@@ -473,13 +556,27 @@ class MedicalContentService {
 
   /**
    * Search sections by title, description, and content
+   * @param query - User search query (will be sanitized)
+   * @param limit - Maximum number of results to return
+   * @returns Array of search results with match information
    */
   async searchSections(query: string, limit = 20): Promise<SearchResult[]> {
-    if (!query.trim()) return [];
+    // SECURITY: Sanitize search input to prevent SQL injection and XSS
+    const sanitizedQuery = this.sanitizeSearchQuery(query);
+
+    if (!sanitizedQuery) {
+      SecureLogger.warn('Search query failed sanitization');
+      return [];
+    }
 
     try {
-      const searchTerm = `%${query.toLowerCase()}%`;
-      
+      // Enforce reasonable limit (prevent excessive data retrieval)
+      const safeLimit = Math.min(Math.max(1, limit), 100);
+
+      // Use sanitized query with ilike for case-insensitive search
+      // Supabase handles proper parameterization, but we've pre-sanitized as defense-in-depth
+      const searchTerm = `%${sanitizedQuery.toLowerCase()}%`;
+
       // Search in title and description using ilike
       const { data, error } = await supabase
         .from('sections')
@@ -488,17 +585,20 @@ class MedicalContentService {
           category, image_url
         `)
         .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
-        .limit(limit);
+        .limit(safeLimit);
 
-      if (error) throw error;
+      if (error) {
+        SecureLogger.error('Database error during search:', error);
+        throw error;
+      }
 
       const results: SearchResult[] = (data || []).map(section => {
-        const matchType = section.title.toLowerCase().includes(query.toLowerCase()) 
+        const matchType = section.title.toLowerCase().includes(sanitizedQuery.toLowerCase())
           ? 'title' as const
           : 'description' as const;
-        
-        const snippet = matchType === 'description' 
-          ? this.createSnippet(section.description || '', query)
+
+        const snippet = matchType === 'description'
+          ? this.createSnippet(section.description || '', sanitizedQuery)
           : undefined;
 
         return {
@@ -508,10 +608,11 @@ class MedicalContentService {
         };
       });
 
+      SecureLogger.log(`Search completed: "${sanitizedQuery}" returned ${results.length} results`);
       return results;
-      
+
     } catch (error) {
-      SecureLogger.log('Error searching sections:', error);
+      SecureLogger.error('Error searching sections:', error);
       throw error;
     }
   }
