@@ -6,7 +6,7 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://your-domain.com/</loc>
+    <loc>https://kpmed.de/</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -14,14 +14,14 @@
 
   <!-- Authentication Pages (Public Landing Pages Only) -->
   <url>
-    <loc>https://your-domain.com/auth/login</loc>
+    <loc>https://kpmed.de/auth/login</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/auth/register</loc>
+    <loc>https://kpmed.de/auth/register</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -30,21 +30,21 @@
   <!-- Main Application Sections (Authenticated - Lower Priority) -->
   <!-- These are included for completeness but will require login -->
   <url>
-    <loc>https://your-domain.com/dashboard</loc>
+    <loc>https://kpmed.de/dashboard</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/bibliothek</loc>
+    <loc>https://kpmed.de/bibliothek</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/simulation</loc>
+    <loc>https://kpmed.de/simulation</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -53,42 +53,42 @@
   <!-- Static/Info Pages (Add these if you create them) -->
   <!--
   <url>
-    <loc>https://your-domain.com/about</loc>
+    <loc>https://kpmed.de/about</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/pricing</loc>
+    <loc>https://kpmed.de/pricing</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/contact</loc>
+    <loc>https://kpmed.de/contact</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/faq</loc>
+    <loc>https://kpmed.de/faq</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/privacy</loc>
+    <loc>https://kpmed.de/privacy</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://your-domain.com/terms</loc>
+    <loc>https://kpmed.de/terms</loc>
     <lastmod>2024-11-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
