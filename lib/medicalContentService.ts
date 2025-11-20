@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { SecureLogger } from './security';
 import { createCache, CacheManager } from './cacheManager';
+import { withDeduplication, generateRequestKey } from './requestDeduplication';
 
 // Enhanced Section interface with all three content formats
 export interface MedicalSection {
@@ -316,17 +317,41 @@ class MedicalContentService {
 
   /**
    * Get sections by parent slug (for navigation)
+   * @deprecated Use getSectionsByParentPaginated for better performance
    */
   async getSectionsByParent(parentSlug: string): Promise<MedicalSection[]> {
-    const cacheKey = `parent_${parentSlug}`;
+    // For backward compatibility, use pagination with large limit
+    const result = await this.getSectionsByParentPaginated(parentSlug, { limit: 1000, offset: 0 });
+    return result.sections;
+  }
+
+  /**
+   * Get sections by parent slug with pagination (PERFORMANCE OPTIMIZED)
+   */
+  async getSectionsByParentPaginated(
+    parentSlug: string,
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<{ sections: MedicalSection[]; totalCount: number; hasMore: boolean }> {
+    const limit = Math.min(options.limit || 20, 100); // Max 100 items per page
+    const offset = options.offset || 0;
+    const cacheKey = `parent_${parentSlug}_${limit}_${offset}`;
+
+    // Check cache
     const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
+    if (cached) {
+      return cached as { sections: MedicalSection[]; totalCount: number; hasMore: boolean };
     }
 
     try {
+      // Get total count first
+      const { count: totalCount, error: countError } = await supabase
+        .from('sections')
+        .select('id', { count: 'exact', head: true })
+        .eq('parent_slug', parentSlug);
+
+      if (countError) throw countError;
+
+      // Get paginated data
       const { data, error } = await supabase
         .from('sections')
         .select(`
@@ -334,41 +359,72 @@ class MedicalContentService {
           category, image_url
         `)
         .eq('parent_slug', parentSlug)
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .range(offset, offset + limit - 1);
 
       if (error) throw error;
 
       const sections = (data || []) as MedicalSection[];
-      
+
       // Compute has_content for each section
       sections.forEach(section => {
         section.has_content = this.hasAnyContent(section);
       });
-      
-      // Update cache
-      listCache.set(cacheKey, { data: sections, timestamp: now });
-      
-      return sections;
-      
+
+      const result = {
+        sections,
+        totalCount: totalCount || 0,
+        hasMore: (offset + limit) < (totalCount || 0),
+      };
+
+      // Cache the result
+      listCache.set(cacheKey, result);
+
+      return result;
+
     } catch (error) {
-      SecureLogger.log('Error fetching sections by parent:', error);
+      SecureLogger.error('Error fetching paginated sections by parent:', error);
       throw error;
     }
   }
 
   /**
    * Get sections by category
+   * @deprecated Use getSectionsByCategoryPaginated for better performance
    */
   async getSectionsByCategory(category: string): Promise<MedicalSection[]> {
-    const cacheKey = `category_${category}`;
+    // For backward compatibility, use pagination with large limit
+    const result = await this.getSectionsByCategoryPaginated(category, { limit: 1000, offset: 0 });
+    return result.sections;
+  }
+
+  /**
+   * Get sections by category with pagination (PERFORMANCE OPTIMIZED)
+   */
+  async getSectionsByCategoryPaginated(
+    category: string,
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<{ sections: MedicalSection[]; totalCount: number; hasMore: boolean }> {
+    const limit = Math.min(options.limit || 20, 100); // Max 100 items per page
+    const offset = options.offset || 0;
+    const cacheKey = `category_${category}_${limit}_${offset}`;
+
+    // Check cache
     const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
+    if (cached) {
+      return cached as { sections: MedicalSection[]; totalCount: number; hasMore: boolean };
     }
 
     try {
+      // Get total count first
+      const { count: totalCount, error: countError } = await supabase
+        .from('sections')
+        .select('id', { count: 'exact', head: true })
+        .eq('category', category);
+
+      if (countError) throw countError;
+
+      // Get paginated data
       const { data, error } = await supabase
         .from('sections')
         .select(`
@@ -376,24 +432,31 @@ class MedicalContentService {
           category, image_url
         `)
         .eq('category', category)
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .range(offset, offset + limit - 1);
 
       if (error) throw error;
 
       const sections = (data || []) as MedicalSection[];
-      
+
       // Compute has_content for each section
       sections.forEach(section => {
         section.has_content = this.hasAnyContent(section);
       });
-      
-      // Update cache
-      listCache.set(cacheKey, { data: sections, timestamp: now });
-      
-      return sections;
-      
+
+      const result = {
+        sections,
+        totalCount: totalCount || 0,
+        hasMore: (offset + limit) < (totalCount || 0),
+      };
+
+      // Cache the result
+      listCache.set(cacheKey, result);
+
+      return result;
+
     } catch (error) {
-      SecureLogger.log('Error fetching sections by category:', error);
+      SecureLogger.error('Error fetching paginated sections by category:', error);
       throw error;
     }
   }
@@ -413,53 +476,57 @@ class MedicalContentService {
   }
 
   /**
-   * Get single section with all content formats
+   * Get single section with all content formats (WITH REQUEST DEDUPLICATION)
    */
   async getSection(slug: string): Promise<MedicalSection | null> {
+    // Check cache first
     const cached = sectionCache.get(slug);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data;
+    if (cached) {
+      return cached;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select(`
-          id, slug, title, description, type, icon, color, display_order,
-          category, image_url, parent_slug, content_json, content_improved, 
-          content_html, content_details,
-          hierarchy_level, created_at, updated_at
-        `)
-        .eq('slug', slug)
-        .maybeSingle();
+    // Use request deduplication to prevent simultaneous duplicate requests
+    const requestKey = generateRequestKey('getSection', slug);
 
-      if (error) {
-        SecureLogger.log(`Database error in getSection(${slug}):`, error);
-        // If columns don't exist, try a simpler query
-        if (error.message && (error.message.includes('column') && error.message.includes('does not exist'))) {
-          SecureLogger.log('Columns missing, trying fallback query');
-          return await this.getSectionFallback(slug);
+    return withDeduplication(requestKey, async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sections')
+          .select(`
+            id, slug, title, description, type, icon, color, display_order,
+            category, image_url, parent_slug, content_json, content_improved,
+            content_html, content_details,
+            hierarchy_level, created_at, updated_at
+          `)
+          .eq('slug', slug)
+          .maybeSingle();
+
+        if (error) {
+          SecureLogger.error(`Database error in getSection(${slug}):`, error);
+          // If columns don't exist, try a simpler query
+          if (error.message && (error.message.includes('column') && error.message.includes('does not exist'))) {
+            SecureLogger.log('Columns missing, trying fallback query');
+            return await this.getSectionFallback(slug);
+          }
+          throw error;
         }
+        if (!data) return null;
+
+        const section = data as MedicalSection;
+
+        // Compute has_content based on available content
+        section.has_content = this.hasAnyContent(section);
+
+        // Update cache
+        sectionCache.set(slug, section);
+
+        return section;
+
+      } catch (error) {
+        SecureLogger.error('Error fetching section:', error);
         throw error;
       }
-      if (!data) return null;
-
-      const section = data as MedicalSection;
-      
-      // Compute has_content based on available content
-      section.has_content = this.hasAnyContent(section);
-      
-      // Update cache
-      sectionCache.set(slug, { data: section, timestamp: now });
-      
-      return section;
-      
-    } catch (error) {
-      SecureLogger.log('Error fetching section:', error);
-      throw error;
-    }
+    });
   }
 
   /**
