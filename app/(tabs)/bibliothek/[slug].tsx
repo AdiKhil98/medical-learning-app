@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect, Href } from 'expo-router';
-import { ChevronLeft, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Home, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,6 +31,11 @@ interface Section {
   display_order: number;
   content_improved?: string;
   content_html?: string;
+}
+
+interface BreadcrumbItem {
+  slug: string;
+  title: string;
 }
 
 // Enhanced Medical Color Palette with Rich Gradients - UNIFIED BY PARENT
@@ -221,6 +226,7 @@ export default function SectionDetailScreen() {
   const [childItems, setChildItems] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
 
   // Cache to prevent re-fetching on tab switches
   const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
@@ -296,7 +302,7 @@ export default function SectionDetailScreen() {
       }
 
       setCurrentItem(itemData);
-      
+
       // Update navigation title with the actual title
       navigation.setOptions({
         headerTitle: itemData.title || slug,
@@ -304,6 +310,28 @@ export default function SectionDetailScreen() {
 
       const children = childItemsData || [];
       setChildItems(children);
+
+      // Build breadcrumb trail
+      const trail: BreadcrumbItem[] = [];
+      let currentSlug = itemData.parent_slug;
+
+      // Fetch parent sections to build breadcrumb trail
+      while (currentSlug) {
+        const { data: parentData } = await supabase
+          .from('sections')
+          .select('slug, title, parent_slug')
+          .eq('slug', currentSlug)
+          .maybeSingle();
+
+        if (parentData) {
+          trail.unshift({ slug: parentData.slug, title: parentData.title });
+          currentSlug = parentData.parent_slug;
+        } else {
+          break;
+        }
+      }
+
+      setBreadcrumbs(trail);
 
       // Cache the results
       dataCache.current.set(cacheKey, {
@@ -559,7 +587,7 @@ export default function SectionDetailScreen() {
       
       {/* Modern Header */}
       <View style={styles.modernHeader}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleBackPress}
           style={styles.modernBackButton}
         >
@@ -573,7 +601,39 @@ export default function SectionDetailScreen() {
           </LinearGradient>
           <Text style={styles.modernBackText}>Zurück</Text>
         </TouchableOpacity>
-        
+
+        {/* Breadcrumb Navigation */}
+        {breadcrumbs.length > 0 && (
+          <View style={styles.breadcrumbContainer}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/bibliothek' as Href)}>
+              <Home size={14} color="#64748b" />
+            </TouchableOpacity>
+
+            {breadcrumbs.map((crumb, index) => (
+              <View key={crumb.slug} style={styles.breadcrumbItem}>
+                <ChevronRight size={14} color="#94a3b8" style={styles.breadcrumbSeparator} />
+                <TouchableOpacity
+                  onPress={() => router.push(`/(tabs)/bibliothek/${crumb.slug}` as Href)}
+                >
+                  <Text
+                    style={[
+                      styles.breadcrumbText,
+                      index === breadcrumbs.length - 1 && styles.breadcrumbTextLast,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {crumb.title}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            <ChevronRight size={14} color="#94a3b8" style={styles.breadcrumbSeparator} />
+            <Text style={styles.breadcrumbTextCurrent} numberOfLines={1}>
+              {currentItem?.title}
+            </Text>
+          </View>
+        )}
       </View>
 
       <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
@@ -677,7 +737,7 @@ const styles = StyleSheet.create({
   modernBackButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   backButtonGradient: {
     width: 36,
@@ -697,6 +757,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
   },
+
+  // Breadcrumb Navigation
+  breadcrumbContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  breadcrumbItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: 150,
+  },
+  breadcrumbSeparator: {
+    marginHorizontal: 6,
+  },
+  breadcrumbText: {
+    fontSize: 13,
+    color: '#64748b',
+    fontFamily: 'Inter-Regular',
+  },
+  breadcrumbTextLast: {
+    color: '#475569',
+    fontFamily: 'Inter-Medium',
+  },
+  breadcrumbTextCurrent: {
+    fontSize: 13,
+    color: '#0891b2',
+    fontFamily: 'Inter-SemiBold',
+    maxWidth: 150,
+  },
+
   headerContent: {
     zIndex: 1,
   },
