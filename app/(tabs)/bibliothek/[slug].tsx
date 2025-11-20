@@ -227,6 +227,12 @@ export default function SectionDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const ITEMS_PER_PAGE = 20;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Cache to prevent re-fetching on tab switches
   const dataCache = useRef<Map<string, { item: Section; children: Section[]; timestamp: number }>>(new Map());
@@ -271,31 +277,32 @@ export default function SectionDetailScreen() {
         return;
       }
 
-      // Optimized: Fetch both current item and children in parallel
-      const [itemResult, childrenResult] = await Promise.all([
-        supabase
-          .from('sections')
-          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
-          .eq('slug', slug)
-          .maybeSingle(),
-        supabase
-          .from('sections')
-          .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
-          .eq('parent_slug', slug)
-          .order('display_order', { ascending: true })
-      ]);
+      // Fetch current item
+      const { data: itemData, error: itemError } = await supabase
+        .from('sections')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
+        .eq('slug', slug)
+        .maybeSingle();
 
-      const { data: itemData, error: itemError } = itemResult;
-      const { data: childItemsData, error: childItemsError } = childrenResult;
-
-      if (itemError) {
-        throw itemError;
-      }
-
+      if (itemError) throw itemError;
       if (!itemData) {
         setError('Inhalt nicht gefunden.');
         return;
       }
+
+      // Fetch children with pagination - get total count first
+      const { count: totalCount } = await supabase
+        .from('sections')
+        .select('id', { count: 'exact', head: true })
+        .eq('parent_slug', slug);
+
+      // Fetch first page of children
+      const { data: childItemsData, error: childItemsError } = await supabase
+        .from('sections')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
+        .eq('parent_slug', slug)
+        .order('display_order', { ascending: true })
+        .range(0, ITEMS_PER_PAGE - 1);
 
       if (childItemsError) {
         throw childItemsError;
@@ -310,6 +317,10 @@ export default function SectionDetailScreen() {
 
       const children = childItemsData || [];
       setChildItems(children);
+
+      // Set pagination state
+      setOffset(ITEMS_PER_PAGE);
+      setHasMore((totalCount || 0) > ITEMS_PER_PAGE);
 
       // Build breadcrumb trail
       const trail: BreadcrumbItem[] = [];
@@ -360,6 +371,44 @@ export default function SectionDetailScreen() {
       setLoading(false);
     }
   }, [slug, session]);
+
+  // Handle scroll to show/hide back-to-top button
+  const handleScroll = useCallback((event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowBackToTop(offsetY > 300); // Show button after scrolling 300px
+  }, []);
+
+  // Scroll to top function
+  const scrollToTop = useCallback(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
+  // Load more children (pagination)
+  const loadMore = useCallback(async () => {
+    if (!slug || !session || loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+
+      const { data: moreItems, error } = await supabase
+        .from('sections')
+        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
+        .eq('parent_slug', slug)
+        .order('display_order', { ascending: true })
+        .range(offset, offset + ITEMS_PER_PAGE - 1);
+
+      if (error) throw error;
+
+      const newItems = moreItems || [];
+      setChildItems((prev) => [...prev, ...newItems]);
+      setOffset((prev) => prev + ITEMS_PER_PAGE);
+      setHasMore(newItems.length === ITEMS_PER_PAGE);
+    } catch (e) {
+      console.error('Error loading more items:', e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [slug, session, offset, hasMore, loadingMore, ITEMS_PER_PAGE]);
 
   // Use focus effect instead of useEffect to handle tab switching properly
   useFocusEffect(
@@ -636,10 +685,43 @@ export default function SectionDetailScreen() {
         )}
       </View>
 
-      <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.modernContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
 
         {/* FIX: Use memoized folder grid */}
         {folderGrid}
+
+        {/* Load More Button */}
+        {hasMore && childItems.length > 0 && (
+          <View style={styles.loadMoreContainer}>
+            <TouchableOpacity
+              style={styles.loadMoreButton}
+              onPress={loadMore}
+              disabled={loadingMore}
+            >
+              <LinearGradient
+                colors={['#0891b2', '#0e7490']}
+                style={styles.loadMoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.loadMoreText}>Mehr laden</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+            <Text style={styles.loadMoreHint}>
+              {childItems.length} von vielen Einträgen geladen
+            </Text>
+          </View>
+        )}
 
         {/* Empty state shown only when no children */}
         {childItems.length === 0 && (
@@ -657,9 +739,27 @@ export default function SectionDetailScreen() {
             </LinearGradient>
           </View>
         )}
-        
+
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <TouchableOpacity
+          style={styles.backToTopButton}
+          onPress={scrollToTop}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#0891b2', '#0e7490']}
+            style={styles.backToTopGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <ChevronLeft size={24} color="#FFFFFF" style={{ transform: [{ rotate: '90deg' }] }} />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -868,6 +968,57 @@ const styles = StyleSheet.create({
 
   bottomPadding: {
     height: 40,
+  },
+
+  // Load More Button
+  loadMoreContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
+  loadMoreButton: {
+    width: '100%',
+    maxWidth: 300,
+    marginBottom: 12,
+  },
+  loadMoreGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  loadMoreText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  loadMoreHint: {
+    fontSize: 13,
+    color: '#64748b',
+    fontFamily: 'Inter-Regular',
+  },
+
+  // Back to Top Button
+  backToTopButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    zIndex: 1000,
+  },
+  backToTopGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   // Skeleton Loading Styles
