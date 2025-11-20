@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Mic, Clock, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
@@ -274,7 +276,7 @@ export default function FSPSimulationScreen() {
         // ============================================
         // STEP 3C: INITIALIZE VOICEFLOW WITH PERSISTENT IDS
         // ============================================
-        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent IDs from localStorage`);
+        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
 
         // Get persistent IDs that will be used
         const persistentIds = controller.getIds();
@@ -608,20 +610,24 @@ export default function FSPSimulationScreen() {
     // Apply optimistic counter deduction (show immediate feedback to user)
     applyOptimisticDeduction();
 
-    // Save simulation state to localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        localStorage.setItem('sim_start_time_fsp', startTime.toString());
-        localStorage.setItem('sim_end_time_fsp', endTime.toString());
-        localStorage.setItem('sim_session_token_fsp', existingSessionToken);
-        localStorage.setItem('sim_duration_ms_fsp', duration.toString());
-        if (user?.id) {
-          localStorage.setItem('sim_user_id_fsp', user.id);
-        }
-        console.log('💾 FSP: Saved simulation state to localStorage');
-      } catch (error) {
-        console.error('❌ FSP: Error saving to localStorage:', error);
+    // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
+    try {
+      // Non-sensitive data - use AsyncStorage
+      await AsyncStorage.multiSet([
+        ['sim_start_time_fsp', startTime.toString()],
+        ['sim_end_time_fsp', endTime.toString()],
+        ['sim_duration_ms_fsp', duration.toString()],
+      ]);
+
+      // Sensitive data - use SecureStore (encrypted storage)
+      await SecureStore.setItemAsync('sim_session_token_fsp', existingSessionToken);
+      if (user?.id) {
+        await SecureStore.setItemAsync('sim_user_id_fsp', user.id);
       }
+
+      console.log('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
+    } catch (error) {
+      console.error('❌ FSP: Error saving simulation state:', error);
     }
 
     // Start heartbeat monitoring for security
@@ -1237,8 +1243,10 @@ export default function FSPSimulationScreen() {
       delete (window as any).fspClickListener;
     }
 
-    // Clear localStorage
-    clearSimulationStorage();
+    // FIX: Clear storage (fire-and-forget for non-blocking reset)
+    clearSimulationStorage().catch(err =>
+      console.error('Error clearing storage during reset:', err)
+    );
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
@@ -1256,19 +1264,23 @@ export default function FSPSimulationScreen() {
     }, 500);
   };
 
-  // Clear simulation localStorage
-  const clearSimulationStorage = () => {
+  // FIX: Clear simulation storage (AsyncStorage + SecureStore)
+  const clearSimulationStorage = async () => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem('sim_start_time_fsp');
-        localStorage.removeItem('sim_end_time_fsp');
-        localStorage.removeItem('sim_session_token_fsp');
-        localStorage.removeItem('sim_duration_ms_fsp');
-        localStorage.removeItem('sim_user_id_fsp');
-        console.log('✅ FSP: Cleared simulation localStorage');
-      }
+      // Clear AsyncStorage items
+      await AsyncStorage.multiRemove([
+        'sim_start_time_fsp',
+        'sim_end_time_fsp',
+        'sim_duration_ms_fsp',
+      ]);
+
+      // Clear SecureStore items (sensitive data)
+      await SecureStore.deleteItemAsync('sim_session_token_fsp');
+      await SecureStore.deleteItemAsync('sim_user_id_fsp');
+
+      console.log('✅ FSP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
-      console.error('❌ FSP: Error clearing localStorage:', error);
+      console.error('❌ FSP: Error clearing simulation storage:', error);
     }
   };
 
@@ -1377,9 +1389,9 @@ export default function FSPSimulationScreen() {
         }
       }
 
-      // Step 8: Clear localStorage
-      console.log('💾 FSP: Step 8 - Clearing localStorage...');
-      clearSimulationStorage();
+      // Step 8: Clear storage (AsyncStorage + SecureStore)
+      console.log('💾 FSP: Step 8 - Clearing simulation storage...');
+      await clearSimulationStorage();
 
       console.log('✅ FSP: Centralized cleanup completed successfully');
     } catch (error) {

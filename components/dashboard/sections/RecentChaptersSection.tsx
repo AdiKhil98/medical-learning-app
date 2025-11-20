@@ -89,11 +89,13 @@ const RecentChaptersSection = React.memo<RecentChaptersSectionProps>(({
                         </View>
                         <View style={styles.chapterStatusRow}>
                           <View style={styles.difficultyBadge}>
-                            <Text style={styles.difficultyText}>FSP</Text>
+                            <Text style={styles.difficultyText}>
+                              {content.category || content.type || 'KP'}
+                            </Text>
                           </View>
                           <View style={styles.modernProgressBadge}>
                             <Text style={styles.modernProgressText}>
-                              {Math.floor(Math.random() * 100)}%
+                              {content.progress !== undefined ? `${content.progress}%` : '0%'}
                             </Text>
                           </View>
                         </View>

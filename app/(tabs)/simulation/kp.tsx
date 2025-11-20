@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
 import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
@@ -66,19 +68,23 @@ export default function KPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
-  // ISSUE #15 FIX: Helper to clear simulation localStorage on error
-  const clearSimulationStorage = () => {
+  // FIX: Helper to clear simulation storage (AsyncStorage + SecureStore)
+  const clearSimulationStorage = async () => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem('sim_start_time_kp');
-        localStorage.removeItem('sim_end_time_kp');
-        localStorage.removeItem('sim_session_token_kp');
-        localStorage.removeItem('sim_duration_ms_kp');
-        localStorage.removeItem('sim_user_id_kp');
-        console.log('🧹 KP: Cleared simulation localStorage');
-      }
+      // Clear AsyncStorage items
+      await AsyncStorage.multiRemove([
+        'sim_start_time_kp',
+        'sim_end_time_kp',
+        'sim_duration_ms_kp',
+      ]);
+
+      // Clear SecureStore items (sensitive data)
+      await SecureStore.deleteItemAsync('sim_session_token_kp');
+      await SecureStore.deleteItemAsync('sim_user_id_kp');
+
+      console.log('🧹 KP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
-      console.error('Error clearing simulation localStorage:', error);
+      console.error('Error clearing simulation storage:', error);
     }
   };
 
@@ -258,7 +264,7 @@ export default function KPSimulationScreen() {
         // ============================================
         // STEP 3C: INITIALIZE VOICEFLOW WITH PERSISTENT IDS
         // ============================================
-        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent IDs from localStorage`);
+        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
 
         // Get persistent IDs that will be used
         const persistentIds = controller.getIds();
@@ -374,8 +380,10 @@ export default function KPSimulationScreen() {
         if (attempt === maxRetryAttempts) {
           console.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
 
-          // ISSUE #15 FIX: Clear localStorage on initialization failure
-          clearSimulationStorage();
+          // FIX: Clear storage on initialization failure
+          clearSimulationStorage().catch(err =>
+            console.error('Error clearing storage after init failure:', err)
+          );
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
@@ -576,20 +584,24 @@ export default function KPSimulationScreen() {
       // Apply optimistic counter deduction (show immediate feedback to user)
       applyOptimisticDeduction();
 
-      // Save simulation state to localStorage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem('sim_start_time_kp', startTime.toString());
-          localStorage.setItem('sim_end_time_kp', endTime.toString());
-          localStorage.setItem('sim_session_token_kp', sessionTokenRef.current);
-          localStorage.setItem('sim_duration_ms_kp', duration.toString());
-          if (user?.id) {
-            localStorage.setItem('sim_user_id_kp', user.id);
-          }
-          console.log('💾 KP: Saved simulation state to localStorage');
-        } catch (error) {
-          console.error('❌ KP: Error saving to localStorage:', error);
+      // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
+      try {
+        // Non-sensitive data - use AsyncStorage
+        await AsyncStorage.multiSet([
+          ['sim_start_time_kp', startTime.toString()],
+          ['sim_end_time_kp', endTime.toString()],
+          ['sim_duration_ms_kp', duration.toString()],
+        ]);
+
+        // Sensitive data - use SecureStore (encrypted storage)
+        await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
+        if (user?.id) {
+          await SecureStore.setItemAsync('sim_user_id_kp', user.id);
         }
+
+        console.log('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
+      } catch (error) {
+        console.error('❌ KP: Error saving simulation state:', error);
       }
 
       setUsageMarked(false);
@@ -1284,8 +1296,10 @@ export default function KPSimulationScreen() {
       delete (window as any).kpClickListener;
     }
 
-    // Clear localStorage
-    clearSimulationStorage();
+    // FIX: Clear storage (fire-and-forget for non-blocking reset)
+    clearSimulationStorage().catch(err =>
+      console.error('Error clearing storage during reset:', err)
+    );
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
@@ -1408,9 +1422,9 @@ export default function KPSimulationScreen() {
         }
       }
 
-      // Step 8: Clear localStorage
-      console.log('💾 KP: Step 8 - Clearing localStorage...');
-      clearSimulationStorage();
+      // Step 8: Clear storage (AsyncStorage + SecureStore)
+      console.log('💾 KP: Step 8 - Clearing simulation storage...');
+      await clearSimulationStorage();
 
       console.log('✅ KP: Centralized cleanup completed successfully');
     } catch (error) {

@@ -23,7 +23,8 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-export default function Button({
+// FIX: Wrap in React.memo to prevent unnecessary re-renders
+export default React.memo(function Button({
   title,
   onPress,
   variant = 'primary',
@@ -34,21 +35,22 @@ export default function Button({
   textStyle,
   icon
 }: ButtonProps) {
-  const buttonStyles = [
+  // FIX: Memoize style arrays to prevent recreation on every render
+  const buttonStyles = React.useMemo(() => [
     styles.button,
     styles[`button_${variant}`],
     styles[`button_${size}`],
     disabled && styles.button_disabled,
     style
-  ];
-  
-  const textStyles = [
+  ], [variant, size, disabled, style]);
+
+  const textStyles = React.useMemo(() => [
     styles.text,
     styles[`text_${variant}`],
     styles[`text_${size}`],
     disabled && styles.text_disabled,
     textStyle
-  ];
+  ], [variant, size, disabled, textStyle]);
 
   return (
     <TouchableOpacity
@@ -70,7 +72,7 @@ export default function Button({
       )}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   button: {

@@ -8,32 +8,32 @@ interface CardProps {
   style?: ViewStyle;
 }
 
-export default function Card({ children, title, style }: CardProps) {
+// FIX: Create static styles once outside component - NEVER recreate StyleSheet on render!
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  title: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 18,
+    marginBottom: 12,
+  },
+});
+
+// FIX: Wrap in React.memo to prevent unnecessary re-renders
+export default React.memo(function Card({ children, title, style }: CardProps) {
   const { colors } = useTheme();
 
-  const dynamicStyles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.card,
-      borderRadius: 12,
-      padding: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    title: {
-      fontFamily: 'Inter-Bold',
-      fontSize: 18,
-      marginBottom: 12,
-      color: colors.text,
-    },
-  });
-
   return (
-    <View style={[dynamicStyles.card, style]}>
-      {title && <Text style={dynamicStyles.title}>{title}</Text>}
+    <View style={[styles.card, { backgroundColor: colors.card }, style]}>
+      {title && <Text style={[styles.title, { color: colors.text }]}>{title}</Text>}
       {children}
     </View>
   );
-}
+});
