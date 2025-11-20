@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -273,6 +274,8 @@ const getIconForSlug = (slug: string, title: string): string => {
   return 'stethoscope'; // Default icon
 };
 
+type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
+
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
@@ -281,6 +284,9 @@ const BibliothekIndex: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('alphabetical');
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Ensure Voiceflow widget is cleaned up when entering Bibliothek
   useEffect(() => {
@@ -363,10 +369,44 @@ const BibliothekIndex: React.FC = () => {
     router.push('/(tabs)/simulation');
   };
 
-  // Filter categories based on search
-  const filteredCategories = categories.filter((cat) =>
-    cat.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter and sort categories
+  const filteredCategories = useMemo(() => {
+    let result = [...categories];
+
+    // Apply search filter
+    if (searchQuery) {
+      result = result.filter((cat) =>
+        cat.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply favorites filter
+    if (showOnlyFavorites) {
+      result = result.filter((cat) => favorites.includes(cat.id));
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'alphabetical':
+        result.sort((a, b) => a.title.localeCompare(b.title, 'de'));
+        break;
+      case 'count-desc':
+        result.sort((a, b) => b.count - a.count);
+        break;
+      case 'count-asc':
+        result.sort((a, b) => a.count - b.count);
+        break;
+      case 'favorites':
+        result.sort((a, b) => {
+          const aIsFav = favorites.includes(a.id) ? 1 : 0;
+          const bIsFav = favorites.includes(b.id) ? 1 : 0;
+          return bIsFav - aIsFav;
+        });
+        break;
+    }
+
+    return result;
+  }, [categories, searchQuery, showOnlyFavorites, sortBy, favorites]);
 
   // Calculate total sections count
   const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
@@ -454,11 +494,136 @@ const BibliothekIndex: React.FC = () => {
             </View>
 
             {/* Filter Button */}
-            <TouchableOpacity style={styles.filterButton}>
-              <Filter size={20} color="#475569" />
-              <Text style={styles.filterText}>Filter</Text>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterButtonActive,
+              ]}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Filter size={20} color={(showOnlyFavorites || sortBy !== 'alphabetical') ? '#F97316' : '#475569'} />
+              <Text style={[
+                styles.filterText,
+                (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterTextActive,
+              ]}>
+                Filter
+              </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Filter Modal */}
+          <Modal
+            visible={filterModalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setFilterModalVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.modalOverlay}
+              activeOpacity={1}
+              onPress={() => setFilterModalVisible(false)}
+            >
+              <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Filter & Sortieren</Text>
+                  <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+                    <Text style={styles.modalCloseText}>Fertig</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Sort Options */}
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>Sortieren nach</Text>
+
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => setSortBy('alphabetical')}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text style={styles.filterOptionText}>Alphabetisch (A-Z)</Text>
+                      {sortBy === 'alphabetical' && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => setSortBy('count-desc')}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text style={styles.filterOptionText}>Meiste Kategorien</Text>
+                      {sortBy === 'count-desc' && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => setSortBy('count-asc')}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text style={styles.filterOptionText}>Wenigste Kategorien</Text>
+                      {sortBy === 'count-asc' && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => setSortBy('favorites')}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text style={styles.filterOptionText}>Favoriten zuerst</Text>
+                      {sortBy === 'favorites' && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Filter Options */}
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>Anzeigen</Text>
+
+                  <TouchableOpacity
+                    style={styles.filterOption}
+                    onPress={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                  >
+                    <View style={styles.filterOptionContent}>
+                      <Text style={styles.filterOptionText}>Nur Favoriten</Text>
+                      {showOnlyFavorites && (
+                        <View style={styles.checkmark}>
+                          <Text style={styles.checkmarkText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Reset Button */}
+                <TouchableOpacity
+                  style={styles.resetButton}
+                  onPress={() => {
+                    setSortBy('alphabetical');
+                    setShowOnlyFavorites(false);
+                  }}
+                >
+                  <Text style={styles.resetButtonText}>Filter zurücksetzen</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           {/* Stats Grid - Animated */}
           <AnimatedStatsGrid
@@ -672,10 +837,110 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 8,
   },
+  filterButtonActive: {
+    borderColor: '#F97316',
+    backgroundColor: '#FFF7ED',
+  },
   filterText: {
     fontSize: 16,
     fontWeight: '500',
     color: '#334155',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  filterTextActive: {
+    color: '#F97316',
+  },
+
+  // Filter Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F97316',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  filterSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  filterOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  filterOptionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F97316',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmarkText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  resetButton: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748B',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
