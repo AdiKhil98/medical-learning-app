@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
@@ -1787,8 +1789,9 @@ export default function KPSimulationScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Lock Overlay - Shows when simulation limit is reached */}
+    <ErrorBoundary>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        {/* Lock Overlay - Shows when simulation limit is reached */}
       {isSimulationLocked && (
         <View style={styles.lockOverlay}>
           <View style={styles.lockOverlayContent}>
@@ -2028,7 +2031,8 @@ export default function KPSimulationScreen() {
         totalLimit={subscriptionStatus?.simulationLimit || 0}
       />
 
-    </SafeAreaView>
+      </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 
