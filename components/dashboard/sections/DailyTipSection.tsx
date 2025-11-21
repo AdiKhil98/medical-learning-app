@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { dashboardStyles as styles } from '@/styles/dashboard';
 import { SectionErrorBoundary } from '../ErrorBoundary';
 import { SectionSkeleton } from '../LoadingSkeleton';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import type { DailyTip } from '@/hooks/useDailyContent';
 
 interface DailyTipSectionProps {
@@ -46,17 +47,17 @@ const DailyTipSection = React.memo<DailyTipSectionProps>(({
           <View style={styles.structuredSection}>
             <View style={styles.structuredSectionHeader}>
               <View style={styles.sectionTitleContainer}>
-                <Lightbulb size={24} color="#F59E0B" />
+                <Lightbulb size={24} color={MEDICAL_COLORS.warmYellow} />
                 <Text style={styles.structuredSectionTitle}>Tipp des Tages</Text>
               </View>
               <Text style={styles.structuredSectionSubtitle}>
                 Erweitere dein medizinisches Wissen täglich
               </Text>
             </View>
-            
+
             <View style={styles.tipCard}>
               <LinearGradient
-                colors={['#FEF3C7', '#FDE68A', '#FBBF24']}
+                colors={MEDICAL_COLORS.warmYellowGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.tipCardGradient}

@@ -63,6 +63,7 @@ export const MEDICAL_COLORS = {
   cardGradient: ['#FFFFFF', '#FDF7F6'],         // Subtle coral card gradient
   warmOrangeGradient: ['#FB923C', '#F97316', '#EF4444'], // Warm orange to red gradient
   warmYellowGradient: ['#FCD34D', '#FBBF24', '#F59E0B'], // Warm yellow gradient
+  purpleCoralGradient: ['#EDE9FE', '#DDD6FE', '#E2827F'], // Purple to coral gradient (for questions)
   backgroundGradient: ['#F8FAFC', '#FFFFFF', '#F1F5F9'], // Neutral background gradient
   headerGradient: ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'], // Header gradient with transparency
   
