@@ -38,6 +38,8 @@ import SectionNotesModal from './SectionNotesModal';
 import Toast from './Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveNote, loadNote, deleteNote } from '@/lib/notesService';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 interface SupabaseRow {
   idx: number;
@@ -145,10 +147,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     if (titleLower.includes('definition') || titleLower.includes('klassifikation') ||
         contentLower.includes('wird definiert') || contentLower.includes('ist eine')) {
       return {
-        borderColor: '#3B82F6',
-        backgroundColor: '#FAFBFF',
+        borderColor: MEDICAL_COLORS.blue,
+        backgroundColor: MEDICAL_COLORS.blueBg,
         icon: FileText,
-        iconColor: '#3B82F6',
+        iconColor: MEDICAL_COLORS.blue,
         type: 'definition'
       };
     }
@@ -157,10 +159,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     if (titleLower.includes('therapie') || titleLower.includes('behandlung') ||
         titleLower.includes('intervention') || titleLower.includes('management')) {
       return {
-        borderColor: '#10B981',
-        backgroundColor: '#F0FDF4',
+        borderColor: MEDICAL_COLORS.success,
+        backgroundColor: MEDICAL_COLORS.lightGreen,
         icon: Activity,
-        iconColor: '#10B981',
+        iconColor: MEDICAL_COLORS.success,
         type: 'clinical'
       };
     }
@@ -169,10 +171,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     if (titleLower.includes('diagnostik') || titleLower.includes('untersuchung') ||
         titleLower.includes('befund') || titleLower.includes('symptom')) {
       return {
-        borderColor: '#F59E0B',
-        backgroundColor: '#FFFBEB',
+        borderColor: MEDICAL_COLORS.warmYellow,
+        backgroundColor: MEDICAL_COLORS.warmYellowBg,
         icon: Stethoscope,
-        iconColor: '#F59E0B',
+        iconColor: MEDICAL_COLORS.warmYellow,
         type: 'diagnostic'
       };
     }
@@ -181,20 +183,20 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     if (titleLower.includes('notfall') || titleLower.includes('kritisch') ||
         titleLower.includes('komplikation') || contentLower.includes('lebensbedrohlich')) {
       return {
-        borderColor: '#EF4444',
-        backgroundColor: '#FEF2F2',
+        borderColor: MEDICAL_COLORS.warmRed,
+        backgroundColor: MEDICAL_COLORS.lightCoral,
         icon: AlertTriangle,
-        iconColor: '#EF4444',
+        iconColor: MEDICAL_COLORS.warmRed,
         type: 'emergency'
       };
     }
 
     // Default
     return {
-      borderColor: '#B87E70',
-      backgroundColor: '#F9F6F2',
+      borderColor: MEDICAL_COLORS.secondary,
+      backgroundColor: MEDICAL_COLORS.offWhite,
       icon: BookOpen,
-      iconColor: '#B87E70',
+      iconColor: MEDICAL_COLORS.secondary,
       type: 'general'
     };
   };
@@ -1154,7 +1156,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   modalButtonModern: {
     width: 40,
@@ -1174,7 +1176,7 @@ const styles = StyleSheet.create({
   modernTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
     flex: 1,
     lineHeight: 34,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -1197,7 +1199,7 @@ const styles = StyleSheet.create({
   modernMetaText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   // Controls Container
   controlsContainer: {
@@ -1208,24 +1210,24 @@ const styles = StyleSheet.create({
   modernSearchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
     marginBottom: 16,
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#FED7AA',
+    borderColor: MEDICAL_COLORS.warmOrangeBg,
   },
   modernSearchInput: {
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     marginLeft: 12,
     padding: 0,
   },
@@ -1239,7 +1241,7 @@ const styles = StyleSheet.create({
   },
   modernClearText: {
     fontSize: 16,
-    color: '#F97316',
+    color: MEDICAL_COLORS.warmOrangeDark,
     fontWeight: '700',
   },
   // Modern Study Controls
@@ -1251,7 +1253,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -1268,22 +1270,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 8,
     borderWidth: 2,
-    borderColor: '#FED7AA',
+    borderColor: MEDICAL_COLORS.warmOrangeBg,
     borderRadius: 14,
   },
   modernStudyButtonText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#F97316',
+    color: MEDICAL_COLORS.warmOrangeDark,
   },
   modernStudyButtonTextActive: {
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   modernFontButton: {
     width: 56,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -1297,16 +1299,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderWidth: 2,
-    borderColor: '#FED7AA',
+    borderColor: MEDICAL_COLORS.warmOrangeBg,
     borderRadius: 14,
   },
   modernFontButtonText: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F97316',
+    color: MEDICAL_COLORS.warmOrangeDark,
   },
   modernFontButtonTextActive: {
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   errorContainer: {
     flex: 1,
@@ -1445,10 +1447,10 @@ const styles = StyleSheet.create({
   studyToggleText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#B87E70',
+    color: MEDICAL_COLORS.secondary,
   },
   studyToggleTextActive: {
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   fontSizeToggle: {
     paddingHorizontal: 12,
@@ -1464,10 +1466,10 @@ const styles = StyleSheet.create({
   fontSizeText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#B87E70',
+    color: MEDICAL_COLORS.secondary,
   },
   fontSizeTextActive: {
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
   },
   searchIcon: {
     marginRight: 8,
@@ -1549,14 +1551,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 12,
-    color: '#B15740',  // Brown Rust for coral branding
+    color: MEDICAL_COLORS.primaryDark,  // Brown Rust for coral branding
   },
   enhancedSectionTitle: {
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
     marginLeft: 12,
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     lineHeight: 24,
   },
   bookmarkButton: {
@@ -1594,7 +1596,7 @@ const styles = StyleSheet.create({
   },
   keyPointsText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: MEDICAL_COLORS.slate500,
     lineHeight: 20,
   },
   contentContainer: {
@@ -1613,7 +1615,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     fontFamily: 'Inter-Medium',
-    color: '#B87E70', // Old Rose for bullets
+    color: MEDICAL_COLORS.secondary, // Old Rose for bullets
     marginRight: 12,
     width: 20,
   },
@@ -1621,7 +1623,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     fontFamily: 'Inter-SemiBold',
-    color: '#B87E70', // Old Rose for numbers
+    color: MEDICAL_COLORS.secondary, // Old Rose for numbers
     marginRight: 12,
     minWidth: 24,
   },
@@ -1629,14 +1631,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     fontFamily: 'Inter-Regular',
-    color: '#374151',
+    color: MEDICAL_COLORS.slate700,
     flex: 1,
   },
   contentText: {
     fontSize: 16,
     lineHeight: 28, // Increased line height for better readability
     fontFamily: 'Inter-Regular',
-    color: '#374151',
+    color: MEDICAL_COLORS.slate700,
     textAlign: 'left',
   },
   numericalBadge: {
@@ -1652,8 +1654,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   highlightedText: {
-    backgroundColor: '#fef3c7', // Light yellow background
-    color: '#92400e', // Darker text for contrast
+    backgroundColor: MEDICAL_COLORS.warmYellowLight, // Light yellow background
+    color: MEDICAL_COLORS.dark, // Darker text for contrast
     fontWeight: '600',
     paddingHorizontal: 2,
     borderRadius: 2,
@@ -1661,12 +1663,12 @@ const styles = StyleSheet.create({
   boldText: {
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
-    color: '#1f2937', // Slightly darker for emphasis
+    color: MEDICAL_COLORS.slate900, // Slightly darker for emphasis
   },
   italicText: {
     fontFamily: 'Inter-Italic',
     fontStyle: 'italic',
-    color: '#4b5563', // Subtle gray for italic
+    color: MEDICAL_COLORS.slate600, // Subtle gray for italic
   },
   chevronIcon: {
     transition: 'transform 0.2s ease',
@@ -1677,13 +1679,13 @@ const styles = StyleSheet.create({
 
   // Progress Section Styles
   progressSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     marginHorizontal: 20,
     marginTop: -12,
     marginBottom: 16,
     padding: 20,
     borderRadius: 16,
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -1698,16 +1700,16 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
   },
   progressPercentage: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F97316',
+    color: MEDICAL_COLORS.warmOrangeDark,
   },
   progressBarTrack: {
     height: 10,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: MEDICAL_COLORS.slate200,
     borderRadius: 5,
     overflow: 'hidden',
   },
@@ -1718,12 +1720,12 @@ const styles = StyleSheet.create({
 
   // Modern Section Card Styles
   modernSectionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     borderRadius: 24,
     marginHorizontal: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#F3F4F6',
+    borderColor: MEDICAL_COLORS.slate200,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -1733,7 +1735,7 @@ const styles = StyleSheet.create({
   },
   modernSectionCardExpanded: {
     borderColor: '#F97316',
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOpacity: 0.15,
   },
   modernSectionCardHeader: {
@@ -1758,7 +1760,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DCFCE7',
   },
   modernIconContainerIncomplete: {
-    backgroundColor: '#FED7AA',
+    backgroundColor: MEDICAL_COLORS.warmOrangeBg,
   },
   modernSectionInfo: {
     flex: 1,
@@ -1766,7 +1768,7 @@ const styles = StyleSheet.create({
   modernSectionCardTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     lineHeight: 24,
     marginBottom: 6,
   },
@@ -1782,7 +1784,7 @@ const styles = StyleSheet.create({
   modernMetaItemText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
+    color: MEDICAL_COLORS.slate500,
   },
   modernSectionActions: {
     flexDirection: 'row',
@@ -1825,7 +1827,7 @@ const styles = StyleSheet.create({
   },
   modernKeyPointsText: {
     fontSize: 14,
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     lineHeight: 22,
   },
   modernContentBody: {
@@ -1839,7 +1841,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#F97316',
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -1856,7 +1858,7 @@ const styles = StyleSheet.create({
   modernPrimaryButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: MEDICAL_COLORS.white,
     letterSpacing: 0.5,
   },
   modernSecondaryButton: {
@@ -1866,7 +1868,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: MEDICAL_COLORS.slate200,
     gap: 8,
     borderWidth: 2,
     borderColor: '#E5E7EB',
@@ -1874,19 +1876,19 @@ const styles = StyleSheet.create({
   modernSecondaryButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#6B7280',
+    color: MEDICAL_COLORS.slate500,
   },
 
   // Learning Summary Card Styles
   learningSummaryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#F3F4F6',
-    shadowColor: '#F97316',
+    borderColor: MEDICAL_COLORS.slate200,
+    shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -1895,7 +1897,7 @@ const styles = StyleSheet.create({
   learningSummaryTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     marginBottom: 20,
   },
   learningSummaryStats: {
@@ -1921,13 +1923,13 @@ const styles = StyleSheet.create({
   summaryStatValue: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#1F2937',
+    color: MEDICAL_COLORS.slate900,
     marginBottom: 4,
   },
   summaryStatLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
+    color: MEDICAL_COLORS.slate500,
     textAlign: 'center',
   },
   summaryProgressText: {
