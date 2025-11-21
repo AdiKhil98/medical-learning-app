@@ -31,6 +31,8 @@ import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { SecureLogger } from '@/lib/security';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 
 interface Category {
   id: string;
@@ -49,10 +51,10 @@ const AnimatedStatsGrid: React.FC<{
   totalSections: number;
 }> = ({ favorites, totalCategories, totalSections }) => {
   const statCards = [
-    { number: totalCategories.toString(), label: 'Fachgebiete', color: '#B8846A' },
-    { number: totalSections.toString(), label: 'Kategorien', color: '#3B82F6' },
-    { number: '1.2k', label: 'Fragen', color: '#10B981' },
-    { number: favorites.toString(), label: 'Favoriten', color: '#F97316' },
+    { number: totalCategories.toString(), label: 'Fachgebiete', color: MEDICAL_COLORS.secondary },
+    { number: totalSections.toString(), label: 'Kategorien', color: MEDICAL_COLORS.blue },
+    { number: '1.2k', label: 'Fragen', color: MEDICAL_COLORS.success },
+    { number: favorites.toString(), label: 'Favoriten', color: MEDICAL_COLORS.warmOrangeDark },
   ];
 
   return (
@@ -154,7 +156,7 @@ const AnimatedCategoryCard: React.FC<{
   };
 
   const getIconComponent = (iconName: string) => {
-    const iconProps = { size: 36, color: '#FFFFFF', strokeWidth: 2.5 };
+    const iconProps = { size: 36, color: MEDICAL_COLORS.white, strokeWidth: 2.5 };
     switch (iconName) {
       case 'stethoscope':
         return <Stethoscope {...iconProps} />;
@@ -206,8 +208,8 @@ const AnimatedCategoryCard: React.FC<{
             >
               <Heart
                 size={24}
-                color="rgba(255,255,255,0.9)"
-                fill={isFavorite ? 'rgba(255,255,255,0.9)' : 'none'}
+                color={MEDICAL_COLORS.white}
+                fill={isFavorite ? MEDICAL_COLORS.white : 'none'}
               />
             </TouchableOpacity>
 
@@ -229,7 +231,7 @@ const AnimatedCategoryCard: React.FC<{
             {/* Count and Arrow */}
             <View style={styles.cardFooter}>
               <Text style={styles.cardCount}>{category.count} Kategorien</Text>
-              <ChevronRight size={24} color="rgba(255,255,255,0.7)" />
+              <ChevronRight size={24} color={MEDICAL_COLORS.white} />
             </View>
           </View>
         </LinearGradient>
@@ -241,22 +243,22 @@ const AnimatedCategoryCard: React.FC<{
 // Helper function to get gradient colors based on slug
 const getGradientForSlug = (slug: string): string[] => {
   const gradientMap: Record<string, string[]> = {
-    'chirurgie': ['#ef4444', '#dc2626', '#b91c1c'],
-    'innere-medizin': ['#E2827F', '#E2827F', '#B15740'],
-    'kardiologie': ['#f43f5e', '#e11d48', '#be185d'],
-    'pneumologie': ['#E2827F', '#B15740', '#B15740'],
-    'gastroenterologie': ['#f97316', '#ea580c', '#c2410c'],
-    'nephrologie': ['#14b8a6', '#0891b2', '#0e7490'],
-    'endokrinologie-und-stoffwechsel': ['#8b5cf6', '#7c3aed', '#6d28d9'],
-    'notfallmedizin': ['#f59e0b', '#dc2626', '#b91c1c'],
-    'infektiologie': ['#10b981', '#059669', '#047857'],
-    'urologie': ['#a16207', '#7c2d12', '#92400e'],
-    'radiologie': ['#6366f1', '#4338ca', '#3730a3'],
-    'dermatologie': ['#ec4899', '#be185d', '#9d174d'],
-    'neurologie': ['#7c3aed', '#5b21b6', '#4c1d95'],
-    'orthopädie': ['#6b7280', '#374151', '#1f2937'],
+    'chirurgie': MEDICAL_COLORS.redGradient,
+    'innere-medizin': MEDICAL_COLORS.primaryGradient,
+    'kardiologie': MEDICAL_COLORS.pinkGradient,
+    'pneumologie': MEDICAL_COLORS.primaryGradient,
+    'gastroenterologie': MEDICAL_COLORS.orangeGradient,
+    'nephrologie': MEDICAL_COLORS.cyanGradient,
+    'endokrinologie-und-stoffwechsel': MEDICAL_COLORS.purpleGradient,
+    'notfallmedizin': MEDICAL_COLORS.warmOrangeGradient,
+    'infektiologie': MEDICAL_COLORS.greenGradient,
+    'urologie': MEDICAL_COLORS.amberGradient,
+    'radiologie': MEDICAL_COLORS.blueGradient,
+    'dermatologie': MEDICAL_COLORS.pinkGradient,
+    'neurologie': MEDICAL_COLORS.purpleGradient,
+    'orthopädie': [...MEDICAL_COLORS.darkMenuGradient].reverse(),
   };
-  return gradientMap[slug] || ['#06b6d4', '#0891b2', '#0e7490']; // Default teal
+  return gradientMap[slug] || MEDICAL_COLORS.cyanGradient; // Default cyan
 };
 
 // Helper function to get icon name based on slug
@@ -429,12 +431,12 @@ const BibliothekIndex: React.FC = () => {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          colors={MEDICAL_COLORS.backgroundGradient}
           style={styles.backgroundGradient}
         />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#B8846A" />
+            <ActivityIndicator size="large" color={MEDICAL_COLORS.secondary} />
             <Text style={styles.loadingText}>Kategorien werden geladen...</Text>
           </View>
         </SafeAreaView>
@@ -447,7 +449,7 @@ const BibliothekIndex: React.FC = () => {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+          colors={MEDICAL_COLORS.backgroundGradient}
           style={styles.backgroundGradient}
         />
         <SafeAreaView style={styles.safeArea}>
@@ -467,7 +469,7 @@ const BibliothekIndex: React.FC = () => {
     <View style={styles.container}>
       {/* Background Gradient */}
       <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        colors={MEDICAL_COLORS.backgroundGradient}
         style={styles.backgroundGradient}
       />
 
@@ -480,8 +482,8 @@ const BibliothekIndex: React.FC = () => {
           <View style={styles.heroSection}>
             {/* Breadcrumb */}
             <View style={styles.breadcrumb}>
-              <Home size={16} color="#94A3B8" />
-              <ChevronRight size={16} color="#94A3B8" style={styles.breadcrumbSeparator} />
+              <Home size={16} color={MEDICAL_COLORS.slate400} />
+              <ChevronRight size={16} color={MEDICAL_COLORS.slate400} style={styles.breadcrumbSeparator} />
               <Text style={styles.breadcrumbActive}>Bibliothek</Text>
             </View>
 
@@ -496,11 +498,11 @@ const BibliothekIndex: React.FC = () => {
           <View style={styles.searchFilterContainer}>
             {/* Search Input */}
             <View style={styles.searchContainer}>
-              <Search size={20} color="#94A3B8" style={styles.searchIcon} />
+              <Search size={20} color={MEDICAL_COLORS.slate400} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Fachgebiet suchen..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={MEDICAL_COLORS.slate400}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -514,7 +516,7 @@ const BibliothekIndex: React.FC = () => {
               ]}
               onPress={() => setFilterModalVisible(true)}
             >
-              <Filter size={20} color={(showOnlyFavorites || sortBy !== 'alphabetical') ? '#F97316' : '#475569'} />
+              <Filter size={20} color={(showOnlyFavorites || sortBy !== 'alphabetical') ? MEDICAL_COLORS.warmOrangeDark : MEDICAL_COLORS.slate600} />
               <Text style={[
                 styles.filterText,
                 (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterTextActive,
@@ -674,7 +676,7 @@ const BibliothekIndex: React.FC = () => {
 
           {/* Call to Action Banner */}
           <LinearGradient
-            colors={['#FB923C', '#F97316', '#EF4444']}
+            colors={MEDICAL_COLORS.warmOrangeGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.ctaBanner}
@@ -690,7 +692,7 @@ const BibliothekIndex: React.FC = () => {
               activeOpacity={0.8}
             >
               <Text style={styles.ctaButtonText}>Simulation starten</Text>
-              <ChevronRight size={20} color="#F97316" />
+              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrangeDark} />
             </TouchableOpacity>
           </LinearGradient>
         </ScrollView>
@@ -724,87 +726,87 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: SPACING.xxxxxl,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#64748B',
+    marginTop: SPACING.lg,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate500,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: SPACING.xxxxxl,
   },
   errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#EF4444',
-    marginBottom: 12,
+    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.warmRed,
+    marginBottom: SPACING.md,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   errorText: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate500,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   retryButton: {
-    backgroundColor: '#B8846A',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: MEDICAL_COLORS.secondary,
+    paddingHorizontal: SPACING.xxxl,
+    paddingVertical: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: MEDICAL_COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   noResultsContainer: {
     width: '100%',
-    padding: 40,
+    padding: SPACING.xxxxxl,
     alignItems: 'center',
   },
   noResultsText: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate500,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Hero Section
   heroSection: {
-    marginBottom: 32,
+    marginBottom: SPACING.xxxl,
   },
   breadcrumb: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
   breadcrumbSeparator: {
-    marginHorizontal: 8,
+    marginHorizontal: SPACING.sm,
   },
   breadcrumbActive: {
-    fontSize: 14,
-    color: '#FB923C',
-    fontWeight: '500',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.warmOrange,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   pageTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#B8846A',
-    marginBottom: 12,
+    fontSize: TYPOGRAPHY.fontSize.xxxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.secondary,
+    marginBottom: SPACING.md,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   pageSubtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate500,
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
@@ -812,8 +814,8 @@ const styles = StyleSheet.create({
   // Search & Filter Bar
   searchFilterContainer: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
+    gap: SPACING.lg,
+    marginBottom: SPACING.xxxl,
   },
   searchContainer: {
     flex: 1,
@@ -822,46 +824,46 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     position: 'absolute',
-    left: 16,
+    left: SPACING.lg,
     top: 14,
     zIndex: 1,
   },
   searchInput: {
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderColor: MEDICAL_COLORS.slate200,
+    borderRadius: BORDER_RADIUS.lg,
     paddingLeft: 48,
-    paddingRight: 16,
-    fontSize: 16,
-    color: '#1E293B',
+    paddingRight: SPACING.lg,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate900,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.md,
+    backgroundColor: MEDICAL_COLORS.white,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    gap: 8,
+    borderColor: MEDICAL_COLORS.slate200,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.sm,
   },
   filterButtonActive: {
-    borderColor: '#F97316',
-    backgroundColor: '#FFF7ED',
+    borderColor: MEDICAL_COLORS.warmOrangeDark,
+    backgroundColor: MEDICAL_COLORS.warmOrangeBg,
   },
   filterText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#334155',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    color: MEDICAL_COLORS.slate700,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   filterTextActive: {
-    color: '#F97316',
+    color: MEDICAL_COLORS.warmOrangeDark,
   },
 
   // Filter Modal
@@ -871,53 +873,53 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
-    paddingHorizontal: 24,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderTopLeftRadius: BORDER_RADIUS.xxl,
+    borderTopRightRadius: BORDER_RADIUS.xxl,
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xxxxxl,
+    paddingHorizontal: SPACING.xxl,
     maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-    paddingBottom: 16,
+    marginBottom: SPACING.xxl,
+    paddingBottom: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: MEDICAL_COLORS.slate200,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   modalCloseText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F97316',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.warmOrangeDark,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   filterSection: {
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
   },
   filterSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.slate500,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: SPACING.md,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   filterOption: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: MEDICAL_COLORS.slate50,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.sm,
   },
   filterOptionContent: {
     flexDirection: 'row',
@@ -925,78 +927,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterOptionText: {
-    fontSize: 16,
-    color: '#1F2937',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate900,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   checkmark: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F97316',
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: MEDICAL_COLORS.warmOrangeDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmarkText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: MEDICAL_COLORS.white,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   resetButton: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    backgroundColor: MEDICAL_COLORS.slate100,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xxl,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   resetButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.slate500,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // Stats Grid
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 32,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxxl,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    ...SHADOWS.lg,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: MEDICAL_COLORS.slate100,
   },
   statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: TYPOGRAPHY.fontSize.xxxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginBottom: 6,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   statLabel: {
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate500,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: '500',
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   // Section Header
   sectionHeader: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 24,
+    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
+    marginBottom: SPACING.xxl,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
@@ -1005,27 +1003,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 48,
+    marginBottom: SPACING.xxxxxl,
   },
   categoryCardWrapper: {
     width: '48%',
-    marginBottom: 32,
+    marginBottom: SPACING.xxxl,
   },
   categoryCard: {
-    borderRadius: 28,
-    padding: 28,
+    borderRadius: BORDER_RADIUS.xxxl,
+    padding: SPACING.xxxl,
     minHeight: 220,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 16,
+    ...SHADOWS.xl,
     overflow: 'hidden',
     position: 'relative',
   },
   bgCircle: {
     position: 'absolute',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     borderRadius: 1000,
   },
   bgCircle1: {
@@ -1048,31 +1042,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    padding: 4,
+    padding: SPACING.xs,
   },
   iconContainer: {
     width: 72,
     height: 72,
     backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 20,
+    borderRadius: BORDER_RADIUS.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: SPACING.xl,
+    ...SHADOWS.md,
   },
   cardTitle: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.white,
+    marginBottom: SPACING.md,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -1080,37 +1072,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardCount: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.9)',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    color: MEDICAL_COLORS.white,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 
   // CTA Banner
   ctaBanner: {
-    borderRadius: 24,
-    padding: 48,
+    borderRadius: BORDER_RADIUS.xxl,
+    padding: SPACING.xxxxxl,
     alignItems: 'center',
-    marginTop: 48,
-    marginBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    marginTop: SPACING.xxxxxl,
+    marginBottom: SPACING.xxxl,
+    ...SHADOWS.xl,
   },
   ctaTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.white,
+    marginBottom: SPACING.lg,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   ctaSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    marginBottom: 24,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.white,
+    marginBottom: SPACING.xxl,
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -1118,16 +1106,16 @@ const styles = StyleSheet.create({
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
+    backgroundColor: MEDICAL_COLORS.white,
+    paddingHorizontal: SPACING.xxxl,
+    paddingVertical: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.sm,
   },
   ctaButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F97316',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.warmOrangeDark,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
 });
