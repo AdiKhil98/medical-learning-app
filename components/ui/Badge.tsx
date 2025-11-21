@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error';
 
@@ -16,45 +18,48 @@ export default function Badge({ text, variant = 'primary' }: BadgeProps) {
   );
 }
 
+// FIX: Replace 10 hardcoded colors with MEDICAL_COLORS
+// FIX: Apply design tokens for spacing, border radius, and typography
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.xl,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
     fontFamily: 'Inter-Medium',
   },
   primary: {
-    backgroundColor: '#FDF7F6',  // Very light coral
+    backgroundColor: MEDICAL_COLORS.veryLightCoral,
   },
   secondary: {
-    backgroundColor: '#FBEEEC',  // Light coral
+    backgroundColor: MEDICAL_COLORS.lightCoral,
   },
   success: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: MEDICAL_COLORS.lightGreen,
   },
   warning: {
-    backgroundColor: '#FDF8F7',  // Very light Tonys Pink background
+    backgroundColor: MEDICAL_COLORS.veryLightPink,
   },
   error: {
-    backgroundColor: '#FBEEEC',  // Light coral for error background
+    backgroundColor: MEDICAL_COLORS.lightCoral,
   },
   text_primary: {
-    color: '#E2827F',  // Burning Sand
+    color: MEDICAL_COLORS.primary,
   },
   text_secondary: {
-    color: '#B87E70',  // Old Rose
+    color: MEDICAL_COLORS.oldRose,
   },
   text_success: {
-    color: '#22C55E',
+    color: MEDICAL_COLORS.success,
   },
   text_warning: {
-    color: '#E5877E',  // Tonys Pink for warning text
+    color: MEDICAL_COLORS.secondary,
   },
   text_error: {
-    color: '#B15740',  // Brown Rust for error text
+    color: MEDICAL_COLORS.brownRust,
   },
 });
