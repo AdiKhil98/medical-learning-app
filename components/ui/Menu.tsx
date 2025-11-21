@@ -5,6 +5,8 @@ import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, Clipboar
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -55,35 +57,35 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       label: 'Profil',
       subtitle: 'Ihre persönlichen Daten',
       route: '/profile',
-      gradientColors: ['#60A5FA', '#3B82F6'] // Blue
+      gradientColors: MEDICAL_COLORS.blueGradient
     },
     {
       icon: Bell,
       label: 'Updates',
       subtitle: 'Neuigkeiten & Hinweise',
       route: '/updates',
-      gradientColors: ['#A78BFA', '#8B5CF6'] // Purple
+      gradientColors: MEDICAL_COLORS.purpleGradient
     },
     {
       icon: Crown,
       label: 'Subscription',
       subtitle: 'Ihr Abonnement verwalten',
       route: '/subscription',
-      gradientColors: ['#FBBF24', '#F59E0B'] // Amber
+      gradientColors: MEDICAL_COLORS.amberGradient
     },
     {
       icon: Bookmark,
       label: 'Bookmarks',
       subtitle: 'Gespeicherte Inhalte',
       route: '/bookmarks',
-      gradientColors: ['#F472B6', '#EC4899'] // Pink
+      gradientColors: MEDICAL_COLORS.pinkGradient
     },
     {
       icon: StickyNote,
       label: 'Gespeicherte Notizen',
       subtitle: 'Ihre persönlichen Notizen',
       route: '/gespeicherte-notizen',
-      gradientColors: ['#F97316', '#EA580C'] // Orange
+      gradientColors: MEDICAL_COLORS.orangeGradient
     },
   ];
 
@@ -114,8 +116,8 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   });
 
   const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#ffffff', '#f1f5f9', '#e2e8f0'];
+    ? MEDICAL_COLORS.darkMenuGradient
+    : MEDICAL_COLORS.lightMenuGradient;
 
   const getUserInitials = () => {
     if (!user?.email) return '?';
@@ -216,14 +218,14 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
         {/* Close Button */}
         <View style={styles.closeButtonContainer}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color="#64748B" />
+            <X size={24} color={MEDICAL_COLORS.slate500} />
           </TouchableOpacity>
         </View>
 
         {/* User Header Section */}
         <View style={styles.userHeader}>
           <LinearGradient
-            colors={['#10B981', '#059669']}
+            colors={MEDICAL_COLORS.greenGradient}
             style={styles.userAvatar}
           >
             <Text style={styles.userAvatarText}>{getUserInitials()}</Text>
@@ -252,13 +254,13 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                   colors={item.gradientColors}
                   style={styles.menuIconGradient}
                 >
-                  <item.icon size={24} color="#FFFFFF" />
+                  <item.icon size={24} color={MEDICAL_COLORS.white} />
                 </LinearGradient>
                 <View style={styles.menuTextContainer}>
                   <Text style={styles.menuItemLabel}>{item.label}</Text>
                   <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
                 </View>
-                <ChevronRight size={20} color="#94A3B8" />
+                <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
               </TouchableOpacity>
             ))}
 
@@ -269,16 +271,16 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 activeOpacity={0.7}
               >
                 <LinearGradient
-                  colors={['#EF4444', '#DC2626']}
+                  colors={MEDICAL_COLORS.redGradient}
                   style={styles.menuIconGradient}
                 >
-                  <Shield size={24} color="#FFFFFF" />
+                  <Shield size={24} color={MEDICAL_COLORS.white} />
                 </LinearGradient>
                 <View style={styles.menuTextContainer}>
                   <Text style={styles.menuItemLabel}>Admin Panel</Text>
                   <Text style={styles.menuItemSubtitle}>Verwaltung & Einstellungen</Text>
                 </View>
-                <ChevronRight size={20} color="#94A3B8" />
+                <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
               </TouchableOpacity>
             )}
 
@@ -289,17 +291,17 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={['#06B6D4', '#0284C7']}
+                colors={MEDICAL_COLORS.cyanGradient}
                 style={styles.menuIconGradient}
               >
-                <Info size={24} color="#FFFFFF" />
+                <Info size={24} color={MEDICAL_COLORS.white} />
               </LinearGradient>
               <View style={styles.menuTextContainer}>
                 <Text style={styles.menuItemLabel}>Kontakt & Info</Text>
                 <Text style={styles.menuItemSubtitle}>Hilfe & Support</Text>
               </View>
               <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                <ChevronDown size={20} color="#94A3B8" />
+                <ChevronDown size={20} color={MEDICAL_COLORS.slate400} />
               </Animated.View>
             </TouchableOpacity>
 
@@ -324,15 +326,15 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <LinearGradient
-              colors={['#EF4444', '#DC2626']}
+              colors={MEDICAL_COLORS.redGradient}
               style={styles.logoutGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <LogOut size={20} color="#FFFFFF" />
+              <LogOut size={20} color={MEDICAL_COLORS.white} />
               <Text style={styles.logoutText}>Abmelden</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -368,143 +370,131 @@ const styles = StyleSheet.create({
   },
   closeButtonContainer: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: SPACING.lg,
+    right: SPACING.lg,
     zIndex: 10,
   },
   closeButton: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: MEDICAL_COLORS.slate100,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...SHADOWS.sm,
   },
   userHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 32,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    borderBottomWidth: 1,
+    paddingTop: SPACING.xxxl,
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.xxl,
+    borderBottomWidth: BORDER_WIDTH.thin,
     borderBottomColor: 'rgba(226, 232, 240, 0.5)',
   },
   userAvatar: {
     width: 64,
     height: 64,
-    borderRadius: 20,
+    borderRadius: BORDER_RADIUS.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#10B981',
+    shadowColor: MEDICAL_COLORS.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   userAvatarText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.white,
   },
   userInfo: {
-    marginLeft: 16,
+    marginLeft: SPACING.lg,
     flex: 1,
   },
   userWelcome: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E293B',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
     marginBottom: 2,
   },
   userSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate500,
   },
   scrollContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   scrollContent: {
-    paddingTop: 24,
-    paddingBottom: 100, // Space for logout button
+    paddingTop: SPACING.xxl,
+    paddingBottom: 100,
   },
   menuItems: {
-    gap: 8,
+    gap: SPACING.sm,
   },
   modernMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
+    padding: SPACING.lg,
+    borderRadius: SPACING.lg,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    ...SHADOWS.md,
   },
   menuIconGradient: {
-    width: 48,
-    height: 48,
+    width: SPACING.xxxxxl,
+    height: SPACING.xxxxxl,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    ...SHADOWS.sm,
   },
   menuTextContainer: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: SPACING.lg,
   },
   menuItemLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.slate900,
     marginBottom: 2,
   },
   menuItemSubtitle: {
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: MEDICAL_COLORS.slate500,
   },
   submenu: {
     overflow: 'hidden',
-    marginTop: 8,
+    marginTop: SPACING.sm,
     marginLeft: 64,
   },
   submenuItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: SPACING.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   submenuText: {
-    fontSize: 14,
-    color: '#475569',
-    fontWeight: '500',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate600,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   logoutContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    borderTopWidth: 1,
+    padding: SPACING.xxl,
+    borderTopWidth: BORDER_WIDTH.thin,
     borderTopColor: 'rgba(226, 232, 240, 0.5)',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
   },
   logoutButton: {
-    borderRadius: 16,
+    borderRadius: SPACING.lg,
     overflow: 'hidden',
-    shadowColor: '#EF4444',
+    shadowColor: MEDICAL_COLORS.warmRed,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -514,13 +504,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 8,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xxl,
+    gap: SPACING.sm,
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.white,
   },
 });

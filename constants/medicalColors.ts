@@ -66,6 +66,18 @@ export const MEDICAL_COLORS = {
   purpleCoralGradient: ['#EDE9FE', '#DDD6FE', '#E2827F'], // Purple to coral gradient (for questions)
   backgroundGradient: ['#F8FAFC', '#FFFFFF', '#F1F5F9'], // Neutral background gradient
   headerGradient: ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'], // Header gradient with transparency
+
+  // Menu-specific gradients
+  blueGradient: ['#60A5FA', '#3B82F6'],         // Blue gradient for profile
+  purpleGradient: ['#A78BFA', '#8B5CF6'],       // Purple gradient for updates
+  amberGradient: ['#FBBF24', '#F59E0B'],        // Amber/gold gradient for subscription
+  pinkGradient: ['#F472B6', '#EC4899'],         // Pink gradient for bookmarks
+  orangeGradient: ['#F97316', '#EA580C'],       // Orange gradient for notes
+  cyanGradient: ['#06B6D4', '#0284C7'],         // Cyan gradient for info
+  redGradient: ['#EF4444', '#DC2626'],          // Red gradient for admin/logout
+  greenGradient: ['#10B981', '#059669'],        // Green gradient for success/avatar
+  lightMenuGradient: ['#ffffff', '#f1f5f9', '#e2e8f0'],  // Light mode menu background
+  darkMenuGradient: ['#1F2937', '#111827', '#0F172A'],   // Dark mode menu background
   
   // Shadow colors with coral tint
   shadowLight: 'rgba(226, 130, 127, 0.08)',    // Light coral shadow
