@@ -266,6 +266,14 @@ export default function FSPSimulationScreen() {
         // ============================================
         console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
 
+        // DEBUG: Check what's in the user object
+        console.log('🔍 DEBUG USER OBJECT:', {
+          hasUser: !!user,
+          userId: user?.id,
+          userEmail: user?.email,
+          fullUser: user
+        });
+
         const controller = createFSPController(user.id, user.email);
 
         if (!controller) {
