@@ -815,7 +815,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             <TextInput
               style={styles.modernSearchInput}
               placeholder="Inhalte durchsuchen..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={MEDICAL_COLORS.slate400}
               value={searchTerm}
               onChangeText={handleSearch}
             />
@@ -943,7 +943,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     style={styles.modernCompletionButton}
                   >
                     {isCompleted ? (
-                      <CheckCircle size={24} color={MEDICAL_COLORS.success} fill="#10B981" />
+                      <CheckCircle size={24} color={MEDICAL_COLORS.success} fill={MEDICAL_COLORS.success} />
                     ) : (
                       <Circle size={24} color="#D1D5DB" strokeWidth={2} />
                     )}
@@ -966,7 +966,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                   {studyMode && (
                     <View style={styles.modernKeyPointsBox}>
                       <View style={styles.modernKeyPointsHeader}>
-                        <Lightbulb size={18} color="#3B82F6" />
+                        <Lightbulb size={18} color={MEDICAL_COLORS.blue} />
                         <Text style={styles.modernKeyPointsTitle}>Wichtige Punkte</Text>
                       </View>
                       <Text style={styles.modernKeyPointsText}>
@@ -1234,7 +1234,7 @@ const styles = StyleSheet.create({
   modernClearButton: {
     width: 28,
     height: 28,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: MEDICAL_COLORS.lightCoral,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1437,12 +1437,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#B87E70',
+    borderColor: MEDICAL_COLORS.secondary,
     backgroundColor: 'transparent',
     gap: 6,
   },
   studyToggleActive: {
-    backgroundColor: '#B87E70',
+    backgroundColor: MEDICAL_COLORS.secondary,
   },
   studyToggleText: {
     fontSize: 14,
@@ -1457,11 +1457,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#B87E70',
+    borderColor: MEDICAL_COLORS.secondary,
     backgroundColor: 'transparent',
   },
   fontSizeToggleActive: {
-    backgroundColor: '#B87E70',
+    backgroundColor: MEDICAL_COLORS.secondary,
   },
   fontSizeText: {
     fontSize: 16,
@@ -1734,7 +1734,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   modernSectionCardExpanded: {
-    borderColor: '#F97316',
+    borderColor: MEDICAL_COLORS.warmOrangeDark,
     shadowColor: MEDICAL_COLORS.warmOrangeDark,
     shadowOpacity: 0.15,
   },
@@ -1757,7 +1757,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   modernIconContainerCompleted: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: MEDICAL_COLORS.lightGreen,
   },
   modernIconContainerIncomplete: {
     backgroundColor: MEDICAL_COLORS.warmOrangeBg,
@@ -1801,15 +1801,15 @@ const styles = StyleSheet.create({
   // Modern Expanded Content Styles
   modernSectionExpandedContent: {
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: MEDICAL_COLORS.slate200,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 24,
   },
   modernKeyPointsBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: MEDICAL_COLORS.blueBg,
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: MEDICAL_COLORS.blue,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -1823,7 +1823,7 @@ const styles = StyleSheet.create({
   modernKeyPointsTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E40AF',
+    color: MEDICAL_COLORS.blue,
   },
   modernKeyPointsText: {
     fontSize: 14,
@@ -1871,7 +1871,7 @@ const styles = StyleSheet.create({
     backgroundColor: MEDICAL_COLORS.slate200,
     gap: 8,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderColor: MEDICAL_COLORS.slate300,
   },
   modernSecondaryButtonText: {
     fontSize: 15,
@@ -1933,7 +1933,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   summaryProgressText: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: MEDICAL_COLORS.warmYellowBg,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
