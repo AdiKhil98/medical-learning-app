@@ -1,12 +1,14 @@
 import React from 'react';
-import { 
-  TouchableOpacity, 
-  Text, 
-  ActivityIndicator, 
+import {
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
   StyleSheet,
   ViewStyle,
   TextStyle
 } from 'react-native';
+import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -74,70 +76,72 @@ export default React.memo(function Button({
   );
 });
 
+// FIX: Use design tokens and medical colors instead of hardcoded values
 const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    gap: 8
+    borderRadius: BORDER_RADIUS.md,
+    gap: SPACING.sm,
   },
   button_primary: {
-    backgroundColor: '#E2827F',  // Burning Sand
+    backgroundColor: MEDICAL_COLORS.primary,
   },
   button_secondary: {
-    backgroundColor: '#E5877E',  // Tonys Pink
+    backgroundColor: MEDICAL_COLORS.secondary,
   },
   button_outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: '#E2827F',  // Burning Sand
+    borderWidth: BORDER_WIDTH.medium,
+    borderColor: MEDICAL_COLORS.primary,
   },
   button_text: {
     backgroundColor: 'transparent',
   },
   button_sm: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: SPACING.xs + 2, // 6px
+    paddingHorizontal: SPACING.md,
   },
   button_md: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: SPACING.sm + 2, // 10px
+    paddingHorizontal: SPACING.lg,
   },
   button_lg: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xxl,
   },
   button_disabled: {
-    backgroundColor: '#E5E7EB',
-    borderColor: '#E5E7EB',
+    backgroundColor: MEDICAL_COLORS.lightGray,
+    borderColor: MEDICAL_COLORS.lightGray,
   },
   text: {
     fontFamily: 'Inter-Medium',
     textAlign: 'center',
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   text_primary: {
-    color: 'white',
+    color: MEDICAL_COLORS.white,
   },
   text_secondary: {
-    color: '#B15740',  // Brown Rust
+    color: MEDICAL_COLORS.brownRust,
   },
   text_outline: {
-    color: '#E2827F',  // Burning Sand
+    color: MEDICAL_COLORS.primary,
   },
   text_text: {
-    color: '#E2827F',  // Burning Sand
+    color: MEDICAL_COLORS.primary,
   },
   text_sm: {
-    fontSize: 14,
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   text_md: {
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.fontSize.base,
   },
   text_lg: {
-    fontSize: 18,
+    fontSize: TYPOGRAPHY.fontSize.lg,
   },
   text_disabled: {
-    color: '#9CA3AF',
+    color: MEDICAL_COLORS.textDisabled,
   },
 });

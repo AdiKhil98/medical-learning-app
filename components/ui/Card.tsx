@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { SPACING, BORDER_RADIUS, SHADOWS, TYPOGRAPHY } from '@/constants/tokens';
 
 interface CardProps {
   children: React.ReactNode;
@@ -9,20 +10,18 @@ interface CardProps {
 }
 
 // FIX: Create static styles once outside component - NEVER recreate StyleSheet on render!
+// FIX: Use design tokens for consistent spacing, shadows, and typography
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    ...SHADOWS.md,
   },
   title: {
     fontFamily: 'Inter-Bold',
-    fontSize: 18,
-    marginBottom: 12,
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginBottom: SPACING.md,
   },
 });
 
