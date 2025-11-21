@@ -12,6 +12,8 @@ import EvaluationDetailScreen from '@/components/evaluation/EvaluationDetailScre
 import EvaluationWebView from '@/components/evaluation/EvaluationWebView';
 import { parseEvaluation } from '@/utils/parseEvaluation';
 import type { Evaluation as ParsedEvaluation } from '@/types/evaluation';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -43,19 +45,12 @@ if (Platform.OS === 'web') {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Updated color scheme matching coral design requirements
-const MEDICAL_COLORS = {
-  primary: '#E2827F', // Burning Sand for chart
-  chartGradient: '#FDF7F6', // Very light coral for chart fill
-  background: '#FFFFFF',
-  lightBackground: '#F9F6F2', // Light cream background
-  textPrimary: '#1F2937',
-  textSecondary: '#6B7280',
-  border: 'rgba(184, 126, 112, 0.2)',
-  success: '#66BB6A', // Keep green for scores >= 60
-  danger: '#B15740', // Brown Rust for scores < 60
-  lightGray: '#F9F6F2',
-  gridColor: '#f0f0f0'
+// Chart-specific colors (derived from MEDICAL_COLORS)
+const CHART_COLORS = {
+  chartGradient: MEDICAL_COLORS.mintGreen, // #FDF7F6 - Very light coral for chart fill
+  gridColor: '#f0f0f0', // Light gray for chart grid
+  border: 'rgba(184, 126, 112, 0.2)', // Chart border with transparency
+  success: '#66BB6A', // Green for scores >= 60
 };
 
 interface Evaluation {
