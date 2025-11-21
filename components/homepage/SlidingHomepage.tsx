@@ -377,25 +377,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
       </ScrollView>
 
-      {/* Carousel Indicators - Dots (visible on mobile) */}
-      {IS_MOBILE && (
-        <View style={styles.carouselIndicators}>
-          {[0, 1, 2, 3].map((index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => scrollToSlide(index)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.indicatorDot,
-                  currentSlide === index && styles.indicatorDotActive,
-                ]}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      {/* Carousel Indicators - Removed to prevent overlap with navigation */}
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
