@@ -380,9 +380,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   // Function to render numerical values with colored badges
   const renderNumericalValue = (value: string, type: 'normal' | 'pathological' | 'range') => {
     const badgeStyle = {
-      normal: { backgroundColor: '#DCFCE7', color: '#166534', borderColor: '#10B981' },
-      pathological: { backgroundColor: '#FEE2E2', color: '#991B1B', borderColor: '#EF4444' },
-      range: { backgroundColor: '#DBEAFE', color: '#1E40AF', borderColor: '#3B82F6' }
+      normal: { backgroundColor: MEDICAL_COLORS.lightGreen, color: MEDICAL_COLORS.success, borderColor: MEDICAL_COLORS.success },
+      pathological: { backgroundColor: MEDICAL_COLORS.lightCoral, color: MEDICAL_COLORS.warmRed, borderColor: MEDICAL_COLORS.warmRed },
+      range: { backgroundColor: MEDICAL_COLORS.blueBg, color: MEDICAL_COLORS.blue, borderColor: MEDICAL_COLORS.blue }
     };
 
     return (
@@ -845,7 +845,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 end={{ x: 1, y: 0 }}
                 style={styles.modernStudyButtonGradient}
               >
-                <Eye size={20} color={studyMode ? '#FFFFFF' : '#F97316'} />
+                <Eye size={20} color={studyMode ? MEDICAL_COLORS.white : MEDICAL_COLORS.warmOrangeDark} />
                 <Text style={[styles.modernStudyButtonText, studyMode && styles.modernStudyButtonTextActive]}>
                   Study Mode
                 </Text>
@@ -872,7 +872,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
 
         {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: '#6B7280', marginHorizontal: 20 }]}>  {/* Medium gray for white background */}
+          <Text style={[styles.searchResults, { color: MEDICAL_COLORS.slate500, marginHorizontal: 20 }]}>  {/* Medium gray for white background */}
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
@@ -908,7 +908,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 ]}>
                   <IconComponent
                     size={24}
-                    color={isCompleted ? '#10B981' : '#F97316'}
+                    color={isCompleted ? MEDICAL_COLORS.success : MEDICAL_COLORS.warmOrangeDark}
                     strokeWidth={2.5}
                   />
                 </View>
@@ -945,12 +945,12 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     {isCompleted ? (
                       <CheckCircle size={24} color={MEDICAL_COLORS.success} fill={MEDICAL_COLORS.success} />
                     ) : (
-                      <Circle size={24} color="#D1D5DB" strokeWidth={2} />
+                      <Circle size={24} color={MEDICAL_COLORS.slate300} strokeWidth={2} />
                     )}
                   </TouchableOpacity>
                   <ChevronDown
                     size={20}
-                    color="#9CA3AF"
+                    color={MEDICAL_COLORS.slate400}
                     style={[
                       styles.modernChevronIcon,
                       isExpanded && { transform: [{ rotate: '180deg' }] }
@@ -1025,9 +1025,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     >
                       <StickyNote
                         size={18}
-                        color={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? '#F97316' : '#6B7280'}
+                        color={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? MEDICAL_COLORS.warmOrangeDark : MEDICAL_COLORS.slate500}
                         strokeWidth={2}
-                        fill={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? '#FED7AA' : 'none'}
+                        fill={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? MEDICAL_COLORS.warmOrangeBg : 'none'}
                       />
                       <Text style={styles.modernSecondaryButtonText}>
                         {sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? 'Notiz bearbeiten' : 'Notizen'}
@@ -1047,7 +1047,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           <View style={styles.learningSummaryStats}>
             {/* Completed Sections */}
             <View style={styles.summaryStatItem}>
-              <View style={[styles.summaryStatIcon, { backgroundColor: '#DCFCE7' }]}>
+              <View style={[styles.summaryStatIcon, { backgroundColor: MEDICAL_COLORS.lightGreen }]}>
                 <CheckCircle size={24} color={MEDICAL_COLORS.success} />
               </View>
               <View style={styles.summaryStatContent}>
@@ -1058,8 +1058,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
             {/* Remaining Sections */}
             <View style={styles.summaryStatItem}>
-              <View style={[styles.summaryStatIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Circle size={24} color="#F59E0B" strokeWidth={2} />
+              <View style={[styles.summaryStatIcon, { backgroundColor: MEDICAL_COLORS.warmYellowBg }]}>
+                <Circle size={24} color={MEDICAL_COLORS.warmYellow} strokeWidth={2} />
               </View>
               <View style={styles.summaryStatContent}>
                 <Text style={styles.summaryStatValue}>
@@ -1071,7 +1071,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
             {/* Total Reading Time */}
             <View style={styles.summaryStatItem}>
-              <View style={[styles.summaryStatIcon, { backgroundColor: '#FED7AA' }]}>
+              <View style={[styles.summaryStatIcon, { backgroundColor: MEDICAL_COLORS.warmOrangeBg }]}>
                 <Clock size={24} color={MEDICAL_COLORS.warmOrangeDark} />
               </View>
               <View style={styles.summaryStatContent}>
@@ -1937,12 +1937,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: MEDICAL_COLORS.warmYellowLight,
   },
   summaryProgressDescription: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#92400E',
+    color: MEDICAL_COLORS.dark,
     textAlign: 'center',
     lineHeight: 22,
   },
