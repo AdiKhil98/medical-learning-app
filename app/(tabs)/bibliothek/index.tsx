@@ -1011,7 +1011,8 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     borderRadius: BORDER_RADIUS.xxxl,
-    padding: SPACING.xxxl,
+    paddingVertical: SPACING.xxxl,
+    paddingHorizontal: SPACING.xl,
     minHeight: 220,
     ...SHADOWS.xl,
     overflow: 'hidden',
@@ -1056,7 +1057,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.md,
   },
   cardTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: MEDICAL_COLORS.white,
     marginBottom: SPACING.md,
