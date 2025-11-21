@@ -8,6 +8,7 @@ import {
 import { Plus, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { bookmarksService } from '@/lib/bookmarksService';
+import { BORDER_WIDTH, SHADOWS } from '@/constants/tokens';
 
 interface BookmarkButtonProps {
   sectionSlug: string;
@@ -175,19 +176,17 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
   );
 };
 
+// FIX: Increase touch target to 48x48 for better accessibility (was 44x44)
+// FIX: Apply design tokens for shadows and border width
 const styles = StyleSheet.create({
   button: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48, // Minimum 48px for accessibility
+    height: 48, // Minimum 48px for accessibility
+    borderRadius: 24, // Half of width/height for circle
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: BORDER_WIDTH.medium,
+    ...SHADOWS.sm,
   },
   iconBookmarked: {
     transform: [{ scale: 1.1 }], // Slightly larger when bookmarked
