@@ -78,6 +78,8 @@ export const MEDICAL_COLORS = {
   greenGradient: ['#10B981', '#059669'],        // Green gradient for success/avatar
   lightMenuGradient: ['#ffffff', '#f1f5f9', '#e2e8f0'],  // Light mode menu background
   darkMenuGradient: ['#1F2937', '#111827', '#0F172A'],   // Dark mode menu background
+  lightCoralBackground: ['#FFF5F0', '#FFFFFF', '#FFF8F5'], // Very light coral/white background
+  whiteGradient: ['#FFFFFF', '#FFFFFF'],        // Solid white gradient (for inactive states)
   
   // Shadow colors with coral tint
   shadowLight: 'rgba(226, 130, 127, 0.08)',    // Light coral shadow

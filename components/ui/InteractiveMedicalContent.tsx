@@ -706,7 +706,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     <Animated.View style={[styles.appContainer, { opacity: fadeAnim }]}>
       {/* Premium Gradient Background */}
       <LinearGradient
-        colors={['#FFF5F0', '#FFFFFF', '#FFF8F5']}
+        colors={MEDICAL_COLORS.lightCoralBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
@@ -727,7 +727,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
         {/* Modern Header Section */}
         <LinearGradient
-          colors={['#FB923C', '#F97316', '#EA580C']}
+          colors={MEDICAL_COLORS.warmOrangeGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.modernHeader}
@@ -740,7 +740,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               activeOpacity={0.8}
             >
               <View style={styles.backButtonInner}>
-                <ChevronLeft size={22} color="#FFFFFF" />
+                <ChevronLeft size={22} color={MEDICAL_COLORS.white} />
                 <Text style={styles.backText}>Zurück</Text>
               </View>
             </TouchableOpacity>
@@ -751,7 +751,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 onPress={onOpenModal}
                 activeOpacity={0.8}
               >
-                <Maximize2 size={18} color="#FFFFFF" />
+                <Maximize2 size={18} color={MEDICAL_COLORS.white} />
               </TouchableOpacity>
             )}
           </View>
@@ -798,7 +798,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           </View>
           <View style={styles.progressBarTrack}>
             <LinearGradient
-              colors={['#F97316', '#EA580C']}
+              colors={MEDICAL_COLORS.orangeGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressBarFill, { width: `${completionPercentage}%` }]}
@@ -811,7 +811,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
           {/* Modern Search Bar */}
           <View style={styles.modernSearchContainer}>
-            <Search size={22} color="#F97316" />
+            <Search size={22} color={MEDICAL_COLORS.warmOrangeDark} />
             <TextInput
               style={styles.modernSearchInput}
               placeholder="Inhalte durchsuchen..."
@@ -840,7 +840,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={studyMode ? ['#F97316', '#EA580C'] : ['#FFFFFF', '#FFFFFF']}
+                colors={studyMode ? MEDICAL_COLORS.orangeGradient : MEDICAL_COLORS.whiteGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modernStudyButtonGradient}
@@ -858,7 +858,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={fontSize === 'large' ? ['#F97316', '#EA580C'] : ['#FFFFFF', '#FFFFFF']}
+                colors={fontSize === 'large' ? MEDICAL_COLORS.orangeGradient : MEDICAL_COLORS.whiteGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modernFontButtonGradient}
@@ -920,7 +920,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                   </Text>
                   <View style={styles.modernSectionMeta}>
                     <View style={styles.modernMetaItem}>
-                      <Clock size={14} color="#6B7280" />
+                      <Clock size={14} color={MEDICAL_COLORS.slate500} />
                       <Text style={styles.modernMetaItemText}>{readingTime} Min.</Text>
                     </View>
                   </View>
@@ -943,7 +943,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     style={styles.modernCompletionButton}
                   >
                     {isCompleted ? (
-                      <CheckCircle size={24} color="#10B981" fill="#10B981" />
+                      <CheckCircle size={24} color={MEDICAL_COLORS.success} fill="#10B981" />
                     ) : (
                       <Circle size={24} color="#D1D5DB" strokeWidth={2} />
                     )}
@@ -1002,13 +1002,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                       }}
                     >
                       <LinearGradient
-                        colors={['#F97316', '#EA580C']}
+                        colors={MEDICAL_COLORS.orangeGradient}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.modernButtonGradient}
                       >
                         <Text style={styles.modernPrimaryButtonText}>Weiter</Text>
-                        <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                        <ChevronRight size={18} color={MEDICAL_COLORS.white} strokeWidth={2.5} />
                       </LinearGradient>
                     </TouchableOpacity>
 
@@ -1048,7 +1048,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             {/* Completed Sections */}
             <View style={styles.summaryStatItem}>
               <View style={[styles.summaryStatIcon, { backgroundColor: '#DCFCE7' }]}>
-                <CheckCircle size={24} color="#10B981" />
+                <CheckCircle size={24} color={MEDICAL_COLORS.success} />
               </View>
               <View style={styles.summaryStatContent}>
                 <Text style={styles.summaryStatValue}>{completedSections.size}</Text>
@@ -1072,7 +1072,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             {/* Total Reading Time */}
             <View style={styles.summaryStatItem}>
               <View style={[styles.summaryStatIcon, { backgroundColor: '#FED7AA' }]}>
-                <Clock size={24} color="#F97316" />
+                <Clock size={24} color={MEDICAL_COLORS.warmOrangeDark} />
               </View>
               <View style={styles.summaryStatContent}>
                 <Text style={styles.summaryStatValue}>{remainingReadingTime}</Text>
