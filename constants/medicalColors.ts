@@ -23,6 +23,31 @@ export const MEDICAL_COLORS = {
   dark: '#8B3A1F',           // Very dark rust
   gray: '#616161',           // Medium gray
   lightGray: '#E0E0E0',      // Light gray for borders
+  textDisabled: '#9CA3AF',   // Gray for disabled text
+
+  // Neutral UI colors (for elements that need less coral tint)
+  slate900: '#0F172A',       // Very dark slate for high-contrast text
+  slate700: '#334155',       // Dark slate for body text
+  slate600: '#475569',       // Medium slate for secondary text
+  slate500: '#64748B',       // Slate for subtle text
+  slate400: '#94A3B8',       // Light slate for hints/placeholders
+  slate300: '#CBD5E1',       // Very light slate for borders
+  slate200: '#E2E8F0',       // Extra light slate for backgrounds
+  slate100: '#F1F5F9',       // Subtle slate background
+  slate50: '#F8FAFC',        // Lightest slate background
+
+  // Additional warm accents
+  warmOrange: '#FB923C',     // Warm orange for accents (complementary to coral)
+  warmOrangeDark: '#F97316', // Darker warm orange
+  warmRed: '#EF4444',        // Warm red for alerts
+  warmYellow: '#FBBF24',     // Warm yellow for highlights
+  warmYellowLight: '#FCD34D',// Light warm yellow
+  warmYellowBg: '#FFFBEB',   // Light yellow background
+  warmOrangeBg: '#FFF7ED',   // Light orange background
+
+  // Info/Accent colors
+  blue: '#3B82F6',           // Blue for informational elements
+  blueBg: '#EFF6FF',         // Light blue background
   
   // Warm Coral Gradients
   gradient1: ['#E2827F', '#B87E70'],     // Primary header gradient (Burning Sand to Old Rose)
@@ -36,6 +61,10 @@ export const MEDICAL_COLORS = {
   successGradient: ['#22C55E', '#16A34A'],      // Success gradient (keep green)
   lightGradient: ['#F8F3E8', '#FBEEEC'],       // Light background gradient
   cardGradient: ['#FFFFFF', '#FDF7F6'],         // Subtle coral card gradient
+  warmOrangeGradient: ['#FB923C', '#F97316', '#EF4444'], // Warm orange to red gradient
+  warmYellowGradient: ['#FCD34D', '#FBBF24', '#F59E0B'], // Warm yellow gradient
+  backgroundGradient: ['#F8FAFC', '#FFFFFF', '#F1F5F9'], // Neutral background gradient
+  headerGradient: ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'], // Header gradient with transparency
   
   // Shadow colors with coral tint
   shadowLight: 'rgba(226, 130, 127, 0.08)',    // Light coral shadow

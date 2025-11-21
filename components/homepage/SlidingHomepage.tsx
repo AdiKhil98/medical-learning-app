@@ -27,8 +27,11 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import { useRouter } from 'expo-router';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const IS_MOBILE = isCompact(screenWidth);
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
@@ -70,14 +73,14 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     <SafeAreaView style={styles.container}>
       {/* Clean gradient background */}
       <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
+        colors={MEDICAL_COLORS.backgroundGradient}
         style={styles.backgroundGradient}
       />
 
       {/* Modern Header */}
       <View style={styles.modernHeader}>
         <LinearGradient
-          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+          colors={MEDICAL_COLORS.headerGradient}
           style={styles.headerGradient}
         >
           <View style={styles.headerContent}>
@@ -90,35 +93,35 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                 style={styles.menuButtonGradient}
               >
-                <MenuIcon size={24} color="#FB923C" />
+                <MenuIcon size={24} color={MEDICAL_COLORS.warmOrange} />
               </LinearGradient>
             </TouchableOpacity>
-            <Logo size="medium" variant="medical" textColor="#FB923C" animated={true} />
+            <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={true} />
             <UserAvatar size="medium" />
           </View>
         </LinearGradient>
       </View>
 
       {/* Navigation Arrows - Hidden on mobile */}
-      {screenWidth >= 600 && (
+      {!IS_MOBILE && (
         <>
           <TouchableOpacity
             style={styles.leftArrow}
             onPress={prevSlide}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <View style={styles.arrowButton}>
-              <ChevronLeft size={28} color="#FFFFFF" strokeWidth={3} />
+              <ChevronLeft size={28} color={MEDICAL_COLORS.white} strokeWidth={3} />
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.rightArrow}
             onPress={nextSlide}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <View style={styles.arrowButton}>
-              <ChevronRight size={28} color="#FFFFFF" strokeWidth={3} />
+              <ChevronRight size={28} color={MEDICAL_COLORS.white} strokeWidth={3} />
             </View>
           </TouchableOpacity>
         </>
@@ -147,12 +150,12 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               {/* Icon Container */}
               <View style={styles.iconContainer}>
                 <LinearGradient
-                  colors={['#FB923C', '#EF4444']}
+                  colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.iconGradient}
                 >
-                  <BookOpen size={40} color="#FFFFFF" strokeWidth={2} />
+                  <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
                 </LinearGradient>
               </View>
 
@@ -172,10 +175,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 <TouchableOpacity
                   style={styles.buttonWrapper}
                   onPress={() => router.push('/(tabs)/simulation')}
-                  activeOpacity={0.9}
+                  activeOpacity={0.7}
                 >
                   <LinearGradient
-                    colors={['#FB923C', '#F97316', '#EF4444']}
+                    colors={MEDICAL_COLORS.warmOrangeGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.primaryButton}
@@ -188,10 +191,10 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 <TouchableOpacity
                   style={styles.buttonWrapper}
                   onPress={() => router.push('/subscription')}
-                  activeOpacity={0.9}
+                  activeOpacity={0.7}
                 >
                   <LinearGradient
-                    colors={['#FCD34D', '#FBBF24', '#F59E0B']}
+                    colors={MEDICAL_COLORS.warmYellowGradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.secondaryButton}
@@ -204,7 +207,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 <TouchableOpacity
                   style={styles.outlineButton}
                   onPress={() => setShowAboutUs(true)}
-                  activeOpacity={0.9}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.outlineButtonText}>Über KP Med</Text>
                 </TouchableOpacity>
@@ -226,11 +229,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
             <View style={styles.cardsContainer}>
               {/* Card 1 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
                 <View style={styles.recentCardContent}>
                   <View style={styles.recentCardLeft}>
                     <View style={styles.recentIconContainer}>
-                      <Heart size={24} color="#3B82F6" />
+                      <Heart size={24} color={MEDICAL_COLORS.blue} />
                     </View>
                     <View>
                       <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
@@ -239,20 +242,20 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   </View>
                   <View style={styles.recentCardRight}>
                     <View style={styles.timeContainer}>
-                      <Clock size={16} color="#94A3B8" />
+                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
                       <Text style={styles.timeText}>6</Text>
                     </View>
-                    <ChevronRight size={20} color="#94A3B8" />
+                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                   </View>
                 </View>
               </TouchableOpacity>
 
               {/* Card 2 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
                 <View style={styles.recentCardContent}>
                   <View style={styles.recentCardLeft}>
                     <View style={styles.recentIconContainer}>
-                      <Heart size={24} color="#3B82F6" />
+                      <Heart size={24} color={MEDICAL_COLORS.blue} />
                     </View>
                     <View>
                       <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
@@ -261,20 +264,20 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   </View>
                   <View style={styles.recentCardRight}>
                     <View style={styles.timeContainer}>
-                      <Clock size={16} color="#94A3B8" />
+                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
                       <Text style={styles.timeText}>1</Text>
                     </View>
-                    <ChevronRight size={20} color="#94A3B8" />
+                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                   </View>
                 </View>
               </TouchableOpacity>
 
               {/* Card 3 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
                 <View style={styles.recentCardContent}>
                   <View style={styles.recentCardLeft}>
                     <View style={styles.recentIconContainer}>
-                      <Heart size={24} color="#3B82F6" />
+                      <Heart size={24} color={MEDICAL_COLORS.blue} />
                     </View>
                     <View>
                       <Text style={styles.recentCardTitle}>Koniotomie</Text>
@@ -283,20 +286,20 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   </View>
                   <View style={styles.recentCardRight}>
                     <View style={styles.timeContainer}>
-                      <Clock size={16} color="#94A3B8" />
+                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
                       <Text style={styles.timeText}>1</Text>
                     </View>
-                    <ChevronRight size={20} color="#94A3B8" />
+                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                   </View>
                 </View>
               </TouchableOpacity>
             </View>
 
             {/* Footer Link */}
-            <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.8}>
-              <FileText size={20} color="#FB923C" />
+            <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
+              <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
               <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-              <ChevronRight size={20} color="#FB923C" />
+              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
             </TouchableOpacity>
           </View>
           </ScrollView>
@@ -315,7 +318,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             <View style={styles.tipCard}>
               <View style={styles.tipHeader}>
                 <View style={styles.tipIconContainer}>
-                  <Lightbulb size={24} color="#FB923C" />
+                  <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
                 </View>
                 <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
               </View>
@@ -343,7 +346,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             <View style={styles.questionCard}>
               <View style={styles.questionHeader}>
                 <View style={styles.questionIconContainer}>
-                  <HelpCircle size={24} color="#FB923C" />
+                  <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
                 </View>
                 <Text style={styles.questionHeaderText}>Wissensfrage</Text>
               </View>
@@ -353,17 +356,17 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               </Text>
 
               <View style={styles.optionsContainer}>
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
                   <Text style={styles.optionLabel}>A.</Text>
                   <Text style={styles.optionText}>D-Dimer-Test</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
                   <Text style={styles.optionLabel}>A.</Text>
                   <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
                   <Text style={styles.optionLabel}>C.</Text>
                   <Text style={styles.optionText}>Röntgen-Thorax</Text>
                 </TouchableOpacity>
@@ -375,13 +378,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       </ScrollView>
 
       {/* Carousel Indicators - Dots (visible on mobile) */}
-      {screenWidth < 600 && (
+      {IS_MOBILE && (
         <View style={styles.carouselIndicators}>
           {[0, 1, 2, 3].map((index) => (
             <TouchableOpacity
               key={index}
               onPress={() => scrollToSlide(index)}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
               <View
                 style={[
@@ -409,7 +412,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: MEDICAL_COLORS.slate50,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -426,13 +429,13 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   headerGradient: {
-    paddingVertical: screenWidth < 600 ? 12 : 16,
-    paddingHorizontal: screenWidth < 600 ? 16 : 20,
-    paddingTop: screenWidth < 600 ? 16 : 24,
+    paddingVertical: IS_MOBILE ? SPACING.md : SPACING.lg,
+    paddingHorizontal: IS_MOBILE ? SPACING.lg : SPACING.xl,
+    paddingTop: IS_MOBILE ? SPACING.lg : SPACING.xxl,
     shadowColor: 'rgba(0,0,0,0.08)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 12,
+    shadowRadius: SPACING.md,
     elevation: 8,
   },
   headerContent: {
@@ -442,14 +445,14 @@ const styles = StyleSheet.create({
     minHeight: 48, // Touch target minimum
   },
   menuButton: {
-    borderRadius: screenWidth < 600 ? 12 : 16,
+    borderRadius: IS_MOBILE ? BORDER_RADIUS.md : BORDER_RADIUS.lg,
     overflow: 'hidden',
     minWidth: 48, // Touch target minimum
     minHeight: 48,
   },
   menuButtonGradient: {
-    padding: screenWidth < 600 ? 12 : 14,
-    borderRadius: screenWidth < 600 ? 12 : 16,
+    padding: IS_MOBILE ? SPACING.md : SPACING.md + 2,
+    borderRadius: IS_MOBILE ? BORDER_RADIUS.md : BORDER_RADIUS.lg,
     shadowColor: 'rgba(0,0,0,0.05)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
@@ -464,29 +467,29 @@ const styles = StyleSheet.create({
   // Navigation Arrows - ALWAYS VISIBLE with z-index 50
   leftArrow: {
     position: 'absolute',
-    left: screenWidth < 600 ? 8 : 16,
+    left: IS_MOBILE ? SPACING.sm : SPACING.lg,
     top: '50%',
     marginTop: -28,
     zIndex: 50,
   },
   rightArrow: {
     position: 'absolute',
-    right: screenWidth < 600 ? 8 : 16,
+    right: IS_MOBILE ? SPACING.sm : SPACING.lg,
     top: '50%',
     marginTop: -28,
     zIndex: 50,
   },
   arrowButton: {
-    width: screenWidth < 600 ? 48 : 56,
-    height: screenWidth < 600 ? 48 : 56,
-    borderRadius: screenWidth < 600 ? 24 : 28,
-    backgroundColor: '#FB923C',
+    width: IS_MOBILE ? 48 : 56,
+    height: IS_MOBILE ? 48 : 56,
+    borderRadius: IS_MOBILE ? 24 : 28,
+    backgroundColor: MEDICAL_COLORS.warmOrange,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: 'rgba(251, 146, 60, 0.5)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: SPACING.sm },
     shadowOpacity: 1,
-    shadowRadius: 16,
+    shadowRadius: SPACING.lg,
     elevation: 12,
   },
 
@@ -507,9 +510,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: screenWidth < 600 ? 20 : 16,
-    paddingVertical: screenWidth < 600 ? 32 : 24,
-    paddingBottom: screenWidth < 600 ? 80 : 24, // Extra space for bottom nav on mobile
+    paddingHorizontal: IS_MOBILE ? SPACING.xl : SPACING.lg,
+    paddingVertical: IS_MOBILE ? SPACING.xxxl : SPACING.xxl,
+    paddingBottom: IS_MOBILE ? 80 : SPACING.xxl, // Extra space for bottom nav on mobile
   },
   slideContainer: {
     width: '100%',
@@ -519,126 +522,126 @@ const styles = StyleSheet.create({
 
   // Slide 0 - Hero Card Styles - Enhanced for Mobile
   heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: screenWidth < 600 ? 20 : 24,
-    padding: screenWidth < 600 ? 28 : 40,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: IS_MOBILE ? SPACING.xl : SPACING.xxl,
+    padding: IS_MOBILE ? 28 : SPACING.xxxxl,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: MEDICAL_COLORS.slate100,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: screenWidth < 600 ? 12 : 20 },
+    shadowOffset: { width: 0, height: IS_MOBILE ? SPACING.md : SPACING.xl },
     shadowOpacity: 1,
-    shadowRadius: screenWidth < 600 ? 24 : 40,
+    shadowRadius: IS_MOBILE ? SPACING.xxl : SPACING.xxxxl,
     elevation: 20,
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: screenWidth < 600 ? 20 : 24,
+    marginBottom: IS_MOBILE ? SPACING.xl : SPACING.xxl,
   },
   iconGradient: {
-    width: screenWidth < 600 ? 100 : 80,
-    height: screenWidth < 600 ? 100 : 80,
-    borderRadius: screenWidth < 600 ? 24 : 16,
+    width: IS_MOBILE ? 100 : 80,
+    height: IS_MOBILE ? 100 : 80,
+    borderRadius: IS_MOBILE ? SPACING.xxl : SPACING.lg,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: 'rgba(251, 146, 60, 0.4)',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: SPACING.sm },
     shadowOpacity: 1,
-    shadowRadius: 16,
+    shadowRadius: SPACING.lg,
     elevation: 8,
   },
   heading: {
-    fontSize: screenWidth < 600 ? 22 : 30,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: IS_MOBILE ? 22 : TYPOGRAPHY.fontSize['3xl'],
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
     textAlign: 'center',
-    marginBottom: screenWidth < 600 ? 12 : 16,
-    lineHeight: screenWidth < 600 ? 30 : 40,
+    marginBottom: IS_MOBILE ? SPACING.md : SPACING.lg,
+    lineHeight: IS_MOBILE ? 30 : 40,
     letterSpacing: -0.5,
-    paddingHorizontal: screenWidth < 600 ? 4 : 0,
+    paddingHorizontal: IS_MOBILE ? SPACING.xs : 0,
   },
   subheading: {
-    fontSize: screenWidth < 600 ? 14 : 18,
-    color: '#64748B',
+    fontSize: IS_MOBILE ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.lg,
+    color: MEDICAL_COLORS.slate500,
     textAlign: 'center',
-    marginBottom: screenWidth < 600 ? 28 : 32,
-    lineHeight: screenWidth < 600 ? 22 : 28,
-    fontWeight: '400',
-    paddingHorizontal: screenWidth < 600 ? 8 : 0,
+    marginBottom: IS_MOBILE ? 28 : SPACING.xxxl,
+    lineHeight: IS_MOBILE ? 22 : 28,
+    fontWeight: TYPOGRAPHY.fontWeight.normal,
+    paddingHorizontal: IS_MOBILE ? SPACING.sm : 0,
   },
   buttonsContainer: {
     width: '100%',
-    gap: screenWidth < 600 ? 12 : 16,
+    gap: IS_MOBILE ? SPACING.md : SPACING.lg,
   },
   buttonWrapper: {
     width: '100%',
-    borderRadius: screenWidth < 600 ? 14 : 16,
+    borderRadius: IS_MOBILE ? 14 : SPACING.lg,
     overflow: 'hidden',
     shadowColor: 'rgba(251, 146, 60, 0.3)',
-    shadowOffset: { width: 0, height: screenWidth < 600 ? 6 : 4 },
+    shadowOffset: { width: 0, height: IS_MOBILE ? 6 : 4 },
     shadowOpacity: 1,
-    shadowRadius: 12,
+    shadowRadius: SPACING.md,
     elevation: 6,
   },
   primaryButton: {
-    paddingVertical: screenWidth < 600 ? 16 : 16,
-    paddingHorizontal: screenWidth < 600 ? 24 : 32,
-    borderRadius: screenWidth < 600 ? 14 : 16,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: IS_MOBILE ? SPACING.xxl : SPACING.xxxl,
+    borderRadius: IS_MOBILE ? 14 : SPACING.lg,
     minHeight: 52, // Enhanced touch target (> 48px)
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButton: {
-    paddingVertical: screenWidth < 600 ? 16 : 16,
-    paddingHorizontal: screenWidth < 600 ? 24 : 32,
-    borderRadius: screenWidth < 600 ? 14 : 16,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: IS_MOBILE ? SPACING.xxl : SPACING.xxxl,
+    borderRadius: IS_MOBILE ? 14 : SPACING.lg,
     minHeight: 52, // Enhanced touch target
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: screenWidth < 600 ? 16 : 18,
-    fontWeight: '600',
+    color: MEDICAL_COLORS.white,
+    fontSize: IS_MOBILE ? TYPOGRAPHY.fontSize.base : TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
     letterSpacing: 0.3,
   },
   outlineButton: {
     width: '100%',
-    paddingVertical: screenWidth < 600 ? 16 : 16,
-    paddingHorizontal: screenWidth < 600 ? 24 : 32,
-    borderRadius: screenWidth < 600 ? 14 : 16,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: IS_MOBILE ? SPACING.xxl : SPACING.xxxl,
+    borderRadius: IS_MOBILE ? 14 : SPACING.lg,
     minHeight: 52, // Enhanced touch target
     borderWidth: 2,
-    borderColor: '#FB923C',
+    borderColor: MEDICAL_COLORS.warmOrange,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlineButtonText: {
-    color: '#FB923C',
-    fontSize: screenWidth < 600 ? 16 : 18,
-    fontWeight: '600',
+    color: MEDICAL_COLORS.warmOrange,
+    fontSize: IS_MOBILE ? TYPOGRAPHY.fontSize.base : TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
     letterSpacing: 0.3,
   },
 
   // Slide 1 - Recently Viewed Styles
   slideTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#0F172A',
+    fontSize: TYPOGRAPHY.fontSize['3xl'],
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: SPACING.xxxl,
   },
   cardsContainer: {
-    gap: 16,
+    gap: SPACING.lg,
   },
   recentCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: SPACING.lg,
+    padding: SPACING.xxl,
     shadowColor: 'rgba(0, 0, 0, 0.08)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 12,
+    shadowRadius: SPACING.md,
     elevation: 6,
   },
   recentCardContent: {
@@ -649,182 +652,182 @@ const styles = StyleSheet.create({
   recentCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.lg,
     flex: 1,
   },
   recentIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#EFF6FF',
+    borderRadius: SPACING.md,
+    backgroundColor: MEDICAL_COLORS.blueBg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   recentCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0F172A',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate900,
   },
   recentCardSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate500,
     marginTop: 2,
   },
   recentCardRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
   },
   timeText: {
-    fontSize: 14,
-    color: '#94A3B8',
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate400,
   },
   viewAllLink: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 24,
+    gap: SPACING.sm,
+    marginTop: SPACING.xxl,
   },
   viewAllText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FB923C',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    color: MEDICAL_COLORS.warmOrange,
   },
 
   // Slide 2 - Tip of the Day Styles
   tipCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 32,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: SPACING.xxl,
+    padding: SPACING.xxxl,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 1,
-    shadowRadius: 24,
+    shadowRadius: SPACING.xxl,
     elevation: 12,
   },
   tipHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
   },
   tipIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FFF7ED',
+    borderRadius: SPACING.md,
+    backgroundColor: MEDICAL_COLORS.warmOrangeBg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tipHeaderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0F172A',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.slate900,
   },
   tipContentBox: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: MEDICAL_COLORS.warmYellowBg,
+    borderRadius: SPACING.lg,
+    padding: SPACING.xxl,
   },
   tipContent: {
-    fontSize: 18,
-    color: '#374151',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    color: MEDICAL_COLORS.slate700,
     lineHeight: 28,
     textAlign: 'center',
   },
 
   // Slide 3 - Question of the Day Styles
   questionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 32,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: SPACING.xxl,
+    padding: SPACING.xxxl,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 1,
-    shadowRadius: 24,
+    shadowRadius: SPACING.xxl,
     elevation: 12,
   },
   questionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
   },
   questionIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FFF7ED',
+    borderRadius: SPACING.md,
+    backgroundColor: MEDICAL_COLORS.warmOrangeBg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   questionHeaderText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0F172A',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: MEDICAL_COLORS.slate900,
   },
   questionText: {
-    fontSize: 18,
-    color: '#0F172A',
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    color: MEDICAL_COLORS.slate900,
     lineHeight: 26,
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
   },
   optionsContainer: {
-    gap: 12,
+    gap: SPACING.md,
   },
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MEDICAL_COLORS.white,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 20,
+    borderColor: MEDICAL_COLORS.slate200,
+    borderRadius: SPACING.md,
+    padding: SPACING.xl,
   },
   optionLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginRight: 16,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.slate700,
+    marginRight: SPACING.lg,
   },
   optionText: {
-    fontSize: 16,
-    color: '#374151',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate700,
     flex: 1,
   },
 
   // Carousel Indicators (Dots) - Mobile Only
   carouselIndicators: {
     position: 'absolute',
-    bottom: screenWidth < 600 ? 90 : 40, // Above bottom nav on mobile
+    bottom: IS_MOBILE ? 90 : SPACING.xxxxl, // Above bottom nav on mobile
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
     zIndex: 100,
   },
   indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CBD5E1',
+    width: SPACING.sm,
+    height: SPACING.sm,
+    borderRadius: SPACING.xs,
+    backgroundColor: MEDICAL_COLORS.slate300,
     transition: 'all 0.3s ease',
     cursor: 'default',
   },
   indicatorDotActive: {
-    width: 24,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FB923C',
+    width: SPACING.xxl,
+    height: SPACING.sm,
+    borderRadius: SPACING.xs,
+    backgroundColor: MEDICAL_COLORS.warmOrange,
     cursor: 'default',
   },
 });
