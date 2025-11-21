@@ -5,7 +5,7 @@ import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, Clipboar
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
+import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
