@@ -1037,6 +1037,7 @@ const styles = StyleSheet.create({
   cardContent: {
     position: 'relative',
     zIndex: 10,
+    flex: 1,
   },
   favoriteButton: {
     position: 'absolute',
@@ -1064,7 +1065,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
     flexShrink: 1,
-    flexWrap: 'wrap',
   },
   cardFooter: {
     flexDirection: 'row',
