@@ -878,20 +878,21 @@ const styles = StyleSheet.create({
 
   // Stats Grid
   statsGrid: {
-    flexDirection: 'row',
+    flexDirection: SCREEN_WIDTH < 400 ? 'column' : 'row',
     paddingHorizontal: SPACING.xl,
     marginBottom: SPACING.xxxl,
     gap: SPACING.lg,
   },
   statCard: {
-    flex: 1,
+    flex: SCREEN_WIDTH < 400 ? 0 : 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: MEDICAL_COLORS.white,
     borderRadius: SPACING.lg,
-    padding: SPACING.xxl,
+    padding: SCREEN_WIDTH < 400 ? SPACING.lg : SPACING.xxl,
     gap: SPACING.lg,
     ...SHADOWS.md,
+    minWidth: SCREEN_WIDTH < 400 ? '100%' : undefined,
   },
   statIconWrapperPurple: {
     width: 56,
@@ -932,6 +933,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs + 1,
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.slate500,
+    flexShrink: 1,
   },
 
   // Modern Chart
