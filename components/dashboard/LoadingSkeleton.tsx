@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import { useEffect, useRef } from 'react';
+import { SPACING, BORDER_RADIUS } from '@/constants/tokens';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 interface SkeletonProps {
   width?: number | string;
@@ -48,7 +50,7 @@ const SkeletonItem: React.FC<SkeletonProps> = ({
           width,
           height,
           borderRadius,
-          backgroundColor: '#E5E7EB',
+          backgroundColor: MEDICAL_COLORS.lightGray,
           opacity,
         },
         style,
@@ -60,12 +62,12 @@ const SkeletonItem: React.FC<SkeletonProps> = ({
 export const SectionSkeleton: React.FC = () => (
   <View style={styles.container}>
     <View style={styles.header}>
-      <SkeletonItem width={40} height={40} borderRadius={20} />
-      <SkeletonItem width={200} height={24} style={{ marginLeft: 12 }} />
+      <SkeletonItem width={40} height={40} borderRadius={BORDER_RADIUS['2xl']} />
+      <SkeletonItem width={200} height={24} style={{ marginLeft: SPACING.md }} />
     </View>
     <View style={styles.card}>
-      <SkeletonItem height={60} style={{ marginBottom: 16 }} />
-      <SkeletonItem height={20} width="80%" style={{ marginBottom: 8 }} />
+      <SkeletonItem height={60} style={{ marginBottom: SPACING.lg }} />
+      <SkeletonItem height={20} width="80%" style={{ marginBottom: SPACING.sm }} />
       <SkeletonItem height={20} width="60%" />
     </View>
   </View>
@@ -74,49 +76,51 @@ export const SectionSkeleton: React.FC = () => (
 export const QuestionSkeleton: React.FC = () => (
   <View style={styles.questionContainer}>
     <View style={styles.questionHeader}>
-      <SkeletonItem width={52} height={52} borderRadius={26} />
+      <SkeletonItem width={52} height={52} borderRadius={BORDER_RADIUS.full} />
       <View style={styles.headerInfo}>
-        <SkeletonItem height={20} width="70%" style={{ marginBottom: 8 }} />
+        <SkeletonItem height={20} width="70%" style={{ marginBottom: SPACING.sm }} />
         <SkeletonItem height={16} width="50%" />
       </View>
     </View>
-    <SkeletonItem height={60} style={{ marginBottom: 20 }} />
-    <SkeletonItem height={50} style={{ marginBottom: 12 }} />
-    <SkeletonItem height={50} style={{ marginBottom: 12 }} />
+    <SkeletonItem height={60} style={{ marginBottom: SPACING.xl }} />
+    <SkeletonItem height={50} style={{ marginBottom: SPACING.md }} />
+    <SkeletonItem height={50} style={{ marginBottom: SPACING.md }} />
     <SkeletonItem height={50} />
   </View>
 );
 
-const styles = {
+// FIX: Wrap in StyleSheet.create() for performance optimization
+// FIX: Use design tokens for spacing, border radius, and colors
+const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    margin: 16,
+    padding: SPACING.lg,
+    backgroundColor: MEDICAL_COLORS.white,
+    borderRadius: BORDER_RADIUS.xl,
+    margin: SPACING.lg,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: SPACING.lg,
   },
   card: {
-    padding: 20,
-    backgroundColor: '#F8F3E8', // White Linen background
-    borderRadius: 12,
+    padding: SPACING.xl,
+    backgroundColor: MEDICAL_COLORS.offWhite,
+    borderRadius: BORDER_RADIUS.lg,
   },
   questionContainer: {
-    padding: 24,
-    backgroundColor: '#E2827F',
-    borderRadius: 20,
-    margin: 16,
+    padding: SPACING.xxl,
+    backgroundColor: MEDICAL_COLORS.primary,
+    borderRadius: BORDER_RADIUS['2xl'],
+    margin: SPACING.lg,
   },
   questionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: SPACING.lg,
   },
   headerInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: SPACING.md,
   },
-};
+});
