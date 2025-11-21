@@ -1144,9 +1144,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs + 2,
   },
   modernViewText: {
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: 'Inter-SemiBold',
-    color: '#EF4444',
+    color: MEDICAL_COLORS.warmRed,
   },
   chevron: {
     transform: [{ rotate: '90deg' }],
@@ -1157,72 +1157,72 @@ const styles = StyleSheet.create({
 
   // Expanded Details
   modernEvaluationDetails: {
-    marginTop: 16,
-    borderRadius: 16,
+    marginTop: SPACING.lg,
+    borderRadius: SPACING.lg,
     overflow: 'hidden',
   },
   detailsGradient: {
-    padding: 20,
+    padding: SPACING.xl,
   },
   modernScoreSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   modernScoreBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: SPACING.xl,
+    gap: SPACING.xs + 2,
   },
   modernScoreBadgeText: {
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: 'Inter-Bold',
-    color: 'white',
+    color: MEDICAL_COLORS.white,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   modernEvaluationSection: {
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 8,
+    marginBottom: SPACING.md,
+    paddingBottom: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   sectionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: SPACING.xxxl,
+    height: SPACING.xxxl,
+    borderRadius: SPACING.sm,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: SPACING.md,
   },
   sectionIcon: {
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.fontSize.base,
   },
   modernSectionTitle: {
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: 'Inter-Bold',
-    color: '#1f2937',
+    color: MEDICAL_COLORS.slate900,
     flex: 1,
   },
   evaluationContentContainer: {
     backgroundColor: '#fafbfc',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: SPACING.md,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   modernEvaluationText: {
-    fontSize: 14,
+    fontSize: TYPOGRAPHY.fontSize.sm,
     fontFamily: 'Inter-Regular',
-    color: '#374151',
+    color: MEDICAL_COLORS.slate700,
     lineHeight: 22,
     letterSpacing: 0.2,
   },
@@ -1232,90 +1232,90 @@ const styles = StyleSheet.create({
 
   // Parsed Evaluation Sections
   parsedSection: {
-    marginBottom: 24, // Increased from 16px for better breathing room
-    backgroundColor: '#FAFBFC', // Subtle background for better contrast
-    borderRadius: 12,
-    padding: 16, // Added padding for better spacing
+    marginBottom: SPACING.xxl,
+    backgroundColor: '#FAFBFC',
+    borderRadius: SPACING.md,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   parsedSectionTitle: {
-    fontSize: 15, // Increased from 13px
+    fontSize: TYPOGRAPHY.fontSize.sm + 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: '700', // Stronger weight for better hierarchy
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: '#059669',
-    marginBottom: 12, // Increased from 6px
+    marginBottom: SPACING.md,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   parsedSectionContentContainer: {
-    paddingLeft: 4,
+    paddingLeft: SPACING.xs,
   },
   parsedSectionContent: {
-    fontSize: 16, // Increased from 14px as requested
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    color: '#1F2937', // Darker for better contrast
-    lineHeight: 25.6, // 1.6 ratio as requested (16 * 1.6)
+    color: MEDICAL_COLORS.slate900,
+    lineHeight: 25.6,
     letterSpacing: 0.2,
   },
 
   // Enhanced Text Components
   enhancedTextContainer: {
-    gap: 16, // Spacing between paragraphs
+    gap: SPACING.lg,
   },
   enhancedBodyText: {
-    fontSize: 16, // Main body text at 16px
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    color: '#1F2937',
-    lineHeight: 25.6, // 1.6 line height
-    marginBottom: 16, // Space between paragraphs
+    color: MEDICAL_COLORS.slate900,
+    lineHeight: 25.6,
+    marginBottom: SPACING.lg,
     letterSpacing: 0.2,
   },
   enhancedBoldText: {
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: '700', // Bold for key terms
-    color: '#B15740', // Medical app accent color for emphasis
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: MEDICAL_COLORS.primaryDark,
     lineHeight: 25.6,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
     letterSpacing: 0.2,
   },
   enhancedListItem: {
-    marginBottom: 12,
-    paddingLeft: 16,
+    marginBottom: SPACING.md,
+    paddingLeft: SPACING.lg,
     borderLeftWidth: 3,
-    borderLeftColor: '#B87E70', // Medical app color
-    backgroundColor: '#FDF8F6', // Very subtle background
-    paddingVertical: 8,
-    borderRadius: 6,
+    borderLeftColor: MEDICAL_COLORS.secondary,
+    backgroundColor: '#FDF8F6',
+    paddingVertical: SPACING.sm,
+    borderRadius: SPACING.xs + 2,
   },
   enhancedListText: {
-    fontSize: 15, // Slightly smaller for lists
+    fontSize: TYPOGRAPHY.fontSize.sm + 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    color: '#374151',
-    lineHeight: 24, // 1.6 ratio
+    color: MEDICAL_COLORS.slate700,
+    lineHeight: 24,
     letterSpacing: 0.2,
   },
 
   // Empty State
   modernEmptyState: {
-    marginTop: 20,
+    marginTop: SPACING.xl,
   },
   emptyStateGradient: {
     alignItems: 'center',
-    padding: 40,
-    borderRadius: 20,
+    padding: SPACING.xxxxl,
+    borderRadius: SPACING.xl,
     borderWidth: 2,
     borderColor: 'rgba(226, 130, 127, 0.3)',
     borderStyle: 'dashed',
-    backgroundColor: '#F9F6F2',
+    backgroundColor: MEDICAL_COLORS.offWhite,
   },
   emptyStateTitle: {
-    fontSize: 18,
+    fontSize: TYPOGRAPHY.fontSize.lg,
     fontFamily: 'Inter-Bold',
-    color: '#E2827F',
-    marginTop: 16,
-    marginBottom: 8,
+    color: MEDICAL_COLORS.primary,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   emptyStateText: {
     fontSize: 14,
