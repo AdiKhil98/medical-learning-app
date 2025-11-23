@@ -166,16 +166,25 @@ export class VoiceflowController {
           email: this.userEmail || null
         },
 
-        // Pass session_id and user_email as custom variables via launch event (backup method)
-        launch: {
-          event: {
-            type: 'launch',
-            payload: {
-              session_id: this.sessionId,
-              user_email: this.userEmail || null
+        // Pass session_id and user_email as custom variables via launch event
+        // Only include if email exists to avoid null values
+        ...(this.userEmail ? {
+          launch: {
+            event: {
+              type: 'launch',
+              payload: {
+                session_id: this.sessionId,
+                user_email: this.userEmail
+              }
             }
           }
-        },
+        } : {
+          launch: {
+            event: {
+              type: 'launch'
+            }
+          }
+        }),
 
         // Voice is REQUIRED - widget crashes without it
         voice: {
@@ -196,6 +205,9 @@ export class VoiceflowController {
       console.log(`📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`, JSON.parse(JSON.stringify(widgetConfig)));
       console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
+
+      // CRITICAL: Log the launch event payload specifically
+      console.log(`🚀 Launch event payload:`, JSON.parse(JSON.stringify(widgetConfig.launch || {})));
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
