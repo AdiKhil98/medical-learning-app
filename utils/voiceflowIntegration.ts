@@ -206,35 +206,13 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // CRITICAL: Send email to Voiceflow Runtime API
-      // This makes the email accessible as a variable in Voiceflow
+      // Email is sent in the configuration above (lines 161, 164-167, 175)
+      // It's included in: user_email (root), user.email (object), and launch.event.payload.user_email
       if (this.userEmail) {
-        console.log(`📧 Sending email to Voiceflow Runtime API: ${this.userEmail}`);
-
-        // Wait for widget to be fully loaded, then send the email via Runtime API
-        setTimeout(async () => {
-          try {
-            const response = await fetch(`https://general-runtime.voiceflow.com/state/user/${this.userId}/variables`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': this.config.projectID
-              },
-              body: JSON.stringify({
-                user_email: this.userEmail,
-                session_id: this.sessionId
-              })
-            });
-
-            if (response.ok) {
-              console.log('✅ Email sent to Voiceflow Runtime API successfully');
-            } else {
-              console.warn('⚠️ Voiceflow Runtime API returned:', response.status);
-            }
-          } catch (error) {
-            console.error('❌ Failed to send email via Runtime API:', error);
-          }
-        }, 1000);
+        console.log(`✅ Email included in Voiceflow configuration: ${this.userEmail}`);
+        console.log(`📍 Email locations: root level, user object, and launch payload`);
+      } else {
+        console.warn(`⚠️ No email available to send to Voiceflow`);
       }
 
       console.log('✅ Widget loaded and ready with persistent IDs');
