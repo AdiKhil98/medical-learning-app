@@ -38,10 +38,17 @@ export class VoiceflowController {
     this.userId = persistentIds.user_id;
     this.sessionId = persistentIds.session_id;
 
+    // VALIDATION: Check if email is provided
+    if (!this.userEmail) {
+      console.warn(`⚠️ VoiceflowController: No email provided for ${config.simulationType.toUpperCase()} simulation!`);
+      console.warn('⚠️ This means user_email will NOT be sent to Voiceflow');
+    }
+
     console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
       user_id: this.userId,
       session_id: this.sessionId,
-      user_email: this.userEmail,
+      user_email: this.userEmail || 'NOT_PROVIDED',
+      email_status: this.userEmail ? '✅ Email available' : '❌ Email missing',
       projectID: config.projectID,
       supabase_synced: !!supabaseUserId
     });
@@ -128,9 +135,15 @@ export class VoiceflowController {
       console.log('🔐 Initializing Voiceflow with persistent IDs:', {
         user_id: this.userId,
         session_id: this.sessionId,
-        user_email: this.userEmail,
+        user_email: this.userEmail || 'NOT_PROVIDED',
+        email_will_be_sent: !!this.userEmail,
         simulation: this.config.simulationType.toUpperCase()
       });
+
+      // CRITICAL WARNING: If email is missing, log it prominently
+      if (!this.userEmail) {
+        console.error('❌❌❌ CRITICAL: user_email is undefined! Email will NOT be sent to Voiceflow! ❌❌❌');
+      }
 
       // Voiceflow configuration with persistent IDs
       // Based on official docs: https://docs.voiceflow.com/docs/customization-configuration
@@ -150,7 +163,7 @@ export class VoiceflowController {
             type: 'launch',
             payload: {
               session_id: this.sessionId,
-              user_email: this.userEmail
+              user_email: this.userEmail || null  // Use null instead of undefined to ensure field is sent
             }
           }
         },

@@ -265,8 +265,27 @@ export default function FSPSimulationScreen() {
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
         // ============================================
         console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
+        console.log(`📧 [${timestamp}] User object:`, {
+          id: user.id,
+          email: user.email,
+          has_email: !!user.email,
+          email_type: typeof user.email
+        });
 
-        const controller = createFSPController(user.id, user.email);
+        // FALLBACK: If email is not in user object, try to get it from Supabase session
+        let userEmail = user.email;
+        if (!userEmail) {
+          console.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.email) {
+            userEmail = session.user.email;
+            console.log(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
+          } else {
+            console.error(`❌ [${timestamp}] Could not retrieve email from session!`);
+          }
+        }
+
+        const controller = createFSPController(user.id, userEmail);
 
         if (!controller) {
           throw new Error('Failed to create Voiceflow controller - returned null/undefined');
