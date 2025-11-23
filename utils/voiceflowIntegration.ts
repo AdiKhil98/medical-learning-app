@@ -206,6 +206,32 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
+      // CRITICAL: Send email to Voiceflow via interact API
+      // This makes the email accessible as a variable in Voiceflow
+      if (this.userEmail) {
+        console.log(`📧 Sending email to Voiceflow via interact API: ${this.userEmail}`);
+
+        // Wait for widget to be fully loaded, then send the email
+        setTimeout(() => {
+          try {
+            if (window.voiceflow?.chat?.interact) {
+              window.voiceflow.chat.interact({
+                type: 'complete',
+                payload: {
+                  user_email: this.userEmail,
+                  session_id: this.sessionId
+                }
+              });
+              console.log('✅ Email sent to Voiceflow via interact API');
+            } else {
+              console.warn('⚠️ Voiceflow interact API not available');
+            }
+          } catch (error) {
+            console.error('❌ Failed to send email via interact API:', error);
+          }
+        }, 500);
+      }
+
       console.log('✅ Widget loaded and ready with persistent IDs');
 
     } catch (error) {
