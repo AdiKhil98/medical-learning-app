@@ -206,30 +206,35 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // CRITICAL: Send email to Voiceflow via interact API
+      // CRITICAL: Send email to Voiceflow Runtime API
       // This makes the email accessible as a variable in Voiceflow
       if (this.userEmail) {
-        console.log(`📧 Sending email to Voiceflow via interact API: ${this.userEmail}`);
+        console.log(`📧 Sending email to Voiceflow Runtime API: ${this.userEmail}`);
 
-        // Wait for widget to be fully loaded, then send the email
-        setTimeout(() => {
+        // Wait for widget to be fully loaded, then send the email via Runtime API
+        setTimeout(async () => {
           try {
-            if (window.voiceflow?.chat?.interact) {
-              window.voiceflow.chat.interact({
-                type: 'complete',
-                payload: {
-                  user_email: this.userEmail,
-                  session_id: this.sessionId
-                }
-              });
-              console.log('✅ Email sent to Voiceflow via interact API');
+            const response = await fetch(`https://general-runtime.voiceflow.com/state/user/${this.userId}/variables`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': this.config.projectID
+              },
+              body: JSON.stringify({
+                user_email: this.userEmail,
+                session_id: this.sessionId
+              })
+            });
+
+            if (response.ok) {
+              console.log('✅ Email sent to Voiceflow Runtime API successfully');
             } else {
-              console.warn('⚠️ Voiceflow interact API not available');
+              console.warn('⚠️ Voiceflow Runtime API returned:', response.status);
             }
           } catch (error) {
-            console.error('❌ Failed to send email via interact API:', error);
+            console.error('❌ Failed to send email via Runtime API:', error);
           }
-        }, 500);
+        }, 1000);
       }
 
       console.log('✅ Widget loaded and ready with persistent IDs');
