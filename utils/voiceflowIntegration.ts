@@ -157,13 +157,22 @@ export class VoiceflowController {
         // User ID - tracked across sessions
         userID: this.userId,
 
-        // Pass session_id and user_email as custom variables via launch event
+        // ATTEMPT 1: Add email at root level (like userID)
+        user_email: this.userEmail || null,
+
+        // ATTEMPT 2: Try user object format
+        user: {
+          id: this.userId,
+          email: this.userEmail || null
+        },
+
+        // Pass session_id and user_email as custom variables via launch event (backup method)
         launch: {
           event: {
             type: 'launch',
             payload: {
               session_id: this.sessionId,
-              user_email: this.userEmail || null  // Use null instead of undefined to ensure field is sent
+              user_email: this.userEmail || null
             }
           }
         },
