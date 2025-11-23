@@ -155,7 +155,9 @@ export class VoiceflowController {
         versionID: this.config.versionID || 'production',
 
         // User ID - tracked across sessions
-        userID: this.userId,
+        // IMPORTANT: Encode email in userID so it's accessible in Voiceflow
+        // Format: userId|||email (using ||| as separator)
+        userID: this.userEmail ? `${this.userId}|||${this.userEmail}` : this.userId,
 
         // ATTEMPT 1: Add email at root level (like userID)
         user_email: this.userEmail || null,
