@@ -31,6 +31,7 @@ export default function FSPSimulationScreen() {
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
+  const timerStartLockRef = useRef(false); // Atomic lock to prevent race conditions in timer start
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -40,7 +41,7 @@ export default function FSPSimulationScreen() {
   const sessionTokenRef = useRef<string | null>(null); // Ref for sessionToken to avoid closure issues
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const usageMarkedRef = useRef(false); // Ref to track usage marked state for cleanup closure
-  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
+  // NOTE: heartbeatInterval removed - deprecated/no-op in new system
 
   // Timer warning system state
   const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
@@ -526,9 +527,18 @@ export default function FSPSimulationScreen() {
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
-    // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
-    console.log('[Timer] Attempting to start timer...');
-    const accessCheck = await checkAccess();
+    // CRITICAL: Atomic lock to prevent race conditions
+    // Check and set lock in one operation BEFORE any async operations
+    if (timerStartLockRef.current) {
+      console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
+      return;
+    }
+    timerStartLockRef.current = true; // Set lock immediately
+
+    try {
+      // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
+      console.log('[Timer] Attempting to start timer...');
+      const accessCheck = await checkAccess();
 
     console.log('[Timer] Access check:', {
       canStart: accessCheck?.canUseSimulation,
@@ -651,8 +661,7 @@ export default function FSPSimulationScreen() {
       console.error('❌ FSP: Error saving simulation state:', error);
     }
 
-    // Start heartbeat monitoring for security
-    startHeartbeat(existingSessionToken);
+    // NOTE: Heartbeat monitoring removed - deprecated/no-op in new system
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
     // Use 1000ms interval for mobile compatibility
@@ -704,10 +713,29 @@ export default function FSPSimulationScreen() {
       if (prev > 30 && remainingSeconds <= 30) {
         showTimerWarning('30 Sekunden verbleibend', 'red', true);
       }
-      if (prev > 10 && remainingSeconds <= 10) {
-        showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        if (prev > 10 && remainingSeconds <= 10) {
+          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        }
+      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
+    } catch (error) {
+      console.error('❌ FSP: Error in startSimulationTimer:', error);
+      // CRITICAL: Rollback optimistic counter deduction on error
+      resetOptimisticCount();
+      console.log('🔄 Rolled back optimistic counter deduction due to error');
+
+      // Reset timer state on error
+      timerActiveRef.current = false;
+      setTimerActive(false);
+      if (timerInterval.current) {
+        clearInterval(timerInterval.current);
+        timerInterval.current = null;
       }
-    }, 1000); // Check every 1000ms (1 second) for mobile compatibility
+      throw error; // Re-throw to be caught by outer handler if needed
+    } finally {
+      // Always release the lock, even if function throws or returns early
+      timerStartLockRef.current = false;
+      console.log('🔓 Timer start lock released');
+    }
   };
 
   // Mark simulation as used at 5-minute mark with server-side validation
@@ -780,37 +808,7 @@ export default function FSPSimulationScreen() {
     }
   };
 
-  // Start heartbeat monitoring for session security
-  const startHeartbeat = (sessionToken: string) => {
-    console.log('💓 FSP: Starting heartbeat monitoring');
-
-    heartbeatInterval.current = setInterval(async () => {
-      try {
-        // Check if sessionToken is still valid
-        if (!sessionToken) {
-          console.warn('💓 FSP: No session token available for heartbeat');
-          return;
-        }
-
-        const result = await simulationTracker.sendHeartbeat(sessionToken);
-        if (!result.success) {
-          console.warn('💓 FSP: Heartbeat failed:', result.error);
-          // Don't stop the timer on heartbeat failure, just log it
-        }
-      } catch (error) {
-        console.error('💓 FSP: Heartbeat error:', error);
-      }
-    }, 30000); // Send heartbeat every 30 seconds
-  };
-
-  // Stop heartbeat monitoring
-  const stopHeartbeat = () => {
-    if (heartbeatInterval.current) {
-      console.log('💓 FSP: Stopping heartbeat monitoring');
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
-  };
+  // NOTE: Heartbeat functions (startHeartbeat, stopHeartbeat) removed - deprecated/no-op in new system
 
   // Stop the simulation timer
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
@@ -1210,11 +1208,7 @@ export default function FSPSimulationScreen() {
       console.log('✅ FSP: Cleared timer interval');
     }
 
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-      console.log('✅ FSP: Cleared heartbeat interval');
-    }
+    // NOTE: Heartbeat interval cleanup removed - deprecated/no-op in new system
 
     // Clear warning timeout
     if (warningTimeoutRef.current) {
@@ -1418,6 +1412,11 @@ export default function FSPSimulationScreen() {
     } catch (error) {
       console.error('❌ FSP: Error during centralized cleanup:', error);
     } finally {
+      // CRITICAL: Always clear session token to prevent reuse
+      sessionTokenRef.current = null;
+      setSessionToken(null);
+      console.log('🔒 FSP: Session token cleared');
+
       // Always reset the cleanup flag
       isCleaningUpRef.current = false;
     }
