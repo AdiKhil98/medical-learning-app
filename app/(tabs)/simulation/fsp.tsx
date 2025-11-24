@@ -477,14 +477,13 @@ export default function FSPSimulationScreen() {
 
               // MEMORY LEAK FIX: Store handler reference for cleanup
               const endedHandler = () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} ended - but NOT stopping timer`);
-                console.log(`ℹ️ FSP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
+                console.log(`🔇 FSP: Audio track ${index + 1} ended - AUTOMATICALLY STOPPING TIMER`);
 
-                // DO NOT automatically stop the timer!
-                // The user should control when the simulation ends via:
-                // 1. "Ich bin fertig" button
-                // 2. 20-minute timer expiration
-                // 3. Manual navigation away from page
+                // Automatically stop the timer when the call ends
+                if (timerActiveRef.current) {
+                  console.log(`⏹️ FSP: Call ended naturally - stopping simulation timer automatically`);
+                  stopSimulationTimer('completed');
+                }
               };
 
               track.addEventListener('ended', endedHandler);
@@ -493,12 +492,14 @@ export default function FSPSimulationScreen() {
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
               track.stop = () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually - but NOT stopping timer`);
-                console.log(`ℹ️ FSP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
+                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually - AUTOMATICALLY STOPPING TIMER`);
                 originalStop();
 
-                // DO NOT automatically stop the timer!
-                // Let the timer run until user explicitly ends the simulation
+                // Automatically stop the timer when the call ends
+                if (timerActiveRef.current) {
+                  console.log(`⏹️ FSP: Call ended - stopping simulation timer automatically`);
+                  stopSimulationTimer('completed');
+                }
               };
             });
 
