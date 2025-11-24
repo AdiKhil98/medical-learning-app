@@ -171,6 +171,14 @@ export class VoiceflowController {
           console.error('❌ Failed to load Voiceflow script:', error);
           reject(new Error('Failed to load Voiceflow script'));
         };
+
+        // SAFETY: Check document.head exists before appending
+        if (!document.head) {
+          clearTimeout(timeout);
+          console.error('❌ document.head is not available');
+          reject(new Error('Document head not available'));
+          return;
+        }
         document.head.appendChild(script);
       } else {
         console.log('📦 Voiceflow script already present, initializing widget...');
@@ -488,16 +496,23 @@ export class VoiceflowController {
     selectors.forEach(selector => {
       const elements = document.querySelectorAll(selector);
       elements.forEach((element: Element) => {
+        // SAFETY: Check element properties exist before accessing
+        if (!element) return;
+
         const isVoiceflowElement =
-          element.id.includes('voiceflow') ||
-          element.className.includes('voiceflow') ||
-          element.className.includes('vfrc') ||
+          element.id?.includes('voiceflow') ||
+          element.className?.includes?.('voiceflow') ||
+          element.className?.includes?.('vfrc') ||
           (element as HTMLElement).innerHTML?.includes('voiceflow') ||
           (element as HTMLIFrameElement).src?.includes('voiceflow');
 
         if (isVoiceflowElement) {
-          element.remove();
-          removedCount++;
+          try {
+            element.remove();
+            removedCount++;
+          } catch (error) {
+            console.warn('⚠️ Failed to remove element:', error);
+          }
         }
       });
     });
@@ -511,12 +526,22 @@ export class VoiceflowController {
   private removeVoiceflowScripts(): void {
     const scripts = document.querySelectorAll('script[src*="voiceflow"]');
     scripts.forEach(script => {
-      script.remove();
+      try {
+        if (script) {
+          script.remove();
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to remove script:', error);
+      }
     });
 
     const styleElement = document.getElementById('hide-voiceflow-aggressive');
     if (styleElement) {
-      styleElement.remove();
+      try {
+        styleElement.remove();
+      } catch (error) {
+        console.warn('⚠️ Failed to remove style element:', error);
+      }
     }
   }
 }

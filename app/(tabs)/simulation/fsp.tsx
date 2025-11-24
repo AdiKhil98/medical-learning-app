@@ -447,12 +447,16 @@ export default function FSPSimulationScreen() {
   const setupConversationMonitoring = () => {
     console.log('🔍 FSP: Setting up passive microphone detection...');
 
+    // MEMORY LEAK FIX: Track listeners for cleanup
+    const trackListeners: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
+    (window as any).fspTrackListeners = trackListeners;
+
     // Method 1: Monitor for MediaStream creation and termination
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
       navigator.mediaDevices.getUserMedia = async function(constraints) {
         console.log('🎤 FSP: MediaStream requested with constraints:', constraints);
-        
+
         if (constraints?.audio) {
           try {
             const stream = await originalGetUserMedia.call(this, constraints);
@@ -470,8 +474,9 @@ export default function FSPSimulationScreen() {
             const audioTracks = stream.getAudioTracks();
             audioTracks.forEach((track, index) => {
               console.log(`🎤 FSP: Monitoring audio track ${index + 1}`);
-              
-              track.addEventListener('ended', () => {
+
+              // MEMORY LEAK FIX: Store handler reference for cleanup
+              const endedHandler = () => {
                 console.log(`🔇 FSP: Audio track ${index + 1} ended - but NOT stopping timer`);
                 console.log(`ℹ️ FSP: Timer continues - user must click "Ich bin fertig" or wait for 20min timer`);
 
@@ -480,7 +485,10 @@ export default function FSPSimulationScreen() {
                 // 1. "Ich bin fertig" button
                 // 2. 20-minute timer expiration
                 // 3. Manual navigation away from page
-              });
+              };
+
+              track.addEventListener('ended', endedHandler);
+              trackListeners.push({ track, handler: endedHandler });
 
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
@@ -500,7 +508,7 @@ export default function FSPSimulationScreen() {
             throw error;
           }
         }
-        
+
         return originalGetUserMedia.call(this, constraints);
       };
     }
@@ -1059,6 +1067,21 @@ export default function FSPSimulationScreen() {
       if ((window as any).fspClickListener) {
         document.removeEventListener('click', (window as any).fspClickListener, true);
         delete (window as any).fspClickListener;
+      }
+
+      // MEMORY LEAK FIX: Clean up tracked audio track listeners
+      if ((window as any).fspTrackListeners) {
+        const trackListeners = (window as any).fspTrackListeners;
+        trackListeners.forEach(({ track, handler }: { track: MediaStreamTrack; handler: () => void }) => {
+          try {
+            track.removeEventListener('ended', handler);
+            console.log('🧹 FSP: Removed track event listener');
+          } catch (error) {
+            console.warn('⚠️ FSP: Error removing track listener:', error);
+          }
+        });
+        trackListeners.length = 0; // Clear the array
+        delete (window as any).fspTrackListeners;
       }
 
       // Restore original getUserMedia function
