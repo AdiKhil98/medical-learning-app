@@ -32,6 +32,7 @@ export default function KPSimulationScreen() {
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
+  const timerStartLockRef = useRef(false); // Atomic lock to prevent race conditions in timer start
   const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -520,9 +521,18 @@ export default function KPSimulationScreen() {
   const startSimulationTimer = async () => {
     console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
-    // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
-    console.log('[Timer] KP: Attempting to start timer...');
-    const accessCheck = await checkAccess();
+    // CRITICAL: Atomic lock to prevent race conditions
+    // Check and set lock in one operation BEFORE any async operations
+    if (timerStartLockRef.current) {
+      console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
+      return;
+    }
+    timerStartLockRef.current = true; // Set lock immediately
+
+    try {
+      // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
+      console.log('[Timer] KP: Attempting to start timer...');
+      const accessCheck = await checkAccess();
 
     console.log('[Timer] KP: Access check:', {
       canStart: accessCheck?.canUseSimulation,
@@ -530,80 +540,80 @@ export default function KPSimulationScreen() {
       total: accessCheck?.simulationLimit
     });
 
-    // CRITICAL: Block if access is denied
-    if (!accessCheck || !accessCheck.canUseSimulation) {
-      console.error('[Timer] KP: ❌ ACCESS DENIED - Cannot start simulation');
+      // CRITICAL: Block if access is denied
+      if (!accessCheck || !accessCheck.canUseSimulation) {
+        console.error('[Timer] KP: ❌ ACCESS DENIED - Cannot start simulation');
 
-      // Show upgrade modal
-      setShowUpgradeModal(true);
-      setIsSimulationLocked(true);
+        // Show upgrade modal
+        setShowUpgradeModal(true);
+        setIsSimulationLocked(true);
 
-      Alert.alert(
-        'Simulationslimit erreicht',
-        accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
-        [
-          { text: 'Upgrade', onPress: () => router.push('subscription' as any) },
-          { text: 'OK' }
-        ]
-      );
+        Alert.alert(
+          'Simulationslimit erreicht',
+          accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
+          [
+            { text: 'Upgrade', onPress: () => router.push('subscription' as any) },
+            { text: 'OK' }
+          ]
+        );
 
-      return; // BLOCK timer start
-    }
+        return; // BLOCK timer start (lock released in finally)
+      }
 
-    // Access granted - proceed with timer
-    console.log('[Timer] KP: ✅ Access GRANTED - Starting timer...');
+      // Access granted - proceed with timer
+      console.log('[Timer] KP: ✅ Access GRANTED - Starting timer...');
 
-    // CRITICAL: Check if session token already exists (generated during initialization)
-    if (!sessionTokenRef.current) {
-      console.error('❌ KP: No session token found - this should have been generated during initialization');
-      return;
-    }
+      // CRITICAL: Check if session token already exists (generated during initialization)
+      if (!sessionTokenRef.current) {
+        console.error('❌ KP: No session token found - this should have been generated during initialization');
+        return; // Lock released in finally
+      }
 
-    console.log('✅ KP: Using existing session token from initialization:', sessionTokenRef.current);
+      console.log('✅ KP: Using existing session token from initialization:', sessionTokenRef.current);
 
-    // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
-    // This prevents false positives from stale state
-    if (timerActiveRef.current && timerInterval.current !== null) {
-      console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
-      return;
-    }
+      // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
+      // This prevents false positives from stale state
+      if (timerActiveRef.current && timerInterval.current !== null) {
+        console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+        return; // Lock released in finally
+      }
 
-    // If ref is true but interval is null, we have stale state - reset it
-    if (timerActiveRef.current && timerInterval.current === null) {
-      console.warn('⚠️ KP: Detected stale timer state, resetting...');
-      timerActiveRef.current = false;
-      setTimerActive(false);
-    }
+      // If ref is true but interval is null, we have stale state - reset it
+      if (timerActiveRef.current && timerInterval.current === null) {
+        console.warn('⚠️ KP: Detected stale timer state, resetting...');
+        timerActiveRef.current = false;
+        setTimerActive(false);
+      }
 
-    console.log('⏰ KP: Starting 20-minute simulation timer');
-    console.log('🔍 KP DEBUG: Current timerActive state:', timerActive);
-    console.log('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
-    console.log('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
+      console.log('⏰ KP: Starting 20-minute simulation timer');
+      console.log('🔍 KP DEBUG: Current timerActive state:', timerActive);
+      console.log('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+      console.log('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
 
-    // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
-    console.log('🔍 DEBUG: Setting timer active IMMEDIATELY');
+      // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
+      console.log('🔍 DEBUG: Setting timer active IMMEDIATELY');
 
-    // Set ref FIRST to prevent race conditions
-    timerActiveRef.current = true;
-    previousTimeRef.current = 20 * 60;
+      // Set ref FIRST to prevent race conditions
+      timerActiveRef.current = true;
+      previousTimeRef.current = 20 * 60;
 
-    // Then update React state
-    setTimerActive(true);
-    setTimeRemaining(20 * 60);
+      // Then update React state
+      setTimerActive(true);
+      setTimeRemaining(20 * 60);
 
-    console.log('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
+      console.log('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
-    // Calculate end time upfront
-    const startTime = Date.now();
-    const duration = 20 * 60 * 1000;
-    const endTime = startTime + duration;
-    setTimerEndTime(endTime);
-    timerEndTimeRef.current = endTime;
-    previousTimeRef.current = 20 * 60;
+      // Calculate end time upfront
+      const startTime = Date.now();
+      const duration = 20 * 60 * 1000;
+      const endTime = startTime + duration;
+      setTimerEndTime(endTime);
+      timerEndTimeRef.current = endTime;
+      previousTimeRef.current = 20 * 60;
 
-    try {
-      // Apply optimistic counter deduction (show immediate feedback to user)
-      applyOptimisticDeduction();
+      try {
+        // Apply optimistic counter deduction (show immediate feedback to user)
+        applyOptimisticDeduction();
 
       // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
       try {
@@ -705,10 +715,29 @@ export default function KPSimulationScreen() {
       if (prev > 30 && remainingSeconds <= 30) {
         showTimerWarning('30 Sekunden verbleibend', 'red', true);
       }
-      if (prev > 10 && remainingSeconds <= 10) {
-        showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        if (prev > 10 && remainingSeconds <= 10) {
+          showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
+        }
+      }, 1000); // Check every 1000ms (1 second) for mobile compatibility
+    } catch (error) {
+      console.error('❌ KP: Error in startSimulationTimer:', error);
+      // CRITICAL: Rollback optimistic counter deduction on error
+      resetOptimisticCount();
+      console.log('🔄 Rolled back optimistic counter deduction due to error');
+
+      // Reset timer state on error
+      timerActiveRef.current = false;
+      setTimerActive(false);
+      if (timerInterval.current) {
+        clearInterval(timerInterval.current);
+        timerInterval.current = null;
       }
-    }, 1000); // Check every 1000ms (1 second) for mobile compatibility
+      throw error; // Re-throw to be caught by outer handler if needed
+    } finally {
+      // Always release the lock, even if function throws or returns early
+      timerStartLockRef.current = false;
+      console.log('🔓 Timer start lock released');
+    }
   };
 
   // Mark simulation as used at 5-minute mark

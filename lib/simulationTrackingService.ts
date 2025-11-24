@@ -29,12 +29,14 @@ class SimulationTrackingService {
   private readonly RPC_TIMEOUT_MS = 10000;
 
   /**
-   * Generate unique session token
+   * Generate unique session token using cryptographically secure random UUID
+   * SECURITY: Uses crypto.randomUUID() instead of Math.random() to prevent token prediction
    */
   private generateSessionToken(): string {
-    const timestamp = Date.now().toString(36);
-    const randomPart = Math.random().toString(36).substr(2, 9);
-    return `sim_${timestamp}_${randomPart}`;
+    // Use crypto.randomUUID() for cryptographically secure token generation
+    // This prevents attackers from predicting session tokens
+    const secureUUID = crypto.randomUUID();
+    return `sim_${secureUUID}`;
   }
 
   /**
