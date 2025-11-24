@@ -42,7 +42,7 @@ export default function KPSimulationScreen() {
   const sessionTokenRef = useRef<string | null>(null); // Ref for sessionToken to avoid closure issues
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
   const usageMarkedRef = useRef(false); // Ref to track usage marked state for cleanup closure
-  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // For security heartbeat
+  // NOTE: heartbeatInterval removed - deprecated/no-op in new system
 
   // Timer warning system state
   const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
@@ -644,20 +644,8 @@ export default function KPSimulationScreen() {
       console.error('❌ KP: Error during timer setup:', error);
     }
 
-    console.log('🔍 DEBUG: Timer already active, now starting heartbeat and interval');
-
-    // Start security heartbeat (every 60 seconds) - use closure to get latest sessionToken
-    heartbeatInterval.current = setInterval(async () => {
-      try {
-        const token = sessionToken; // Will be set by database call if successful
-        if (token) {
-          await simulationTracker.sendHeartbeat(token);
-          console.log('💓 DEBUG: Heartbeat sent');
-        }
-      } catch (error) {
-        console.error('❌ DEBUG: Heartbeat failed:', error);
-      }
-    }, 60000); // Every 60 seconds
+    console.log('🔍 DEBUG: Timer already active, now starting timer interval');
+    // NOTE: Heartbeat removed - deprecated/no-op in new system
 
     console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
 
@@ -886,11 +874,7 @@ export default function KPSimulationScreen() {
       timerInterval.current = null;
     }
 
-    // Clear heartbeat interval
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-    }
+    // NOTE: Heartbeat cleanup removed - deprecated/no-op in new system
 
     // Show 10-second warning modal
     setShowFinalWarningModal(true);
@@ -1292,11 +1276,7 @@ export default function KPSimulationScreen() {
       console.log('✅ KP: Cleared timer interval');
     }
 
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
-      console.log('✅ KP: Cleared heartbeat interval');
-    }
+    // NOTE: Heartbeat cleanup removed - deprecated/no-op in new system
 
     // Clear warning timeout
     if (warningTimeoutRef.current) {
@@ -1391,10 +1371,7 @@ export default function KPSimulationScreen() {
         clearInterval(timerInterval.current);
         timerInterval.current = null;
       }
-      if (heartbeatInterval.current) {
-        clearInterval(heartbeatInterval.current);
-        heartbeatInterval.current = null;
-      }
+      // NOTE: Heartbeat cleanup removed - deprecated/no-op in new system
       if (warningTimeoutRef.current) {
         clearTimeout(warningTimeoutRef.current);
         warningTimeoutRef.current = null;
@@ -1480,6 +1457,11 @@ export default function KPSimulationScreen() {
     } catch (error) {
       console.error('❌ KP: Error during centralized cleanup:', error);
     } finally {
+      // CRITICAL: Always clear session token to prevent reuse
+      sessionTokenRef.current = null;
+      setSessionToken(null);
+      console.log('🔒 KP: Session token cleared');
+
       // Always reset the cleanup flag
       isCleaningUpRef.current = false;
     }

@@ -38,26 +38,82 @@ export class VoiceflowController {
     this.userId = persistentIds.user_id;
     this.sessionId = persistentIds.session_id;
 
-    // VALIDATION: Check if email is provided
-    if (!this.userEmail) {
-      console.warn(`⚠️ VoiceflowController: No email provided for ${config.simulationType.toUpperCase()} simulation!`);
-      console.warn('⚠️ This means user_email will NOT be sent to Voiceflow');
-    }
-
     console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
       user_id: this.userId,
       session_id: this.sessionId,
       user_email: this.userEmail || 'NOT_PROVIDED',
-      email_status: this.userEmail ? '✅ Email available' : '❌ Email missing',
+      email_status: this.userEmail ? '✅ Email available' : '⚠️ Will attempt fallback',
       projectID: config.projectID,
       supabase_synced: !!supabaseUserId
     });
   }
 
   /**
+   * Validate email format
+   * Returns true if email is valid, false otherwise
+   */
+  private isValidEmail(email: string): boolean {
+    if (!email || typeof email !== 'string') {
+      return false;
+    }
+    // Basic email regex validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  /**
+   * Fetch email from Supabase session as fallback if not provided
+   * Called during initialization before widget load
+   */
+  private async fetchEmailFallback(): Promise<void> {
+    if (this.userEmail) {
+      // Validate existing email
+      if (!this.isValidEmail(this.userEmail)) {
+        console.warn(`⚠️ Invalid email format: ${this.userEmail}`);
+        this.userEmail = undefined; // Clear invalid email
+      } else {
+        // Email already provided and valid, no fallback needed
+        return;
+      }
+    }
+
+    try {
+      console.log('📧 Attempting to fetch email from Supabase session...');
+
+      // Dynamically import supabase to avoid circular dependencies
+      const { supabase } = await import('@/lib/supabase');
+
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('❌ Error fetching Supabase session:', error);
+        return;
+      }
+
+      if (session?.user?.email) {
+        // Validate email before using it
+        if (this.isValidEmail(session.user.email)) {
+          this.userEmail = session.user.email;
+          console.log(`✅ Email fetched from Supabase session: ${this.userEmail}`);
+        } else {
+          console.warn(`⚠️ Invalid email format from session: ${session.user.email}`);
+        }
+      } else {
+        console.warn('⚠️ No email found in Supabase session');
+        console.warn('⚠️ Voiceflow will initialize without user_email');
+      }
+    } catch (error) {
+      console.error('❌ Exception fetching email fallback:', error);
+    }
+  }
+
+  /**
    * Initialize Voiceflow widget with persistent IDs
+   * Attempts email fallback before loading widget
    */
   async initialize(): Promise<boolean> {
+    // Try to fetch email from Supabase if not provided
+    await this.fetchEmailFallback();
     return this.loadWidget();
   }
 
@@ -80,6 +136,7 @@ export class VoiceflowController {
       }
 
       console.log(`📦 Voiceflow: Loading widget for ${this.config.simulationType.toUpperCase()}...`);
+      console.log(`📧 Email for widget: ${this.userEmail || 'NOT_AVAILABLE'}`);
       logCurrentIds(this.config.simulationType);
 
       // Load script if not present
@@ -89,7 +146,14 @@ export class VoiceflowController {
         script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
         script.type = 'text/javascript';
 
+        // Add 30-second timeout to prevent hanging
+        const timeout = setTimeout(() => {
+          console.error('❌ Voiceflow script load timeout (30s)');
+          reject(new Error('Voiceflow script load timeout'));
+        }, 30000);
+
         script.onload = () => {
+          clearTimeout(timeout); // Clear timeout on success
           console.log('✅ Voiceflow script loaded from CDN');
           this.initializeWidget()
             .then(() => {
@@ -103,6 +167,7 @@ export class VoiceflowController {
         };
 
         script.onerror = (error) => {
+          clearTimeout(timeout); // Clear timeout on error
           console.error('❌ Failed to load Voiceflow script:', error);
           reject(new Error('Failed to load Voiceflow script'));
         };
