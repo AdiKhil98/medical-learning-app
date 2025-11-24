@@ -155,38 +155,18 @@ export class VoiceflowController {
         versionID: this.config.versionID || 'production',
 
         // User ID - tracked across sessions
-        // IMPORTANT: Encode email in userID so it's accessible in Voiceflow
-        // Format: userId|||email (using ||| as separator)
-        userID: this.userEmail ? `${this.userId}|||${this.userEmail}` : this.userId,
+        userID: this.userId,
 
-        // ATTEMPT 1: Add email at root level (like userID)
-        user_email: this.userEmail || null,
-
-        // ATTEMPT 2: Try user object format
-        user: {
-          id: this.userId,
-          email: this.userEmail || null
+        // Send email in launch payload (SIMPLE, WORKING APPROACH)
+        launch: {
+          event: {
+            type: 'launch',
+            payload: {
+              session_id: this.sessionId,
+              user_email: this.userEmail
+            }
+          }
         },
-
-        // Pass session_id and user_email as custom variables via launch event
-        // Only include if email exists to avoid null values
-        ...(this.userEmail ? {
-          launch: {
-            event: {
-              type: 'launch',
-              payload: {
-                session_id: this.sessionId,
-                user_email: this.userEmail
-              }
-            }
-          }
-        } : {
-          launch: {
-            event: {
-              type: 'launch'
-            }
-          }
-        }),
 
         // Voice is REQUIRED - widget crashes without it
         voice: {
@@ -220,46 +200,9 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // CRITICAL: Send email via Voiceflow Dialog API
-      // This worked before - send it as state variables
+      // Email is sent in launch payload above (simple approach that was working)
       if (this.userEmail) {
-        console.log(`📧 Sending email to Voiceflow Dialog API: ${this.userEmail}`);
-
-        setTimeout(async () => {
-          try {
-            // Use the Dialog API interact endpoint
-            const response = await fetch(`https://general-runtime.voiceflow.com/state/user/${this.userId}/interact`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'versionID': this.config.versionID || 'production'
-              },
-              body: JSON.stringify({
-                action: {
-                  type: 'launch',
-                  payload: {
-                    user_email: this.userEmail,
-                    session_id: this.sessionId
-                  }
-                },
-                config: {
-                  tts: false,
-                  stripSSML: true
-                }
-              })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-              console.log('✅ Email sent to Voiceflow Dialog API successfully', data);
-            } else {
-              console.warn('⚠️ Voiceflow Dialog API returned:', response.status, data);
-            }
-          } catch (error) {
-            console.error('❌ Failed to send email via Dialog API:', error);
-          }
-        }, 1000);
+        console.log(`✅ Email sent in launch payload: ${this.userEmail}`);
       }
 
       console.log('✅ Widget loaded and ready with persistent IDs');
