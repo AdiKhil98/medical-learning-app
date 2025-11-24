@@ -220,13 +220,46 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // Email is sent in the configuration above (lines 161, 164-167, 175)
-      // It's included in: user_email (root), user.email (object), and launch.event.payload.user_email
+      // CRITICAL: Send email via Voiceflow Dialog API
+      // This worked before - send it as state variables
       if (this.userEmail) {
-        console.log(`✅ Email included in Voiceflow configuration: ${this.userEmail}`);
-        console.log(`📍 Email locations: root level, user object, and launch payload`);
-      } else {
-        console.warn(`⚠️ No email available to send to Voiceflow`);
+        console.log(`📧 Sending email to Voiceflow Dialog API: ${this.userEmail}`);
+
+        setTimeout(async () => {
+          try {
+            // Use the Dialog API interact endpoint
+            const response = await fetch(`https://general-runtime.voiceflow.com/state/user/${this.userId}/interact`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'versionID': this.config.versionID || 'production'
+              },
+              body: JSON.stringify({
+                action: {
+                  type: 'launch',
+                  payload: {
+                    user_email: this.userEmail,
+                    session_id: this.sessionId
+                  }
+                },
+                config: {
+                  tts: false,
+                  stripSSML: true
+                }
+              })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              console.log('✅ Email sent to Voiceflow Dialog API successfully', data);
+            } else {
+              console.warn('⚠️ Voiceflow Dialog API returned:', response.status, data);
+            }
+          } catch (error) {
+            console.error('❌ Failed to send email via Dialog API:', error);
+          }
+        }, 1000);
       }
 
       console.log('✅ Widget loaded and ready with persistent IDs');
