@@ -227,12 +227,11 @@ export class VoiceflowController {
         url: this.config.url || 'https://general-runtime.voiceflow.com',
         versionID: this.config.versionID || 'production',
 
-        // User ID - tracked across sessions
-        userID: this.userId,
-
-        // Send email directly as custom config (root level)
-        user_email: this.userEmail,
-        session_id: this.sessionId,
+        // User ID with email encoded (so Voiceflow definitely receives it)
+        // Format: "userID|email|sessionID" - we can parse this in Voiceflow
+        userID: this.userEmail
+          ? `${this.userId}|${this.userEmail}|${this.sessionId}`
+          : this.userId,
 
         // Voice is REQUIRED - widget crashes without it
         voice: {
@@ -254,9 +253,11 @@ export class VoiceflowController {
       console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
-      // CRITICAL: Log email and session at root level
-      console.log(`📧 Email (root level):`, widgetConfig.user_email);
-      console.log(`🆔 Session (root level):`, widgetConfig.session_id);
+      // CRITICAL: Log encoded userID (contains email)
+      console.log(`🎯 UserID (encoded with email):`, widgetConfig.userID);
+      if (this.userEmail) {
+        console.log(`📧 Email encoded in userID: ${this.userEmail}`);
+      }
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
@@ -267,14 +268,8 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // Send email via interact API after widget loads (WORKING APPROACH)
-      if (this.userEmail) {
-        await this.sendEmailViaAPI();
-      } else {
-        console.warn(`⚠️ No email available to send to Voiceflow`);
-      }
-
-      console.log('✅ Widget loaded and ready with persistent IDs');
+      // Email is encoded in userID field (see above)
+      console.log('✅ Widget loaded and ready with persistent IDs (email in userID)');
 
     } catch (error) {
       console.error('❌ Failed to initialize Voiceflow widget:', error);
