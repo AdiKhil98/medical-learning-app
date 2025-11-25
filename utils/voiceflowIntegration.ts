@@ -230,11 +230,9 @@ export class VoiceflowController {
         // User ID - tracked across sessions
         userID: this.userId,
 
-        // Send email and session in render config (Voiceflow's recommended approach)
-        render: {
-          user_email: this.userEmail,
-          session_id: this.sessionId
-        },
+        // Send email directly as custom config (root level)
+        user_email: this.userEmail,
+        session_id: this.sessionId,
 
         // Voice is REQUIRED - widget crashes without it
         voice: {
@@ -256,8 +254,9 @@ export class VoiceflowController {
       console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
-      // CRITICAL: Log the render config specifically
-      console.log(`🎨 Render config (email & session):`, JSON.parse(JSON.stringify(widgetConfig.render || {})));
+      // CRITICAL: Log email and session at root level
+      console.log(`📧 Email (root level):`, widgetConfig.user_email);
+      console.log(`🆔 Session (root level):`, widgetConfig.session_id);
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
@@ -268,9 +267,9 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // Email is sent in render config above
+      // Email is sent in widget config above
       if (this.userEmail) {
-        console.log(`✅ Email sent in render config: ${this.userEmail}`);
+        console.log(`✅ Email sent to Voiceflow (root level): ${this.userEmail}`);
       } else {
         console.warn(`⚠️ No email available to send to Voiceflow`);
       }
