@@ -267,9 +267,9 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // Email is sent in widget config above
+      // Send email via interact API after widget loads (WORKING APPROACH)
       if (this.userEmail) {
-        console.log(`✅ Email sent to Voiceflow (root level): ${this.userEmail}`);
+        await this.sendEmailViaAPI();
       } else {
         console.warn(`⚠️ No email available to send to Voiceflow`);
       }
@@ -329,6 +329,59 @@ export class VoiceflowController {
       }
     } catch (error) {
       console.warn('⚠️ Could not set up Voiceflow event listeners:', error);
+    }
+  }
+
+  /**
+   * Send email to Voiceflow via interact API
+   * This approach sends the email as an action after widget initialization
+   */
+  private async sendEmailViaAPI(): Promise<void> {
+    try {
+      console.log('📧 Sending email to Voiceflow via interact API...');
+
+      const interactPayload = {
+        action: {
+          type: 'set',
+          payload: {
+            user_email: this.userEmail,
+            session_id: this.sessionId
+          }
+        }
+      };
+
+      // Use the widget's interact method if available
+      if (this.widget && typeof this.widget.interact === 'function') {
+        await this.widget.interact(interactPayload);
+        console.log(`✅ Email sent via widget.interact: ${this.userEmail}`);
+      } else {
+        // Fallback: Use the Dialog API directly
+        const response = await fetch(`${this.config.url}/interact/${this.config.projectID}/${this.config.versionID || 'production'}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userID: this.userId,
+            action: {
+              type: 'set',
+              payload: {
+                user_email: this.userEmail,
+                session_id: this.sessionId
+              }
+            }
+          })
+        });
+
+        if (response.ok) {
+          console.log(`✅ Email sent via Dialog API: ${this.userEmail}`);
+        } else {
+          console.error(`❌ Failed to send email via API: ${response.statusText}`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error sending email via API:', error);
+      // Don't throw - widget should still work even if email fails
     }
   }
 
