@@ -17,6 +17,20 @@ export interface VoiceflowConfig {
   simulationType: SimulationType;
   title?: string;
   imageUrl?: string;
+
+  /**
+   * PRIVACY OPTION: Hash email before sending to Voiceflow
+   *
+   * - false (default): Send plain email in userID (current behavior)
+   *   Use when Voiceflow agent needs to access/display the email
+   *
+   * - true: Send SHA-256 hash of email instead
+   *   Use for GDPR compliance when agent doesn't need actual email
+   *   Hash is consistent (same email = same hash) but one-way
+   *
+   * WARNING: If enabled, Voiceflow agent will only see hash, not email
+   */
+  hashEmail?: boolean;
 }
 
 export class VoiceflowController {
@@ -59,6 +73,39 @@ export class VoiceflowController {
     // Basic email regex validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  }
+
+  /**
+   * Hash email using SHA-256 for privacy
+   * Creates a consistent, one-way hash that can't be reversed to get email
+   *
+   * @param email - The email to hash
+   * @returns SHA-256 hash in hexadecimal format (64 characters)
+   */
+  private async hashEmail(email: string): Promise<string> {
+    if (!email) {
+      return '';
+    }
+
+    try {
+      // Convert email to lowercase for consistent hashing
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Use Web Crypto API (available in browsers and modern environments)
+      const encoder = new TextEncoder();
+      const data = encoder.encode(normalizedEmail);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+
+      // Convert buffer to hex string
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      return hashHex;
+    } catch (error) {
+      console.error('❌ Error hashing email:', error);
+      // Fallback: return empty string on error (Voiceflow will receive userID without email)
+      return '';
+    }
   }
 
   /**
@@ -218,6 +265,15 @@ export class VoiceflowController {
         console.error('❌❌❌ CRITICAL: user_email is undefined! Email will NOT be sent to Voiceflow! ❌❌❌');
       }
 
+      // Prepare email for userID (hash if privacy mode enabled)
+      let emailForUserID = this.userEmail;
+      if (this.userEmail && this.config.hashEmail) {
+        emailForUserID = await this.hashEmail(this.userEmail);
+        console.log('🔒 PRIVACY MODE: Email hashed for Voiceflow (SHA-256)');
+        console.log('   Original:', this.userEmail);
+        console.log('   Hashed:', emailForUserID.substring(0, 16) + '...');
+      }
+
       // Voiceflow configuration with persistent IDs
       // Based on official docs: https://docs.voiceflow.com/docs/customization-configuration
       const widgetConfig: any = {
@@ -229,8 +285,9 @@ export class VoiceflowController {
 
         // User ID with email encoded (so Voiceflow definitely receives it)
         // Format: "userID|email|sessionID" - we can parse this in Voiceflow
-        userID: this.userEmail
-          ? `${this.userId}|${this.userEmail}|${this.sessionId}`
+        // If hashEmail is enabled, email will be SHA-256 hash instead of plain text
+        userID: emailForUserID
+          ? `${this.userId}|${emailForUserID}|${this.sessionId}`
           : this.userId,
 
         // Voice is REQUIRED - widget crashes without it
@@ -253,10 +310,14 @@ export class VoiceflowController {
       console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
-      // CRITICAL: Log encoded userID (contains email)
-      console.log(`🎯 UserID (encoded with email):`, widgetConfig.userID);
+      // CRITICAL: Log encoded userID (contains email or hash)
+      console.log(`🎯 UserID (encoded):`, widgetConfig.userID);
       if (this.userEmail) {
-        console.log(`📧 Email encoded in userID: ${this.userEmail}`);
+        if (this.config.hashEmail) {
+          console.log(`🔒 Email hashed in userID (privacy mode enabled)`);
+        } else {
+          console.log(`📧 Email encoded in userID: ${this.userEmail}`);
+        }
       }
 
       // Load the widget
@@ -269,7 +330,8 @@ export class VoiceflowController {
       this.setupEventListeners();
 
       // Email is encoded in userID field (see above)
-      console.log('✅ Widget loaded and ready with persistent IDs (email in userID)');
+      const privacyStatus = this.config.hashEmail ? '(email hashed in userID)' : '(email in userID)';
+      console.log(`✅ Widget loaded and ready with persistent IDs ${privacyStatus}`);
 
     } catch (error) {
       console.error('❌ Failed to initialize Voiceflow widget:', error);
