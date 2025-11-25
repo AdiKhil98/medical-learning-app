@@ -230,15 +230,10 @@ export class VoiceflowController {
         // User ID - tracked across sessions
         userID: this.userId,
 
-        // Send email in launch payload (SIMPLE, WORKING APPROACH)
-        launch: {
-          event: {
-            type: 'launch',
-            payload: {
-              session_id: this.sessionId,
-              user_email: this.userEmail
-            }
-          }
+        // Send email and session in render config (Voiceflow's recommended approach)
+        render: {
+          user_email: this.userEmail,
+          session_id: this.sessionId
         },
 
         // Voice is REQUIRED - widget crashes without it
@@ -261,8 +256,8 @@ export class VoiceflowController {
       console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
-      // CRITICAL: Log the launch event payload specifically
-      console.log(`🚀 Launch event payload:`, JSON.parse(JSON.stringify(widgetConfig.launch || {})));
+      // CRITICAL: Log the render config specifically
+      console.log(`🎨 Render config (email & session):`, JSON.parse(JSON.stringify(widgetConfig.render || {})));
 
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
@@ -273,9 +268,11 @@ export class VoiceflowController {
       // Setup event listeners
       this.setupEventListeners();
 
-      // Email is sent in launch payload above (simple approach that was working)
+      // Email is sent in render config above
       if (this.userEmail) {
-        console.log(`✅ Email sent in launch payload: ${this.userEmail}`);
+        console.log(`✅ Email sent in render config: ${this.userEmail}`);
+      } else {
+        console.warn(`⚠️ No email available to send to Voiceflow`);
       }
 
       console.log('✅ Widget loaded and ready with persistent IDs');
