@@ -42,7 +42,7 @@ const isTest = process.env.NODE_ENV === 'test';
 
 const defaultConfig: LogConfig = {
   level: isDevelopment ? LogLevel.DEBUG : LogLevel.INFO,
-  enableConsole: isDevelopment || isTest,
+  enableConsole: true, // TEMPORARY: Enable console in production for debugging
   enableExternalLogging: !isDevelopment && !isTest,
   includeTimestamp: true,
   includeSource: true,
