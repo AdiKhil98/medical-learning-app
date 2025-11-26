@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { ScrollView, StyleSheet, Animated, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Evaluation } from '@/types/evaluation';

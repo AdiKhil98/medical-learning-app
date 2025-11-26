@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from '@/utils/logger';
 import { SecureLogger } from './security';
 import { createCache, CacheManager } from './cacheManager';
 import { withDeduplication, generateRequestKey } from './requestDeduplication';

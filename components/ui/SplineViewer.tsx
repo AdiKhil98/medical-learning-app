@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { View, StyleSheet, Platform } from 'react-native';
 
 interface SplineViewerProps {

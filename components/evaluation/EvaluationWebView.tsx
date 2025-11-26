@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import {
   View,
   StyleSheet,

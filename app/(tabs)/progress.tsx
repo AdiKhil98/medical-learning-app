@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Platform, Modal } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '../../lib/supabase';

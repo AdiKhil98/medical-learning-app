@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/utils/logger';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import SlidingHomepage from '@/components/homepage/SlidingHomepage';

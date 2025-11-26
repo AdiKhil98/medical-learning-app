@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';

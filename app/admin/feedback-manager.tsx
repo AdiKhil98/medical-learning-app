@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Bug, Lightbulb, Circle, Clock, CheckCircle2, Filter, MessageSquare, User, Calendar, Edit3, Save, X } from 'lucide-react-native';

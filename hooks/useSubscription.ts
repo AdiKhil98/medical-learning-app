@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { supabase } from '../lib/supabase';
 
 interface SubscriptionStatus {

@@ -1,4 +1,5 @@
 import { Stack, usePathname } from 'expo-router';
+import { logger } from '@/utils/logger';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView, Alert, ScrollView, Linking, Animated } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';

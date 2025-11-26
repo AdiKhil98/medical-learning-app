@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from '@/utils/logger';
 
 export class AuditLogger {
   static async logAuthEvent(

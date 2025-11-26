@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { logger } from '@/utils/logger';
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';

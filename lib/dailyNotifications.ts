@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { logger } from '@/utils/logger';
 import { Platform } from 'react-native';
 import { SecureLogger } from './security';
 import AsyncStorage from '@react-native-async-storage/async-storage';

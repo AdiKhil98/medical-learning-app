@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { recentContentService, RecentContentItem } from '@/lib/recentContentService';
 
 interface UseRecentContentResult {
