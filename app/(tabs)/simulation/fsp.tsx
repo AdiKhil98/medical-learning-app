@@ -155,13 +155,9 @@ export default function FSPSimulationScreen() {
       }
 
       if (!user) {
-        logger.error(`❌ [${timestamp}] No user object found`);
-        setInitializationError('User not authenticated');
-        Alert.alert(
-          'Authentifizierungsfehler',
-          'Bitte melden Sie sich an, um fortzufahren.',
-          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
-        );
+        logger.warn(`⏳ [${timestamp}] User object not loaded yet, waiting...`);
+        // Don't show error - user might still be loading
+        // The useEffect will re-run when user loads (it's in dependencies)
         return;
       }
 
