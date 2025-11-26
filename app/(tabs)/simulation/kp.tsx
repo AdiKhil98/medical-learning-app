@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
-import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { stopGlobalVoiceflowCleanup, disableVoiceflowCleanup, enableVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -96,6 +96,13 @@ export default function KPSimulationScreen() {
       logger.error('Error clearing simulation storage:', error);
     }
   };
+
+  // Disable global Voiceflow cleanup as soon as component mounts
+  useEffect(() => {
+    logger.info('🛑 KP: Component mounted - disabling global Voiceflow cleanup');
+    disableVoiceflowCleanup();
+    stopGlobalVoiceflowCleanup();
+  }, []);
 
   // Reset optimistic count on page mount/refresh to show actual backend count
   useEffect(() => {
@@ -230,8 +237,9 @@ export default function KPSimulationScreen() {
         setInitializationError(null);
         initializationAttemptsRef.current = attempt;
 
-        // Stop global cleanup to allow widget
-        logger.info(`🛑 [${timestamp}] Stopping global Voiceflow cleanup`);
+        // Disable global cleanup to allow widget
+        logger.info(`🛑 [${timestamp}] Disabling global Voiceflow cleanup`);
+        disableVoiceflowCleanup();
         stopGlobalVoiceflowCleanup();
 
         // ============================================
@@ -1118,6 +1126,8 @@ export default function KPSimulationScreen() {
 
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
+        logger.info('🌍 KP: Re-enabling global Voiceflow cleanup');
+        enableVoiceflowCleanup();
         logger.info('🌍 KP: Running global Voiceflow cleanup with force=true');
         globalVoiceflowCleanup(true);
       }

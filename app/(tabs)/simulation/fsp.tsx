@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
-import { stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { stopGlobalVoiceflowCleanup, disableVoiceflowCleanup, enableVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -75,6 +75,13 @@ export default function FSPSimulationScreen() {
 
   // Lock state for when limit is reached
   const [isSimulationLocked, setIsSimulationLocked] = useState(false);
+
+  // Disable global Voiceflow cleanup as soon as component mounts
+  useEffect(() => {
+    logger.info('🛑 FSP: Component mounted - disabling global Voiceflow cleanup');
+    disableVoiceflowCleanup();
+    stopGlobalVoiceflowCleanup();
+  }, []);
 
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
   // Reset optimistic count on page mount/refresh to show actual backend data
@@ -242,8 +249,9 @@ export default function FSPSimulationScreen() {
         setInitializationError(null);
         initializationAttemptsRef.current = attempt;
 
-        // Stop global cleanup to allow widget
-        logger.info(`🛑 [${timestamp}] Stopping global Voiceflow cleanup`);
+        // Disable global cleanup to allow widget
+        logger.info(`🛑 [${timestamp}] Disabling global Voiceflow cleanup`);
+        disableVoiceflowCleanup();
         stopGlobalVoiceflowCleanup();
 
         // ============================================
@@ -1100,6 +1108,8 @@ export default function FSPSimulationScreen() {
 
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
+        logger.info('🌍 FSP: Re-enabling global Voiceflow cleanup');
+        enableVoiceflowCleanup();
         logger.info('🌍 FSP: Running global Voiceflow cleanup with force=true');
         globalVoiceflowCleanup(true);
       }

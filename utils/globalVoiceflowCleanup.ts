@@ -2,13 +2,40 @@ import { logger } from './logger';
 // Global Voiceflow widget cleanup utility
 // This runs on every page load to ensure widgets don't persist across pages
 
+// Global flag to completely disable cleanup (set by simulation pages)
+let cleanupDisabled = false;
+
+/**
+ * Disable Voiceflow cleanup globally
+ * Call this BEFORE loading Voiceflow widget on simulation pages
+ */
+export function disableVoiceflowCleanup() {
+  cleanupDisabled = true;
+  logger.info('🛑 Voiceflow cleanup DISABLED globally');
+}
+
+/**
+ * Re-enable Voiceflow cleanup
+ * Call this when leaving simulation pages
+ */
+export function enableVoiceflowCleanup() {
+  cleanupDisabled = false;
+  logger.info('✅ Voiceflow cleanup ENABLED globally');
+}
+
 export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
   if (typeof window === 'undefined') return;
+
+  // Check global disable flag first
+  if (cleanupDisabled && !forceCleanup) {
+    logger.info('🚫 Cleanup is globally disabled, skipping (use forceCleanup=true to override)');
+    return;
+  }
 
   // Check if we're on a simulation page - if so, don't run cleanup unless forced
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
-  
+
   if (isSimulationPage && !forceCleanup) {
     logger.info('🚫 On simulation page, skipping Voiceflow cleanup (use forceCleanup=true to override)');
     return;
@@ -164,10 +191,15 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
 
   // Set up mutation observer to catch new Voiceflow elements (only on non-simulation pages)
   const observer = new MutationObserver((mutations) => {
+    // Check global disable flag first
+    if (cleanupDisabled) {
+      return; // Cleanup is globally disabled
+    }
+
     // Check current path before cleaning up
     const currentPath = window.location?.pathname || '';
     const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
-    
+
     if (isSimulationPage) {
       return; // Don't clean up on simulation pages
     }
