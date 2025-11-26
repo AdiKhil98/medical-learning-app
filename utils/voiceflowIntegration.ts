@@ -9,6 +9,7 @@
  */
 
 import { getPersistentIds, resetSimulation, logCurrentIds, SimulationType } from './persistentIdManager';
+import { logger } from './logger';
 
 export interface VoiceflowConfig {
   projectID: string;

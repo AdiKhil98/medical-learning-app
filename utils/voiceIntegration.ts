@@ -1,5 +1,6 @@
 // Voice integration service for custom microphone interface with Voiceflow
 import { VoiceflowController } from './voiceflowIntegration';
+import { logger } from './logger';
 
 export interface VoiceInteractionState {
   isInitialized: boolean;

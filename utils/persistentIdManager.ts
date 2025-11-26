@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /**
  * Persistent ID Manager for Voiceflow Widget Integration
  *

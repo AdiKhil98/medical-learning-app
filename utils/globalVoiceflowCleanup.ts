@@ -1,3 +1,4 @@
+import { logger } from './logger';
 // Global Voiceflow widget cleanup utility
 // This runs on every page load to ensure widgets don't persist across pages
 

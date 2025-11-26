@@ -1,4 +1,5 @@
 import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep, MissedQuestion, LearningPriority } from '@/types/evaluation';
+import { logger } from './logger';
 
 /**
  * Parses the raw evaluation text from Supabase into structured data
