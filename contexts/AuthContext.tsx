@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, SecureLogger, SessionTimeoutManager, RateLimiter } from '@/lib/security';
 import { AuditLogger } from '@/lib/auditLogger';
+import { setSentryUser, clearSentryUser } from '@/utils/sentry';
 
 type AuthContextType = {
   session: Session | null;
@@ -78,6 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session);
           setUser(session.user);
           await ensureUserProfile(session.user);
+
+          // Set Sentry user context for error tracking
+          setSentryUser(session.user.id, session.user.email);
+
           // Initialize session timeout on sign in
           await SessionTimeoutManager.init(
             () => SecureLogger.warn('Session timeout warning'),
@@ -85,6 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
         } else if (event === 'SIGNED_OUT') {
           SecureLogger.log('Processing SIGNED_OUT event');
+
+          // Clear Sentry user context
+          clearSentryUser();
+
           // Cleanup session timeout on sign out
           SessionTimeoutManager.destroy();
 
@@ -325,6 +334,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         SecureLogger.log('Sign in successful');
 
+        // Set Sentry user context for error tracking
+        setSentryUser(data.user.id, data.user.email);
+
         // Clear failed attempts on success (client-side)
         const clearAttemptsStartTime = performance.now();
         await RateLimiter.clearAttempts(email);
@@ -457,15 +469,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const signOutTime = Date.now();
       SecureLogger.log('Supabase signOut successful', { duration: signOutTime - startTime });
-      
+
+      // Clear Sentry user context
+      clearSentryUser();
+
       // Log logout audit event
       if (beforeSession?.user) {
         await AuditLogger.logAuthEvent('logout', beforeSession.user.id);
       }
-      
+
       // Clean up session timeout manager
       SessionTimeoutManager.destroy();
-      
+
       // Clear local state immediately and force re-render
       SecureLogger.log('Clearing local session state');
       setSession(null);

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 import { AuditLogger } from '@/lib/auditLogger';
+import { captureException, setSentryContext } from '@/utils/sentry';
 
 interface Props {
   children: ReactNode;
@@ -41,6 +42,23 @@ export class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
+
+    // Set Sentry context with component stack
+    try {
+      setSentryContext('errorBoundary', {
+        componentStack: errorInfo.componentStack?.substring(0, 500), // Limit length
+        retryCount: this.state.retryCount,
+      });
+
+      // Capture exception in Sentry
+      captureException(error, {
+        errorBoundary: true,
+        retryCount: this.state.retryCount,
+      });
+    } catch (sentryError) {
+      // Silent fail if Sentry not configured
+      logger.warn('Failed to send error to Sentry', { error: sentryError });
+    }
 
     // Log error securely without sensitive data
     this.logErrorToSupabase(error, errorInfo);

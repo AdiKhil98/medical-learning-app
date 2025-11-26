@@ -7,11 +7,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { initializeSentry } from '@/utils/sentry';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
+
+  // Initialize Sentry error monitoring (runs once on app start)
+  useEffect(() => {
+    initializeSentry();
+  }, []);
 
   // Fix mobile viewport on web
   useEffect(() => {

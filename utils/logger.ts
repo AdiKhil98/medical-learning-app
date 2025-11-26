@@ -233,34 +233,60 @@ class Logger {
   }
 
   /**
-   * Log to external service (Sentry, LogRocket, etc.)
+   * Log to external service (Sentry)
    */
   private logToExternal(entry: LogEntry): void {
-    // TODO: Integrate with Sentry or other logging service
-    // Example:
-    // if (entry.level === LogLevel.ERROR && entry.error) {
-    //   Sentry.captureException(entry.error, {
-    //     contexts: { custom: entry.context },
-    //     tags: { platform: entry.platform },
-    //   });
-    // }
+    try {
+      // Dynamically import Sentry to avoid errors if not configured
+      const sentryModule = require('./sentry');
 
-    // For now, just prepare the data in the right format
-    const externalLog = {
-      level: LogLevel[entry.level],
-      message: entry.message,
-      timestamp: entry.timestamp,
-      context: entry.context,
-      error: entry.error ? {
-        message: entry.error.message,
-        stack: entry.error.stack,
-        name: entry.error.name,
-      } : undefined,
-      platform: entry.platform,
-    };
+      // Map log levels to Sentry severity
+      const sentryLevel = this.mapLogLevelToSentry(entry.level);
 
-    // Placeholder: In production, send to logging service
-    // await fetch('/api/logs', { method: 'POST', body: JSON.stringify(externalLog) });
+      // Add breadcrumb for all log levels
+      sentryModule.addSentryBreadcrumb(
+        entry.message,
+        entry.source || 'app',
+        sentryLevel,
+        entry.context
+      );
+
+      // Capture errors and warnings in Sentry
+      if (entry.level === LogLevel.ERROR && entry.error) {
+        sentryModule.captureException(entry.error, {
+          ...entry.context,
+          source: entry.source,
+          platform: entry.platform,
+        });
+      } else if (entry.level === LogLevel.WARN) {
+        sentryModule.captureMessage(entry.message, 'warning', {
+          ...entry.context,
+          source: entry.source,
+          platform: entry.platform,
+        });
+      }
+    } catch (error) {
+      // Sentry not available or not configured - silent fail
+      // Don't log to avoid infinite loop
+    }
+  }
+
+  /**
+   * Map log level to Sentry severity
+   */
+  private mapLogLevelToSentry(level: LogLevel): 'debug' | 'info' | 'warning' | 'error' {
+    switch (level) {
+      case LogLevel.DEBUG:
+        return 'debug';
+      case LogLevel.INFO:
+        return 'info';
+      case LogLevel.WARN:
+        return 'warning';
+      case LogLevel.ERROR:
+        return 'error';
+      default:
+        return 'info';
+    }
   }
 
   /**
