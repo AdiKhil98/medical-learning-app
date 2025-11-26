@@ -15,6 +15,11 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import InlineInstructions from '@/components/ui/InlineInstructions';
 import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
+import {
+  SIMULATION_DURATION_SECONDS,
+  USAGE_THRESHOLD_SECONDS,
+  WARNING_5_MIN_REMAINING
+} from '@/constants/simulationConstants';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -699,9 +704,10 @@ export default function FSPSimulationScreen() {
       }
 
       // Mark as used at 5-minute mark (only trigger once)
-      // NOTE: 20 minutes total = 1200 seconds, so 5 minutes elapsed = 900 seconds REMAINING
+      // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
+      const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
       const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
-      if (prev > 900 && remainingSeconds <= 900 && !usageMarkedRef.current && currentSessionToken) {
+      if (prev > fiveMinutesRemaining && remainingSeconds <= fiveMinutesRemaining && !usageMarkedRef.current && currentSessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
         console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
         console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
@@ -710,7 +716,7 @@ export default function FSPSimulationScreen() {
       }
 
       // Timer warnings (only trigger once per threshold)
-      if (prev > 300 && remainingSeconds <= 300) {
+      if (prev > WARNING_5_MIN_REMAINING && remainingSeconds <= WARNING_5_MIN_REMAINING) {
         showTimerWarning('5 Minuten verbleibend', 'yellow', false);
       }
       if (prev > 120 && remainingSeconds <= 120) {
@@ -849,7 +855,7 @@ export default function FSPSimulationScreen() {
       finalStatus = 'completed';
     } else if (reason === 'aborted') {
       // If aborted, check if it was before 5-minute mark
-      if (!usageMarked && elapsedSeconds < 300) {
+      if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
         finalStatus = 'incomplete';
         console.log('📊 FSP: Marking as incomplete - ended before 5-minute mark');
 
@@ -1020,10 +1026,10 @@ export default function FSPSimulationScreen() {
         console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
         // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
-        if (!usageMarked && elapsedSeconds < 300) {
+        if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
           console.log('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
           resetOptimisticCount();
-        } else if (elapsedSeconds >= 300) {
+        } else if (elapsedSeconds >= USAGE_THRESHOLD_SECONDS) {
           console.log('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
         }
       } catch (error) {
