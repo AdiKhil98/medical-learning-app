@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { SecureLogger } from '@/lib/security';
+import { logger } from '@/utils/logger';
 import { AuditLogger } from '@/lib/auditLogger';
 
 interface Props {
@@ -12,6 +12,8 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: React.ErrorInfo | null;
+  retryCount: number;
+  isRetrying: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -21,10 +23,12 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      retryCount: 0,
+      isRetrying: false,
     };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return {
       hasError: true,
       error,
@@ -71,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
         }
       );
     } catch (logError) {
-      SecureLogger.error('Error in logErrorToSupabase', logError);
+      logger.error('Failed to log error to Supabase', { error: logError });
     }
   }
 
@@ -89,11 +93,30 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
+    const { retryCount } = this.state;
+    const maxRetries = 3;
+
+    if (retryCount >= maxRetries) {
+      logger.warn('Maximum retry attempts reached', { retryCount });
+      return;
+    }
+
+    this.setState({ isRetrying: true });
+
+    // Exponential backoff: 1s, 2s, 4s
+    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 4000);
+
+    logger.info('Retrying after error', { retryCount, backoffDelay });
+
+    setTimeout(() => {
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+        retryCount: retryCount + 1,
+        isRetrying: false,
+      });
+    }, backoffDelay);
   };
 
   render() {
@@ -106,9 +129,25 @@ export class ErrorBoundary extends Component<Props, State> {
               Entschuldigung, etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.
             </Text>
             
-            <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
-              <Text style={styles.retryButtonText}>Erneut versuchen</Text>
+            <TouchableOpacity
+              style={[styles.retryButton, this.state.isRetrying && styles.retryButtonDisabled]}
+              onPress={this.handleRetry}
+              disabled={this.state.isRetrying || this.state.retryCount >= 3}
+            >
+              <Text style={styles.retryButtonText}>
+                {this.state.isRetrying
+                  ? 'Wird wiederholt...'
+                  : this.state.retryCount >= 3
+                    ? 'Maximale Versuche erreicht'
+                    : 'Erneut versuchen'}
+              </Text>
             </TouchableOpacity>
+
+            {this.state.retryCount > 0 && this.state.retryCount < 3 && (
+              <Text style={styles.retryCountText}>
+                Versuch {this.state.retryCount} von 3
+              </Text>
+            )}
 
             {__DEV__ && this.state.error && (
               <ScrollView style={styles.devErrorContainer}>
@@ -175,6 +214,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  retryButtonDisabled: {
+    backgroundColor: '#999',
+    opacity: 0.6,
+  },
+  retryCountText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    marginBottom: 12,
   },
   devErrorContainer: {
     backgroundColor: '#f5f5f5',

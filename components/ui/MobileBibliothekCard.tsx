@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, ChevronRight, BookOpen, Stethoscope } from 'lucide-react-native';
@@ -17,7 +17,7 @@ interface MobileBibliothekCardProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 cards per row with 16px margins and 16px gap
 
-export function MobileBibliothekCard({
+export const MobileBibliothekCard = memo(function MobileBibliothekCard({
   title,
   icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70', '#A0645D'],
@@ -29,12 +29,15 @@ export function MobileBibliothekCard({
 }: MobileBibliothekCardProps) {
   const [isPressed, setIsPressed] = useState(false);
 
+  const handlePressIn = useCallback(() => setIsPressed(true), []);
+  const handlePressOut = useCallback(() => setIsPressed(false), []);
+
   return (
     <TouchableOpacity
       style={[styles.cardContainer, { width: CARD_WIDTH }]}
       onPress={onPress}
-      onPressIn={() => setIsPressed(true)}
-      onPressOut={() => setIsPressed(false)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       activeOpacity={0.9}
       accessibilityRole="button"
       accessibilityLabel={`${title}${itemCount ? `, ${itemCount} Kategorien` : ''}`}
@@ -101,10 +104,10 @@ export function MobileBibliothekCard({
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 // Alternative list view for dense content
-export function MobileBibliothekListItem({
+export const MobileBibliothekListItem = memo(function MobileBibliothekListItem({
   title,
   icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70'],
@@ -167,7 +170,7 @@ export function MobileBibliothekListItem({
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   // Card View Styles
