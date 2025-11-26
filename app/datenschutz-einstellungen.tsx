@@ -38,7 +38,7 @@ export default function DataProtectionSettingsScreen() {
         setSettings(JSON.parse(savedSettings));
       }
     } catch (error) {
-      console.error('Error loading privacy settings:', error);
+      logger.error('Error loading privacy settings:', error);
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function DataProtectionSettingsScreen() {
     try {
       await AsyncStorage.setItem('privacy-settings', JSON.stringify(newSettings));
     } catch (error) {
-      console.error('Error saving privacy settings:', error);
+      logger.error('Error saving privacy settings:', error);
       Alert.alert('Fehler', 'Einstellungen konnten nicht gespeichert werden.');
     }
   };
@@ -77,7 +77,7 @@ export default function DataProtectionSettingsScreen() {
             try {
               await AsyncStorage.setItem('privacy-settings', JSON.stringify(defaultSettings));
             } catch (error) {
-              console.error('Error resetting privacy settings:', error);
+              logger.error('Error resetting privacy settings:', error);
             }
           }
         }

@@ -23,7 +23,7 @@ export default function AdminLayout() {
           .rpc('verify_admin_role');
 
         if (error) {
-          console.error('Admin verification error:', error);
+          logger.error('Admin verification error:', error);
           setVerificationError('Fehler bei der Admin-Verifizierung');
           setIsVerifiedAdmin(false);
           return;
@@ -32,7 +32,7 @@ export default function AdminLayout() {
         // data should be { is_admin: boolean }
         setIsVerifiedAdmin(data?.is_admin === true);
       } catch (err) {
-        console.error('Admin verification exception:', err);
+        logger.error('Admin verification exception:', err);
         setVerificationError('Verifizierungsfehler');
         setIsVerifiedAdmin(false);
       }

@@ -89,7 +89,7 @@ export default function PasswortAendernScreen() {
       );
 
     } catch (error: any) {
-      console.error('Error changing password:', error);
+      logger.error('Error changing password:', error);
       
       let errorMessage = 'Passwort konnte nicht geändert werden.';
       

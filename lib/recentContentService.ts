@@ -40,7 +40,7 @@ class RecentContentService {
    */
   async addRecentContent(contentData: RecentContentData): Promise<void> {
     try {
-      console.log('📖 Adding recent content:', contentData.section_title);
+      logger.info('📖 Adding recent content:', contentData.section_title);
       
       // Get current recent items from storage
       const recentItems = await this.getRecentContent();
@@ -80,7 +80,7 @@ class RecentContentService {
       SecureLogger.log(`Added recent content: ${contentData.section_title} (view count: ${newItem.viewCount})`);
       
     } catch (error) {
-      console.error('❌ Error adding recent content:', error);
+      logger.error('❌ Error adding recent content:', error);
       SecureLogger.log('Error adding recent content:', error);
     }
   }
@@ -100,7 +100,7 @@ class RecentContentService {
       const storedData = await AsyncStorage.getItem(STORAGE_KEY);
       
       if (!storedData) {
-        console.log('📚 No recent content found in storage');
+        logger.info('📚 No recent content found in storage');
         return [];
       }
       
@@ -109,11 +109,11 @@ class RecentContentService {
       // Update cache
       recentContentCache = { data: recentItems, timestamp: now };
       
-      console.log(`📚 Loaded ${recentItems.length} recent content items`);
+      logger.info(`📚 Loaded ${recentItems.length} recent content items`);
       return recentItems;
       
     } catch (error) {
-      console.error('❌ Error getting recent content:', error);
+      logger.error('❌ Error getting recent content:', error);
       SecureLogger.log('Error getting recent content:', error);
       return [];
     }
@@ -127,7 +127,7 @@ class RecentContentService {
       const recentItems = await this.getRecentContent();
       return recentItems.slice(0, 3);
     } catch (error) {
-      console.error('❌ Error getting recent content for homepage:', error);
+      logger.error('❌ Error getting recent content for homepage:', error);
       return [];
     }
   }
@@ -141,7 +141,7 @@ class RecentContentService {
       recentContentCache = null;
       SecureLogger.log('Cleared recent content history');
     } catch (error) {
-      console.error('❌ Error clearing recent content:', error);
+      logger.error('❌ Error clearing recent content:', error);
       SecureLogger.log('Error clearing recent content:', error);
     }
   }
@@ -159,7 +159,7 @@ class RecentContentService {
       
       SecureLogger.log(`Removed recent content: ${slug}`);
     } catch (error) {
-      console.error('❌ Error removing recent content:', error);
+      logger.error('❌ Error removing recent content:', error);
       SecureLogger.log('Error removing recent content:', error);
     }
   }
@@ -182,7 +182,7 @@ class RecentContentService {
       
       return stats;
     } catch (error) {
-      console.error('❌ Error getting recent content stats:', error);
+      logger.error('❌ Error getting recent content stats:', error);
       return { totalItems: 0, categories: {} };
     }
   }
@@ -193,7 +193,7 @@ class RecentContentService {
   async trackContentView(section: any): Promise<void> {
     try {
       if (!section || !section.slug || !section.title) {
-        console.warn('⚠️ Invalid section data for tracking');
+        logger.warn('⚠️ Invalid section data for tracking');
         return;
       }
       
@@ -208,7 +208,7 @@ class RecentContentService {
       });
       
     } catch (error) {
-      console.error('❌ Error tracking content view:', error);
+      logger.error('❌ Error tracking content view:', error);
     }
   }
   

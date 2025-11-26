@@ -23,7 +23,7 @@ export default function SubscriptionPage() {
   });
 
   const handleSelectPlan = async (planId: string) => {
-    console.log('Selected plan:', planId);
+    logger.info('Selected plan:', planId);
 
     // Prevent spamming - check if already updating
     if (isUpdating) {
@@ -52,7 +52,7 @@ export default function SubscriptionPage() {
     // For paid plans, go directly to checkout page
     const checkoutUrl = checkoutUrls[planId];
     if (checkoutUrl) {
-      console.log(`Opening checkout for ${planId} plan:`, checkoutUrl);
+      logger.info(`Opening checkout for ${planId} plan:`, checkoutUrl);
       openLemonSqueezyCheckout(checkoutUrl);
     } else {
       Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
@@ -64,12 +64,12 @@ export default function SubscriptionPage() {
     setLoadingMessage('Wechsel zum kostenlosen Plan...');
 
     try {
-      console.log('🎯 Starting free plan selection...');
+      logger.info('🎯 Starting free plan selection...');
       const result = await SubscriptionService.updateUserSubscription(user!.id, 'free');
-      console.log('📊 Update result:', result);
+      logger.info('📊 Update result:', result);
 
       if (result.success) {
-        console.log('✅ Free plan update successful');
+        logger.info('✅ Free plan update successful');
         setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
 
         // Refresh subscription data
@@ -89,7 +89,7 @@ export default function SubscriptionPage() {
           ]
         );
       } else {
-        console.log('❌ Free plan update failed:', result.error);
+        logger.info('❌ Free plan update failed:', result.error);
         setErrorModal({
           visible: true,
           title: 'Nicht verfügbar',
@@ -97,7 +97,7 @@ export default function SubscriptionPage() {
         });
       }
     } catch (error) {
-      console.error('Error switching to free plan:', error);
+      logger.error('Error switching to free plan:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
@@ -144,7 +144,7 @@ export default function SubscriptionPage() {
         });
       }
     } catch (error) {
-      console.error('Error switching plan:', error);
+      logger.error('Error switching plan:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
@@ -156,7 +156,7 @@ export default function SubscriptionPage() {
     try {
       Linking.openURL(checkoutUrl);
     } catch (error) {
-      console.error('Error opening checkout:', error);
+      logger.error('Error opening checkout:', error);
       alert('Fehler beim Öffnen der Checkout-Seite');
     }
   };

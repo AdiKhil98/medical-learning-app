@@ -235,7 +235,7 @@ export default function LicensesScreen() {
 
       setDependencies(sortedDeps);
     } catch (error) {
-      console.error('Error loading dependencies:', error);
+      logger.error('Error loading dependencies:', error);
     } finally {
       setLoading(false);
     }

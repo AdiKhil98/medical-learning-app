@@ -36,7 +36,7 @@ export function DebugSubscription() {
         .single();
 
       if (error) {
-        console.error('Error fetching raw data:', error);
+        logger.error('Error fetching raw data:', error);
         return;
       }
 
@@ -85,7 +85,7 @@ export function DebugSubscription() {
       });
 
     } catch (err) {
-      console.error('Error in debug fetch:', err);
+      logger.error('Error in debug fetch:', err);
     }
   };
 

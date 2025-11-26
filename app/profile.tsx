@@ -61,12 +61,12 @@ export default function ProfileScreen() {
   // Listen for session changes and redirect when logged out
   useEffect(() => {
     if (!loading && !session) {
-      console.log('🔄 Session is null, redirecting to login...');
+      logger.info('🔄 Session is null, redirecting to login...');
       try {
         router.replace('/auth/login');
-        console.log('✅ Router replace called successfully');
+        logger.info('✅ Router replace called successfully');
       } catch (error) {
-        console.error('❌ Router replace failed:', error);
+        logger.error('❌ Router replace failed:', error);
         // Fallback: try router.push
         router.push('/auth/login');
       }
@@ -86,7 +86,7 @@ export default function ProfileScreen() {
             .maybeSingle();
             
           if (error) {
-            console.error('Error loading user data:', error);
+            logger.error('Error loading user data:', error);
             // Don't throw error, just use auth user data
             setUserData({
               name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
           }
         }
       } catch (error) {
-        console.error('Error loading user data', error);
+        logger.error('Error loading user data', error);
         // Use fallback data from auth
         if (user) {
           setUserData({
@@ -127,25 +127,25 @@ export default function ProfileScreen() {
   }, [user, fadeAnim]);
 
   const handleSignOut = async () => {
-    console.log('handleSignOut called');
-    console.log('Current user:', user?.email);
-    console.log('Current session:', !!session);
-    console.log('About to show Alert.alert confirmation dialog...');
+    logger.info('handleSignOut called');
+    logger.info('Current user:', user?.email);
+    logger.info('Current session:', !!session);
+    logger.info('About to show Alert.alert confirmation dialog...');
     
     try {
-      console.log('Calling Alert.alert...');
+      logger.info('Calling Alert.alert...');
       
       // For web platform, use window.confirm as a fallback
       if (Platform.OS === 'web') {
-        console.log('Using web confirm dialog...');
+        logger.info('Using web confirm dialog...');
         const confirmed = window.confirm('Möchten Sie sich wirklich abmelden?');
-        console.log('Web confirm result:', confirmed);
+        logger.info('Web confirm result:', confirmed);
         
         if (confirmed) {
-          console.log('Web confirmation confirmed, calling performSignOut...');
+          logger.info('Web confirmation confirmed, calling performSignOut...');
           await performSignOut();
         } else {
-          console.log('Web confirmation cancelled');
+          logger.info('Web confirmation cancelled');
         }
         return;
       }
@@ -159,14 +159,14 @@ export default function ProfileScreen() {
             text: 'Abbrechen', 
             style: 'cancel',
             onPress: () => {
-              console.log('Mobile logout cancelled by user');
+              logger.info('Mobile logout cancelled by user');
             }
           },
           { 
             text: 'Abmelden', 
             onPress: async () => {
-              console.log('Mobile alert confirmation pressed');
-              console.log('About to call performSignOut...');
+              logger.info('Mobile alert confirmation pressed');
+              logger.info('About to call performSignOut...');
               await performSignOut();
             },
             style: 'destructive'
@@ -174,53 +174,53 @@ export default function ProfileScreen() {
         ],
         { cancelable: false }
       );
-      console.log('Mobile Alert.alert has been called');
+      logger.info('Mobile Alert.alert has been called');
       
     } catch (error) {
-      console.error('Error with Alert.alert:', error);
+      logger.error('Error with Alert.alert:', error);
       // Fallback to direct logout if Alert fails
-      console.log('Alert failed, falling back to direct logout...');
+      logger.info('Alert failed, falling back to direct logout...');
       await performSignOut();
     }
   };
 
   const performSignOut = async () => {
-    console.log('performSignOut called');
-    console.log('About to start logout process...');
+    logger.info('performSignOut called');
+    logger.info('About to start logout process...');
     
     try {
       setSigningOut(true);
-      console.log('Starting logout process...');
-      console.log('signingOut state set to true');
+      logger.info('Starting logout process...');
+      logger.info('signingOut state set to true');
       
       // Add a small delay to ensure state is updated
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Call the signOut function from context
-      console.log('Calling signOut from context...');
-      console.log('🔍 signOut function type:', typeof signOut);
+      logger.info('Calling signOut from context...');
+      logger.info('🔍 signOut function type:', typeof signOut);
       
       // Let the AuthContext handle navigation after signOut completes
-      console.log('📍 Skipping pre-emptive navigation - will let AuthContext handle it');
+      logger.info('📍 Skipping pre-emptive navigation - will let AuthContext handle it');
       
-      console.log('🔍 signOut function:', signOut);
-      console.log('🔍 useAuth hook result:', { user: !!user, session: !!session, loading, signOut: typeof signOut });
+      logger.info('🔍 signOut function:', signOut);
+      logger.info('🔍 useAuth hook result:', { user: !!user, session: !!session, loading, signOut: typeof signOut });
       
       if (!signOut) {
         throw new Error('signOut function is not available from useAuth');
       }
       
-      console.log('✅ About to call signOut() function...');
-      console.log('⏰ Time before signOut call:', new Date().toISOString());
+      logger.info('✅ About to call signOut() function...');
+      logger.info('⏰ Time before signOut call:', new Date().toISOString());
       await signOut();
-      console.log('✅ signOut() call completed successfully');
-      console.log('⏰ Time after signOut call:', new Date().toISOString());
+      logger.info('✅ signOut() call completed successfully');
+      logger.info('⏰ Time after signOut call:', new Date().toISOString());
       
-      console.log('✅ Logout successful, navigation should have already occurred');
+      logger.info('✅ Logout successful, navigation should have already occurred');
       
     } catch (error: any) {
-      console.error('Error during logout:', error);
-      console.error('Error details:', {
+      logger.error('Error during logout:', error);
+      logger.error('Error details:', {
         message: error.message,
         stack: error.stack,
         name: error.name
@@ -234,23 +234,23 @@ export default function ProfileScreen() {
         [{ text: 'OK' }]
       );
     } finally {
-      console.log('performSignOut finally block');
+      logger.info('performSignOut finally block');
       setSigningOut(false);
     }
   };
 
   // Direct logout function for testing (bypasses Alert.alert)
   const handleDirectSignOut = async () => {
-    console.log('🧪 Direct logout called (bypassing Alert.alert)');
-    console.log('Current user:', user?.email);
-    console.log('Current session:', !!session);
+    logger.info('🧪 Direct logout called (bypassing Alert.alert)');
+    logger.info('Current user:', user?.email);
+    logger.info('Current session:', !!session);
     
     try {
-      console.log('Calling performSignOut directly...');
+      logger.info('Calling performSignOut directly...');
       await performSignOut();
-      console.log('Direct logout completed');
+      logger.info('Direct logout completed');
     } catch (error) {
-      console.error('Direct logout error:', error);
+      logger.error('Direct logout error:', error);
       Alert.alert('Error', 'Direct logout failed: ' + error.message);
     }
   };
@@ -267,11 +267,11 @@ export default function ProfileScreen() {
   const handlePushNotificationToggle = async (value: boolean) => {
     try {
       setUpdatingNotifications(true);
-      console.log('Toggle push notifications to:', value);
+      logger.info('Toggle push notifications to:', value);
       await setPushNotificationsEnabled(value);
-      console.log('Push notifications toggle completed');
+      logger.info('Push notifications toggle completed');
     } catch (error: any) {
-      console.error('Error toggling push notifications:', error);
+      logger.error('Error toggling push notifications:', error);
       Alert.alert(
         'Fehler',
         error.message || 'Benachrichtigungseinstellungen konnten nicht aktualisiert werden.'
@@ -284,11 +284,11 @@ export default function ProfileScreen() {
   const handleSoundVibrationToggle = async (value: boolean) => {
     try {
       setUpdatingNotifications(true);
-      console.log('Toggle sound/vibration to:', value);
+      logger.info('Toggle sound/vibration to:', value);
       await setSoundVibrationEnabled(value);
-      console.log('Sound/vibration toggle completed');
+      logger.info('Sound/vibration toggle completed');
     } catch (error: any) {
-      console.error('Error toggling sound/vibration:', error);
+      logger.error('Error toggling sound/vibration:', error);
       Alert.alert(
         'Fehler',
         error.message || 'Ton- und Vibrationseinstellungen konnten nicht aktualisiert werden.'

@@ -34,9 +34,9 @@ export default function SupabaseTestScreen() {
       const role = userData?.app_metadata?.role || userData?.user_metadata?.role || null;
       setUserRole(role);
       
-      console.log('User role:', role);
+      logger.info('User role:', role);
     } catch (err: any) {
-      console.error('Error checking user role:', err.message);
+      logger.error('Error checking user role:', err.message);
     }
   };
 
@@ -56,7 +56,7 @@ export default function SupabaseTestScreen() {
       Alert.alert('Success', 'User role updated to admin via Edge Function.');
     } catch (err: any) {
       setError(err.message || 'An error occurred while updating user role');
-      console.error('Update role error:', err);
+      logger.error('Update role error:', err);
     } finally {
       setLoading(false);
     }
@@ -75,11 +75,11 @@ export default function SupabaseTestScreen() {
       if (error) throw error;
       
       setConnectionStatus('success');
-      console.log('Connection successful!', data);
+      logger.info('Connection successful!', data);
     } catch (err: any) {
       setError(err.message || 'An error occurred while connecting to Supabase');
       setConnectionStatus('error');
-      console.error('Connection error:', err);
+      logger.error('Connection error:', err);
     } finally {
       setLoading(false);
     }
@@ -98,10 +98,10 @@ export default function SupabaseTestScreen() {
       if (error) throw error;
       
       setSections(data || []);
-      console.log('Sections fetched:', data?.length);
+      logger.info('Sections fetched:', data?.length);
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching sections');
-      console.error('Fetch error:', err);
+      logger.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function SupabaseTestScreen() {
       Alert.alert('Success', 'User profile has been fixed successfully!');
     } catch (err: any) {
       setError(err.message || 'An error occurred while fixing user profile');
-      console.error('Fix user profile error:', err);
+      logger.error('Fix user profile error:', err);
       Alert.alert('Error', err.message || 'An error occurred while fixing user profile');
     } finally {
       setRunningSQL(false);
@@ -159,7 +159,7 @@ export default function SupabaseTestScreen() {
       
     } catch (err: any) {
       setError(err.message || 'An error occurred during migration');
-      console.error('Migration error:', err);
+      logger.error('Migration error:', err);
       Alert.alert('Migration Failed', err.message || 'An error occurred during Edge Function migration');
     } finally {
       setRunningSQL(false);

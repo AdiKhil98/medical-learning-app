@@ -194,7 +194,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       // Start with all sections collapsed for better overview
       setExpandedSections({});
     } catch (e: any) {
-      console.error('Error fetching section:', e);
+      logger.error('Error fetching section:', e);
       setError(e.message || 'Fehler beim Laden');
     } finally {
       setLoading(false);

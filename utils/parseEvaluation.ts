@@ -7,11 +7,11 @@ import { Evaluation, EvaluationScore, CriticalError, ScoreBreakdown, NextStep, M
 export function parseEvaluation(rawText: string, id: string = '', timestamp: string = new Date().toISOString()): Evaluation {
   // Safety check: handle null/undefined rawText
   if (!rawText || typeof rawText !== 'string') {
-    console.error('parseEvaluation: Invalid rawText provided:', rawText);
+    logger.error('parseEvaluation: Invalid rawText provided:', rawText);
     return getEmptyEvaluation(id, timestamp);
   }
 
-  console.log('parseEvaluation called with:', {
+  logger.info('parseEvaluation called with:', {
     rawTextLength: rawText.length,
     rawTextPreview: rawText.substring(0, 200),
     id,
@@ -64,7 +64,7 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
     // Check for dangerous errors
     const { hasDangerousError, dangerousErrorText } = parseDangerousError(rawText);
 
-    console.log('Parsed evaluation successfully:', {
+    logger.info('Parsed evaluation successfully:', {
       score: score.total,
       phase,
       passed,
@@ -105,7 +105,7 @@ export function parseEvaluation(rawText: string, id: string = '', timestamp: str
       rawText,
     };
   } catch (error) {
-    console.error('Error parsing evaluation:', error);
+    logger.error('Error parsing evaluation:', error);
     return getEmptyEvaluation(id, timestamp);
   }
 }
@@ -555,7 +555,7 @@ function parseCriticalErrors(text: string): CriticalError[] {
           });
         }
       } catch (e) {
-        console.warn('Error parsing error item:', e, item);
+        logger.warn('Error parsing error item:', e, item);
       }
     });
   }
@@ -832,7 +832,7 @@ function parseStrengths(text: string): string[] {
           strengths.push(`**${item.title}**`);
         }
       } catch (e) {
-        console.warn('Error parsing strength item:', e, item);
+        logger.warn('Error parsing strength item:', e, item);
       }
     });
   }

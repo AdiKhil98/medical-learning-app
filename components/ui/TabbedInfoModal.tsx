@@ -76,7 +76,7 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
   }, [visible, onClose]);
 
   const handleTabPress = (tabId: string) => {
-    console.log('Tab pressed:', tabId, 'Current active:', activeTab);
+    logger.info('Tab pressed:', tabId, 'Current active:', activeTab);
     setActiveTab(tabId);
   };
 
@@ -140,7 +140,7 @@ export default function TabbedInfoModal({ visible, onClose, title, tabs }: Tabbe
                   ]}
                   onPress={(e) => {
                     e?.stopPropagation?.();
-                    console.log('TouchableOpacity onPress triggered for:', tab.id);
+                    logger.info('TouchableOpacity onPress triggered for:', tab.id);
                     handleTabPress(tab.id);
                   }}
                   activeOpacity={0.7}

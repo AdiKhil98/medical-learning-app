@@ -30,17 +30,17 @@ const SimpleMedicalContentRenderer: React.FC<SimpleMedicalContentRendererProps> 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Debug: Log what we receive
-  console.log('🔍 SimpleMedicalContentRenderer received:');
-  console.log('- title:', title);
-  console.log('- htmlContent length:', htmlContent?.length || 0);
-  console.log('- jsonContent type:', typeof jsonContent, Array.isArray(jsonContent) ? `array[${jsonContent.length}]` : jsonContent);
-  console.log('- plainTextContent length:', plainTextContent?.length || 0);
+  logger.info('🔍 SimpleMedicalContentRenderer received:');
+  logger.info('- title:', title);
+  logger.info('- htmlContent length:', htmlContent?.length || 0);
+  logger.info('- jsonContent type:', typeof jsonContent, Array.isArray(jsonContent) ? `array[${jsonContent.length}]` : jsonContent);
+  logger.info('- plainTextContent length:', plainTextContent?.length || 0);
 
   // Simple content processing - just split HTML by h2/h3 headers
   const processContent = () => {
     // If we have JSON array, use it directly
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      console.log('✅ Using JSON array directly');
+      logger.info('✅ Using JSON array directly');
       return jsonContent.map((section: any, index: number) => ({
         id: `section-${index}`,
         title: section.title || `Section ${index + 1}`,
@@ -51,11 +51,11 @@ const SimpleMedicalContentRenderer: React.FC<SimpleMedicalContentRendererProps> 
 
     // If we have HTML content, split it simply
     if (htmlContent && htmlContent.length > 0) {
-      console.log('✅ Processing HTML content');
+      logger.info('✅ Processing HTML content');
       
       // Skip if it's a full HTML document
       if (htmlContent.includes('<!DOCTYPE html>')) {
-        console.log('⚠️ Skipping full HTML document');
+        logger.info('⚠️ Skipping full HTML document');
         return [{
           id: 'content',
           title: 'Inhalt',
@@ -82,13 +82,13 @@ const SimpleMedicalContentRenderer: React.FC<SimpleMedicalContentRendererProps> 
         }
       }
       
-      console.log(`✅ Created ${sections.length} sections from HTML`);
+      logger.info(`✅ Created ${sections.length} sections from HTML`);
       return sections;
     }
 
     // Fallback to plain text
     if (plainTextContent && plainTextContent.length > 0) {
-      console.log('✅ Using plain text content');
+      logger.info('✅ Using plain text content');
       return [{
         id: 'content',
         title: 'Inhalt',
@@ -97,7 +97,7 @@ const SimpleMedicalContentRenderer: React.FC<SimpleMedicalContentRendererProps> 
       }];
     }
 
-    console.log('❌ No content found');
+    logger.info('❌ No content found');
     return [];
   };
 

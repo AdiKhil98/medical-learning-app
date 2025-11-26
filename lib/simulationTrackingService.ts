@@ -92,11 +92,11 @@ class SimulationTrackingService {
     error?: string
   }> {
     try {
-      console.log('📊 Starting simulation:', simulationType);
+      logger.info('📊 Starting simulation:', simulationType);
 
       // DEBUG: Check session state
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('🔐 Session check:', {
+      logger.info('🔐 Session check:', {
         hasSession: !!session,
         hasAccessToken: !!session?.access_token,
         tokenLength: session?.access_token?.length,
@@ -106,18 +106,18 @@ class SimulationTrackingService {
 
       // If no session, try to refresh
       if (!session) {
-        console.log('⚠️ No session found, attempting refresh...');
+        logger.info('⚠️ No session found, attempting refresh...');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !refreshData.session) {
-          console.error('❌ Session refresh failed:', refreshError);
+          logger.error('❌ Session refresh failed:', refreshError);
           // ISSUE #18 FIX: Standardize to German
           return { success: false, error: 'Sitzung abgelaufen - bitte erneut anmelden' };
         }
-        console.log('✅ Session refreshed successfully');
+        logger.info('✅ Session refreshed successfully');
       }
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('👤 User check:', {
+      logger.info('👤 User check:', {
         hasUser: !!user,
         userId: user?.id,
         email: user?.email,
@@ -130,10 +130,10 @@ class SimulationTrackingService {
       }
 
       const sessionToken = this.generateSessionToken();
-      console.log('🎫 Session token:', sessionToken);
+      logger.info('🎫 Session token:', sessionToken);
 
       // Call database function to start session
-      console.log('📤 Calling RPC start_simulation_session with:', {
+      logger.info('📤 Calling RPC start_simulation_session with:', {
         p_user_id: user.id,
         p_simulation_type: simulationType,
         p_session_token: sessionToken
@@ -147,11 +147,11 @@ class SimulationTrackingService {
         })
       );
 
-      console.log('📥 RPC response:', { data, error });
+      logger.info('📥 RPC response:', { data, error });
 
       if (error) {
-        console.error('❌ Database error:', error);
-        console.error('❌ Error details:', {
+        logger.error('❌ Database error:', error);
+        logger.error('❌ Error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
@@ -163,22 +163,22 @@ class SimulationTrackingService {
       // ISSUE #9 FIX: Validate RPC response structure
       const validation = this.validateRpcResponse(data, ['success']);
       if (!validation.valid) {
-        console.error('❌ Invalid RPC response:', validation.error);
+        logger.error('❌ Invalid RPC response:', validation.error);
         return { success: false, error: validation.error };
       }
 
       if (!data.success) {
-        console.error('❌ Failed to start session:', data);
-        console.error('❌ Function returned error:', data.error);
+        logger.error('❌ Failed to start session:', data);
+        logger.error('❌ Function returned error:', data.error);
         // ISSUE #18 FIX: Standardize to German
         return { success: false, error: data.error || 'Unbekannter Fehler' };
       }
 
-      console.log('✅ Simulation started:', data);
+      logger.info('✅ Simulation started:', data);
       return { success: true, sessionToken };
 
     } catch (error: any) {
-      console.error('❌ Exception in startSimulation:', error);
+      logger.error('❌ Exception in startSimulation:', error);
       // ISSUE #18 FIX: Standardize to German
       return { success: false, error: error.message || 'Systemfehler' };
     }
@@ -194,11 +194,11 @@ class SimulationTrackingService {
     alreadyCounted?: boolean;
   }> {
     try {
-      console.log('✓ Marking simulation as counted:', sessionToken);
+      logger.info('✓ Marking simulation as counted:', sessionToken);
 
       // ISSUE #19 FIX: Validate session token format
       if (!this.isValidSessionToken(sessionToken)) {
-        console.error('❌ Invalid session token format in markSimulationCounted');
+        logger.error('❌ Invalid session token format in markSimulationCounted');
         return { success: false, error: 'Ungültiges Sitzungstoken' };
       }
 
@@ -215,12 +215,12 @@ class SimulationTrackingService {
       });
 
       if (error) {
-        console.error('❌ Database error marking counted:', error);
+        logger.error('❌ Database error marking counted:', error);
         return { success: false, error: error.message };
       }
 
       if (!data.success) {
-        console.error('❌ Failed to mark as counted:', data);
+        logger.error('❌ Failed to mark as counted:', data);
         return {
           success: false,
           // ISSUE #18 FIX: Standardize to German
@@ -229,8 +229,8 @@ class SimulationTrackingService {
         };
       }
 
-      console.log('✅ Simulation marked as counted:', data);
-      console.log('⏱️ Elapsed time:', data.elapsed_seconds, 'seconds');
+      logger.info('✅ Simulation marked as counted:', data);
+      logger.info('⏱️ Elapsed time:', data.elapsed_seconds, 'seconds');
 
       return {
         success: true,
@@ -238,7 +238,7 @@ class SimulationTrackingService {
       };
 
     } catch (error: any) {
-      console.error('❌ Exception in markSimulationCounted:', error);
+      logger.error('❌ Exception in markSimulationCounted:', error);
       // ISSUE #18 FIX: Standardize to German
       return { success: false, error: error.message || 'Systemfehler' };
     }
@@ -256,11 +256,11 @@ class SimulationTrackingService {
     error?: string
   }> {
     try {
-      console.log('🏁 Ending simulation:', sessionToken);
+      logger.info('🏁 Ending simulation:', sessionToken);
 
       // ISSUE #19 FIX: Validate session token format
       if (!this.isValidSessionToken(sessionToken)) {
-        console.error('❌ Invalid session token format in endSimulation');
+        logger.error('❌ Invalid session token format in endSimulation');
         return { success: false, error: 'Ungültiges Sitzungstoken' };
       }
 
@@ -277,19 +277,19 @@ class SimulationTrackingService {
       });
 
       if (error) {
-        console.error('❌ Database error ending session:', error);
+        logger.error('❌ Database error ending session:', error);
         return { success: false, error: error.message };
       }
 
       if (!data.success) {
-        console.error('❌ Failed to end session:', data);
+        logger.error('❌ Failed to end session:', data);
         // ISSUE #18 FIX: Standardize to German
         return { success: false, error: data.error || 'Unbekannter Fehler' };
       }
 
-      console.log('✅ Simulation ended:', data);
-      console.log('⏱️ Duration:', data.duration_seconds, 'seconds');
-      console.log('📊 Counted:', data.counted_toward_usage ? 'YES (>= 5 min)' : 'NO (< 5 min)');
+      logger.info('✅ Simulation ended:', data);
+      logger.info('⏱️ Duration:', data.duration_seconds, 'seconds');
+      logger.info('📊 Counted:', data.counted_toward_usage ? 'YES (>= 5 min)' : 'NO (< 5 min)');
 
       return {
         success: true,
@@ -298,7 +298,7 @@ class SimulationTrackingService {
       };
 
     } catch (error: any) {
-      console.error('❌ Exception in endSimulation:', error);
+      logger.error('❌ Exception in endSimulation:', error);
       // ISSUE #18 FIX: Standardize to German
       return { success: false, error: error.message || 'Systemfehler' };
     }
@@ -311,7 +311,7 @@ class SimulationTrackingService {
     try {
       // SECURITY FIX: Validate session token format
       if (!this.isValidSessionToken(sessionToken)) {
-        console.error('❌ Invalid session token format');
+        logger.error('❌ Invalid session token format');
         return null;
       }
 
@@ -319,12 +319,12 @@ class SimulationTrackingService {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
       if (authError) {
-        console.error('❌ Auth error in getSimulationStatus:', authError.message);
+        logger.error('❌ Auth error in getSimulationStatus:', authError.message);
         return null;
       }
 
       if (!user || !user.id) {
-        console.error('❌ Not authenticated or missing user ID');
+        logger.error('❌ Not authenticated or missing user ID');
         return null;
       }
 
@@ -338,19 +338,19 @@ class SimulationTrackingService {
       );
 
       if (error) {
-        console.error('❌ Error fetching simulation status:', error);
+        logger.error('❌ Error fetching simulation status:', error);
         return null;
       }
 
       // Verify the returned data belongs to the authenticated user
       if (data && data.user_id !== user.id) {
-        console.error('❌ Security violation: returned data does not belong to user');
+        logger.error('❌ Security violation: returned data does not belong to user');
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('❌ Exception getting simulation status:', error);
+      logger.error('❌ Exception getting simulation status:', error);
       return null;
     }
   }
@@ -372,13 +372,13 @@ class SimulationTrackingService {
         .limit(limit);
 
       if (error) {
-        console.error('❌ Error fetching counted simulations:', error);
+        logger.error('❌ Error fetching counted simulations:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('❌ Exception getting counted simulations:', error);
+      logger.error('❌ Exception getting counted simulations:', error);
       return [];
     }
   }
@@ -397,8 +397,8 @@ class SimulationTrackingService {
     sessionToken: string,
     clientElapsedSeconds?: number
   ): Promise<{ success: boolean; error?: string }> {
-    console.log('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
-    console.log('📊 Client reported:', clientElapsedSeconds, 'seconds (ignored - using server time)');
+    logger.info('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
+    logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds (ignored - using server time)');
 
     // Call the new method
     const result = await this.markSimulationCounted(sessionToken);
@@ -419,8 +419,8 @@ class SimulationTrackingService {
     durationSeconds?: number,
     metadata?: Record<string, any>
   ): Promise<{ success: boolean; error?: string }> {
-    console.log('⚠️ DEPRECATED: updateSimulationStatus() called. Use endSimulation() instead.');
-    console.log('📊 Status:', status, 'Duration:', durationSeconds, 'Metadata:', metadata);
+    logger.info('⚠️ DEPRECATED: updateSimulationStatus() called. Use endSimulation() instead.');
+    logger.info('📊 Status:', status, 'Duration:', durationSeconds, 'Metadata:', metadata);
 
     // Just end the simulation - the database will determine if it should be counted
     const result = await this.endSimulation(sessionToken);
@@ -454,11 +454,11 @@ class SimulationTrackingService {
     totalLimit?: number;
   }> {
     try {
-      console.log('[Backend Validation] Checking simulation access for type:', simulationType);
+      logger.info('[Backend Validation] Checking simulation access for type:', simulationType);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('[Backend Validation] Not authenticated');
+        logger.info('[Backend Validation] Not authenticated');
         return {
           allowed: false,
           reason: 'not_authenticated',
@@ -474,7 +474,7 @@ class SimulationTrackingService {
         .single();
 
       if (error) {
-        console.error('[Backend Validation] Error checking limit:', error);
+        logger.error('[Backend Validation] Error checking limit:', error);
         return {
           allowed: false,
           reason: 'database_error',
@@ -484,7 +484,7 @@ class SimulationTrackingService {
         };
       }
 
-      console.log('[Backend Validation] Limit check result:', {
+      logger.info('[Backend Validation] Limit check result:', {
         canStart: data.can_start,
         remaining: data.remaining,
         totalLimit: data.total_limit,
@@ -494,7 +494,7 @@ class SimulationTrackingService {
 
       // CRITICAL: Only block if remaining === 0
       if (!data.can_start || data.remaining === 0) {
-        console.error('[Backend Validation] ❌ BLOCKED - Limit reached:', data.reason);
+        logger.error('[Backend Validation] ❌ BLOCKED - Limit reached:', data.reason);
         return {
           allowed: false,
           reason: data.remaining === 0 ? 'limit_reached' : 'blocked',
@@ -508,7 +508,7 @@ class SimulationTrackingService {
       // Check for existing active sessions (concurrency check)
       const hasActiveSession = await this.hasActiveSession(user.id);
       if (hasActiveSession) {
-        console.error('[Backend Validation] ❌ BLOCKED - User has active session');
+        logger.error('[Backend Validation] ❌ BLOCKED - User has active session');
         return {
           allowed: false,
           reason: 'concurrent_session',
@@ -519,7 +519,7 @@ class SimulationTrackingService {
       }
 
       // All checks passed
-      console.log('[Backend Validation] ✅ ALLOWED - Remaining:', data.remaining);
+      logger.info('[Backend Validation] ✅ ALLOWED - Remaining:', data.remaining);
       return {
         allowed: true,
         reason: 'allowed',
@@ -530,7 +530,7 @@ class SimulationTrackingService {
       };
 
     } catch (error: any) {
-      console.error('[Backend Validation] Exception:', error);
+      logger.error('[Backend Validation] Exception:', error);
       return {
         allowed: false,
         reason: 'system_error',
@@ -554,15 +554,15 @@ class SimulationTrackingService {
         .limit(1);
 
       if (error) {
-        console.error('[hasActiveSession] Error:', error);
+        logger.error('[hasActiveSession] Error:', error);
         return false;
       }
 
       const hasActive = (data && data.length > 0);
-      console.log('[hasActiveSession]', hasActive ? 'Found active session' : 'No active session');
+      logger.info('[hasActiveSession]', hasActive ? 'Found active session' : 'No active session');
       return hasActive;
     } catch (error) {
-      console.error('[hasActiveSession] Exception:', error);
+      logger.error('[hasActiveSession] Exception:', error);
       return false;
     }
   }
@@ -630,18 +630,18 @@ class SimulationTrackingService {
           .eq('id', userId);
 
         if (updateError) {
-          console.error('[Edge Case Fix] Error updating user:', updateError);
+          logger.error('[Edge Case Fix] Error updating user:', updateError);
           return { fixed: false, issues };
         }
 
-        console.log('[Edge Case Fix] Applied fixes:', updates);
+        logger.info('[Edge Case Fix] Applied fixes:', updates);
         return { fixed: true, issues };
       }
 
       return { fixed: false, issues: ['No issues found'] };
 
     } catch (error) {
-      console.error('[Edge Case Fix] Exception:', error);
+      logger.error('[Edge Case Fix] Exception:', error);
       return { fixed: false, issues: ['Exception occurred'] };
     }
   }

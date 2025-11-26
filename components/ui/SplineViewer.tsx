@@ -18,7 +18,7 @@ export default function SplineViewer({ onPress, isActive, size = 160 }: SplineVi
       script.src = 'https://unpkg.com/@splinetool/viewer@1.10.55/build/spline-viewer.js';
       
       script.onload = () => {
-        console.log('✅ Spline viewer loaded successfully');
+        logger.info('✅ Spline viewer loaded successfully');
         
         // Create the spline-viewer element
         if (containerRef.current) {
@@ -64,7 +64,7 @@ export default function SplineViewer({ onPress, isActive, size = 160 }: SplineVi
           splineViewer.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 Spline viewer clicked');
+            logger.info('🎯 Spline viewer clicked');
             onPress();
           });
           
@@ -82,7 +82,7 @@ export default function SplineViewer({ onPress, isActive, size = 160 }: SplineVi
       };
       
       script.onerror = () => {
-        console.error('❌ Failed to load Spline viewer script');
+        logger.error('❌ Failed to load Spline viewer script');
       };
       
       // Only add script if not already present

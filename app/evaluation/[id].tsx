@@ -29,7 +29,7 @@ export default function EvaluationPage() {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching evaluation with ID:', id);
+      logger.info('Fetching evaluation with ID:', id);
 
       // Fetch from Supabase evaluation_scores table (existing webhook system)
       const { data, error: fetchError } = await supabase
@@ -39,7 +39,7 @@ export default function EvaluationPage() {
         .single();
 
       if (fetchError) {
-        console.error('Supabase fetch error:', fetchError);
+        logger.error('Supabase fetch error:', fetchError);
         throw new Error(fetchError.message);
       }
 
@@ -47,7 +47,7 @@ export default function EvaluationPage() {
         throw new Error('Evaluation not found');
       }
 
-      console.log('Raw evaluation data from Supabase:', data);
+      logger.info('Raw evaluation data from Supabase:', data);
 
       // Parse the evaluation field (contains AI-generated evaluation text)
       const parsedEvaluation = parseEvaluation(
@@ -71,12 +71,12 @@ export default function EvaluationPage() {
       // Store conversation type to determine which screen to show
       setConversationType(data.conversation_type || 'patient');
 
-      console.log('Parsed evaluation:', parsedEvaluation);
-      console.log('Conversation type:', data.conversation_type);
+      logger.info('Parsed evaluation:', parsedEvaluation);
+      logger.info('Conversation type:', data.conversation_type);
 
       setEvaluation(parsedEvaluation);
     } catch (err: any) {
-      console.error('Error fetching evaluation:', err);
+      logger.error('Error fetching evaluation:', err);
       setError(err.message || 'Failed to load evaluation');
     } finally {
       setLoading(false);

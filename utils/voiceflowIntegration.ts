@@ -52,7 +52,7 @@ export class VoiceflowController {
     this.userId = persistentIds.user_id;
     this.sessionId = persistentIds.session_id;
 
-    console.log(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
+    logger.info(`🎮 VoiceflowController created for ${config.simulationType.toUpperCase()}:`, {
       user_id: this.userId,
       session_id: this.sessionId,
       user_email: this.userEmail || 'NOT_PROVIDED',
@@ -102,7 +102,7 @@ export class VoiceflowController {
 
       return hashHex;
     } catch (error) {
-      console.error('❌ Error hashing email:', error);
+      logger.error('❌ Error hashing email:', error);
       // Fallback: return empty string on error (Voiceflow will receive userID without email)
       return '';
     }
@@ -116,7 +116,7 @@ export class VoiceflowController {
     if (this.userEmail) {
       // Validate existing email
       if (!this.isValidEmail(this.userEmail)) {
-        console.warn(`⚠️ Invalid email format: ${this.userEmail}`);
+        logger.warn(`⚠️ Invalid email format: ${this.userEmail}`);
         this.userEmail = undefined; // Clear invalid email
       } else {
         // Email already provided and valid, no fallback needed
@@ -125,7 +125,7 @@ export class VoiceflowController {
     }
 
     try {
-      console.log('📧 Attempting to fetch email from Supabase session...');
+      logger.info('📧 Attempting to fetch email from Supabase session...');
 
       // Dynamically import supabase to avoid circular dependencies
       const { supabase } = await import('@/lib/supabase');
@@ -133,7 +133,7 @@ export class VoiceflowController {
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('❌ Error fetching Supabase session:', error);
+        logger.error('❌ Error fetching Supabase session:', error);
         return;
       }
 
@@ -141,16 +141,16 @@ export class VoiceflowController {
         // Validate email before using it
         if (this.isValidEmail(session.user.email)) {
           this.userEmail = session.user.email;
-          console.log(`✅ Email fetched from Supabase session: ${this.userEmail}`);
+          logger.info(`✅ Email fetched from Supabase session: ${this.userEmail}`);
         } else {
-          console.warn(`⚠️ Invalid email format from session: ${session.user.email}`);
+          logger.warn(`⚠️ Invalid email format from session: ${session.user.email}`);
         }
       } else {
-        console.warn('⚠️ No email found in Supabase session');
-        console.warn('⚠️ Voiceflow will initialize without user_email');
+        logger.warn('⚠️ No email found in Supabase session');
+        logger.warn('⚠️ Voiceflow will initialize without user_email');
       }
     } catch (error) {
-      console.error('❌ Exception fetching email fallback:', error);
+      logger.error('❌ Exception fetching email fallback:', error);
     }
   }
 
@@ -170,72 +170,72 @@ export class VoiceflowController {
   async loadWidget(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
-        console.log('❌ Voiceflow: Window is undefined (not in browser)');
+        logger.info('❌ Voiceflow: Window is undefined (not in browser)');
         resolve(false);
         return;
       }
 
       // Check if already loaded
       if (window.voiceflow && this.isLoaded) {
-        console.log('✅ Voiceflow: Already loaded');
+        logger.info('✅ Voiceflow: Already loaded');
         resolve(true);
         return;
       }
 
-      console.log(`📦 Voiceflow: Loading widget for ${this.config.simulationType.toUpperCase()}...`);
-      console.log(`📧 Email for widget: ${this.userEmail || 'NOT_AVAILABLE'}`);
+      logger.info(`📦 Voiceflow: Loading widget for ${this.config.simulationType.toUpperCase()}...`);
+      logger.info(`📧 Email for widget: ${this.userEmail || 'NOT_AVAILABLE'}`);
       logCurrentIds(this.config.simulationType);
 
       // Load script if not present
       if (!document.querySelector('script[src*="voiceflow.com"]')) {
-        console.log('📡 Loading Voiceflow script from CDN...');
+        logger.info('📡 Loading Voiceflow script from CDN...');
         const script = document.createElement('script');
         script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
         script.type = 'text/javascript';
 
         // Add 30-second timeout to prevent hanging
         const timeout = setTimeout(() => {
-          console.error('❌ Voiceflow script load timeout (30s)');
+          logger.error('❌ Voiceflow script load timeout (30s)');
           reject(new Error('Voiceflow script load timeout'));
         }, 30000);
 
         script.onload = () => {
           clearTimeout(timeout); // Clear timeout on success
-          console.log('✅ Voiceflow script loaded from CDN');
+          logger.info('✅ Voiceflow script loaded from CDN');
           this.initializeWidget()
             .then(() => {
-              console.log('✅ Widget initialized successfully');
+              logger.info('✅ Widget initialized successfully');
               resolve(true);
             })
             .catch((error) => {
-              console.error('❌ Widget initialization failed:', error);
+              logger.error('❌ Widget initialization failed:', error);
               reject(error);
             });
         };
 
         script.onerror = (error) => {
           clearTimeout(timeout); // Clear timeout on error
-          console.error('❌ Failed to load Voiceflow script:', error);
+          logger.error('❌ Failed to load Voiceflow script:', error);
           reject(new Error('Failed to load Voiceflow script'));
         };
 
         // SAFETY: Check document.head exists before appending
         if (!document.head) {
           clearTimeout(timeout);
-          console.error('❌ document.head is not available');
+          logger.error('❌ document.head is not available');
           reject(new Error('Document head not available'));
           return;
         }
         document.head.appendChild(script);
       } else {
-        console.log('📦 Voiceflow script already present, initializing widget...');
+        logger.info('📦 Voiceflow script already present, initializing widget...');
         this.initializeWidget()
           .then(() => {
-            console.log('✅ Widget initialized successfully');
+            logger.info('✅ Widget initialized successfully');
             resolve(true);
           })
           .catch((error) => {
-            console.error('❌ Widget initialization failed:', error);
+            logger.error('❌ Widget initialization failed:', error);
             reject(error);
           });
       }
@@ -252,7 +252,7 @@ export class VoiceflowController {
 
     try {
       // Log IDs being sent to Voiceflow
-      console.log('🔐 Initializing Voiceflow with persistent IDs:', {
+      logger.info('🔐 Initializing Voiceflow with persistent IDs:', {
         user_id: this.userId,
         session_id: this.sessionId,
         user_email: this.userEmail || 'NOT_PROVIDED',
@@ -262,16 +262,16 @@ export class VoiceflowController {
 
       // CRITICAL WARNING: If email is missing, log it prominently
       if (!this.userEmail) {
-        console.error('❌❌❌ CRITICAL: user_email is undefined! Email will NOT be sent to Voiceflow! ❌❌❌');
+        logger.error('❌❌❌ CRITICAL: user_email is undefined! Email will NOT be sent to Voiceflow! ❌❌❌');
       }
 
       // Prepare email for userID (hash if privacy mode enabled)
       let emailForUserID = this.userEmail;
       if (this.userEmail && this.config.hashEmail) {
         emailForUserID = await this.hashEmail(this.userEmail);
-        console.log('🔒 PRIVACY MODE: Email hashed for Voiceflow (SHA-256)');
-        console.log('   Original:', this.userEmail);
-        console.log('   Hashed:', emailForUserID.substring(0, 16) + '...');
+        logger.info('🔒 PRIVACY MODE: Email hashed for Voiceflow (SHA-256)');
+        logger.info('   Original:', this.userEmail);
+        logger.info('   Hashed:', emailForUserID.substring(0, 16) + '...');
       }
 
       // Voiceflow configuration with persistent IDs
@@ -306,17 +306,17 @@ export class VoiceflowController {
       };
 
       // Log the ACTUAL configuration being sent to Voiceflow (not flattened)
-      console.log(`📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`, JSON.parse(JSON.stringify(widgetConfig)));
-      console.log(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
-      console.log(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
+      logger.info(`📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`, JSON.parse(JSON.stringify(widgetConfig)));
+      logger.info(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
+      logger.info(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
       // CRITICAL: Log encoded userID (contains email or hash)
-      console.log(`🎯 UserID (encoded):`, widgetConfig.userID);
+      logger.info(`🎯 UserID (encoded):`, widgetConfig.userID);
       if (this.userEmail) {
         if (this.config.hashEmail) {
-          console.log(`🔒 Email hashed in userID (privacy mode enabled)`);
+          logger.info(`🔒 Email hashed in userID (privacy mode enabled)`);
         } else {
-          console.log(`📧 Email encoded in userID: ${this.userEmail}`);
+          logger.info(`📧 Email encoded in userID: ${this.userEmail}`);
         }
       }
 
@@ -331,10 +331,10 @@ export class VoiceflowController {
 
       // Email is encoded in userID field (see above)
       const privacyStatus = this.config.hashEmail ? '(email hashed in userID)' : '(email in userID)';
-      console.log(`✅ Widget loaded and ready with persistent IDs ${privacyStatus}`);
+      logger.info(`✅ Widget loaded and ready with persistent IDs ${privacyStatus}`);
 
     } catch (error) {
-      console.error('❌ Failed to initialize Voiceflow widget:', error);
+      logger.error('❌ Failed to initialize Voiceflow widget:', error);
       throw error;
     }
   }
@@ -346,17 +346,17 @@ export class VoiceflowController {
     try {
       if (this.widget && this.widget.listen) {
         this.widget.listen('open', () => {
-          console.log('🎯 Voiceflow: Widget opened');
+          logger.info('🎯 Voiceflow: Widget opened');
           window.dispatchEvent(new CustomEvent('voiceflowWidgetOpened'));
         });
 
         this.widget.listen('interact', (interaction: any) => {
-          console.log('🎯 Voiceflow: User interaction detected:', interaction);
+          logger.info('🎯 Voiceflow: User interaction detected:', interaction);
           window.dispatchEvent(new CustomEvent('voiceflowUserInteraction', { detail: interaction }));
         });
 
         this.widget.listen('message', (message: any) => {
-          console.log('🎯 Voiceflow: Message received:', message);
+          logger.info('🎯 Voiceflow: Message received:', message);
           window.dispatchEvent(new CustomEvent('voiceflowMessage', { detail: message }));
         });
       }
@@ -369,7 +369,7 @@ export class VoiceflowController {
               if (node instanceof HTMLElement) {
                 const hasVoiceflowActivity = node.querySelector('.vfrc-message, .vfrc-input, .vfrc-button');
                 if (hasVoiceflowActivity) {
-                  console.log('🎯 Voiceflow: DOM activity detected');
+                  logger.info('🎯 Voiceflow: DOM activity detected');
                   window.dispatchEvent(new CustomEvent('voiceflowDOMActivity'));
                 }
               }
@@ -385,7 +385,7 @@ export class VoiceflowController {
         (window as any).voiceflowObserver = observer;
       }
     } catch (error) {
-      console.warn('⚠️ Could not set up Voiceflow event listeners:', error);
+      logger.warn('⚠️ Could not set up Voiceflow event listeners:', error);
     }
   }
 
@@ -395,7 +395,7 @@ export class VoiceflowController {
    */
   private async sendEmailViaAPI(): Promise<void> {
     try {
-      console.log('📧 Sending email to Voiceflow via interact API...');
+      logger.info('📧 Sending email to Voiceflow via interact API...');
 
       const interactPayload = {
         action: {
@@ -410,7 +410,7 @@ export class VoiceflowController {
       // Use the widget's interact method if available
       if (this.widget && typeof this.widget.interact === 'function') {
         await this.widget.interact(interactPayload);
-        console.log(`✅ Email sent via widget.interact: ${this.userEmail}`);
+        logger.info(`✅ Email sent via widget.interact: ${this.userEmail}`);
       } else {
         // Fallback: Use the Dialog API directly
         const response = await fetch(`${this.config.url}/interact/${this.config.projectID}/${this.config.versionID || 'production'}`, {
@@ -431,13 +431,13 @@ export class VoiceflowController {
         });
 
         if (response.ok) {
-          console.log(`✅ Email sent via Dialog API: ${this.userEmail}`);
+          logger.info(`✅ Email sent via Dialog API: ${this.userEmail}`);
         } else {
-          console.error(`❌ Failed to send email via API: ${response.statusText}`);
+          logger.error(`❌ Failed to send email via API: ${response.statusText}`);
         }
       }
     } catch (error) {
-      console.error('❌ Error sending email via API:', error);
+      logger.error('❌ Error sending email via API:', error);
       // Don't throw - widget should still work even if email fails
     }
   }
@@ -465,9 +465,9 @@ export class VoiceflowController {
   open(): void {
     if (this.isReady()) {
       this.widget.show();
-      console.log('📂 Voiceflow widget opened');
+      logger.info('📂 Voiceflow widget opened');
     } else {
-      console.warn('⚠️ Cannot open widget - not ready');
+      logger.warn('⚠️ Cannot open widget - not ready');
     }
   }
 
@@ -477,9 +477,9 @@ export class VoiceflowController {
   close(): void {
     if (this.isReady()) {
       this.widget.hide();
-      console.log('📁 Voiceflow widget closed');
+      logger.info('📁 Voiceflow widget closed');
     } else {
-      console.warn('⚠️ Cannot close widget - not ready');
+      logger.warn('⚠️ Cannot close widget - not ready');
     }
   }
 
@@ -488,7 +488,7 @@ export class VoiceflowController {
    */
   private stopAllMediaStreams(): void {
     try {
-      console.log('🔇 Stopping all active media streams...');
+      logger.info('🔇 Stopping all active media streams...');
 
       // Stop audio/video elements
       const audioElements = document.querySelectorAll('audio, video');
@@ -497,7 +497,7 @@ export class VoiceflowController {
         if (!mediaElement.paused) {
           mediaElement.pause();
           mediaElement.srcObject = null;
-          console.log('⏸️ Paused media element:', mediaElement.tagName);
+          logger.info('⏸️ Paused media element:', mediaElement.tagName);
         }
       });
 
@@ -510,15 +510,15 @@ export class VoiceflowController {
           const tracks = htmlElement.srcObject.getTracks();
           tracks.forEach((track: MediaStreamTrack) => {
             track.stop();
-            console.log('🛑 Stopped media track:', track.kind, track.label);
+            logger.info('🛑 Stopped media track:', track.kind, track.label);
           });
           htmlElement.srcObject = null;
         }
       });
 
-      console.log('✅ Media stream cleanup completed');
+      logger.info('✅ Media stream cleanup completed');
     } catch (error) {
-      console.warn('⚠️ Error stopping media streams:', error);
+      logger.warn('⚠️ Error stopping media streams:', error);
     }
   }
 
@@ -526,7 +526,7 @@ export class VoiceflowController {
    * Clean up widget properly
    */
   destroy(): void {
-    console.log(`🧹 VoiceflowController: Starting cleanup for ${this.config.simulationType.toUpperCase()}...`);
+    logger.info(`🧹 VoiceflowController: Starting cleanup for ${this.config.simulationType.toUpperCase()}...`);
 
     if (typeof window !== 'undefined') {
       // Stop all media streams
@@ -535,12 +535,12 @@ export class VoiceflowController {
       // Call Voiceflow API cleanup methods
       if (window.voiceflow?.chat) {
         try {
-          console.log('🔧 Calling Voiceflow cleanup methods...');
+          logger.info('🔧 Calling Voiceflow cleanup methods...');
           window.voiceflow.chat.hide && window.voiceflow.chat.hide();
           window.voiceflow.chat.close && window.voiceflow.chat.close();
           window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
         } catch (error) {
-          console.warn('⚠️ Voiceflow API cleanup error:', error);
+          logger.warn('⚠️ Voiceflow API cleanup error:', error);
         }
       }
 
@@ -555,9 +555,9 @@ export class VoiceflowController {
         try {
           (window as any).voiceflowObserver.disconnect();
           delete (window as any).voiceflowObserver;
-          console.log('✅ Cleaned up Voiceflow observer');
+          logger.info('✅ Cleaned up Voiceflow observer');
         } catch (error) {
-          console.warn('⚠️ Could not clean up observer:', error);
+          logger.warn('⚠️ Could not clean up observer:', error);
         }
       }
 
@@ -565,16 +565,16 @@ export class VoiceflowController {
       if (window.voiceflow) {
         try {
           delete (window as any).voiceflow;
-          console.log('✅ Cleared global voiceflow object');
+          logger.info('✅ Cleared global voiceflow object');
         } catch (error) {
-          console.warn('⚠️ Could not clear global voiceflow object:', error);
+          logger.warn('⚠️ Could not clear global voiceflow object:', error);
         }
       }
     }
 
     this.isLoaded = false;
     this.widget = null;
-    console.log('✅ VoiceflowController cleanup completed');
+    logger.info('✅ VoiceflowController cleanup completed');
   }
 
   /**
@@ -617,13 +617,13 @@ export class VoiceflowController {
             element.remove();
             removedCount++;
           } catch (error) {
-            console.warn('⚠️ Failed to remove element:', error);
+            logger.warn('⚠️ Failed to remove element:', error);
           }
         }
       });
     });
 
-    console.log(`🗑️ Removed ${removedCount} Voiceflow DOM elements`);
+    logger.info(`🗑️ Removed ${removedCount} Voiceflow DOM elements`);
   }
 
   /**
@@ -637,7 +637,7 @@ export class VoiceflowController {
           script.remove();
         }
       } catch (error) {
-        console.warn('⚠️ Failed to remove script:', error);
+        logger.warn('⚠️ Failed to remove script:', error);
       }
     });
 
@@ -646,7 +646,7 @@ export class VoiceflowController {
       try {
         styleElement.remove();
       } catch (error) {
-        console.warn('⚠️ Failed to remove style element:', error);
+        logger.warn('⚠️ Failed to remove style element:', error);
       }
     }
   }
@@ -693,7 +693,7 @@ export function resetFSPSimulation(): void {
  * Global cleanup utility function
  */
 export function globalVoiceflowCleanup(): void {
-  console.log('🌍 Global Voiceflow cleanup started...');
+  logger.info('🌍 Global Voiceflow cleanup started...');
 
   if (typeof window !== 'undefined') {
     if (window.voiceflow?.chat) {
@@ -702,7 +702,7 @@ export function globalVoiceflowCleanup(): void {
         window.voiceflow.chat.close && window.voiceflow.chat.close();
         window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
       } catch (error) {
-        console.warn('⚠️ Global Voiceflow API cleanup error:', error);
+        logger.warn('⚠️ Global Voiceflow API cleanup error:', error);
       }
     }
 
@@ -720,7 +720,7 @@ export function globalVoiceflowCleanup(): void {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element: Element) => element.remove());
       } catch (error) {
-        console.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
+        logger.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
       }
     });
 
@@ -734,7 +734,7 @@ export function globalVoiceflowCleanup(): void {
     }
   }
 
-  console.log('✅ Global Voiceflow cleanup completed');
+  logger.info('✅ Global Voiceflow cleanup completed');
 }
 
 // Type declaration for window.voiceflow

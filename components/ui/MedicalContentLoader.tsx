@@ -36,13 +36,13 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
       try {
         // If currentSection is already provided, use it directly (avoids duplicate fetch)
         if (currentSection) {
-          console.log('✅ Using cached section data from parent');
+          logger.info('✅ Using cached section data from parent');
           setData(currentSection);
           setLoading(false);
           return;
         }
 
-        console.log('🔄 Fetching medical content for slug:', slug);
+        logger.info('🔄 Fetching medical content for slug:', slug);
 
         const { data: result, error } = await supabase
           .from('sections')
@@ -51,22 +51,22 @@ const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBac
           .single();
 
         if (error) {
-          console.error('❌ Supabase query error:', error);
+          logger.error('❌ Supabase query error:', error);
           setError(`Database error: ${error.message}`);
           return;
         }
 
         if (!result) {
-          console.error('❌ No data found for slug:', slug);
+          logger.error('❌ No data found for slug:', slug);
           setError(`No content found for: ${slug}`);
           return;
         }
 
-        console.log('✅ Data fetched successfully');
+        logger.info('✅ Data fetched successfully');
         setData(result);
 
       } catch (err) {
-        console.error('❌ Unexpected error:', err);
+        logger.error('❌ Unexpected error:', err);
         setError(`Unexpected error: ${err}`);
       } finally {
         setLoading(false);

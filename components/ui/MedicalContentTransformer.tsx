@@ -388,7 +388,7 @@ const MedicalContentTransformer: React.FC = () => {
               );
               
             } catch (error) {
-              console.error('Transformation error:', error);
+              logger.error('Transformation error:', error);
               Alert.alert('Fehler', 'Ein Fehler ist bei der Transformation aufgetreten.');
             } finally {
               setIsTransforming(false);

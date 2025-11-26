@@ -40,7 +40,7 @@ export default function AdminDashboard() {
         setFeedbackCount(count || 0);
       }
     } catch (error) {
-      console.error('Error loading feedback count:', error);
+      logger.error('Error loading feedback count:', error);
     }
   };
 

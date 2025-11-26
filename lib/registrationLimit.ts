@@ -12,21 +12,21 @@ export interface RegistrationStatus {
  */
 export async function checkRegistrationStatus(): Promise<RegistrationStatus | null> {
   try {
-    console.log('🔍 Checking registration status...');
+    logger.info('🔍 Checking registration status...');
 
     const { data, error } = await supabase
       .rpc('can_register_new_user')
       .single();
 
     if (error) {
-      console.error('❌ Error checking registration status:', error);
+      logger.error('❌ Error checking registration status:', error);
       return null;
     }
 
-    console.log('✅ Registration status:', data);
+    logger.info('✅ Registration status:', data);
     return data as RegistrationStatus;
   } catch (error) {
-    console.error('❌ Exception checking registration:', error);
+    logger.error('❌ Exception checking registration:', error);
     return null;
   }
 }
@@ -55,13 +55,13 @@ export async function joinWaitlist(data: {
       if (error.code === '23505') {
         return { success: false, error: 'This email is already on the waitlist.' };
       }
-      console.error('Error joining waitlist:', error);
+      logger.error('Error joining waitlist:', error);
       return { success: false, error: 'Failed to join waitlist. Please try again.' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Exception joining waitlist:', error);
+    logger.error('Exception joining waitlist:', error);
     return { success: false, error: 'An unexpected error occurred.' };
   }
 }
@@ -75,13 +75,13 @@ export async function getActiveUserCount(): Promise<number | null> {
       .rpc('get_active_user_count');
 
     if (error) {
-      console.error('Error getting user count:', error);
+      logger.error('Error getting user count:', error);
       return null;
     }
 
     return data as number;
   } catch (error) {
-    console.error('Exception getting user count:', error);
+    logger.error('Exception getting user count:', error);
     return null;
   }
 }

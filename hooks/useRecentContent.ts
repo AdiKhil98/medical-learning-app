@@ -25,7 +25,7 @@ export function useRecentContent(): UseRecentContentResult {
       setRecentContent(items);
       
     } catch (err) {
-      console.error('Error loading recent content:', err);
+      logger.error('Error loading recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to load recent content');
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ export function useRecentContent(): UseRecentContentResult {
       // Refresh the list after adding
       await loadRecentContent();
     } catch (err) {
-      console.error('Error adding recent content:', err);
+      logger.error('Error adding recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to add recent content');
     }
   }, [loadRecentContent]);
@@ -52,7 +52,7 @@ export function useRecentContent(): UseRecentContentResult {
       await recentContentService.clearRecentContent();
       setRecentContent([]);
     } catch (err) {
-      console.error('Error clearing recent content:', err);
+      logger.error('Error clearing recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear recent content');
     }
   }, []);
@@ -63,7 +63,7 @@ export function useRecentContent(): UseRecentContentResult {
       // Refresh the list after removing
       await loadRecentContent();
     } catch (err) {
-      console.error('Error removing recent content:', err);
+      logger.error('Error removing recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to remove recent content');
     }
   }, [loadRecentContent]);
@@ -94,7 +94,7 @@ export function useRecentContentForHomepage() {
       const items = await recentContentService.getRecentContentForHomepage();
       setRecentContent(items);
     } catch (error) {
-      console.error('Error loading recent content for homepage:', error);
+      logger.error('Error loading recent content for homepage:', error);
     } finally {
       setLoading(false);
     }

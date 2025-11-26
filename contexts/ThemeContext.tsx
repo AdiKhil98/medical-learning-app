@@ -92,7 +92,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setFontSizeState(savedFontSize);
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      logger.error('Error loading settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +104,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
     } catch (error) {
-      console.error('Error saving theme:', error);
+      logger.error('Error saving theme:', error);
     }
   }, [theme]);
 
@@ -113,7 +113,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       await AsyncStorage.setItem(FONT_SIZE_STORAGE_KEY, size);
     } catch (error) {
-      console.error('Error saving font size:', error);
+      logger.error('Error saving font size:', error);
     }
   }, []);
 

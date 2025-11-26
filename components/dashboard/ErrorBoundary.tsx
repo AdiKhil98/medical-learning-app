@@ -25,7 +25,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Section Error Boundary caught an error:', error, errorInfo);
+    logger.error('Section Error Boundary caught an error:', error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 

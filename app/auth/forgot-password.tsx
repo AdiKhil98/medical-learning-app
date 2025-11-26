@@ -53,48 +53,48 @@ export default function ForgotPassword() {
   };
 
   const handleResetPassword = async () => {
-    console.log('🔵 handleResetPassword called with email:', email);
+    logger.info('🔵 handleResetPassword called with email:', email);
     setSubmitError(''); // Clear previous errors
 
     if (!email) {
-      console.log('❌ Email is empty');
+      logger.info('❌ Email is empty');
       setSubmitError('Bitte geben Sie Ihre E-Mail-Adresse ein');
       return;
     }
 
     // Check for email validation errors
     if (!validateEmailFormat(email)) {
-      console.log('❌ Email validation failed');
+      logger.info('❌ Email validation failed');
       setEmailTouched(true);
       setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
       return;
     }
 
-    console.log('✅ Email validation passed');
+    logger.info('✅ Email validation passed');
     setLoading(true);
 
     try {
-      console.log('🔵 Calling Supabase resetPasswordForEmail...');
+      logger.info('🔵 Calling Supabase resetPasswordForEmail...');
       const redirectUrl = Platform.OS === 'web'
         ? `${window.location.origin}/auth/reset-password`
         : 'medicallearningapp://auth/reset-password';
-      console.log('🔵 Redirect URL:', redirectUrl);
+      logger.info('🔵 Redirect URL:', redirectUrl);
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl
       });
 
-      console.log('🔵 Supabase response received');
+      logger.info('🔵 Supabase response received');
 
       if (error) {
-        console.log('❌ Supabase error:', error);
+        logger.info('❌ Supabase error:', error);
         throw error;
       }
 
-      console.log('✅ Password reset email sent successfully');
+      logger.info('✅ Password reset email sent successfully');
       setEmailSent(true);
     } catch (error: any) {
-      console.log('❌ Caught error:', error);
+      logger.info('❌ Caught error:', error);
       const errorMsg = error?.message?.toLowerCase() || '';
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
 
@@ -104,10 +104,10 @@ export default function ForgotPassword() {
         errorMessage = 'Aus Sicherheitsgründen können wir nicht bestätigen, ob diese E-Mail-Adresse in unserem System existiert. Falls sie existiert, haben Sie eine E-Mail erhalten.';
       }
 
-      console.log('🔵 Setting error message:', errorMessage);
+      logger.info('🔵 Setting error message:', errorMessage);
       setSubmitError(errorMessage);
     } finally {
-      console.log('🔵 Finally block - setting loading to false');
+      logger.info('🔵 Finally block - setting loading to false');
       setLoading(false);
     }
   };

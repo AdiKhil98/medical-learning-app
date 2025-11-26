@@ -41,7 +41,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
 
   const checkBookmarkStatus = async () => {
     try {
-      console.log('🔍 BookmarkButton checking status for:', sectionSlug);
+      logger.info('🔍 BookmarkButton checking status for:', sectionSlug);
       setIsChecking(true);
       
       // Add timeout to prevent infinite loading
@@ -52,10 +52,10 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
       const statusPromise = bookmarksService.isBookmarked(sectionSlug);
       
       const bookmarked = await Promise.race([statusPromise, timeoutPromise]);
-      console.log('✅ BookmarkButton status result:', bookmarked);
+      logger.info('✅ BookmarkButton status result:', bookmarked);
       setIsBookmarked(bookmarked);
     } catch (error) {
-      console.error('❌ Error checking bookmark status:', error);
+      logger.error('❌ Error checking bookmark status:', error);
       // Default to false if check fails
       setIsBookmarked(false);
     } finally {
@@ -65,8 +65,8 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
 
   const handleToggleBookmark = async () => {
     try {
-      console.log('🎯 BookmarkButton toggle started for:', sectionTitle);
-      console.log('🎯 Current UI state - isBookmarked:', isBookmarked);
+      logger.info('🎯 BookmarkButton toggle started for:', sectionTitle);
+      logger.info('🎯 Current UI state - isBookmarked:', isBookmarked);
       setIsLoading(true);
       
       const newBookmarkStatus = await bookmarksService.toggleBookmark(
@@ -75,7 +75,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
         sectionCategory
       );
       
-      console.log('🎯 Toggle completed, new status:', newBookmarkStatus);
+      logger.info('🎯 Toggle completed, new status:', newBookmarkStatus);
       setIsBookmarked(newBookmarkStatus);
       
       // Notify parent component
@@ -89,13 +89,13 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
           ? '⭐ Zu Favoriten hinzugefügt!'
           : '❌ Aus Favoriten entfernt';
         
-        console.log('🎯 Showing user feedback:', message);
+        logger.info('🎯 Showing user feedback:', message);
         Alert.alert('Lesezeichen', message, [{ text: 'OK' }]);
       }
 
     } catch (error) {
-      console.error('💥 BookmarkButton toggle error:', error);
-      console.error('💥 BookmarkButton error details:', JSON.stringify(error, null, 2));
+      logger.error('💥 BookmarkButton toggle error:', error);
+      logger.error('💥 BookmarkButton error details:', JSON.stringify(error, null, 2));
       
       // Show detailed error message for debugging
       const errorMessage = error instanceof Error ? error.message : 'Fehler beim Speichern des Lesezeichens';
@@ -124,7 +124,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
       <TouchableOpacity 
         style={[styles.button, { backgroundColor: colors.card }, style]}
         onPress={() => {
-          console.log('🔄 Force refresh bookmark status');
+          logger.info('🔄 Force refresh bookmark status');
           checkBookmarkStatus();
         }}
       >

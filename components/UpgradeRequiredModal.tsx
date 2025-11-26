@@ -47,7 +47,7 @@ export function UpgradeRequiredModal({
   };
 
   const handleUpgradeClick = () => {
-    console.log('🔄 Navigating to subscription page...');
+    logger.info('🔄 Navigating to subscription page...');
     onClose();
     // Navigate using the string path directly (Expo Router v3+ syntax)
     router.push('subscription' as any);

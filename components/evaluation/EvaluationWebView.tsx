@@ -55,7 +55,7 @@ export default function EvaluationWebView({
         FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
       });
     } catch (err) {
-      console.error('Error sanitizing HTML:', err);
+      logger.error('Error sanitizing HTML:', err);
       return '';
     }
   }, [htmlReport]);
@@ -151,7 +151,7 @@ export default function EvaluationWebView({
 
   const handleError = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
-    console.error('WebView error:', nativeEvent);
+    logger.error('WebView error:', nativeEvent);
     setError('Fehler beim Laden der Evaluation');
     setLoading(false);
   };
@@ -160,10 +160,10 @@ export default function EvaluationWebView({
     try {
       const message = JSON.parse(event.nativeEvent.data);
       if (message.type === 'contentLoaded') {
-        console.log('WebView content loaded, height:', message.height);
+        logger.info('WebView content loaded, height:', message.height);
       }
     } catch (err) {
-      console.error('Error parsing WebView message:', err);
+      logger.error('Error parsing WebView message:', err);
     }
   };
 

@@ -30,7 +30,7 @@ export async function saveNote(
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       // PGRST116 is "no rows returned", which is fine
-      console.error('Error checking existing note:', fetchError);
+      logger.error('Error checking existing note:', fetchError);
       return { success: false, error: fetchError.message };
     }
 
@@ -46,7 +46,7 @@ export async function saveNote(
         .eq('id', existingNote.id);
 
       if (updateError) {
-        console.error('Error updating note:', updateError);
+        logger.error('Error updating note:', updateError);
         return { success: false, error: updateError.message };
       }
     } else {
@@ -63,14 +63,14 @@ export async function saveNote(
         });
 
       if (insertError) {
-        console.error('Error inserting note:', insertError);
+        logger.error('Error inserting note:', insertError);
         return { success: false, error: insertError.message };
       }
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error saving note:', error);
+    logger.error('Error saving note:', error);
     return { success: false, error: String(error) };
   }
 }
@@ -91,13 +91,13 @@ export async function loadNote(
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error loading note:', error);
+      logger.error('Error loading note:', error);
       return { note: null, error: error.message };
     }
 
     return { note: data as UserNote | null };
   } catch (error) {
-    console.error('Error loading note:', error);
+    logger.error('Error loading note:', error);
     return { note: null, error: String(error) };
   }
 }
@@ -117,13 +117,13 @@ export async function deleteNote(
       .eq('lesson_id', lessonId);
 
     if (error) {
-      console.error('Error deleting note:', error);
+      logger.error('Error deleting note:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error deleting note:', error);
+    logger.error('Error deleting note:', error);
     return { success: false, error: String(error) };
   }
 }
@@ -142,13 +142,13 @@ export async function loadAllNotes(
       .order('updated_at', { ascending: false });
 
     if (error) {
-      console.error('Error loading all notes:', error);
+      logger.error('Error loading all notes:', error);
       return { notes: [], error: error.message };
     }
 
     return { notes: (data as UserNote[]) || [] };
   } catch (error) {
-    console.error('Error loading all notes:', error);
+    logger.error('Error loading all notes:', error);
     return { notes: [], error: String(error) };
   }
 }

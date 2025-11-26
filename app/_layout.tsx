@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 
 export default function RootLayout() {
-  console.log('RootLayout rendering...');
+  logger.info('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
 
@@ -34,7 +34,7 @@ export default function RootLayout() {
       `;
       if (!document.getElementById('mobile-viewport-fix')) {
         document.head.appendChild(style);
-        console.log('✅ Mobile viewport fix applied');
+        logger.info('✅ Mobile viewport fix applied');
       }
     }
   }, []);
@@ -48,10 +48,10 @@ export default function RootLayout() {
         const isSimulationPage = currentPath.includes('/simulation/');
 
         if (!isSimulationPage) {
-          console.log('🧹 Root layout cleanup - not on simulation page');
+          logger.info('🧹 Root layout cleanup - not on simulation page');
           runGlobalVoiceflowCleanup();
         } else {
-          console.log('🚫 Root layout - on simulation page, skipping cleanup');
+          logger.info('🚫 Root layout - on simulation page, skipping cleanup');
         }
       }, 1000);
     }
@@ -68,7 +68,7 @@ export default function RootLayout() {
 
       // If we were on a simulation page and now we're not, run cleanup
       if (wasOnSimulationPage && !isOnSimulationPage) {
-        console.log('🔄 Navigated away from simulation page, running cleanup...');
+        logger.info('🔄 Navigated away from simulation page, running cleanup...');
         setTimeout(() => {
           runGlobalVoiceflowCleanup(true); // Force cleanup
         }, 100);

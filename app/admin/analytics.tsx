@@ -89,7 +89,7 @@ export default function Analytics() {
         .select('*', { count: 'exact', head: true });
 
       if (auditError && auditError.code !== 'PGRST116') {
-        console.warn('Audit logs table might not exist:', auditError);
+        logger.warn('Audit logs table might not exist:', auditError);
       }
 
       // Get recent sign ups (last 10)
@@ -122,7 +122,7 @@ export default function Analytics() {
       });
 
     } catch (error: any) {
-      console.error('Error fetching analytics:', error);
+      logger.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
     }
@@ -168,7 +168,7 @@ export default function Analytics() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.card }]}>
         <BarChart size={24} color={colors.primary} />
-        <Text style={[styles.title, { color: colors.text }]}>Analytics Dashboard</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Analyse-Dashboard</Text>
       </View>
 
       <View style={[styles.timeRangeContainer, { backgroundColor: colors.card }]}>
@@ -185,7 +185,7 @@ export default function Analytics() {
               styles.timeRangeText,
               { color: timeRange === range ? colors.primary : colors.textSecondary }
             ]}>
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+              {range === 'today' ? 'Heute' : range === 'week' ? 'Woche' : 'Monat'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -199,37 +199,37 @@ export default function Analytics() {
       >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading analytics...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Lade Analysen...</Text>
           </View>
         ) : (
           <>
             {/* Main Stats */}
             <View style={styles.statsGrid}>
               <StatCard
-                title="Total Users"
+                title="Benutzer Gesamt"
                 value={analytics.totalUsers.toLocaleString()}
-                subtitle={`+${analytics.newUsersThisWeek} this week`}
+                subtitle={`+${analytics.newUsersThisWeek} diese Woche`}
                 icon={Users}
                 color="#E2827F"
               />
               <StatCard
-                title="Active Today"
+                title="Heute Aktiv"
                 value={analytics.activeUsersToday.toLocaleString()}
-                subtitle={`${Math.round((analytics.activeUsersToday / analytics.totalUsers) * 100)}% of total`}
+                subtitle={`${Math.round((analytics.activeUsersToday / analytics.totalUsers) * 100)}% insgesamt`}
                 icon={Activity}
                 color="#10B981"
               />
               <StatCard
-                title="Total Sessions"
+                title="Sitzungen Gesamt"
                 value={analytics.totalSessions.toLocaleString()}
-                subtitle="Estimated"
+                subtitle="Geschätzt"
                 icon={Eye}
                 color="#F59E0B"
               />
               <StatCard
-                title="Avg Session"
+                title="Durchschn. Sitzung"
                 value={formatDuration(analytics.averageSessionTime)}
-                subtitle="Time spent"
+                subtitle="Verbrachte Zeit"
                 icon={Clock}
                 color="#E2827F"
               />
@@ -237,7 +237,7 @@ export default function Analytics() {
 
             {/* Growth Stats */}
             <View style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Growth Overview</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Wachstumsübersicht</Text>
               <View style={styles.growthStats}>
                 <View style={styles.growthStat}>
                   <TrendingUp size={20} color="#10B981" />
@@ -246,7 +246,7 @@ export default function Analytics() {
                       {analytics.newUsersToday}
                     </Text>
                     <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>
-                      New users today
+                      Neue Benutzer heute
                     </Text>
                   </View>
                 </View>
@@ -257,7 +257,7 @@ export default function Analytics() {
                       {analytics.newUsersThisWeek}
                     </Text>
                     <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>
-                      New users this week
+                      Neue Benutzer diese Woche
                     </Text>
                   </View>
                 </View>
@@ -268,7 +268,7 @@ export default function Analytics() {
                       {analytics.totalSections}
                     </Text>
                     <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>
-                      Total sections
+                      Abschnitte gesamt
                     </Text>
                   </View>
                 </View>
@@ -277,12 +277,12 @@ export default function Analytics() {
 
             {/* Recent Sign Ups */}
             <View style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Sign Ups</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Neueste Anmeldungen</Text>
               {analytics.recentSignUps.slice(0, 5).map((user, index) => (
                 <View key={user.id} style={styles.recentUser}>
                   <View style={styles.userInfo}>
                     <Text style={[styles.userEmail, { color: colors.text }]}>
-                      {user.email || 'No email'}
+                      {user.email || 'Keine E-Mail'}
                     </Text>
                     <Text style={[styles.userDate, { color: colors.textSecondary }]}>
                       {formatDate(user.created_at)}
@@ -297,14 +297,14 @@ export default function Analytics() {
               ))}
               {analytics.recentSignUps.length === 0 && (
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  No recent sign ups
+                  Keine neuesten Anmeldungen
                 </Text>
               )}
             </View>
 
             {/* Popular Sections */}
             <View style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Sections</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Beliebte Abschnitte</Text>
               {analytics.popularSections.map((section, index) => (
                 <View key={section.id} style={styles.popularSection}>
                   <View style={styles.sectionInfo}>
@@ -317,7 +317,7 @@ export default function Analytics() {
                   </View>
                   <View style={styles.sectionStats}>
                     <Text style={[styles.viewCount, { color: colors.primary }]}>
-                      {section.views} views
+                      {section.views} Aufrufe
                     </Text>
                     <View style={[styles.rankBadge, { backgroundColor: colors.primary + '20' }]}>
                       <Text style={[styles.rankText, { color: colors.primary }]}>
@@ -329,21 +329,21 @@ export default function Analytics() {
               ))}
               {analytics.popularSections.length === 0 && (
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  No section data available
+                  Keine Abschnittsdaten verfügbar
                 </Text>
               )}
             </View>
 
             {/* System Stats */}
             <View style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>System Overview</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Systemübersicht</Text>
               <View style={styles.systemStats}>
                 <View style={styles.systemStat}>
                   <Text style={[styles.systemValue, { color: colors.text }]}>
                     {analytics.totalAuditLogs}
                   </Text>
                   <Text style={[styles.systemLabel, { color: colors.textSecondary }]}>
-                    Audit Logs
+                    Audit-Protokolle
                   </Text>
                 </View>
                 <View style={styles.systemStat}>
@@ -351,7 +351,7 @@ export default function Analytics() {
                     {analytics.totalSections}
                   </Text>
                   <Text style={[styles.systemLabel, { color: colors.textSecondary }]}>
-                    Sections
+                    Abschnitte
                   </Text>
                 </View>
                 <View style={styles.systemStat}>
@@ -359,7 +359,7 @@ export default function Analytics() {
                     {analytics.totalUsers}
                   </Text>
                   <Text style={[styles.systemLabel, { color: colors.textSecondary }]}>
-                    Users
+                    Benutzer
                   </Text>
                 </View>
               </View>

@@ -12,7 +12,7 @@ export default function DashboardScreen() {
 
   const handleGetStarted = () => {
     // You can navigate to a specific screen or show a modal
-    console.log('Get Started button pressed');
+    logger.info('Get Started button pressed');
     // For example: router.push('/dashboard');
   };
 

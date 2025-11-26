@@ -38,29 +38,29 @@ export class VoiceInteractionService {
   // Initialize the voice interaction system
   async initialize(): Promise<boolean> {
     try {
-      console.log('🎤 Initializing voice interaction service...');
+      logger.info('🎤 Initializing voice interaction service...');
       
       // Initialize Voiceflow widget (hidden)
-      console.log('📦 Loading Voiceflow widget...');
+      logger.info('📦 Loading Voiceflow widget...');
       const voiceflowReady = await this.voiceflowController.loadWidget();
       if (!voiceflowReady) {
-        console.error('❌ Voiceflow widget failed to load');
+        logger.error('❌ Voiceflow widget failed to load');
         throw new Error('Failed to initialize Voiceflow');
       }
-      console.log('✅ Voiceflow widget loaded successfully');
+      logger.info('✅ Voiceflow widget loaded successfully');
 
       // Initialize speech recognition
-      console.log('🎙️ Initializing speech recognition...');
+      logger.info('🎙️ Initializing speech recognition...');
       await this.initializeSpeechRecognition();
-      console.log('✅ Speech recognition initialized');
+      logger.info('✅ Speech recognition initialized');
       
       // Start the simulation in Voiceflow
-      console.log('🚀 Starting simulation in Voiceflow...');
+      logger.info('🚀 Starting simulation in Voiceflow...');
       const simulationStarted = await this.voiceflowController.startSimulation();
       if (simulationStarted) {
-        console.log('✅ Simulation started successfully');
+        logger.info('✅ Simulation started successfully');
       } else {
-        console.log('⚠️ Simulation start returned false');
+        logger.info('⚠️ Simulation start returned false');
       }
       
       this.updateState({ 
@@ -68,10 +68,10 @@ export class VoiceInteractionService {
         error: null 
       });
       
-      console.log('✅ Voice interaction service initialized successfully');
+      logger.info('✅ Voice interaction service initialized successfully');
       return true;
     } catch (error) {
-      console.error('❌ Failed to initialize voice interaction:', error);
+      logger.error('❌ Failed to initialize voice interaction:', error);
       this.updateState({ 
         error: `Initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
       });
@@ -84,27 +84,27 @@ export class VoiceInteractionService {
     if (typeof window === 'undefined') return;
 
     // First, check and request microphone permission
-    console.log('🎙️ Checking microphone permissions...');
+    logger.info('🎙️ Checking microphone permissions...');
     
     try {
       // Check current permission status
       const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-      console.log('📊 Current microphone permission status:', permission.state);
+      logger.info('📊 Current microphone permission status:', permission.state);
       
       if (permission.state === 'denied') {
         throw new Error('Microphone permission was denied. Please enable microphone access in your browser settings and refresh the page.');
       }
       
       // Request microphone access
-      console.log('🎙️ Requesting microphone access...');
+      logger.info('🎙️ Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone permission granted and working');
+      logger.info('✅ Microphone permission granted and working');
       
       // Stop the stream immediately as we just needed permission
       stream.getTracks().forEach(track => track.stop());
       
     } catch (error) {
-      console.error('❌ Microphone permission issue:', error);
+      logger.error('❌ Microphone permission issue:', error);
       
       if (error.name === 'NotAllowedError') {
         throw new Error('Microphone access was denied. Please click the microphone icon in your browser\'s address bar and allow microphone access, then try again.');
@@ -128,7 +128,7 @@ export class VoiceInteractionService {
     this.recognition.maxAlternatives = 1;
 
     this.recognition.onstart = () => {
-      console.log('🎤 Speech recognition started');
+      logger.info('🎤 Speech recognition started');
       this.updateState({ isRecording: true });
     };
 
@@ -146,7 +146,7 @@ export class VoiceInteractionService {
       }
 
       if (finalTranscript) {
-        console.log('🗣️ Final transcript:', finalTranscript);
+        logger.info('🗣️ Final transcript:', finalTranscript);
         this.sendMessageToVoiceflow(finalTranscript);
       }
 
@@ -156,7 +156,7 @@ export class VoiceInteractionService {
     };
 
     this.recognition.onerror = (event: any) => {
-      console.error('❌ Speech recognition error:', event.error);
+      logger.error('❌ Speech recognition error:', event.error);
       this.updateState({ 
         isRecording: false,
         isProcessing: false,
@@ -165,7 +165,7 @@ export class VoiceInteractionService {
     };
 
     this.recognition.onend = () => {
-      console.log('🎤 Speech recognition ended');
+      logger.info('🎤 Speech recognition ended');
       this.updateState({ isRecording: false });
     };
   }
@@ -173,7 +173,7 @@ export class VoiceInteractionService {
   // Setup listener for Voiceflow messages
   private setupVoiceflowMessageListener(): void {
     this.messageListener = (event: MessageEvent) => {
-      console.log('📨 Received window message:', {
+      logger.info('📨 Received window message:', {
         origin: event.origin,
         data: event.data,
         type: typeof event.data
@@ -190,7 +190,7 @@ export class VoiceInteractionService {
           
           const message = event.data.message || event.data.text || event.data.payload || event.data.content;
           if (message && typeof message === 'string') {
-            console.log('🤖 Received Voiceflow window message:', message);
+            logger.info('🤖 Received Voiceflow window message:', message);
             this.handleVoiceflowResponse(message);
           }
         }
@@ -198,13 +198,13 @@ export class VoiceInteractionService {
         // Also check for any widget-related events with text content
         if (event.data.type && event.data.type.includes('widget') || 
             event.data.type && event.data.type.includes('chat')) {
-          console.log('🔍 Widget/Chat event:', event.data);
+          logger.info('🔍 Widget/Chat event:', event.data);
         }
       }
     };
 
     window.addEventListener('message', this.messageListener);
-    console.log('👂 Window message listener attached');
+    logger.info('👂 Window message listener attached');
     
     // Also monitor DOM changes for Voiceflow responses
     this.monitorVoiceflowDOM();
@@ -239,22 +239,22 @@ export class VoiceInteractionService {
         
         // Only log if elements are found
         if (messages.length > 0) {
-          console.log(`🔍 Found ${messages.length} elements for selector: ${selector}`);
+          logger.info(`🔍 Found ${messages.length} elements for selector: ${selector}`);
         }
         
         const latestMessage = messages[messages.length - 1];
         
         if (latestMessage && latestMessage.textContent) {
           const messageText = latestMessage.textContent.trim();
-          console.log(`📝 Latest message text: "${messageText}"`);
-          console.log(`📚 Current history:`, this.state.conversationHistory);
+          logger.info(`📝 Latest message text: "${messageText}"`);
+          logger.info(`📚 Current history:`, this.state.conversationHistory);
           
           if (messageText && !this.state.conversationHistory.includes(messageText)) {
-            console.log('🤖 Found new DOM response:', messageText);
+            logger.info('🤖 Found new DOM response:', messageText);
             this.handleVoiceflowResponse(messageText);
             break;
           } else if (messageText) {
-            console.log('⏭️ Message already in history, skipping');
+            logger.info('⏭️ Message already in history, skipping');
           }
         }
       }
@@ -262,7 +262,7 @@ export class VoiceInteractionService {
       if (foundElements === 0) {
         // Only log this occasionally to reduce spam
         if (Math.random() < 0.1) {
-          console.log('❌ No Voiceflow message elements found in DOM');
+          logger.info('❌ No Voiceflow message elements found in DOM');
         }
         
         // Fallback: check for ANY new text content in the page
@@ -281,11 +281,11 @@ export class VoiceInteractionService {
                 !text.includes('Checking DOM') &&
                 !text.includes('Found 0 elements')) {
               
-              console.log('🔍 Found potential new text:', text.substring(0, 100));
+              logger.info('🔍 Found potential new text:', text.substring(0, 100));
               
               // Check if this could be a Voiceflow response
               if (text.length > 20 && text.length < 500) {
-                console.log('🤖 Treating as potential Voiceflow response:', text);
+                logger.info('🤖 Treating as potential Voiceflow response:', text);
                 this.handleVoiceflowResponse(text);
                 newTextFound = true;
               }
@@ -294,22 +294,22 @@ export class VoiceInteractionService {
         });
         
         if (!newTextFound) {
-          console.log('🔍 No new potential response text found in DOM');
+          logger.info('🔍 No new potential response text found in DOM');
         }
       }
     };
 
     // Check periodically - slower interval to reduce console spam
-    console.log('⏰ Starting DOM monitoring with 3-second intervals');
+    logger.info('⏰ Starting DOM monitoring with 3-second intervals');
     setInterval(checkForResponses, 3000);
   }
 
   // Send message to Voiceflow
   private async sendMessageToVoiceflow(message: string): Promise<void> {
     try {
-      console.log('📤 Sending message to Voiceflow:', message);
-      console.log('🔧 Voiceflow object available:', !!window.voiceflow);
-      console.log('🔧 Voiceflow.chat available:', !!(window.voiceflow && window.voiceflow.chat));
+      logger.info('📤 Sending message to Voiceflow:', message);
+      logger.info('🔧 Voiceflow object available:', !!window.voiceflow);
+      logger.info('🔧 Voiceflow.chat available:', !!(window.voiceflow && window.voiceflow.chat));
       
       this.updateState({ 
         isProcessing: true,
@@ -319,36 +319,36 @@ export class VoiceInteractionService {
 
       // Try different methods to send message to Voiceflow
       if (window.voiceflow && window.voiceflow.chat) {
-        console.log('🔧 Available methods:', {
+        logger.info('🔧 Available methods:', {
           interact: !!window.voiceflow.chat.interact,
           send: !!window.voiceflow.chat.send,
           sendMessage: !!window.voiceflow.chat.sendMessage
         });
         
         if (window.voiceflow.chat.interact) {
-          console.log('📡 Using interact method');
+          logger.info('📡 Using interact method');
           const response = await window.voiceflow.chat.interact({
             type: 'text',
             payload: message
           });
-          console.log('📡 Full interact response:', response);
+          logger.info('📡 Full interact response:', response);
           
           // Try to extract text from different response formats
           if (response) {
             if (typeof response === 'string') {
-              console.log('🎯 Direct string response:', response);
+              logger.info('🎯 Direct string response:', response);
               this.handleVoiceflowResponse(response);
             } else if (response.text) {
-              console.log('🎯 Response.text:', response.text);
+              logger.info('🎯 Response.text:', response.text);
               this.handleVoiceflowResponse(response.text);
             } else if (response.message) {
-              console.log('🎯 Response.message:', response.message);
+              logger.info('🎯 Response.message:', response.message);
               this.handleVoiceflowResponse(response.message);
             } else if (response.payload) {
-              console.log('🎯 Response.payload:', response.payload);
+              logger.info('🎯 Response.payload:', response.payload);
               this.handleVoiceflowResponse(response.payload);
             } else if (Array.isArray(response) && response.length > 0) {
-              console.log('🎯 Array response:', response[0]);
+              logger.info('🎯 Array response:', response[0]);
               const firstResponse = response[0];
               if (firstResponse.text) {
                 this.handleVoiceflowResponse(firstResponse.text);
@@ -358,25 +358,25 @@ export class VoiceInteractionService {
             }
           }
         } else if (window.voiceflow.chat.send) {
-          console.log('📡 Using send method');
+          logger.info('📡 Using send method');
           const response = await window.voiceflow.chat.send({
             type: 'text',
             payload: message
           });
-          console.log('📡 Send response:', response);
+          logger.info('📡 Send response:', response);
         } else if (window.voiceflow.chat.sendMessage) {
-          console.log('📡 Using sendMessage method');
+          logger.info('📡 Using sendMessage method');
           const response = await window.voiceflow.chat.sendMessage(message);
-          console.log('📡 SendMessage response:', response);
+          logger.info('📡 SendMessage response:', response);
         }
         
         // Try to manually trigger a response check after sending
         setTimeout(() => {
-          console.log('🔄 Manually checking for responses after message send...');
+          logger.info('🔄 Manually checking for responses after message send...');
           this.checkForManualResponse();
         }, 2000);
       } else {
-        console.log('❌ Voiceflow not available, trying DOM fallback');
+        logger.info('❌ Voiceflow not available, trying DOM fallback');
       }
 
       // Fallback: try to interact with hidden DOM elements
@@ -417,7 +417,7 @@ export class VoiceInteractionService {
       }, 100);
 
     } catch (error) {
-      console.error('❌ Error sending message to Voiceflow:', error);
+      logger.error('❌ Error sending message to Voiceflow:', error);
       this.updateState({ 
         isProcessing: false,
         error: `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}` 
@@ -427,7 +427,7 @@ export class VoiceInteractionService {
 
   // Handle Voiceflow response
   private handleVoiceflowResponse(message: string): void {
-    console.log('🤖 Processing Voiceflow response:', message);
+    logger.info('🤖 Processing Voiceflow response:', message);
     
     this.updateState({
       isProcessing: false,
@@ -441,17 +441,17 @@ export class VoiceInteractionService {
 
   // Text-to-speech for responses
   private speakMessage(message: string): void {
-    console.log('🔊 speakMessage called with:', message);
+    logger.info('🔊 speakMessage called with:', message);
     
     if (!this.speechSynthesis) {
-      console.error('❌ Speech synthesis not available');
+      logger.error('❌ Speech synthesis not available');
       return;
     }
 
     try {
       // Cancel any ongoing speech
       this.speechSynthesis.cancel();
-      console.log('🔇 Cancelled any existing speech');
+      logger.info('🔇 Cancelled any existing speech');
 
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = 'de-DE'; // German
@@ -459,7 +459,7 @@ export class VoiceInteractionService {
       utterance.pitch = 1;
       utterance.volume = 1.0; // Max volume
       
-      console.log('🎛️ Speech settings:', {
+      logger.info('🎛️ Speech settings:', {
         lang: utterance.lang,
         rate: utterance.rate,
         pitch: utterance.pitch,
@@ -468,34 +468,34 @@ export class VoiceInteractionService {
 
       // Find a German voice if available
       const voices = this.speechSynthesis.getVoices();
-      console.log('🎤 Available voices:', voices.length);
+      logger.info('🎤 Available voices:', voices.length);
       
       const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
       if (germanVoice) {
         utterance.voice = germanVoice;
-        console.log('🇩🇪 Using German voice:', germanVoice.name);
+        logger.info('🇩🇪 Using German voice:', germanVoice.name);
       } else {
-        console.log('⚠️ No German voice found, using default');
+        logger.info('⚠️ No German voice found, using default');
       }
 
       utterance.onstart = () => {
-        console.log('🔊 Speech started');
+        logger.info('🔊 Speech started');
       };
 
       utterance.onend = () => {
-        console.log('🔊 Speech finished');
+        logger.info('🔊 Speech finished');
       };
 
       utterance.onerror = (error) => {
-        console.error('❌ Speech synthesis error:', error);
+        logger.error('❌ Speech synthesis error:', error);
       };
 
-      console.log('🎯 About to speak message...');
+      logger.info('🎯 About to speak message...');
       this.speechSynthesis.speak(utterance);
       
       // Double-check if speech is working
       setTimeout(() => {
-        console.log('📊 Speech synthesis status:', {
+        logger.info('📊 Speech synthesis status:', {
           speaking: this.speechSynthesis.speaking,
           pending: this.speechSynthesis.pending,
           paused: this.speechSynthesis.paused
@@ -503,44 +503,44 @@ export class VoiceInteractionService {
       }, 100);
       
     } catch (error) {
-      console.error('❌ Error in speakMessage:', error);
+      logger.error('❌ Error in speakMessage:', error);
     }
   }
 
   // Test function to manually trigger speech synthesis
   testSpeech(): void {
-    console.log('🧪 Testing speech synthesis directly...');
+    logger.info('🧪 Testing speech synthesis directly...');
     this.speakMessage('Dies ist ein Test der Sprachsynthese');
   }
 
   // Manual check for responses in Voiceflow widget
   private checkForManualResponse(): void {
-    console.log('🔄 Manual response check - looking for hidden Voiceflow content...');
+    logger.info('🔄 Manual response check - looking for hidden Voiceflow content...');
     
     // Check all iframes for Voiceflow content
     const iframes = document.querySelectorAll('iframe');
     iframes.forEach((iframe, index) => {
       try {
-        console.log(`🔍 Checking iframe ${index}:`, iframe.src);
+        logger.info(`🔍 Checking iframe ${index}:`, iframe.src);
         if (iframe.contentDocument) {
           const iframeDoc = iframe.contentDocument;
           const textContent = iframeDoc.body?.textContent || '';
           if (textContent.length > 10) {
-            console.log(`📄 Iframe ${index} content:`, textContent.substring(0, 200));
+            logger.info(`📄 Iframe ${index} content:`, textContent.substring(0, 200));
           }
         }
       } catch (e) {
-        console.log(`🚫 Cannot access iframe ${index} content (CORS)`, e.message);
+        logger.info(`🚫 Cannot access iframe ${index} content (CORS)`, e.message);
       }
     });
     
     // Also check for any newly created elements
     const recentElements = document.querySelectorAll('[class*="vf"], [id*="vf"], [class*="chat"], [class*="widget"]');
-    console.log(`🔍 Found ${recentElements.length} potential Voiceflow elements`);
+    logger.info(`🔍 Found ${recentElements.length} potential Voiceflow elements`);
     
     recentElements.forEach((el, index) => {
       if (el.textContent && el.textContent.trim().length > 5) {
-        console.log(`📝 Element ${index} text:`, el.textContent.trim().substring(0, 100));
+        logger.info(`📝 Element ${index} text:`, el.textContent.trim().substring(0, 100));
       }
     });
   }
@@ -548,20 +548,20 @@ export class VoiceInteractionService {
   // Start recording
   startRecording(): void {
     if (!this.state.isInitialized || !this.recognition) {
-      console.warn('⚠️ Voice interaction not initialized');
+      logger.warn('⚠️ Voice interaction not initialized');
       return;
     }
 
     if (this.state.isRecording) {
-      console.warn('⚠️ Already recording');
+      logger.warn('⚠️ Already recording');
       return;
     }
 
     try {
       this.recognition.start();
-      console.log('🎤 Started recording');
+      logger.info('🎤 Started recording');
     } catch (error) {
-      console.error('❌ Error starting recording:', error);
+      logger.error('❌ Error starting recording:', error);
       this.updateState({ 
         error: `Failed to start recording: ${error instanceof Error ? error.message : 'Unknown error'}` 
       });
@@ -576,9 +576,9 @@ export class VoiceInteractionService {
 
     try {
       this.recognition.stop();
-      console.log('🎤 Stopped recording');
+      logger.info('🎤 Stopped recording');
     } catch (error) {
-      console.error('❌ Error stopping recording:', error);
+      logger.error('❌ Error stopping recording:', error);
     }
   }
 

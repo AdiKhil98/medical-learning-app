@@ -30,7 +30,7 @@ export const useSubscription = (userId: string | undefined) => {
    */
   const checkAccess = useCallback(async () => {
     if (!userId) {
-      console.log('[Access Control] No user ID - access denied');
+      logger.info('[Access Control] No user ID - access denied');
       return {
         canUseSimulation: false,
         simulationsUsed: 0,
@@ -47,18 +47,18 @@ export const useSubscription = (userId: string | undefined) => {
 
     try {
       // STEP 1: Check and reset monthly counter if in new billing period
-      console.log('[Access Control] Checking if monthly counter needs reset...');
+      logger.info('[Access Control] Checking if monthly counter needs reset...');
       try {
         const { data: resetResult, error: resetError } = await supabase
           .rpc('check_and_reset_monthly_counter', { user_id_input: userId });
 
         if (resetError) {
-          console.warn('[Access Control] Counter reset check failed:', resetError);
+          logger.warn('[Access Control] Counter reset check failed:', resetError);
         } else if (resetResult) {
-          console.log('[Access Control] ✅ Monthly counter was automatically reset (new billing period)');
+          logger.info('[Access Control] ✅ Monthly counter was automatically reset (new billing period)');
         }
       } catch (resetErr) {
-        console.warn('[Access Control] Counter reset error (non-critical):', resetErr);
+        logger.warn('[Access Control] Counter reset error (non-critical):', resetErr);
       }
 
       // STEP 2: Fetch FRESH data from database to prevent stale state
@@ -76,7 +76,7 @@ export const useSubscription = (userId: string | undefined) => {
         .single();
 
       if (error || !user) {
-        console.error('[Access Control] Error fetching user subscription:', error);
+        logger.error('[Access Control] Error fetching user subscription:', error);
         setError('Fehler beim Abrufen des Abonnementstatus');
         return {
           canUseSimulation: false,
@@ -100,7 +100,7 @@ export const useSubscription = (userId: string | undefined) => {
 
       for (const field of requiredFields) {
         if (!(field in user)) {
-          console.error(`[Access Control] Missing required field: ${field}`);
+          logger.error(`[Access Control] Missing required field: ${field}`);
           setError('Unvollständige Benutzerdaten');
           return {
             canUseSimulation: false,
@@ -114,7 +114,7 @@ export const useSubscription = (userId: string | undefined) => {
         }
       }
 
-      console.log('[Access Control] User data:', {
+      logger.info('[Access Control] User data:', {
         tier: user.subscription_tier,
         status: user.subscription_status,
         limit: user.simulation_limit,
@@ -144,7 +144,7 @@ export const useSubscription = (userId: string | undefined) => {
           calculatedLimit = 30; // Default fallback
         }
 
-        console.warn(`[Access Control] NULL limit detected for ${user.subscription_tier}, auto-calculated: ${calculatedLimit}`);
+        logger.warn(`[Access Control] NULL limit detected for ${user.subscription_tier}, auto-calculated: ${calculatedLimit}`);
       }
 
       const sanitizedData = {
@@ -180,12 +180,12 @@ export const useSubscription = (userId: string | undefined) => {
 
         if (canUse) {
           message = `${remaining} von ${totalLimit} kostenlosen Simulationen verbleibend`;
-          console.log(`[Access Control] ✅ FREE TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
+          logger.info(`[Access Control] ✅ FREE TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
         } else {
           // remaining === 0, limit reached
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] ❌ FREE TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
+          logger.info(`[Access Control] ❌ FREE TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
         }
       } else if (sanitizedData.tier === 'unlimited') {
         // ===== UNLIMITED TIER: No limit =====
@@ -194,7 +194,7 @@ export const useSubscription = (userId: string | undefined) => {
         remaining = 999999;
         canUse = true; // Always allow
         message = 'Unbegrenzte Simulationen verfügbar';
-        console.log(`[Access Control] ✅ UNLIMITED TIER - Always allowed (used: ${usedCount})`);
+        logger.info(`[Access Control] ✅ UNLIMITED TIER - Always allowed (used: ${usedCount})`);
       } else {
         // ===== PAID TIER: Dynamic limit from database (works for 5, 30, 50, 100, any value) =====
         totalLimit = sanitizedData.limit;
@@ -208,12 +208,12 @@ export const useSubscription = (userId: string | undefined) => {
 
         if (canUse) {
           message = `${remaining} von ${totalLimit} Simulationen verbleibend`;
-          console.log(`[Access Control] ✅ PAID TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
+          logger.info(`[Access Control] ✅ PAID TIER ALLOWED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: true`);
         } else {
           // remaining === 0, limit reached
           shouldUpgrade = true;
           message = `Sie haben alle ${totalLimit} Simulationen dieses Monats verbraucht. Upgraden Sie für mehr!`;
-          console.log(`[Access Control] ❌ PAID TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
+          logger.info(`[Access Control] ❌ PAID TIER BLOCKED - Calculation: ${totalLimit} - ${usedCount} = ${remaining}, canStart: false`);
         }
       }
 
@@ -227,7 +227,7 @@ export const useSubscription = (userId: string | undefined) => {
         remainingSimulations: remaining
       };
 
-      console.log('[Access Control] Final Result:', {
+      logger.info('[Access Control] Final Result:', {
         tier,
         totalLimit,
         usedCount,
@@ -240,7 +240,7 @@ export const useSubscription = (userId: string | undefined) => {
       setSubscriptionStatus(status);
       return status;
     } catch (err) {
-      console.error('[Access Control] Exception:', err);
+      logger.error('[Access Control] Exception:', err);
       setError('Fehler beim Überprüfen des Abonnementstatus');
       return {
         canUseSimulation: false,
@@ -276,7 +276,7 @@ export const useSubscription = (userId: string | undefined) => {
         .single();
 
       if (fetchError || !user) {
-        console.error('Error fetching user for usage recording:', fetchError);
+        logger.error('Error fetching user for usage recording:', fetchError);
         return false;
       }
 
@@ -288,42 +288,42 @@ export const useSubscription = (userId: string | undefined) => {
         const { data, error } = await supabase.rpc('increment_free_simulations', { user_id: userId });
 
         if (error) {
-          console.error('Error updating free simulation usage:', error);
+          logger.error('Error updating free simulation usage:', error);
           return false;
         }
 
         // Check response from function
         if (data && !data.success) {
-          console.error('Free simulation increment failed:', data.error, data.message);
+          logger.error('Free simulation increment failed:', data.error, data.message);
           setError(data.message || 'Failed to record simulation usage');
           return false;
         }
 
-        console.log('✅ Free simulation recorded:', data);
+        logger.info('✅ Free simulation recorded:', data);
       } else {
         // Paid tier
         const { data, error } = await supabase.rpc('increment_monthly_simulations', { user_id: userId });
 
         if (error) {
-          console.error('Error updating monthly simulation usage:', error);
+          logger.error('Error updating monthly simulation usage:', error);
           return false;
         }
 
         // Check response from function
         if (data && !data.success) {
-          console.error('Monthly simulation increment failed:', data.error, data.message);
+          logger.error('Monthly simulation increment failed:', data.error, data.message);
           setError(data.message || 'Failed to record simulation usage');
           return false;
         }
 
-        console.log('✅ Monthly simulation recorded:', data);
+        logger.info('✅ Monthly simulation recorded:', data);
       }
 
       // Refresh the subscription status after recording usage
       await checkAccess();
       return true;
     } catch (err) {
-      console.error('Error recording simulation usage:', err);
+      logger.error('Error recording simulation usage:', err);
       setError('Error recording simulation usage');
       return false;
     }
@@ -384,7 +384,7 @@ export const useSubscription = (userId: string | undefined) => {
    * Shows immediate feedback while backend handles actual deduction at 10-min mark
    */
   const applyOptimisticDeduction = useCallback(() => {
-    console.log('🎯 Applying optimistic deduction to counter...');
+    logger.info('🎯 Applying optimistic deduction to counter...');
     setOptimisticDeduction(1);
     setHasOptimisticState(true);
   }, []);
@@ -394,7 +394,7 @@ export const useSubscription = (userId: string | undefined) => {
    * Call this on: page refresh, simulation completion, or when returning to dashboard
    */
   const resetOptimisticCount = useCallback(() => {
-    console.log('🔄 Resetting to actual backend count...');
+    logger.info('🔄 Resetting to actual backend count...');
     setOptimisticDeduction(0);
     setHasOptimisticState(false);
     // Re-fetch actual count from backend
@@ -413,7 +413,7 @@ export const useSubscription = (userId: string | undefined) => {
   useEffect(() => {
     if (!userId) return;
 
-    console.log('[Real-time] Setting up subscription listener for user:', userId);
+    logger.info('[Real-time] Setting up subscription listener for user:', userId);
 
     // Subscribe to changes in the users table for this specific user
     const subscription = supabase
@@ -427,7 +427,7 @@ export const useSubscription = (userId: string | undefined) => {
           filter: `id=eq.${userId}`
         },
         (payload) => {
-          console.log('[Real-time] Usage update detected:', payload);
+          logger.info('[Real-time] Usage update detected:', payload);
 
           // Re-check access when usage changes (use ref to get latest function)
           if (checkAccessRef.current) {
@@ -436,17 +436,17 @@ export const useSubscription = (userId: string | undefined) => {
         }
       )
       .subscribe((status) => {
-        console.log('[Real-time] Subscription status:', status);
+        logger.info('[Real-time] Subscription status:', status);
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('[Real-time] Cleaning up subscription listener');
+      logger.info('[Real-time] Cleaning up subscription listener');
       try {
         const result = subscription.unsubscribe();
-        console.log('[Real-time] Unsubscribe completed:', result);
+        logger.info('[Real-time] Unsubscribe completed:', result);
       } catch (error) {
-        console.error('[Real-time] Error during unsubscribe:', error);
+        logger.error('[Real-time] Error during unsubscribe:', error);
       }
     };
   }, [userId]); // Only userId - checkAccess accessed via ref

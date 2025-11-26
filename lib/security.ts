@@ -93,21 +93,21 @@ export class SecureLogger {
   static log(message: string, ...args: any[]): void {
     if (__DEV__) {
       const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
-      console.log(`[SECURE LOG] ${message}`, ...sanitizedArgs);
+      logger.info(`[SECURE LOG] ${message}`, ...sanitizedArgs);
     }
   }
 
   static warn(message: string, ...args: any[]): void {
     if (__DEV__) {
       const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
-      console.warn(`[SECURE WARN] ${message}`, ...sanitizedArgs);
+      logger.warn(`[SECURE WARN] ${message}`, ...sanitizedArgs);
     }
   }
 
   static error(message: string, ...args: any[]): void {
     if (__DEV__) {
       const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
-      console.error(`[SECURE ERROR] ${message}`, ...sanitizedArgs);
+      logger.error(`[SECURE ERROR] ${message}`, ...sanitizedArgs);
     }
   }
 }

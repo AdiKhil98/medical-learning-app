@@ -154,15 +154,15 @@ class BookmarksService {
    */
   async removeBookmark(sectionSlug: string): Promise<void> {
     try {
-      console.log('🗑️ removeBookmark called for section:', sectionSlug);
+      logger.info('🗑️ removeBookmark called for section:', sectionSlug);
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error('❌ Authentication error:', authError);
+        logger.error('❌ Authentication error:', authError);
         throw new Error('User must be authenticated to remove bookmarks');
       }
 
-      console.log('👤 User authenticated:', user.id);
+      logger.info('👤 User authenticated:', user.id);
 
       // First, check if bookmark exists
       const { data: existingBookmark, error: checkError } = await supabase
@@ -173,16 +173,16 @@ class BookmarksService {
         .maybeSingle();
 
       if (checkError) {
-        console.error('❌ Error checking existing bookmark:', checkError);
+        logger.error('❌ Error checking existing bookmark:', checkError);
         throw new Error(`Error checking bookmark: ${checkError.message}`);
       }
 
       if (!existingBookmark) {
-        console.warn('⚠️ Bookmark not found for section:', sectionSlug);
+        logger.warn('⚠️ Bookmark not found for section:', sectionSlug);
         throw new Error('Bookmark not found or already removed');
       }
 
-      console.log('📖 Found bookmark to delete:', existingBookmark.section_title);
+      logger.info('📖 Found bookmark to delete:', existingBookmark.section_title);
 
       // Perform the delete
       const { data: deleteData, error: deleteError } = await supabase
@@ -193,21 +193,21 @@ class BookmarksService {
         .select(); // Return deleted rows for confirmation
 
       if (deleteError) {
-        console.error('❌ Delete error:', deleteError);
+        logger.error('❌ Delete error:', deleteError);
         SecureLogger.log('Error removing bookmark:', deleteError);
         throw new Error(`Failed to remove bookmark: ${deleteError.message}`);
       }
 
-      console.log('✅ Delete successful, rows affected:', deleteData?.length || 0);
+      logger.info('✅ Delete successful, rows affected:', deleteData?.length || 0);
 
       // Clear cache to force refresh
       this.clearUserCache(user.id);
       
       SecureLogger.log('Removed bookmark for section:', sectionSlug);
-      console.log('🎉 Bookmark removed successfully!');
+      logger.info('🎉 Bookmark removed successfully!');
 
     } catch (error) {
-      console.error('💥 Error in removeBookmark:', error);
+      logger.error('💥 Error in removeBookmark:', error);
       SecureLogger.log('Error in removeBookmark:', error);
       throw error;
     }
@@ -218,21 +218,21 @@ class BookmarksService {
    */
   async isBookmarked(sectionSlug: string): Promise<boolean> {
     try {
-      console.log('🔍 Checking if bookmarked:', sectionSlug);
+      logger.info('🔍 Checking if bookmarked:', sectionSlug);
       const bookmarks = await this.getUserBookmarks();
-      console.log('📚 User has', bookmarks.length, 'total bookmarks');
+      logger.info('📚 User has', bookmarks.length, 'total bookmarks');
       
       const isBookmarked = bookmarks.some(bookmark => bookmark.section_slug === sectionSlug);
-      console.log('✅ isBookmarked result:', isBookmarked);
+      logger.info('✅ isBookmarked result:', isBookmarked);
       
       if (isBookmarked) {
         const found = bookmarks.find(bookmark => bookmark.section_slug === sectionSlug);
-        console.log('📖 Found bookmark:', found?.section_title);
+        logger.info('📖 Found bookmark:', found?.section_title);
       }
       
       return isBookmarked;
     } catch (error) {
-      console.error('❌ Error checking bookmark status:', error);
+      logger.error('❌ Error checking bookmark status:', error);
       SecureLogger.log('Error checking bookmark status:', error);
       return false;
     }
@@ -410,58 +410,58 @@ class BookmarksService {
    */
   async toggleBookmark(sectionSlug: string, sectionTitle: string, sectionCategory?: string): Promise<boolean> {
     try {
-      console.log('🔄 toggleBookmark called for:', sectionTitle, 'slug:', sectionSlug);
-      console.log('🔄 toggleBookmark category:', sectionCategory);
+      logger.info('🔄 toggleBookmark called for:', sectionTitle, 'slug:', sectionSlug);
+      logger.info('🔄 toggleBookmark category:', sectionCategory);
       
       // First check authentication
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error('❌ Authentication error in toggle:', authError);
+        logger.error('❌ Authentication error in toggle:', authError);
         throw new Error('User must be authenticated to toggle bookmarks');
       }
-      console.log('👤 User authenticated for toggle:', user.id);
+      logger.info('👤 User authenticated for toggle:', user.id);
       
       const isCurrentlyBookmarked = await this.isBookmarked(sectionSlug);
-      console.log('📊 Current bookmark status:', isCurrentlyBookmarked);
+      logger.info('📊 Current bookmark status:', isCurrentlyBookmarked);
       
       if (isCurrentlyBookmarked) {
-        console.log('🗑️ Item is bookmarked, removing...');
+        logger.info('🗑️ Item is bookmarked, removing...');
         try {
           await this.removeBookmark(sectionSlug);
-          console.log('✅ Toggle: removed bookmark successfully');
+          logger.info('✅ Toggle: removed bookmark successfully');
           
           // Verify the removal worked
           const verifyRemoval = await this.isBookmarked(sectionSlug);
-          console.log('🔍 Verification after removal - still bookmarked?', verifyRemoval);
+          logger.info('🔍 Verification after removal - still bookmarked?', verifyRemoval);
           
           return false; // Now unbookmarked
         } catch (removeError) {
-          console.error('❌ Failed to remove bookmark in toggle:', removeError);
+          logger.error('❌ Failed to remove bookmark in toggle:', removeError);
           throw removeError;
         }
       } else {
-        console.log('➕ Item not bookmarked, adding...');
+        logger.info('➕ Item not bookmarked, adding...');
         try {
           await this.addBookmark({
             section_slug: sectionSlug,
             section_title: sectionTitle,
             section_category: sectionCategory
           });
-          console.log('✅ Toggle: added bookmark successfully');
+          logger.info('✅ Toggle: added bookmark successfully');
           
           // Verify the addition worked
           const verifyAddition = await this.isBookmarked(sectionSlug);
-          console.log('🔍 Verification after addition - now bookmarked?', verifyAddition);
+          logger.info('🔍 Verification after addition - now bookmarked?', verifyAddition);
           
           return true; // Now bookmarked
         } catch (addError) {
-          console.error('❌ Failed to add bookmark in toggle:', addError);
+          logger.error('❌ Failed to add bookmark in toggle:', addError);
           throw addError;
         }
       }
     } catch (error) {
-      console.error('💥 Error toggling bookmark:', error);
-      console.error('💥 Error details:', JSON.stringify(error, null, 2));
+      logger.error('💥 Error toggling bookmark:', error);
+      logger.error('💥 Error details:', JSON.stringify(error, null, 2));
       SecureLogger.log('Error toggling bookmark:', error);
       throw error;
     }

@@ -267,7 +267,7 @@ export default function ContentManagement() {
           <Search size={16} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search sections..."
+            placeholder="Abschnitte durchsuchen..."
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -280,7 +280,7 @@ export default function ContentManagement() {
         >
           <Filter size={16} color={colors.textSecondary} />
           <Text style={[styles.filterText, { color: colors.text }]}>
-            {filterType === 'all' ? 'All' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+            {filterType === 'all' ? 'Alle' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
           </Text>
         </TouchableOpacity>
       </View>
@@ -288,19 +288,19 @@ export default function ContentManagement() {
       <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: colors.text }]}>{sections.length}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Sections</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Abschnitte Gesamt</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: '#10B981' }]}>
             {sections.filter(s => s.is_visible).length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Visible</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sichtbar</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: '#EF4444' }]}>
             {sections.filter(s => !s.is_visible).length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Hidden</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Verborgen</Text>
         </View>
       </View>
 
@@ -312,7 +312,7 @@ export default function ContentManagement() {
       >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading sections...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Lade Abschnitte...</Text>
           </View>
         ) : (
           <>
@@ -415,7 +415,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.title}
               onChangeText={(text) => setEditForm({ ...editForm, title: text })}
-              placeholder="Section title"
+              placeholder="Abschnittstitel"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -424,7 +424,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.slug}
               onChangeText={(text) => setEditForm({ ...editForm, slug: text })}
-              placeholder="section-slug"
+              placeholder="abschnitt-slug"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -433,7 +433,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card }]}
               onPress={() => {
                 Alert.alert(
-                  'Select Type',
+                  'Typ auswählen',
                   '',
                   sectionTypes.map(type => ({
                     text: type.charAt(0).toUpperCase() + type.slice(1),
@@ -443,7 +443,7 @@ export default function ContentManagement() {
               }}
             >
               <Text style={[styles.inputText, { color: colors.text }]}>
-                {editForm.type || 'Select type'}
+                {editForm.type || 'Typ auswählen'}
               </Text>
             </TouchableOpacity>
 
@@ -452,7 +452,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.category}
               onChangeText={(text) => setEditForm({ ...editForm, category: text })}
-              placeholder="Optional category"
+              placeholder="Optionale Kategorie"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -461,7 +461,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.parent_slug}
               onChangeText={(text) => setEditForm({ ...editForm, parent_slug: text })}
-              placeholder="Optional parent section"
+              placeholder="Optionaler Elternabschnitt"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -480,7 +480,7 @@ export default function ContentManagement() {
               style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.icon}
               onChangeText={(text) => setEditForm({ ...editForm, icon: text })}
-              placeholder="Optional icon name"
+              placeholder="Optionaler Symbolname"
               placeholderTextColor={colors.textSecondary}
             />
 
@@ -498,7 +498,7 @@ export default function ContentManagement() {
               style={[styles.textArea, { backgroundColor: colors.card, color: colors.text }]}
               value={editForm.content}
               onChangeText={(text) => setEditForm({ ...editForm, content: text })}
-              placeholder="Optional content"
+              placeholder="Optionaler Inhalt"
               placeholderTextColor={colors.textSecondary}
               multiline
               numberOfLines={6}
@@ -514,7 +514,7 @@ export default function ContentManagement() {
               >
                 {editForm.is_visible && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
-              <Text style={[styles.checkboxLabel, { color: colors.text }]}>Visible</Text>
+              <Text style={[styles.checkboxLabel, { color: colors.text }]}>Sichtbar</Text>
             </View>
           </ScrollView>
         </SafeAreaView>

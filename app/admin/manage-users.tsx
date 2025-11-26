@@ -153,7 +153,7 @@ export default function ManageUsers() {
           <Search size={16} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search users..."
+            placeholder="Benutzer durchsuchen..."
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -174,7 +174,7 @@ export default function ManageUsers() {
       <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: colors.text }]}>{users.length}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Users</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Benutzer Gesamt</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: '#EF4444' }]}>
@@ -198,7 +198,7 @@ export default function ManageUsers() {
       >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading users...</Text>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Lade Benutzer...</Text>
           </View>
         ) : (
           <>

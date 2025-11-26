@@ -27,7 +27,7 @@ if (Platform.OS === 'web') {
     VictoryScatter = Victory.VictoryScatter;
     VictoryLine = Victory.VictoryLine;
   } catch (error) {
-    console.log('Victory not available on web');
+    logger.info('Victory not available on web');
   }
 } else {
   try {
@@ -39,7 +39,7 @@ if (Platform.OS === 'web') {
     VictoryScatter = VictoryNative.VictoryScatter;
     VictoryLine = VictoryNative.VictoryLine;
   } catch (error) {
-    console.log('Victory Native not available');
+    logger.info('Victory Native not available');
   }
 }
 
@@ -76,9 +76,9 @@ export default function ProgressScreen() {
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   
-  console.log('ProgressScreen: Rendering, evaluations count:', evaluations.length);
-  console.log('ProgressScreen: chartData:', chartData);
-  console.log('ProgressScreen: activeTab:', activeTab);
+  logger.info('ProgressScreen: Rendering, evaluations count:', evaluations.length);
+  logger.info('ProgressScreen: chartData:', chartData);
+  logger.info('ProgressScreen: activeTab:', activeTab);
 
   useEffect(() => {
     fetchEvaluations();
@@ -89,10 +89,10 @@ export default function ProgressScreen() {
   }, [evaluations]);
 
   const fetchEvaluations = async () => {
-    console.log('fetchEvaluations: Starting...');
+    logger.info('fetchEvaluations: Starting...');
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
-    console.log('fetchEvaluations: userId:', userId);
+    logger.info('fetchEvaluations: userId:', userId);
     if (!userId) return;
 
     const { data: evaluationsData, error } = await supabase
@@ -101,11 +101,11 @@ export default function ProgressScreen() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    console.log('fetchEvaluations: evaluationsData:', evaluationsData);
-    console.log('fetchEvaluations: error:', error);
+    logger.info('fetchEvaluations: evaluationsData:', evaluationsData);
+    logger.info('fetchEvaluations: error:', error);
 
     if (error) {
-      console.error('Error fetching evaluations:', error);
+      logger.error('Error fetching evaluations:', error);
       return;
     }
 
@@ -421,13 +421,13 @@ export default function ProgressScreen() {
       selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
     }`;
 
-    console.log('Selected Evaluation:', selectedEvaluation);
-    console.log('Has HTML Report:', !!selectedEvaluation.html_report);
-    console.log('HTML Report Length:', selectedEvaluation.html_report?.length || 0);
+    logger.info('Selected Evaluation:', selectedEvaluation);
+    logger.info('Has HTML Report:', !!selectedEvaluation.html_report);
+    logger.info('HTML Report Length:', selectedEvaluation.html_report?.length || 0);
 
     // NEW APPROACH: Try HTML report first (pre-generated from Make.com)
     if (selectedEvaluation.html_report && selectedEvaluation.html_report.trim().length > 0) {
-      console.log('Using HTML Report (NEW)');
+      logger.info('Using HTML Report (NEW)');
       return (
         <Modal
           animationType="slide"
@@ -452,7 +452,7 @@ export default function ProgressScreen() {
                           selectedEvaluation.evaluation ||
                           '';
 
-    console.log('Evaluation fields:', {
+    logger.info('Evaluation fields:', {
       hasPatientEval: !!selectedEvaluation.patient_evaluation,
       hasExaminerEval: !!selectedEvaluation.examiner_evaluation,
       hasEvaluation: !!selectedEvaluation.evaluation,
@@ -463,7 +463,7 @@ export default function ProgressScreen() {
 
     // If no evaluation data at all, show error
     if (!evaluationText || evaluationText.trim().length === 0) {
-      console.error('No evaluation data found in selectedEvaluation');
+      logger.error('No evaluation data found in selectedEvaluation');
       return (
         <Modal
           animationType="slide"
@@ -495,7 +495,7 @@ export default function ProgressScreen() {
     // OLD EVALUATION: Show legacy warning (suggest re-running simulation for new format)
     // Uncomment this block to show warning for old evaluations
     /*
-    console.log('Using Legacy Text Evaluation (OLD) - showing warning');
+    logger.info('Using Legacy Text Evaluation (OLD) - showing warning');
     return (
       <Modal
         animationType="slide"
@@ -516,7 +516,7 @@ export default function ProgressScreen() {
 
     // FALLBACK: Use old parsing method for backward compatibility
     try {
-      console.log('Using Legacy Text Evaluation (OLD) - parsing with old method');
+      logger.info('Using Legacy Text Evaluation (OLD) - parsing with old method');
 
       // Parse the evaluation text into structured data
       const parsedEvaluation = parseEvaluation(
@@ -525,7 +525,7 @@ export default function ProgressScreen() {
         selectedEvaluation.created_at
       );
 
-      console.log('Parsed Evaluation:', parsedEvaluation);
+      logger.info('Parsed Evaluation:', parsedEvaluation);
 
       // Override the evaluation type with the actual exam type
       parsedEvaluation.evaluationType = evaluationType;
@@ -549,7 +549,7 @@ export default function ProgressScreen() {
         </Modal>
       );
     } catch (error) {
-      console.error('Error parsing evaluation:', error);
+      logger.error('Error parsing evaluation:', error);
 
       // Fallback to raw text if parsing fails
       return (

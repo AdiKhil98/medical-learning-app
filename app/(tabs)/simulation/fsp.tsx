@@ -20,6 +20,7 @@ import {
   USAGE_THRESHOLD_SECONDS,
   WARNING_5_MIN_REMAINING
 } from '@/constants/simulationConstants';
+import { logger } from '@/utils/logger';
 
 export default function FSPSimulationScreen() {
   const router = useRouter();
@@ -78,13 +79,13 @@ export default function FSPSimulationScreen() {
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
   // Reset optimistic count on page mount/refresh to show actual backend data
   useEffect(() => {
-    console.log('[Mount] Resetting optimistic count to show actual backend data...');
+    logger.info('[Mount] Resetting optimistic count to show actual backend data...');
     resetOptimisticCount();
   }, [resetOptimisticCount]);
 
   // Monitor subscription status for lock state
   useEffect(() => {
-    console.log('[Lock Monitor] FSP: useEffect triggered', {
+    logger.info('[Lock Monitor] FSP: useEffect triggered', {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
@@ -93,7 +94,7 @@ export default function FSPSimulationScreen() {
 
     if (subscriptionStatus) {
       const shouldLock = !subscriptionStatus.canUseSimulation;
-      console.log('[Lock Monitor] FSP: Subscription status changed:', {
+      logger.info('[Lock Monitor] FSP: Subscription status changed:', {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
@@ -101,17 +102,17 @@ export default function FSPSimulationScreen() {
       });
 
       if (shouldLock !== isSimulationLocked) {
-        console.log(`[Lock Monitor] FSP: 🔒 Setting lock state to: ${shouldLock}`);
+        logger.info(`[Lock Monitor] FSP: 🔒 Setting lock state to: ${shouldLock}`);
         setIsSimulationLocked(shouldLock);
       }
 
       // If locked and timer is active, show warning
       if (shouldLock && timerActive) {
-        console.warn('[Lock Monitor] FSP: ⚠️ User ran out of simulations during active session!');
+        logger.warn('[Lock Monitor] FSP: ⚠️ User ran out of simulations during active session!');
         // Note: Don't stop the current simulation, just prevent new ones
       }
     } else {
-      console.warn('[Lock Monitor] FSP: No subscription status available yet');
+      logger.warn('[Lock Monitor] FSP: No subscription status available yet');
     }
   }, [subscriptionStatus, timerActive, isSimulationLocked]);
 
@@ -131,23 +132,23 @@ export default function FSPSimulationScreen() {
       // PREVENT DOUBLE INITIALIZATION
       // ============================================
       if (hasInitializedRef.current) {
-        console.log(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        logger.info(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
         return;
       }
 
       // ============================================
       // STEP 1: VALIDATE USER DATA
       // ============================================
-      console.log(`🔐 [${timestamp}] Step 1: Validating user data...`);
+      logger.info(`🔐 [${timestamp}] Step 1: Validating user data...`);
 
       if (typeof window === 'undefined') {
-        console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
+        logger.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
         return;
       }
 
       if (!user) {
-        console.error(`❌ [${timestamp}] No user object found`);
+        logger.error(`❌ [${timestamp}] No user object found`);
         setInitializationError('User not authenticated');
         Alert.alert(
           'Authentifizierungsfehler',
@@ -158,7 +159,7 @@ export default function FSPSimulationScreen() {
       }
 
       if (!user.id) {
-        console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
+        logger.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
         Alert.alert(
           'Authentifizierungsfehler',
@@ -168,18 +169,18 @@ export default function FSPSimulationScreen() {
         return;
       }
 
-      console.log(`✅ [${timestamp}] User validated - ID: ${user.id}`);
+      logger.info(`✅ [${timestamp}] User validated - ID: ${user.id}`);
 
       // ============================================
       // STEP 2: CHECK ACCESS PERMISSIONS
       // ============================================
-      console.log(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
+      logger.info(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
 
       try {
         const accessCheck = await checkAccess();
 
         if (!accessCheck) {
-          console.error(`❌ [${timestamp}] Access check returned null/undefined`);
+          logger.error(`❌ [${timestamp}] Access check returned null/undefined`);
           setInitializationError('Failed to verify access permissions');
           Alert.alert(
             'Zugriffsfehler',
@@ -189,22 +190,22 @@ export default function FSPSimulationScreen() {
           return;
         }
 
-        console.log(`📊 [${timestamp}] Access check result:`, {
+        logger.info(`📊 [${timestamp}] Access check result:`, {
           canUse: accessCheck.canUseSimulation,
           remaining: accessCheck.remainingSimulations,
           limit: accessCheck.simulationLimit
         });
 
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-          console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
+          logger.info(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           setInitializationError('No simulations remaining');
           return; // Do NOT initialize widget
         }
 
-        console.log(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
+        logger.info(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
 
       } catch (accessError) {
-        console.error(`❌ [${timestamp}] Error checking access:`, accessError);
+        logger.error(`❌ [${timestamp}] Error checking access:`, accessError);
         setInitializationError('Access check failed');
         Alert.alert(
           'Zugriffsfehler',
@@ -217,7 +218,7 @@ export default function FSPSimulationScreen() {
       // ============================================
       // STEP 3: INITIALIZE WITH RETRY LOGIC
       // ============================================
-      console.log(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
+      logger.info(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
 
       await initializeWithRetry(user.id, timestamp);
     };
@@ -236,23 +237,23 @@ export default function FSPSimulationScreen() {
       const timestamp = new Date().toISOString();
 
       try {
-        console.log(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
+        logger.info(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
         setIsInitializing(true);
         setInitializationError(null);
         initializationAttemptsRef.current = attempt;
 
         // Stop global cleanup to allow widget
-        console.log(`🛑 [${timestamp}] Stopping global Voiceflow cleanup`);
+        logger.info(`🛑 [${timestamp}] Stopping global Voiceflow cleanup`);
         stopGlobalVoiceflowCleanup();
 
         // ============================================
         // STEP 3A: GENERATE SESSION TOKEN
         // ============================================
-        console.log(`🔑 [${timestamp}] Step 3a: Generating session token before Voiceflow initialization`);
+        logger.info(`🔑 [${timestamp}] Step 3a: Generating session token before Voiceflow initialization`);
 
         const result = await simulationTracker.startSimulation('fsp');
 
-        console.log(`📋 [${timestamp}] Session token generation result:`, {
+        logger.info(`📋 [${timestamp}] Session token generation result:`, {
           success: result.success,
           hasToken: !!result.sessionToken,
           error: result.error || 'none'
@@ -262,7 +263,7 @@ export default function FSPSimulationScreen() {
           throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
         }
 
-        console.log(`✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`);
+        logger.info(`✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`);
 
         setSessionToken(result.sessionToken);
         sessionTokenRef.current = result.sessionToken;
@@ -270,8 +271,8 @@ export default function FSPSimulationScreen() {
         // ============================================
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
         // ============================================
-        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
-        console.log(`📧 [${timestamp}] User object:`, {
+        logger.info(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
+        logger.info(`📧 [${timestamp}] User object:`, {
           id: user.id,
           email: user.email,
           has_email: !!user.email,
@@ -281,13 +282,13 @@ export default function FSPSimulationScreen() {
         // FALLBACK: If email is not in user object, try to get it from Supabase session
         let userEmail = user.email;
         if (!userEmail) {
-          console.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
+          logger.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.email) {
             userEmail = session.user.email;
-            console.log(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
+            logger.info(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
           } else {
-            console.error(`❌ [${timestamp}] Could not retrieve email from session!`);
+            logger.error(`❌ [${timestamp}] Could not retrieve email from session!`);
           }
         }
 
@@ -298,16 +299,16 @@ export default function FSPSimulationScreen() {
         }
 
         voiceflowController.current = controller;
-        console.log(`✅ [${timestamp}] Voiceflow controller created successfully`);
+        logger.info(`✅ [${timestamp}] Voiceflow controller created successfully`);
 
         // ============================================
         // STEP 3C: INITIALIZE VOICEFLOW WITH PERSISTENT IDS
         // ============================================
-        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
+        logger.info(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
 
         // Get persistent IDs that will be used
         const persistentIds = controller.getIds();
-        console.log(`📤 [${timestamp}] Persistent IDs:`, {
+        logger.info(`📤 [${timestamp}] Persistent IDs:`, {
           user_id: persistentIds.user_id,
           session_id: persistentIds.session_id
         });
@@ -318,12 +319,12 @@ export default function FSPSimulationScreen() {
           throw new Error('Voiceflow initialization returned false');
         }
 
-        console.log(`✅ [${timestamp}] Voiceflow initialized successfully with user credentials`);
+        logger.info(`✅ [${timestamp}] Voiceflow initialized successfully with user credentials`);
 
         // ============================================
         // STEP 3D: VERIFY VOICEFLOW API AVAILABILITY
         // ============================================
-        console.log(`🔍 [${timestamp}] Step 3d: Verifying Voiceflow API availability`);
+        logger.info(`🔍 [${timestamp}] Step 3d: Verifying Voiceflow API availability`);
 
         if (!window.voiceflow) {
           throw new Error('Voiceflow API not available on window object after initialization');
@@ -333,42 +334,42 @@ export default function FSPSimulationScreen() {
           throw new Error('Voiceflow chat API not available after initialization');
         }
 
-        console.log(`✅ [${timestamp}] Voiceflow API verified and available`);
+        logger.info(`✅ [${timestamp}] Voiceflow API verified and available`);
 
         // ============================================
         // STEP 3E: MAKE WIDGET VISIBLE
         // ============================================
-        console.log(`👁️ [${timestamp}] Step 3e: Making widget visible`);
+        logger.info(`👁️ [${timestamp}] Step 3e: Making widget visible`);
 
         setTimeout(() => {
           try {
             if (window.voiceflow?.chat) {
               window.voiceflow.chat.show();
-              console.log(`✅ [${timestamp}] Widget made visible successfully`);
+              logger.info(`✅ [${timestamp}] Widget made visible successfully`);
             } else {
-              console.warn(`⚠️ [${timestamp}] Voiceflow chat API not available during visibility check`);
+              logger.warn(`⚠️ [${timestamp}] Voiceflow chat API not available during visibility check`);
             }
           } catch (visibilityError) {
-            console.error(`❌ [${timestamp}] Error making widget visible:`, visibilityError);
+            logger.error(`❌ [${timestamp}] Error making widget visible:`, visibilityError);
           }
         }, 1000);
 
         // ============================================
         // STEP 3F: SET UP CONVERSATION MONITORING
         // ============================================
-        console.log(`📡 [${timestamp}] Step 3f: Setting up conversation monitoring`);
+        logger.info(`📡 [${timestamp}] Step 3f: Setting up conversation monitoring`);
         setupConversationMonitoring();
-        console.log(`✅ [${timestamp}] Conversation monitoring initialized`);
+        logger.info(`✅ [${timestamp}] Conversation monitoring initialized`);
 
         // ============================================
         // STEP 3G: ADD VOICEFLOW MESSAGE LISTENER
         // ============================================
-        console.log(`🎧 [${timestamp}] Step 3g: Adding Voiceflow message event listener`);
+        logger.info(`🎧 [${timestamp}] Step 3g: Adding Voiceflow message event listener`);
 
         if (window.voiceflow?.chat) {
           // Listen for Voiceflow events (if available in the API)
           const voiceflowEventListener = (event: any) => {
-            console.log(`💬 [${new Date().toISOString()}] Voiceflow event received:`, {
+            logger.info(`💬 [${new Date().toISOString()}] Voiceflow event received:`, {
               type: event.type,
               timestamp: new Date().toISOString(),
               hasUserData: !!event.user_id,
@@ -380,24 +381,24 @@ export default function FSPSimulationScreen() {
           try {
             if (typeof window.voiceflow.chat.on === 'function') {
               window.voiceflow.chat.on('message', voiceflowEventListener);
-              console.log(`✅ [${timestamp}] Voiceflow message listener added`);
+              logger.info(`✅ [${timestamp}] Voiceflow message listener added`);
             } else {
-              console.log(`ℹ️ [${timestamp}] Voiceflow event listener API not available`);
+              logger.info(`ℹ️ [${timestamp}] Voiceflow event listener API not available`);
             }
           } catch (listenerError) {
-            console.warn(`⚠️ [${timestamp}] Could not add Voiceflow event listener:`, listenerError);
+            logger.warn(`⚠️ [${timestamp}] Could not add Voiceflow event listener:`, listenerError);
           }
         }
 
         // ============================================
         // SUCCESS - RESET ERROR STATE
         // ============================================
-        console.log(`🎉 [${timestamp}] ========================================`);
-        console.log(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
-        console.log(`🎉 [${timestamp}] User ID: ${userId}`);
-        console.log(`🎉 [${timestamp}] Session Token: ${result.sessionToken.substring(0, 8)}...`);
-        console.log(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
-        console.log(`🎉 [${timestamp}] ========================================`);
+        logger.info(`🎉 [${timestamp}] ========================================`);
+        logger.info(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
+        logger.info(`🎉 [${timestamp}] User ID: ${userId}`);
+        logger.info(`🎉 [${timestamp}] Session Token: ${result.sessionToken.substring(0, 8)}...`);
+        logger.info(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
+        logger.info(`🎉 [${timestamp}] ========================================`);
 
         // Mark as successfully initialized to prevent re-initialization
         hasInitializedRef.current = true;
@@ -410,14 +411,14 @@ export default function FSPSimulationScreen() {
         const timestamp = new Date().toISOString();
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        console.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
+        logger.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
           error: errorMessage,
           stack: error instanceof Error ? error.stack : undefined
         });
 
         // If this was the last attempt, show error to user
         if (attempt === maxRetryAttempts) {
-          console.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
+          logger.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
@@ -441,7 +442,7 @@ export default function FSPSimulationScreen() {
 
         // Not the last attempt - calculate backoff delay and retry
         const backoffDelay = attempt * 1000; // 1s, 2s, 3s
-        console.log(`⏳ [${timestamp}] Retrying in ${backoffDelay}ms...`);
+        logger.info(`⏳ [${timestamp}] Retrying in ${backoffDelay}ms...`);
 
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
       }
@@ -450,7 +451,7 @@ export default function FSPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    console.log('🔍 FSP: Setting up passive microphone detection...');
+    logger.info('🔍 FSP: Setting up passive microphone detection...');
 
     // MEMORY LEAK FIX: Track listeners for cleanup
     const trackListeners: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
@@ -460,7 +461,7 @@ export default function FSPSimulationScreen() {
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
       navigator.mediaDevices.getUserMedia = async function(constraints) {
-        console.log('🎤 FSP: MediaStream requested with constraints:', constraints);
+        logger.info('🎤 FSP: MediaStream requested with constraints:', constraints);
 
         if (constraints?.audio) {
           try {
@@ -468,25 +469,25 @@ export default function FSPSimulationScreen() {
 
             // Start timer when audio stream is granted
             if (!timerActiveRef.current) {
-              console.log('🎯 FSP: Audio stream granted - voice call starting!');
-              console.log('⏰ FSP: Starting 20-minute timer due to voice call');
+              logger.info('🎯 FSP: Audio stream granted - voice call starting!');
+              logger.info('⏰ FSP: Starting 20-minute timer due to voice call');
               startSimulationTimer();
             } else {
-              console.log('⏰ FSP: Timer already active, not starting again');
+              logger.info('⏰ FSP: Timer already active, not starting again');
             }
 
             // Monitor stream tracks for when they end
             const audioTracks = stream.getAudioTracks();
             audioTracks.forEach((track, index) => {
-              console.log(`🎤 FSP: Monitoring audio track ${index + 1}`);
+              logger.info(`🎤 FSP: Monitoring audio track ${index + 1}`);
 
               // MEMORY LEAK FIX: Store handler reference for cleanup
               const endedHandler = () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} ended - AUTOMATICALLY STOPPING TIMER`);
+                logger.info(`🔇 FSP: Audio track ${index + 1} ended - AUTOMATICALLY STOPPING TIMER`);
 
                 // Automatically stop the timer when the call ends
                 if (timerActiveRef.current) {
-                  console.log(`⏹️ FSP: Call ended naturally - stopping simulation timer automatically`);
+                  logger.info(`⏹️ FSP: Call ended naturally - stopping simulation timer automatically`);
                   stopSimulationTimer('completed');
                 }
               };
@@ -497,12 +498,12 @@ export default function FSPSimulationScreen() {
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
               track.stop = () => {
-                console.log(`🔇 FSP: Audio track ${index + 1} stopped manually - AUTOMATICALLY STOPPING TIMER`);
+                logger.info(`🔇 FSP: Audio track ${index + 1} stopped manually - AUTOMATICALLY STOPPING TIMER`);
                 originalStop();
 
                 // Automatically stop the timer when the call ends
                 if (timerActiveRef.current) {
-                  console.log(`⏹️ FSP: Call ended - stopping simulation timer automatically`);
+                  logger.info(`⏹️ FSP: Call ended - stopping simulation timer automatically`);
                   stopSimulationTimer('completed');
                 }
               };
@@ -510,7 +511,7 @@ export default function FSPSimulationScreen() {
 
             return stream;
           } catch (error) {
-            console.log('❌ FSP: Failed to get audio stream:', error);
+            logger.info('❌ FSP: Failed to get audio stream:', error);
             throw error;
           }
         }
@@ -525,7 +526,7 @@ export default function FSPSimulationScreen() {
       
       // Only trigger on voiceflow-chat container clicks
       if (target.closest('#voiceflow-chat') && !timerActive) {
-        console.log('🎯 FSP: Click detected on Voiceflow widget - waiting for voice call...');
+        logger.info('🎯 FSP: Click detected on Voiceflow widget - waiting for voice call...');
         // Don't start timer immediately, wait for actual mic access
       }
     };
@@ -539,22 +540,22 @@ export default function FSPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    console.log('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+    logger.info('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
 
     // CRITICAL: Atomic lock to prevent race conditions
     // Check and set lock in one operation BEFORE any async operations
     if (timerStartLockRef.current) {
-      console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
+      logger.info('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
       return;
     }
     timerStartLockRef.current = true; // Set lock immediately
 
     try {
       // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
-      console.log('[Timer] Attempting to start timer...');
+      logger.info('[Timer] Attempting to start timer...');
       const accessCheck = await checkAccess();
 
-    console.log('[Timer] Access check:', {
+    logger.info('[Timer] Access check:', {
       canStart: accessCheck?.canUseSimulation,
       remaining: accessCheck?.remainingSimulations,
       total: accessCheck?.simulationLimit
@@ -562,8 +563,8 @@ export default function FSPSimulationScreen() {
 
     // CRITICAL: Block if access is denied
     if (!accessCheck || !accessCheck.canUseSimulation) {
-      console.error('[Timer] ❌ ACCESS DENIED - Cannot start simulation');
-      console.error('[Timer] Reason:', accessCheck?.message || 'Unknown');
+      logger.error('[Timer] ❌ ACCESS DENIED - Cannot start simulation');
+      logger.error('[Timer] Reason:', accessCheck?.message || 'Unknown');
 
       // Show upgrade modal
       setShowUpgradeModal(true);
@@ -585,39 +586,39 @@ export default function FSPSimulationScreen() {
     }
 
     // Access granted - proceed with timer
-    console.log('[Timer] ✅ Access GRANTED - Starting timer...');
+    logger.info('[Timer] ✅ Access GRANTED - Starting timer...');
 
     // CRITICAL: Check if session token already exists (generated during initialization)
     if (!sessionTokenRef.current) {
-      console.error('❌ FSP: No session token found - this should have been generated during initialization');
+      logger.error('❌ FSP: No session token found - this should have been generated during initialization');
       return;
     }
 
-    console.log('✅ FSP: Using existing session token from initialization:', sessionTokenRef.current);
+    logger.info('✅ FSP: Using existing session token from initialization:', sessionTokenRef.current);
 
     // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
     // This prevents false positives from stale state
     if (timerActiveRef.current && timerInterval.current !== null) {
-      console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+      logger.info('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
       return;
     }
 
     // If ref is true but interval is null, we have stale state - reset it
     if (timerActiveRef.current && timerInterval.current === null) {
-      console.warn('⚠️ FSP: Detected stale timer state, resetting...');
+      logger.warn('⚠️ FSP: Detected stale timer state, resetting...');
       timerActiveRef.current = false;
       setTimerActive(false);
     }
 
-    console.log('⏰ FSP: Starting 20-minute simulation timer');
-    console.log('🔍 FSP DEBUG: Current timerActive state:', timerActive);
-    console.log('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
-    console.log('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
+    logger.info('⏰ FSP: Starting 20-minute simulation timer');
+    logger.info('🔍 FSP DEBUG: Current timerActive state:', timerActive);
+    logger.info('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+    logger.info('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
 
     // CRITICAL FIX: Activate timer BEFORE async database calls
     // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
     // Force state update immediately with flushSync-like behavior
-    console.log('🔍 FSP DEBUG: About to call setTimerActive(true)');
+    logger.info('🔍 FSP DEBUG: About to call setTimerActive(true)');
 
     // Set ref FIRST to prevent race conditions
     timerActiveRef.current = true;
@@ -627,7 +628,7 @@ export default function FSPSimulationScreen() {
     setTimerActive(true);
     setTimeRemaining(20 * 60);
 
-    console.log('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
+    logger.info('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
     // Calculate absolute end time for the timer
     const startTime = Date.now();
@@ -636,17 +637,17 @@ export default function FSPSimulationScreen() {
     setTimerEndTime(endTime);
     timerEndTimeRef.current = endTime;
 
-    console.log('✅ FSP: Timer activated - using existing session token from initialization');
+    logger.info('✅ FSP: Timer activated - using existing session token from initialization');
 
     // Session token already created during initialization - just use it
     const existingSessionToken = sessionTokenRef.current;
 
     if (!existingSessionToken) {
-      console.error('❌ FSP: No session token found - this should not happen as token is created during initialization');
+      logger.error('❌ FSP: No session token found - this should not happen as token is created during initialization');
       return;
     }
 
-    console.log(`🔑 FSP: Using session token from initialization: ${existingSessionToken.substring(0, 8)}...`);
+    logger.info(`🔑 FSP: Using session token from initialization: ${existingSessionToken.substring(0, 8)}...`);
 
     // Initialize usage tracking state
     setUsageMarked(false);
@@ -670,14 +671,14 @@ export default function FSPSimulationScreen() {
         await SecureStore.setItemAsync('sim_user_id_fsp', user.id);
       }
 
-      console.log('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
+      logger.info('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
     } catch (error) {
-      console.error('❌ FSP: Error saving simulation state:', error);
+      logger.error('❌ FSP: Error saving simulation state:', error);
     }
 
     // NOTE: Heartbeat monitoring removed - deprecated/no-op in new system
 
-    console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
+    logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
     // Use 1000ms interval for mobile compatibility
     timerInterval.current = setInterval(() => {
       // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
@@ -694,8 +695,8 @@ export default function FSPSimulationScreen() {
         previousTimeRef.current = 0;
         clearInterval(timerInterval.current!);
         timerInterval.current = null;
-        console.log('⏰ FSP: Timer finished - 20 minutes elapsed');
-        console.log('🔚 FSP: Initiating graceful end sequence');
+        logger.info('⏰ FSP: Timer finished - 20 minutes elapsed');
+        logger.info('🔚 FSP: Initiating graceful end sequence');
         initiateGracefulEnd();
         return;
       } else {
@@ -709,9 +710,9 @@ export default function FSPSimulationScreen() {
       const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
       if (prev > fiveMinutesRemaining && remainingSeconds <= fiveMinutesRemaining && !usageMarkedRef.current && currentSessionToken) {
         const clientElapsed = (20 * 60) - remainingSeconds;
-        console.log('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
-        console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-        console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
+        logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
+        logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+        logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
         markSimulationAsUsed(clientElapsed);
       }
 
@@ -733,10 +734,10 @@ export default function FSPSimulationScreen() {
         }
       }, 1000); // Check every 1000ms (1 second) for mobile compatibility
     } catch (error) {
-      console.error('❌ FSP: Error in startSimulationTimer:', error);
+      logger.error('❌ FSP: Error in startSimulationTimer:', error);
       // CRITICAL: Rollback optimistic counter deduction on error
       resetOptimisticCount();
-      console.log('🔄 Rolled back optimistic counter deduction due to error');
+      logger.info('🔄 Rolled back optimistic counter deduction due to error');
 
       // Reset timer state on error
       timerActiveRef.current = false;
@@ -749,7 +750,7 @@ export default function FSPSimulationScreen() {
     } finally {
       // Always release the lock, even if function throws or returns early
       timerStartLockRef.current = false;
-      console.log('🔓 Timer start lock released');
+      logger.info('🔓 Timer start lock released');
     }
   };
 
@@ -758,30 +759,30 @@ export default function FSPSimulationScreen() {
     const token = sessionTokenRef.current; // Use ref instead of state
     if (!token || usageMarkedRef.current) return;
 
-    console.log('📊 FSP: Marking simulation as used at 5-minute mark');
-    console.log('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);
-    console.log('🔍 DEBUG: Using session token:', token);
+    logger.info('📊 FSP: Marking simulation as used at 5-minute mark');
+    logger.info('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);
+    logger.info('🔍 DEBUG: Using session token:', token);
 
     try {
       const result = await simulationTracker.markSimulationUsed(token, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
-        console.log('✅ FSP: Simulation usage recorded in database with server validation');
-        console.log('✅ FSP: Counter automatically incremented by database function');
+        logger.info('✅ FSP: Simulation usage recorded in database with server validation');
+        logger.info('✅ FSP: Counter automatically incremented by database function');
 
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
         // already increments the counter in the database. Calling recordUsage() would
         // result in double-counting (incrementing the counter twice).
       } else{
-        console.error('❌ FSP: Failed to mark simulation as used:', result.error);
+        logger.error('❌ FSP: Failed to mark simulation as used:', result.error);
         // If server-side validation fails, this could be a security issue
         if (result.error?.includes('Server validation')) {
-          console.warn('🛡️ SECURITY: Server-side validation failed - possible time manipulation');
+          logger.warn('🛡️ SECURITY: Server-side validation failed - possible time manipulation');
         }
       }
     } catch (error) {
-      console.error('❌ FSP: Error marking simulation as used:', error);
+      logger.error('❌ FSP: Error marking simulation as used:', error);
     }
   };
 
@@ -790,7 +791,7 @@ export default function FSPSimulationScreen() {
     try {
       // Method 1: Try to close the Voiceflow widget
       if (window.voiceflow?.chat) {
-        console.log('🔚 FSP: Attempting to close Voiceflow widget');
+        logger.info('🔚 FSP: Attempting to close Voiceflow widget');
         window.voiceflow.chat.close && window.voiceflow.chat.close();
         window.voiceflow.chat.hide && window.voiceflow.chat.hide();
       }
@@ -798,7 +799,7 @@ export default function FSPSimulationScreen() {
       // Method 2: Try to stop any active media streams
       navigator.mediaDevices?.getUserMedia({ audio: true })
         .then((stream) => {
-          console.log('🔚 FSP: Stopping active audio streams');
+          logger.info('🔚 FSP: Stopping active audio streams');
           stream.getTracks().forEach(track => track.stop());
         })
         .catch(() => {
@@ -811,7 +812,7 @@ export default function FSPSimulationScreen() {
         for (const button of endButtons) {
           const buttonText = button.textContent?.toLowerCase();
           if (buttonText?.includes('end') || buttonText?.includes('hang') || buttonText?.includes('stop')) {
-            console.log('🔚 FSP: Found potential end call button, clicking it');
+            logger.info('🔚 FSP: Found potential end call button, clicking it');
             button.click();
             break;
           }
@@ -819,7 +820,7 @@ export default function FSPSimulationScreen() {
       }, 500);
 
     } catch (error) {
-      console.error('❌ FSP: Error ending Voiceflow conversation:', error);
+      logger.error('❌ FSP: Error ending Voiceflow conversation:', error);
     }
   };
 
@@ -827,7 +828,7 @@ export default function FSPSimulationScreen() {
 
   // Stop the simulation timer
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
-    console.log('🛑 FSP: Stopping simulation timer');
+    logger.info('🛑 FSP: Stopping simulation timer');
 
     const elapsedSeconds = (20 * 60) - timeRemaining;
 
@@ -837,10 +838,10 @@ export default function FSPSimulationScreen() {
       try {
         if (sessionToken) {
           await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds);
-          console.log(`📊 FSP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
+          logger.info(`📊 FSP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
         }
       } catch (error) {
-        console.error('❌ FSP: Error updating session during graceful shutdown:', error);
+        logger.error('❌ FSP: Error updating session during graceful shutdown:', error);
       }
 
       // Reset state
@@ -857,14 +858,14 @@ export default function FSPSimulationScreen() {
       // If aborted, check if it was before 5-minute mark
       if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
         finalStatus = 'incomplete';
-        console.log('📊 FSP: Marking as incomplete - ended before 5-minute mark');
+        logger.info('📊 FSP: Marking as incomplete - ended before 5-minute mark');
 
         // Reset optimistic counter since simulation ended before being charged
-        console.log('🔄 FSP: Resetting optimistic count - simulation ended before being charged');
+        logger.info('🔄 FSP: Resetting optimistic count - simulation ended before being charged');
         resetOptimisticCount();
       } else {
         finalStatus = 'aborted';
-        console.log('📊 FSP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
+        logger.info('📊 FSP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
       }
     }
 
@@ -881,7 +882,7 @@ export default function FSPSimulationScreen() {
     // After a short delay, reinitialize the conversation monitoring for restart
     setTimeout(() => {
       if (voiceflowController.current) {
-        console.log('🔄 FSP: Reinitializing conversation monitoring after stop');
+        logger.info('🔄 FSP: Reinitializing conversation monitoring after stop');
         setupConversationMonitoring();
       }
     }, 1000);
@@ -889,7 +890,7 @@ export default function FSPSimulationScreen() {
 
   // Initiate graceful end sequence
   const initiateGracefulEnd = () => {
-    console.log('🎬 FSP: Starting graceful end sequence');
+    logger.info('🎬 FSP: Starting graceful end sequence');
 
     // Prevent timer from continuing
     setIsGracefulShutdown(true);
@@ -928,7 +929,7 @@ export default function FSPSimulationScreen() {
 
   // Execute simulation end
   const executeSimulationEnd = async () => {
-    console.log('🏁 FSP: Executing simulation end');
+    logger.info('🏁 FSP: Executing simulation end');
 
     // Hide final warning modal
     setShowFinalWarningModal(false);
@@ -954,7 +955,7 @@ export default function FSPSimulationScreen() {
 
   // Show completion modal
   const showCompletionModal = () => {
-    console.log('🎉 FSP: Showing completion modal');
+    logger.info('🎉 FSP: Showing completion modal');
     setShowSimulationCompleted(true);
   };
 
@@ -972,12 +973,12 @@ export default function FSPSimulationScreen() {
 
   // Early completion functions
   const initiateEarlyCompletion = () => {
-    console.log('🏁 FSP: User initiated early completion');
+    logger.info('🏁 FSP: User initiated early completion');
     setShowEarlyCompletionModal(true);
   };
 
   const confirmEarlyCompletion = () => {
-    console.log('✅ FSP: User confirmed early completion');
+    logger.info('✅ FSP: User confirmed early completion');
     setShowEarlyCompletionModal(false);
 
     // Calculate elapsed time
@@ -988,13 +989,13 @@ export default function FSPSimulationScreen() {
   };
 
   const cancelEarlyCompletion = () => {
-    console.log('↩️ FSP: User cancelled early completion');
+    logger.info('↩️ FSP: User cancelled early completion');
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
   };
 
   const executeEarlyCompletion = async (elapsedSeconds: number) => {
-    console.log('🏁 FSP: Executing early completion');
+    logger.info('🏁 FSP: Executing early completion');
 
     // Set graceful shutdown flag
     setIsGracefulShutdown(true);
@@ -1023,17 +1024,17 @@ export default function FSPSimulationScreen() {
             completion_reason: earlyCompletionReason || 'user_finished_early'
           }
         );
-        console.log(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
+        logger.info(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
         // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
         if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
-          console.log('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
+          logger.info('🔄 FSP: Early completion before 5-minute mark - resetting optimistic count');
           resetOptimisticCount();
         } else if (elapsedSeconds >= USAGE_THRESHOLD_SECONDS) {
-          console.log('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
+          logger.info('✅ FSP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
         }
       } catch (error) {
-        console.error('❌ FSP: Error updating early completion status:', error);
+        logger.error('❌ FSP: Error updating early completion status:', error);
       }
     }
 
@@ -1049,13 +1050,13 @@ export default function FSPSimulationScreen() {
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
-      console.log('🧹 FSP: Component unmount cleanup started');
+      logger.info('🧹 FSP: Component unmount cleanup started');
 
       // Determine final status based on whether usage was recorded
       const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
       const elapsedSeconds = (20 * 60) - timeRemaining;
 
-      console.log(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+      logger.info(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
 
       // Use centralized cleanup (async but don't wait for it in cleanup)
       if (timerActiveRef.current && sessionTokenRef.current) {
@@ -1064,9 +1065,9 @@ export default function FSPSimulationScreen() {
           elapsedSeconds: elapsedSeconds,
           skipDatabaseUpdate: false
         }).then(() => {
-          console.log('✅ FSP: Cleanup completed successfully');
+          logger.info('✅ FSP: Cleanup completed successfully');
         }).catch(error => {
-          console.error('❌ FSP: Error during cleanup:', error);
+          logger.error('❌ FSP: Error during cleanup:', error);
         });
       }
 
@@ -1082,9 +1083,9 @@ export default function FSPSimulationScreen() {
         trackListeners.forEach(({ track, handler }: { track: MediaStreamTrack; handler: () => void }) => {
           try {
             track.removeEventListener('ended', handler);
-            console.log('🧹 FSP: Removed track event listener');
+            logger.info('🧹 FSP: Removed track event listener');
           } catch (error) {
-            console.warn('⚠️ FSP: Error removing track listener:', error);
+            logger.warn('⚠️ FSP: Error removing track listener:', error);
           }
         });
         trackListeners.length = 0; // Clear the array
@@ -1099,11 +1100,11 @@ export default function FSPSimulationScreen() {
 
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
-        console.log('🌍 FSP: Running global Voiceflow cleanup with force=true');
+        logger.info('🌍 FSP: Running global Voiceflow cleanup with force=true');
         globalVoiceflowCleanup(true);
       }
 
-      console.log('✅ FSP: Component unmount cleanup initiated');
+      logger.info('✅ FSP: Component unmount cleanup initiated');
     };
   }, []);
 
@@ -1122,17 +1123,17 @@ export default function FSPSimulationScreen() {
     const handleVisibilityChange = async () => {
       // When tab becomes visible again, re-validate access
       if (document.visibilityState === 'visible') {
-        console.log('👁️ FSP: Tab became visible, re-validating access...');
+        logger.info('👁️ FSP: Tab became visible, re-validating access...');
         const accessCheck = await checkAccess();
 
         if (!accessCheck.canUseSimulation && !timerActive) {
-          console.log('🔒 FSP: Access validation failed - locking simulation');
+          logger.info('🔒 FSP: Access validation failed - locking simulation');
           setIsSimulationLocked(true);
         }
       }
 
       if (timerActive && (document.visibilityState === 'hidden' || document.hidden)) {
-        console.log('🚫 FSP: Attempted to leave page during simulation - BLOCKED');
+        logger.info('🚫 FSP: Attempted to leave page during simulation - BLOCKED');
         // For mobile apps, prevent backgrounding during simulation
         if (Platform.OS !== 'web') {
           Alert.alert(
@@ -1148,7 +1149,7 @@ export default function FSPSimulationScreen() {
     // Handle route changes - BLOCK during active simulation
     const handlePopState = (e: PopStateEvent) => {
       if (timerActive) {
-        console.log('🚫 FSP: Navigation blocked - simulation in progress');
+        logger.info('🚫 FSP: Navigation blocked - simulation in progress');
         e.preventDefault();
         // Push the current state back to prevent navigation
         window.history.pushState(null, '', window.location.href);
@@ -1185,7 +1186,7 @@ export default function FSPSimulationScreen() {
   // Immediate cleanup function for navigation events
   const performImmediateCleanup = () => {
     try {
-      console.log('⚡ FSP: Performing immediate cleanup');
+      logger.info('⚡ FSP: Performing immediate cleanup');
       
       // Immediately hide and destroy Voiceflow widget
       if (window.voiceflow?.chat) {
@@ -1207,7 +1208,7 @@ export default function FSPSimulationScreen() {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
           element.remove();
-          console.log(`🗑️ FSP: Immediately removed element: ${selector}`);
+          logger.info(`🗑️ FSP: Immediately removed element: ${selector}`);
         });
       });
       
@@ -1216,26 +1217,26 @@ export default function FSPSimulationScreen() {
         .then(stream => {
           stream.getTracks().forEach(track => {
             track.stop();
-            console.log('🔇 FSP: Stopped audio track during immediate cleanup');
+            logger.info('🔇 FSP: Stopped audio track during immediate cleanup');
           });
         })
         .catch(() => {});
       
-      console.log('✅ FSP: Immediate cleanup completed');
+      logger.info('✅ FSP: Immediate cleanup completed');
     } catch (error) {
-      console.error('❌ FSP: Error during immediate cleanup:', error);
+      logger.error('❌ FSP: Error during immediate cleanup:', error);
     }
   };
 
   // Reset simulation state for restart
   const resetSimulationState = () => {
-    console.log('🔄 FSP: Resetting simulation state for restart');
+    logger.info('🔄 FSP: Resetting simulation state for restart');
 
     // CRITICAL: Clear intervals FIRST before resetting refs
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
-      console.log('✅ FSP: Cleared timer interval');
+      logger.info('✅ FSP: Cleared timer interval');
     }
 
     // NOTE: Heartbeat interval cleanup removed - deprecated/no-op in new system
@@ -1290,20 +1291,20 @@ export default function FSPSimulationScreen() {
 
     // FIX: Clear storage (fire-and-forget for non-blocking reset)
     clearSimulationStorage().catch(err =>
-      console.error('Error clearing storage during reset:', err)
+      logger.error('Error clearing storage during reset:', err)
     );
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
-    console.log('✅ FSP: Simulation state reset completed - ready for next run');
-    console.log('🔍 FSP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+    logger.info('✅ FSP: Simulation state reset completed - ready for next run');
+    logger.info('🔍 FSP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
 
     // Re-setup conversation monitoring for next run
     setTimeout(() => {
       if (voiceflowController.current) {
-        console.log('🔄 FSP: Re-initializing conversation monitoring after reset');
+        logger.info('🔄 FSP: Re-initializing conversation monitoring after reset');
         setupConversationMonitoring();
       }
     }, 500);
@@ -1323,9 +1324,9 @@ export default function FSPSimulationScreen() {
       await SecureStore.deleteItemAsync('sim_session_token_fsp');
       await SecureStore.deleteItemAsync('sim_user_id_fsp');
 
-      console.log('✅ FSP: Cleared simulation storage (AsyncStorage + SecureStore)');
+      logger.info('✅ FSP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
-      console.error('❌ FSP: Error clearing simulation storage:', error);
+      logger.error('❌ FSP: Error clearing simulation storage:', error);
     }
   };
 
@@ -1339,16 +1340,16 @@ export default function FSPSimulationScreen() {
   } = {}) => {
     // Prevent concurrent cleanup operations
     if (isCleaningUpRef.current) {
-      console.log('⚠️ FSP: Cleanup already in progress, skipping...');
+      logger.info('⚠️ FSP: Cleanup already in progress, skipping...');
       return;
     }
 
-    console.log('🧹 FSP: Starting centralized widget cleanup...');
+    logger.info('🧹 FSP: Starting centralized widget cleanup...');
     isCleaningUpRef.current = true;
 
     try {
       // Step 1: Stop all intervals immediately
-      console.log('🛑 FSP: Step 1 - Clearing all intervals...');
+      logger.info('🛑 FSP: Step 1 - Clearing all intervals...');
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
         timerInterval.current = null;
@@ -1370,14 +1371,14 @@ export default function FSPSimulationScreen() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Step 3: Close Voiceflow widget
-      console.log('🔚 FSP: Step 3 - Closing Voiceflow widget...');
+      logger.info('🔚 FSP: Step 3 - Closing Voiceflow widget...');
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.close && window.voiceflow.chat.close();
           window.voiceflow.chat.hide && window.voiceflow.chat.hide();
-          console.log('✅ FSP: Voiceflow widget closed');
+          logger.info('✅ FSP: Voiceflow widget closed');
         } catch (error) {
-          console.error('❌ FSP: Error closing Voiceflow widget:', error);
+          logger.error('❌ FSP: Error closing Voiceflow widget:', error);
         }
       }
 
@@ -1385,19 +1386,19 @@ export default function FSPSimulationScreen() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Step 5: Destroy controller
-      console.log('🔧 FSP: Step 5 - Destroying controller...');
+      logger.info('🔧 FSP: Step 5 - Destroying controller...');
       if (voiceflowController.current) {
         try {
           voiceflowController.current.destroy();
           voiceflowController.current = null;
-          console.log('✅ FSP: Controller destroyed');
+          logger.info('✅ FSP: Controller destroyed');
         } catch (error) {
-          console.error('❌ FSP: Error destroying controller:', error);
+          logger.error('❌ FSP: Error destroying controller:', error);
         }
       }
 
       // Step 6: Force remove DOM elements
-      console.log('🗑️ FSP: Step 6 - Force removing DOM elements...');
+      logger.info('🗑️ FSP: Step 6 - Force removing DOM elements...');
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         try {
           const widgetSelectors = [
@@ -1411,41 +1412,41 @@ export default function FSPSimulationScreen() {
             const elements = document.querySelectorAll(selector);
             elements.forEach(el => {
               el.remove();
-              console.log(`✅ FSP: Removed element: ${selector}`);
+              logger.info(`✅ FSP: Removed element: ${selector}`);
             });
           });
         } catch (error) {
-          console.error('❌ FSP: Error removing DOM elements:', error);
+          logger.error('❌ FSP: Error removing DOM elements:', error);
         }
       }
 
       // Step 7: Update database if needed
       if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
-        console.log('📊 FSP: Step 7 - Updating database...');
+        logger.info('📊 FSP: Step 7 - Updating database...');
         try {
           await simulationTracker.updateSimulationStatus(
             sessionToken,
             options.finalStatus,
             options.elapsedSeconds || 0
           );
-          console.log(`✅ FSP: Database updated with status: ${options.finalStatus}`);
+          logger.info(`✅ FSP: Database updated with status: ${options.finalStatus}`);
         } catch (error) {
-          console.error('❌ FSP: Error updating database:', error);
+          logger.error('❌ FSP: Error updating database:', error);
         }
       }
 
       // Step 8: Clear storage (AsyncStorage + SecureStore)
-      console.log('💾 FSP: Step 8 - Clearing simulation storage...');
+      logger.info('💾 FSP: Step 8 - Clearing simulation storage...');
       await clearSimulationStorage();
 
-      console.log('✅ FSP: Centralized cleanup completed successfully');
+      logger.info('✅ FSP: Centralized cleanup completed successfully');
     } catch (error) {
-      console.error('❌ FSP: Error during centralized cleanup:', error);
+      logger.error('❌ FSP: Error during centralized cleanup:', error);
     } finally {
       // CRITICAL: Always clear session token to prevent reuse
       sessionTokenRef.current = null;
       setSessionToken(null);
-      console.log('🔒 FSP: Session token cleared');
+      logger.info('🔒 FSP: Session token cleared');
 
       // Always reset the cleanup flag
       isCleaningUpRef.current = false;
@@ -1471,7 +1472,7 @@ export default function FSPSimulationScreen() {
 
   // Show timer warning with color and message
   const showTimerWarning = (message: string, level: 'yellow' | 'orange' | 'red', isPulsing: boolean) => {
-    console.log(`⚠️ Timer warning: ${message} (${level})`);
+    logger.info(`⚠️ Timer warning: ${message} (${level})`);
 
     // Update warning level
     setTimerWarningLevel(level);

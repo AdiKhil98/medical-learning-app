@@ -87,13 +87,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
   // Parse content sections
   const parsedSections = React.useMemo(() => {
-    console.log('📄 Parsing content for:', supabaseRow?.title);
+    logger.info('📄 Parsing content for:', supabaseRow?.title);
 
     // Try content_improved first, then content_html as fallback
     const contentSource = supabaseRow?.content_improved || supabaseRow?.content_html;
     
     if (!contentSource) {
-      console.log('❌ No content found in content_improved or content_html');
+      logger.info('❌ No content found in content_improved or content_html');
       return [];
     }
 
@@ -101,7 +101,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       // Ensure contentSource is a string before checking startsWith
       const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
       
-      console.log('📊 Content type:', typeof contentSource, 'Content length:', contentString.length);
+      logger.info('📊 Content type:', typeof contentSource, 'Content length:', contentString.length);
       
       // If it's JSON, parse it
       if (contentString.startsWith('[') || contentString.startsWith('{')) {
@@ -128,7 +128,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       }
 
     } catch (error) {
-      console.error('Error parsing content:', error);
+      logger.error('Error parsing content:', error);
       // Fallback to treating as plain text
       const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
       return [{

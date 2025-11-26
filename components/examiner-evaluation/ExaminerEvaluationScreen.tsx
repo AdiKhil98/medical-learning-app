@@ -21,8 +21,8 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    console.log('ExaminerEvaluationScreen mounted with professional design');
-    console.log('Evaluation data:', JSON.stringify(evaluation, null, 2));
+    logger.info('ExaminerEvaluationScreen mounted with professional design');
+    logger.info('Evaluation data:', JSON.stringify(evaluation, null, 2));
 
     // Entrance animation
     Animated.timing(fadeAnim, {

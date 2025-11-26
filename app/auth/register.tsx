@@ -52,14 +52,14 @@ export default function RegisterScreen() {
   // Check registration status on mount
   useEffect(() => {
     async function checkStatus() {
-      console.log('📋 Register page: Checking registration status on mount...');
+      logger.info('📋 Register page: Checking registration status on mount...');
       const status = await checkRegistrationStatus();
 
-      console.log('📋 Register page: Status received:', status);
+      logger.info('📋 Register page: Status received:', status);
 
       if (status && !status.allowed) {
         // Redirect to waitlist immediately if registration is closed
-        console.log('🚫 Registration closed, showing message...');
+        logger.info('🚫 Registration closed, showing message...');
         showAlert(
           'Registrierung geschlossen',
           'Wir haben das Limit der Benutzer erreicht, die sich registrieren können. Bitte tragen Sie sich in unsere Warteliste ein. Wenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail. Vielen Dank für Ihre Geduld.',
@@ -169,12 +169,12 @@ export default function RegisterScreen() {
     }
 
     // Double-check registration status before submitting
-    console.log('🔄 Double-checking registration status before submission...');
+    logger.info('🔄 Double-checking registration status before submission...');
     const status = await checkRegistrationStatus();
-    console.log('📊 Status result:', status);
+    logger.info('📊 Status result:', status);
 
     if (status && !status.allowed) {
-      console.log('🚫 Registration not allowed, adding to waitlist');
+      logger.info('🚫 Registration not allowed, adding to waitlist');
 
       // Automatically add user to waitlist
       setLoading(true);
@@ -202,7 +202,7 @@ export default function RegisterScreen() {
     }
 
     if (!status) {
-      console.error('⚠️ Could not verify registration status');
+      logger.error('⚠️ Could not verify registration status');
       showAlert(
         'Fehler',
         'Die Registrierungsstatus konnte nicht überprüft werden. Bitte versuchen Sie es später erneut.'
@@ -210,14 +210,14 @@ export default function RegisterScreen() {
       return;
     }
 
-    console.log('✅ Registration allowed, proceeding with signup...');
+    logger.info('✅ Registration allowed, proceeding with signup...');
     setLoading(true);
     try {
       await signUp(email, password, name);
-      console.log('✅ Signup successful');
+      logger.info('✅ Signup successful');
       router.replace('/(tabs)');
     } catch (error: any) {
-      console.error('❌ Signup error:', error);
+      logger.error('❌ Signup error:', error);
 
       if (error.message === 'VERIFICATION_REQUIRED') {
         router.push({
@@ -229,7 +229,7 @@ export default function RegisterScreen() {
         });
       } else if (error.message && (error.message.includes('USER_LIMIT_REACHED') || error.message.includes('user limit'))) {
         // Registration limit reached - add to waitlist automatically
-        console.log('🚫 Backend returned USER_LIMIT_REACHED, adding to waitlist');
+        logger.info('🚫 Backend returned USER_LIMIT_REACHED, adding to waitlist');
 
         const waitlistResult = await joinWaitlist({
           email: email.toLowerCase().trim(),

@@ -58,7 +58,7 @@ export default function DatabaseManagement() {
         appUpdates: updatesResult.status === 'fulfilled' ? updatesResult.value.count || 0 : 0
       });
     } catch (error) {
-      console.error('Error fetching database stats:', error);
+      logger.error('Error fetching database stats:', error);
     }
   };
 
@@ -184,7 +184,7 @@ export default function DatabaseManagement() {
               
               // In a real app, you'd use a file system API to save the file
               Alert.alert('Export Complete', `${data?.length || 0} rows exported from ${tableName}`);
-              console.log(`${tableName} export:`, JSON.stringify(data, null, 2));
+              logger.info(`${tableName} export:`, JSON.stringify(data, null, 2));
             } catch (error: any) {
               Alert.alert('Export Failed', error.message);
             }
@@ -272,13 +272,13 @@ export default function DatabaseManagement() {
 
         {/* SQL Query Interface */}
         <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>SQL Query Interface</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>SQL-Abfrageschnittstelle</Text>
           
           <TextInput
             style={[styles.queryInput, { backgroundColor: colors.background, color: colors.text }]}
             value={queryText}
             onChangeText={setQueryText}
-            placeholder="Enter your SQL query here..."
+            placeholder="Geben Sie Ihre SQL-Abfrage hier ein..."
             placeholderTextColor={colors.textSecondary}
             multiline
             numberOfLines={6}
@@ -292,7 +292,7 @@ export default function DatabaseManagement() {
             >
               <Play size={16} color="white" />
               <Text style={styles.executeButtonText}>
-                {loading ? 'Executing...' : 'Execute Query'}
+                {loading ? 'Wird ausgeführt...' : 'Abfrage ausführen'}
               </Text>
             </TouchableOpacity>
 
@@ -302,7 +302,7 @@ export default function DatabaseManagement() {
                 onPress={clearResults}
               >
                 <XCircle size={16} color="white" />
-                <Text style={styles.clearButtonText}>Clear</Text>
+                <Text style={styles.clearButtonText}>Löschen</Text>
               </TouchableOpacity>
             )}
           </View>

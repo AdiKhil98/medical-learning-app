@@ -52,7 +52,7 @@ export default function PersoenlicheDatenScreen() {
         setOriginalData({ name: '', email: user.email || '' });
       }
     } catch (error: any) {
-      console.error('Error loading user data:', error);
+      logger.error('Error loading user data:', error);
       Alert.alert('Fehler', 'Benutzerdaten konnten nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function PersoenlicheDatenScreen() {
       );
 
     } catch (error: any) {
-      console.error('Error saving user data:', error);
+      logger.error('Error saving user data:', error);
       Alert.alert('Fehler', error.message || 'Daten konnten nicht gespeichert werden.');
     } finally {
       setSaving(false);

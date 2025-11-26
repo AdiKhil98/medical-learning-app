@@ -74,14 +74,14 @@ export default function FeedbackManagerScreen() {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error loading feedback:', error);
+        logger.error('Error loading feedback:', error);
         Alert.alert('Fehler', 'Feedback konnte nicht geladen werden.');
         return;
       }
 
       setFeedback(data || []);
     } catch (error) {
-      console.error('Error loading feedback:', error);
+      logger.error('Error loading feedback:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export default function FeedbackManagerScreen() {
         .eq('id', feedbackId);
 
       if (error) {
-        console.error('Error updating status:', error);
+        logger.error('Error updating status:', error);
         Alert.alert('Fehler', 'Status konnte nicht aktualisiert werden.');
         return;
       }
@@ -110,7 +110,7 @@ export default function FeedbackManagerScreen() {
         )
       );
     } catch (error) {
-      console.error('Error updating status:', error);
+      logger.error('Error updating status:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
     }
   };
@@ -128,7 +128,7 @@ export default function FeedbackManagerScreen() {
         .eq('id', selectedFeedback.id);
 
       if (error) {
-        console.error('Error updating notes:', error);
+        logger.error('Error updating notes:', error);
         Alert.alert('Fehler', 'Notizen konnten nicht gespeichert werden.');
         return;
       }
@@ -145,7 +145,7 @@ export default function FeedbackManagerScreen() {
       setModalVisible(false);
       setSelectedFeedback(null);
     } catch (error) {
-      console.error('Error updating notes:', error);
+      logger.error('Error updating notes:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
     }
   };

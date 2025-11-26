@@ -27,7 +27,7 @@ export function getPersistentIds(
   supabaseUserId?: string
 ): PersistentIds {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    console.warn('⚠️ localStorage not available - generating temporary IDs');
+    logger.warn('⚠️ localStorage not available - generating temporary IDs');
     return generateTemporaryIds();
   }
 
@@ -39,14 +39,14 @@ export function getPersistentIds(
   if (supabaseUserId) {
     userId = supabaseUserId;
     localStorage.setItem(userKey, userId);
-    console.log(`✅ Using Supabase user ID for ${simulationType.toUpperCase()}:`, userId);
+    logger.info(`✅ Using Supabase user ID for ${simulationType.toUpperCase()}:`, userId);
   } else {
     userId = localStorage.getItem(userKey) || generateUserId();
     if (!localStorage.getItem(userKey)) {
       localStorage.setItem(userKey, userId);
-      console.log(`✅ Created new ${simulationType.toUpperCase()} user_id:`, userId);
+      logger.info(`✅ Created new ${simulationType.toUpperCase()} user_id:`, userId);
     } else {
-      console.log(`✅ Retrieved existing ${simulationType.toUpperCase()} user_id:`, userId);
+      logger.info(`✅ Retrieved existing ${simulationType.toUpperCase()} user_id:`, userId);
     }
   }
 
@@ -55,9 +55,9 @@ export function getPersistentIds(
   if (!sessionId) {
     sessionId = generateSessionId();
     localStorage.setItem(sessionKey, sessionId);
-    console.log(`✅ Created new ${simulationType.toUpperCase()} session_id:`, sessionId);
+    logger.info(`✅ Created new ${simulationType.toUpperCase()} session_id:`, sessionId);
   } else {
-    console.log(`✅ Retrieved existing ${simulationType.toUpperCase()} session_id:`, sessionId);
+    logger.info(`✅ Retrieved existing ${simulationType.toUpperCase()} session_id:`, sessionId);
   }
 
   return {
@@ -101,7 +101,7 @@ function generateTemporaryIds(): PersistentIds {
  */
 export function resetSimulation(simulationType: SimulationType): void {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    console.warn('⚠️ localStorage not available - cannot reset simulation');
+    logger.warn('⚠️ localStorage not available - cannot reset simulation');
     return;
   }
 
@@ -111,7 +111,7 @@ export function resetSimulation(simulationType: SimulationType): void {
   localStorage.removeItem(userKey);
   localStorage.removeItem(sessionKey);
 
-  console.log(`✅ Reset ${simulationType.toUpperCase()} simulation - cleared user_id and session_id`);
+  logger.info(`✅ Reset ${simulationType.toUpperCase()} simulation - cleared user_id and session_id`);
 }
 
 /**
@@ -120,14 +120,14 @@ export function resetSimulation(simulationType: SimulationType): void {
  */
 export function resetSession(simulationType: SimulationType): void {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    console.warn('⚠️ localStorage not available - cannot reset session');
+    logger.warn('⚠️ localStorage not available - cannot reset session');
     return;
   }
 
   const sessionKey = `${simulationType}_session_id`;
   localStorage.removeItem(sessionKey);
 
-  console.log(`✅ Reset ${simulationType.toUpperCase()} session - cleared session_id only`);
+  logger.info(`✅ Reset ${simulationType.toUpperCase()} session - cleared session_id only`);
 }
 
 /**
@@ -175,12 +175,12 @@ export function logCurrentIds(simulationType: SimulationType): void {
   const ids = getCurrentIds(simulationType);
 
   if (ids) {
-    console.log(`📊 Current ${simulationType.toUpperCase()} IDs:`, {
+    logger.info(`📊 Current ${simulationType.toUpperCase()} IDs:`, {
       user_id: ids.user_id,
       session_id: ids.session_id,
       exists_in_storage: true
     });
   } else {
-    console.log(`📊 No existing ${simulationType.toUpperCase()} IDs in localStorage`);
+    logger.info(`📊 No existing ${simulationType.toUpperCase()} IDs in localStorage`);
   }
 }

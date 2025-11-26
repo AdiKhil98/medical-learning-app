@@ -191,8 +191,8 @@ export class DailyNotificationManager {
       SecureLogger.log(`Daily tip notification scheduled for ${scheduledDate.toLocaleString('de-DE')}`);
       
       if (__DEV__) {
-        console.log(`📅 Daily tip scheduled for: ${scheduledDate.toLocaleString('de-DE')}`);
-        console.log(`💡 Message: ${message.title} - ${message.body}`);
+        logger.info(`📅 Daily tip scheduled for: ${scheduledDate.toLocaleString('de-DE')}`);
+        logger.info(`💡 Message: ${message.title} - ${message.body}`);
       }
     } catch (error) {
       SecureLogger.error('Failed to schedule tip notification', error);
@@ -235,8 +235,8 @@ export class DailyNotificationManager {
       SecureLogger.log(`Daily question notification scheduled for ${scheduledDate.toLocaleString('de-DE')}`);
       
       if (__DEV__) {
-        console.log(`📅 Daily question scheduled for: ${scheduledDate.toLocaleString('de-DE')}`);
-        console.log(`❓ Message: ${message.title} - ${message.body}`);
+        logger.info(`📅 Daily question scheduled for: ${scheduledDate.toLocaleString('de-DE')}`);
+        logger.info(`❓ Message: ${message.title} - ${message.body}`);
       }
     } catch (error) {
       SecureLogger.error('Failed to schedule question notification', error);

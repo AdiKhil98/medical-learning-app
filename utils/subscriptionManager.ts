@@ -104,7 +104,7 @@ export class SubscriptionManager {
       };
 
     } catch (error) {
-      console.error('Error checking simulation access:', error);
+      logger.error('Error checking simulation access:', error);
       return {
         canUseSimulation: false,
         simulationsUsed: 0,
@@ -127,7 +127,7 @@ export class SubscriptionManager {
         .single();
 
       if (error || !user) {
-        console.error('User not found for usage recording');
+        logger.error('User not found for usage recording');
         return false;
       }
 
@@ -138,7 +138,7 @@ export class SubscriptionManager {
           .rpc('increment_free_simulations', { user_id: userId });
 
         if (updateError) {
-          console.error('Error updating free simulation usage:', updateError);
+          logger.error('Error updating free simulation usage:', updateError);
           return false;
         }
       } else {
@@ -147,7 +147,7 @@ export class SubscriptionManager {
           .rpc('increment_monthly_simulations', { user_id: userId });
 
         if (updateError) {
-          console.error('Error updating simulation usage:', updateError);
+          logger.error('Error updating simulation usage:', updateError);
           return false;
         }
       }
@@ -157,7 +157,7 @@ export class SubscriptionManager {
 
       return true;
     } catch (error) {
-      console.error('Error recording simulation usage:', error);
+      logger.error('Error recording simulation usage:', error);
       return false;
     }
   }
@@ -177,10 +177,10 @@ export class SubscriptionManager {
         .eq('id', userId);
 
       if (error) {
-        console.error('Error resetting user usage:', error);
+        logger.error('Error resetting user usage:', error);
       }
     } catch (error) {
-      console.error('Error in resetUserUsage:', error);
+      logger.error('Error in resetUserUsage:', error);
     }
   }
 
@@ -200,7 +200,7 @@ export class SubscriptionManager {
         });
     } catch (error) {
       // Don't throw error if logging fails - just log it
-      console.log('Note: Could not log to simulation_usage_logs table:', error);
+      logger.info('Note: Could not log to simulation_usage_logs table:', error);
     }
   }
 }

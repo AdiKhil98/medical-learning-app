@@ -9,15 +9,15 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
   const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
   
   if (isSimulationPage && !forceCleanup) {
-    console.log('🚫 On simulation page, skipping Voiceflow cleanup (use forceCleanup=true to override)');
+    logger.info('🚫 On simulation page, skipping Voiceflow cleanup (use forceCleanup=true to override)');
     return;
   }
 
   if (forceCleanup) {
-    console.log('⚡ Force cleanup requested - cleaning up regardless of page type');
+    logger.info('⚡ Force cleanup requested - cleaning up regardless of page type');
   }
 
-  console.log('🌍 Running global Voiceflow cleanup on page load...');
+  logger.info('🌍 Running global Voiceflow cleanup on page load...');
 
   // Function to remove all Voiceflow elements
   const cleanupVoiceflowElements = () => {
@@ -72,13 +72,13 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
             isVoiceflowElement;
 
           if (isWidgetElement) {
-            console.log(`🗑️ Removing Voiceflow element: ${selector}`, element);
+            logger.info(`🗑️ Removing Voiceflow element: ${selector}`, element);
             element.remove();
             removedCount++;
           }
         });
       } catch (error) {
-        console.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
+        logger.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
       }
     });
 
@@ -90,11 +90,11 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     try {
       const scripts = document.querySelectorAll('script[src*="voiceflow"]');
       scripts.forEach(script => {
-        console.log('🗑️ Removing Voiceflow script:', script.getAttribute('src'));
+        logger.info('🗑️ Removing Voiceflow script:', script.getAttribute('src'));
         script.remove();
       });
     } catch (error) {
-      console.warn('⚠️ Error removing Voiceflow scripts:', error);
+      logger.warn('⚠️ Error removing Voiceflow scripts:', error);
     }
   };
 
@@ -105,9 +105,9 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.hide();
-          console.log('✅ Hidden Voiceflow widget');
+          logger.info('✅ Hidden Voiceflow widget');
         } catch (error) {
-          console.warn('⚠️ Error hiding Voiceflow widget:', error);
+          logger.warn('⚠️ Error hiding Voiceflow widget:', error);
         }
       }
 
@@ -125,7 +125,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
 
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-        console.log(`🗑️ Removed localStorage key: ${key}`);
+        logger.info(`🗑️ Removed localStorage key: ${key}`);
       });
 
       // Be selective about sessionStorage cleanup too
@@ -142,11 +142,11 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
 
       sessionKeysToRemove.forEach(key => {
         sessionStorage.removeItem(key);
-        console.log(`🗑️ Removed sessionStorage key: ${key}`);
+        logger.info(`🗑️ Removed sessionStorage key: ${key}`);
       });
 
     } catch (error) {
-      console.warn('⚠️ Error clearing global objects:', error);
+      logger.warn('⚠️ Error clearing global objects:', error);
     }
   };
 
@@ -158,7 +158,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
   // Run cleanup again after a short delay to catch dynamically loaded content
   setTimeout(() => {
     const additionalRemoved = cleanupVoiceflowElements();
-    console.log(`🧹 Global cleanup completed: ${removedCount + additionalRemoved} elements removed`);
+    logger.info(`🧹 Global cleanup completed: ${removedCount + additionalRemoved} elements removed`);
   }, 500);
 
   // Set up mutation observer to catch new Voiceflow elements (only on non-simulation pages)
@@ -190,7 +190,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     });
 
     if (shouldCleanup) {
-      console.log('🔍 Detected new Voiceflow elements on non-simulation page, cleaning up...');
+      logger.info('🔍 Detected new Voiceflow elements on non-simulation page, cleaning up...');
       setTimeout(cleanupVoiceflowElements, 100);
     }
   });
@@ -209,7 +209,7 @@ export function stopGlobalVoiceflowCleanup() {
   if (typeof window !== 'undefined' && (window as any).voiceflowCleanupObserver) {
     (window as any).voiceflowCleanupObserver.disconnect();
     delete (window as any).voiceflowCleanupObserver;
-    console.log('🛑 Stopped Voiceflow cleanup observer');
+    logger.info('🛑 Stopped Voiceflow cleanup observer');
   }
 }
 
@@ -219,7 +219,7 @@ if (typeof window !== 'undefined') {
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/');
   
-  console.log('🔍 Current path:', currentPath, 'Is simulation page:', isSimulationPage);
+  logger.info('🔍 Current path:', currentPath, 'Is simulation page:', isSimulationPage);
   
   if (!isSimulationPage) {
     // Not on simulation page, run cleanup

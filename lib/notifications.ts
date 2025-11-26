@@ -74,7 +74,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       if (!projectId || projectId === 'your-project-id-here') {
         SecureLogger.warn('No valid EAS project ID found, skipping push token registration');
         if (__DEV__) {
-          console.log('💡 To enable push notifications, set up EAS project and update app.json with real project ID');
+          logger.info('💡 To enable push notifications, set up EAS project and update app.json with real project ID');
         }
         return 'dev-token-placeholder'; // Return placeholder for dev mode
       }
@@ -103,7 +103,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     const message = 'Push notifications require a physical device';
     SecureLogger.warn(message);
     if (__DEV__) {
-      console.log(message);
+      logger.info(message);
     }
     throw new Error(message);
   }
@@ -114,7 +114,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 export async function sendTestNotification(title: string, body: string) {
   if (Platform.OS === 'web') {
     if (__DEV__) {
-      console.log('Test notification would be sent:', { title, body });
+      logger.info('Test notification would be sent:', { title, body });
     }
     return;
   }

@@ -64,8 +64,8 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   lastUpdated = "Juni 2025",
   completionStatus = "Vollständiger Leitfaden",
 }) => {
-  console.log('🚀 ModernMedicalContentRenderer STARTED');
-  console.log('🔍 Props:', { 
+  logger.info('🚀 ModernMedicalContentRenderer STARTED');
+  logger.info('🔍 Props:', { 
     hasHtml: !!htmlContent, 
     hasJson: !!jsonContent, 
     hasPlainText: !!plainTextContent, 
@@ -359,7 +359,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
       });
     }
 
-    console.log('🔍 Parsed sections result:', sections.length, sections.map(s => s.title));
+    logger.info('🔍 Parsed sections result:', sections.length, sections.map(s => s.title));
     return sections;
   }, [jsonContent, htmlContent, plainTextContent]);
 
@@ -440,7 +440,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         const sectionHeight = 120; // Average section height when collapsed
         const approximateY = headerHeight + progressBarHeight + (sectionIndex * sectionHeight);
         
-        console.log(`Scrolling to section ${sectionId} at index ${sectionIndex}, position ${approximateY}`);
+        logger.info(`Scrolling to section ${sectionId} at index ${sectionIndex}, position ${approximateY}`);
         
         scrollViewRef.current?.scrollTo({
           x: 0,
@@ -449,7 +449,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
         });
       }, 300); // Optimized delay
     } else {
-      console.log(`Section ${sectionId} not found in parsedSections`);
+      logger.info(`Section ${sectionId} not found in parsedSections`);
     }
   }, [parsedSections]);
 
@@ -485,11 +485,11 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
   const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
     // Check if we need arrows based on content size
-    console.log('Pills content size:', contentWidth, 'Screen width:', screenWidth);
+    logger.info('Pills content size:', contentWidth, 'Screen width:', screenWidth);
     if (pillScrollRef.current) {
       const containerWidth = screenWidth - 100; // Approximate container width  
       const needsRightArrow = contentWidth > containerWidth;
-      console.log('Setting right arrow:', needsRightArrow);
+      logger.info('Setting right arrow:', needsRightArrow);
       setShowRightArrow(needsRightArrow);
     }
   }, []);
@@ -618,9 +618,9 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
 
   // Render horizontal scrollable navigation
   const renderQuickNavigation = () => {
-    console.log('🔍 DEBUG: Rendering navigation with', navigationItems.length, 'items');
-    console.log('🔍 DEBUG: Navigation items:', navigationItems.map(item => item.title));
-    console.log('🔍 DEBUG: Show left arrow:', showLeftArrow, 'Show right arrow:', showRightArrow);
+    logger.info('🔍 DEBUG: Rendering navigation with', navigationItems.length, 'items');
+    logger.info('🔍 DEBUG: Navigation items:', navigationItems.map(item => item.title));
+    logger.info('🔍 DEBUG: Show left arrow:', showLeftArrow, 'Show right arrow:', showRightArrow);
     
     return (
     <View style={styles.navigationContainer}>
@@ -641,7 +641,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
           const isActive = activePillId === item.sectionId;
           
           const handleNavPress = () => {
-            console.log(`🔍 DEBUG: Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
+            logger.info(`🔍 DEBUG: Navigation pill pressed: ${item.title} -> ${item.sectionId}`);
             handlePillPress(item.sectionId);
           };
 
@@ -879,7 +879,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
             <ContentSearchBar
               searchableContent={parsedSections}
               onSearchResult={(results) => {
-                console.log('Search results:', results);
+                logger.info('Search results:', results);
               }}
               onSectionSelect={(sectionId) => {
                 setExpandedSections(prev => ({ ...prev, [sectionId]: true }));

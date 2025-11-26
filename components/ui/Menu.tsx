@@ -132,7 +132,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       // Use replace instead of push to prevent going back to authenticated screens
       router.replace('/auth/login');
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // If logout fails, still try to navigate to login for security
       router.replace('/auth/login');
     }

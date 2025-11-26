@@ -78,27 +78,27 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
 
   // Parse content into structured sections with enhanced parsing
   const parsedSections = React.useMemo(() => {
-    console.log('🔍 MedicalContentRenderer parsing content for:', title);
-    console.log('- jsonContent:', jsonContent, typeof jsonContent);
-    console.log('- htmlContent exists:', !!htmlContent, 'Length:', htmlContent?.length);
-    console.log('- htmlContent preview:', htmlContent?.substring(0, 500));
-    console.log('- plainTextContent exists:', !!plainTextContent, plainTextContent?.substring(0, 200));
+    logger.info('🔍 MedicalContentRenderer parsing content for:', title);
+    logger.info('- jsonContent:', jsonContent, typeof jsonContent);
+    logger.info('- htmlContent exists:', !!htmlContent, 'Length:', htmlContent?.length);
+    logger.info('- htmlContent preview:', htmlContent?.substring(0, 500));
+    logger.info('- plainTextContent exists:', !!plainTextContent, plainTextContent?.substring(0, 200));
     
     // Check if htmlContent is actually a full HTML document
     if (htmlContent?.includes('<!DOCTYPE html>')) {
-      console.log('⚠️ WARNING: htmlContent contains full HTML document instead of content fragment');
+      logger.info('⚠️ WARNING: htmlContent contains full HTML document instead of content fragment');
     }
     
     // Priority 1: Check for structured JSON content first (content_improved)
     if (jsonContent && Array.isArray(jsonContent) && jsonContent.length > 0) {
-      console.log('✅ Using JSON array content, sections:', jsonContent.length);
-      console.log('📊 JSON sections preview:', jsonContent.slice(0, 2));
+      logger.info('✅ Using JSON array content, sections:', jsonContent.length);
+      logger.info('📊 JSON sections preview:', jsonContent.slice(0, 2));
       return jsonContent as MedicalSection[];
     }
     
     // Priority 2: Check for JSON object with sections
     if (jsonContent && typeof jsonContent === 'object' && !Array.isArray(jsonContent)) {
-      console.log('📋 JSON is object, trying to extract sections');
+      logger.info('📋 JSON is object, trying to extract sections');
       // Try to extract sections from object
       if (jsonContent.sections && Array.isArray(jsonContent.sections) && jsonContent.sections.length > 0) {
         return jsonContent.sections as MedicalSection[];
@@ -107,7 +107,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
     
     // Priority 3: HTML parsing for actual database structure (content_html)
     if (htmlContent || plainTextContent) {
-      console.log('📄 Using HTML content - splitting by H2/H3 headers');
+      logger.info('📄 Using HTML content - splitting by H2/H3 headers');
       const sections: MedicalSection[] = [];
       const htmlToUse = htmlContent || plainTextContent || '';
       
@@ -115,7 +115,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
       const headerRegex = /<h[23]>([^<]+)<\/h[23]>/gi;
       const parts = htmlToUse.split(headerRegex);
       
-      console.log('📄 Split into parts:', parts.length);
+      logger.info('📄 Split into parts:', parts.length);
       
       if (parts.length > 1) {
         // Process parts: [content_before_first_header, header1, content1, header2, content2, ...]
@@ -202,11 +202,11 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
         }
       }
       
-      console.log('📄 Created sections:', sections.length, sections.map(s => s.title));
+      logger.info('📄 Created sections:', sections.length, sections.map(s => s.title));
       return sections;
     }
     
-    console.log('❌ No content found');
+    logger.info('❌ No content found');
     return [];
   }, [jsonContent, htmlContent, plainTextContent]);
 

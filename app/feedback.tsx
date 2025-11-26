@@ -46,7 +46,7 @@ export default function FeedbackScreen() {
         ]);
 
       if (error) {
-        console.error('Error submitting feedback:', error);
+        logger.error('Error submitting feedback:', error);
         Alert.alert('Fehler', 'Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
         return;
       }
@@ -61,7 +61,7 @@ export default function FeedbackScreen() {
       }, 2000);
 
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      logger.error('Error submitting feedback:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
     } finally {
       setIsSubmitting(false);

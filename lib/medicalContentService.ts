@@ -137,11 +137,11 @@ class MedicalContentService {
    */
   async testDatabaseConnection(): Promise<any> {
     try {
-      console.log('🔍 TESTING DATABASE CONNECTION...');
+      logger.info('🔍 TESTING DATABASE CONNECTION...');
       
       // Check auth session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('📊 Auth Session:', { 
+      logger.info('📊 Auth Session:', { 
         hasSession: !!session, 
         userId: session?.user?.id, 
         email: session?.user?.email,
@@ -149,13 +149,13 @@ class MedicalContentService {
       });
 
       // Test simple query to see if sections table exists
-      console.log('🔍 Testing sections table access...');
+      logger.info('🔍 Testing sections table access...');
       const { data: testData, error: testError, count } = await supabase
         .from('sections')
         .select('*', { count: 'exact' })
         .limit(5);
 
-      console.log('📊 Sections table test result:', {
+      logger.info('📊 Sections table test result:', {
         data: testData,
         error: testError,
         count: count,
@@ -163,13 +163,13 @@ class MedicalContentService {
       });
 
       if (testError) {
-        console.error('❌ Cannot access sections table:', testError);
+        logger.error('❌ Cannot access sections table:', testError);
         return { success: false, error: testError };
       }
 
       // If we have data, log the first few records
       if (testData && testData.length > 0) {
-        console.log('✅ Sample sections data:', testData.map(s => ({ 
+        logger.info('✅ Sample sections data:', testData.map(s => ({ 
           id: s.id, 
           slug: s.slug, 
           title: s.title, 
@@ -177,12 +177,12 @@ class MedicalContentService {
           type: s.type 
         })));
       } else {
-        console.log('⚠️ Sections table is empty');
+        logger.info('⚠️ Sections table is empty');
       }
 
       return { success: true, data: testData, count };
     } catch (error) {
-      console.error('💥 Database connection test failed:', error);
+      logger.error('💥 Database connection test failed:', error);
       return { success: false, error };
     }
   }
@@ -196,12 +196,12 @@ class MedicalContentService {
     const now = Date.now();
     
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      console.log('📋 Returning cached root sections:', cached.data.length);
+      logger.info('📋 Returning cached root sections:', cached.data.length);
       return cached.data;
     }
 
     try {
-      console.log('🔍 FETCHING ROOT SECTIONS FROM DATABASE...');
+      logger.info('🔍 FETCHING ROOT SECTIONS FROM DATABASE...');
       
       // First run our debug test
       const dbTest = await this.testDatabaseConnection();
@@ -209,7 +209,7 @@ class MedicalContentService {
         throw new Error(`Database connection failed: ${dbTest.error?.message || 'Unknown error'}`);
       }
 
-      console.log('🔍 Querying for root sections (parent_slug IS NULL)...');
+      logger.info('🔍 Querying for root sections (parent_slug IS NULL)...');
       const { data, error } = await supabase
         .from('sections')
         .select(`
@@ -219,14 +219,14 @@ class MedicalContentService {
         .is('parent_slug', null)
         .order('display_order', { ascending: true });
 
-      console.log('📊 Root sections query result:', { 
+      logger.info('📊 Root sections query result:', { 
         data: data?.map(s => ({ slug: s.slug, title: s.title, type: s.type })), 
         error, 
         count: data?.length 
       });
 
       if (error) {
-        console.error('❌ Database error in getRootSections:', error);
+        logger.error('❌ Database error in getRootSections:', error);
         throw new Error(`Root sections query failed: ${error.message}`);
       }
 
@@ -237,16 +237,16 @@ class MedicalContentService {
         section.has_content = this.hasAnyContent(section);
       });
       
-      console.log(`✅ Found ${sections.length} root sections`);
+      logger.info(`✅ Found ${sections.length} root sections`);
 
       // If no sections found, try to populate with basic data
       if (sections.length === 0) {
-        console.log('📝 No sections found, attempting to populate with basic medical categories...');
+        logger.info('📝 No sections found, attempting to populate with basic medical categories...');
         try {
           await this.populateBasicSections();
           
           // Retry the query after populating
-          console.log('🔄 Retrying root sections query after population...');
+          logger.info('🔄 Retrying root sections query after population...');
           const { data: newData, error: newError } = await supabase
             .from('sections')
             .select(`
@@ -257,7 +257,7 @@ class MedicalContentService {
             .order('display_order', { ascending: true });
 
           if (newError) {
-            console.error('❌ Retry query failed:', newError);
+            logger.error('❌ Retry query failed:', newError);
           } else {
             const newSections = (newData || []) as MedicalSection[];
             
@@ -266,7 +266,7 @@ class MedicalContentService {
               section.has_content = this.hasAnyContent(section);
             });
             
-            console.log(`✅ After population, found ${newSections.length} root sections`);
+            logger.info(`✅ After population, found ${newSections.length} root sections`);
             
             // Update cache with new data
             listCache.set(cacheKey, { data: newSections, timestamp: now });
@@ -274,7 +274,7 @@ class MedicalContentService {
             return newSections;
           }
         } catch (populationError) {
-          console.error('❌ Failed to populate sections:', populationError);
+          logger.error('❌ Failed to populate sections:', populationError);
         }
       }
       
@@ -534,7 +534,7 @@ class MedicalContentService {
    */
   async populateBasicSections(): Promise<void> {
     try {
-      console.log('🔧 POPULATING BASIC SECTIONS...');
+      logger.info('🔧 POPULATING BASIC SECTIONS...');
       
       const basicSections = [
         {
@@ -575,13 +575,13 @@ class MedicalContentService {
         .select();
 
       if (error) {
-        console.error('❌ Error populating sections:', error);
+        logger.error('❌ Error populating sections:', error);
         throw error;
       }
 
-      console.log('✅ Successfully populated sections:', data);
+      logger.info('✅ Successfully populated sections:', data);
     } catch (error) {
-      console.error('💥 Failed to populate sections:', error);
+      logger.error('💥 Failed to populate sections:', error);
       throw error;
     }
   }

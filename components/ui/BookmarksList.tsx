@@ -68,10 +68,10 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
       const userBookmarks = await bookmarksService.getUserBookmarks();
       setBookmarks(userBookmarks);
       
-      console.log(`📚 Loaded ${userBookmarks.length} bookmarks`);
+      logger.info(`📚 Loaded ${userBookmarks.length} bookmarks`);
       
     } catch (error) {
-      console.error('Error fetching bookmarks:', error);
+      logger.error('Error fetching bookmarks:', error);
       Alert.alert('Fehler', 'Lesezeichen konnten nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -116,7 +116,7 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
   };
 
   const handleRemoveBookmark = async (bookmark: UserBookmark) => {
-    console.log('🗑️ handleRemoveBookmark called for:', bookmark.section_title);
+    logger.info('🗑️ handleRemoveBookmark called for:', bookmark.section_title);
     
     Alert.alert(
       'Lesezeichen entfernen',
@@ -128,12 +128,12 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('👤 User confirmed deletion for:', bookmark.section_slug);
+              logger.info('👤 User confirmed deletion for:', bookmark.section_slug);
               
               // Show loading indicator could be added here
               await bookmarksService.removeBookmark(bookmark.section_slug);
               
-              console.log('✅ Remove successful, refreshing list...');
+              logger.info('✅ Remove successful, refreshing list...');
               await fetchBookmarks(); // Refresh list
               
               // Show success message
@@ -144,7 +144,7 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
               );
               
             } catch (error: any) {
-              console.error('💥 Error removing bookmark:', error);
+              logger.error('💥 Error removing bookmark:', error);
               
               // Show detailed error message
               const errorMessage = error?.message || 'Unbekannter Fehler beim Entfernen des Lesezeichens.';

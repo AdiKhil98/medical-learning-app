@@ -72,7 +72,7 @@ export default function DailyTipsManager() {
       setTips(tipsResponse.data || []);
       setQuestions(questionsResponse.data || []);
     } catch (error: any) {
-      console.error('Error loading daily content:', error);
+      logger.error('Error loading daily content:', error);
       Alert.alert('Fehler', 'Tägliche Inhalte konnten nicht geladen werden');
     } finally {
       setLoading(false);

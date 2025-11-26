@@ -31,11 +31,11 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
   const isExaminer = theme === 'examiner';
 
   // DEBUG LOGGING
-  console.log('='.repeat(50));
-  console.log('EvaluationDetailScreen RENDER');
-  console.log('Theme prop received:', theme);
-  console.log('isExaminer:', isExaminer);
-  console.log('='.repeat(50));
+  logger.info('='.repeat(50));
+  logger.info('EvaluationDetailScreen RENDER');
+  logger.info('Theme prop received:', theme);
+  logger.info('isExaminer:', isExaminer);
+  logger.info('='.repeat(50));
 
   const colors = {
     // Hero background gradient
@@ -74,15 +74,15 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
     contextHintText: isExaminer ? '#1565c0' : '#1b5e20',
   };
 
-  console.log('Colors object created:');
-  console.log('  heroBg:', colors.heroBg);
-  console.log('  circleStroke:', colors.circleStroke);
-  console.log('  categoryBar:', colors.categoryBar);
+  logger.info('Colors object created:');
+  logger.info('  heroBg:', colors.heroBg);
+  logger.info('  circleStroke:', colors.circleStroke);
+  logger.info('  categoryBar:', colors.categoryBar);
 
   useEffect(() => {
-    console.log('EvaluationDetailScreen mounted with MODERN ENHANCED design');
-    console.log('Theme:', theme);
-    console.log('Evaluation data:', JSON.stringify(evaluation, null, 2));
+    logger.info('EvaluationDetailScreen mounted with MODERN ENHANCED design');
+    logger.info('Theme:', theme);
+    logger.info('Evaluation data:', JSON.stringify(evaluation, null, 2));
 
     // Entrance animation
     Animated.parallel([

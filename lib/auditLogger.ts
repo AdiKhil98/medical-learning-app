@@ -17,7 +17,7 @@ export class AuditLogger {
       });
     } catch (error) {
       // Silently fail for now
-      console.log('Audit log skipped');
+      logger.info('Audit log skipped');
     }
   }
 
@@ -37,7 +37,7 @@ export class AuditLogger {
       });
     } catch (error) {
       // Silently fail for now
-      console.log('Audit log skipped');
+      logger.info('Audit log skipped');
     }
   }
 
@@ -63,7 +63,7 @@ export class AuditLogger {
       });
     } catch (logError) {
       // Silently fail for now
-      console.log('Audit log skipped');
+      logger.info('Audit log skipped');
     }
   }
 
@@ -74,7 +74,7 @@ export class AuditLogger {
       });
     } catch (error) {
       // Silently fail for now
-      console.log('Audit log skipped');
+      logger.info('Audit log skipped');
     }
   }
 
@@ -94,7 +94,7 @@ export class AuditLogger {
       });
     } catch (error) {
       // Silently fail for now
-      console.log('Audit log skipped');
+      logger.info('Audit log skipped');
     }
   }
 }

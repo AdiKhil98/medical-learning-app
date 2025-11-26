@@ -404,7 +404,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         
         // Add extra context for development mode
         if (__DEV__) {
-          console.log('📱 Test notification scheduled - you should see it in 1 second');
+          logger.info('📱 Test notification scheduled - you should see it in 1 second');
         }
       } catch (scheduleError) {
         SecureLogger.error('Failed to schedule local notification', scheduleError);

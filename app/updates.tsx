@@ -40,7 +40,7 @@ export default function Updates() {
       if (error) throw error;
       setUpdates(data || []);
     } catch (error) {
-      console.error('Error fetching updates:', error);
+      logger.error('Error fetching updates:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
