@@ -69,11 +69,6 @@ jest.mock('react-native', () => ({
   StyleSheet: {
     create: jest.fn((styles) => styles),
   },
-  View: 'View',
-  Text: 'Text',
-  TouchableOpacity: 'TouchableOpacity',
-  ScrollView: 'ScrollView',
-  Image: 'Image',
 }));
 
 // Mock Supabase
