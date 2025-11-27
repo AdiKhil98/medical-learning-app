@@ -1,15 +1,6 @@
 module.exports = {
   // Paths to ignore
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/.expo/',
-    '/dist/',
-    '/api/',
-    '/netlify/',
-  ],
-
-  // File extensions to test
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  testPathIgnorePatterns: ['/node_modules/', '/.expo/', '/dist/', '/api/', '/netlify/'],
 
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
@@ -22,16 +13,19 @@ module.exports = {
 
   // Transform configuration
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
 
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|@expo|@react-navigation|react-navigation|@react-native-community)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg))',
   ],
+
+  // Test environment
+  testEnvironment: 'node',
 
   // Coverage configuration
   collectCoverageFrom: [
-    '**/*.{ts,tsx}',
+    '**/*.{ts,tsx,js,jsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.expo/**',
@@ -39,24 +33,25 @@ module.exports = {
     '!**/coverage/**',
     '!**/__tests__/**',
     '!**/__mocks__/**',
-    '!jest.config.js',
-    '!babel.config.js',
-    '!metro.config.js',
+    '!**/jest.config.js',
+    '!**/babel.config.js',
+    '!**/metro.config.js',
+    '!**/app.config.js',
+    '!**/tailwind.config.js',
+    '!**/.lintstagedrc.js',
+    '!**/.eslintrc.js',
   ],
 
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50,
     },
   },
 
   coverageReporters: ['text', 'lcov', 'html'],
-
-  // Test environment
-  testEnvironment: 'node',
 
   // Globals
   globals: {

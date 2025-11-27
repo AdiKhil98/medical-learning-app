@@ -1,8 +1,18 @@
 // Jest setup file
 import '@testing-library/react-native/extend-expect';
+import '@testing-library/jest-native/extend-expect';
 
-// Mock React Native modules
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+// Polyfill for crypto.getRandomValues (required by some libraries)
+if (typeof global.crypto === 'undefined') {
+  global.crypto = {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    },
+  };
+}
 
 // Mock Expo modules
 jest.mock('expo-router', () => ({
@@ -28,12 +38,14 @@ jest.mock('expo-linear-gradient', () => ({
 // Mock NetInfo for network manager tests
 jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
-  fetch: jest.fn(() => Promise.resolve({
-    isConnected: true,
-    isInternetReachable: true,
-    type: 'wifi',
-    details: {},
-  })),
+  fetch: jest.fn(() =>
+    Promise.resolve({
+      isConnected: true,
+      isInternetReachable: true,
+      type: 'wifi',
+      details: {},
+    })
+  ),
 }));
 
 // Mock AsyncStorage
@@ -48,10 +60,55 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(() => Promise.resolve()),
 }));
 
-// Mock Platform
-jest.mock('react-native/Libraries/Utilities/Platform', () => ({
-  OS: 'ios',
-  select: jest.fn((obj) => obj.ios || obj.default),
+// Mock React Native Platform
+jest.mock('react-native', () => ({
+  Platform: {
+    OS: 'ios',
+    select: jest.fn((obj) => obj.ios || obj.default),
+  },
+  StyleSheet: {
+    create: jest.fn((styles) => styles),
+  },
+  View: 'View',
+  Text: 'Text',
+  TouchableOpacity: 'TouchableOpacity',
+  ScrollView: 'ScrollView',
+  Image: 'Image',
+}));
+
+// Mock Supabase
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({
+        data: { subscription: { unsubscribe: jest.fn() } },
+      })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+    rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+  },
+}));
+
+// Mock Sentry
+jest.mock('@/utils/sentry', () => ({
+  initializeSentry: jest.fn(),
+  setSentryUser: jest.fn(),
+  clearSentryUser: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addSentryBreadcrumb: jest.fn(),
+  setSentryContext: jest.fn(),
 }));
 
 // Silence console errors and warnings in tests
