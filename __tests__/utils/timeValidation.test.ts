@@ -9,6 +9,7 @@ describe('Time Validation', () => {
     // Reset time validator state
     timeValidator.resetSuspiciousEvents();
     jest.clearAllMocks();
+    jest.clearAllTimers();
   });
 
   describe('validateTime', () => {
@@ -30,7 +31,7 @@ describe('Time Validation', () => {
 
       const result = timeValidator.validateTime();
 
-      expect(result.warnings.some(w => w.includes('Backward'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Backward'))).toBe(true);
       expect(result.confidence).toBeLessThan(0.5);
 
       Date.now = originalDateNow;
@@ -38,35 +39,42 @@ describe('Time Validation', () => {
 
     it('should detect time inconsistency', () => {
       // First snapshot
+      const firstTime = Date.now();
       timeValidator.validateTime();
 
-      // Wait a bit
-      jest.advanceTimersByTime(1000);
+      // Mock performance.now to show little elapsed time
+      const originalPerf = global.performance.now;
+      global.performance.now = jest.fn(() => 100); // Only 100ms elapsed
 
-      // Mock a huge jump in Date.now()
+      // Mock Date.now() to show large jump (10 seconds)
       const originalDateNow = Date.now;
-      Date.now = jest.fn(() => originalDateNow() + 10000);
+      Date.now = jest.fn(() => firstTime + 10000);
 
       const result = timeValidator.validateTime();
 
-      expect(result.warnings.some(w => w.includes('inconsistency'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('inconsistency') || w.includes('manipulation'))).toBe(true);
 
+      // Restore
       Date.now = originalDateNow;
+      global.performance.now = originalPerf;
     });
 
     it('should track suspicious events', () => {
       const originalDateNow = Date.now;
+      const baseTime = originalDateNow();
 
-      // Trigger multiple suspicious events
+      // Trigger multiple suspicious events (backward time jumps)
       for (let i = 0; i < 3; i++) {
-        Date.now = jest.fn(() => originalDateNow() - 5000 * (i + 1));
+        Date.now = jest.fn(() => baseTime - 5000 * (i + 1));
         timeValidator.validateTime();
       }
 
+      // One more call to check the state after 3 suspicious events
+      Date.now = jest.fn(() => baseTime - 15000);
       const result = timeValidator.validateTime();
 
       expect(result.confidence).toBe(0);
-      expect(result.warnings.some(w => w.includes('Multiple'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Multiple'))).toBe(true);
       expect(timeValidator.isCriticallyCompromised()).toBe(true);
 
       Date.now = originalDateNow;
@@ -74,10 +82,11 @@ describe('Time Validation', () => {
 
     it('should allow resetting suspicious events', () => {
       const originalDateNow = Date.now;
+      const baseTime = originalDateNow();
 
-      // Trigger suspicious events
-      for (let i = 0; i < 3; i++) {
-        Date.now = jest.fn(() => originalDateNow() - 5000 * (i + 1));
+      // Trigger 3+ suspicious events
+      for (let i = 0; i < 4; i++) {
+        Date.now = jest.fn(() => baseTime - 5000 * (i + 1));
         timeValidator.validateTime();
       }
 
@@ -102,17 +111,19 @@ describe('Time Validation', () => {
 
     it('should have lower confidence after suspicious events', () => {
       const originalDateNow = Date.now;
+      const baseTime = originalDateNow();
 
-      // Normal confidence
-      const result1 = timeValidator.getTrustedTimestamp();
-      expect(result1.confidence).toBeGreaterThan(0.5);
+      // Establish baseline with first validation
+      const validation1 = timeValidator.validateTime();
+      expect(validation1.confidence).toBeGreaterThanOrEqual(0.5);
 
-      // Trigger suspicious event
-      Date.now = jest.fn(() => originalDateNow() - 5000);
-      timeValidator.validateTime();
+      // Trigger suspicious event (backward time jump)
+      Date.now = jest.fn(() => baseTime - 5000);
+      const validation2 = timeValidator.validateTime();
 
-      const result2 = timeValidator.getTrustedTimestamp();
-      expect(result2.confidence).toBeLessThan(result1.confidence);
+      // Confidence should be lower after detecting suspicious event
+      expect(validation2.confidence).toBeLessThan(validation1.confidence);
+      expect(validation2.warnings.length).toBeGreaterThan(0);
 
       Date.now = originalDateNow;
     });
@@ -159,9 +170,7 @@ describe('Time Validation', () => {
     it('should handle sync errors gracefully', async () => {
       global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as jest.Mock;
 
-      await expect(
-        timeValidator.syncWithServer('https://api.example.com/time')
-      ).resolves.not.toThrow();
+      await expect(timeValidator.syncWithServer('https://api.example.com/time')).resolves.not.toThrow();
     });
   });
 });

@@ -121,9 +121,12 @@ global.console = {
 };
 
 // Mock global performance object
+const performanceTimeOrigin = Date.now();
 global.performance = {
-  now: jest.fn(() => Date.now()),
-  timeOrigin: Date.now(),
+  now: jest.fn(() => Date.now() - performanceTimeOrigin),
+  get timeOrigin() {
+    return performanceTimeOrigin;
+  },
 };
 
 // Mock fetch
