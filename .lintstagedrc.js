@@ -1,6 +1,10 @@
 module.exports = {
-  '*.{ts,tsx}': [
-    'npm run lint --fix',
-    'npm test -- --bail --findRelatedTests',
-  ],
+  '*.{ts,tsx,js,jsx}': (filenames) => {
+    const files = filenames.join(' ');
+    return [`prettier --write ${files}`, `eslint --fix ${files}`];
+  },
+  '*.{json,md}': (filenames) => {
+    const files = filenames.join(' ');
+    return [`prettier --write ${files}`];
+  },
 };

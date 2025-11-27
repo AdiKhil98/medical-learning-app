@@ -2,5 +2,12 @@
   "useTabs": false,
   "bracketSpacing": true,
   "singleQuote": true,
-  "tabWidth": 2
+  "tabWidth": 2,
+  "semi": true,
+  "trailingComma": "es5",
+  "printWidth": 120,
+  "arrowParens": "always",
+  "endOfLine": "auto",
+  "bracketSameLine": false,
+  "proseWrap": "preserve"
 }
