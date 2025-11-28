@@ -21,8 +21,9 @@ import {
   WARNING_5_MIN_REMAINING
 } from '@/constants/simulationConstants';
 import { logger } from '@/utils/logger';
+import { withErrorBoundary } from '@/components/withErrorBoundary';
 
-export default function FSPSimulationScreen() {
+function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const {
@@ -2758,3 +2759,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default withErrorBoundary(FSPSimulationScreen, 'FSP Simulation');

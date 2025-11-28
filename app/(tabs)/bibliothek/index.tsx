@@ -33,6 +33,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SecureLogger } from '@/lib/security';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
+import { withErrorBoundary } from '@/components/withErrorBoundary';
 
 interface Category {
   id: string;
@@ -1121,4 +1122,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BibliothekIndex;
+export default withErrorBoundary(BibliothekIndex, 'Bibliothek');

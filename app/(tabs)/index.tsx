@@ -5,8 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import SlidingHomepage from '@/components/homepage/SlidingHomepage';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
+import { withMonitoring } from '@/components/withMonitoring';
 
-export default function DashboardScreen() {
+function DashboardScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const { showWelcome: showWelcomeFlow, loading: onboardingLoading, completeOnboarding } = useOnboarding();
@@ -40,4 +41,6 @@ export default function DashboardScreen() {
     </>
   );
 }
+
+export default withMonitoring(DashboardScreen, 'Home');
 

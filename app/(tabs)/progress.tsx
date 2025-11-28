@@ -15,6 +15,7 @@ import { parseEvaluation } from '@/utils/parseEvaluation';
 import type { Evaluation as ParsedEvaluation } from '@/types/evaluation';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { withErrorBoundary } from '@/components/withErrorBoundary';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -68,7 +69,7 @@ interface Evaluation {
   html_report?: string | null; // NEW: Pre-generated HTML report from Make.com
 }
 
-export default function ProgressScreen() {
+function ProgressScreen() {
   const { user } = useAuth();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
@@ -1508,3 +1509,5 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.slate900,
   },
 });
+
+export default withErrorBoundary(ProgressScreen, 'Progress');
