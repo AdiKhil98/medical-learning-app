@@ -29,7 +29,7 @@
     "lighthouse": "node scripts/lighthouse-audit.js",
     "lighthouse:mobile": "node scripts/lighthouse-audit.js --mobile",
     "lighthouse:desktop": "node scripts/lighthouse-audit.js --desktop",
-    "lighthouse:prod": "node scripts/lighthouse-audit.js --url=https://your-production-url.netlify.app",
+    "lighthouse:prod": "node scripts/lighthouse-audit.js --url=https://splendid-swan-dade5c.netlify.app",
     "prepare": "husky install"
   },
   "dependencies": {
