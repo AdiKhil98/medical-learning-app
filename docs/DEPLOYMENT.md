@@ -8,8 +8,7 @@ Before deploying, ensure you have:
 
 - [ ] GitHub repository set up and pushed
 - [ ] Supabase project created
-- [ ] Sentry account created (optional but recommended)
-- [ ] Analytics platform account (PostHog recommended)
+- [ ] PostHog account created (for analytics)
 - [ ] Domain name (optional)
 
 ---
@@ -112,19 +111,12 @@ Create a `.env.production` file (don't commit this!):
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Sentry Configuration (Error Monitoring)
-EXPO_PUBLIC_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
-SENTRY_AUTH_TOKEN=your-sentry-auth-token
-SENTRY_ORG=your-org-name
-SENTRY_PROJECT=your-project-name
-
 # Analytics Configuration (PostHog)
 EXPO_PUBLIC_POSTHOG_API_KEY=phc_your_api_key
 EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 
 # Application Configuration
 EXPO_PUBLIC_APP_ENV=production
-EXPO_PUBLIC_API_URL=https://your-api.com
 ```
 
 ### How to Get Each Variable:
@@ -140,19 +132,7 @@ EXPO_PUBLIC_API_URL=https://your-api.com
 #    - anon/public key (EXPO_PUBLIC_SUPABASE_ANON_KEY)
 ```
 
-#### 2. Sentry Variables
-
-```bash
-# 1. Go to https://sentry.io
-# 2. Create account / Sign in
-# 3. Create new project → select "React"
-# 4. Copy DSN from Project Settings
-# 5. Create Auth Token:
-#    - Settings → Account → API → Auth Tokens
-#    - Create New Token with "project:write" scope
-```
-
-#### 3. PostHog Variables
+#### 2. PostHog Variables
 
 ```bash
 # 1. Go to https://posthog.com
@@ -232,20 +212,7 @@ export default function RootLayout() {
 }
 ```
 
-### 2. Initialize Sentry
-
-Already set up in `utils/sentry.ts`, but verify:
-
-```typescript
-import { initializeSentry } from '@/utils/sentry';
-
-// In app/_layout.tsx
-useEffect(() => {
-  initializeSentry();
-}, []);
-```
-
-### 3. Enable Performance Monitoring
+### 2. Enable Performance Monitoring
 
 The performance monitor auto-initializes. Verify it's working:
 
@@ -290,13 +257,10 @@ Before going live, verify:
   - All production variables configured
   - No secrets in code
 
-- [ ] **Error Monitoring Active**
-  - Sentry DSN configured
-  - Test error reporting works
-
-- [ ] **Analytics Configured**
+- [ ] **Analytics & Error Tracking Configured**
   - PostHog API key set
   - Events tracking correctly
+  - Error tracking working (test with analytics.track(AnalyticsEvent.ERROR_OCCURRED))
 
 - [ ] **Database Migrations Applied**
   ```bash
@@ -308,32 +272,30 @@ Before going live, verify:
 
 ## 📊 Monitoring Your Deployment
 
-### 1. Sentry Dashboard
-
-- https://sentry.io/organizations/your-org/issues/
-- Monitor errors in real-time
-- Set up alerts for critical errors
-
-### 2. PostHog Analytics
+### 1. PostHog Analytics & Error Tracking
 
 - https://app.posthog.com/
 - Track user behavior
+- Monitor errors (via `error_occurred` events)
 - Monitor feature adoption
 - Analyze user flows
+- Session recordings
 
-### 3. Vercel Analytics
+### 2. Vercel/Netlify Analytics
 
-- Vercel Dashboard → Analytics
+- Dashboard → Analytics
 - Page load times
 - Core Web Vitals
 - Geographic distribution
+- Build logs
 
-### 4. Supabase Dashboard
+### 3. Supabase Dashboard
 
 - https://supabase.com/dashboard
 - Monitor database performance
 - Check API usage
 - Review logs
+- Query performance
 
 ---
 
@@ -479,8 +441,8 @@ After 1 week of production:
 If you encounter issues:
 
 1. **Check Logs**
-   - Vercel: Dashboard → Deployments → View Logs
-   - Sentry: Error reports
+   - Vercel/Netlify: Dashboard → Deployments → View Logs
+   - PostHog: Dashboard → Events → Filter by `error_occurred`
    - Browser Console: Client-side errors
 
 2. **Review Documentation**
@@ -500,10 +462,10 @@ If you encounter issues:
 After successful deployment:
 
 1. **Add Custom Domain**
-2. **Set Up Email Notifications** (Sentry alerts)
+2. **Set Up Error Alerts** (PostHog alerts for critical errors)
 3. **Enable Automated Backups** (Supabase)
 4. **Create Staging Environment**
-5. **Set Up Monitoring Dashboards**
+5. **Set Up Monitoring Dashboards** (PostHog insights)
 6. **Plan Feature Rollouts**
 
 ---
