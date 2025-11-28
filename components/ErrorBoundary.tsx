@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 import { AuditLogger } from '@/lib/auditLogger';
-import { captureException, setSentryContext } from '@/utils/sentry';
+import { analytics, AnalyticsEvent } from '@/utils/analytics';
 
 interface Props {
   children: ReactNode;
@@ -43,21 +43,19 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
-    // Set Sentry context with component stack
+    // Track error with PostHog Analytics
     try {
-      setSentryContext('errorBoundary', {
-        componentStack: errorInfo.componentStack?.substring(0, 500), // Limit length
+      analytics.track(AnalyticsEvent.ERROR_OCCURRED, {
+        errorType: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack?.substring(0, 500), // Limit length
+        componentStack: errorInfo.componentStack?.substring(0, 500),
         retryCount: this.state.retryCount,
-      });
-
-      // Capture exception in Sentry
-      captureException(error, {
         errorBoundary: true,
-        retryCount: this.state.retryCount,
       });
-    } catch (sentryError) {
-      // Silent fail if Sentry not configured
-      logger.warn('Failed to send error to Sentry', { error: sentryError });
+    } catch (analyticsError) {
+      // Silent fail if analytics not configured
+      logger.warn('Failed to track error to analytics', { error: analyticsError });
     }
 
     // Log error securely without sensitive data
@@ -67,8 +65,10 @@ export class ErrorBoundary extends Component<Props, State> {
   private async logErrorToSupabase(error: Error, errorInfo: React.ErrorInfo) {
     try {
       // Get current user without exposing sensitive data
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       // Sanitize error data - remove potential sensitive information
       const sanitizedError = {
         message: error.message,
@@ -82,16 +82,11 @@ export class ErrorBoundary extends Component<Props, State> {
         : '[REDACTED]';
 
       // Log error using AuditLogger
-      await AuditLogger.logErrorEvent(
-        error,
-        user?.id,
-        'ErrorBoundary',
-        {
-          componentStack: sanitizedComponentStack,
-          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'React Native',
-          platform: 'mobile',
-        }
-      );
+      await AuditLogger.logErrorEvent(error, user?.id, 'ErrorBoundary', {
+        componentStack: sanitizedComponentStack,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'React Native',
+        platform: 'mobile',
+      });
     } catch (logError) {
       logger.error('Failed to log error to Supabase', { error: logError });
     }
@@ -101,11 +96,12 @@ export class ErrorBoundary extends Component<Props, State> {
     // Remove potential sensitive data from component stack
     return componentStack
       .split('\n')
-      .map(line => {
+      .map((line) => {
         // Remove anything that looks like props or state values
-        return line.replace(/\{[^}]*\}/g, '{[SANITIZED]}')
-                  .replace(/="[^"]*"/g, '="[SANITIZED]"')
-                  .replace(/=\{[^}]*\}/g, '={[SANITIZED]}');
+        return line
+          .replace(/\{[^}]*\}/g, '{[SANITIZED]}')
+          .replace(/="[^"]*"/g, '="[SANITIZED]"')
+          .replace(/=\{[^}]*\}/g, '={[SANITIZED]}');
       })
       .join('\n');
   }
@@ -146,7 +142,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <Text style={styles.errorSubtitle}>
               Entschuldigung, etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.
             </Text>
-            
+
             <TouchableOpacity
               style={[styles.retryButton, this.state.isRetrying && styles.retryButtonDisabled]}
               onPress={this.handleRetry}
@@ -162,9 +158,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </TouchableOpacity>
 
             {this.state.retryCount > 0 && this.state.retryCount < 3 && (
-              <Text style={styles.retryCountText}>
-                Versuch {this.state.retryCount} von 3
-              </Text>
+              <Text style={styles.retryCountText}>Versuch {this.state.retryCount} von 3</Text>
             )}
 
             {__DEV__ && this.state.error && (
@@ -175,12 +169,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Text>
                 {this.state.error.stack && (
                   <Text style={styles.devErrorStack}>
-                    Stack Trace:{'\n'}{this.state.error.stack}
+                    Stack Trace:{'\n'}
+                    {this.state.error.stack}
                   </Text>
                 )}
                 {this.state.errorInfo?.componentStack && (
                   <Text style={styles.devErrorStack}>
-                    Component Stack:{'\n'}{this.state.errorInfo.componentStack}
+                    Component Stack:{'\n'}
+                    {this.state.errorInfo.componentStack}
                   </Text>
                 )}
               </ScrollView>

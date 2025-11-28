@@ -167,12 +167,7 @@ class Logger {
   /**
    * Core logging method
    */
-  private log(
-    level: LogLevel,
-    message: string,
-    context?: LogContext,
-    error?: Error
-  ): void {
+  private log(level: LogLevel, message: string, context?: LogContext, error?: Error): void {
     // Skip if below configured level
     if (level < this.config.level) {
       return;
@@ -205,9 +200,7 @@ class Logger {
    */
   private logToConsole(entry: LogEntry): void {
     const prefix = this.getLogPrefix(entry.level);
-    const timestamp = this.config.includeTimestamp
-      ? `[${new Date(entry.timestamp).toLocaleTimeString()}]`
-      : '';
+    const timestamp = this.config.includeTimestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}]` : '';
     const source = entry.source ? `[${entry.source}]` : '';
 
     const logMessage = `${prefix} ${timestamp} ${source} ${entry.message}`;
@@ -233,59 +226,29 @@ class Logger {
   }
 
   /**
-   * Log to external service (Sentry)
+   * Log to external service (PostHog Analytics)
    */
   private logToExternal(entry: LogEntry): void {
     try {
-      // Dynamically import Sentry to avoid errors if not configured
-      const sentryModule = require('./sentry');
+      // Only track errors and warnings to PostHog
+      if (entry.level === LogLevel.ERROR || entry.level === LogLevel.WARN) {
+        // Dynamically import analytics to avoid circular dependencies
+        const { analytics, AnalyticsEvent } = require('./analytics');
 
-      // Map log levels to Sentry severity
-      const sentryLevel = this.mapLogLevelToSentry(entry.level);
-
-      // Add breadcrumb for all log levels
-      sentryModule.addSentryBreadcrumb(
-        entry.message,
-        entry.source || 'app',
-        sentryLevel,
-        entry.context
-      );
-
-      // Capture errors and warnings in Sentry
-      if (entry.level === LogLevel.ERROR && entry.error) {
-        sentryModule.captureException(entry.error, {
-          ...entry.context,
+        analytics.track(AnalyticsEvent.ERROR_OCCURRED, {
+          level: entry.level,
+          message: entry.message,
+          errorType: entry.error?.name,
+          errorMessage: entry.error?.message,
+          errorStack: entry.error?.stack?.substring(0, 500),
           source: entry.source,
           platform: entry.platform,
-        });
-      } else if (entry.level === LogLevel.WARN) {
-        sentryModule.captureMessage(entry.message, 'warning', {
           ...entry.context,
-          source: entry.source,
-          platform: entry.platform,
         });
       }
     } catch (error) {
-      // Sentry not available or not configured - silent fail
+      // Analytics not available or not configured - silent fail
       // Don't log to avoid infinite loop
-    }
-  }
-
-  /**
-   * Map log level to Sentry severity
-   */
-  private mapLogLevelToSentry(level: LogLevel): 'debug' | 'info' | 'warning' | 'error' {
-    switch (level) {
-      case LogLevel.DEBUG:
-        return 'debug';
-      case LogLevel.INFO:
-        return 'info';
-      case LogLevel.WARN:
-        return 'warning';
-      case LogLevel.ERROR:
-        return 'error';
-      default:
-        return 'info';
     }
   }
 
@@ -339,10 +302,7 @@ export function createScopedLogger(scope: string): Logger {
 /**
  * Performance measurement decorator
  */
-export function measurePerformance<T>(
-  operation: string,
-  fn: () => T | Promise<T>
-): Promise<T> {
+export function measurePerformance<T>(operation: string, fn: () => T | Promise<T>): Promise<T> {
   const start = Date.now();
   const result = fn();
 
@@ -362,11 +322,7 @@ export function measurePerformance<T>(
 /**
  * Async error wrapper with logging
  */
-export async function withErrorLogging<T>(
-  operation: string,
-  fn: () => Promise<T>,
-  context?: LogContext
-): Promise<T> {
+export async function withErrorLogging<T>(operation: string, fn: () => Promise<T>, context?: LogContext): Promise<T> {
   try {
     return await fn();
   } catch (error) {

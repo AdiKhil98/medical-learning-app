@@ -95,17 +95,6 @@ jest.mock('@/lib/supabase', () => ({
   },
 }));
 
-// Mock Sentry
-jest.mock('@/utils/sentry', () => ({
-  initializeSentry: jest.fn(),
-  setSentryUser: jest.fn(),
-  clearSentryUser: jest.fn(),
-  captureException: jest.fn(),
-  captureMessage: jest.fn(),
-  addSentryBreadcrumb: jest.fn(),
-  setSentryContext: jest.fn(),
-}));
-
 // Silence console errors and warnings in tests
 global.console = {
   ...console,
