@@ -13,7 +13,14 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:badge": "npm run test:coverage && node scripts/coverage-badge.js",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:ci": "playwright test --reporter=html,json",
+    "coverage:view": "open coverage/lcov-report/index.html || xdg-open coverage/lcov-report/index.html || start coverage/lcov-report/index.html",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -76,7 +83,9 @@
     "victory-native": "^41.17.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@babel/core": "^7.23.9",
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.9.0",
     "@types/jest": "^29.5.14",
