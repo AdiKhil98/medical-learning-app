@@ -10,14 +10,7 @@ module.exports = ({ config }) => {
       ...config.web,
       bundler: 'metro',
 
-      // Performance optimizations
-      build: {
-        babel: {
-          include: ['@expo/vector-icons'],
-        },
-      },
-
-      // Meta tags for SEO (already good, but ensuring they're set)
+      // Meta tags for SEO
       meta: {
         'theme-color': '#B15740',
         'apple-mobile-web-app-capable': 'yes',
@@ -34,19 +27,7 @@ module.exports = ({ config }) => {
       typedRoutes: true,
     },
 
-    // Plugin configuration
-    plugins: [
-      ...(config.plugins || []),
-      [
-        'expo-font',
-        {
-          fonts: [
-            // Only load fonts that are actually used
-            './node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf',
-            './node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf',
-          ],
-        },
-      ],
-    ],
+    // Use default plugins (expo-font plugin removed to prevent loading all icon fonts)
+    plugins: config.plugins || [],
   };
 };

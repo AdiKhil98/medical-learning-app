@@ -164,31 +164,44 @@ Add to `index.html`:
 - Placeholder text
 - Disabled state colors
 
-## Expected Results After Fixes
+## Actual Results After Phase 1
 
-### Before
+### Before (Baseline: 2025-11-28 18:38)
 
-- Performance: 38
+- Performance: **38/100**
 - Bundle Size: 6.15 MB (single file)
-- Icon Fonts: 4.8 MB
+- Icon Fonts: 4.8 MB (all 19 families)
 - LCP: 8.2s
 - TBT: 3,740ms
+- Unused JS: 692 KB
 
-### After (Conservative Estimate)
+### After Phase 1 (2025-11-28 19:08)
 
-- Performance: **70-75** (+32-37 points)
-- Bundle Size: **1.5-2 MB** (-4 MB)
-- Icon Fonts: **600 KB** (-4.2 MB)
-- LCP: **2.5-3s** (-5s improvement)
-- TBT: **< 500ms** (-3.2s improvement)
+- Performance: **39/100** (+1 point ❌ minimal improvement)
+- Bundle Size: **1.07 MB** (-83% ✅ HUGE improvement!)
+- Icon Fonts: Still bundled (optimization didn't work due to Expo limitations)
+- LCP: **7.8s** (-400ms ⚠️ slight improvement)
+- TBT: **3,380ms** (-360ms ⚠️ slight improvement)
+- Unused JS: **652 KB** (-40 KB ⚠️ minimal improvement)
 
-### After (Optimistic - with all recommendations)
+### Analysis
 
-- Performance: **85-90** (+47-52 points)
-- Bundle Size: **< 1 MB** (-5 MB)
-- Icon Fonts: **600 KB** (-4.2 MB)
-- LCP: **< 2s** (-6s improvement)
-- TBT: **< 200ms** (-3.5s improvement)
+✅ **What worked:**
+
+- Metro minification and tree shaking reduced bundle from 6.15 MB to 1.07 MB (-83%)
+- Console.log removal helped reduce bundle size
+
+❌ **What didn't work:**
+
+- Icon font optimization (Expo bundles all fonts regardless of configuration)
+- Performance score barely changed despite 83% bundle reduction
+- Core Web Vitals still failing
+
+🔍 **Root cause:**
+
+- Problem is **JavaScript execution time**, not just bundle download size
+- 652 KB of unused JavaScript is still being **executed** (blocking main thread)
+- Need to actually remove/lazy-load unused code, not just minify it
 
 ## Testing Plan
 
@@ -216,15 +229,135 @@ npm run lighthouse:prod
 - Monitor performance metrics
 - Watch for regressions
 
+## Phase 2: Reduce JavaScript Execution Time
+
+Based on Phase 1 results, we need to focus on **execution time**, not just bundle size.
+
+### Priority 1: Code Splitting & Lazy Loading
+
+**Problem:** 652 KB of unused JavaScript executing on initial load
+
+**Solutions:**
+
+1. **Lazy load simulation screens** (heaviest pages):
+
+```typescript
+// app/(tabs)/simulation/_layout.tsx
+import { lazy, Suspense } from 'react';
+
+const KPSimulation = lazy(() => import('./kp'));
+const FSPSimulation = lazy(() => import('./fsp'));
+
+// Wrap with Suspense and loading indicator
+```
+
+**Expected Impact:** -2s TBT, -3s LCP
+
+2. **Lazy load chart libraries:**
+
+```typescript
+// Only load charts when needed
+const ChartComponent = lazy(() => import('@/components/charts/PerformanceChart'));
+```
+
+**Expected Impact:** -500ms TBT
+
+3. **Lazy load Voiceflow integration:**
+
+```typescript
+// Load Voiceflow script only on simulation pages
+useEffect(() => {
+  if (isSimulationPage) {
+    import('@/utils/voiceflowIntegration').then(({ initializeVoiceflow }) => {
+      initializeVoiceflow();
+    });
+  }
+}, [isSimulationPage]);
+```
+
+**Expected Impact:** -1s TBT
+
+### Priority 2: Remove Duplicate Dependencies
+
+**Problem:** Both `victory` and `react-native-chart-kit` installed
+
+```bash
+# Check bundle impact
+npm uninstall react-native-chart-kit
+# Keep victory (more features, better tree shaking)
+```
+
+**Expected Impact:** -300 KB, -500ms TBT
+
+### Priority 3: Defer Non-Critical Scripts
+
+**Problem:** PostHog, analytics loading on app init
+
+```typescript
+// Defer analytics initialization
+useEffect(() => {
+  setTimeout(() => {
+    import('@/utils/analytics').then(({ initAnalytics }) => {
+      initAnalytics();
+    });
+  }, 3000); // Load after 3s
+}, []);
+```
+
+**Expected Impact:** -800ms TBT
+
+### Priority 4: Icon Font Optimization (Complex)
+
+**Problem:** Expo bundles all 19 icon fonts (still 4.8 MB in bundle)
+
+**Solutions:**
+
+Option A: Use `react-icons` for web only:
+
+```typescript
+// components/Icon.tsx
+import { Platform } from 'react-native';
+
+export const Icon = Platform.select({
+  web: () => require('react-icons').IoMdHome, // Tree-shakeable
+  default: () => require('@expo/vector-icons').Ionicons, // Expo icons
+});
+```
+
+Option B: Create custom Babel plugin to strip unused fonts
+
+Option C: Accept current state (lowest priority)
+
+**Expected Impact:** -4 MB bundle, -2s LCP (if Option A implemented)
+
+### Expected Results After Phase 2
+
+- Performance: **70-80/100** (+31-41 points)
+- Bundle Size: **< 500 KB** (if icon fonts fixed)
+- LCP: **< 3s** (-4.8s improvement)
+- TBT: **< 500ms** (-2.9s improvement)
+- Unused JS: **< 200 KB** (-450 KB)
+
 ## Implementation Status
 
+### Phase 1: Bundle Optimization ✅
+
 - [x] Metro config optimization
-- [x] Icon font lazy loading
+- [x] Icon font lazy loading attempt (didn't work)
 - [x] App config optimization
-- [ ] Rebuild and test
-- [ ] Lazy load heavy libraries
-- [ ] Remove duplicate dependencies
-- [ ] Fix color contrast
+- [x] Rebuild and test
+- [x] Re-run Lighthouse audit
+- [x] Analyze results
+
+### Phase 2: Execution Time Optimization (TODO)
+
+- [ ] Lazy load simulation screens (kp.tsx, fsp.tsx)
+- [ ] Lazy load chart libraries
+- [ ] Lazy load Voiceflow integration
+- [ ] Remove duplicate chart dependency
+- [ ] Defer analytics initialization
+- [ ] Fix color contrast issue
+- [ ] (Optional) Switch to react-icons for web
 - [ ] Re-run Lighthouse audit
 - [ ] Deploy and verify
 
