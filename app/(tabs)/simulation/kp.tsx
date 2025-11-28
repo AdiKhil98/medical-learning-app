@@ -8,18 +8,33 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { createKPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
-import { stopGlobalVoiceflowCleanup, disableVoiceflowCleanup, enableVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import {
+  stopGlobalVoiceflowCleanup,
+  disableVoiceflowCleanup,
+  enableVoiceflowCleanup,
+} from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import InlineInstructions from '@/components/ui/InlineInstructions';
-import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
+import {
+  InlineContent,
+  Section,
+  Paragraph,
+  BoldText,
+  Step,
+  InfoBox,
+  TimeItem,
+  TipsList,
+  HighlightBox,
+  TimeBadge,
+} from '@/components/ui/InlineContent';
 import {
   SIMULATION_DURATION_SECONDS,
   USAGE_THRESHOLD_SECONDS,
-  WARNING_5_MIN_REMAINING
+  WARNING_5_MIN_REMAINING,
 } from '@/constants/simulationConstants';
 import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
@@ -34,7 +49,7 @@ function KPSimulationScreen() {
     getSubscriptionInfo,
     checkAccess,
     applyOptimisticDeduction,
-    resetOptimisticCount
+    resetOptimisticCount,
   } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
@@ -64,7 +79,6 @@ function KPSimulationScreen() {
   const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-
   // Early completion state
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
   const [earlyCompletionReason, setEarlyCompletionReason] = useState('');
@@ -82,11 +96,7 @@ function KPSimulationScreen() {
   const clearSimulationStorage = async () => {
     try {
       // Clear AsyncStorage items
-      await AsyncStorage.multiRemove([
-        'sim_start_time_kp',
-        'sim_end_time_kp',
-        'sim_duration_ms_kp',
-      ]);
+      await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
 
       // Clear SecureStore items (sensitive data)
       await SecureStore.deleteItemAsync('sim_session_token_kp');
@@ -110,7 +120,6 @@ function KPSimulationScreen() {
     logger.info('[Mount] Resetting optimistic count to show actual backend data...');
     resetOptimisticCount();
   }, [resetOptimisticCount]);
-
 
   // Add state for initialization tracking
   const [isInitializing, setIsInitializing] = useState(false);
@@ -146,22 +155,18 @@ function KPSimulationScreen() {
       if (!user) {
         logger.error(`❌ [${timestamp}] No user object found`);
         setInitializationError('User not authenticated');
-        Alert.alert(
-          'Authentifizierungsfehler',
-          'Bitte melden Sie sich an, um fortzufahren.',
-          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
-        );
+        Alert.alert('Authentifizierungsfehler', 'Bitte melden Sie sich an, um fortzufahren.', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
+        ]);
         return;
       }
 
       if (!user.id) {
         logger.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
-        Alert.alert(
-          'Authentifizierungsfehler',
-          'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.',
-          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
-        );
+        Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
+        ]);
         return;
       }
 
@@ -189,7 +194,7 @@ function KPSimulationScreen() {
         logger.info(`📊 [${timestamp}] Access check result:`, {
           canUse: accessCheck.canUseSimulation,
           remaining: accessCheck.remainingSimulations,
-          limit: accessCheck.simulationLimit
+          limit: accessCheck.simulationLimit,
         });
 
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
@@ -199,7 +204,6 @@ function KPSimulationScreen() {
         }
 
         logger.info(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
-
       } catch (accessError) {
         logger.error(`❌ [${timestamp}] Error checking access:`, accessError);
         setInitializationError('Access check failed');
@@ -253,14 +257,16 @@ function KPSimulationScreen() {
         logger.info(`📋 [${timestamp}] Session token generation result:`, {
           success: result.success,
           hasToken: !!result.sessionToken,
-          error: result.error || 'none'
+          error: result.error || 'none',
         });
 
         if (!result.success || !result.sessionToken) {
           throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
         }
 
-        logger.info(`✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`);
+        logger.info(
+          `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
+        );
 
         setSessionToken(result.sessionToken);
         sessionTokenRef.current = result.sessionToken;
@@ -273,14 +279,16 @@ function KPSimulationScreen() {
           id: user.id,
           email: user.email,
           has_email: !!user.email,
-          email_type: typeof user.email
+          email_type: typeof user.email,
         });
 
         // FALLBACK: If email is not in user object, try to get it from Supabase session
         let userEmail = user.email;
         if (!userEmail) {
           logger.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           if (session?.user?.email) {
             userEmail = session.user.email;
             logger.info(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
@@ -307,7 +315,7 @@ function KPSimulationScreen() {
         const persistentIds = controller.getIds();
         logger.info(`📤 [${timestamp}] Persistent IDs:`, {
           user_id: persistentIds.user_id,
-          session_id: persistentIds.session_id
+          session_id: persistentIds.session_id,
         });
 
         const initialized = await controller.initialize();
@@ -370,7 +378,7 @@ function KPSimulationScreen() {
               type: event.type,
               timestamp: new Date().toISOString(),
               hasUserData: !!event.user_id,
-              hasSessionToken: !!event.session_token
+              hasSessionToken: !!event.session_token,
             });
           };
 
@@ -403,14 +411,13 @@ function KPSimulationScreen() {
         setIsInitializing(false);
         setInitializationError(null);
         return; // Success - exit retry loop
-
       } catch (error) {
         const timestamp = new Date().toISOString();
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         logger.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
           error: errorMessage,
-          stack: error instanceof Error ? error.stack : undefined
+          stack: error instanceof Error ? error.stack : undefined,
         });
 
         // If this was the last attempt, show error to user
@@ -418,9 +425,7 @@ function KPSimulationScreen() {
           logger.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
 
           // FIX: Clear storage on initialization failure
-          clearSimulationStorage().catch(err =>
-            logger.error('Error clearing storage after init failure:', err)
-          );
+          clearSimulationStorage().catch((err) => logger.error('Error clearing storage after init failure:', err));
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
@@ -435,8 +440,8 @@ function KPSimulationScreen() {
                 onPress: () => {
                   initializationAttemptsRef.current = 0;
                   initializeWithRetry(userId, timestamp);
-                }
-              }
+                },
+              },
             ]
           );
 
@@ -447,7 +452,7 @@ function KPSimulationScreen() {
         const delay = attempt * 1000;
         logger.info(`⏳ [${timestamp}] Waiting ${delay}ms before retry attempt ${attempt + 1}...`);
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   };
@@ -457,13 +462,13 @@ function KPSimulationScreen() {
     logger.info('🔍 KP: Setting up passive microphone detection...');
 
     // MEMORY LEAK FIX: Track listeners for cleanup
-    const trackListeners: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
+    const trackListeners: { track: MediaStreamTrack; handler: () => void }[] = [];
     (window as any).kpTrackListeners = trackListeners;
 
     // Method 1: Monitor for MediaStream creation and termination
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
-      navigator.mediaDevices.getUserMedia = async function(constraints) {
+      navigator.mediaDevices.getUserMedia = async function (constraints) {
         logger.info('🎤 KP: MediaStream requested with constraints:', constraints);
 
         if (constraints?.audio) {
@@ -527,7 +532,7 @@ function KPSimulationScreen() {
     // Method 2: Simple click detection as backup
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      
+
       // Only trigger on voiceflow-chat container clicks
       if (target.closest('#voiceflow-chat') && !timerActive) {
         logger.info('🎯 KP: Click detected on Voiceflow widget - waiting for voice call...');
@@ -544,7 +549,14 @@ function KPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    logger.info('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+    logger.info(
+      '🔍 DEBUG: startSimulationTimer called, timerActive:',
+      timerActive,
+      'timerActiveRef:',
+      timerActiveRef.current,
+      'sessionToken:',
+      sessionTokenRef.current
+    );
 
     // CRITICAL: Atomic lock to prevent race conditions
     // Check and set lock in one operation BEFORE any async operations
@@ -559,11 +571,11 @@ function KPSimulationScreen() {
       logger.info('[Timer] KP: Attempting to start timer...');
       const accessCheck = await checkAccess();
 
-    logger.info('[Timer] KP: Access check:', {
-      canStart: accessCheck?.canUseSimulation,
-      remaining: accessCheck?.remainingSimulations,
-      total: accessCheck?.simulationLimit
-    });
+      logger.info('[Timer] KP: Access check:', {
+        canStart: accessCheck?.canUseSimulation,
+        remaining: accessCheck?.remainingSimulations,
+        total: accessCheck?.simulationLimit,
+      });
 
       // CRITICAL: Block if access is denied
       if (!accessCheck || !accessCheck.canUseSimulation) {
@@ -573,14 +585,10 @@ function KPSimulationScreen() {
         setShowUpgradeModal(true);
         setIsSimulationLocked(true);
 
-        Alert.alert(
-          'Simulationslimit erreicht',
-          accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
-          [
-            { text: 'Upgrade', onPress: () => router.push('subscription' as any) },
-            { text: 'OK' }
-          ]
-        );
+        Alert.alert('Simulationslimit erreicht', accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.', [
+          { text: 'Upgrade', onPress: () => router.push('subscription' as any) },
+          { text: 'OK' },
+        ]);
 
         return; // BLOCK timer start (lock released in finally)
       }
@@ -640,95 +648,103 @@ function KPSimulationScreen() {
         // Apply optimistic counter deduction (show immediate feedback to user)
         applyOptimisticDeduction();
 
-      // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
-      try {
-        // Non-sensitive data - use AsyncStorage
-        await AsyncStorage.multiSet([
-          ['sim_start_time_kp', startTime.toString()],
-          ['sim_end_time_kp', endTime.toString()],
-          ['sim_duration_ms_kp', duration.toString()],
-        ]);
+        // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
+        try {
+          // Non-sensitive data - use AsyncStorage
+          await AsyncStorage.multiSet([
+            ['sim_start_time_kp', startTime.toString()],
+            ['sim_end_time_kp', endTime.toString()],
+            ['sim_duration_ms_kp', duration.toString()],
+          ]);
 
-        // Sensitive data - use SecureStore (encrypted storage)
-        await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
-        if (user?.id) {
-          await SecureStore.setItemAsync('sim_user_id_kp', user.id);
+          // Sensitive data - use SecureStore (encrypted storage)
+          await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
+          if (user?.id) {
+            await SecureStore.setItemAsync('sim_user_id_kp', user.id);
+          }
+
+          logger.info('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
+        } catch (error) {
+          logger.error('❌ KP: Error saving simulation state:', error);
         }
 
-        logger.info('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
+        setUsageMarked(false);
+        usageMarkedRef.current = false; // Initialize ref
+
+        logger.info('✅ KP: Timer started with existing session token');
       } catch (error) {
-        logger.error('❌ KP: Error saving simulation state:', error);
+        logger.error('❌ KP: Error during timer setup:', error);
       }
 
-      setUsageMarked(false);
-      usageMarkedRef.current = false; // Initialize ref
+      logger.info('🔍 DEBUG: Timer already active, now starting timer interval');
+      // NOTE: Heartbeat removed - deprecated/no-op in new system
 
-      logger.info('✅ KP: Timer started with existing session token');
+      logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
 
-    } catch (error) {
-      logger.error('❌ KP: Error during timer setup:', error);
-    }
+      // Use 1000ms interval for better mobile compatibility (less battery drain)
+      timerInterval.current = setInterval(() => {
+        // Calculate remaining time based on absolute end time (use ref for mobile reliability)
+        const currentEndTime = timerEndTimeRef.current || endTime;
+        const remaining = currentEndTime - Date.now();
+        const remainingSeconds = Math.floor(remaining / 1000);
 
-    logger.info('🔍 DEBUG: Timer already active, now starting timer interval');
-    // NOTE: Heartbeat removed - deprecated/no-op in new system
+        // Get previous value for comparison
+        const prev = previousTimeRef.current;
 
-    logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
+        // Update time remaining
+        if (remaining <= 0) {
+          setTimeRemaining(0);
+          previousTimeRef.current = 0;
+          clearInterval(timerInterval.current!);
+          timerInterval.current = null;
+          logger.info('⏰ KP: Timer finished - 20 minutes elapsed');
+          logger.info('🔚 KP: Initiating graceful end sequence');
+          initiateGracefulEnd();
+          return;
+        } else {
+          setTimeRemaining(remainingSeconds);
+          previousTimeRef.current = remainingSeconds;
+        }
 
-    // Use 1000ms interval for better mobile compatibility (less battery drain)
-    timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time (use ref for mobile reliability)
-      const currentEndTime = timerEndTimeRef.current || endTime;
-      const remaining = currentEndTime - Date.now();
-      const remainingSeconds = Math.floor(remaining / 1000);
+        // Log timer value every 10 seconds (only when value changes)
+        if (remainingSeconds % 10 === 0 && remainingSeconds !== prev) {
+          logger.info(
+            '⏱️ DEBUG: Timer at',
+            `${Math.floor(remainingSeconds / 60)  }:${  String(remainingSeconds % 60).padStart(2, '0')}`,
+            `(${remainingSeconds} seconds)`
+          );
+        }
 
-      // Get previous value for comparison
-      const prev = previousTimeRef.current;
+        // Mark as used at 5-minute mark (only trigger once)
+        // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
+        const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
+        const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
+        if (
+          prev > fiveMinutesRemaining &&
+          remainingSeconds <= fiveMinutesRemaining &&
+          !usageMarkedRef.current &&
+          currentSessionToken
+        ) {
+          const clientElapsed = 20 * 60 - remainingSeconds;
+          logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
+          logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
+          markSimulationAsUsed(clientElapsed);
+        }
 
-      // Update time remaining
-      if (remaining <= 0) {
-        setTimeRemaining(0);
-        previousTimeRef.current = 0;
-        clearInterval(timerInterval.current!);
-        timerInterval.current = null;
-        logger.info('⏰ KP: Timer finished - 20 minutes elapsed');
-        logger.info('🔚 KP: Initiating graceful end sequence');
-        initiateGracefulEnd();
-        return;
-      } else {
-        setTimeRemaining(remainingSeconds);
-        previousTimeRef.current = remainingSeconds;
-      }
-
-      // Log timer value every 10 seconds (only when value changes)
-      if (remainingSeconds % 10 === 0 && remainingSeconds !== prev) {
-        logger.info('⏱️ DEBUG: Timer at', Math.floor(remainingSeconds / 60) + ':' + String(remainingSeconds % 60).padStart(2, '0'), `(${remainingSeconds} seconds)`);
-      }
-
-      // Mark as used at 5-minute mark (only trigger once)
-      // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
-      const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
-      const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
-      if (prev > fiveMinutesRemaining && remainingSeconds <= fiveMinutesRemaining && !usageMarkedRef.current && currentSessionToken) {
-        const clientElapsed = (20 * 60) - remainingSeconds;
-        logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
-        logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-        logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
-        markSimulationAsUsed(clientElapsed);
-      }
-
-      // Timer warnings (only trigger once per threshold)
-      if (prev > WARNING_5_MIN_REMAINING && remainingSeconds <= WARNING_5_MIN_REMAINING) {
-        showTimerWarning('5 Minuten verbleibend', 'yellow', false);
-      }
-      if (prev > 120 && remainingSeconds <= 120) {
-        showTimerWarning('2 Minuten verbleibend', 'orange', false);
-      }
-      if (prev > 60 && remainingSeconds <= 60) {
-        showTimerWarning('Nur noch 1 Minute!', 'red', false);
-      }
-      if (prev > 30 && remainingSeconds <= 30) {
-        showTimerWarning('30 Sekunden verbleibend', 'red', true);
-      }
+        // Timer warnings (only trigger once per threshold)
+        if (prev > WARNING_5_MIN_REMAINING && remainingSeconds <= WARNING_5_MIN_REMAINING) {
+          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+        }
+        if (prev > 120 && remainingSeconds <= 120) {
+          showTimerWarning('2 Minuten verbleibend', 'orange', false);
+        }
+        if (prev > 60 && remainingSeconds <= 60) {
+          showTimerWarning('Nur noch 1 Minute!', 'red', false);
+        }
+        if (prev > 30 && remainingSeconds <= 30) {
+          showTimerWarning('30 Sekunden verbleibend', 'red', true);
+        }
         if (prev > 10 && remainingSeconds <= 10) {
           showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
         }
@@ -758,7 +774,7 @@ function KPSimulationScreen() {
   const markSimulationAsUsed = async (clientElapsedSeconds?: number) => {
     const token = sessionTokenRef.current; // Use ref instead of state
     if (!token || usageMarkedRef.current) return;
-    
+
     logger.info('📊 KP: Marking simulation as used at 5-minute mark');
     logger.info('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
     logger.info('🔍 DEBUG: Using session token:', token);
@@ -776,7 +792,7 @@ function KPSimulationScreen() {
         // result in double-counting (incrementing the counter twice).
       } else {
         logger.error('❌ KP: Failed to mark simulation as used:', result.error);
-        
+
         // If server rejected due to time manipulation, flag it
         if (result.error?.includes('insufficient_time')) {
           logger.info('🛡️ SECURITY: Server blocked usage marking - possible time manipulation attempt');
@@ -798,10 +814,11 @@ function KPSimulationScreen() {
       }
 
       // Method 2: Try to stop any active media streams
-      navigator.mediaDevices?.getUserMedia({ audio: true })
+      navigator.mediaDevices
+        ?.getUserMedia({ audio: true })
         .then((stream) => {
           logger.info('🔚 KP: Stopping active audio streams');
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
         })
         .catch(() => {
           // No active streams, which is fine
@@ -819,7 +836,6 @@ function KPSimulationScreen() {
           }
         }
       }, 500);
-
     } catch (error) {
       logger.error('❌ KP: Error ending Voiceflow conversation:', error);
     }
@@ -829,7 +845,7 @@ function KPSimulationScreen() {
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     logger.info('🛑 KP: Stopping simulation timer');
 
-    const elapsedSeconds = (20 * 60) - timeRemaining;
+    const elapsedSeconds = 20 * 60 - timeRemaining;
 
     // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
@@ -870,9 +886,9 @@ function KPSimulationScreen() {
 
     // Use centralized cleanup
     await cleanupVoiceflowWidget({
-      finalStatus: finalStatus,
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      finalStatus,
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Reset simulation state to allow restart
@@ -930,13 +946,13 @@ function KPSimulationScreen() {
     setShowFinalWarningModal(false);
 
     // Calculate elapsed time
-    const elapsedSeconds = (20 * 60) - timeRemaining;
+    const elapsedSeconds = 20 * 60 - timeRemaining;
 
     // Use centralized cleanup with database update
     await cleanupVoiceflowWidget({
       finalStatus: 'completed',
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Reset simulation state
@@ -1008,8 +1024,10 @@ function KPSimulationScreen() {
     setShowEarlyCompletionModal(false);
 
     // Calculate elapsed time
-    const elapsedSeconds = (20 * 60) - timeRemaining;
-    logger.info(`📊 KP: Completed early after ${elapsedSeconds} seconds (${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')})`);
+    const elapsedSeconds = 20 * 60 - timeRemaining;
+    logger.info(
+      `📊 KP: Completed early after ${elapsedSeconds} seconds (${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')})`
+    );
 
     // Execute early completion sequence
     executeEarlyCompletion(elapsedSeconds);
@@ -1034,24 +1052,21 @@ function KPSimulationScreen() {
     // Use centralized cleanup with custom metadata
     await cleanupVoiceflowWidget({
       finalStatus: 'completed',
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Handle early completion specific logic
     if (sessionToken) {
       try {
         // Update with metadata about early completion
-        await simulationTracker.updateSimulationStatus(
-          sessionToken,
-          'completed',
-          elapsedSeconds,
-          {
-            completion_type: 'early',
-            completion_reason: earlyCompletionReason || 'user_finished_early'
-          }
+        await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds, {
+          completion_type: 'early',
+          completion_reason: earlyCompletionReason || 'user_finished_early',
+        });
+        logger.info(
+          `📊 KP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`
         );
-        logger.info(`📊 KP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
         // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
         if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
@@ -1081,21 +1096,23 @@ function KPSimulationScreen() {
 
       // Determine final status based on whether usage was recorded
       const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
-      const elapsedSeconds = (20 * 60) - timeRemaining;
+      const elapsedSeconds = 20 * 60 - timeRemaining;
 
       logger.info(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
 
       // Use centralized cleanup (async but don't wait for it in cleanup)
       if (timerActiveRef.current && sessionTokenRef.current) {
         cleanupVoiceflowWidget({
-          finalStatus: finalStatus,
-          elapsedSeconds: elapsedSeconds,
-          skipDatabaseUpdate: false
-        }).then(() => {
-          logger.info('✅ KP: Cleanup completed successfully');
-        }).catch(error => {
-          logger.error('❌ KP: Error during cleanup:', error);
-        });
+          finalStatus,
+          elapsedSeconds,
+          skipDatabaseUpdate: false,
+        })
+          .then(() => {
+            logger.info('✅ KP: Cleanup completed successfully');
+          })
+          .catch((error) => {
+            logger.error('❌ KP: Error during cleanup:', error);
+          });
       }
 
       // Remove event listeners
@@ -1137,7 +1154,6 @@ function KPSimulationScreen() {
     };
   }, []);
 
-
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -1154,11 +1170,9 @@ function KPSimulationScreen() {
         logger.info('🚫 KP: Attempted to leave page during simulation - BLOCKED');
         // For mobile apps, prevent backgrounding during simulation
         if (Platform.OS !== 'web') {
-          Alert.alert(
-            'Simulation läuft',
-            'Sie können die App nicht verlassen, während die Simulation läuft.',
-            [{ text: 'OK' }]
-          );
+          Alert.alert('Simulation läuft', 'Sie können die App nicht verlassen, während die Simulation läuft.', [
+            { text: 'OK' },
+          ]);
         }
         return false;
       }
@@ -1187,11 +1201,9 @@ function KPSimulationScreen() {
         e.preventDefault();
         // Push the current state back to prevent navigation
         window.history.pushState(null, '', window.location.href);
-        Alert.alert(
-          'Simulation läuft',
-          'Sie können die Seite nicht verlassen, während die Simulation läuft.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Simulation läuft', 'Sie können die Seite nicht verlassen, während die Simulation läuft.', [
+          { text: 'OK' },
+        ]);
         return false;
       }
     };
@@ -1223,7 +1235,7 @@ function KPSimulationScreen() {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
-      currentLockState: isSimulationLocked
+      currentLockState: isSimulationLocked,
     });
 
     if (subscriptionStatus) {
@@ -1232,7 +1244,7 @@ function KPSimulationScreen() {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
-        willUpdateLockState: shouldLock !== isSimulationLocked
+        willUpdateLockState: shouldLock !== isSimulationLocked,
       });
 
       if (shouldLock !== isSimulationLocked) {
@@ -1252,13 +1264,13 @@ function KPSimulationScreen() {
   const performImmediateCleanup = () => {
     try {
       logger.info('⚡ KP: Performing immediate cleanup');
-      
+
       // Immediately hide and destroy Voiceflow widget
       if (window.voiceflow?.chat) {
         window.voiceflow.chat.hide();
         window.voiceflow.chat.close && window.voiceflow.chat.close();
       }
-      
+
       // Force remove widget elements immediately
       const widgetSelectors = [
         '[id*="voiceflow"]',
@@ -1266,27 +1278,28 @@ function KPSimulationScreen() {
         '[class*="vfrc"]',
         '#voiceflow-chat',
         '.vfrc-widget',
-        '.vfrc-chat'
+        '.vfrc-chat',
       ];
-      
-      widgetSelectors.forEach(selector => {
+
+      widgetSelectors.forEach((selector) => {
         const elements = document.querySelectorAll(selector);
-        elements.forEach(element => {
+        elements.forEach((element) => {
           element.remove();
           logger.info(`🗑️ KP: Immediately removed element: ${selector}`);
         });
       });
-      
+
       // Stop any active media streams
-      navigator.mediaDevices?.getUserMedia({ audio: true })
-        .then(stream => {
-          stream.getTracks().forEach(track => {
+      navigator.mediaDevices
+        ?.getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach((track) => {
             track.stop();
             logger.info('🔇 KP: Stopped audio track during immediate cleanup');
           });
         })
         .catch(() => {});
-      
+
       logger.info('✅ KP: Immediate cleanup completed');
     } catch (error) {
       logger.error('❌ KP: Error during immediate cleanup:', error);
@@ -1355,16 +1368,19 @@ function KPSimulationScreen() {
     }
 
     // FIX: Clear storage (fire-and-forget for non-blocking reset)
-    clearSimulationStorage().catch(err =>
-      logger.error('Error clearing storage during reset:', err)
-    );
+    clearSimulationStorage().catch((err) => logger.error('Error clearing storage during reset:', err));
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
     logger.info('✅ KP: Simulation state reset completed - ready for next run');
-    logger.info('🔍 KP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+    logger.info(
+      '🔍 KP: Post-reset state - timerActiveRef:',
+      timerActiveRef.current,
+      'timerInterval:',
+      timerInterval.current
+    );
 
     // Re-setup conversation monitoring for next run
     setTimeout(() => {
@@ -1378,11 +1394,13 @@ function KPSimulationScreen() {
   // ============================================
   // CENTRALIZED VOICEFLOW WIDGET CLEANUP
   // ============================================
-  const cleanupVoiceflowWidget = async (options: {
-    skipDatabaseUpdate?: boolean;
-    finalStatus?: 'completed' | 'aborted' | 'incomplete';
-    elapsedSeconds?: number;
-  } = {}) => {
+  const cleanupVoiceflowWidget = async (
+    options: {
+      skipDatabaseUpdate?: boolean;
+      finalStatus?: 'completed' | 'aborted' | 'incomplete';
+      elapsedSeconds?: number;
+    } = {}
+  ) => {
     // Prevent concurrent cleanup operations
     if (isCleaningUpRef.current) {
       logger.info('⚠️ KP: Cleanup already in progress, skipping...');
@@ -1410,7 +1428,7 @@ function KPSimulationScreen() {
       }
 
       // Step 2: Wait briefly for any pending operations to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 3: Close Voiceflow widget
       logger.info('🔚 KP: Step 3 - Closing Voiceflow widget...');
@@ -1425,7 +1443,7 @@ function KPSimulationScreen() {
       }
 
       // Step 4: Wait for widget to close
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 5: Destroy controller
       logger.info('🔧 KP: Step 5 - Destroying controller...');
@@ -1450,9 +1468,9 @@ function KPSimulationScreen() {
             'iframe[src*="voiceflow"]',
           ];
 
-          widgetSelectors.forEach(selector => {
+          widgetSelectors.forEach((selector) => {
             const elements = document.querySelectorAll(selector);
-            elements.forEach(el => {
+            elements.forEach((el) => {
               el.remove();
               logger.info(`✅ KP: Removed element: ${selector}`);
             });
@@ -1497,11 +1515,7 @@ function KPSimulationScreen() {
 
   // Show expired simulation message
   const showExpiredSimulationMessage = () => {
-    Alert.alert(
-      'Simulation abgelaufen',
-      'Ihre vorherige Simulation ist abgelaufen.',
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Simulation abgelaufen', 'Ihre vorherige Simulation ist abgelaufen.', [{ text: 'OK' }]);
   };
 
   // Format time display for resume modal
@@ -1560,7 +1574,9 @@ function KPSimulationScreen() {
         <InlineContent>
           <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
             <Paragraph>
-              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Kenntnisprüfung (KP)</BoldText> vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie möglich nachzubilden.
+              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Kenntnisprüfung (KP)</BoldText>{' '}
+              vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie
+              möglich nachzubilden.
             </Paragraph>
           </Section>
 
@@ -1593,9 +1609,7 @@ function KPSimulationScreen() {
           </Section>
 
           <Section title="🚀 Kontinuierliche Verbesserung">
-            <Paragraph>
-              Wir arbeiten ständig daran, die Simulation zu optimieren:
-            </Paragraph>
+            <Paragraph>Wir arbeiten ständig daran, die Simulation zu optimieren:</Paragraph>
 
             <View style={{ marginLeft: 16 }}>
               <Paragraph>⚡ Schnellere Ladezeiten</Paragraph>
@@ -1606,7 +1620,7 @@ function KPSimulationScreen() {
             </View>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'process',
@@ -1637,7 +1651,8 @@ function KPSimulationScreen() {
             </InfoBox>
 
             <HighlightBox type="warning">
-              ⏳ <BoldText>Hinweis zur Ladezeit:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern. Bitte haben Sie einen Moment Geduld.
+              ⏳ <BoldText>Hinweis zur Ladezeit:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern. Bitte haben Sie
+              einen Moment Geduld.
             </HighlightBox>
 
             <Step
@@ -1648,11 +1663,13 @@ function KPSimulationScreen() {
             />
 
             <HighlightBox type="success">
-              ✅ <BoldText>Sie beginnen das Gespräch!</BoldText> Der Patient wartet auf Ihre Begrüßung. Stellen Sie sich vor und beginnen Sie die Anamnese.
+              ✅ <BoldText>Sie beginnen das Gespräch!</BoldText> Der Patient wartet auf Ihre Begrüßung. Stellen Sie sich
+              vor und beginnen Sie die Anamnese.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              🎤 <BoldText>Stimmen-Hinweis:</BoldText> Die Simulation verwendet derzeit eine weibliche KI-Stimme für alle Patientenrollen, auch bei männlichen Patienten.
+              🎤 <BoldText>Stimmen-Hinweis:</BoldText> Die Simulation verwendet derzeit eine weibliche KI-Stimme für
+              alle Patientenrollen, auch bei männlichen Patienten.
             </HighlightBox>
 
             <Paragraph>
@@ -1685,7 +1702,8 @@ function KPSimulationScreen() {
             />
 
             <HighlightBox type="success">
-              ✅ <BoldText>Begrüßen Sie den Prüfer!</BoldText> Beispiel: "Guten Tag, Herr Dr. Hoffmann!" Nach Ihrer Begrüßung beginnt der Prüfer automatisch.
+              ✅ <BoldText>Begrüßen Sie den Prüfer!</BoldText> Beispiel: "Guten Tag, Herr Dr. Hoffmann!" Nach Ihrer
+              Begrüßung beginnt der Prüfer automatisch.
             </HighlightBox>
 
             <Paragraph>
@@ -1693,17 +1711,21 @@ function KPSimulationScreen() {
             </Paragraph>
 
             <View style={{ marginLeft: 16 }}>
-              <Paragraph><BoldText>1. Persönliche Vorstellung:</BoldText></Paragraph>
-              <Paragraph>   • Seit wann sind Sie in Deutschland?</Paragraph>
-              <Paragraph>   • Was haben Sie bisher gemacht?</Paragraph>
-              <Paragraph>   • Was sind Ihre beruflichen Pläne?</Paragraph>
+              <Paragraph>
+                <BoldText>1. Persönliche Vorstellung:</BoldText>
+              </Paragraph>
+              <Paragraph> • Seit wann sind Sie in Deutschland?</Paragraph>
+              <Paragraph> • Was haben Sie bisher gemacht?</Paragraph>
+              <Paragraph> • Was sind Ihre beruflichen Pläne?</Paragraph>
               <Paragraph></Paragraph>
-              <Paragraph><BoldText>2. Fallbesprechung:</BoldText></Paragraph>
-              <Paragraph>   • Verdachtsdiagnose</Paragraph>
-              <Paragraph>   • Differentialdiagnosen</Paragraph>
-              <Paragraph>   • Geplante Diagnostik</Paragraph>
-              <Paragraph>   • Therapieoptionen</Paragraph>
-              <Paragraph>   • Patientenaufklärung</Paragraph>
+              <Paragraph>
+                <BoldText>2. Fallbesprechung:</BoldText>
+              </Paragraph>
+              <Paragraph> • Verdachtsdiagnose</Paragraph>
+              <Paragraph> • Differentialdiagnosen</Paragraph>
+              <Paragraph> • Geplante Diagnostik</Paragraph>
+              <Paragraph> • Therapieoptionen</Paragraph>
+              <Paragraph> • Patientenaufklärung</Paragraph>
             </View>
 
             <InfoBox>
@@ -1715,7 +1737,7 @@ function KPSimulationScreen() {
             </InfoBox>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'evaluation',
@@ -1724,7 +1746,8 @@ function KPSimulationScreen() {
         <InlineContent>
           <Section title="📈 Ihre Evaluation einsehen">
             <Paragraph>
-              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) finden Sie Ihre <BoldText>detaillierte Bewertung</BoldText> im Bereich <BoldText>"Fortschritt"</BoldText>.
+              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) finden Sie Ihre{' '}
+              <BoldText>detaillierte Bewertung</BoldText> im Bereich <BoldText>"Fortschritt"</BoldText>.
             </Paragraph>
           </Section>
 
@@ -1765,7 +1788,9 @@ function KPSimulationScreen() {
           </Section>
 
           <Section title="⏱️ Zeitplan im Überblick">
-            <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
+            <View
+              style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}
+            >
               <TimeItem label="📅 Gesamtdauer" time="20-30 Minuten" />
               <TimeItem label="💬 Patientengespräch" time="10-15 Minuten" />
               <TimeItem label="👨‍⚕️ Prüfergespräch" time="10-15 Minuten" />
@@ -1773,7 +1798,7 @@ function KPSimulationScreen() {
             </View>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'tips',
@@ -1781,20 +1806,21 @@ function KPSimulationScreen() {
       content: (
         <InlineContent>
           <Section title="⚠️ Bekannte technische Einschränkungen">
-            <Paragraph>
-              Wir möchten transparent sein über aktuelle Limitierungen:
-            </Paragraph>
+            <Paragraph>Wir möchten transparent sein über aktuelle Limitierungen:</Paragraph>
 
             <HighlightBox type="warning">
-              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern, während der KI-Agent den Fall abruft.
+              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText> Die Fallauswahl kann 5-10 Sekunden dauern, während der
+              KI-Agent den Fall abruft.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              🎤 <BoldText>Stimmen:</BoldText> Derzeit wird eine weibliche Stimme für alle Patientenrollen verwendet, auch bei männlichen Patienten.
+              🎤 <BoldText>Stimmen:</BoldText> Derzeit wird eine weibliche Stimme für alle Patientenrollen verwendet,
+              auch bei männlichen Patienten.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              ⚡ <BoldText>Gelegentliche Verzögerungen:</BoldText> Bei hoher Serverauslastung kann es zu kurzen Verzögerungen kommen.
+              ⚡ <BoldText>Gelegentliche Verzögerungen:</BoldText> Bei hoher Serverauslastung kann es zu kurzen
+              Verzögerungen kommen.
             </HighlightBox>
 
             <InfoBox>
@@ -1824,271 +1850,250 @@ function KPSimulationScreen() {
               {'\n'}• 🐛 Technische Probleme melden
               {'\n'}• ⭐ Ihre Erfolgsgeschichten teilen
               {'\n'}• 📝 Feedback zur Simulation
-              {'\n\n'}<BoldText>Ihre Meinung hilft uns</BoldText>, die Simulation noch besser zu machen!
+              {'\n\n'}
+              <BoldText>Ihre Meinung hilft uns</BoldText>, die Simulation noch besser zu machen!
             </HighlightBox>
           </Section>
 
           <Section title="🚀 Bereit? Los geht's!">
-            <Paragraph>
-              Jetzt sind Sie bestens vorbereitet, um mit der Simulation zu starten.
-            </Paragraph>
+            <Paragraph>Jetzt sind Sie bestens vorbereitet, um mit der Simulation zu starten.</Paragraph>
 
-            <InfoBox>
-              "Ihre Prüfungsvorbereitung ist unser Erfolg. Wir glauben an Sie!" ✨
-            </InfoBox>
+            <InfoBox>"Ihre Prüfungsvorbereitung ist unser Erfolg. Wir glauben an Sie!" ✨</InfoBox>
 
             <HighlightBox type="success">
               🎯 <BoldText>Viel Erfolg bei Ihrer Prüfungsvorbereitung!</BoldText>
             </HighlightBox>
           </Section>
         </InlineContent>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <ErrorBoundary>
       <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         {/* Lock Overlay - Shows when simulation limit is reached */}
-      {isSimulationLocked && (
-        <View style={styles.lockOverlay}>
-          <View style={styles.lockOverlayContent}>
-            <View style={styles.lockIconContainer}>
-              <Text style={styles.lockIcon}>🔒</Text>
-            </View>
-            <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
-            <Text style={styles.lockMessage}>
-              {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
-            </Text>
-            <Text style={styles.lockSubMessage}>
-              Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.
-            </Text>
-            <TouchableOpacity
-              style={styles.lockUpgradeButton}
-              onPress={() => router.push('subscription' as any)}
-            >
-              <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.lockBackButton}
-              onPress={() => router.push('/(tabs)/simulation')}
-            >
-              <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Header with back button and title */}
-      <LinearGradient
-        colors={['#4338ca', '#3730a3']}
-        style={styles.header}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push('/(tabs)/simulation')}
-        >
-          <ArrowLeft size={24} color="white" />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Brain size={24} color="white" />
-          <Text style={styles.headerTitle}>KP-Simulation</Text>
-        </View>
-
-        {/* Info button in header instead of floating */}
-        <TouchableOpacity
-          style={styles.headerInfoButton}
-          onPress={handleInfoPress}
-          activeOpacity={0.7}
-        >
-          <Info size={20} color="white" />
-        </TouchableOpacity>
-      </LinearGradient>
-
-      {/* Subscription Counter Badge - always visible */}
-      {getSubscriptionInfo() && (
-        <View style={styles.counterBadgeContainer}>
-          <View style={styles.counterBadge}>
-            <Text style={styles.counterBadgeText}>
-              {getSubscriptionInfo()?.usageText}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Timer display - only show when active */}
-      {timerActive && (
-        <View style={styles.timerSection}>
-          <View style={[
-            styles.timerContainer,
-            timerWarningLevel === 'normal' && styles.timerNormal,
-            timerWarningLevel === 'yellow' && styles.timerWarningYellow,
-            timerWarningLevel === 'orange' && styles.timerWarningOrange,
-            timerWarningLevel === 'red' && styles.timerWarningRed
-          ]}>
-            <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
-            <Text style={[
-              styles.timerText,
-              timerWarningLevel === 'red' && styles.timerTextRed
-            ]}>
-              Simulation läuft: {formatTime(timeRemaining)}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Warning message notification */}
-      {showWarningMessage && (
-        <View style={styles.warningNotification}>
-          <Text style={styles.warningNotificationText}>{warningMessageText}</Text>
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        bounces={true}
-        scrollEventThrottle={16}
-      >
-        <View style={styles.content}>
-          {/* Inline Instructions Panel */}
-          <View style={styles.instructionsContainer}>
-            <InlineInstructions tabs={kpInstructions} />
-          </View>
-
-          {/* Widget Area */}
-          <View style={styles.widgetArea}>
-            {/* Widget loads here automatically */}
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Final Warning Modal */}
-      {showFinalWarningModal && (
-        <View style={styles.finalWarningOverlay}>
-          <View style={styles.finalWarningModal}>
-            <Text style={styles.warningIcon}>⏱️</Text>
-            <Text style={styles.finalWarningTitle}>Simulation endet</Text>
-            <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
-            <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
-            <View style={styles.progressDots}>
-              <View style={[styles.dot, styles.dot1]} />
-              <View style={[styles.dot, styles.dot2]} />
-              <View style={[styles.dot, styles.dot3]} />
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Early Completion Confirmation Modal */}
-      {showEarlyCompletionModal && (
-        <View style={styles.earlyCompletionOverlay}>
-          <View style={styles.earlyCompletionModal}>
-            <Text style={styles.modalIcon}>⚠️</Text>
-            <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
-
-            <View style={styles.timeInfo}>
-              <View style={styles.timeRow}>
-                <Text style={styles.timeLabel}>Verstrichene Zeit:</Text>
-                <Text style={styles.timeValue}>{formatTime((20 * 60) - timeRemaining)}</Text>
+        {isSimulationLocked && (
+          <View style={styles.lockOverlay}>
+            <View style={styles.lockOverlayContent}>
+              <View style={styles.lockIconContainer}>
+                <Text style={styles.lockIcon}>🔒</Text>
               </View>
-              <View style={styles.timeRow}>
-                <Text style={styles.timeLabel}>Verbleibende Zeit:</Text>
-                <Text style={styles.timeValue}>{formatTime(timeRemaining)}</Text>
-              </View>
+              <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
+              <Text style={styles.lockMessage}>
+                {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
+              </Text>
+              <Text style={styles.lockSubMessage}>Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.</Text>
+              <TouchableOpacity style={styles.lockUpgradeButton} onPress={() => router.push('subscription' as any)}>
+                <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.lockBackButton} onPress={() => router.push('/(tabs)/simulation')}>
+                <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
+              </TouchableOpacity>
             </View>
+          </View>
+        )}
 
-            <View style={styles.warningBox}>
-              <Text style={styles.warningIconText}>ℹ️</Text>
-              <Text style={styles.warningBoxText}>
-                Ihre Simulation wird beendet und ausgewertet. Sie können nicht zur Simulation zurückkehren.
+        {/* Header with back button and title */}
+        <LinearGradient colors={['#4338ca', '#3730a3']} style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/simulation')}>
+            <ArrowLeft size={24} color="white" />
+          </TouchableOpacity>
+
+          <View style={styles.headerTitleContainer}>
+            <Brain size={24} color="white" />
+            <Text style={styles.headerTitle}>KP-Simulation</Text>
+          </View>
+
+          {/* Info button in header instead of floating */}
+          <TouchableOpacity style={styles.headerInfoButton} onPress={handleInfoPress} activeOpacity={0.7}>
+            <Info size={20} color="white" />
+          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* Subscription Counter Badge - always visible */}
+        {getSubscriptionInfo() && (
+          <View style={styles.counterBadgeContainer}>
+            <View style={styles.counterBadge}>
+              <Text style={styles.counterBadgeText}>{getSubscriptionInfo()?.usageText}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Timer display - only show when active */}
+        {timerActive && (
+          <View style={styles.timerSection}>
+            <View
+              style={[
+                styles.timerContainer,
+                timerWarningLevel === 'normal' && styles.timerNormal,
+                timerWarningLevel === 'yellow' && styles.timerWarningYellow,
+                timerWarningLevel === 'orange' && styles.timerWarningOrange,
+                timerWarningLevel === 'red' && styles.timerWarningRed,
+              ]}
+            >
+              <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
+              <Text style={[styles.timerText, timerWarningLevel === 'red' && styles.timerTextRed]}>
+                Simulation läuft: {formatTime(timeRemaining)}
               </Text>
             </View>
+          </View>
+        )}
 
-            <View style={styles.reasonSection}>
-              <Text style={styles.reasonLabel}>Grund (optional):</Text>
-              <View style={styles.pickerContainer}>
-                <TouchableOpacity
-                  style={styles.pickerButton}
-                  onPress={() => {
-                    Alert.alert(
-                      'Grund wählen',
-                      '',
-                      [
-                        { text: 'Alle Aufgaben abgeschlossen', onPress: () => setEarlyCompletionReason('finished_all_tasks') },
-                        { text: 'Ausreichendes Gespräch geführt', onPress: () => setEarlyCompletionReason('sufficient_conversation') },
+        {/* Warning message notification */}
+        {showWarningMessage && (
+          <View style={styles.warningNotification}>
+            <Text style={styles.warningNotificationText}>{warningMessageText}</Text>
+          </View>
+        )}
+
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          scrollEventThrottle={16}
+        >
+          <View style={styles.content}>
+            {/* Inline Instructions Panel */}
+            <View style={styles.instructionsContainer}>
+              <InlineInstructions tabs={kpInstructions} />
+            </View>
+
+            {/* Widget Area */}
+            <View style={styles.widgetArea}>{/* Widget loads here automatically */}</View>
+          </View>
+        </ScrollView>
+
+        {/* Final Warning Modal */}
+        {showFinalWarningModal && (
+          <View style={styles.finalWarningOverlay}>
+            <View style={styles.finalWarningModal}>
+              <Text style={styles.warningIcon}>⏱️</Text>
+              <Text style={styles.finalWarningTitle}>Simulation endet</Text>
+              <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
+              <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
+              <View style={styles.progressDots}>
+                <View style={[styles.dot, styles.dot1]} />
+                <View style={[styles.dot, styles.dot2]} />
+                <View style={[styles.dot, styles.dot3]} />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Early Completion Confirmation Modal */}
+        {showEarlyCompletionModal && (
+          <View style={styles.earlyCompletionOverlay}>
+            <View style={styles.earlyCompletionModal}>
+              <Text style={styles.modalIcon}>⚠️</Text>
+              <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
+
+              <View style={styles.timeInfo}>
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeLabel}>Verstrichene Zeit:</Text>
+                  <Text style={styles.timeValue}>{formatTime(20 * 60 - timeRemaining)}</Text>
+                </View>
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeLabel}>Verbleibende Zeit:</Text>
+                  <Text style={styles.timeValue}>{formatTime(timeRemaining)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.warningBox}>
+                <Text style={styles.warningIconText}>ℹ️</Text>
+                <Text style={styles.warningBoxText}>
+                  Ihre Simulation wird beendet und ausgewertet. Sie können nicht zur Simulation zurückkehren.
+                </Text>
+              </View>
+
+              <View style={styles.reasonSection}>
+                <Text style={styles.reasonLabel}>Grund (optional):</Text>
+                <View style={styles.pickerContainer}>
+                  <TouchableOpacity
+                    style={styles.pickerButton}
+                    onPress={() => {
+                      Alert.alert('Grund wählen', '', [
+                        {
+                          text: 'Alle Aufgaben abgeschlossen',
+                          onPress: () => setEarlyCompletionReason('finished_all_tasks'),
+                        },
+                        {
+                          text: 'Ausreichendes Gespräch geführt',
+                          onPress: () => setEarlyCompletionReason('sufficient_conversation'),
+                        },
                         { text: 'Technisches Problem', onPress: () => setEarlyCompletionReason('technical_issue') },
                         { text: 'Persönlicher Grund', onPress: () => setEarlyCompletionReason('personal_reason') },
                         { text: 'Sonstiges', onPress: () => setEarlyCompletionReason('other') },
-                        { text: 'Abbrechen', style: 'cancel' }
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {earlyCompletionReason ?
-                      earlyCompletionReason === 'finished_all_tasks' ? 'Alle Aufgaben abgeschlossen' :
-                      earlyCompletionReason === 'sufficient_conversation' ? 'Ausreichendes Gespräch geführt' :
-                      earlyCompletionReason === 'technical_issue' ? 'Technisches Problem' :
-                      earlyCompletionReason === 'personal_reason' ? 'Persönlicher Grund' :
-                      earlyCompletionReason === 'other' ? 'Sonstiges' : 'Bitte wählen...'
-                      : 'Bitte wählen...'}
-                  </Text>
+                        { text: 'Abbrechen', style: 'cancel' },
+                      ]);
+                    }}
+                  >
+                    <Text style={styles.pickerButtonText}>
+                      {earlyCompletionReason
+                        ? earlyCompletionReason === 'finished_all_tasks'
+                          ? 'Alle Aufgaben abgeschlossen'
+                          : earlyCompletionReason === 'sufficient_conversation'
+                            ? 'Ausreichendes Gespräch geführt'
+                            : earlyCompletionReason === 'technical_issue'
+                              ? 'Technisches Problem'
+                              : earlyCompletionReason === 'personal_reason'
+                                ? 'Persönlicher Grund'
+                                : earlyCompletionReason === 'other'
+                                  ? 'Sonstiges'
+                                  : 'Bitte wählen...'
+                        : 'Bitte wählen...'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.buttonGroupEarly}>
+                <TouchableOpacity style={styles.confirmButton} onPress={confirmEarlyCompletion}>
+                  <Text style={styles.buttonIconEarly}>✓</Text>
+                  <Text style={styles.confirmButtonText}>Ja, beenden</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton} onPress={cancelEarlyCompletion}>
+                  <Text style={styles.buttonIconEarly}>↩</Text>
+                  <Text style={styles.cancelButtonText}>Weiter üben</Text>
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        )}
 
-            <View style={styles.buttonGroupEarly}>
-              <TouchableOpacity style={styles.confirmButton} onPress={confirmEarlyCompletion}>
-                <Text style={styles.buttonIconEarly}>✓</Text>
-                <Text style={styles.confirmButtonText}>Ja, beenden</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={cancelEarlyCompletion}>
-                <Text style={styles.buttonIconEarly}>↩</Text>
-                <Text style={styles.cancelButtonText}>Weiter üben</Text>
-              </TouchableOpacity>
+        {/* Completion Modal */}
+        {showSimulationCompleted && (
+          <View style={styles.completionOverlay}>
+            <View style={styles.completionModal}>
+              <View style={styles.successIcon}>
+                <Text style={styles.successIconText}>✓</Text>
+              </View>
+              <Text style={styles.completionTitle}>Simulation abgeschlossen</Text>
+              <Text style={styles.completionMessage}>
+                Ihre Simulation wurde erfolgreich beendet und wird nun ausgewertet.
+              </Text>
+              <Text style={styles.nextSteps}>Die Auswertung finden Sie in Kürze im Fortschrittsbereich.</Text>
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity style={styles.primaryButton} onPress={navigateToProgress}>
+                  <Text style={styles.primaryButtonText}>Zur Auswertung</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.secondaryButton} onPress={closeCompletionModal}>
+                  <Text style={styles.secondaryButtonText}>Schließen</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Completion Modal */}
-      {showSimulationCompleted && (
-        <View style={styles.completionOverlay}>
-          <View style={styles.completionModal}>
-            <View style={styles.successIcon}>
-              <Text style={styles.successIconText}>✓</Text>
-            </View>
-            <Text style={styles.completionTitle}>Simulation abgeschlossen</Text>
-            <Text style={styles.completionMessage}>
-              Ihre Simulation wurde erfolgreich beendet und wird nun ausgewertet.
-            </Text>
-            <Text style={styles.nextSteps}>
-              Die Auswertung finden Sie in Kürze im Fortschrittsbereich.
-            </Text>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.primaryButton} onPress={navigateToProgress}>
-                <Text style={styles.primaryButtonText}>Zur Auswertung</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={closeCompletionModal}>
-                <Text style={styles.secondaryButtonText}>Schließen</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Upgrade Required Modal */}
-      <UpgradeRequiredModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        currentTier={subscriptionStatus?.subscriptionTier || 'free'}
-        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
-        totalLimit={subscriptionStatus?.simulationLimit || 0}
-      />
-
+        {/* Upgrade Required Modal */}
+        <UpgradeRequiredModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          currentTier={subscriptionStatus?.subscriptionTier || 'free'}
+          remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
+          totalLimit={subscriptionStatus?.simulationLimit || 0}
+        />
       </SafeAreaView>
     </ErrorBoundary>
   );
@@ -2643,14 +2648,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-    fontSize: 15,
-  },
-  timeValue: {
-    color: '#B15740',
-    fontSize: 18,
-    fontWeight: '700',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   warningBox: {
     flexDirection: 'row',
