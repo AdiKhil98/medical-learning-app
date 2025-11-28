@@ -26,6 +26,10 @@
     "analyze:metro": "node scripts/analyze-metro-bundle.js",
     "analyze": "npm run analyze:bundle && npm run analyze:metro",
     "optimize:images": "node scripts/optimize-images.js",
+    "lighthouse": "node scripts/lighthouse-audit.js",
+    "lighthouse:mobile": "node scripts/lighthouse-audit.js --mobile",
+    "lighthouse:desktop": "node scripts/lighthouse-audit.js --desktop",
+    "lighthouse:prod": "node scripts/lighthouse-audit.js --url=https://your-production-url.netlify.app",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -95,6 +99,7 @@
     "@types/react": "~18.3.12",
     "babel-jest": "^30.2.0",
     "babel-plugin-module-resolver": "^5.0.2",
+    "chrome-launcher": "^1.2.1",
     "eslint": "^8.57.0",
     "eslint-config-expo": "~8.0.1",
     "eslint-config-prettier": "^10.1.8",
@@ -102,6 +107,7 @@
     "husky": "^8.0.3",
     "jest": "^29.7.0",
     "jest-expo": "^51.0.4",
+    "lighthouse": "^12.8.2",
     "lint-staged": "^15.5.2",
     "prettier": "^3.6.2",
     "react-test-renderer": "^18.3.1",
