@@ -229,11 +229,116 @@ npm run lighthouse:prod
 - Monitor performance metrics
 - Watch for regressions
 
-## Phase 2: Reduce JavaScript Execution Time
+## Phase 2: Dependency Removal (COMPLETED)
+
+### Changes Made
+
+Removed 29 packages total (6 unused heavy libraries + dependencies):
+
+1. **react-native-chart-kit** - Duplicate chart library (unused)
+2. **@dotlottie/react-player** - Animation player (unused)
+3. **framer-motion** - Animation library ~200KB (unused)
+4. **expo-camera** - Camera with native modules (unused)
+5. **expo-av** - Audio/Video playback (unused)
+6. **@shopify/react-native-skia** - Graphics library ~1MB (unused)
+
+### Results: No Impact ❌
+
+**Phase 1 → Phase 2:**
+
+- Performance: 39 → 38 (-1 point, **regression**)
+- Bundle: 1.07 MB → 1.095 MB (no change)
+- LCP: 7.8s → 8.0s (+200ms, **worse**)
+- TBT: 3,380ms → 3,720ms (+340ms, **worse**)
+- Unused JS: 652 KB → 648 KB (-4 KB, negligible)
+
+### Why It Didn't Work
+
+The removed libraries were **native-only** (not included in web bundle).
+Removing them from package.json didn't affect the web bundle.
+
+### Root Cause: Expo Router Limitation
+
+**Lighthouse clearly identifies:**
+
+- "Reduce JavaScript execution time: **5.3s**"
+- "Remove unused JavaScript: **648 KiB** (save ~3300ms)"
+
+**The problem:**
+
+- Expo Router bundles ALL routes into one file on web (no code splitting)
+- `lazy: true` in Stack.Screen doesn't work on web builds
+- Heavy simulation screens (kp.tsx: 2,760 lines, fsp.tsx: 2,762 lines)
+- All 5,500+ lines load and execute on EVERY page, even home page
+
+**Evidence:**
+
+```bash
+# Simulation screens are massive
+app/(tabs)/simulation/kp.tsx: 2,760 lines
+app/(tabs)/simulation/fsp.tsx: 2,762 lines
+Total: 5,522 lines of complex React components
+```
+
+## What Would Actually Work
+
+### Option A: Framework Migration (High Impact, High Effort)
+
+Migrate from Expo Router to Next.js for proper code splitting:
+
+**Pros:**
+
+- True route-based code splitting
+- Server-side rendering (SSR)
+- Automatic optimization
+- Performance: 70-90/100 achievable
+
+**Cons:**
+
+- Major refactor (2-4 weeks)
+- Need to replace Expo-specific APIs
+- Breaking change
+
+**Expected Impact:** Performance 70-90/100, LCP < 2s, TBT < 300ms
+
+### Option B: Manual Component Splitting (Medium Impact, Medium Effort)
+
+Extract heavy components and lazy load them:
+
+```typescript
+// Extract simulation logic to separate components
+const SimulationEngine = lazy(() => import('@/components/simulation/Engine'));
+const VoiceflowChat = lazy(() => import('@/components/voiceflow/Chat'));
+
+// Load only when simulation starts
+const [showSimulation, setShowSimulation] = useState(false);
+```
+
+**Expected Impact:** Performance 50-60/100, LCP < 5s, TBT < 2s
+
+### Option C: Accept Current State (No Impact, No Effort)
+
+Current performance is acceptable for an MVP:
+
+- Works on all devices
+- Good accessibility (93/100)
+- Perfect best practices (100/100)
+- Perfect SEO (100/100)
+- Only performance needs work
+
+Focus on:
+
+- User acquisition
+- Feature development
+- Real user feedback
+
+Optimize later with metrics from real users.
+
+## Phase 2: Reduce JavaScript Execution Time (ATTEMPTED, LIMITED SUCCESS)
 
 Based on Phase 1 results, we need to focus on **execution time**, not just bundle size.
 
-### Priority 1: Code Splitting & Lazy Loading
+### Priority 1: Code Splitting & Lazy Loading (BLOCKED BY EXPO ROUTER)
 
 **Problem:** 652 KB of unused JavaScript executing on initial load
 
