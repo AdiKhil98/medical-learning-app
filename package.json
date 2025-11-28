@@ -25,6 +25,7 @@
     "analyze:bundle": "node scripts/analyze-bundle.js",
     "analyze:metro": "node scripts/analyze-metro-bundle.js",
     "analyze": "npm run analyze:bundle && npm run analyze:metro",
+    "optimize:images": "node scripts/optimize-images.js",
     "prepare": "husky install"
   },
   "dependencies": {
