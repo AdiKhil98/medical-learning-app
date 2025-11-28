@@ -22,6 +22,9 @@
     "test:e2e:ci": "playwright test --reporter=html,json",
     "coverage:view": "open coverage/lcov-report/index.html || xdg-open coverage/lcov-report/index.html || start coverage/lcov-report/index.html",
     "verify:posthog": "node scripts/verify-posthog.js",
+    "analyze:bundle": "node scripts/analyze-bundle.js",
+    "analyze:metro": "node scripts/analyze-metro-bundle.js",
+    "analyze": "npm run analyze:bundle && npm run analyze:metro",
     "prepare": "husky install"
   },
   "dependencies": {

@@ -58,54 +58,99 @@ export default function AdminLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen 
-        name="index" 
-        options={{ 
+    <Stack
+      screenOptions={{
+        // Enable lazy loading for all admin screens
+        // Reduces initial bundle size since admin screens aren't needed for regular users
+        lazy: true,
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{
           title: 'Admin Dashboard',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
-      <Stack.Screen 
-        name="test-simulation" 
-        options={{ 
+      <Stack.Screen
+        name="test-simulation"
+        options={{
           title: 'Test Simulation',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
-      <Stack.Screen 
-        name="add-update" 
-        options={{ 
+      <Stack.Screen
+        name="add-update"
+        options={{
           title: 'Post Update',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
-      <Stack.Screen 
-        name="manage-users" 
-        options={{ 
+      <Stack.Screen
+        name="manage-users"
+        options={{
           title: 'Manage Users',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
-      <Stack.Screen 
-        name="analytics" 
-        options={{ 
+      <Stack.Screen
+        name="analytics"
+        options={{
           title: 'Analytics',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
-      <Stack.Screen 
-        name="content" 
-        options={{ 
+      <Stack.Screen
+        name="content"
+        options={{
           title: 'Content Management',
-          headerShown: true 
-        }} 
+          headerShown: true,
+          lazy: true,
+        }}
       />
       <Stack.Screen
         name="database"
         options={{
           title: 'Database Management',
-          headerShown: true
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="monitoring"
+        options={{
+          title: 'System Monitoring',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="daily-tips"
+        options={{
+          title: 'Daily Tips Management',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="feedback-manager"
+        options={{
+          title: 'Feedback Manager',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="transform-content"
+        options={{
+          title: 'Transform Content',
+          headerShown: true,
+          lazy: true,
         }}
       />
     </Stack>

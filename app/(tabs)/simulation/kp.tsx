@@ -2644,8 +2644,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  timeLabel: {
-    color: '#333333',
     fontSize: 15,
   },
   timeValue: {

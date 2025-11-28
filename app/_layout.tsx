@@ -7,11 +7,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
+
+  // Preload critical routes on app init
+  useEffect(() => {
+    preloadCriticalRoutes();
+    logger.info('🚀 Critical routes preloading initiated');
+  }, []);
 
   // Fix mobile viewport on web
   useEffect(() => {
