@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
+import { registerServiceWorker } from '@/utils/serviceWorkerRegistration';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
@@ -18,6 +19,27 @@ export default function RootLayout() {
   useEffect(() => {
     preloadCriticalRoutes();
     logger.info('🚀 Critical routes preloading initiated');
+  }, []);
+
+  // Register service worker for PWA functionality
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      registerServiceWorker({
+        onSuccess: (registration) => {
+          logger.info('✅ Service Worker registered successfully');
+        },
+        onUpdate: (registration) => {
+          logger.info('🔄 New app version available');
+          // Optionally show update notification to user
+        },
+        onOffline: () => {
+          logger.warn('📴 App is offline');
+        },
+        onOnline: () => {
+          logger.info('🌐 App is online');
+        },
+      });
+    }
   }, []);
 
   // Fix mobile viewport on web

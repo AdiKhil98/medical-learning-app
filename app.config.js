@@ -9,12 +9,24 @@ module.exports = ({ config }) => {
     web: {
       ...config.web,
       bundler: 'metro',
+      favicon: './assets/favicon.png',
 
-      // Meta tags for SEO
+      // PWA Configuration
+      manifest: '/manifest.json',
+      serviceWorker: {
+        enabled: true,
+        scope: '/',
+        swSrc: './public/service-worker.js',
+      },
+
+      // Meta tags for PWA and SEO
       meta: {
         'theme-color': '#B15740',
         'apple-mobile-web-app-capable': 'yes',
         'apple-mobile-web-app-status-bar-style': 'default',
+        'apple-mobile-web-app-title': 'KP MED',
+        'mobile-web-app-capable': 'yes',
+        'application-name': 'KP MED',
       },
     },
 
