@@ -7,7 +7,9 @@
  * - Stale-while-revalidate for HTML pages
  */
 
-const CACHE_VERSION = 'kp-med-v1';
+// IMPORTANT: This version MUST change with each deployment to force cache refresh
+// Format: kp-med-v{major}.{timestamp}
+const CACHE_VERSION = `kp-med-v2-${  Date.now()}`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -97,7 +99,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 3: Stale-while-revalidate for HTML pages
+  // Strategy 3: Network-first for HTML pages (always get fresh HTML!)
+  if (request.destination === 'document' || request.url.endsWith('.html') || request.url.endsWith('/')) {
+    event.respondWith(networkFirst(request, DYNAMIC_CACHE));
+    return;
+  }
+
+  // Strategy 4: Stale-while-revalidate for everything else
   event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE));
 });
 
@@ -222,7 +230,7 @@ async function limitCacheSize(cacheName, maxSize) {
 }
 
 /**
- * Message handler - Clear caches on demand
+ * Message handler - Clear caches on demand & skip waiting
  */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CLEAR_CACHE') {
@@ -242,6 +250,12 @@ self.addEventListener('message', (event) => {
           });
         })
     );
+  }
+
+  // Force immediate activation of new service worker
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Skipping waiting, activating immediately...');
+    self.skipWaiting();
   }
 });
 

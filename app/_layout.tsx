@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
-import { registerServiceWorker } from '@/utils/serviceWorkerRegistration';
+import { registerServiceWorker, checkForAppUpdate, skipWaitingAndReload } from '@/utils/serviceWorkerRegistration';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
@@ -29,8 +29,18 @@ export default function RootLayout() {
           logger.info('✅ Service Worker registered successfully');
         },
         onUpdate: (registration) => {
-          logger.info('🔄 New app version available');
-          // Optionally show update notification to user
+          logger.info('🔄 New app version available - auto-updating...');
+
+          // Automatically skip waiting and reload to get new version
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+            // Reload page when new service worker takes control
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              logger.info('♻️ New service worker activated - reloading...');
+              window.location.reload();
+            });
+          }
         },
         onOffline: () => {
           logger.warn('📴 App is offline');
@@ -39,6 +49,21 @@ export default function RootLayout() {
           logger.info('🌐 App is online');
         },
       });
+
+      // Check for updates every 5 minutes
+      const updateCheckInterval = setInterval(
+        async () => {
+          logger.info('🔍 Checking for app updates...');
+          const hasUpdate = await checkForAppUpdate();
+          if (hasUpdate) {
+            logger.info('📥 Update found! Auto-installing...');
+            await skipWaitingAndReload();
+          }
+        },
+        5 * 60 * 1000
+      ); // 5 minutes
+
+      return () => clearInterval(updateCheckInterval);
     }
   }, []);
 
