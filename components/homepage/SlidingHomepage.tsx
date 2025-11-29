@@ -8,7 +8,7 @@ import {
   Dimensions,
   ScrollView,
   NativeScrollEvent,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -20,7 +20,7 @@ import {
   Clock,
   FileText,
   Lightbulb,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react-native';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
@@ -29,6 +29,7 @@ import AboutUsModal from '@/components/ui/AboutUsModal';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const IS_MOBILE = isCompact(screenWidth);
@@ -38,6 +39,7 @@ interface SlidingHomepageProps {
 }
 
 export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) {
+  const { colors, isDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -69,26 +71,40 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     setCurrentSlide(index);
   };
 
+  // Dynamic styles for dark mode support
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      ...styles.container,
+      backgroundColor: colors.background,
+    },
+    heroCard: {
+      ...styles.heroCard,
+      backgroundColor: colors.card,
+    },
+    recentCard: {
+      ...styles.recentCard,
+      backgroundColor: colors.card,
+    },
+    tipCard: {
+      ...styles.tipCard,
+      backgroundColor: colors.card,
+    },
+    questionCard: {
+      ...styles.questionCard,
+      backgroundColor: colors.card,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       {/* Clean gradient background */}
-      <LinearGradient
-        colors={MEDICAL_COLORS.backgroundGradient}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={MEDICAL_COLORS.backgroundGradient} style={styles.backgroundGradient} />
 
       {/* Modern Header */}
       <View style={styles.modernHeader}>
-        <LinearGradient
-          colors={MEDICAL_COLORS.headerGradient}
-          style={styles.headerGradient}
-        >
+        <LinearGradient colors={MEDICAL_COLORS.headerGradient} style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.menuButton}
-              onPress={() => setMenuOpen(true)}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
               <LinearGradient
                 colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                 style={styles.menuButtonGradient}
@@ -105,21 +121,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       {/* Navigation Arrows - Hidden on mobile */}
       {!IS_MOBILE && (
         <>
-          <TouchableOpacity
-            style={styles.leftArrow}
-            onPress={prevSlide}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.leftArrow} onPress={prevSlide} activeOpacity={0.7}>
             <View style={styles.arrowButton}>
               <ChevronLeft size={28} color={MEDICAL_COLORS.white} strokeWidth={3} />
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.rightArrow}
-            onPress={nextSlide}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.rightArrow} onPress={nextSlide} activeOpacity={0.7}>
             <View style={styles.arrowButton}>
               <ChevronRight size={28} color={MEDICAL_COLORS.white} strokeWidth={3} />
             </View>
@@ -145,75 +153,73 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
           >
-          <View style={styles.slideContainer}>
-            <View style={styles.heroCard}>
-              {/* Icon Container */}
-              <View style={styles.iconContainer}>
-                <LinearGradient
-                  colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.iconGradient}
-                >
-                  <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
-                </LinearGradient>
-              </View>
-
-              {/* Heading */}
-              <Text style={styles.heading}>
-                Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch
-              </Text>
-
-              {/* Subheading */}
-              <Text style={styles.subheading}>
-                Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
-              </Text>
-
-              {/* CTA Buttons */}
-              <View style={styles.buttonsContainer}>
-                {/* Button 1 - Simulation testen */}
-                <TouchableOpacity
-                  style={styles.buttonWrapper}
-                  onPress={() => router.push('/(tabs)/simulation')}
-                  activeOpacity={0.7}
-                >
+            <View style={styles.slideContainer}>
+              <View style={dynamicStyles.heroCard}>
+                {/* Icon Container */}
+                <View style={styles.iconContainer}>
                   <LinearGradient
-                    colors={MEDICAL_COLORS.warmOrangeGradient}
+                    colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
                     start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.primaryButton}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.iconGradient}
                   >
-                    <Text style={styles.buttonText}>Simulation testen</Text>
+                    <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
                   </LinearGradient>
-                </TouchableOpacity>
+                </View>
 
-                {/* Button 2 - Abonnieren */}
-                <TouchableOpacity
-                  style={styles.buttonWrapper}
-                  onPress={() => router.push('/subscription')}
-                  activeOpacity={0.7}
-                >
-                  <LinearGradient
-                    colors={MEDICAL_COLORS.warmYellowGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.secondaryButton}
+                {/* Heading */}
+                <Text style={styles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
+
+                {/* Subheading */}
+                <Text style={styles.subheading}>
+                  Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
+                </Text>
+
+                {/* CTA Buttons */}
+                <View style={styles.buttonsContainer}>
+                  {/* Button 1 - Simulation testen */}
+                  <TouchableOpacity
+                    style={styles.buttonWrapper}
+                    onPress={() => router.push('/(tabs)/simulation')}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.buttonText}>Abonnieren</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                    <LinearGradient
+                      colors={MEDICAL_COLORS.warmOrangeGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.primaryButton}
+                    >
+                      <Text style={styles.buttonText}>Simulation testen</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
 
-                {/* Button 3 - Über KP Med */}
-                <TouchableOpacity
-                  style={styles.outlineButton}
-                  onPress={() => setShowAboutUs(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.outlineButtonText}>Über KP Med</Text>
-                </TouchableOpacity>
+                  {/* Button 2 - Abonnieren */}
+                  <TouchableOpacity
+                    style={styles.buttonWrapper}
+                    onPress={() => router.push('/subscription')}
+                    activeOpacity={0.7}
+                  >
+                    <LinearGradient
+                      colors={MEDICAL_COLORS.warmYellowGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.secondaryButton}
+                    >
+                      <Text style={styles.buttonText}>Abonnieren</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  {/* Button 3 - Über KP Med */}
+                  <TouchableOpacity
+                    style={styles.outlineButton}
+                    onPress={() => setShowAboutUs(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.outlineButtonText}>Über KP Med</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           </ScrollView>
         </View>
 
@@ -224,84 +230,84 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
           >
-          <View style={styles.slideContainer}>
-            <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
+            <View style={styles.slideContainer}>
+              <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
 
-            <View style={styles.cardsContainer}>
-              {/* Card 1 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
-                <View style={styles.recentCardContent}>
-                  <View style={styles.recentCardLeft}>
-                    <View style={styles.recentIconContainer}>
-                      <Heart size={24} color={MEDICAL_COLORS.blue} />
+              <View style={styles.cardsContainer}>
+                {/* Card 1 */}
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
-                      <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>6</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                     </View>
                   </View>
-                  <View style={styles.recentCardRight}>
-                    <View style={styles.timeContainer}>
-                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                      <Text style={styles.timeText}>6</Text>
-                    </View>
-                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              {/* Card 2 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
-                <View style={styles.recentCardContent}>
-                  <View style={styles.recentCardLeft}>
-                    <View style={styles.recentIconContainer}>
-                      <Heart size={24} color={MEDICAL_COLORS.blue} />
+                {/* Card 2 */}
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
-                      <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>1</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                     </View>
                   </View>
-                  <View style={styles.recentCardRight}>
-                    <View style={styles.timeContainer}>
-                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                      <Text style={styles.timeText}>1</Text>
-                    </View>
-                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              {/* Card 3 */}
-              <TouchableOpacity style={styles.recentCard} activeOpacity={0.7}>
-                <View style={styles.recentCardContent}>
-                  <View style={styles.recentCardLeft}>
-                    <View style={styles.recentIconContainer}>
-                      <Heart size={24} color={MEDICAL_COLORS.blue} />
+                {/* Card 3 */}
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Koniotomie</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.recentCardTitle}>Koniotomie</Text>
-                      <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>1</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
                     </View>
                   </View>
-                  <View style={styles.recentCardRight}>
-                    <View style={styles.timeContainer}>
-                      <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                      <Text style={styles.timeText}>1</Text>
-                    </View>
-                    <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                  </View>
-                </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Footer Link */}
+              <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
+                <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
+                <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
               </TouchableOpacity>
             </View>
-
-            {/* Footer Link */}
-            <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
-              <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
-              <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
-            </TouchableOpacity>
-          </View>
           </ScrollView>
         </View>
 
@@ -312,24 +318,25 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
           >
-          <View style={styles.slideContainer}>
-            <Text style={styles.slideTitle}>Tipp des Tages</Text>
+            <View style={styles.slideContainer}>
+              <Text style={styles.slideTitle}>Tipp des Tages</Text>
 
-            <View style={styles.tipCard}>
-              <View style={styles.tipHeader}>
-                <View style={styles.tipIconContainer}>
-                  <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
+              <View style={dynamicStyles.tipCard}>
+                <View style={styles.tipHeader}>
+                  <View style={styles.tipIconContainer}>
+                    <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
+                  </View>
+                  <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
                 </View>
-                <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
-              </View>
 
-              <View style={styles.tipContentBox}>
-                <Text style={styles.tipContent}>
-                  Nimm dir regelmäßig Zeit für Entspannung 🧘. Kurze Meditationsübungen können Wunder wirken, um Stress abzubauen und den Fokus zu schärfen! ✨
-                </Text>
+                <View style={styles.tipContentBox}>
+                  <Text style={styles.tipContent}>
+                    Nimm dir regelmäßig Zeit für Entspannung 🧘. Kurze Meditationsübungen können Wunder wirken, um
+                    Stress abzubauen und den Fokus zu schärfen! ✨
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
           </ScrollView>
         </View>
 
@@ -340,39 +347,39 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}
           >
-          <View style={styles.slideContainer}>
-            <Text style={styles.slideTitle}>Frage des Tages</Text>
+            <View style={styles.slideContainer}>
+              <Text style={styles.slideTitle}>Frage des Tages</Text>
 
-            <View style={styles.questionCard}>
-              <View style={styles.questionHeader}>
-                <View style={styles.questionIconContainer}>
-                  <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
+              <View style={dynamicStyles.questionCard}>
+                <View style={styles.questionHeader}>
+                  <View style={styles.questionIconContainer}>
+                    <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
+                  </View>
+                  <Text style={styles.questionHeaderText}>Wissensfrage</Text>
                 </View>
-                <Text style={styles.questionHeaderText}>Wissensfrage</Text>
-              </View>
 
-              <Text style={styles.questionText}>
-                Welche der folgenden Untersuchungen ist am sensitivsten zur Diagnose einer Lungenembolie?
-              </Text>
+                <Text style={styles.questionText}>
+                  Welche der folgenden Untersuchungen ist am sensitivsten zur Diagnose einer Lungenembolie?
+                </Text>
 
-              <View style={styles.optionsContainer}>
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-                  <Text style={styles.optionLabel}>A.</Text>
-                  <Text style={styles.optionText}>D-Dimer-Test</Text>
-                </TouchableOpacity>
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>A.</Text>
+                    <Text style={styles.optionText}>D-Dimer-Test</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-                  <Text style={styles.optionLabel}>A.</Text>
-                  <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>A.</Text>
+                    <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-                  <Text style={styles.optionLabel}>C.</Text>
-                  <Text style={styles.optionText}>Röntgen-Thorax</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>C.</Text>
+                    <Text style={styles.optionText}>Röntgen-Thorax</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           </ScrollView>
         </View>
       </ScrollView>
@@ -383,10 +390,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       {/* About Us Modal */}
-      <AboutUsModal
-        visible={showAboutUs}
-        onClose={() => setShowAboutUs(false)}
-      />
+      <AboutUsModal visible={showAboutUs} onClose={() => setShowAboutUs(false)} />
     </SafeAreaView>
   );
 }
