@@ -6,30 +6,96 @@ import {
   Mic,
   Brain,
   Target,
-  Clock,
   Menu as MenuIcon,
   Sparkles,
   CheckCircle2,
   TrendingUp,
   Zap,
-  Award
+  Award,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function SimulationScreen() {
   const router = useRouter();
+  const { colors, isDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Theme-aware gradient colors
+  const backgroundGradient = isDarkMode
+    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
+    : ['#EEF2FF', '#FFFFFF', '#FFF7ED']; // Light gradient
+
+  const headerGradient = isDarkMode
+    ? ['rgba(31, 41, 55, 0.95)', 'rgba(31, 41, 55, 0.85)'] // Dark header gradient
+    : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']; // Light header gradient
+
+  // Dynamic styles for dark mode support
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      ...styles.container,
+      backgroundColor: colors.background,
+    },
+    mainTitle: {
+      ...styles.mainTitle,
+      color: colors.text,
+    },
+    subtitle: {
+      ...styles.subtitle,
+      color: colors.textSecondary,
+    },
+    statCard: {
+      ...styles.statCard,
+      backgroundColor: colors.card,
+    },
+    statNumber: {
+      ...styles.statNumber,
+      color: colors.text,
+    },
+    statLabel: {
+      ...styles.statLabel,
+      color: colors.textSecondary,
+    },
+    cardButton: {
+      ...styles.cardButton,
+      backgroundColor: isDarkMode ? colors.card : '#FFFFFF',
+    },
+    cardButtonText: {
+      ...styles.cardButtonText,
+      color: colors.text,
+    },
+    whyChooseSection: {
+      ...styles.whyChooseSection,
+      backgroundColor: colors.card,
+    },
+    whyChooseTitle: {
+      ...styles.whyChooseTitle,
+      color: colors.text,
+    },
+    whyChooseSubtitle: {
+      ...styles.whyChooseSubtitle,
+      color: colors.textSecondary,
+    },
+    whyChooseCardTitle: {
+      ...styles.whyChooseCardTitle,
+      color: colors.text,
+    },
+    whyChooseCardText: {
+      ...styles.whyChooseCardText,
+      color: colors.textSecondary,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       {/* Gradient Background */}
       <LinearGradient
-        colors={['#EEF2FF', '#FFFFFF', '#FFF7ED']}
+        colors={backgroundGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
@@ -37,16 +103,9 @@ export default function SimulationScreen() {
 
       {/* Modern Header */}
       <View style={styles.modernHeader}>
-        <LinearGradient
-          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
-          style={styles.headerGradient}
-        >
+        <LinearGradient colors={headerGradient} style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.menuButton}
-              onPress={() => setMenuOpen(true)}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
               <LinearGradient
                 colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                 style={styles.menuButtonGradient}
@@ -76,37 +135,35 @@ export default function SimulationScreen() {
           {/* Main Title */}
           <View style={styles.titleContainer}>
             <Text style={styles.gradientTitle}>Meistere deine</Text>
-            <Text style={styles.mainTitle}>medizinische Prüfung</Text>
+            <Text style={dynamicStyles.mainTitle}>medizinische Prüfung</Text>
           </View>
 
           {/* Subtitle */}
-          <Text style={styles.subtitle}>
-            Realistische Simulationen mit KI-gestütztem Feedback für KP & FSP
-          </Text>
+          <Text style={dynamicStyles.subtitle}>Realistische Simulationen mit KI-gestütztem Feedback für KP & FSP</Text>
 
           {/* Stats Cards */}
           <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
+            <View style={dynamicStyles.statCard}>
               <CheckCircle2 size={20} color="#10B981" />
               <View style={styles.statContent}>
-                <Text style={styles.statNumber}>24</Text>
-                <Text style={styles.statLabel}>Abgeschlossen</Text>
+                <Text style={dynamicStyles.statNumber}>24</Text>
+                <Text style={dynamicStyles.statLabel}>Abgeschlossen</Text>
               </View>
             </View>
 
-            <View style={styles.statCard}>
+            <View style={dynamicStyles.statCard}>
               <TrendingUp size={20} color="#3B82F6" />
               <View style={styles.statContent}>
-                <Text style={styles.statNumber}>89%</Text>
-                <Text style={styles.statLabel}>Erfolgsrate</Text>
+                <Text style={dynamicStyles.statNumber}>89%</Text>
+                <Text style={dynamicStyles.statLabel}>Erfolgsrate</Text>
               </View>
             </View>
 
-            <View style={styles.statCard}>
+            <View style={dynamicStyles.statCard}>
               <Zap size={20} color="#F97316" />
               <View style={styles.statContent}>
-                <Text style={styles.statNumber}>7 Tage</Text>
-                <Text style={styles.statLabel}>Streak</Text>
+                <Text style={dynamicStyles.statNumber}>7 Tage</Text>
+                <Text style={dynamicStyles.statLabel}>Streak</Text>
               </View>
             </View>
           </View>
@@ -170,8 +227,8 @@ export default function SimulationScreen() {
                 </View>
 
                 {/* Button */}
-                <View style={styles.cardButton}>
-                  <Text style={styles.cardButtonText}>Jetzt starten</Text>
+                <View style={dynamicStyles.cardButton}>
+                  <Text style={dynamicStyles.cardButtonText}>Jetzt starten</Text>
                   <ChevronRight size={20} color="#6366F1" />
                 </View>
               </View>
@@ -234,8 +291,8 @@ export default function SimulationScreen() {
                 </View>
 
                 {/* Button */}
-                <View style={styles.cardButton}>
-                  <Text style={styles.cardButtonText}>Jetzt starten</Text>
+                <View style={dynamicStyles.cardButton}>
+                  <Text style={dynamicStyles.cardButtonText}>Jetzt starten</Text>
                   <ChevronRight size={20} color="#F97316" />
                 </View>
               </View>
@@ -244,10 +301,10 @@ export default function SimulationScreen() {
         </View>
 
         {/* Why Choose Section */}
-        <View style={styles.whyChooseSection}>
+        <View style={dynamicStyles.whyChooseSection}>
           <View style={styles.whyChooseHeader}>
-            <Text style={styles.whyChooseTitle}>Warum KP MED Simulationen?</Text>
-            <Text style={styles.whyChooseSubtitle}>
+            <Text style={dynamicStyles.whyChooseTitle}>Warum KP MED Simulationen?</Text>
+            <Text style={dynamicStyles.whyChooseSubtitle}>
               Die effektivste Methode zur Prüfungsvorbereitung mit nachweislichen Ergebnissen
             </Text>
           </View>
@@ -257,8 +314,8 @@ export default function SimulationScreen() {
               <View style={[styles.whyChooseIcon, styles.whyChooseIconBlue]}>
                 <Brain size={32} color="#3B82F6" />
               </View>
-              <Text style={styles.whyChooseCardTitle}>KI-gestützt</Text>
-              <Text style={styles.whyChooseCardText}>
+              <Text style={dynamicStyles.whyChooseCardTitle}>KI-gestützt</Text>
+              <Text style={dynamicStyles.whyChooseCardText}>
                 Intelligentes Feedback basierend auf deinen individuellen Antworten
               </Text>
             </View>
@@ -267,18 +324,16 @@ export default function SimulationScreen() {
               <View style={[styles.whyChooseIcon, styles.whyChooseIconPurple]}>
                 <Award size={32} color="#8B5CF6" />
               </View>
-              <Text style={styles.whyChooseCardTitle}>Zertifiziert</Text>
-              <Text style={styles.whyChooseCardText}>
-                Von medizinischen Experten entwickelt und validiert
-              </Text>
+              <Text style={dynamicStyles.whyChooseCardTitle}>Zertifiziert</Text>
+              <Text style={dynamicStyles.whyChooseCardText}>Von medizinischen Experten entwickelt und validiert</Text>
             </View>
 
             <View style={styles.whyChooseCard}>
               <View style={[styles.whyChooseIcon, styles.whyChooseIconGreen]}>
                 <TrendingUp size={32} color="#10B981" />
               </View>
-              <Text style={styles.whyChooseCardTitle}>Messbar</Text>
-              <Text style={styles.whyChooseCardText}>
+              <Text style={dynamicStyles.whyChooseCardTitle}>Messbar</Text>
+              <Text style={dynamicStyles.whyChooseCardText}>
                 Verfolge deinen Fortschritt und optimiere deine Vorbereitung
               </Text>
             </View>

@@ -24,12 +24,12 @@ import {
   AlertTriangle,
   Droplet,
   Scan,
-  SyringeIcon as Syringe,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { SecureLogger } from '@/lib/security';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
@@ -45,12 +45,61 @@ interface Category {
   description?: string;
 }
 
+// Individual Stat Card Component (extracted to properly use hooks)
+const AnimatedStatCard: React.FC<{
+  number: string;
+  label: string;
+  color: string;
+  index: number;
+  cardStyle?: StyleSheet.NamedStyles<unknown>;
+  labelColor?: string;
+}> = ({ number, label, color, index, cardStyle, labelColor }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        delay: index * 80,
+        friction: 4,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [index, scaleAnim, fadeAnim]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.statCard,
+        cardStyle,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}
+    >
+      <Text style={[styles.statNumber, { color }]}>{number}</Text>
+      <Text style={[styles.statLabel, labelColor && { color: labelColor }]}>{label}</Text>
+    </Animated.View>
+  );
+};
+
 // Animated Stats Grid Component
 const AnimatedStatsGrid: React.FC<{
   favorites: number;
   totalCategories: number;
   totalSections: number;
-}> = ({ favorites, totalCategories, totalSections }) => {
+  cardStyle?: StyleSheet.NamedStyles<unknown>;
+  labelColor?: string;
+}> = ({ favorites, totalCategories, totalSections, cardStyle, labelColor }) => {
   const statCards = [
     { number: totalCategories.toString(), label: 'Fachgebiete', color: MEDICAL_COLORS.secondary },
     { number: totalSections.toString(), label: 'Kategorien', color: MEDICAL_COLORS.blue },
@@ -60,44 +109,17 @@ const AnimatedStatsGrid: React.FC<{
 
   return (
     <View style={styles.statsGrid}>
-      {statCards.map((stat, index) => {
-        const scaleAnim = useRef(new Animated.Value(0)).current;
-        const fadeAnim = useRef(new Animated.Value(0)).current;
-
-        useEffect(() => {
-          Animated.parallel([
-            Animated.spring(scaleAnim, {
-              toValue: 1,
-              delay: index * 80,
-              friction: 4,
-              tension: 40,
-              useNativeDriver: true,
-            }),
-            Animated.timing(fadeAnim, {
-              toValue: 1,
-              duration: 300,
-              delay: index * 80,
-              useNativeDriver: true,
-            }),
-          ]).start();
-        }, []);
-
-        return (
-          <Animated.View
-            key={index}
-            style={[
-              styles.statCard,
-              {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-          >
-            <Text style={[styles.statNumber, { color: stat.color }]}>{stat.number}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
-          </Animated.View>
-        );
-      })}
+      {statCards.map((stat, index) => (
+        <AnimatedStatCard
+          key={index}
+          number={stat.number}
+          label={stat.label}
+          color={stat.color}
+          index={index}
+          cardStyle={cardStyle}
+          labelColor={labelColor}
+        />
+      ))}
     </View>
   );
 };
@@ -186,32 +208,18 @@ const AnimatedCategoryCard: React.FC<{
         },
       ]}
     >
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
-      >
+      <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
         <LinearGradient
           colors={category.gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.categoryCard}
         >
-
           {/* Content */}
           <View style={styles.cardContent}>
             {/* Favorite Button */}
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={onToggleFavorite}
-              activeOpacity={0.7}
-            >
-              <Heart
-                size={24}
-                color={MEDICAL_COLORS.white}
-                fill={isFavorite ? MEDICAL_COLORS.white : 'none'}
-              />
+            <TouchableOpacity style={styles.favoriteButton} onPress={onToggleFavorite} activeOpacity={0.7}>
+              <Heart size={24} color={MEDICAL_COLORS.white} fill={isFavorite ? MEDICAL_COLORS.white : 'none'} />
             </TouchableOpacity>
 
             {/* Icon Container with Pulse */}
@@ -244,20 +252,20 @@ const AnimatedCategoryCard: React.FC<{
 // Helper function to get gradient colors based on slug
 const getGradientForSlug = (slug: string): string[] => {
   const gradientMap: Record<string, string[]> = {
-    'chirurgie': MEDICAL_COLORS.redGradient,
+    chirurgie: MEDICAL_COLORS.redGradient,
     'innere-medizin': MEDICAL_COLORS.primaryGradient,
-    'kardiologie': MEDICAL_COLORS.pinkGradient,
-    'pneumologie': MEDICAL_COLORS.primaryGradient,
-    'gastroenterologie': MEDICAL_COLORS.orangeGradient,
-    'nephrologie': MEDICAL_COLORS.cyanGradient,
+    kardiologie: MEDICAL_COLORS.pinkGradient,
+    pneumologie: MEDICAL_COLORS.primaryGradient,
+    gastroenterologie: MEDICAL_COLORS.orangeGradient,
+    nephrologie: MEDICAL_COLORS.cyanGradient,
     'endokrinologie-und-stoffwechsel': MEDICAL_COLORS.purpleGradient,
-    'notfallmedizin': MEDICAL_COLORS.warmOrangeGradient,
-    'infektiologie': MEDICAL_COLORS.greenGradient,
-    'urologie': MEDICAL_COLORS.amberGradient,
-    'radiologie': MEDICAL_COLORS.blueGradient,
-    'dermatologie': MEDICAL_COLORS.pinkGradient,
-    'neurologie': MEDICAL_COLORS.purpleGradient,
-    'orthopädie': [...MEDICAL_COLORS.darkMenuGradient].reverse(),
+    notfallmedizin: MEDICAL_COLORS.warmOrangeGradient,
+    infektiologie: MEDICAL_COLORS.greenGradient,
+    urologie: MEDICAL_COLORS.amberGradient,
+    radiologie: MEDICAL_COLORS.blueGradient,
+    dermatologie: MEDICAL_COLORS.pinkGradient,
+    neurologie: MEDICAL_COLORS.purpleGradient,
+    orthopädie: [...MEDICAL_COLORS.darkMenuGradient].reverse(),
   };
   return gradientMap[slug] || MEDICAL_COLORS.cyanGradient; // Default cyan
 };
@@ -283,6 +291,7 @@ type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -326,7 +335,7 @@ const BibliothekIndex: React.FC = () => {
 
       // FIX: Fetch all child counts in a SINGLE query instead of N queries
       // Get all children where parent_slug matches any of our sections
-      const parentSlugs = sections.map(s => s.slug);
+      const parentSlugs = sections.map((s) => s.slug);
       const { data: allChildren, error: childrenError } = await supabase
         .from('sections')
         .select('parent_slug')
@@ -336,13 +345,13 @@ const BibliothekIndex: React.FC = () => {
 
       // Create a map of parent_slug -> count for O(1) lookup
       const childCountMap = new Map<string, number>();
-      (allChildren || []).forEach(child => {
+      (allChildren || []).forEach((child) => {
         const currentCount = childCountMap.get(child.parent_slug) || 0;
         childCountMap.set(child.parent_slug, currentCount + 1);
       });
 
       // Map sections to categories with their counts
-      const categoriesWithCounts = sections.map(section => ({
+      const categoriesWithCounts = sections.map((section) => ({
         id: section.id,
         title: section.title,
         slug: section.slug,
@@ -369,9 +378,7 @@ const BibliothekIndex: React.FC = () => {
   // Toggle favorite
   const toggleFavorite = (categoryId: string) => {
     setFavorites((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
     );
   };
 
@@ -391,9 +398,7 @@ const BibliothekIndex: React.FC = () => {
 
     // Apply search filter
     if (searchQuery) {
-      result = result.filter((cat) =>
-        cat.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      result = result.filter((cat) => cat.title.toLowerCase().includes(searchQuery.toLowerCase()));
     }
 
     // Apply favorites filter
@@ -427,18 +432,119 @@ const BibliothekIndex: React.FC = () => {
   // Calculate total sections count
   const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
 
+  // Theme-aware gradient colors
+  const backgroundGradient = isDarkMode
+    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
+    : MEDICAL_COLORS.backgroundGradient; // Light gradient
+
+  // Dynamic styles for dark mode support
+  const dynamicStyles = StyleSheet.create({
+    loadingText: {
+      ...styles.loadingText,
+      color: colors.textSecondary,
+    },
+    errorText: {
+      ...styles.errorText,
+      color: colors.textSecondary,
+    },
+    retryButton: {
+      ...styles.retryButton,
+      backgroundColor: colors.primary,
+    },
+    breadcrumbActive: {
+      ...styles.breadcrumbActive,
+      color: colors.primary,
+    },
+    pageTitle: {
+      ...styles.pageTitle,
+      color: colors.text,
+    },
+    pageSubtitle: {
+      ...styles.pageSubtitle,
+      color: colors.textSecondary,
+    },
+    searchContainer: {
+      ...styles.searchContainer,
+    },
+    searchInput: {
+      ...styles.searchInput,
+      backgroundColor: colors.card,
+      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate200,
+      color: colors.text,
+    },
+    filterButton: {
+      ...styles.filterButton,
+      backgroundColor: colors.card,
+      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate200,
+    },
+    filterButtonActive: {
+      ...styles.filterButtonActive,
+      backgroundColor: isDarkMode ? 'rgba(251, 146, 60, 0.15)' : MEDICAL_COLORS.warmOrangeBg,
+    },
+    filterText: {
+      ...styles.filterText,
+      color: colors.text,
+    },
+    modalContent: {
+      ...styles.modalContent,
+      backgroundColor: colors.card,
+    },
+    modalTitle: {
+      ...styles.modalTitle,
+      color: colors.text,
+    },
+    filterSectionTitle: {
+      ...styles.filterSectionTitle,
+      color: colors.textSecondary,
+    },
+    filterOption: {
+      ...styles.filterOption,
+      backgroundColor: isDarkMode ? colors.surface : MEDICAL_COLORS.slate50,
+    },
+    filterOptionText: {
+      ...styles.filterOptionText,
+      color: colors.text,
+    },
+    resetButtonText: {
+      ...styles.resetButtonText,
+      color: colors.textSecondary,
+    },
+    statCard: {
+      ...styles.statCard,
+      backgroundColor: colors.card,
+      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate100,
+    },
+    statLabel: {
+      ...styles.statLabel,
+      color: colors.textSecondary,
+    },
+    sectionHeader: {
+      ...styles.sectionHeader,
+      color: colors.text,
+    },
+    noResultsText: {
+      ...styles.noResultsText,
+      color: colors.textSecondary,
+    },
+    ctaButton: {
+      ...styles.ctaButton,
+      backgroundColor: isDarkMode ? colors.card : MEDICAL_COLORS.white,
+    },
+    ctaButtonText: {
+      ...styles.ctaButtonText,
+      color: isDarkMode ? MEDICAL_COLORS.warmOrange : MEDICAL_COLORS.warmOrangeDark,
+    },
+  });
+
   // Loading state
   if (loading) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={MEDICAL_COLORS.backgroundGradient}
-          style={styles.backgroundGradient}
-        />
+        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={MEDICAL_COLORS.secondary} />
-            <Text style={styles.loadingText}>Kategorien werden geladen...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={dynamicStyles.loadingText}>Kategorien werden geladen...</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -449,15 +555,12 @@ const BibliothekIndex: React.FC = () => {
   if (error) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={MEDICAL_COLORS.backgroundGradient}
-          style={styles.backgroundGradient}
-        />
+        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.errorContainer}>
             <Text style={styles.errorTitle}>Fehler</Text>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={fetchCategories}>
+            <Text style={dynamicStyles.errorText}>{error}</Text>
+            <TouchableOpacity style={dynamicStyles.retryButton} onPress={fetchCategories}>
               <Text style={styles.retryButtonText}>Erneut versuchen</Text>
             </TouchableOpacity>
           </View>
@@ -469,28 +572,22 @@ const BibliothekIndex: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Background Gradient */}
-      <LinearGradient
-        colors={MEDICAL_COLORS.backgroundGradient}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
             {/* Breadcrumb */}
             <View style={styles.breadcrumb}>
-              <Home size={16} color={MEDICAL_COLORS.slate400} />
-              <ChevronRight size={16} color={MEDICAL_COLORS.slate400} style={styles.breadcrumbSeparator} />
-              <Text style={styles.breadcrumbActive}>Bibliothek</Text>
+              <Home size={16} color={colors.textSecondary} />
+              <ChevronRight size={16} color={colors.textSecondary} style={styles.breadcrumbSeparator} />
+              <Text style={dynamicStyles.breadcrumbActive}>Bibliothek</Text>
             </View>
 
             {/* Title */}
-            <Text style={styles.pageTitle}>Bibliothek</Text>
-            <Text style={styles.pageSubtitle}>
+            <Text style={dynamicStyles.pageTitle}>Bibliothek</Text>
+            <Text style={dynamicStyles.pageSubtitle}>
               Entdecken Sie medizinische Fachgebiete und vertiefen Sie Ihr Wissen
             </Text>
           </View>
@@ -498,12 +595,12 @@ const BibliothekIndex: React.FC = () => {
           {/* Search & Filter Bar */}
           <View style={styles.searchFilterContainer}>
             {/* Search Input */}
-            <View style={styles.searchContainer}>
-              <Search size={20} color={MEDICAL_COLORS.slate400} style={styles.searchIcon} />
+            <View style={dynamicStyles.searchContainer}>
+              <Search size={20} color={colors.textSecondary} style={styles.searchIcon} />
               <TextInput
-                style={styles.searchInput}
+                style={dynamicStyles.searchInput}
                 placeholder="Fachgebiet suchen..."
-                placeholderTextColor={MEDICAL_COLORS.slate400}
+                placeholderTextColor={colors.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -512,16 +609,21 @@ const BibliothekIndex: React.FC = () => {
             {/* Filter Button */}
             <TouchableOpacity
               style={[
-                styles.filterButton,
-                (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterButtonActive,
+                dynamicStyles.filterButton,
+                (showOnlyFavorites || sortBy !== 'alphabetical') && dynamicStyles.filterButtonActive,
               ]}
               onPress={() => setFilterModalVisible(true)}
             >
-              <Filter size={20} color={(showOnlyFavorites || sortBy !== 'alphabetical') ? MEDICAL_COLORS.warmOrangeDark : MEDICAL_COLORS.slate600} />
-              <Text style={[
-                styles.filterText,
-                (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterTextActive,
-              ]}>
+              <Filter
+                size={20}
+                color={showOnlyFavorites || sortBy !== 'alphabetical' ? MEDICAL_COLORS.warmOrangeDark : colors.text}
+              />
+              <Text
+                style={[
+                  dynamicStyles.filterText,
+                  (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterTextActive,
+                ]}
+              >
                 Filter
               </Text>
             </TouchableOpacity>
@@ -539,9 +641,9 @@ const BibliothekIndex: React.FC = () => {
               activeOpacity={1}
               onPress={() => setFilterModalVisible(false)}
             >
-              <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+              <View style={dynamicStyles.modalContent} onStartShouldSetResponder={() => true}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Filter & Sortieren</Text>
+                  <Text style={dynamicStyles.modalTitle}>Filter & Sortieren</Text>
                   <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
                     <Text style={styles.modalCloseText}>Fertig</Text>
                   </TouchableOpacity>
@@ -549,14 +651,11 @@ const BibliothekIndex: React.FC = () => {
 
                 {/* Sort Options */}
                 <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>Sortieren nach</Text>
+                  <Text style={dynamicStyles.filterSectionTitle}>Sortieren nach</Text>
 
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => setSortBy('alphabetical')}
-                  >
+                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('alphabetical')}>
                     <View style={styles.filterOptionContent}>
-                      <Text style={styles.filterOptionText}>Alphabetisch (A-Z)</Text>
+                      <Text style={dynamicStyles.filterOptionText}>Alphabetisch (A-Z)</Text>
                       {sortBy === 'alphabetical' && (
                         <View style={styles.checkmark}>
                           <Text style={styles.checkmarkText}>✓</Text>
@@ -565,12 +664,9 @@ const BibliothekIndex: React.FC = () => {
                     </View>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => setSortBy('count-desc')}
-                  >
+                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('count-desc')}>
                     <View style={styles.filterOptionContent}>
-                      <Text style={styles.filterOptionText}>Meiste Kategorien</Text>
+                      <Text style={dynamicStyles.filterOptionText}>Meiste Kategorien</Text>
                       {sortBy === 'count-desc' && (
                         <View style={styles.checkmark}>
                           <Text style={styles.checkmarkText}>✓</Text>
@@ -579,12 +675,9 @@ const BibliothekIndex: React.FC = () => {
                     </View>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => setSortBy('count-asc')}
-                  >
+                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('count-asc')}>
                     <View style={styles.filterOptionContent}>
-                      <Text style={styles.filterOptionText}>Wenigste Kategorien</Text>
+                      <Text style={dynamicStyles.filterOptionText}>Wenigste Kategorien</Text>
                       {sortBy === 'count-asc' && (
                         <View style={styles.checkmark}>
                           <Text style={styles.checkmarkText}>✓</Text>
@@ -593,12 +686,9 @@ const BibliothekIndex: React.FC = () => {
                     </View>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.filterOption}
-                    onPress={() => setSortBy('favorites')}
-                  >
+                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('favorites')}>
                     <View style={styles.filterOptionContent}>
-                      <Text style={styles.filterOptionText}>Favoriten zuerst</Text>
+                      <Text style={dynamicStyles.filterOptionText}>Favoriten zuerst</Text>
                       {sortBy === 'favorites' && (
                         <View style={styles.checkmark}>
                           <Text style={styles.checkmarkText}>✓</Text>
@@ -610,14 +700,14 @@ const BibliothekIndex: React.FC = () => {
 
                 {/* Filter Options */}
                 <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>Anzeigen</Text>
+                  <Text style={dynamicStyles.filterSectionTitle}>Anzeigen</Text>
 
                   <TouchableOpacity
-                    style={styles.filterOption}
+                    style={dynamicStyles.filterOption}
                     onPress={() => setShowOnlyFavorites(!showOnlyFavorites)}
                   >
                     <View style={styles.filterOptionContent}>
-                      <Text style={styles.filterOptionText}>Nur Favoriten</Text>
+                      <Text style={dynamicStyles.filterOptionText}>Nur Favoriten</Text>
                       {showOnlyFavorites && (
                         <View style={styles.checkmark}>
                           <Text style={styles.checkmarkText}>✓</Text>
@@ -635,7 +725,7 @@ const BibliothekIndex: React.FC = () => {
                     setShowOnlyFavorites(false);
                   }}
                 >
-                  <Text style={styles.resetButtonText}>Filter zurücksetzen</Text>
+                  <Text style={dynamicStyles.resetButtonText}>Filter zurücksetzen</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -646,10 +736,12 @@ const BibliothekIndex: React.FC = () => {
             favorites={favorites.length}
             totalCategories={categories.length}
             totalSections={totalSectionsCount}
+            cardStyle={dynamicStyles.statCard}
+            labelColor={colors.textSecondary}
           />
 
           {/* Section Header */}
-          <Text style={styles.sectionHeader}>
+          <Text style={dynamicStyles.sectionHeader}>
             {searchQuery ? `Suchergebnisse (${filteredCategories.length})` : 'Alle Fachgebiete'}
           </Text>
 
@@ -668,8 +760,8 @@ const BibliothekIndex: React.FC = () => {
               ))
             ) : (
               <View style={styles.noResultsContainer}>
-                <Text style={styles.noResultsText}>
-                  Keine Fachgebiete gefunden für "{searchQuery}"
+                <Text style={dynamicStyles.noResultsText}>
+                  Keine Fachgebiete gefunden für &ldquo;{searchQuery}&rdquo;
                 </Text>
               </View>
             )}
@@ -683,17 +775,11 @@ const BibliothekIndex: React.FC = () => {
             style={styles.ctaBanner}
           >
             <Text style={styles.ctaTitle}>Bereit zum Lernen?</Text>
-            <Text style={styles.ctaSubtitle}>
-              Starten Sie jetzt mit einer Simulation und testen Sie Ihr Wissen
-            </Text>
+            <Text style={styles.ctaSubtitle}>Starten Sie jetzt mit einer Simulation und testen Sie Ihr Wissen</Text>
 
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={handleStartSimulation}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.ctaButtonText}>Simulation starten</Text>
-              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+            <TouchableOpacity style={dynamicStyles.ctaButton} onPress={handleStartSimulation} activeOpacity={0.8}>
+              <Text style={dynamicStyles.ctaButtonText}>Simulation starten</Text>
+              <ChevronRight size={20} color={isDarkMode ? MEDICAL_COLORS.warmOrange : MEDICAL_COLORS.warmOrangeDark} />
             </TouchableOpacity>
           </LinearGradient>
         </ScrollView>
