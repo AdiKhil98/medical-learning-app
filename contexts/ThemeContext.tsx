@@ -30,31 +30,31 @@ interface ThemeContextType {
 }
 
 const lightColors = {
-  background: '#FFFFFF',  // Pure white to match homepage
+  background: '#FFFFFF', // Pure white to match homepage
   surface: '#FFFFFF',
-  primary: '#E2827F',     // Burning Sand - main brand color
-  secondary: '#B87E70',   // Old Rose - dark accent
+  primary: '#E2827F', // Burning Sand - main brand color
+  secondary: '#B87E70', // Old Rose - dark accent
   text: '#1F2937',
   textSecondary: '#6B7280',
   border: '#E5E7EB',
-  card: '#F9F6F2',        // Light beige/cream for cards to match homepage
-  error: '#B15740',       // Brown Rust for errors
+  card: '#F9F6F2', // Light beige/cream for cards to match homepage
+  error: '#B15740', // Brown Rust for errors
   success: '#22C55E',
-  warning: '#E5877E',     // Tonys Pink for warnings/highlights
+  warning: '#E5877E', // Tonys Pink for warnings/highlights
 };
 
 const darkColors = {
   background: '#111827',
   surface: '#1F2937',
-  primary: '#E5877E',     // Tonys Pink - lighter for dark mode
-  secondary: '#B87E70',   // Old Rose - consistent across themes
+  primary: '#E5877E', // Tonys Pink - lighter for dark mode
+  secondary: '#B87E70', // Old Rose - consistent across themes
   text: '#F8F3E8', // White Linen background
   textSecondary: '#D1D5DB',
   border: '#374151',
   card: '#1F2937',
-  error: '#E2827F',       // Burning Sand for dark mode errors
+  error: '#E2827F', // Burning Sand for dark mode errors
   success: '#34D399',
-  warning: '#E5877E',     // Tonys Pink for warnings
+  warning: '#E5877E', // Tonys Pink for warnings
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -76,6 +76,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadSettings();
+
+    // Listen for system theme changes (web only)
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      const handleChange = async (e: MediaQueryListEvent) => {
+        // Only auto-switch if user hasn't manually set a preference
+        const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+        if (!savedTheme) {
+          const newTheme = e.matches ? 'dark' : 'light';
+          setTheme(newTheme);
+          logger.info(`🎨 System theme changed to ${newTheme} mode`);
+        }
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
   }, []);
 
   const loadSettings = async () => {
@@ -84,11 +102,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         AsyncStorage.getItem(THEME_STORAGE_KEY),
         AsyncStorage.getItem(FONT_SIZE_STORAGE_KEY),
       ]);
-      
+
       if (savedTheme === 'dark' || savedTheme === 'light') {
         setTheme(savedTheme);
+      } else if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        // Auto-detect system preference on first launch (web only)
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const systemTheme = prefersDark ? 'dark' : 'light';
+        setTheme(systemTheme);
+        logger.info(`🎨 System preference detected: ${systemTheme} mode`);
       }
-      
+
       if (savedFontSize === 'small' || savedFontSize === 'medium' || savedFontSize === 'large') {
         setFontSizeState(savedFontSize);
       }
@@ -118,9 +142,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const fontScale = useCallback((baseSize: number): number => {
-    return Math.round(baseSize * FONT_SCALE_MAP[fontSize]);
-  }, [fontSize]);
+  const fontScale = useCallback(
+    (baseSize: number): number => {
+      return Math.round(baseSize * FONT_SCALE_MAP[fontSize]);
+    },
+    [fontSize]
+  );
 
   const showFontSizeSelector = useCallback(() => {
     const options = [
@@ -132,7 +159,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Abbrechen', ...options.map(o => o.text)],
+          options: ['Abbrechen', ...options.map((o) => o.text)],
           cancelButtonIndex: 0,
           title: 'Schriftgröße wählen',
         },
@@ -145,35 +172,34 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       );
     } else {
       // For Android, cycle through options
-      const currentIndex = options.findIndex(o => o.value === fontSize);
+      const currentIndex = options.findIndex((o) => o.value === fontSize);
       const nextIndex = (currentIndex + 1) % options.length;
       setFontSize(options[nextIndex].value);
     }
   }, [fontSize, setFontSize]);
 
-  const colors = useMemo(() => theme === 'light' ? lightColors : darkColors, [theme]);
+  const colors = useMemo(() => (theme === 'light' ? lightColors : darkColors), [theme]);
   const isDarkMode = useMemo(() => theme === 'dark', [theme]);
 
-  const contextValue = useMemo(() => ({
-    theme,
-    isDarkMode,
-    toggleTheme,
-    fontSize,
-    setFontSize,
-    fontScale,
-    showFontSizeSelector,
-    colors
-  }), [theme, isDarkMode, toggleTheme, fontSize, setFontSize, fontScale, showFontSizeSelector, colors]);
+  const contextValue = useMemo(
+    () => ({
+      theme,
+      isDarkMode,
+      toggleTheme,
+      fontSize,
+      setFontSize,
+      fontScale,
+      showFontSizeSelector,
+      colors,
+    }),
+    [theme, isDarkMode, toggleTheme, fontSize, setFontSize, fontScale, showFontSizeSelector, colors]
+  );
 
   if (isLoading) {
     return null; // or a loading spinner
   }
 
-  return (
-    <ThemeContext.Provider value={contextValue}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
