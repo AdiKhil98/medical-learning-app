@@ -1,900 +1,503 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { logger } from '@/utils/logger';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, SafeAreaView, Alert, ScrollView, Linking, Animated } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { supabase } from '@/lib/supabase';
-import { CommonActions } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Platform } from 'react-native';
 import {
-  LogOut,
-  Moon,
-  User,
+  ChevronLeft,
   ChevronRight,
-  Settings,
+  User,
   Lock,
-  Shield,
+  CreditCard,
+  Moon,
   Type,
-  Bell,
-  Volume2,
-  FileText,
+  Heart,
   HelpCircle,
+  FileText,
   Info,
-  Award,
-  Send,
-  Bookmark,
-  Crown,
-  ArrowLeft
+  LogOut,
 } from 'lucide-react-native';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
-export default function ProfileScreen() {
-  const { user, signOut, session } = useAuth();
-  const { isDarkMode, toggleTheme, colors, fontSize, showFontSizeSelector, fontScale } = useTheme();
-  const {
-    pushNotificationsEnabled,
-    soundVibrationEnabled,
-    setPushNotificationsEnabled,
-    setSoundVibrationEnabled,
-    sendTestNotification,
-    hasPermission,
-    loading: notificationLoading,
-    // Daily notifications
-    dailyNotificationsConfig,
-    updateDailyNotificationsConfig,
-    sendTestTipNotification,
-    sendTestQuestionNotification,
-  } = useNotifications();
+interface SettingsItemProps {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  subtitle?: string;
+  value?: string;
+  onPress?: () => void;
+  showArrow?: boolean;
+  rightComponent?: React.ReactNode;
+}
 
-  const router = useRouter();
-  
-  // State declarations
-  const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState<any>(null);
-  const [signingOut, setSigningOut] = useState(false);
-  const [updatingNotifications, setUpdatingNotifications] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  // Listen for session changes and redirect when logged out
-  useEffect(() => {
-    if (!loading && !session) {
-      logger.info('🔄 Session is null, redirecting to login...');
-      try {
-        router.replace('/auth/login');
-        logger.info('✅ Router replace called successfully');
-      } catch (error) {
-        logger.error('❌ Router replace failed:', error);
-        // Fallback: try router.push
-        router.push('/auth/login');
-      }
-    }
-  }, [session, loading, router]);
-
-  useEffect(() => {
-    async function loadUserData() {
-      try {
-        setLoading(true);
-        
-        if (user) {
-          const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .maybeSingle();
-            
-          if (error) {
-            logger.error('Error loading user data:', error);
-            // Don't throw error, just use auth user data
-            setUserData({
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-              email: user.email
-            });
-          } else if (data) {
-            setUserData(data);
-          } else {
-            // User doesn't exist in database, use auth data
-            setUserData({
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-              email: user.email
-            });
-          }
-        }
-      } catch (error) {
-        logger.error('Error loading user data', error);
-        // Use fallback data from auth
-        if (user) {
-          setUserData({
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-            email: user.email
-          });
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadUserData();
-
-    // Fade in animation
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
-  }, [user, fadeAnim]);
-
-  const handleSignOut = async () => {
-    logger.info('handleSignOut called');
-    logger.info('Current user:', user?.email);
-    logger.info('Current session:', !!session);
-    logger.info('About to show Alert.alert confirmation dialog...');
-    
-    try {
-      logger.info('Calling Alert.alert...');
-      
-      // For web platform, use window.confirm as a fallback
-      if (Platform.OS === 'web') {
-        logger.info('Using web confirm dialog...');
-        const confirmed = window.confirm('Möchten Sie sich wirklich abmelden?');
-        logger.info('Web confirm result:', confirmed);
-        
-        if (confirmed) {
-          logger.info('Web confirmation confirmed, calling performSignOut...');
-          await performSignOut();
-        } else {
-          logger.info('Web confirmation cancelled');
-        }
-        return;
-      }
-      
-      // For mobile platforms, use Alert.alert
-      Alert.alert(
-        'Abmelden',
-        'Möchten Sie sich wirklich abmelden?',
-        [
-          { 
-            text: 'Abbrechen', 
-            style: 'cancel',
-            onPress: () => {
-              logger.info('Mobile logout cancelled by user');
-            }
-          },
-          { 
-            text: 'Abmelden', 
-            onPress: async () => {
-              logger.info('Mobile alert confirmation pressed');
-              logger.info('About to call performSignOut...');
-              await performSignOut();
-            },
-            style: 'destructive'
-          },
-        ],
-        { cancelable: false }
-      );
-      logger.info('Mobile Alert.alert has been called');
-      
-    } catch (error) {
-      logger.error('Error with Alert.alert:', error);
-      // Fallback to direct logout if Alert fails
-      logger.info('Alert failed, falling back to direct logout...');
-      await performSignOut();
-    }
-  };
-
-  const performSignOut = async () => {
-    logger.info('performSignOut called');
-    logger.info('About to start logout process...');
-    
-    try {
-      setSigningOut(true);
-      logger.info('Starting logout process...');
-      logger.info('signingOut state set to true');
-      
-      // Add a small delay to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Call the signOut function from context
-      logger.info('Calling signOut from context...');
-      logger.info('🔍 signOut function type:', typeof signOut);
-      
-      // Let the AuthContext handle navigation after signOut completes
-      logger.info('📍 Skipping pre-emptive navigation - will let AuthContext handle it');
-      
-      logger.info('🔍 signOut function:', signOut);
-      logger.info('🔍 useAuth hook result:', { user: !!user, session: !!session, loading, signOut: typeof signOut });
-      
-      if (!signOut) {
-        throw new Error('signOut function is not available from useAuth');
-      }
-      
-      logger.info('✅ About to call signOut() function...');
-      logger.info('⏰ Time before signOut call:', new Date().toISOString());
-      await signOut();
-      logger.info('✅ signOut() call completed successfully');
-      logger.info('⏰ Time after signOut call:', new Date().toISOString());
-      
-      logger.info('✅ Logout successful, navigation should have already occurred');
-      
-    } catch (error: any) {
-      logger.error('Error during logout:', error);
-      logger.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      
-      // Note: We don't clear state here because that should be handled by AuthContext
-      
-      Alert.alert(
-        'Abmeldung', 
-        `Es gab einen Fehler beim Abmelden: ${error.message || 'Unbekannter Fehler'}. Versuchen Sie es erneut.`,
-        [{ text: 'OK' }]
-      );
-    } finally {
-      logger.info('performSignOut finally block');
-      setSigningOut(false);
-    }
-  };
-
-  // Direct logout function for testing (bypasses Alert.alert)
-  const handleDirectSignOut = async () => {
-    logger.info('🧪 Direct logout called (bypassing Alert.alert)');
-    logger.info('Current user:', user?.email);
-    logger.info('Current session:', !!session);
-    
-    try {
-      logger.info('Calling performSignOut directly...');
-      await performSignOut();
-      logger.info('Direct logout completed');
-    } catch (error) {
-      logger.error('Direct logout error:', error);
-      Alert.alert('Error', 'Direct logout failed: ' + error.message);
-    }
-  };
-
-  const handleGoBack = () => {
-    // Try to go back, if no history then go to dashboard
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/dashboard');
-    }
-  };
-
-  const handlePushNotificationToggle = async (value: boolean) => {
-    try {
-      setUpdatingNotifications(true);
-      logger.info('Toggle push notifications to:', value);
-      await setPushNotificationsEnabled(value);
-      logger.info('Push notifications toggle completed');
-    } catch (error: any) {
-      logger.error('Error toggling push notifications:', error);
-      Alert.alert(
-        'Fehler',
-        error.message || 'Benachrichtigungseinstellungen konnten nicht aktualisiert werden.'
-      );
-    } finally {
-      setUpdatingNotifications(false);
-    }
-  };
-
-  const handleSoundVibrationToggle = async (value: boolean) => {
-    try {
-      setUpdatingNotifications(true);
-      logger.info('Toggle sound/vibration to:', value);
-      await setSoundVibrationEnabled(value);
-      logger.info('Sound/vibration toggle completed');
-    } catch (error: any) {
-      logger.error('Error toggling sound/vibration:', error);
-      Alert.alert(
-        'Fehler',
-        error.message || 'Ton- und Vibrationseinstellungen konnten nicht aktualisiert werden.'
-      );
-    } finally {
-      setUpdatingNotifications(false);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    try {
-      await sendTestNotification();
-      Alert.alert(
-        'Test-Benachrichtigung gesendet',
-        'Sie sollten in Kürze eine Test-Benachrichtigung erhalten.'
-      );
-    } catch (error: any) {
-      Alert.alert(
-        'Fehler',
-        error.message || 'Test-Benachrichtigung konnte nicht gesendet werden.'
-      );
-    }
-  };
-
-  const openExternalLink = async (url: string) => {
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      Alert.alert('Fehler', 'Link konnte nicht geöffnet werden.');
-    }
-  };
-
-  const navigateTo = (route: string) => {
-    router.push(route);
-  };
-
-  const getFontSizeDisplayText = () => {
-    switch (fontSize) {
-      case 'small': return 'Klein';
-      case 'medium': return 'Mittel';
-      case 'large': return 'Groß';
-      default: return 'Mittel';
-    }
-  };
-
-  const SettingItem = ({ 
-    icon: IconComponent, 
-    title, 
-    onPress, 
-    showArrow = true, 
-    rightComponent 
-  }: {
-    icon: any;
-    title: string;
-    onPress?: () => void;
-    showArrow?: boolean;
-    rightComponent?: React.ReactNode;
-  }) => (
-    <TouchableOpacity 
-      style={dynamicStyles.settingItem} 
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={dynamicStyles.settingLeft}>
-        <IconComponent size={20} color={colors.textSecondary} />
-        <Text style={dynamicStyles.settingLabel}>{title}</Text>
-      </View>
-      {rightComponent || (showArrow && (
-        <ChevronRight size={20} color={colors.textSecondary} />
-      ))}
-    </TouchableOpacity>
-  );
-
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
-
-  const dynamicStyles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    gradientBackground: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      height: '100%',
-    },
-    headerContainer: {
-      paddingHorizontal: 24,
-      paddingVertical: 16,
-      paddingTop: 60,
-    },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      backgroundColor: 'rgba(249, 246, 242, 0.95)',
-      shadowColor: 'rgba(181,87,64,0.3)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-      alignSelf: 'flex-start',
-    },
-    backButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#B87E70',
-      marginLeft: 8,
-    },
-    title: {
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(28),
-      color: colors.text,
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
-      color: colors.textSecondary,
-      marginBottom: 24,
-      lineHeight: fontScale(24),
-    },
-    profileCard: {
-      marginBottom: 32,
-      borderRadius: 16,
-      backgroundColor: colors.card,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
-      shadowRadius: 12,
-      elevation: 6,
-    },
-    profileName: {
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
-      color: colors.text,
-      marginBottom: 4,
-    },
-    profileEmail: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
-      color: colors.textSecondary,
-    },
-    sectionCard: {
-      marginBottom: 32,
-      borderRadius: 12,
-      backgroundColor: colors.card,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    sectionTitle: {
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
-      color: colors.primary,
-      marginBottom: 16,
-      marginTop: 24,
-    },
-    firstSectionTitle: {
-      marginTop: 0,
-    },
-    settingItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      minHeight: 56,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    settingLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    settingLabel: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
-      color: colors.text,
-      marginLeft: 12,
-    },
-    lastSettingItem: {
-      borderBottomWidth: 0,
-    },
-    versionText: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
-      color: colors.textSecondary,
-    },
-    logoutButton: {
-      marginTop: 24,
-      marginBottom: 32,
-      borderColor: '#EF4444',
-      borderRadius: 16,
-      backgroundColor: 'rgba(239, 68, 68, 0.05)',
-      height: 56,
-    },
-    logoutText: {
-      color: '#EF4444',
-      fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
-    },
-    fontSizeValue: {
-      fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
-      color: colors.textSecondary,
-      marginRight: 8,
-    },
-    testButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      marginLeft: 8,
-    },
-    testButtonText: {
-      color: '#FFFFFF',
-      fontFamily: 'Inter-Medium',
-      fontSize: fontScale(12),
-    },
-    permissionWarning: {
-      backgroundColor: colors.warning + '20',
-      borderRadius: 8,
-      padding: 12,
-      marginTop: 8,
-      marginHorizontal: 16,
-    },
-    permissionWarningText: {
-      fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
-      color: colors.warning,
-      textAlign: 'center',
-    },
-  });
+const SettingsItem: React.FC<SettingsItemProps> = ({
+  icon,
+  iconBg,
+  title,
+  subtitle,
+  value,
+  onPress,
+  showArrow = true,
+  rightComponent,
+}) => {
+  const { colors } = useTheme();
 
   return (
-    <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={dynamicStyles.gradientBackground}
-      />
-      
-      <Animated.ScrollView
-        style={[styles.scrollContainer, { opacity: fadeAnim }]}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {/* Back Button */}
-        <View style={dynamicStyles.headerContainer}>
-          <TouchableOpacity
-            style={dynamicStyles.backButton}
-            onPress={handleGoBack}
-          >
-            <ArrowLeft size={20} color="#B87E70" />
-            <Text style={dynamicStyles.backButtonText}>Zurück</Text>
-          </TouchableOpacity>
+    <TouchableOpacity
+      style={[styles.settingsItem, { borderBottomColor: colors.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={!onPress && !rightComponent}
+    >
+      <View style={styles.settingsItemLeft}>
+        <View style={[styles.settingsIcon, { backgroundColor: iconBg }]}>{icon}</View>
+        <View style={styles.settingsText}>
+          <Text style={[styles.settingsTitle, { color: colors.text }]}>{title}</Text>
+          {subtitle && <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
         </View>
+      </View>
+      <View style={styles.settingsItemRight}>
+        {rightComponent}
+        {value && <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>{value}</Text>}
+        {showArrow && !rightComponent && <ChevronRight size={20} color={colors.textSecondary} />}
+      </View>
+    </TouchableOpacity>
+  );
+};
 
-        <View style={styles.header}>
-          <Text style={dynamicStyles.title}>Einstellungen</Text>
-          <Text style={dynamicStyles.subtitle}>Verwalten Sie Ihr Konto und Ihre Präferenzen</Text>
+const ToggleSwitch: React.FC<{ active: boolean; onToggle: () => void }> = ({ active, onToggle }) => {
+  return (
+    <TouchableOpacity
+      style={[styles.toggleSwitch, active && styles.toggleSwitchActive]}
+      onPress={onToggle}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.toggleThumb, active && styles.toggleThumbActive]} />
+    </TouchableOpacity>
+  );
+};
+
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { colors, isDarkMode, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const [fontSize, setFontSize] = useState('Mittel');
+
+  const getUserInitials = () => {
+    if (!user?.email) return 'U';
+    return user.email.substring(0, 1).toUpperCase();
+  };
+
+  const getDisplayName = () => {
+    return user?.email?.split('@')[0] || 'Benutzer';
+  };
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Möchten Sie sich wirklich abmelden?')) {
+        signOut().then(() => {
+          router.replace('/auth/login');
+        });
+      }
+    } else {
+      Alert.alert('Abmelden', 'Möchten Sie sich wirklich abmelden?', [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Abmelden',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+            router.replace('/auth/login');
+          },
+        },
+      ]);
+    }
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+          <ChevronLeft size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+          <Text style={styles.backButtonText}>Zurück</Text>
+        </TouchableOpacity>
+
+        <LinearGradient colors={MEDICAL_COLORS.warmOrangeGradient} style={styles.headerLogo}>
+          <Text style={styles.headerLogoText}>+ KP MED</Text>
+        </LinearGradient>
+
+        <View style={styles.headerAvatar}>
+          <Text style={styles.headerAvatarText}>{getUserInitials()}</Text>
+        </View>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Page Title */}
+        <View style={styles.titleSection}>
+          <Text style={[styles.pageTitle, { color: colors.text }]}>Profil</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
+            Verwalten Sie Ihr Konto und Ihre Präferenzen
+          </Text>
         </View>
 
         {/* Profile Card */}
-        <Card style={dynamicStyles.profileCard}>
-          <View style={styles.profileHeader}>
-            <LinearGradient
-              colors={['#E2827F', '#E5877E']}
-              style={styles.avatarContainer}
-            >
-              <Text style={styles.avatarText}>
-                {userData?.name ? userData.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
+        <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
+          <LinearGradient colors={['#EF4444', '#F87171']} style={styles.profileAvatarLarge}>
+            <Text style={styles.profileAvatarText}>{getUserInitials()}</Text>
+          </LinearGradient>
+          <View style={styles.profileInfo}>
+            <Text style={[styles.profileName, { color: colors.text }]}>{getDisplayName()}</Text>
+            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
+          </View>
+          <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8}>
+            <LinearGradient colors={MEDICAL_COLORS.warmOrangeGradient} style={styles.editProfileGradient}>
+              <Text style={styles.editProfileText}>Bearbeiten</Text>
             </LinearGradient>
-            <View style={styles.profileInfo}>
-              <Text style={dynamicStyles.profileName}>{userData?.name || 'Benutzer'}</Text>
-              <Text style={dynamicStyles.profileEmail}>{userData?.email || user?.email || ''}</Text>
-            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Account Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Konto</Text>
           </View>
-        </Card>
-
-
-        {/* Konto Section */}
-        <Text style={[dynamicStyles.sectionTitle, dynamicStyles.firstSectionTitle]}>Konto</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={User}
-            title="Persönliche Daten"
-            onPress={() => navigateTo('/konto/persoenliche-daten')}
-          />
-          <SettingItem
-            icon={Lock}
-            title="Passwort ändern"
-            onPress={() => navigateTo('/konto/passwort-aendern')}
-            showArrow={false}
-            rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
-          />
-        </Card>
-
-        {/* Favoriten Section */}
-        <Text style={dynamicStyles.sectionTitle}>Favoriten</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={Bookmark}
-            title="Gespeicherte Inhalte"
-            onPress={() => navigateTo('/bookmarks')}
-          />
-          <SettingItem
-            icon={Crown}
-            title="Abonnement"
-            onPress={() => navigateTo('/konto/abonnement')}
-            showArrow={false}
-            rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
-          />
-        </Card>
-
-        {/* Darstellung Section */}
-        <Text style={dynamicStyles.sectionTitle}>Darstellung</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={Moon}
-            title="Dunkelmodus"
-            showArrow={false}
-            rightComponent={
-              <Switch
-                value={isDarkMode}
-                onValueChange={toggleTheme}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={'#FFFFFF'}
-              />
-            }
-          />
-          <SettingItem
-            icon={Type}
-            title="Schriftgröße"
-            onPress={showFontSizeSelector}
-            rightComponent={
-              <View style={styles.fontSizeContainer}>
-                <Text style={dynamicStyles.fontSizeValue}>{getFontSizeDisplayText()}</Text>
-                <ChevronRight size={20} color={colors.textSecondary} />
-              </View>
-            }
-          />
-        </Card>
-
-        {/* Benachrichtigungen Section */}
-        <Text style={dynamicStyles.sectionTitle}>Benachrichtigungen</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={Bell}
-            title="Push-Benachrichtigungen"
-            showArrow={false}
-            rightComponent={
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {pushNotificationsEnabled && (
-                  <TouchableOpacity
-                    style={dynamicStyles.testButton}
-                    onPress={handleTestNotification}
-                    disabled={updatingNotifications}
-                  >
-                    <Send size={12} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-                <Switch
-                  value={pushNotificationsEnabled}
-                  onValueChange={handlePushNotificationToggle}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={'#FFFFFF'}
-                  disabled={updatingNotifications || notificationLoading}
-                />
-              </View>
-            }
-          />
-          <SettingItem
-            icon={Volume2}
-            title="Ton & Vibration"
-            showArrow={false}
-            rightComponent={
-              <Switch
-                value={soundVibrationEnabled}
-                onValueChange={handleSoundVibrationToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={'#FFFFFF'}
-                disabled={updatingNotifications || notificationLoading}
-              />
-            }
-          />
-        </Card>
-
-        {/* Show permission warning if push notifications are enabled but permission not granted */}
-        {pushNotificationsEnabled && !hasPermission && (
-          <View style={dynamicStyles.permissionWarning}>
-            <Text style={dynamicStyles.permissionWarningText}>
-              Push-Benachrichtigungen sind aktiviert, aber die Berechtigung wurde nicht erteilt. 
-              Bitte aktivieren Sie Benachrichtigungen in den Systemeinstellungen.
-            </Text>
+          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+            <SettingsItem
+              icon={<User size={24} color="#3B82F6" />}
+              iconBg="rgba(59, 130, 246, 0.15)"
+              title="Persönliche Daten"
+              subtitle="Name, E-Mail und mehr"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<Lock size={24} color="#8B5CF6" />}
+              iconBg="rgba(139, 92, 246, 0.15)"
+              title="Passwort ändern"
+              subtitle="Ihr Konto schützen"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<CreditCard size={24} color="#F59E0B" />}
+              iconBg="rgba(245, 158, 11, 0.15)"
+              title="Abonnement"
+              subtitle="Premium Plan"
+              onPress={() => {}}
+            />
           </View>
-        )}
+        </View>
 
-        {/* Tägliche Benachrichtigungen Section */}
-        <Text style={dynamicStyles.sectionTitle}>Tägliche Erinnerungen</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={Bell}
-            title="Tägliche Benachrichtigungen"
-            showArrow={false}
-            rightComponent={
-              <Switch
-                value={dailyNotificationsConfig.enabled}
-                onValueChange={async (value) => {
-                  try {
-                    await updateDailyNotificationsConfig({ enabled: value });
-                  } catch (error: any) {
-                    Alert.alert('Fehler', 'Einstellungen konnten nicht aktualisiert werden: ' + error.message);
-                  }
-                }}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={'#FFFFFF'}
-                disabled={updatingNotifications || notificationLoading}
-              />
-            }
-          />
-          
-          {dailyNotificationsConfig.enabled && (
-            <>
-              <SettingItem
-                icon={Type}
-                title={`Tipp des Tages (${String(dailyNotificationsConfig.tipNotificationTime.hour).padStart(2, '0')}:${String(dailyNotificationsConfig.tipNotificationTime.minute).padStart(2, '0')})`}
-                onPress={() => {
-                  Alert.alert(
-                    'Tipp-Zeit einstellen',
-                    'Wählen Sie die Zeit für den täglichen Tipp:',
-                    [
-                      { text: '09:00', onPress: () => updateDailyNotificationsConfig({ tipNotificationTime: { hour: 9, minute: 0 } }) },
-                      { text: '10:00', onPress: () => updateDailyNotificationsConfig({ tipNotificationTime: { hour: 10, minute: 0 } }) },
-                      { text: '11:00', onPress: () => updateDailyNotificationsConfig({ tipNotificationTime: { hour: 11, minute: 0 } }) },
-                      { text: '12:00', onPress: () => updateDailyNotificationsConfig({ tipNotificationTime: { hour: 12, minute: 0 } }) },
-                      { text: 'Abbrechen', style: 'cancel' }
-                    ]
-                  );
-                }}
-                rightComponent={
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={[dynamicStyles.testButton, { backgroundColor: '#F59E0B' }]}
-                      onPress={async () => {
-                        try {
-                          await sendTestTipNotification();
-                          Alert.alert('Test gesendet', 'Test-Tipp-Benachrichtigung wurde gesendet!');
-                        } catch (error: any) {
-                          Alert.alert('Fehler', error.message);
-                        }
-                      }}
-                      disabled={updatingNotifications}
-                    >
-                      <Send size={12} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <ChevronRight size={20} color={colors.textSecondary} />
-                  </View>
-                }
-              />
-              
-              <SettingItem
-                icon={HelpCircle}
-                title={`Tagesfrage (${String(dailyNotificationsConfig.questionNotificationTime.hour).padStart(2, '0')}:${String(dailyNotificationsConfig.questionNotificationTime.minute).padStart(2, '0')})`}
-                onPress={() => {
-                  Alert.alert(
-                    'Frage-Zeit einstellen',
-                    'Wählen Sie die Zeit für die tägliche Frage:',
-                    [
-                      { text: '17:00', onPress: () => updateDailyNotificationsConfig({ questionNotificationTime: { hour: 17, minute: 0 } }) },
-                      { text: '18:00', onPress: () => updateDailyNotificationsConfig({ questionNotificationTime: { hour: 18, minute: 0 } }) },
-                      { text: '19:00', onPress: () => updateDailyNotificationsConfig({ questionNotificationTime: { hour: 19, minute: 0 } }) },
-                      { text: '20:00', onPress: () => updateDailyNotificationsConfig({ questionNotificationTime: { hour: 20, minute: 0 } }) },
-                      { text: 'Abbrechen', style: 'cancel' }
-                    ]
-                  );
-                }}
-                rightComponent={
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={[dynamicStyles.testButton, { backgroundColor: '#E2827F' }]}
-                      onPress={async () => {
-                        try {
-                          await sendTestQuestionNotification();
-                          Alert.alert('Test gesendet', 'Test-Frage-Benachrichtigung wurde gesendet!');
-                        } catch (error: any) {
-                          Alert.alert('Fehler', error.message);
-                        }
-                      }}
-                      disabled={updatingNotifications}
-                    >
-                      <Send size={12} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    <ChevronRight size={20} color={colors.textSecondary} />
-                  </View>
-                }
-              />
-            </>
-          )}
-        </Card>
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Einstellungen</Text>
+          </View>
+          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+            <SettingsItem
+              icon={<Moon size={24} color="#6B7280" />}
+              iconBg="rgba(107, 114, 128, 0.15)"
+              title="Dunkelmodus"
+              showArrow={false}
+              rightComponent={<ToggleSwitch active={isDarkMode} onToggle={toggleTheme} />}
+            />
+            <SettingsItem
+              icon={<Type size={24} color="#3B82F6" />}
+              iconBg="rgba(59, 130, 246, 0.15)"
+              title="Schriftgröße"
+              value={fontSize}
+              onPress={() => {}}
+            />
+          </View>
+        </View>
 
-        {/* Rechtliches & Hilfe Section */}
-        <Text style={dynamicStyles.sectionTitle}>Rechtliches & Hilfe</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={HelpCircle}
-            title="Hilfe & Support"
-            onPress={() => navigateTo('/help')}
-          />
-          <SettingItem
-            icon={FileText}
-            title="Datenschutz & AGB"
-            onPress={() => navigateTo('/konto/datenschutz-agb')}
-          />
-          <SettingItem
-            icon={Info}
-            title="Impressum"
-            onPress={() => openExternalLink('https://yourapp.com/impressum')}
-            showArrow={false}
-            rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
-          />
-        </Card>
-
-        {/* Über die App Section */}
-        <Text style={dynamicStyles.sectionTitle}>Über die App</Text>
-        <Card style={dynamicStyles.sectionCard}>
-          <SettingItem
-            icon={Info}
-            title="Version"
-            showArrow={false}
-            rightComponent={<Text style={dynamicStyles.versionText}>1.0.0</Text>}
-          />
-          <SettingItem
-            icon={Award}
-            title="Lizenzen"
-            onPress={() => navigateTo('/settings/licenses')}
-            showArrow={false}
-            rightComponent={<View style={[styles.lastSettingItem, dynamicStyles.lastSettingItem]} />}
-          />
-        </Card>
+        {/* Support & Legal Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <HelpCircle size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Support & Rechtliches</Text>
+          </View>
+          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+            <SettingsItem
+              icon={<Heart size={24} color="#EC4899" />}
+              iconBg="rgba(236, 72, 153, 0.15)"
+              title="Gespeicherte Inhalte"
+              subtitle="Ihre Favoriten"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<HelpCircle size={24} color="#3B82F6" />}
+              iconBg="rgba(59, 130, 246, 0.15)"
+              title="Hilfe & Support"
+              subtitle="FAQ und Kontakt"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<FileText size={24} color="#6B7280" />}
+              iconBg="rgba(107, 114, 128, 0.15)"
+              title="Datenschutz & AGB"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<Info size={24} color="#6B7280" />}
+              iconBg="rgba(107, 114, 128, 0.15)"
+              title="Impressum"
+              onPress={() => {}}
+            />
+            <SettingsItem
+              icon={<Info size={24} color="#3B82F6" />}
+              iconBg="rgba(59, 130, 246, 0.15)"
+              title="Version"
+              value="1.0.0"
+              showArrow={false}
+            />
+          </View>
+        </View>
 
         {/* Logout Button */}
-        <Button
-          title={signingOut ? "Wird abgemeldet..." : "Abmelden"}
-          onPress={handleSignOut}
-          variant="outline"
-          icon={<LogOut size={20} color="#EF4444" />}
-          style={dynamicStyles.logoutButton}
-          textStyle={dynamicStyles.logoutText}
-          disabled={signingOut}
-          loading={signingOut}
-        />
-      </Animated.ScrollView>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
+          <LinearGradient colors={['#EF4444', '#F87171']} style={styles.logoutGradient}>
+            <LogOut size={24} color="white" />
+            <Text style={styles.logoutText}>Abmelden</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 32,
   },
   header: {
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
+  backButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
   },
-  avatarText: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 28,
+  backButtonText: {
+    color: MEDICAL_COLORS.warmOrangeDark,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  headerLogo: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  headerLogoText: {
     color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAvatarText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  titleSection: {
+    marginBottom: 24,
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  pageSubtitle: {
+    fontSize: 15,
+  },
+  profileCard: {
+    borderRadius: 20,
+    padding: 32,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 4,
+  },
+  profileAvatarLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  profileAvatarText: {
+    color: 'white',
+    fontSize: 32,
+    fontWeight: '700',
   },
   profileInfo: {
-    flex: 1,
+    marginBottom: 16,
   },
-  lastSettingItem: {
-    borderBottomWidth: 0,
+  profileName: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  fontSizeContainer: {
+  profileEmail: {
+    fontSize: 15,
+  },
+  editProfileButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  editProfileGradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  editProfileText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  settingsCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+  },
+  settingsItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  settingsIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsText: {
+    flex: 1,
+  },
+  settingsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  settingsSubtitle: {
+    fontSize: 13,
+  },
+  settingsItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsValue: {
+    fontSize: 14,
+  },
+  toggleSwitch: {
+    width: 52,
+    height: 28,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  toggleSwitchActive: {
+    backgroundColor: '#10B981',
+  },
+  toggleThumb: {
+    width: 22,
+    height: 22,
+    backgroundColor: 'white',
+    borderRadius: 11,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 24 }],
+  },
+  logoutButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  logoutGradient: {
+    paddingVertical: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  logoutText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
