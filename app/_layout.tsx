@@ -66,6 +66,21 @@ export default function RootLayout() {
         document.head.appendChild(style);
         logger.info('✅ Mobile viewport fix applied');
       }
+
+      // Add cache control meta tags to prevent HTML caching
+      const addMetaTag = (name: string, content: string) => {
+        if (!document.querySelector(`meta[http-equiv="${name}"]`)) {
+          const meta = document.createElement('meta');
+          meta.httpEquiv = name;
+          meta.content = content;
+          document.head.appendChild(meta);
+        }
+      };
+
+      addMetaTag('Cache-Control', 'no-cache, no-store, must-revalidate');
+      addMetaTag('Pragma', 'no-cache');
+      addMetaTag('Expires', '0');
+      logger.info('✅ Cache control meta tags added - HTML will not be cached');
     }
   }, []);
 
