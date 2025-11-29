@@ -8,24 +8,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { createFSPController, VoiceflowController, globalVoiceflowCleanup } from '@/utils/voiceflowIntegration';
-import { stopGlobalVoiceflowCleanup, disableVoiceflowCleanup, enableVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
+import {
+  stopGlobalVoiceflowCleanup,
+  disableVoiceflowCleanup,
+  enableVoiceflowCleanup,
+} from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import InlineInstructions from '@/components/ui/InlineInstructions';
-import { InlineContent, Section, Paragraph, BoldText, Step, InfoBox, TimeItem, TipsList, HighlightBox, TimeBadge } from '@/components/ui/InlineContent';
+import {
+  InlineContent,
+  Section,
+  Paragraph,
+  BoldText,
+  Step,
+  InfoBox,
+  TimeItem,
+  TipsList,
+  HighlightBox,
+  TimeBadge,
+} from '@/components/ui/InlineContent';
 import {
   SIMULATION_DURATION_SECONDS,
   USAGE_THRESHOLD_SECONDS,
-  WARNING_5_MIN_REMAINING
+  WARNING_5_MIN_REMAINING,
 } from '@/constants/simulationConstants';
 import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
+import { useTheme } from '@/contexts/ThemeContext';
 
 function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const {
     canUseSimulation,
     subscriptionStatus,
@@ -33,7 +50,7 @@ function FSPSimulationScreen() {
     getSubscriptionInfo,
     checkAccess,
     applyOptimisticDeduction,
-    resetOptimisticCount
+    resetOptimisticCount,
   } = useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
@@ -62,7 +79,6 @@ function FSPSimulationScreen() {
   const [isGracefulShutdown, setIsGracefulShutdown] = useState(false);
   const [showSimulationCompleted, setShowSimulationCompleted] = useState(false);
   const finalCountdownInterval = useRef<NodeJS.Timeout | null>(null);
-
 
   // Early completion state
   const [showEarlyCompletionModal, setShowEarlyCompletionModal] = useState(false);
@@ -97,7 +113,7 @@ function FSPSimulationScreen() {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
-      currentLockState: isSimulationLocked
+      currentLockState: isSimulationLocked,
     });
 
     if (subscriptionStatus) {
@@ -106,7 +122,7 @@ function FSPSimulationScreen() {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
-        willUpdateLockState: shouldLock !== isSimulationLocked
+        willUpdateLockState: shouldLock !== isSimulationLocked,
       });
 
       if (shouldLock !== isSimulationLocked) {
@@ -165,11 +181,9 @@ function FSPSimulationScreen() {
       if (!user.id) {
         logger.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
-        Alert.alert(
-          'Authentifizierungsfehler',
-          'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.',
-          [{ text: 'OK', onPress: () => router.push('/(tabs)/simulation') }]
-        );
+        Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
+        ]);
         return;
       }
 
@@ -197,7 +211,7 @@ function FSPSimulationScreen() {
         logger.info(`📊 [${timestamp}] Access check result:`, {
           canUse: accessCheck.canUseSimulation,
           remaining: accessCheck.remainingSimulations,
-          limit: accessCheck.simulationLimit
+          limit: accessCheck.simulationLimit,
         });
 
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
@@ -207,7 +221,6 @@ function FSPSimulationScreen() {
         }
 
         logger.info(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
-
       } catch (accessError) {
         logger.error(`❌ [${timestamp}] Error checking access:`, accessError);
         setInitializationError('Access check failed');
@@ -261,14 +274,16 @@ function FSPSimulationScreen() {
         logger.info(`📋 [${timestamp}] Session token generation result:`, {
           success: result.success,
           hasToken: !!result.sessionToken,
-          error: result.error || 'none'
+          error: result.error || 'none',
         });
 
         if (!result.success || !result.sessionToken) {
           throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
         }
 
-        logger.info(`✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`);
+        logger.info(
+          `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
+        );
 
         setSessionToken(result.sessionToken);
         sessionTokenRef.current = result.sessionToken;
@@ -281,14 +296,16 @@ function FSPSimulationScreen() {
           id: user.id,
           email: user.email,
           has_email: !!user.email,
-          email_type: typeof user.email
+          email_type: typeof user.email,
         });
 
         // FALLBACK: If email is not in user object, try to get it from Supabase session
         let userEmail = user.email;
         if (!userEmail) {
           logger.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           if (session?.user?.email) {
             userEmail = session.user.email;
             logger.info(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
@@ -315,7 +332,7 @@ function FSPSimulationScreen() {
         const persistentIds = controller.getIds();
         logger.info(`📤 [${timestamp}] Persistent IDs:`, {
           user_id: persistentIds.user_id,
-          session_id: persistentIds.session_id
+          session_id: persistentIds.session_id,
         });
 
         const initialized = await controller.initialize();
@@ -378,7 +395,7 @@ function FSPSimulationScreen() {
               type: event.type,
               timestamp: new Date().toISOString(),
               hasUserData: !!event.user_id,
-              hasSessionToken: !!event.session_token
+              hasSessionToken: !!event.session_token,
             });
           };
 
@@ -411,14 +428,13 @@ function FSPSimulationScreen() {
         setIsInitializing(false);
         setInitializationError(null);
         return; // Success - exit retry loop
-
       } catch (error) {
         const timestamp = new Date().toISOString();
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         logger.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
           error: errorMessage,
-          stack: error instanceof Error ? error.stack : undefined
+          stack: error instanceof Error ? error.stack : undefined,
         });
 
         // If this was the last attempt, show error to user
@@ -438,8 +454,8 @@ function FSPSimulationScreen() {
                 onPress: () => {
                   hasInitializedRef.current = false;
                   initializeWithRetry(userId, initialTimestamp);
-                }
-              }
+                },
+              },
             ]
           );
           return;
@@ -449,7 +465,7 @@ function FSPSimulationScreen() {
         const backoffDelay = attempt * 1000; // 1s, 2s, 3s
         logger.info(`⏳ [${timestamp}] Retrying in ${backoffDelay}ms...`);
 
-        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       }
     }
   };
@@ -459,13 +475,13 @@ function FSPSimulationScreen() {
     logger.info('🔍 FSP: Setting up passive microphone detection...');
 
     // MEMORY LEAK FIX: Track listeners for cleanup
-    const trackListeners: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
+    const trackListeners: { track: MediaStreamTrack; handler: () => void }[] = [];
     (window as any).fspTrackListeners = trackListeners;
 
     // Method 1: Monitor for MediaStream creation and termination
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
-      navigator.mediaDevices.getUserMedia = async function(constraints) {
+      navigator.mediaDevices.getUserMedia = async function (constraints) {
         logger.info('🎤 FSP: MediaStream requested with constraints:', constraints);
 
         if (constraints?.audio) {
@@ -528,7 +544,7 @@ function FSPSimulationScreen() {
     // Method 2: Simple click detection as backup
     const clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      
+
       // Only trigger on voiceflow-chat container clicks
       if (target.closest('#voiceflow-chat') && !timerActive) {
         logger.info('🎯 FSP: Click detected on Voiceflow widget - waiting for voice call...');
@@ -545,7 +561,14 @@ function FSPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    logger.info('🔍 DEBUG: startSimulationTimer called, timerActive:', timerActive, 'timerActiveRef:', timerActiveRef.current, 'sessionToken:', sessionTokenRef.current);
+    logger.info(
+      '🔍 DEBUG: startSimulationTimer called, timerActive:',
+      timerActive,
+      'timerActiveRef:',
+      timerActiveRef.current,
+      'sessionToken:',
+      sessionTokenRef.current
+    );
 
     // CRITICAL: Atomic lock to prevent race conditions
     // Check and set lock in one operation BEFORE any async operations
@@ -560,180 +583,183 @@ function FSPSimulationScreen() {
       logger.info('[Timer] Attempting to start timer...');
       const accessCheck = await checkAccess();
 
-    logger.info('[Timer] Access check:', {
-      canStart: accessCheck?.canUseSimulation,
-      remaining: accessCheck?.remainingSimulations,
-      total: accessCheck?.simulationLimit
-    });
+      logger.info('[Timer] Access check:', {
+        canStart: accessCheck?.canUseSimulation,
+        remaining: accessCheck?.remainingSimulations,
+        total: accessCheck?.simulationLimit,
+      });
 
-    // CRITICAL: Block if access is denied
-    if (!accessCheck || !accessCheck.canUseSimulation) {
-      logger.error('[Timer] ❌ ACCESS DENIED - Cannot start simulation');
-      logger.error('[Timer] Reason:', accessCheck?.message || 'Unknown');
+      // CRITICAL: Block if access is denied
+      if (!accessCheck || !accessCheck.canUseSimulation) {
+        logger.error('[Timer] ❌ ACCESS DENIED - Cannot start simulation');
+        logger.error('[Timer] Reason:', accessCheck?.message || 'Unknown');
 
-      // Show upgrade modal
-      setShowUpgradeModal(true);
-      setIsSimulationLocked(true);
+        // Show upgrade modal
+        setShowUpgradeModal(true);
+        setIsSimulationLocked(true);
 
-      Alert.alert(
-        'Simulationslimit erreicht',
-        accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.',
-        [
+        Alert.alert('Simulationslimit erreicht', accessCheck?.message || 'Sie haben Ihr Simulationslimit erreicht.', [
           {
             text: 'Upgrade',
-            onPress: () => router.push('subscription' as any)
+            onPress: () => router.push('subscription' as any),
           },
-          { text: 'OK' }
-        ]
-      );
+          { text: 'OK' },
+        ]);
 
-      return; // BLOCK timer start
-    }
-
-    // Access granted - proceed with timer
-    logger.info('[Timer] ✅ Access GRANTED - Starting timer...');
-
-    // CRITICAL: Check if session token already exists (generated during initialization)
-    if (!sessionTokenRef.current) {
-      logger.error('❌ FSP: No session token found - this should have been generated during initialization');
-      return;
-    }
-
-    logger.info('✅ FSP: Using existing session token from initialization:', sessionTokenRef.current);
-
-    // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
-    // This prevents false positives from stale state
-    if (timerActiveRef.current && timerInterval.current !== null) {
-      logger.info('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
-      return;
-    }
-
-    // If ref is true but interval is null, we have stale state - reset it
-    if (timerActiveRef.current && timerInterval.current === null) {
-      logger.warn('⚠️ FSP: Detected stale timer state, resetting...');
-      timerActiveRef.current = false;
-      setTimerActive(false);
-    }
-
-    logger.info('⏰ FSP: Starting 20-minute simulation timer');
-    logger.info('🔍 FSP DEBUG: Current timerActive state:', timerActive);
-    logger.info('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
-    logger.info('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
-
-    // CRITICAL FIX: Activate timer BEFORE async database calls
-    // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
-    // Force state update immediately with flushSync-like behavior
-    logger.info('🔍 FSP DEBUG: About to call setTimerActive(true)');
-
-    // Set ref FIRST to prevent race conditions
-    timerActiveRef.current = true;
-    previousTimeRef.current = 20 * 60;
-
-    // Then update React state
-    setTimerActive(true);
-    setTimeRemaining(20 * 60);
-
-    logger.info('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
-
-    // Calculate absolute end time for the timer
-    const startTime = Date.now();
-    const duration = 20 * 60 * 1000;
-    const endTime = startTime + duration;
-    setTimerEndTime(endTime);
-    timerEndTimeRef.current = endTime;
-
-    logger.info('✅ FSP: Timer activated - using existing session token from initialization');
-
-    // Session token already created during initialization - just use it
-    const existingSessionToken = sessionTokenRef.current;
-
-    if (!existingSessionToken) {
-      logger.error('❌ FSP: No session token found - this should not happen as token is created during initialization');
-      return;
-    }
-
-    logger.info(`🔑 FSP: Using session token from initialization: ${existingSessionToken.substring(0, 8)}...`);
-
-    // Initialize usage tracking state
-    setUsageMarked(false);
-    usageMarkedRef.current = false;
-
-    // Apply optimistic counter deduction (show immediate feedback to user)
-    applyOptimisticDeduction();
-
-    // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
-    try {
-      // Non-sensitive data - use AsyncStorage
-      await AsyncStorage.multiSet([
-        ['sim_start_time_fsp', startTime.toString()],
-        ['sim_end_time_fsp', endTime.toString()],
-        ['sim_duration_ms_fsp', duration.toString()],
-      ]);
-
-      // Sensitive data - use SecureStore (encrypted storage)
-      await SecureStore.setItemAsync('sim_session_token_fsp', existingSessionToken);
-      if (user?.id) {
-        await SecureStore.setItemAsync('sim_user_id_fsp', user.id);
+        return; // BLOCK timer start
       }
 
-      logger.info('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
-    } catch (error) {
-      logger.error('❌ FSP: Error saving simulation state:', error);
-    }
+      // Access granted - proceed with timer
+      logger.info('[Timer] ✅ Access GRANTED - Starting timer...');
 
-    // NOTE: Heartbeat monitoring removed - deprecated/no-op in new system
-
-    logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
-    // Use 1000ms interval for mobile compatibility
-    timerInterval.current = setInterval(() => {
-      // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
-      const currentEndTime = timerEndTimeRef.current || endTime;
-      const remaining = currentEndTime - Date.now();
-      const remainingSeconds = Math.floor(remaining / 1000);
-
-      // Get previous value for comparison
-      const prev = previousTimeRef.current;
-
-      // Update time remaining
-      if (remaining <= 0) {
-        setTimeRemaining(0);
-        previousTimeRef.current = 0;
-        clearInterval(timerInterval.current!);
-        timerInterval.current = null;
-        logger.info('⏰ FSP: Timer finished - 20 minutes elapsed');
-        logger.info('🔚 FSP: Initiating graceful end sequence');
-        initiateGracefulEnd();
+      // CRITICAL: Check if session token already exists (generated during initialization)
+      if (!sessionTokenRef.current) {
+        logger.error('❌ FSP: No session token found - this should have been generated during initialization');
         return;
-      } else {
-        setTimeRemaining(remainingSeconds);
-        previousTimeRef.current = remainingSeconds;
       }
 
-      // Mark as used at 5-minute mark (only trigger once)
-      // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
-      const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
-      const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
-      if (prev > fiveMinutesRemaining && remainingSeconds <= fiveMinutesRemaining && !usageMarkedRef.current && currentSessionToken) {
-        const clientElapsed = (20 * 60) - remainingSeconds;
-        logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
-        logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-        logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
-        markSimulationAsUsed(clientElapsed);
+      logger.info('✅ FSP: Using existing session token from initialization:', sessionTokenRef.current);
+
+      // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
+      // This prevents false positives from stale state
+      if (timerActiveRef.current && timerInterval.current !== null) {
+        logger.info('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+        return;
       }
 
-      // Timer warnings (only trigger once per threshold)
-      if (prev > WARNING_5_MIN_REMAINING && remainingSeconds <= WARNING_5_MIN_REMAINING) {
-        showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+      // If ref is true but interval is null, we have stale state - reset it
+      if (timerActiveRef.current && timerInterval.current === null) {
+        logger.warn('⚠️ FSP: Detected stale timer state, resetting...');
+        timerActiveRef.current = false;
+        setTimerActive(false);
       }
-      if (prev > 120 && remainingSeconds <= 120) {
-        showTimerWarning('2 Minuten verbleibend', 'orange', false);
+
+      logger.info('⏰ FSP: Starting 20-minute simulation timer');
+      logger.info('🔍 FSP DEBUG: Current timerActive state:', timerActive);
+      logger.info('🔍 FSP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+      logger.info('🔍 FSP DEBUG: Current timerInterval:', timerInterval.current);
+
+      // CRITICAL FIX: Activate timer BEFORE async database calls
+      // This ensures the timer always starts when audio is granted, regardless of DB call success/failure
+      // Force state update immediately with flushSync-like behavior
+      logger.info('🔍 FSP DEBUG: About to call setTimerActive(true)');
+
+      // Set ref FIRST to prevent race conditions
+      timerActiveRef.current = true;
+      previousTimeRef.current = 20 * 60;
+
+      // Then update React state
+      setTimerActive(true);
+      setTimeRemaining(20 * 60);
+
+      logger.info('🔍 FSP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
+
+      // Calculate absolute end time for the timer
+      const startTime = Date.now();
+      const duration = 20 * 60 * 1000;
+      const endTime = startTime + duration;
+      setTimerEndTime(endTime);
+      timerEndTimeRef.current = endTime;
+
+      logger.info('✅ FSP: Timer activated - using existing session token from initialization');
+
+      // Session token already created during initialization - just use it
+      const existingSessionToken = sessionTokenRef.current;
+
+      if (!existingSessionToken) {
+        logger.error(
+          '❌ FSP: No session token found - this should not happen as token is created during initialization'
+        );
+        return;
       }
-      if (prev > 60 && remainingSeconds <= 60) {
-        showTimerWarning('Nur noch 1 Minute!', 'red', false);
+
+      logger.info(`🔑 FSP: Using session token from initialization: ${existingSessionToken.substring(0, 8)}...`);
+
+      // Initialize usage tracking state
+      setUsageMarked(false);
+      usageMarkedRef.current = false;
+
+      // Apply optimistic counter deduction (show immediate feedback to user)
+      applyOptimisticDeduction();
+
+      // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
+      try {
+        // Non-sensitive data - use AsyncStorage
+        await AsyncStorage.multiSet([
+          ['sim_start_time_fsp', startTime.toString()],
+          ['sim_end_time_fsp', endTime.toString()],
+          ['sim_duration_ms_fsp', duration.toString()],
+        ]);
+
+        // Sensitive data - use SecureStore (encrypted storage)
+        await SecureStore.setItemAsync('sim_session_token_fsp', existingSessionToken);
+        if (user?.id) {
+          await SecureStore.setItemAsync('sim_user_id_fsp', user.id);
+        }
+
+        logger.info('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
+      } catch (error) {
+        logger.error('❌ FSP: Error saving simulation state:', error);
       }
-      if (prev > 30 && remainingSeconds <= 30) {
-        showTimerWarning('30 Sekunden verbleibend', 'red', true);
-      }
+
+      // NOTE: Heartbeat monitoring removed - deprecated/no-op in new system
+
+      logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
+      // Use 1000ms interval for mobile compatibility
+      timerInterval.current = setInterval(() => {
+        // Calculate remaining time based on absolute end time (use ref to avoid closure issues)
+        const currentEndTime = timerEndTimeRef.current || endTime;
+        const remaining = currentEndTime - Date.now();
+        const remainingSeconds = Math.floor(remaining / 1000);
+
+        // Get previous value for comparison
+        const prev = previousTimeRef.current;
+
+        // Update time remaining
+        if (remaining <= 0) {
+          setTimeRemaining(0);
+          previousTimeRef.current = 0;
+          clearInterval(timerInterval.current!);
+          timerInterval.current = null;
+          logger.info('⏰ FSP: Timer finished - 20 minutes elapsed');
+          logger.info('🔚 FSP: Initiating graceful end sequence');
+          initiateGracefulEnd();
+          return;
+        } else {
+          setTimeRemaining(remainingSeconds);
+          previousTimeRef.current = remainingSeconds;
+        }
+
+        // Mark as used at 5-minute mark (only trigger once)
+        // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
+        const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
+        const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
+        if (
+          prev > fiveMinutesRemaining &&
+          remainingSeconds <= fiveMinutesRemaining &&
+          !usageMarkedRef.current &&
+          currentSessionToken
+        ) {
+          const clientElapsed = 20 * 60 - remainingSeconds;
+          logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
+          logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
+          markSimulationAsUsed(clientElapsed);
+        }
+
+        // Timer warnings (only trigger once per threshold)
+        if (prev > WARNING_5_MIN_REMAINING && remainingSeconds <= WARNING_5_MIN_REMAINING) {
+          showTimerWarning('5 Minuten verbleibend', 'yellow', false);
+        }
+        if (prev > 120 && remainingSeconds <= 120) {
+          showTimerWarning('2 Minuten verbleibend', 'orange', false);
+        }
+        if (prev > 60 && remainingSeconds <= 60) {
+          showTimerWarning('Nur noch 1 Minute!', 'red', false);
+        }
+        if (prev > 30 && remainingSeconds <= 30) {
+          showTimerWarning('30 Sekunden verbleibend', 'red', true);
+        }
         if (prev > 10 && remainingSeconds <= 10) {
           showTimerWarning('Simulation endet in 10 Sekunden', 'red', true);
         }
@@ -779,7 +805,7 @@ function FSPSimulationScreen() {
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
         // already increments the counter in the database. Calling recordUsage() would
         // result in double-counting (incrementing the counter twice).
-      } else{
+      } else {
         logger.error('❌ FSP: Failed to mark simulation as used:', result.error);
         // If server-side validation fails, this could be a security issue
         if (result.error?.includes('Server validation')) {
@@ -802,10 +828,11 @@ function FSPSimulationScreen() {
       }
 
       // Method 2: Try to stop any active media streams
-      navigator.mediaDevices?.getUserMedia({ audio: true })
+      navigator.mediaDevices
+        ?.getUserMedia({ audio: true })
         .then((stream) => {
           logger.info('🔚 FSP: Stopping active audio streams');
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
         })
         .catch(() => {
           // No active streams, which is fine
@@ -823,7 +850,6 @@ function FSPSimulationScreen() {
           }
         }
       }, 500);
-
     } catch (error) {
       logger.error('❌ FSP: Error ending Voiceflow conversation:', error);
     }
@@ -835,7 +861,7 @@ function FSPSimulationScreen() {
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
     logger.info('🛑 FSP: Stopping simulation timer');
 
-    const elapsedSeconds = (20 * 60) - timeRemaining;
+    const elapsedSeconds = 20 * 60 - timeRemaining;
 
     // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
@@ -876,9 +902,9 @@ function FSPSimulationScreen() {
 
     // Use centralized cleanup
     await cleanupVoiceflowWidget({
-      finalStatus: finalStatus,
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      finalStatus,
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Reset simulation state to allow restart
@@ -940,13 +966,13 @@ function FSPSimulationScreen() {
     setShowFinalWarningModal(false);
 
     // Calculate elapsed time
-    const elapsedSeconds = (20 * 60) - timeRemaining;
+    const elapsedSeconds = 20 * 60 - timeRemaining;
 
     // Use centralized cleanup with database update
     await cleanupVoiceflowWidget({
       finalStatus: 'completed',
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Reset simulation state
@@ -987,7 +1013,7 @@ function FSPSimulationScreen() {
     setShowEarlyCompletionModal(false);
 
     // Calculate elapsed time
-    const elapsedSeconds = (20 * 60) - timeRemaining;
+    const elapsedSeconds = 20 * 60 - timeRemaining;
 
     // Execute early completion
     executeEarlyCompletion(elapsedSeconds);
@@ -1012,24 +1038,21 @@ function FSPSimulationScreen() {
     // Use centralized cleanup with custom metadata
     await cleanupVoiceflowWidget({
       finalStatus: 'completed',
-      elapsedSeconds: elapsedSeconds,
-      skipDatabaseUpdate: false
+      elapsedSeconds,
+      skipDatabaseUpdate: false,
     });
 
     // Handle early completion specific logic
     if (sessionToken) {
       try {
         // Update with metadata about early completion
-        await simulationTracker.updateSimulationStatus(
-          sessionToken,
-          'completed',
-          elapsedSeconds,
-          {
-            completion_type: 'early',
-            completion_reason: earlyCompletionReason || 'user_finished_early'
-          }
+        await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds, {
+          completion_type: 'early',
+          completion_reason: earlyCompletionReason || 'user_finished_early',
+        });
+        logger.info(
+          `📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`
         );
-        logger.info(`📊 FSP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`);
 
         // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
         if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
@@ -1059,21 +1082,23 @@ function FSPSimulationScreen() {
 
       // Determine final status based on whether usage was recorded
       const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
-      const elapsedSeconds = (20 * 60) - timeRemaining;
+      const elapsedSeconds = 20 * 60 - timeRemaining;
 
       logger.info(`🔍 FSP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
 
       // Use centralized cleanup (async but don't wait for it in cleanup)
       if (timerActiveRef.current && sessionTokenRef.current) {
         cleanupVoiceflowWidget({
-          finalStatus: finalStatus,
-          elapsedSeconds: elapsedSeconds,
-          skipDatabaseUpdate: false
-        }).then(() => {
-          logger.info('✅ FSP: Cleanup completed successfully');
-        }).catch(error => {
-          logger.error('❌ FSP: Error during cleanup:', error);
-        });
+          finalStatus,
+          elapsedSeconds,
+          skipDatabaseUpdate: false,
+        })
+          .then(() => {
+            logger.info('✅ FSP: Cleanup completed successfully');
+          })
+          .catch((error) => {
+            logger.error('❌ FSP: Error during cleanup:', error);
+          });
       }
 
       // Remove event listeners
@@ -1115,7 +1140,6 @@ function FSPSimulationScreen() {
     };
   }, []);
 
-
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -1143,11 +1167,9 @@ function FSPSimulationScreen() {
         logger.info('🚫 FSP: Attempted to leave page during simulation - BLOCKED');
         // For mobile apps, prevent backgrounding during simulation
         if (Platform.OS !== 'web') {
-          Alert.alert(
-            'Simulation läuft',
-            'Sie können die App nicht verlassen, während die Simulation läuft.',
-            [{ text: 'OK' }]
-          );
+          Alert.alert('Simulation läuft', 'Sie können die App nicht verlassen, während die Simulation läuft.', [
+            { text: 'OK' },
+          ]);
         }
         return false;
       }
@@ -1160,11 +1182,9 @@ function FSPSimulationScreen() {
         e.preventDefault();
         // Push the current state back to prevent navigation
         window.history.pushState(null, '', window.location.href);
-        Alert.alert(
-          'Simulation läuft',
-          'Sie können die Seite nicht verlassen, während die Simulation läuft.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Simulation läuft', 'Sie können die Seite nicht verlassen, während die Simulation läuft.', [
+          { text: 'OK' },
+        ]);
         return false;
       }
     };
@@ -1194,13 +1214,13 @@ function FSPSimulationScreen() {
   const performImmediateCleanup = () => {
     try {
       logger.info('⚡ FSP: Performing immediate cleanup');
-      
+
       // Immediately hide and destroy Voiceflow widget
       if (window.voiceflow?.chat) {
         window.voiceflow.chat.hide();
         window.voiceflow.chat.close && window.voiceflow.chat.close();
       }
-      
+
       // Force remove widget elements immediately
       const widgetSelectors = [
         '[id*="voiceflow"]',
@@ -1208,27 +1228,28 @@ function FSPSimulationScreen() {
         '[class*="vfrc"]',
         '#voiceflow-chat',
         '.vfrc-widget',
-        '.vfrc-chat'
+        '.vfrc-chat',
       ];
-      
-      widgetSelectors.forEach(selector => {
+
+      widgetSelectors.forEach((selector) => {
         const elements = document.querySelectorAll(selector);
-        elements.forEach(element => {
+        elements.forEach((element) => {
           element.remove();
           logger.info(`🗑️ FSP: Immediately removed element: ${selector}`);
         });
       });
-      
+
       // Stop any active media streams
-      navigator.mediaDevices?.getUserMedia({ audio: true })
-        .then(stream => {
-          stream.getTracks().forEach(track => {
+      navigator.mediaDevices
+        ?.getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach((track) => {
             track.stop();
             logger.info('🔇 FSP: Stopped audio track during immediate cleanup');
           });
         })
         .catch(() => {});
-      
+
       logger.info('✅ FSP: Immediate cleanup completed');
     } catch (error) {
       logger.error('❌ FSP: Error during immediate cleanup:', error);
@@ -1297,16 +1318,19 @@ function FSPSimulationScreen() {
     }
 
     // FIX: Clear storage (fire-and-forget for non-blocking reset)
-    clearSimulationStorage().catch(err =>
-      logger.error('Error clearing storage during reset:', err)
-    );
+    clearSimulationStorage().catch((err) => logger.error('Error clearing storage during reset:', err));
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
     logger.info('✅ FSP: Simulation state reset completed - ready for next run');
-    logger.info('🔍 FSP: Post-reset state - timerActiveRef:', timerActiveRef.current, 'timerInterval:', timerInterval.current);
+    logger.info(
+      '🔍 FSP: Post-reset state - timerActiveRef:',
+      timerActiveRef.current,
+      'timerInterval:',
+      timerInterval.current
+    );
 
     // Re-setup conversation monitoring for next run
     setTimeout(() => {
@@ -1321,11 +1345,7 @@ function FSPSimulationScreen() {
   const clearSimulationStorage = async () => {
     try {
       // Clear AsyncStorage items
-      await AsyncStorage.multiRemove([
-        'sim_start_time_fsp',
-        'sim_end_time_fsp',
-        'sim_duration_ms_fsp',
-      ]);
+      await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']);
 
       // Clear SecureStore items (sensitive data)
       await SecureStore.deleteItemAsync('sim_session_token_fsp');
@@ -1340,11 +1360,13 @@ function FSPSimulationScreen() {
   // ============================================
   // CENTRALIZED VOICEFLOW WIDGET CLEANUP
   // ============================================
-  const cleanupVoiceflowWidget = async (options: {
-    skipDatabaseUpdate?: boolean;
-    finalStatus?: 'completed' | 'aborted' | 'incomplete';
-    elapsedSeconds?: number;
-  } = {}) => {
+  const cleanupVoiceflowWidget = async (
+    options: {
+      skipDatabaseUpdate?: boolean;
+      finalStatus?: 'completed' | 'aborted' | 'incomplete';
+      elapsedSeconds?: number;
+    } = {}
+  ) => {
     // Prevent concurrent cleanup operations
     if (isCleaningUpRef.current) {
       logger.info('⚠️ FSP: Cleanup already in progress, skipping...');
@@ -1375,7 +1397,7 @@ function FSPSimulationScreen() {
       }
 
       // Step 2: Wait briefly for any pending operations to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 3: Close Voiceflow widget
       logger.info('🔚 FSP: Step 3 - Closing Voiceflow widget...');
@@ -1390,7 +1412,7 @@ function FSPSimulationScreen() {
       }
 
       // Step 4: Wait for widget to close
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 5: Destroy controller
       logger.info('🔧 FSP: Step 5 - Destroying controller...');
@@ -1415,9 +1437,9 @@ function FSPSimulationScreen() {
             'iframe[src*="voiceflow"]',
           ];
 
-          widgetSelectors.forEach(selector => {
+          widgetSelectors.forEach((selector) => {
             const elements = document.querySelectorAll(selector);
-            elements.forEach(el => {
+            elements.forEach((el) => {
               el.remove();
               logger.info(`✅ FSP: Removed element: ${selector}`);
             });
@@ -1462,11 +1484,7 @@ function FSPSimulationScreen() {
 
   // Show expired simulation message
   const showExpiredSimulationMessage = () => {
-    Alert.alert(
-      'Simulation abgelaufen',
-      'Ihre vorherige Simulation ist abgelaufen.',
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Simulation abgelaufen', 'Ihre vorherige Simulation ist abgelaufen.', [{ text: 'OK' }]);
   };
 
   // Format time display for resume modal
@@ -1475,7 +1493,6 @@ function FSPSimulationScreen() {
     const secs = seconds % 60;
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
-
 
   // Show timer warning with color and message
   const showTimerWarning = (message: string, level: 'yellow' | 'orange' | 'red', isPulsing: boolean) => {
@@ -1506,7 +1523,6 @@ function FSPSimulationScreen() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-
   // FSP Simulation inline instructions content
   const fspInstructions = [
     {
@@ -1516,7 +1532,9 @@ function FSPSimulationScreen() {
         <InlineContent>
           <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
             <Paragraph>
-              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Fachsprachprüfung (FSP)</BoldText> vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie möglich nachzubilden.
+              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Fachsprachprüfung (FSP)</BoldText>{' '}
+              vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie
+              möglich nachzubilden.
             </Paragraph>
           </Section>
 
@@ -1549,9 +1567,7 @@ function FSPSimulationScreen() {
           </Section>
 
           <Section title="🚀 Kontinuierliche Verbesserung">
-            <Paragraph>
-              Wir arbeiten ständig daran, die Simulation zu optimieren:
-            </Paragraph>
+            <Paragraph>Wir arbeiten ständig daran, die Simulation zu optimieren:</Paragraph>
 
             <View style={{ marginLeft: 16 }}>
               <Paragraph>⚡ Schnellere Ladezeiten</Paragraph>
@@ -1562,7 +1578,7 @@ function FSPSimulationScreen() {
             </View>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'process',
@@ -1592,7 +1608,8 @@ function FSPSimulationScreen() {
             </InfoBox>
 
             <HighlightBox type="warning">
-              ⏳ <BoldText>Hinweis zur Ladezeit:</BoldText> Die Fallauswahl kann 20-30 Sekunden dauern. Bitte haben Sie einen Moment Geduld.
+              ⏳ <BoldText>Hinweis zur Ladezeit:</BoldText> Die Fallauswahl kann 20-30 Sekunden dauern. Bitte haben Sie
+              einen Moment Geduld.
             </HighlightBox>
 
             <Step
@@ -1602,11 +1619,13 @@ function FSPSimulationScreen() {
             />
 
             <HighlightBox type="success">
-              ✅ <BoldText>Sie beginnen das Gespräch!</BoldText> Der Patient wartet auf Ihre Begrüßung. Stellen Sie sich vor und beginnen Sie die Anamnese.
+              ✅ <BoldText>Sie beginnen das Gespräch!</BoldText> Der Patient wartet auf Ihre Begrüßung. Stellen Sie sich
+              vor und beginnen Sie die Anamnese.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              🎤 <BoldText>Stimmen-Hinweis:</BoldText> Die Simulation verwendet derzeit eine weibliche KI-Stimme für alle Patientenrollen, auch bei männlichen Patienten.
+              🎤 <BoldText>Stimmen-Hinweis:</BoldText> Die Simulation verwendet derzeit eine weibliche KI-Stimme für
+              alle Patientenrollen, auch bei männlichen Patienten.
             </HighlightBox>
 
             <Paragraph>
@@ -1642,7 +1661,8 @@ function FSPSimulationScreen() {
             />
 
             <HighlightBox type="success">
-              ✅ <BoldText>Begrüßen Sie den Prüfer!</BoldText> Beispiel: "Guten Tag, Herr Dr. Hoffmann!" Nach Ihrer Begrüßung beginnt der Prüfer automatisch.
+              ✅ <BoldText>Begrüßen Sie den Prüfer!</BoldText> Beispiel: "Guten Tag, Herr Dr. Hoffmann!" Nach Ihrer
+              Begrüßung beginnt der Prüfer automatisch.
             </HighlightBox>
 
             <Paragraph>
@@ -1650,17 +1670,21 @@ function FSPSimulationScreen() {
             </Paragraph>
 
             <View style={{ marginLeft: 16 }}>
-              <Paragraph><BoldText>1. Persönliche Vorstellung:</BoldText></Paragraph>
-              <Paragraph>   • Seit wann sind Sie in Deutschland?</Paragraph>
-              <Paragraph>   • Was haben Sie bisher gemacht?</Paragraph>
-              <Paragraph>   • Was sind Ihre beruflichen Pläne?</Paragraph>
+              <Paragraph>
+                <BoldText>1. Persönliche Vorstellung:</BoldText>
+              </Paragraph>
+              <Paragraph> • Seit wann sind Sie in Deutschland?</Paragraph>
+              <Paragraph> • Was haben Sie bisher gemacht?</Paragraph>
+              <Paragraph> • Was sind Ihre beruflichen Pläne?</Paragraph>
               <Paragraph></Paragraph>
-              <Paragraph><BoldText>2. Fallbesprechung:</BoldText></Paragraph>
-              <Paragraph>   • Verdachtsdiagnose</Paragraph>
-              <Paragraph>   • Differentialdiagnosen</Paragraph>
-              <Paragraph>   • Geplante Diagnostik</Paragraph>
-              <Paragraph>   • Therapieoptionen</Paragraph>
-              <Paragraph>   • Patientenaufklärung</Paragraph>
+              <Paragraph>
+                <BoldText>2. Fallbesprechung:</BoldText>
+              </Paragraph>
+              <Paragraph> • Verdachtsdiagnose</Paragraph>
+              <Paragraph> • Differentialdiagnosen</Paragraph>
+              <Paragraph> • Geplante Diagnostik</Paragraph>
+              <Paragraph> • Therapieoptionen</Paragraph>
+              <Paragraph> • Patientenaufklärung</Paragraph>
             </View>
 
             <InfoBox>
@@ -1676,7 +1700,7 @@ function FSPSimulationScreen() {
             </HighlightBox>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'evaluation',
@@ -1685,11 +1709,13 @@ function FSPSimulationScreen() {
         <InlineContent>
           <Section title="📈 Ihre Evaluation einsehen">
             <Paragraph>
-              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) finden Sie Ihre <BoldText>detaillierte Bewertung</BoldText> im Bereich <BoldText>"Fortschritt"</BoldText>.
+              Nach Abschluss beider Gesprächsteile (Patient + Prüfer) finden Sie Ihre{' '}
+              <BoldText>detaillierte Bewertung</BoldText> im Bereich <BoldText>"Fortschritt"</BoldText>.
             </Paragraph>
 
             <HighlightBox type="info">
-              ⏱️ <BoldText>Bearbeitungszeit:</BoldText> Die Auswertung kann einige Minuten dauern. Sie können die App schließen und später zurückkommen – Ihre Evaluation wird gespeichert.
+              ⏱️ <BoldText>Bearbeitungszeit:</BoldText> Die Auswertung kann einige Minuten dauern. Sie können die App
+              schließen und später zurückkommen – Ihre Evaluation wird gespeichert.
             </HighlightBox>
           </Section>
 
@@ -1730,7 +1756,9 @@ function FSPSimulationScreen() {
           </Section>
 
           <Section title="⏱️ Zeitplan im Überblick">
-            <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}>
+            <View
+              style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', padding: 16, borderRadius: 12, marginVertical: 8 }}
+            >
               <TimeItem label="📅 Gesamtdauer" time="20 Minuten" />
               <TimeItem label="💬 Patientengespräch" time="10 Minuten" />
               <TimeItem label="👨‍⚕️ Prüfergespräch" time="10 Minuten" />
@@ -1738,7 +1766,7 @@ function FSPSimulationScreen() {
             </View>
           </Section>
         </InlineContent>
-      )
+      ),
     },
     {
       id: 'tips',
@@ -1746,24 +1774,26 @@ function FSPSimulationScreen() {
       content: (
         <InlineContent>
           <Section title="⚠️ Bekannte technische Einschränkungen">
-            <Paragraph>
-              Wir möchten transparent sein über aktuelle Limitierungen:
-            </Paragraph>
+            <Paragraph>Wir möchten transparent sein über aktuelle Limitierungen:</Paragraph>
 
             <HighlightBox type="warning">
-              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText> Die Fallauswahl kann 20-30 Sekunden dauern, während der KI-Agent den Fall abruft.
+              ⏳ <BoldText>Ladezeiten bei Fallauswahl:</BoldText> Die Fallauswahl kann 20-30 Sekunden dauern, während
+              der KI-Agent den Fall abruft.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              🎤 <BoldText>Stimmen:</BoldText> Derzeit wird eine weibliche Stimme für alle Patientenrollen verwendet, auch bei männlichen Patienten.
+              🎤 <BoldText>Stimmen:</BoldText> Derzeit wird eine weibliche Stimme für alle Patientenrollen verwendet,
+              auch bei männlichen Patienten.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              🔄 <BoldText>Mehrfache Nachfragen zur Benutzer-ID:</BoldText> Manchmal fragt das System mehrmals nach Ihrer Benutzer-ID. Geben Sie einfach jedes Mal Ihre ID ein – Ihre Daten werden korrekt zugeordnet.
+              🔄 <BoldText>Mehrfache Nachfragen zur Benutzer-ID:</BoldText> Manchmal fragt das System mehrmals nach
+              Ihrer Benutzer-ID. Geben Sie einfach jedes Mal Ihre ID ein – Ihre Daten werden korrekt zugeordnet.
             </HighlightBox>
 
             <HighlightBox type="warning">
-              ⚡ <BoldText>Gelegentliche Verzögerungen:</BoldText> Bei hoher Serverauslastung kann es zu kurzen Verzögerungen kommen.
+              ⚡ <BoldText>Gelegentliche Verzögerungen:</BoldText> Bei hoher Serverauslastung kann es zu kurzen
+              Verzögerungen kommen.
             </HighlightBox>
 
             <InfoBox>
@@ -1793,290 +1823,291 @@ function FSPSimulationScreen() {
               {'\n'}• 🐛 Technische Probleme melden
               {'\n'}• ⭐ Ihre Erfolgsgeschichten teilen
               {'\n'}• 📝 Feedback zur Simulation
-              {'\n\n'}<BoldText>Ihre Meinung hilft uns</BoldText>, die Simulation noch besser zu machen!
+              {'\n\n'}
+              <BoldText>Ihre Meinung hilft uns</BoldText>, die Simulation noch besser zu machen!
             </HighlightBox>
           </Section>
 
           <Section title="🚀 Bereit? Los geht's!">
-            <Paragraph>
-              Jetzt sind Sie bestens vorbereitet, um mit der Simulation zu starten.
-            </Paragraph>
+            <Paragraph>Jetzt sind Sie bestens vorbereitet, um mit der Simulation zu starten.</Paragraph>
 
-            <InfoBox>
-              "Ihre Prüfungsvorbereitung ist unser Erfolg. Wir glauben an Sie!" ✨
-            </InfoBox>
+            <InfoBox>"Ihre Prüfungsvorbereitung ist unser Erfolg. Wir glauben an Sie!" ✨</InfoBox>
 
             <HighlightBox type="success">
               🎯 <BoldText>Viel Erfolg bei Ihrer Prüfungsvorbereitung!</BoldText>
             </HighlightBox>
           </Section>
         </InlineContent>
-      )
-    }
+      ),
+    },
   ];
+
+  // Dynamic styles for dark mode support
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      ...styles.container,
+      backgroundColor: colors.background,
+    },
+    lockOverlayContent: {
+      ...styles.lockOverlayContent,
+      backgroundColor: colors.card,
+    },
+    lockIconContainer: {
+      ...styles.lockIconContainer,
+      backgroundColor: isDarkMode ? colors.surface : '#FEE2E2',
+    },
+    lockBackButton: {
+      ...styles.lockBackButton,
+      backgroundColor: isDarkMode ? colors.surface : '#F3F4F6',
+    },
+    timerNormal: {
+      ...styles.timerNormal,
+      backgroundColor: isDarkMode ? colors.surface : '#F8F3E8',
+    },
+    timerWarningYellow: {
+      ...styles.timerWarningYellow,
+      backgroundColor: isDarkMode ? colors.surface : '#FFF4E6',
+    },
+    timerWarningOrange: {
+      ...styles.timerWarningOrange,
+      backgroundColor: isDarkMode ? colors.surface : '#FFE8D6',
+    },
+  });
 
   return (
     <ErrorBoundary>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <SafeAreaView style={dynamicStyles.container} edges={['top', 'bottom', 'left', 'right']}>
         {/* Lock Overlay - Shows when simulation limit is reached */}
-      {isSimulationLocked && (
-        <View style={styles.lockOverlay}>
-          <View style={styles.lockOverlayContent}>
-            <View style={styles.lockIconContainer}>
-              <Text style={styles.lockIcon}>🔒</Text>
-            </View>
-            <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
-            <Text style={styles.lockMessage}>
-              {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
-            </Text>
-            <Text style={styles.lockSubMessage}>
-              Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.
-            </Text>
-            <TouchableOpacity
-              style={styles.lockUpgradeButton}
-              onPress={() => router.push('subscription' as any)}
-            >
-              <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.lockBackButton}
-              onPress={() => router.push('/(tabs)/simulation')}
-            >
-              <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Header with back button and title */}
-      <LinearGradient
-        colors={['#ef4444', '#dc2626']}
-        style={styles.header}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push('/(tabs)/simulation')}
-        >
-          <ArrowLeft size={24} color="white" />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Mic size={24} color="white" />
-          <Text style={styles.headerTitle}>FSP-Simulation</Text>
-        </View>
-
-        <View style={styles.headerSpacer} />
-      </LinearGradient>
-
-      {/* Subscription Counter Badge - always visible */}
-      {getSubscriptionInfo() && (
-        <View style={styles.counterBadgeContainer}>
-          <View style={styles.counterBadge}>
-            <Text style={styles.counterBadgeText}>
-              {getSubscriptionInfo()?.usageText}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Timer display - only show when active */}
-      {timerActive && (
-        <View style={styles.timerSection}>
-          <View style={[
-            styles.timerContainer,
-            timerWarningLevel === 'normal' && styles.timerNormal,
-            timerWarningLevel === 'yellow' && styles.timerWarningYellow,
-            timerWarningLevel === 'orange' && styles.timerWarningOrange,
-            timerWarningLevel === 'red' && styles.timerWarningRed
-          ]}>
-            <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
-            <Text style={[
-              styles.timerText,
-              timerWarningLevel === 'red' && styles.timerTextRed
-            ]}>
-              Simulation läuft: {formatTime(timeRemaining)}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Warning message notification */}
-      {showWarningMessage && (
-        <View style={styles.warningNotification}>
-          <Text style={styles.warningNotificationText}>{warningMessageText}</Text>
-        </View>
-      )}
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        bounces={true}
-        scrollEventThrottle={16}
-      >
-        <View style={styles.content}>
-          {/* Inline Instructions Panel */}
-          <View style={styles.instructionsContainer}>
-            <InlineInstructions tabs={fspInstructions} />
-          </View>
-
-          {/* Widget Area */}
-          <View style={styles.widgetArea}>
-            {/* Widget loads here automatically */}
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Final Warning Modal */}
-      {showFinalWarningModal && (
-        <View style={styles.finalWarningOverlay}>
-          <View style={styles.finalWarningModal}>
-            <Text style={styles.warningIcon}>⏱️</Text>
-            <Text style={styles.finalWarningTitle}>Simulation endet</Text>
-            <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
-            <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
-            <View style={styles.progressDots}>
-              <View style={[styles.dot, styles.dot1]} />
-              <View style={[styles.dot, styles.dot2]} />
-              <View style={[styles.dot, styles.dot3]} />
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Early Completion Confirmation Modal */}
-      {showEarlyCompletionModal && (
-        <View style={styles.earlyCompletionOverlay}>
-          <View style={styles.earlyCompletionModal}>
-            <Text style={styles.modalIcon}>⚠️</Text>
-            <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
-
-            {/* Time Information */}
-            <View style={styles.timeInfo}>
-              <View style={styles.timeRow}>
-                <Text style={styles.timeRowLabel}>Verstrichene Zeit:</Text>
-                <Text style={styles.timeRowValue}>{formatTime((20 * 60) - timeRemaining)}</Text>
+        {isSimulationLocked && (
+          <View style={styles.lockOverlay}>
+            <View style={dynamicStyles.lockOverlayContent}>
+              <View style={dynamicStyles.lockIconContainer}>
+                <Text style={styles.lockIcon}>🔒</Text>
               </View>
-              <View style={styles.timeRow}>
-                <Text style={styles.timeRowLabel}>Verbleibende Zeit:</Text>
-                <Text style={styles.timeRowValue}>{formatTime(timeRemaining)}</Text>
-              </View>
+              <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
+              <Text style={styles.lockMessage}>
+                {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
+              </Text>
+              <Text style={styles.lockSubMessage}>Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.</Text>
+              <TouchableOpacity style={styles.lockUpgradeButton} onPress={() => router.push('subscription' as any)}>
+                <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={dynamicStyles.lockBackButton} onPress={() => router.push('/(tabs)/simulation')}>
+                <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
+              </TouchableOpacity>
             </View>
+          </View>
+        )}
 
-            {/* Warning Box */}
-            <View style={styles.warningBox}>
-              <Text style={styles.warningBoxIcon}>ℹ️</Text>
-              <Text style={styles.warningBoxText}>
-                Ihre Simulation wird beendet und zur Auswertung weitergeleitet. Das Gespräch wird gespeichert und analysiert.
+        {/* Header with back button and title */}
+        <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/simulation')}>
+            <ArrowLeft size={24} color="white" />
+          </TouchableOpacity>
+
+          <View style={styles.headerTitleContainer}>
+            <Mic size={24} color="white" />
+            <Text style={styles.headerTitle}>FSP-Simulation</Text>
+          </View>
+
+          <View style={styles.headerSpacer} />
+        </LinearGradient>
+
+        {/* Subscription Counter Badge - always visible */}
+        {getSubscriptionInfo() && (
+          <View style={styles.counterBadgeContainer}>
+            <View style={styles.counterBadge}>
+              <Text style={styles.counterBadgeText}>{getSubscriptionInfo()?.usageText}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Timer display - only show when active */}
+        {timerActive && (
+          <View style={styles.timerSection}>
+            <View
+              style={[
+                styles.timerContainer,
+                timerWarningLevel === 'normal' && dynamicStyles.timerNormal,
+                timerWarningLevel === 'yellow' && dynamicStyles.timerWarningYellow,
+                timerWarningLevel === 'orange' && dynamicStyles.timerWarningOrange,
+                timerWarningLevel === 'red' && styles.timerWarningRed,
+              ]}
+            >
+              <Clock size={16} color={timerWarningLevel === 'red' ? 'white' : '#B15740'} />
+              <Text style={[styles.timerText, timerWarningLevel === 'red' && styles.timerTextRed]}>
+                Simulation läuft: {formatTime(timeRemaining)}
               </Text>
             </View>
+          </View>
+        )}
 
-            {/* Reason Selector */}
-            <View style={styles.reasonSection}>
-              <Text style={styles.reasonLabel}>Grund (optional):</Text>
-              <TouchableOpacity
-                style={styles.reasonSelector}
-                onPress={() => {
-                  Alert.alert(
-                    'Grund wählen',
-                    'Warum möchten Sie die Simulation vorzeitig beenden?',
-                    [
+        {/* Warning message notification */}
+        {showWarningMessage && (
+          <View style={styles.warningNotification}>
+            <Text style={styles.warningNotificationText}>{warningMessageText}</Text>
+          </View>
+        )}
+
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          scrollEventThrottle={16}
+        >
+          <View style={styles.content}>
+            {/* Inline Instructions Panel */}
+            <View style={styles.instructionsContainer}>
+              <InlineInstructions tabs={fspInstructions} />
+            </View>
+
+            {/* Widget Area */}
+            <View style={styles.widgetArea}>{/* Widget loads here automatically */}</View>
+          </View>
+        </ScrollView>
+
+        {/* Final Warning Modal */}
+        {showFinalWarningModal && (
+          <View style={styles.finalWarningOverlay}>
+            <View style={styles.finalWarningModal}>
+              <Text style={styles.warningIcon}>⏱️</Text>
+              <Text style={styles.finalWarningTitle}>Simulation endet</Text>
+              <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
+              <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
+              <View style={styles.progressDots}>
+                <View style={[styles.dot, styles.dot1]} />
+                <View style={[styles.dot, styles.dot2]} />
+                <View style={[styles.dot, styles.dot3]} />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Early Completion Confirmation Modal */}
+        {showEarlyCompletionModal && (
+          <View style={styles.earlyCompletionOverlay}>
+            <View style={styles.earlyCompletionModal}>
+              <Text style={styles.modalIcon}>⚠️</Text>
+              <Text style={styles.earlyCompletionTitle}>Simulation vorzeitig beenden?</Text>
+
+              {/* Time Information */}
+              <View style={styles.timeInfo}>
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeRowLabel}>Verstrichene Zeit:</Text>
+                  <Text style={styles.timeRowValue}>{formatTime(20 * 60 - timeRemaining)}</Text>
+                </View>
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeRowLabel}>Verbleibende Zeit:</Text>
+                  <Text style={styles.timeRowValue}>{formatTime(timeRemaining)}</Text>
+                </View>
+              </View>
+
+              {/* Warning Box */}
+              <View style={styles.warningBox}>
+                <Text style={styles.warningBoxIcon}>ℹ️</Text>
+                <Text style={styles.warningBoxText}>
+                  Ihre Simulation wird beendet und zur Auswertung weitergeleitet. Das Gespräch wird gespeichert und
+                  analysiert.
+                </Text>
+              </View>
+
+              {/* Reason Selector */}
+              <View style={styles.reasonSection}>
+                <Text style={styles.reasonLabel}>Grund (optional):</Text>
+                <TouchableOpacity
+                  style={styles.reasonSelector}
+                  onPress={() => {
+                    Alert.alert('Grund wählen', 'Warum möchten Sie die Simulation vorzeitig beenden?', [
                       {
                         text: 'Alle Aufgaben abgeschlossen',
-                        onPress: () => setEarlyCompletionReason('finished_all_tasks')
+                        onPress: () => setEarlyCompletionReason('finished_all_tasks'),
                       },
                       {
                         text: 'Ausreichendes Gespräch geführt',
-                        onPress: () => setEarlyCompletionReason('sufficient_conversation')
+                        onPress: () => setEarlyCompletionReason('sufficient_conversation'),
                       },
                       {
                         text: 'Technisches Problem',
-                        onPress: () => setEarlyCompletionReason('technical_issue')
+                        onPress: () => setEarlyCompletionReason('technical_issue'),
                       },
                       {
                         text: 'Persönlicher Grund',
-                        onPress: () => setEarlyCompletionReason('personal_reason')
+                        onPress: () => setEarlyCompletionReason('personal_reason'),
                       },
                       {
                         text: 'Sonstiges',
-                        onPress: () => setEarlyCompletionReason('other')
+                        onPress: () => setEarlyCompletionReason('other'),
                       },
-                      { text: 'Abbrechen', style: 'cancel' }
-                    ]
-                  );
-                }}
-              >
-                <Text style={styles.reasonText}>
-                  {earlyCompletionReason === 'finished_all_tasks' ? 'Alle Aufgaben abgeschlossen' :
-                   earlyCompletionReason === 'sufficient_conversation' ? 'Ausreichendes Gespräch geführt' :
-                   earlyCompletionReason === 'technical_issue' ? 'Technisches Problem' :
-                   earlyCompletionReason === 'personal_reason' ? 'Persönlicher Grund' :
-                   earlyCompletionReason === 'other' ? 'Sonstiges' :
-                   'Tippen Sie, um einen Grund auszuwählen'}
-                </Text>
-                <Text style={styles.reasonArrow}>▼</Text>
-              </TouchableOpacity>
-            </View>
+                      { text: 'Abbrechen', style: 'cancel' },
+                    ]);
+                  }}
+                >
+                  <Text style={styles.reasonText}>
+                    {earlyCompletionReason === 'finished_all_tasks'
+                      ? 'Alle Aufgaben abgeschlossen'
+                      : earlyCompletionReason === 'sufficient_conversation'
+                        ? 'Ausreichendes Gespräch geführt'
+                        : earlyCompletionReason === 'technical_issue'
+                          ? 'Technisches Problem'
+                          : earlyCompletionReason === 'personal_reason'
+                            ? 'Persönlicher Grund'
+                            : earlyCompletionReason === 'other'
+                              ? 'Sonstiges'
+                              : 'Tippen Sie, um einen Grund auszuwählen'}
+                  </Text>
+                  <Text style={styles.reasonArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Buttons */}
-            <View style={styles.earlyCompletionButtons}>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={confirmEarlyCompletion}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.confirmButtonIcon}>✓</Text>
-                <Text style={styles.confirmButtonText}>Ja, beenden</Text>
-              </TouchableOpacity>
+              {/* Buttons */}
+              <View style={styles.earlyCompletionButtons}>
+                <TouchableOpacity style={styles.confirmButton} onPress={confirmEarlyCompletion} activeOpacity={0.8}>
+                  <Text style={styles.confirmButtonIcon}>✓</Text>
+                  <Text style={styles.confirmButtonText}>Ja, beenden</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={cancelEarlyCompletion}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.continueButtonIcon}>↩</Text>
-                <Text style={styles.continueButtonText}>Weiter üben</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={styles.continueButton} onPress={cancelEarlyCompletion} activeOpacity={0.7}>
+                  <Text style={styles.continueButtonIcon}>↩</Text>
+                  <Text style={styles.continueButtonText}>Weiter üben</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Completion Modal */}
-      {showSimulationCompleted && (
-        <View style={styles.completionOverlay}>
-          <View style={styles.completionModal}>
-            <View style={styles.successIcon}>
-              <Text style={styles.successIconText}>✓</Text>
-            </View>
-            <Text style={styles.completionTitle}>Simulation abgeschlossen</Text>
-            <Text style={styles.completionMessage}>
-              Ihre Simulation wurde erfolgreich beendet und wird nun ausgewertet.
-            </Text>
-            <Text style={styles.nextSteps}>
-              Die Auswertung finden Sie in Kürze im Fortschrittsbereich.
-            </Text>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.primaryButton} onPress={navigateToProgress}>
-                <Text style={styles.primaryButtonText}>Zur Auswertung</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={closeCompletionModal}>
-                <Text style={styles.secondaryButtonText}>Schließen</Text>
-              </TouchableOpacity>
+        {/* Completion Modal */}
+        {showSimulationCompleted && (
+          <View style={styles.completionOverlay}>
+            <View style={styles.completionModal}>
+              <View style={styles.successIcon}>
+                <Text style={styles.successIconText}>✓</Text>
+              </View>
+              <Text style={styles.completionTitle}>Simulation abgeschlossen</Text>
+              <Text style={styles.completionMessage}>
+                Ihre Simulation wurde erfolgreich beendet und wird nun ausgewertet.
+              </Text>
+              <Text style={styles.nextSteps}>Die Auswertung finden Sie in Kürze im Fortschrittsbereich.</Text>
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity style={styles.primaryButton} onPress={navigateToProgress}>
+                  <Text style={styles.primaryButtonText}>Zur Auswertung</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.secondaryButton} onPress={closeCompletionModal}>
+                  <Text style={styles.secondaryButtonText}>Schließen</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Upgrade Required Modal */}
-      <UpgradeRequiredModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        currentTier={subscriptionStatus?.subscriptionTier || 'free'}
-        remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
-        totalLimit={subscriptionStatus?.simulationLimit || 0}
-      />
-
+        {/* Upgrade Required Modal */}
+        <UpgradeRequiredModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          currentTier={subscriptionStatus?.subscriptionTier || 'free'}
+          remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
+          totalLimit={subscriptionStatus?.simulationLimit || 0}
+        />
       </SafeAreaView>
     </ErrorBoundary>
   );
