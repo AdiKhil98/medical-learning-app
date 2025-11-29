@@ -95,14 +95,23 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     },
   });
 
+  // Theme-aware gradient colors
+  const backgroundGradient = isDarkMode
+    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
+    : MEDICAL_COLORS.backgroundGradient; // Light gradient
+
+  const headerGradient = isDarkMode
+    ? ['#1F2937', '#111827'] // Dark header gradient
+    : MEDICAL_COLORS.headerGradient; // Light header gradient
+
   return (
     <SafeAreaView style={dynamicStyles.container}>
       {/* Clean gradient background */}
-      <LinearGradient colors={MEDICAL_COLORS.backgroundGradient} style={styles.backgroundGradient} />
+      <LinearGradient colors={backgroundGradient as any} style={styles.backgroundGradient} />
 
       {/* Modern Header */}
       <View style={styles.modernHeader}>
-        <LinearGradient colors={MEDICAL_COLORS.headerGradient} style={styles.headerGradient}>
+        <LinearGradient colors={headerGradient as any} style={styles.headerGradient}>
           <View style={styles.headerContent}>
             <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
               <LinearGradient
