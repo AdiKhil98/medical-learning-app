@@ -9,6 +9,7 @@ import {
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -27,12 +28,9 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import { useRouter } from 'expo-router';
-import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact, isLarge } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { useTheme } from '@/contexts/ThemeContext';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const IS_MOBILE = isCompact(screenWidth);
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
@@ -45,6 +43,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+
+  // Responsive dimensions
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const screenWidth = windowWidth;
+  const screenHeight = windowHeight;
+  const IS_MOBILE = isCompact(windowWidth);
+  const IS_DESKTOP = isLarge(windowWidth);
 
   const totalSlides = 4;
 
@@ -71,7 +76,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     setCurrentSlide(index);
   };
 
-  // Dynamic styles for dark mode support
+  // Dynamic styles for dark mode support and responsive layout
   const dynamicStyles = StyleSheet.create({
     container: {
       ...styles.container,
@@ -92,6 +97,15 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     questionCard: {
       ...styles.questionCard,
       backgroundColor: colors.card,
+    },
+    slideWrapper: {
+      width: IS_MOBILE ? screenWidth : '100%',
+      height: IS_MOBILE ? '100%' : 'auto',
+    },
+    cardsContainer: {
+      gap: SPACING.lg,
+      flexDirection: IS_DESKTOP ? 'row' : 'column',
+      flexWrap: IS_DESKTOP ? 'wrap' : 'nowrap',
     },
   });
 
@@ -144,19 +158,30 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </>
       )}
 
-      {/* Main Content - Horizontal Scrollable Carousel */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={styles.mainContent}
-        contentContainerStyle={styles.horizontalContentContainer}
-      >
+      {/* Main Content - Responsive: Carousel on Mobile, Vertical Grid on Desktop */}
+      {IS_MOBILE ? (
+        // MOBILE: Horizontal Carousel
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={styles.mainContent}
+          contentContainerStyle={styles.horizontalContentContainer}
+        >
+      ) : (
+        // DESKTOP: Vertical Scroll with Grid Layout
+        <ScrollView
+          style={[styles.mainContent, styles.desktopMainContent]}
+          contentContainerStyle={styles.desktopContentContainer}
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.desktopContainer}>
+      )}
         {/* SLIDE 0 - Welcome Card */}
-        <View style={styles.slideWrapper}>
+        <View style={dynamicStyles.slideWrapper}>
           <ScrollView
             style={styles.verticalScroll}
             contentContainerStyle={styles.contentContainer}
@@ -233,7 +258,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
 
         {/* SLIDE 1 - Zuletzt angesehen (Recently Viewed) */}
-        <View style={styles.slideWrapper}>
+        <View style={dynamicStyles.slideWrapper}>
           <ScrollView
             style={styles.verticalScroll}
             contentContainerStyle={styles.contentContainer}
@@ -242,7 +267,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             <View style={styles.slideContainer}>
               <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
 
-              <View style={styles.cardsContainer}>
+              <View style={dynamicStyles.cardsContainer}>
                 {/* Card 1 */}
                 <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
                   <View style={styles.recentCardContent}>
@@ -321,7 +346,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
 
         {/* SLIDE 2 - Tipp des Tages */}
-        <View style={styles.slideWrapper}>
+        <View style={dynamicStyles.slideWrapper}>
           <ScrollView
             style={styles.verticalScroll}
             contentContainerStyle={styles.contentContainer}
@@ -350,7 +375,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </View>
 
         {/* SLIDE 3 - Frage des Tages */}
-        <View style={styles.slideWrapper}>
+        <View style={dynamicStyles.slideWrapper}>
           <ScrollView
             style={styles.verticalScroll}
             contentContainerStyle={styles.contentContainer}
@@ -391,9 +416,25 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             </View>
           </ScrollView>
         </View>
-      </ScrollView>
+      {IS_MOBILE ? (
+        </ScrollView>
+      ) : (
+          </View>
+        </ScrollView>
+      )}
 
-      {/* Carousel Indicators - Removed to prevent overlap with navigation */}
+      {/* Carousel Indicators - Only show on Mobile */}
+      {IS_MOBILE && (
+        <View style={styles.carouselIndicators}>
+          {[...Array(totalSlides)].map((_, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => scrollToSlide(index)}
+              style={currentSlide === index ? styles.indicatorDotActive : styles.indicatorDot}
+            />
+          ))}
+        </View>
+      )}
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -824,5 +865,20 @@ const styles = StyleSheet.create({
     borderRadius: SPACING.xs,
     backgroundColor: MEDICAL_COLORS.warmOrange,
     cursor: 'default',
+  },
+
+  // Desktop-specific styles
+  desktopMainContent: {
+    flex: 1,
+  },
+  desktopContentContainer: {
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.xxxxl,
+    alignItems: 'center',
+  },
+  desktopContainer: {
+    maxWidth: 1200,
+    width: '100%',
+    gap: SPACING.xxxl,
   },
 });
