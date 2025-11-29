@@ -93,6 +93,97 @@ export default function ProfileScreen() {
     return user?.email?.split('@')[0] || 'Benutzer';
   };
 
+  const handleEditProfile = () => {
+    if (Platform.OS === 'web') {
+      alert('Profil bearbeiten - Funktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Profil bearbeiten', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    }
+  };
+
+  const handlePersonalData = () => {
+    if (Platform.OS === 'web') {
+      alert(`Name: ${getDisplayName()}\nE-Mail: ${user?.email}\n\nBearbeiten Sie Ihre persönlichen Daten.`);
+    } else {
+      Alert.alert(
+        'Persönliche Daten',
+        `Name: ${getDisplayName()}\nE-Mail: ${user?.email}\n\nDiese Funktion wird bald verfügbar sein.`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleChangePassword = () => {
+    if (Platform.OS === 'web') {
+      alert('Passwort ändern - Funktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Passwort ändern', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    }
+  };
+
+  const handleSubscription = () => {
+    if (Platform.OS === 'web') {
+      alert('Abonnement verwalten - Premium Plan\n\nFunktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Abonnement', 'Premium Plan\n\nDiese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    }
+  };
+
+  const handleFontSize = () => {
+    const fontSizes = ['Klein', 'Mittel', 'Groß'];
+    if (Platform.OS === 'web') {
+      const size = prompt('Wählen Sie eine Schriftgröße:\n1. Klein\n2. Mittel\n3. Groß\n\nGeben Sie 1, 2 oder 3 ein:');
+      if (size === '1') setFontSize('Klein');
+      else if (size === '2') setFontSize('Mittel');
+      else if (size === '3') setFontSize('Groß');
+    } else {
+      Alert.alert('Schriftgröße', 'Wählen Sie eine Schriftgröße:', [
+        { text: 'Klein', onPress: () => setFontSize('Klein') },
+        { text: 'Mittel', onPress: () => setFontSize('Mittel') },
+        { text: 'Groß', onPress: () => setFontSize('Groß') },
+        { text: 'Abbrechen', style: 'cancel' },
+      ]);
+    }
+  };
+
+  const handleSavedContent = () => {
+    if (Platform.OS === 'web') {
+      alert('Gespeicherte Inhalte - Ihre Favoriten\n\nFunktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Gespeicherte Inhalte', 'Ihre Favoriten\n\nDiese Funktion wird bald verfügbar sein!', [
+        { text: 'OK' },
+      ]);
+    }
+  };
+
+  const handleHelpSupport = () => {
+    if (Platform.OS === 'web') {
+      alert('Hilfe & Support\n\nFAQ und Kontakt\n\nFunktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Hilfe & Support', 'FAQ und Kontakt\n\nDiese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    }
+  };
+
+  const handlePrivacyTerms = () => {
+    if (Platform.OS === 'web') {
+      alert('Datenschutz & AGB\n\nFunktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert('Datenschutz & AGB', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    }
+  };
+
+  const handleImprint = () => {
+    if (Platform.OS === 'web') {
+      alert('Impressum\n\nKP MED - Medical Learning App\nVersion 1.0.0\n\nFunktion wird bald verfügbar sein!');
+    } else {
+      Alert.alert(
+        'Impressum',
+        'KP MED - Medical Learning App\nVersion 1.0.0\n\nDiese Funktion wird bald verfügbar sein!',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const handleLogout = () => {
     if (Platform.OS === 'web') {
       if (window.confirm('Möchten Sie sich wirklich abmelden?')) {
@@ -151,7 +242,7 @@ export default function ProfileScreen() {
             <Text style={[styles.profileName, { color: colors.text }]}>{getDisplayName()}</Text>
             <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
           </View>
-          <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8} onPress={handleEditProfile}>
             <LinearGradient colors={MEDICAL_COLORS.warmOrangeGradient} style={styles.editProfileGradient}>
               <Text style={styles.editProfileText}>Bearbeiten</Text>
             </LinearGradient>
@@ -170,21 +261,21 @@ export default function ProfileScreen() {
               iconBg="rgba(59, 130, 246, 0.15)"
               title="Persönliche Daten"
               subtitle="Name, E-Mail und mehr"
-              onPress={() => {}}
+              onPress={handlePersonalData}
             />
             <SettingsItem
               icon={<Lock size={24} color="#8B5CF6" />}
               iconBg="rgba(139, 92, 246, 0.15)"
               title="Passwort ändern"
               subtitle="Ihr Konto schützen"
-              onPress={() => {}}
+              onPress={handleChangePassword}
             />
             <SettingsItem
               icon={<CreditCard size={24} color="#F59E0B" />}
               iconBg="rgba(245, 158, 11, 0.15)"
               title="Abonnement"
               subtitle="Premium Plan"
-              onPress={() => {}}
+              onPress={handleSubscription}
             />
           </View>
         </View>
@@ -208,7 +299,7 @@ export default function ProfileScreen() {
               iconBg="rgba(59, 130, 246, 0.15)"
               title="Schriftgröße"
               value={fontSize}
-              onPress={() => {}}
+              onPress={handleFontSize}
             />
           </View>
         </View>
@@ -225,26 +316,26 @@ export default function ProfileScreen() {
               iconBg="rgba(236, 72, 153, 0.15)"
               title="Gespeicherte Inhalte"
               subtitle="Ihre Favoriten"
-              onPress={() => {}}
+              onPress={handleSavedContent}
             />
             <SettingsItem
               icon={<HelpCircle size={24} color="#3B82F6" />}
               iconBg="rgba(59, 130, 246, 0.15)"
               title="Hilfe & Support"
               subtitle="FAQ und Kontakt"
-              onPress={() => {}}
+              onPress={handleHelpSupport}
             />
             <SettingsItem
               icon={<FileText size={24} color="#6B7280" />}
               iconBg="rgba(107, 114, 128, 0.15)"
               title="Datenschutz & AGB"
-              onPress={() => {}}
+              onPress={handlePrivacyTerms}
             />
             <SettingsItem
               icon={<Info size={24} color="#6B7280" />}
               iconBg="rgba(107, 114, 128, 0.15)"
               title="Impressum"
-              onPress={() => {}}
+              onPress={handleImprint}
             />
             <SettingsItem
               icon={<Info size={24} color="#3B82F6" />}
