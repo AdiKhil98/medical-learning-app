@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: screenHeight,
+    bottom: 0,
   },
 
   // Header Styles - Enhanced for Mobile
@@ -769,10 +769,7 @@ const styles = StyleSheet.create({
   horizontalContentContainer: {
     flexDirection: 'row',
   },
-  slideWrapper: {
-    width: screenWidth,
-    height: '100%',
-  },
+  // slideWrapper moved to dynamicStyles for responsive width
   verticalScroll: {
     flex: 1,
   },
@@ -1074,7 +1071,7 @@ const styles = StyleSheet.create({
   // Carousel Indicators (Dots) - Mobile Only
   carouselIndicators: {
     position: 'absolute',
-    bottom: IS_MOBILE ? 90 : SPACING.xxxxl, // Above bottom nav on mobile
+    bottom: 90, // Above bottom nav on mobile
     left: 0,
     right: 0,
     flexDirection: 'row',
