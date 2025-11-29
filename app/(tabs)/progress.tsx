@@ -1,11 +1,35 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
-import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, TouchableOpacity, Platform, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  SafeAreaView,
+  TouchableOpacity,
+  Platform,
+  Modal,
+} from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TrendingUp, Award, Calendar, Target, BarChart3, Users, Clock, Trophy, ChevronRight, X, Maximize2, Menu as MenuIcon } from 'lucide-react-native';
+import {
+  TrendingUp,
+  Award,
+  Calendar,
+  Target,
+  BarChart3,
+  Users,
+  Clock,
+  Trophy,
+  ChevronRight,
+  X,
+  Maximize2,
+  Menu as MenuIcon,
+} from 'lucide-react-native';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -71,13 +95,14 @@ interface Evaluation {
 
 function ProgressScreen() {
   const { user } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  
+
   logger.info('ProgressScreen: Rendering, evaluations count:', evaluations.length);
   logger.info('ProgressScreen: chartData:', chartData);
   logger.info('ProgressScreen: activeTab:', activeTab);
@@ -123,12 +148,12 @@ function ProgressScreen() {
 
     // Separate KP and FSP evaluations
     const kpEvaluations = evaluations
-      .filter(e => e.exam_type === 'KP')
+      .filter((e) => e.exam_type === 'KP')
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       .slice(-10);
 
     const fspEvaluations = evaluations
-      .filter(e => e.exam_type === 'FSP')
+      .filter((e) => e.exam_type === 'FSP')
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       .slice(-10);
 
@@ -136,36 +161,31 @@ function ProgressScreen() {
     const kpChartPoints = kpEvaluations.map((evaluation, index) => ({
       x: index + 1,
       y: evaluation.score,
-      date: format(new Date(evaluation.created_at), 'dd.MM')
+      date: format(new Date(evaluation.created_at), 'dd.MM'),
     }));
 
     const fspChartPoints = fspEvaluations.map((evaluation, index) => ({
       x: index + 1,
       y: evaluation.score,
-      date: format(new Date(evaluation.created_at), 'dd.MM')
+      date: format(new Date(evaluation.created_at), 'dd.MM'),
     }));
 
     setChartData({
       KP: kpChartPoints,
-      FSP: fspChartPoints
+      FSP: fspChartPoints,
     });
   }, [evaluations]);
 
   const getFilteredEvaluations = () => {
-    return evaluations
-      .filter(evaluation => evaluation.exam_type === activeTab)
-      .slice(0, 7);
+    return evaluations.filter((evaluation) => evaluation.exam_type === activeTab).slice(0, 7);
   };
-
 
   // FIX: Memoize chart rendering to prevent expensive Victory re-renders (300-500ms → ~50ms)
   const renderChart = useMemo(() => {
     if (!chartData || !chartData[activeTab] || chartData[activeTab].length === 0) {
       return (
         <View style={styles.emptyChart}>
-          <Text style={styles.emptyChartText}>
-            Noch keine {activeTab}-Bewertungen vorhanden
-          </Text>
+          <Text style={styles.emptyChartText}>Noch keine {activeTab}-Bewertungen vorhanden</Text>
         </View>
       );
     }
@@ -181,13 +201,13 @@ function ProgressScreen() {
           <View style={styles.chartBars}>
             {currentChartData.map((point: any, index: number) => (
               <View key={index} style={styles.chartBarContainer}>
-                <View 
+                <View
                   style={[
                     styles.chartBar,
-                    { 
+                    {
                       height: `${point.y}%`,
-                      backgroundColor: point.y >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger
-                    }
+                      backgroundColor: point.y >= 60 ? MEDICAL_COLORS.success : MEDICAL_COLORS.danger,
+                    },
                   ]}
                 />
                 <Text style={styles.chartLabel}>{point.date}</Text>
@@ -213,37 +233,37 @@ function ProgressScreen() {
             tickCount={5}
             domain={[0, 100]}
             style={{
-              grid: { 
-                stroke: '#f0f0f0', 
+              grid: {
+                stroke: '#f0f0f0',
                 strokeWidth: 1,
-                strokeDasharray: 'none'
+                strokeDasharray: 'none',
               },
               axis: { stroke: 'transparent' },
               ticks: { stroke: 'transparent' },
-              tickLabels: { 
-                fontSize: 12, 
-                fill: '#999', 
-                fontFamily: 'system-ui'
-              }
+              tickLabels: {
+                fontSize: 12,
+                fill: '#999',
+                fontFamily: 'system-ui',
+              },
             }}
           />
-          
+
           {/* X-Axis with date labels */}
           <VictoryAxis
-            tickFormat={(x: any, i: number) => currentChartData[i] ? currentChartData[i].date : ''}
+            tickFormat={(x: any, i: number) => (currentChartData[i] ? currentChartData[i].date : '')}
             style={{
               grid: { stroke: 'transparent' },
               axis: { stroke: 'transparent' },
               ticks: { stroke: 'transparent' },
-              tickLabels: { 
-                fontSize: 11, 
-                fill: '#999', 
+              tickLabels: {
+                fontSize: 11,
+                fill: '#999',
                 angle: 0,
-                fontFamily: 'system-ui'
-              }
+                fontFamily: 'system-ui',
+              },
             }}
           />
-          
+
           {/* Area chart with gradient fill - different colors for KP and FSP */}
           <VictoryArea
             data={currentChartData}
@@ -252,38 +272,44 @@ function ProgressScreen() {
                 fill: activeTab === 'KP' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(236, 72, 153, 0.15)',
                 fillOpacity: 1,
                 stroke: activeTab === 'KP' ? '#6366F1' : '#EC4899',
-                strokeWidth: 3
-              }
+                strokeWidth: 3,
+              },
             }}
             animate={{
               duration: 1200,
-              onLoad: { duration: 600 }
+              onLoad: { duration: 600 },
             }}
             interpolation="cardinal"
           />
-          
+
           {/* Goal lines at 60% and 80% thresholds */}
           <VictoryLine
-            data={[{x: 1, y: 60}, {x: currentChartData.length, y: 60}]}
+            data={[
+              { x: 1, y: 60 },
+              { x: currentChartData.length, y: 60 },
+            ]}
             style={{
               data: {
                 stroke: '#FFA726', // Orange color for 60% threshold
                 strokeWidth: 2,
-                strokeDasharray: '5,5'
-              }
+                strokeDasharray: '5,5',
+              },
             }}
           />
           <VictoryLine
-            data={[{x: 1, y: 80}, {x: currentChartData.length, y: 80}]}
+            data={[
+              { x: 1, y: 80 },
+              { x: currentChartData.length, y: 80 },
+            ]}
             style={{
               data: {
                 stroke: '#66BB6A', // Green color for 80% threshold
                 strokeWidth: 2,
-                strokeDasharray: '5,5'
-              }
+                strokeDasharray: '5,5',
+              },
             }}
           />
-          
+
           {/* Data point circles */}
           <VictoryScatter
             data={currentChartData}
@@ -292,8 +318,8 @@ function ProgressScreen() {
               data: {
                 fill: activeTab === 'KP' ? '#6366F1' : '#EC4899',
                 stroke: '#fff',
-                strokeWidth: 2
-              }
+                strokeWidth: 2,
+              },
             }}
           />
         </VictoryChart>
@@ -301,50 +327,51 @@ function ProgressScreen() {
     );
   }, [chartData, activeTab]); // Only re-render when chart data or active tab changes
 
-
   const parseEvaluationText = (text: string) => {
     if (!text) return [];
-    
+
     // Split by double asterisks or other common separators
     const sections = text.split(/\*\*([^*]+)\*\*/).filter(Boolean);
     const parsedSections = [];
-    
+
     for (let i = 0; i < sections.length; i += 2) {
       const title = sections[i]?.trim();
       const content = sections[i + 1]?.trim();
-      
+
       if (title && content) {
         parsedSections.push({ title, content });
       } else if (title && title.length > 20) {
         // If it's a long text without a clear title, treat as content
-        parsedSections.push({ 
-          title: 'Details', 
-          content: title 
+        parsedSections.push({
+          title: 'Details',
+          content: title,
         });
       }
     }
-    
+
     // If no structured sections found, return the original text
     if (parsedSections.length === 0) {
       return [{ title: 'Bewertung', content: text }];
     }
-    
+
     return parsedSections;
   };
 
   const enhanceTextReadability = (text: string) => {
     // Improve text formatting for better readability
-    return text
-      // Break long sentences
-      .replace(/([.!?])\s+(?=[A-ZÄÖÜ])/g, '$1\n\n')
-      // Add spacing around key phrases
-      .replace(/\*\*([^*]+)\*\*/g, '**$1**') // Keep bold markers for now
-      // Clean up extra whitespace
-      .replace(/\n{3,}/g, '\n\n')
-      // Improve list formatting
-      .replace(/(\d+\.)\s*/g, '\n$1 ')
-      .replace(/[-•]\s*/g, '\n• ')
-      .trim();
+    return (
+      text
+        // Break long sentences
+        .replace(/([.!?])\s+(?=[A-ZÄÖÜ])/g, '$1\n\n')
+        // Add spacing around key phrases
+        .replace(/\*\*([^*]+)\*\*/g, '**$1**') // Keep bold markers for now
+        // Clean up extra whitespace
+        .replace(/\n{3,}/g, '\n\n')
+        // Improve list formatting
+        .replace(/(\d+\.)\s*/g, '\n$1 ')
+        .replace(/[-•]\s*/g, '\n• ')
+        .trim()
+    );
   };
 
   const renderEnhancedEvaluationText = (text: string) => {
@@ -364,12 +391,12 @@ function ProgressScreen() {
             );
           } else if (part.trim()) {
             // Regular text with paragraphs
-            const paragraphs = part.split('\n\n').filter(p => p.trim());
+            const paragraphs = part.split('\n\n').filter((p) => p.trim());
             return paragraphs.map((paragraph, pIndex) => {
               if (paragraph.startsWith('•') || paragraph.match(/^\d+\./)) {
                 // List item
                 return (
-                  <View key={`${index}-${pIndex}`} style={styles.enhancedListItem}>
+                  <View key={`${index}-${pIndex}`} style={dynamicStyles.enhancedListItem}>
                     <Text style={styles.enhancedListText}>{paragraph.trim()}</Text>
                   </View>
                 );
@@ -395,11 +422,9 @@ function ProgressScreen() {
     return (
       <View>
         {sections.map((section, index) => (
-          <View key={index} style={styles.parsedSection}>
+          <View key={index} style={dynamicStyles.parsedSection}>
             <Text style={styles.parsedSectionTitle}>{section.title}</Text>
-            <View style={styles.parsedSectionContentContainer}>
-              {renderEnhancedEvaluationText(section.content)}
-            </View>
+            <View style={styles.parsedSectionContentContainer}>{renderEnhancedEvaluationText(section.content)}</View>
           </View>
         ))}
       </View>
@@ -449,10 +474,11 @@ function ProgressScreen() {
     }
 
     // OLD APPROACH: Parse text evaluation (for backward compatibility)
-    const evaluationText = selectedEvaluation.patient_evaluation ||
-                          selectedEvaluation.examiner_evaluation ||
-                          selectedEvaluation.evaluation ||
-                          '';
+    const evaluationText =
+      selectedEvaluation.patient_evaluation ||
+      selectedEvaluation.examiner_evaluation ||
+      selectedEvaluation.evaluation ||
+      '';
 
     logger.info('Evaluation fields:', {
       hasPatientEval: !!selectedEvaluation.patient_evaluation,
@@ -474,7 +500,7 @@ function ProgressScreen() {
           onRequestClose={closeEvaluationModal}
           presentationStyle="fullScreen"
         >
-          <SafeAreaView style={styles.modalContainer}>
+          <SafeAreaView style={dynamicStyles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Keine Bewertung verfügbar</Text>
               <TouchableOpacity onPress={closeEvaluationModal}>
@@ -485,7 +511,16 @@ function ProgressScreen() {
               <Text style={{ fontSize: 16, fontFamily: 'Inter-Regular', color: '#6B7280', textAlign: 'center' }}>
                 Für diese Prüfung ist keine Bewertung vorhanden.
               </Text>
-              <TouchableOpacity onPress={closeEvaluationModal} style={{ marginTop: 24, backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}>
+              <TouchableOpacity
+                onPress={closeEvaluationModal}
+                style={{
+                  marginTop: 24,
+                  backgroundColor: '#3B82F6',
+                  paddingHorizontal: 24,
+                  paddingVertical: 12,
+                  borderRadius: 12,
+                }}
+              >
                 <Text style={{ fontSize: 16, fontFamily: 'Inter-SemiBold', color: '#FFFFFF' }}>Schließen</Text>
               </TouchableOpacity>
             </View>
@@ -521,11 +556,7 @@ function ProgressScreen() {
       logger.info('Using Legacy Text Evaluation (OLD) - parsing with old method');
 
       // Parse the evaluation text into structured data
-      const parsedEvaluation = parseEvaluation(
-        evaluationText,
-        selectedEvaluation.id,
-        selectedEvaluation.created_at
-      );
+      const parsedEvaluation = parseEvaluation(evaluationText, selectedEvaluation.id, selectedEvaluation.created_at);
 
       logger.info('Parsed Evaluation:', parsedEvaluation);
 
@@ -544,10 +575,7 @@ function ProgressScreen() {
           onRequestClose={closeEvaluationModal}
           presentationStyle="fullScreen"
         >
-          <EvaluationDetailScreen
-            evaluation={parsedEvaluation}
-            onClose={closeEvaluationModal}
-          />
+          <EvaluationDetailScreen evaluation={parsedEvaluation} onClose={closeEvaluationModal} />
         </Modal>
       );
     } catch (error) {
@@ -555,13 +583,8 @@ function ProgressScreen() {
 
       // Fallback to raw text if parsing fails
       return (
-        <Modal
-          animationType="slide"
-          transparent={false}
-          visible={modalVisible}
-          onRequestClose={closeEvaluationModal}
-        >
-          <SafeAreaView style={styles.modalContainer}>
+        <Modal animationType="slide" transparent={false} visible={modalVisible} onRequestClose={closeEvaluationModal}>
+          <SafeAreaView style={dynamicStyles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Bewertung Details</Text>
               <TouchableOpacity onPress={closeEvaluationModal}>
@@ -569,7 +592,7 @@ function ProgressScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScrollView}>
-              <View style={styles.modalContentCard}>
+              <View style={dynamicStyles.modalContentCard}>
                 <Text style={styles.modalInfoText}>Score: {selectedEvaluation.score}/100</Text>
                 <Text style={styles.parsedSectionContent}>{evaluationText}</Text>
               </View>
@@ -582,21 +605,17 @@ function ProgressScreen() {
 
   const renderTabs = () => (
     <View style={styles.tabContainer}>
-      <TouchableOpacity 
-        style={[styles.tab, activeTab === 'KP' && styles.activeTab]}
+      <TouchableOpacity
+        style={[dynamicStyles.tab, activeTab === 'KP' && dynamicStyles.activeTab]}
         onPress={() => setActiveTab('KP')}
       >
-        <Text style={[styles.tabText, activeTab === 'KP' && styles.activeTabText]}>
-          KP
-        </Text>
+        <Text style={[styles.tabText, activeTab === 'KP' && styles.activeTabText]}>KP</Text>
       </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.tab, activeTab === 'FSP' && styles.activeTab]}
+      <TouchableOpacity
+        style={[dynamicStyles.tab, activeTab === 'FSP' && dynamicStyles.activeTab]}
         onPress={() => setActiveTab('FSP')}
       >
-        <Text style={[styles.tabText, activeTab === 'FSP' && styles.activeTabText]}>
-          FSP
-        </Text>
+        <Text style={[styles.tabText, activeTab === 'FSP' && styles.activeTabText]}>FSP</Text>
       </TouchableOpacity>
     </View>
   );
@@ -607,55 +626,49 @@ function ProgressScreen() {
     const passStatus = evaluation.score >= 60 ? 'Bestanden' : 'Nicht bestanden';
 
     return (
-      <TouchableOpacity 
-        key={evaluation.id} 
+      <TouchableOpacity
+        key={evaluation.id}
         style={styles.modernEvaluationCard}
         onPress={() => openEvaluationModal(evaluation)}
         activeOpacity={0.7}
       >
-        <View style={styles.modernCardGradient}>
+        <View style={dynamicStyles.modernCardGradient}>
           <View style={styles.modernCardHeader}>
             <View style={styles.modernCardLeft}>
               <View style={styles.modernDateContainer}>
                 <Calendar size={16} color="#6b7280" />
-                <Text style={styles.modernCardDate}>
-                  {format(new Date(evaluation.created_at), 'dd.MM.yyyy')}
-                </Text>
+                <Text style={styles.modernCardDate}>{format(new Date(evaluation.created_at), 'dd.MM.yyyy')}</Text>
               </View>
               <Text style={styles.modernCardType}>
                 {evaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'}
               </Text>
             </View>
-            
+
             <View style={styles.modernCardRight}>
               <View style={[styles.modernScoreContainer, { backgroundColor: scoreBgColor }]}>
-                <Text style={[styles.modernScoreText, { color: scoreColor }]}>
-                  {evaluation.score}
-                </Text>
+                <Text style={[styles.modernScoreText, { color: scoreColor }]}>{evaluation.score}</Text>
                 <Text style={styles.modernScoreMax}>/100</Text>
               </View>
-              <Text style={[styles.modernPassStatus, { color: scoreColor }]}>
-                {passStatus}
-              </Text>
+              <Text style={[styles.modernPassStatus, { color: scoreColor }]}>{passStatus}</Text>
             </View>
           </View>
-          
+
           <View style={styles.modernCardFooter}>
             <View style={styles.modernCardProgress}>
               <View style={styles.progressBar}>
-                <View 
+                <View
                   style={[
-                    styles.progressFill, 
-                    { 
+                    styles.progressFill,
+                    {
                       width: `${evaluation.score}%`,
-                      backgroundColor: scoreColor
-                    }
-                  ]} 
+                      backgroundColor: scoreColor,
+                    },
+                  ]}
                 />
               </View>
               <Text style={styles.progressText}>{evaluation.score}% erreicht</Text>
             </View>
-            
+
             <View style={styles.modernViewButton}>
               <Text style={styles.modernViewText}>Antippen zum Anzeigen</Text>
               <Maximize2 size={16} color="#E2827F" />
@@ -668,29 +681,93 @@ function ProgressScreen() {
 
   const filteredEvaluations = getFilteredEvaluations();
 
-  const averageScore = filteredEvaluations.length > 0 
-    ? Math.round(filteredEvaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / filteredEvaluations.length)
-    : 0;
-    
-  const passedCount = filteredEvaluations.filter(evaluation => evaluation.score >= 60).length;
+  const averageScore =
+    filteredEvaluations.length > 0
+      ? Math.round(
+          filteredEvaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / filteredEvaluations.length
+        )
+      : 0;
+
+  const passedCount = filteredEvaluations.filter((evaluation) => evaluation.score >= 60).length;
   const totalAttempts = filteredEvaluations.length;
 
+  // Dynamic styles that adapt to theme
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      ...styles.modernContainer,
+      backgroundColor: colors.background,
+    },
+    gradientBackground: {
+      ...styles.gradientBackground,
+      backgroundColor: colors.background,
+    },
+    activeTab: {
+      ...styles.activeTab,
+      backgroundColor: colors.primary,
+    },
+    tab: {
+      ...styles.tab,
+      backgroundColor: isDarkMode ? colors.surface : MEDICAL_COLORS.slate100,
+    },
+    statIconWrapperPurple: {
+      ...styles.statIconWrapperPurple,
+      backgroundColor: isDarkMode ? colors.surface : '#F3E8FF',
+    },
+    statIconWrapperPink: {
+      ...styles.statIconWrapperPink,
+      backgroundColor: isDarkMode ? colors.surface : '#FCE7F3',
+    },
+    statIconWrapperCyan: {
+      ...styles.statIconWrapperCyan,
+      backgroundColor: isDarkMode ? colors.surface : '#CFFAFE',
+    },
+    statCard: {
+      ...styles.statCard,
+      backgroundColor: colors.card,
+    },
+    modernChartContainer: {
+      ...styles.modernChartContainer,
+      backgroundColor: colors.card,
+    },
+    modernCardGradient: {
+      ...styles.modernCardGradient,
+      backgroundColor: colors.card,
+    },
+    evaluationContentContainer: {
+      ...styles.evaluationContentContainer,
+      backgroundColor: isDarkMode ? colors.surface : '#fafbfc',
+    },
+    parsedSection: {
+      ...styles.parsedSection,
+      backgroundColor: isDarkMode ? colors.surface : '#FAFBFC',
+    },
+    enhancedListItem: {
+      ...styles.enhancedListItem,
+      backgroundColor: isDarkMode ? colors.surface : '#FDF8F6',
+    },
+    emptyStateGradient: {
+      ...styles.emptyStateGradient,
+      backgroundColor: colors.card,
+    },
+    modalContainer: {
+      ...styles.modalContainer,
+      backgroundColor: colors.background,
+    },
+    modalContentCard: {
+      ...styles.modalContentCard,
+      backgroundColor: colors.card,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.modernContainer}>
-      <View style={styles.gradientBackground} />
+    <SafeAreaView style={dynamicStyles.container}>
+      <View style={dynamicStyles.gradientBackground} />
 
       {/* Modern Header - Same as Homepage */}
       <View style={styles.appHeader}>
-        <LinearGradient
-          colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
-          style={styles.headerGradient}
-        >
+        <LinearGradient colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']} style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.menuButton}
-              onPress={() => setMenuOpen(true)}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
               <LinearGradient
                 colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                 style={styles.menuButtonGradient}
@@ -708,15 +785,13 @@ function ProgressScreen() {
         {/* Page Title Section */}
         <View style={styles.pageTitleSection}>
           <Text style={styles.pageTitle}>Lernfortschritt</Text>
-          <Text style={styles.pageSubtitle}>
-            Verfolgen Sie Ihre Entwicklung in der medizinischen Ausbildung
-          </Text>
+          <Text style={styles.pageSubtitle}>Verfolgen Sie Ihre Entwicklung in der medizinischen Ausbildung</Text>
         </View>
 
         {/* Stats Overview Cards */}
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconWrapperPurple}>
+          <View style={dynamicStyles.statCard}>
+            <View style={dynamicStyles.statIconWrapperPurple}>
               <Award size={28} color="#8B5CF6" />
             </View>
             <View style={styles.statTextContent}>
@@ -725,18 +800,20 @@ function ProgressScreen() {
             </View>
           </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statIconWrapperPink}>
+          <View style={dynamicStyles.statCard}>
+            <View style={dynamicStyles.statIconWrapperPink}>
               <Target size={28} color="#EC4899" />
             </View>
             <View style={styles.statTextContent}>
-              <Text style={styles.statValue}>{passedCount}/{totalAttempts}</Text>
+              <Text style={styles.statValue}>
+                {passedCount}/{totalAttempts}
+              </Text>
               <Text style={styles.statLabel}>Bestanden</Text>
             </View>
           </View>
 
-          <View style={styles.statCard}>
-            <View style={styles.statIconWrapperCyan}>
+          <View style={dynamicStyles.statCard}>
+            <View style={dynamicStyles.statIconWrapperCyan}>
               <TrendingUp size={28} color="#06B6D4" />
             </View>
             <View style={styles.statTextContent}>
@@ -749,7 +826,7 @@ function ProgressScreen() {
         </View>
 
         {/* Modern Chart Section */}
-        <View style={styles.modernChartContainer}>
+        <View style={dynamicStyles.modernChartContainer}>
           <View style={styles.chartHeader}>
             <View style={styles.chartTitleContainer}>
               <BarChart3 size={24} color="#B87E70" />
@@ -757,10 +834,7 @@ function ProgressScreen() {
             </View>
             <View style={styles.chartLegend}>
               <View style={styles.legendItem}>
-                <View style={[
-                  styles.legendDot,
-                  { backgroundColor: activeTab === 'KP' ? '#6366F1' : '#EC4899' }
-                ]} />
+                <View style={[styles.legendDot, { backgroundColor: activeTab === 'KP' ? '#6366F1' : '#EC4899' }]} />
                 <Text style={styles.legendText}>{activeTab} Score</Text>
               </View>
             </View>
@@ -778,10 +852,7 @@ function ProgressScreen() {
         <View style={styles.modernCardsContainer}>
           {filteredEvaluations.length === 0 ? (
             <View style={styles.modernEmptyState}>
-              <LinearGradient
-                colors={['#e3f2fd', '#f3e5f5']}
-                style={styles.emptyStateGradient}
-              >
+              <LinearGradient colors={['#e3f2fd', '#f3e5f5']} style={dynamicStyles.emptyStateGradient}>
                 <Calendar size={48} color="#E2827F" />
                 <Text style={styles.emptyStateTitle}>Noch keine Daten</Text>
                 <Text style={styles.emptyStateText}>
@@ -793,7 +864,7 @@ function ProgressScreen() {
             filteredEvaluations.map(renderModernEvaluationCard)
           )}
         </View>
-        
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
