@@ -288,6 +288,9 @@ class Logger {
 // ===== SINGLETON INSTANCE =====
 export const logger = new Logger();
 
+// DIAGNOSTIC: Test if logger module loads
+console.log('🔍 LOGGER MODULE LOADED - If you see this, logger file is executing');
+
 // ===== HELPER FUNCTIONS =====
 
 /**

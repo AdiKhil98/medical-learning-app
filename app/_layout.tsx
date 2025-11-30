@@ -11,6 +11,7 @@ import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
 import { registerServiceWorker, checkForAppUpdate, skipWaitingAndReload } from '@/utils/serviceWorkerRegistration';
 
 export default function RootLayout() {
+  console.log('🔍 DIAGNOSTIC: RootLayout function executing');
   logger.info('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
