@@ -59,7 +59,7 @@ export class VoiceflowController {
       user_email: this.userEmail || 'NOT_PROVIDED',
       email_status: this.userEmail ? '✅ Email available' : '⚠️ Will attempt fallback',
       projectID: config.projectID,
-      supabase_synced: !!supabaseUserId
+      supabase_synced: !!supabaseUserId,
     });
   }
 
@@ -99,7 +99,7 @@ export class VoiceflowController {
 
       // Convert buffer to hex string
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
       return hashHex;
     } catch (error) {
@@ -131,7 +131,10 @@ export class VoiceflowController {
       // Dynamically import supabase to avoid circular dependencies
       const { supabase } = await import('@/lib/supabase');
 
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
       if (error) {
         logger.error('❌ Error fetching Supabase session:', error);
@@ -258,7 +261,7 @@ export class VoiceflowController {
         session_id: this.sessionId,
         user_email: this.userEmail || 'NOT_PROVIDED',
         email_will_be_sent: !!this.userEmail,
-        simulation: this.config.simulationType.toUpperCase()
+        simulation: this.config.simulationType.toUpperCase(),
       });
 
       // CRITICAL WARNING: If email is missing, log it prominently
@@ -272,14 +275,14 @@ export class VoiceflowController {
         emailForUserID = await this.hashEmail(this.userEmail);
         logger.info('🔒 PRIVACY MODE: Email hashed for Voiceflow (SHA-256)');
         logger.info('   Original:', this.userEmail);
-        logger.info('   Hashed:', emailForUserID.substring(0, 16) + '...');
+        logger.info('   Hashed:', `${emailForUserID.substring(0, 16)  }...`);
       }
 
       // Voiceflow configuration with persistent IDs
       // Based on official docs: https://docs.voiceflow.com/docs/customization-configuration
       const widgetConfig: any = {
         verify: {
-          projectID: this.config.projectID
+          projectID: this.config.projectID,
         },
         url: this.config.url || 'https://general-runtime.voiceflow.com',
         versionID: this.config.versionID || 'production',
@@ -287,27 +290,28 @@ export class VoiceflowController {
         // User ID with email encoded (so Voiceflow definitely receives it)
         // Format: "userID|email|sessionID" - we can parse this in Voiceflow
         // If hashEmail is enabled, email will be SHA-256 hash instead of plain text
-        userID: emailForUserID
-          ? `${this.userId}|${emailForUserID}|${this.sessionId}`
-          : this.userId,
+        userID: emailForUserID ? `${this.userId}|${emailForUserID}|${this.sessionId}` : this.userId,
 
         // Voice is REQUIRED - widget crashes without it
         voice: {
-          url: 'https://runtime-api.voiceflow.com'
+          url: 'https://runtime-api.voiceflow.com',
         },
 
         // Assistant configuration
         assistant: {
           persistence: 'memory', // Use 'memory' to reset on refresh (not 'localStorage')
           header: {
-            title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation`
+            title: this.config.title || `${this.config.simulationType.toUpperCase()} Simulation`,
           },
-          inputPlaceholder: 'Geben Sie Ihre Nachricht ein...'
-        }
+          inputPlaceholder: 'Geben Sie Ihre Nachricht ein...',
+        },
       };
 
       // Log the ACTUAL configuration being sent to Voiceflow (not flattened)
-      logger.info(`📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`, JSON.parse(JSON.stringify(widgetConfig)));
+      logger.info(
+        `📤 ${this.config.simulationType.toUpperCase()} Voiceflow configuration (ACTUAL STRUCTURE):`,
+        JSON.parse(JSON.stringify(widgetConfig))
+      );
       logger.info(`🆔 ${this.config.simulationType.toUpperCase()} Project ID: ${this.config.projectID}`);
       logger.info(`🔢 ${this.config.simulationType.toUpperCase()} Version ID: ${this.config.versionID}`);
 
@@ -333,7 +337,6 @@ export class VoiceflowController {
       // Email is encoded in userID field (see above)
       const privacyStatus = this.config.hashEmail ? '(email hashed in userID)' : '(email in userID)';
       logger.info(`✅ Widget loaded and ready with persistent IDs ${privacyStatus}`);
-
     } catch (error) {
       logger.error('❌ Failed to initialize Voiceflow widget:', error);
       throw error;
@@ -380,7 +383,7 @@ export class VoiceflowController {
 
         observer.observe(document.body, {
           childList: true,
-          subtree: true
+          subtree: true,
         });
 
         (window as any).voiceflowObserver = observer;
@@ -403,9 +406,9 @@ export class VoiceflowController {
           type: 'set',
           payload: {
             user_email: this.userEmail,
-            session_id: this.sessionId
-          }
-        }
+            session_id: this.sessionId,
+          },
+        },
       };
 
       // Use the widget's interact method if available
@@ -414,22 +417,25 @@ export class VoiceflowController {
         logger.info(`✅ Email sent via widget.interact: ${this.userEmail}`);
       } else {
         // Fallback: Use the Dialog API directly
-        const response = await fetch(`${this.config.url}/interact/${this.config.projectID}/${this.config.versionID || 'production'}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userID: this.userId,
-            action: {
-              type: 'set',
-              payload: {
-                user_email: this.userEmail,
-                session_id: this.sessionId
-              }
-            }
-          })
-        });
+        const response = await fetch(
+          `${this.config.url}/interact/${this.config.projectID}/${this.config.versionID || 'production'}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userID: this.userId,
+              action: {
+                type: 'set',
+                payload: {
+                  user_email: this.userEmail,
+                  session_id: this.sessionId,
+                },
+              },
+            }),
+          }
+        );
 
         if (response.ok) {
           logger.info(`✅ Email sent via Dialog API: ${this.userEmail}`);
@@ -449,7 +455,7 @@ export class VoiceflowController {
   getIds(): { user_id: string; session_id: string } {
     return {
       user_id: this.userId,
-      session_id: this.sessionId
+      session_id: this.sessionId,
     };
   }
 
@@ -596,11 +602,11 @@ export class VoiceflowController {
       '#voiceflow-chat',
       '.vfrc-widget',
       '.vfrc-chat',
-      '.vfrc-launcher'
+      '.vfrc-launcher',
     ];
 
     let removedCount = 0;
-    selectors.forEach(selector => {
+    selectors.forEach((selector) => {
       const elements = document.querySelectorAll(selector);
       elements.forEach((element: Element) => {
         // SAFETY: Check element properties exist before accessing
@@ -632,7 +638,7 @@ export class VoiceflowController {
    */
   private removeVoiceflowScripts(): void {
     const scripts = document.querySelectorAll('script[src*="voiceflow"]');
-    scripts.forEach(script => {
+    scripts.forEach((script) => {
       try {
         if (script) {
           script.remove();
@@ -657,26 +663,34 @@ export class VoiceflowController {
  * Create controller for KP simulation
  */
 export function createKPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
-  return new VoiceflowController({
-    projectID: '691ef46be9fed392ea2fa0ac',  // KP57 Project ID (updated 2025-01-20)
-    versionID: '691ef46be9fed392ea2fa0ad',  // KP57 Version ID
-    url: 'https://general-runtime.voiceflow.com',
-    simulationType: 'kp',
-    title: 'KP Simulation Assistant'
-  }, supabaseUserId, userEmail);
+  return new VoiceflowController(
+    {
+      projectID: '6929a798906ea96d54f85c21', // KP57 Project ID (updated 2025-11-29)
+      versionID: '6929a798906ea96d54f85c22', // KP57 Version ID
+      url: 'https://general-runtime.voiceflow.com',
+      simulationType: 'kp',
+      title: 'KP Simulation Assistant',
+    },
+    supabaseUserId,
+    userEmail
+  );
 }
 
 /**
  * Create controller for FSP simulation
  */
 export function createFSPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
-  return new VoiceflowController({
-    projectID: '691ef462ec7f2b60273d0a8a',  // FSP57 Project ID (updated 2025-01-20)
-    versionID: '691ef462ec7f2b60273d0a8b',  // FSP57 Version ID
-    url: 'https://general-runtime.voiceflow.com',
-    simulationType: 'fsp',
-    title: 'FSP Simulation Assistant'
-  }, supabaseUserId, userEmail);
+  return new VoiceflowController(
+    {
+      projectID: '6929a79f906ea96d54f85c27', // FSP57 Project ID (updated 2025-11-29)
+      versionID: '6929a79f906ea96d54f85c28', // FSP57 Version ID
+      url: 'https://general-runtime.voiceflow.com',
+      simulationType: 'fsp',
+      title: 'FSP Simulation Assistant',
+    },
+    supabaseUserId,
+    userEmail
+  );
 }
 
 /**
@@ -713,10 +727,10 @@ export function globalVoiceflowCleanup(): void {
       '[class*="voiceflow"]',
       '[class*="vfrc"]',
       'iframe[src*="voiceflow"]',
-      '.vfrc-widget'
+      '.vfrc-widget',
     ];
 
-    selectors.forEach(selector => {
+    selectors.forEach((selector) => {
       try {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element: Element) => element.remove());
@@ -727,7 +741,7 @@ export function globalVoiceflowCleanup(): void {
 
     // Remove scripts
     const scripts = document.querySelectorAll('script[src*="voiceflow"]');
-    scripts.forEach(script => script.remove());
+    scripts.forEach((script) => script.remove());
 
     // Clear global objects
     if (window.voiceflow) {
