@@ -40,13 +40,9 @@ interface LogConfig {
 const isDevelopment = __DEV__;
 const isTest = process.env.NODE_ENV === 'test';
 
-// Feature flag: Enable console logs in production for debugging
-// Set EXPO_PUBLIC_ENABLE_CONSOLE_LOGS=true in .env to enable
-const forceConsoleLogging = process.env.EXPO_PUBLIC_ENABLE_CONSOLE_LOGS === 'true';
-
 const defaultConfig: LogConfig = {
-  level: isDevelopment ? LogLevel.DEBUG : LogLevel.INFO,
-  enableConsole: isDevelopment || isTest || forceConsoleLogging,
+  level: LogLevel.DEBUG, // Always show all logs
+  enableConsole: true, // Always enable console logging for debugging
   enableExternalLogging: !isDevelopment && !isTest,
   includeTimestamp: true,
   includeSource: true,
