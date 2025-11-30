@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - KP Med</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            background: #fb923c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #f97316;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f1f5f9;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>🧹 Clear All Caches</h1>
+    <p>This will clear the service worker cache and reload the page with the latest version.</p>
+
+    <button onclick="clearEverything()">Clear All Caches & Reload</button>
+    <button onclick="unregisterServiceWorker()">Unregister Service Worker</button>
+    <button onclick="clearBrowserCache()">Clear Browser Storage</button>
+
+    <div id="status" class="status"></div>
+
+    <script>
+        const status = document.getElementById('status');
+
+        function log(message, type = 'info') {
+            status.className = 'status ' + type;
+            status.innerHTML += message + '<br>';
+        }
+
+        async function clearEverything() {
+            status.innerHTML = '';
+            log('🔄 Starting cache clear...', 'info');
+
+            // 1. Clear service worker caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                log(`Found ${cacheNames.length} caches`, 'info');
+
+                for (const name of cacheNames) {
+                    await caches.delete(name);
+                    log(`✅ Deleted cache: ${name}`, 'success');
+                }
+            }
+
+            // 2. Unregister service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} service workers`, 'info');
+
+                for (const registration of registrations) {
+                    await registration.unregister();
+                    log('✅ Unregistered service worker', 'success');
+                }
+            }
+
+            // 3. Clear local storage
+            localStorage.clear();
+            log('✅ Cleared localStorage', 'success');
+
+            // 4. Clear session storage
+            sessionStorage.clear();
+            log('✅ Cleared sessionStorage', 'success');
+
+            log('✅ All caches cleared!', 'success');
+            log('♻️ Reloading in 2 seconds...', 'info');
+
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+
+        async function unregisterServiceWorker() {
+            status.innerHTML = '';
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                    log('✅ Service worker unregistered', 'success');
+                }
+                log('♻️ Reloading...', 'info');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                log('❌ Service workers not supported', 'error');
+            }
+        }
+
+        async function clearBrowserCache() {
+            status.innerHTML = '';
+            localStorage.clear();
+            sessionStorage.clear();
+
+            if ('caches' in window) {
+                const names = await caches.keys();
+                for (const name of names) {
+                    await caches.delete(name);
+                }
+            }
+
+            log('✅ Browser storage cleared', 'success');
+            log('♻️ Reloading...', 'info');
+            setTimeout(() => location.reload(), 1000);
+        }
+    </script>
+</body>
+</html>
