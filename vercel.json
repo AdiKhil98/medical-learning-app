@@ -1,6 +1,15 @@
 {
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(*), camera=(*)"
+        }
+      ]
+    },
+    {
       "source": "/(.*).html",
       "headers": [
         {

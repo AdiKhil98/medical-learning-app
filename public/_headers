@@ -1,5 +1,9 @@
 # Cache control for static assets and HTML
 
+# Permissions Policy - Allow microphone and camera access
+/*
+  Permissions-Policy: geolocation=(self), microphone=(*), camera=(*)
+
 # Don't cache HTML files - force revalidation
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
