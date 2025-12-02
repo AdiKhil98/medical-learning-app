@@ -31,6 +31,8 @@ import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useDailyContent } from '@/hooks/useDailyContent';
+import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const IS_MOBILE = isCompact(screenWidth);
@@ -45,8 +47,13 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+
+  // Fetch daily content and recent content
+  const { dailyTip, dailyQuestion, loading: dailyLoading } = useDailyContent();
+  const { recentContent, loading: recentLoading } = useRecentContentForHomepage();
 
   const totalSlides = 4;
 
@@ -71,6 +78,28 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const scrollToSlide = (index: number) => {
     scrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
     setCurrentSlide(index);
+  };
+
+  // Handle answer selection for daily question
+  const handleAnswerSelect = (option: string) => {
+    setSelectedAnswer(option);
+  };
+
+  // Check if selected answer is correct
+  const isCorrectAnswer = (option: string) => {
+    if (!dailyQuestion || !selectedAnswer) return null;
+    const correctAnswer = (dailyQuestion.correct_answer || dailyQuestion.correct_choice || '').toLowerCase();
+    return option.toLowerCase() === correctAnswer;
+  };
+
+  // Navigate to recent content page
+  const handleRecentContentClick = (slug: string) => {
+    router.push(`/(tabs)/bibliothek/content/${slug}`);
+  };
+
+  // Navigate to all content (Bibliothek)
+  const handleViewAllContent = () => {
+    router.push('/(tabs)/bibliothek');
   };
 
   // Dynamic styles for dark mode support
@@ -223,76 +252,49 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             {/* SLIDE 1 - Zuletzt angesehen */}
             <View style={styles.webSlide}>
               <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
-              <View style={styles.cardsContainer}>
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>6</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
+              {recentContent.length > 0 ? (
+                <>
+                  <View style={styles.cardsContainer}>
+                    {recentContent.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={dynamicStyles.recentCard}
+                        activeOpacity={0.7}
+                        onPress={() => handleRecentContentClick(item.slug)}
+                      >
+                        <View style={styles.recentCardContent}>
+                          <View style={styles.recentCardLeft}>
+                            <View style={styles.recentIconContainer}>
+                              <Heart size={24} color={MEDICAL_COLORS.blue} />
+                            </View>
+                            <View>
+                              <Text style={styles.recentCardTitle}>{item.title}</Text>
+                              <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
+                            </View>
+                          </View>
+                          <View style={styles.recentCardRight}>
+                            <View style={styles.timeContainer}>
+                              <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                              <Text style={styles.timeText}>{item.viewCount}</Text>
+                            </View>
+                            <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                </TouchableOpacity>
 
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>1</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Koniotomie</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>1</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
-                <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
-                <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-                <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
-              </TouchableOpacity>
+                  <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7} onPress={handleViewAllContent}>
+                    <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
+                    <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                    <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={dynamicStyles.recentCard}>
+                  <Text style={styles.recentCardTitle}>Keine kürzlich angesehenen Inhalte</Text>
+                </View>
+              )}
             </View>
 
             {/* SLIDE 2 - Tipp des Tages */}
@@ -307,8 +309,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 </View>
                 <View style={styles.tipContentBox}>
                   <Text style={styles.tipContent}>
-                    Nimm dir regelmäßig Zeit für Entspannung 🧘. Kurze Meditationsübungen können Wunder wirken, um
-                    Stress abzubauen und den Fokus zu schärfen! ✨
+                    {dailyTip?.tip_content || dailyTip?.content || dailyTip?.tip || 'Kein Tipp für heute verfügbar'}
                   </Text>
                 </View>
               </View>
@@ -325,20 +326,41 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   <Text style={styles.questionHeaderText}>Wissensfrage</Text>
                 </View>
                 <Text style={styles.questionText}>
-                  Welche der folgenden Untersuchungen ist am sensitivsten zur Diagnose einer Lungenembolie?
+                  {dailyQuestion?.question || 'Keine Frage für heute verfügbar'}
                 </Text>
                 <View style={styles.optionsContainer}>
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('a')}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.optionLabel}>A.</Text>
-                    <Text style={styles.optionText}>D-Dimer-Test</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_a || dailyQuestion?.choice_a || 'N/A'}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('b')}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.optionLabel}>B.</Text>
-                    <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_b || dailyQuestion?.choice_b || 'N/A'}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('c')}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.optionLabel}>C.</Text>
-                    <Text style={styles.optionText}>Röntgen-Thorax</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_c || dailyQuestion?.choice_c || 'N/A'}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -444,80 +466,50 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
             <View style={styles.slideContainer}>
               <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
 
-              <View style={styles.cardsContainer}>
-                {/* Card 1 */}
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>6</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
+              {recentContent.length > 0 ? (
+                <>
+                  <View style={styles.cardsContainer}>
+                    {recentContent.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={dynamicStyles.recentCard}
+                        activeOpacity={0.7}
+                        onPress={() => handleRecentContentClick(item.slug)}
+                      >
+                        <View style={styles.recentCardContent}>
+                          <View style={styles.recentCardLeft}>
+                            <View style={styles.recentIconContainer}>
+                              <Heart size={24} color={MEDICAL_COLORS.blue} />
+                            </View>
+                            <View>
+                              <Text style={styles.recentCardTitle}>{item.title}</Text>
+                              <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
+                            </View>
+                          </View>
+                          <View style={styles.recentCardRight}>
+                            <View style={styles.timeContainer}>
+                              <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                              <Text style={styles.timeText}>{item.viewCount}</Text>
+                            </View>
+                            <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                </TouchableOpacity>
 
-                {/* Card 2 */}
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>1</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Card 3 */}
-                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
-                  <View style={styles.recentCardContent}>
-                    <View style={styles.recentCardLeft}>
-                      <View style={styles.recentIconContainer}>
-                        <Heart size={24} color={MEDICAL_COLORS.blue} />
-                      </View>
-                      <View>
-                        <Text style={styles.recentCardTitle}>Koniotomie</Text>
-                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
-                      </View>
-                    </View>
-                    <View style={styles.recentCardRight}>
-                      <View style={styles.timeContainer}>
-                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                        <Text style={styles.timeText}>1</Text>
-                      </View>
-                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              {/* Footer Link */}
-              <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
-                <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
-                <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-                <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
-              </TouchableOpacity>
+                  {/* Footer Link */}
+                  <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7} onPress={handleViewAllContent}>
+                    <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
+                    <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                    <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={dynamicStyles.recentCard}>
+                  <Text style={styles.recentCardTitle}>Keine kürzlich angesehenen Inhalte</Text>
+                </View>
+              )}
             </View>
           </ScrollView>
         </View>
@@ -542,8 +534,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
                 <View style={styles.tipContentBox}>
                   <Text style={styles.tipContent}>
-                    Nimm dir regelmäßig Zeit für Entspannung 🧘. Kurze Meditationsübungen können Wunder wirken, um
-                    Stress abzubauen und den Fokus zu schärfen! ✨
+                    {dailyTip?.tip_content || dailyTip?.content || dailyTip?.tip || 'Kein Tipp für heute verfügbar'}
                   </Text>
                 </View>
               </View>
@@ -570,23 +561,44 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 </View>
 
                 <Text style={styles.questionText}>
-                  Welche der folgenden Untersuchungen ist am sensitivsten zur Diagnose einer Lungenembolie?
+                  {dailyQuestion?.question || 'Keine Frage für heute verfügbar'}
                 </Text>
 
                 <View style={styles.optionsContainer}>
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('a')}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.optionLabel}>A.</Text>
-                    <Text style={styles.optionText}>D-Dimer-Test</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_a || dailyQuestion?.choice_a || 'N/A'}</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
-                    <Text style={styles.optionLabel}>A.</Text>
-                    <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('b')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.optionLabel}>B.</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_b || dailyQuestion?.choice_b || 'N/A'}</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer)
+                    ]}
+                    onPress={() => handleAnswerSelect('c')}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.optionLabel}>C.</Text>
-                    <Text style={styles.optionText}>Röntgen-Thorax</Text>
+                    <Text style={styles.optionText}>{dailyQuestion?.option_c || dailyQuestion?.choice_c || 'N/A'}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -998,6 +1010,14 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.base,
     color: MEDICAL_COLORS.slate700,
     flex: 1,
+  },
+  correctAnswer: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderColor: '#22c55e',
+  },
+  wrongAnswer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: '#ef4444',
   },
 
   // Web Layout Styles
