@@ -9,6 +9,7 @@ import {
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -31,14 +32,17 @@ import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/co
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const IS_MOBILE = isCompact(screenWidth);
-
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
 }
 
 export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) {
+  // Responsive dimensions - updates when window resizes
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const screenWidth = windowWidth;
+  const screenHeight = windowHeight;
+  const IS_MOBILE = isCompact(screenWidth);
+
   const { colors, isDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
