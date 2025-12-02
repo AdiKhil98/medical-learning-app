@@ -129,8 +129,8 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </LinearGradient>
       </View>
 
-      {/* Navigation Arrows - Hidden on mobile */}
-      {!IS_MOBILE && (
+      {/* Navigation Arrows - Hidden on mobile AND web */}
+      {!IS_MOBILE && !IS_WEB && (
         <>
           <TouchableOpacity style={styles.leftArrow} onPress={prevSlide} activeOpacity={0.7}>
             <View style={styles.arrowButton}>
@@ -146,8 +146,208 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
         </>
       )}
 
-      {/* Main Content - Horizontal Scrollable Carousel */}
-      <ScrollView
+      {/* Main Content - Conditional: Vertical for Web, Horizontal Carousel for Mobile */}
+      {IS_WEB ? (
+        /* WEB: Vertical scrolling layout - all slides stacked */
+        <ScrollView
+          style={styles.mainContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.webContainer}>
+            {/* SLIDE 0 - Welcome Card */}
+            <View style={styles.webSlide}>
+              <View style={dynamicStyles.heroCard}>
+                {/* Icon Container */}
+                <View style={styles.iconContainer}>
+                  <LinearGradient
+                    colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.iconGradient}
+                  >
+                    <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
+                  </LinearGradient>
+                </View>
+
+                {/* Heading */}
+                <Text style={styles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
+
+                {/* Subheading */}
+                <Text style={styles.subheading}>
+                  Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
+                </Text>
+
+                {/* CTA Buttons */}
+                <View style={styles.buttonsContainer}>
+                  <TouchableOpacity
+                    style={styles.buttonWrapper}
+                    onPress={() => router.push('/(tabs)/simulation')}
+                    activeOpacity={0.7}
+                  >
+                    <LinearGradient
+                      colors={MEDICAL_COLORS.warmOrangeGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.primaryButton}
+                    >
+                      <Text style={styles.buttonText}>Simulation testen</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.buttonWrapper}
+                    onPress={() => router.push('/subscription')}
+                    activeOpacity={0.7}
+                  >
+                    <LinearGradient
+                      colors={MEDICAL_COLORS.warmYellowGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.secondaryButton}
+                    >
+                      <Text style={styles.buttonText}>Abonnieren</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.outlineButton}
+                    onPress={() => setShowAboutUs(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.outlineButtonText}>Über KP Med</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* SLIDE 1 - Zuletzt angesehen */}
+            <View style={styles.webSlide}>
+              <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
+              <View style={styles.cardsContainer}>
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Akutes Koronarsyndrom</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
+                    </View>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>6</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Perikardtamponade</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
+                    </View>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>1</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={dynamicStyles.recentCard} activeOpacity={0.7}>
+                  <View style={styles.recentCardContent}>
+                    <View style={styles.recentCardLeft}>
+                      <View style={styles.recentIconContainer}>
+                        <Heart size={24} color={MEDICAL_COLORS.blue} />
+                      </View>
+                      <View>
+                        <Text style={styles.recentCardTitle}>Koniotomie</Text>
+                        <Text style={styles.recentCardSubtitle}>Sonstiges</Text>
+                      </View>
+                    </View>
+                    <View style={styles.recentCardRight}>
+                      <View style={styles.timeContainer}>
+                        <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                        <Text style={styles.timeText}>1</Text>
+                      </View>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7}>
+                <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
+                <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
+              </TouchableOpacity>
+            </View>
+
+            {/* SLIDE 2 - Tipp des Tages */}
+            <View style={styles.webSlide}>
+              <Text style={styles.slideTitle}>Tipp des Tages</Text>
+              <View style={dynamicStyles.tipCard}>
+                <View style={styles.tipHeader}>
+                  <View style={styles.tipIconContainer}>
+                    <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
+                  </View>
+                  <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
+                </View>
+                <View style={styles.tipContentBox}>
+                  <Text style={styles.tipContent}>
+                    Nimm dir regelmäßig Zeit für Entspannung 🧘. Kurze Meditationsübungen können Wunder wirken, um
+                    Stress abzubauen und den Fokus zu schärfen! ✨
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* SLIDE 3 - Frage des Tages */}
+            <View style={styles.webSlide}>
+              <Text style={styles.slideTitle}>Frage des Tages</Text>
+              <View style={dynamicStyles.questionCard}>
+                <View style={styles.questionHeader}>
+                  <View style={styles.questionIconContainer}>
+                    <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
+                  </View>
+                  <Text style={styles.questionHeaderText}>Wissensfrage</Text>
+                </View>
+                <Text style={styles.questionText}>
+                  Welche der folgenden Untersuchungen ist am sensitivsten zur Diagnose einer Lungenembolie?
+                </Text>
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>A.</Text>
+                    <Text style={styles.optionText}>D-Dimer-Test</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>B.</Text>
+                    <Text style={styles.optionText}>Spiral-CT der Lunge</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionButton} activeOpacity={0.7}>
+                    <Text style={styles.optionLabel}>C.</Text>
+                    <Text style={styles.optionText}>Röntgen-Thorax</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      ) : (
+        /* MOBILE: Horizontal scrolling carousel */
+        <ScrollView
         ref={scrollViewRef}
         horizontal
         pagingEnabled
@@ -394,6 +594,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           </ScrollView>
         </View>
       </ScrollView>
+      )}
 
       {/* Carousel Indicators - Removed to prevent overlap with navigation */}
 
@@ -797,6 +998,18 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.base,
     color: MEDICAL_COLORS.slate700,
     flex: 1,
+  },
+
+  // Web Layout Styles
+  webContainer: {
+    maxWidth: 1200,
+    marginHorizontal: 'auto',
+    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.xxl,
+  },
+  webSlide: {
+    marginBottom: SPACING.xxxl,
+    width: '100%',
   },
 
   // Carousel Indicators (Dots) - Mobile Only
