@@ -9,6 +9,7 @@ import {
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -33,6 +34,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const IS_MOBILE = isCompact(screenWidth);
+const IS_WEB = Platform.OS === 'web';
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
