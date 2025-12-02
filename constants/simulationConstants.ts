@@ -7,11 +7,11 @@
 
 // ===== SIMULATION DURATION =====
 
-/** Total simulation duration in seconds (20 minutes) */
-export const SIMULATION_DURATION_SECONDS = 1200;
+/** Total simulation duration in seconds (15 minutes) */
+export const SIMULATION_DURATION_SECONDS = 900;
 
-/** Total simulation duration in milliseconds (20 minutes) */
-export const SIMULATION_DURATION_MS = 1200000;
+/** Total simulation duration in milliseconds (15 minutes) */
+export const SIMULATION_DURATION_MS = 900000;
 
 // ===== USAGE THRESHOLDS =====
 
@@ -49,17 +49,17 @@ export const WARNING_10_SEC_REMAINING = 10;
  * Grace period for stale session cleanup
  *
  * Calculation:
- * - 20 minutes: Normal simulation duration
- * - 10 minutes: Buffer for network delays, app slowdowns
+ * - 15 minutes: Normal simulation duration
+ * - 5 minutes: Buffer for network delays, app slowdowns
  * - 10 minutes: Additional safety margin for edge cases
- * = 40 minutes total
+ * = 30 minutes total
  *
  * This ensures legitimate sessions aren't prematurely ended due to:
  * - Network connectivity issues
  * - Device performance problems
  * - User taking brief break (emergency call, etc.)
  */
-export const STALE_SESSION_GRACE_PERIOD_MINUTES = 40;
+export const STALE_SESSION_GRACE_PERIOD_MINUTES = 30;
 
 /** Heartbeat interval in milliseconds (30 seconds) */
 export const HEARTBEAT_INTERVAL_MS = 30000;

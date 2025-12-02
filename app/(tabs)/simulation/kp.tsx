@@ -55,11 +55,11 @@ function KPSimulationScreen() {
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
   const timerStartLockRef = useRef(false); // Atomic lock to prevent race conditions in timer start
-  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(SIMULATION_DURATION_SECONDS); // 15 minutes in seconds
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
-  const previousTimeRef = useRef<number>(20 * 60); // Track previous time value for comparisons
+  const previousTimeRef = useRef<number>(SIMULATION_DURATION_SECONDS); // Track previous time value for comparisons
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const sessionTokenRef = useRef<string | null>(null); // Ref for sessionToken to avoid closure issues
   const [usageMarked, setUsageMarked] = useState(false); // Track if we've marked usage at 10min
@@ -716,8 +716,8 @@ function KPSimulationScreen() {
         }
 
         // Mark as used at 5-minute mark (only trigger once)
-        // NOTE: 20 minutes total = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (20-5) minutes REMAINING
-        const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS; // 1200 - 300 = 900
+        // NOTE: Total duration = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (total-5) minutes REMAINING
+        const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS;
         const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
         if (
           prev > fiveMinutesRemaining &&
@@ -725,8 +725,9 @@ function KPSimulationScreen() {
           !usageMarkedRef.current &&
           currentSessionToken
         ) {
-          const clientElapsed = 20 * 60 - remainingSeconds;
-          logger.info('🔍 DEBUG: 5-minute mark reached (900s remaining = 5min elapsed), marking as used');
+          const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
+          logger.info('🔍 DEBUG: 5-minute mark reached, marking as used');
+          logger.info('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
           markSimulationAsUsed(clientElapsed);
