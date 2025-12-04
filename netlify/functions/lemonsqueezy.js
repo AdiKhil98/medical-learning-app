@@ -124,20 +124,59 @@ async function findUserByEmail(email) {
   return data;
 }
 
-// Helper function to update user subscription
-async function updateUserSubscription(userId, subscriptionData) {
-  const { error } = await supabase
-    .from('users')
-    .update({
-      ...subscriptionData,
-      subscription_updated_at: new Date().toISOString()
-    })
-    .eq('id', userId);
+// NEW: Use existing upsert_subscription_from_webhook database function
+async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType) {
+  const {
+    subscriptionId,
+    variantId,
+    variantName,
+    customerEmail,
+    tier,
+    status,
+    simulationLimit,
+    createdAt,
+    updatedAt,
+    expiresAt,
+    renewsAt,
+    periodStart,
+    periodEnd
+  } = subscriptionData;
+
+  console.log('🔄 Calling upsert_subscription_from_webhook:', {
+    userId,
+    subscriptionId,
+    tier,
+    status,
+    variantId
+  });
+
+  const { data, error } = await supabase.rpc('upsert_subscription_from_webhook', {
+    p_user_id: userId,
+    p_lemonsqueezy_subscription_id: subscriptionId,
+    p_tier: tier,
+    p_status: status,
+    p_variant_id: String(variantId),
+    p_variant_name: variantName,
+    p_customer_email: customerEmail,
+    p_simulation_limit: simulationLimit,
+    p_created_at: createdAt,
+    p_updated_at: updatedAt,
+    p_expires_at: expiresAt,
+    p_renews_at: renewsAt,
+    p_period_start: periodStart,
+    p_period_end: periodEnd,
+    p_webhook_event: eventType
+  });
 
   if (error) {
-    console.error('Error updating user subscription:', error);
+    console.error('❌ Error calling upsert_subscription_from_webhook:', error);
     throw error;
   }
+
+  console.log('✅ Upsert successful:', data);
+  return data;
+}
+
 }
 
 // Netlify function handler
@@ -248,76 +287,82 @@ exports.handler = async (event, context) => {
     // Determine subscription tier
     const tier = determineSubscriptionTier(variantName, variantId);
     const tierConfig = SUBSCRIPTION_TIERS[tier];
+    // Prepare subscription data for upsert function
+    const subscriptionData = {
+      subscriptionId: String(subscriptionId),
+      variantId: variantId,
+      variantName: variantName || tierConfig.name,
+      customerEmail: customerEmail,
+      tier: tier,
+      status: status,
+      simulationLimit: tierConfig.simulationLimit,
+      createdAt: attributes.created_at ? new Date(attributes.created_at).toISOString() : new Date().toISOString(),
+      updatedAt: attributes.updated_at ? new Date(attributes.updated_at).toISOString() : new Date().toISOString(),
+      expiresAt: attributes.ends_at ? new Date(attributes.ends_at).toISOString() : null,
+      renewsAt: attributes.renews_at ? new Date(attributes.renews_at).toISOString() : null,
+      periodStart: attributes.billing_anchor ? new Date(attributes.billing_anchor).toISOString() : new Date().toISOString(),
+      periodEnd: attributes.renews_at ? new Date(attributes.renews_at).toISOString() : null
+    };
+
 
     // Handle different event types
     switch (eventType) {
       case 'subscription_created':
-        console.log(`Creating subscription for user ${userId}`);
+        console.log(`📝 Creating subscription for user ${userId}`);
 
-        await updateUserSubscription(userId, {
-          subscription_id: subscriptionId,
-          variant_id: variantId,
-          subscription_status: 'active',
-          subscription_tier: tier,
-          subscription_variant_name: tierConfig.name,
-          simulation_limit: tierConfig.simulationLimit,
-          lemon_squeezy_customer_email: customerEmail,
-          subscription_created_at: new Date().toISOString(),
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        const createResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`Subscription created successfully for user ${userId}`);
+        console.log(`✅ Subscription created successfully for user ${userId}`);
+        console.log('Create result:', createResult);
         break;
 
       case 'subscription_updated':
-        console.log(`Updating subscription for user ${userId}`);
+        console.log(`🔄 Updating subscription for user ${userId}`);
 
-        // Determine new tier (in case of upgrade/downgrade)
+        // Re-determine tier in case of upgrade/downgrade
         const newTier = determineSubscriptionTier(variantName, variantId);
         const newTierConfig = SUBSCRIPTION_TIERS[newTier];
 
-        await updateUserSubscription(userId, {
-          subscription_id: subscriptionId,
-          variant_id: variantId,
-          subscription_status: status === 'active' ? 'active' : status,
-          subscription_tier: newTier,
-          subscription_variant_name: newTierConfig.name,
-          simulation_limit: newTierConfig.simulationLimit,
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        subscriptionData.tier = newTier;
+        subscriptionData.simulationLimit = newTierConfig.simulationLimit;
+
+        const updateResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`Subscription updated successfully for user ${userId}`);
+        console.log(`✅ Subscription updated successfully for user ${userId}`);
+        console.log('Update result:', updateResult);
+
+        // Check if tier changed (upgrade/downgrade)
+        if (updateResult && updateResult.sync_result && updateResult.sync_result.tier_changed) {
+          console.log(`🎉 TIER CHANGED: ${updateResult.sync_result.old_tier} → ${updateResult.sync_result.new_tier}`);
+          console.log('✅ Counter automatically reset by sync function');
+        }
         break;
 
       case 'subscription_cancelled':
-        console.log(`Cancelling subscription for user ${userId}`);
+        console.log(`❌ Cancelling subscription for user ${userId}`);
 
-        // Mark as cancelled but keep access until end of period
-        await updateUserSubscription(userId, {
-          subscription_status: 'cancelled',
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
-        });
+        subscriptionData.status = 'cancelled';
+
+        const cancelResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`Subscription cancelled for user ${userId}, access until ${subscriptionData.ends_at}`);
+        console.log(`✅ Subscription cancelled for user ${userId}, access until ${subscriptionData.expiresAt}`);
+        console.log('Cancel result:', cancelResult);
         break;
 
       case 'subscription_expired':
-        console.log(`Expiring subscription for user ${userId}`);
+        console.log(`⏰ Expiring subscription for user ${userId}`);
 
-        // Remove access when subscription expires
-        await updateUserSubscription(userId, {
-          subscription_status: 'expired',
-          subscription_tier: null,
-          subscription_variant_name: null,
-          simulation_limit: null,
-          subscription_expires_at: new Date().toISOString()
-        });
+        subscriptionData.status = 'expired';
+        subscriptionData.expiresAt = new Date().toISOString();
+
+        const expireResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`Subscription expired for user ${userId}, access removed`);
+        console.log(`✅ Subscription expired for user ${userId}, access removed`);
+        console.log('Expire result:', expireResult);
         break;
 
       default:
