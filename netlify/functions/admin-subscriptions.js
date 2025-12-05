@@ -71,13 +71,46 @@ async function listUserSubscriptions(userId, email) {
 }
 
 async function checkDuplicateSubscriptions() {
-  const { data } = await supabase.rpc('check_duplicate_subscriptions');
+  // Query to find users with multiple active subscriptions
+  const { data, error } = await supabase
+    .from('user_subscriptions')
+    .select('user_id, lemonsqueezy_customer_email, lemonsqueezy_subscription_id, status')
+    .in('status', ['active', 'on_trial']);
+
+  if (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Database error', message: error.message })
+    };
+  }
+
+  // Group by user_id to find duplicates
+  const userGroups = {};
+  data.forEach(sub => {
+    if (!userGroups[sub.user_id]) {
+      userGroups[sub.user_id] = {
+        user_id: sub.user_id,
+        user_email: sub.lemonsqueezy_customer_email,
+        subscriptions: []
+      };
+    }
+    userGroups[sub.user_id].subscriptions.push(sub.lemonsqueezy_subscription_id);
+  });
+
+  // Filter to only users with multiple subscriptions
+  const duplicates = Object.values(userGroups).filter(user => user.subscriptions.length > 1);
+
   return {
     statusCode: 200,
     body: JSON.stringify({
       success: true,
-      duplicates_found: data.length,
-      users: data
+      duplicates_found: duplicates.length,
+      users: duplicates.map(d => ({
+        user_id: d.user_id,
+        user_email: d.user_email,
+        subscription_count: d.subscriptions.length,
+        subscription_ids: d.subscriptions
+      }))
     })
   };
 }
