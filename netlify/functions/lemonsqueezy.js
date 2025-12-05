@@ -177,8 +177,6 @@ async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType
   return data;
 }
 
-}
-
 // Netlify function handler
 exports.handler = async (event, context) => {
   console.log('Lemon Squeezy webhook received:', event.httpMethod);
@@ -287,8 +285,9 @@ exports.handler = async (event, context) => {
     // Determine subscription tier
     const tier = determineSubscriptionTier(variantName, variantId);
     const tierConfig = SUBSCRIPTION_TIERS[tier];
+
     // Prepare subscription data for upsert function
-    const subscriptionData = {
+    const subData = {
       subscriptionId: String(subscriptionId),
       variantId: variantId,
       variantName: variantName || tierConfig.name,
@@ -296,12 +295,12 @@ exports.handler = async (event, context) => {
       tier: tier,
       status: status,
       simulationLimit: tierConfig.simulationLimit,
-      createdAt: attributes.created_at ? new Date(attributes.created_at).toISOString() : new Date().toISOString(),
-      updatedAt: attributes.updated_at ? new Date(attributes.updated_at).toISOString() : new Date().toISOString(),
-      expiresAt: attributes.ends_at ? new Date(attributes.ends_at).toISOString() : null,
-      renewsAt: attributes.renews_at ? new Date(attributes.renews_at).toISOString() : null,
-      periodStart: attributes.billing_anchor ? new Date(attributes.billing_anchor).toISOString() : new Date().toISOString(),
-      periodEnd: attributes.renews_at ? new Date(attributes.renews_at).toISOString() : null
+      createdAt: subscriptionData?.created_at ? new Date(subscriptionData.created_at).toISOString() : new Date().toISOString(),
+      updatedAt: subscriptionData?.updated_at ? new Date(subscriptionData.updated_at).toISOString() : new Date().toISOString(),
+      expiresAt: subscriptionData?.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
+      renewsAt: subscriptionData?.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null,
+      periodStart: subscriptionData?.billing_anchor ? new Date(subscriptionData.billing_anchor).toISOString() : new Date().toISOString(),
+      periodEnd: subscriptionData?.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null
     };
 
 
@@ -310,7 +309,7 @@ exports.handler = async (event, context) => {
       case 'subscription_created':
         console.log(`📝 Creating subscription for user ${userId}`);
 
-        const createResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
+        const createResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
         console.log(`✅ Subscription created successfully for user ${userId}`);
@@ -324,10 +323,10 @@ exports.handler = async (event, context) => {
         const newTier = determineSubscriptionTier(variantName, variantId);
         const newTierConfig = SUBSCRIPTION_TIERS[newTier];
 
-        subscriptionData.tier = newTier;
-        subscriptionData.simulationLimit = newTierConfig.simulationLimit;
+        subData.tier = newTier;
+        subData.simulationLimit = newTierConfig.simulationLimit;
 
-        const updateResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
+        const updateResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
         console.log(`✅ Subscription updated successfully for user ${userId}`);
@@ -343,22 +342,22 @@ exports.handler = async (event, context) => {
       case 'subscription_cancelled':
         console.log(`❌ Cancelling subscription for user ${userId}`);
 
-        subscriptionData.status = 'cancelled';
+        subData.status = 'cancelled';
 
-        const cancelResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
+        const cancelResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
-        console.log(`✅ Subscription cancelled for user ${userId}, access until ${subscriptionData.expiresAt}`);
+        console.log(`✅ Subscription cancelled for user ${userId}, access until ${subData.expiresAt}`);
         console.log('Cancel result:', cancelResult);
         break;
 
       case 'subscription_expired':
         console.log(`⏰ Expiring subscription for user ${userId}`);
 
-        subscriptionData.status = 'expired';
-        subscriptionData.expiresAt = new Date().toISOString();
+        subData.status = 'expired';
+        subData.expiresAt = new Date().toISOString();
 
-        const expireResult = await upsertSubscriptionViaFunction(userId, subscriptionData, eventType);
+        const expireResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
         console.log(`✅ Subscription expired for user ${userId}, access removed`);
