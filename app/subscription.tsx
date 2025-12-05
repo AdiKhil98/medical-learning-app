@@ -23,6 +23,12 @@ export default function SubscriptionPage() {
     title: '',
     message: ''
   });
+  const [testModal, setTestModal] = useState<{ visible: boolean; currentPlan: string; currentVariant: string; newVariant: string }>({
+    visible: false,
+    currentPlan: '',
+    currentVariant: '',
+    newVariant: ''
+  });
 
     const handleSelectPlan = async (planId: string) => {
     logger.info('Selected plan:', planId);
@@ -84,27 +90,14 @@ export default function SubscriptionPage() {
         const TEST_MODE = true; // Set to false to actually upgrade
 
         if (TEST_MODE) {
-          Alert.alert(
-            '🧪 TEST MODE',
-            `Erkannte aktuelle Subscription:\n\n` +
-            `Current Plan: ${existingSubscription.subscription_tier}\n` +
-            `Variant ID: ${existingSubscription.lemonsqueezy_variant_id}\n` +
-            `Status: ${existingSubscription.status}\n\n` +
-            `Würde jetzt upgraden zu:\n` +
-            `New Variant ID: ${newVariantId}\n\n` +
-            `✅ Kein Checkout-Redirect!\n` +
-            `✅ Würde change-plan API aufrufen\n` +
-            `✅ Keine doppelte Subscription!\n\n` +
-            `(TEST_MODE ist aktiviert, keine echte Änderung)`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  setIsUpdating(false);
-                }
-              }
-            ]
-          );
+          logger.info('🧪 TEST MODE: Detected existing subscription, would upgrade without checkout');
+          setTestModal({
+            visible: true,
+            currentPlan: existingSubscription.subscription_tier || 'unknown',
+            currentVariant: existingSubscription.lemonsqueezy_variant_id || 'unknown',
+            newVariant: String(newVariantId)
+          });
+          setIsUpdating(false);
           return;
         }
 
@@ -506,6 +499,50 @@ export default function SubscriptionPage() {
                   end={{ x: 1, y: 1 }}
                 >
                   <Text style={dynamicStyles.errorButtonText}>Verstanden</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Test Mode Modal */}
+      <Modal
+        visible={testModal.visible}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+      >
+        <View style={dynamicStyles.errorOverlay}>
+          <View style={dynamicStyles.errorContainer}>
+            <View style={dynamicStyles.errorHeader}>
+              <View style={dynamicStyles.errorTitleContainer}>
+                <Text style={[dynamicStyles.errorTitle, { fontSize: 20 }]}>🧪 TEST MODE</Text>
+              </View>
+              <TouchableOpacity
+                style={dynamicStyles.closeButton}
+                onPress={() => setTestModal({ visible: false, currentPlan: '', currentVariant: '', newVariant: '' })}
+              >
+                <X size={24} color="#B87E70" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={dynamicStyles.errorMessage}>
+              {`Erkannte aktuelle Subscription:\n\nCurrent Plan: ${testModal.currentPlan}\nVariant ID: ${testModal.currentVariant}\nStatus: active\n\nWürde jetzt upgraden zu:\nNew Variant ID: ${testModal.newVariant}\n\n✅ Kein Checkout-Redirect!\n✅ Würde change-plan API aufrufen\n✅ Keine doppelte Subscription!\n\n(TEST_MODE ist aktiviert, keine echte Änderung)`}
+            </Text>
+
+            <View style={dynamicStyles.errorActions}>
+              <TouchableOpacity
+                style={dynamicStyles.errorButton}
+                onPress={() => setTestModal({ visible: false, currentPlan: '', currentVariant: '', newVariant: '' })}
+              >
+                <LinearGradient
+                  colors={['#4CAF50', '#45A049']}
+                  style={dynamicStyles.errorButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={dynamicStyles.errorButtonText}>OK</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
