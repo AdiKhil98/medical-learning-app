@@ -79,6 +79,35 @@ export default function SubscriptionPage() {
       // STEP 2A: User has active subscription → UPGRADE/DOWNGRADE
       if (existingSubscription) {
         logger.info('✅ User has existing subscription, upgrading/downgrading...');
+
+        // 🧪 TEST MODE: Show what WOULD happen without actually upgrading
+        const TEST_MODE = true; // Set to false to actually upgrade
+
+        if (TEST_MODE) {
+          Alert.alert(
+            '🧪 TEST MODE',
+            `Erkannte aktuelle Subscription:\n\n` +
+            `Current Plan: ${existingSubscription.subscription_tier}\n` +
+            `Variant ID: ${existingSubscription.lemonsqueezy_variant_id}\n` +
+            `Status: ${existingSubscription.status}\n\n` +
+            `Würde jetzt upgraden zu:\n` +
+            `New Variant ID: ${newVariantId}\n\n` +
+            `✅ Kein Checkout-Redirect!\n` +
+            `✅ Würde change-plan API aufrufen\n` +
+            `✅ Keine doppelte Subscription!\n\n` +
+            `(TEST_MODE ist aktiviert, keine echte Änderung)`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  setIsUpdating(false);
+                }
+              }
+            ]
+          );
+          return;
+        }
+
         setLoadingMessage('Abo wird aktualisiert...');
 
         const response = await fetch('/.netlify/functions/change-plan', {
