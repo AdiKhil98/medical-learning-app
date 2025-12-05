@@ -6,18 +6,19 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { 
-  Shield, 
-  Users, 
-  FileText, 
-  TestTube, 
-  BarChart, 
+import {
+  Shield,
+  Users,
+  FileText,
+  TestTube,
+  BarChart,
   Bell,
   Settings,
   Database,
   MessageSquare,
   Lightbulb,
-  Wand2
+  Wand2,
+  CreditCard
 } from 'lucide-react-native';
 
 export default function AdminDashboard() {
@@ -66,6 +67,13 @@ export default function AdminDashboard() {
       route: '/admin/manage-users',
       description: 'Benutzer verwalten',
       color: '#E2827F'
+    },
+    {
+      title: 'Subscription Manager',
+      icon: CreditCard,
+      route: '/admin/subscriptions',
+      description: 'Abonnements & Duplikate verwalten',
+      color: '#8B5CF6'
     },
     {
       title: 'Feedback Manager',
