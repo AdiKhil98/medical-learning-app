@@ -21,6 +21,7 @@ export interface LessonProgressStats {
 /**
  * Save/mark a section as complete for a specific lesson
  * Uses UPSERT to avoid duplicates
+ * Clears progress cache to ensure fresh calculations
  */
 export async function saveProgress(
   userId: string,
@@ -45,6 +46,9 @@ export async function saveProgress(
       logger.error('Error saving progress:', error);
       return { success: false, error: error.message };
     }
+
+    // Clear cache for this user so progress updates are reflected immediately
+    clearProgressCache(userId);
 
     logger.info(`✅ Saved progress: user=${userId}, lesson=${lessonSlug}, section=${sectionIndex}`);
     return { success: true };
@@ -86,6 +90,7 @@ export async function loadProgress(
 
 /**
  * Remove/unmark a section as complete
+ * Clears progress cache to ensure fresh calculations
  */
 export async function removeProgress(
   userId: string,
@@ -104,6 +109,9 @@ export async function removeProgress(
       logger.error('Error removing progress:', error);
       return { success: false, error: error.message };
     }
+
+    // Clear cache for this user so progress updates are reflected immediately
+    clearProgressCache(userId);
 
     logger.info(`🗑️ Removed progress: user=${userId}, lesson=${lessonSlug}, section=${sectionIndex}`);
     return { success: true };
@@ -241,5 +249,170 @@ export async function getAllUserProgress(
   } catch (error) {
     logger.error('Error loading all user progress:', error);
     return { progress: [], error: String(error) };
+  }
+}
+
+// Cache for recursive progress calculations (5 minute TTL)
+// Key format: "userId:sectionSlug"
+const progressCache = new Map<string, { progress: number; timestamp: number }>();
+const PROGRESS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Clear progress cache for a specific user or all users
+ */
+export function clearProgressCache(userId?: string): void {
+  if (userId) {
+    // Clear only this user's cache entries
+    const keysToDelete: string[] = [];
+    progressCache.forEach((_, key) => {
+      if (key.startsWith(`${userId}:`)) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => progressCache.delete(key));
+    logger.info(`🧹 Cleared progress cache for user ${userId}`);
+  } else {
+    progressCache.clear();
+    logger.info('🧹 Cleared entire progress cache');
+  }
+}
+
+/**
+ * RECURSIVE HIERARCHICAL PROGRESS CALCULATION
+ *
+ * Calculates progress for a section by recursively traversing all descendants.
+ * - If section is a leaf (has content): returns its direct completion percentage
+ * - If section is a parent: returns average progress of all children (recursively)
+ *
+ * This creates cascading progress bars where parent sections show aggregate
+ * progress of ALL descendants (not just immediate children).
+ *
+ * Example hierarchy:
+ *   Sub-category (10%)
+ *   ├── Section 1 (0%)
+ *   │   └── Subsection 1 (0% - 10 lessons, none complete)
+ *   ├── Section 2 (100%)
+ *   │   └── Subsection 2 (100% - 10 lessons, all complete)
+ *   └── ... (8 more sections at 0%)
+ *
+ * Sub-category shows 10% because (100 + 0 + 0 + ... + 0) / 10 = 10%
+ *
+ * PERFORMANCE: Results are cached for 5 minutes to avoid redundant calculations
+ */
+export async function getRecursiveProgressForSection(
+  userId: string,
+  sectionSlug: string,
+  _visitedSlugs = new Set<string>() // Prevent infinite loops
+): Promise<number> {
+  try {
+    // Prevent infinite recursion from circular references
+    if (_visitedSlugs.has(sectionSlug)) {
+      logger.warn(`Circular reference detected for section: ${sectionSlug}`);
+      return 0;
+    }
+    _visitedSlugs.add(sectionSlug);
+
+    // Check cache first (only for top-level calls, not recursive ones)
+    const cacheKey = `${userId}:${sectionSlug}`;
+    const now = Date.now();
+    const cached = progressCache.get(cacheKey);
+
+    if (cached && (now - cached.timestamp) < PROGRESS_CACHE_TTL) {
+      logger.info(`💾 Cache hit for ${sectionSlug}: ${cached.progress}%`);
+      return cached.progress;
+    }
+
+    // 1. Fetch the section
+    const { data: section, error: sectionError } = await supabase
+      .from('sections')
+      .select('slug, content_improved')
+      .eq('slug', sectionSlug)
+      .maybeSingle();
+
+    if (sectionError || !section) {
+      logger.error(`Error fetching section ${sectionSlug}:`, sectionError);
+      return 0;
+    }
+
+    // 2. Check if this is a LEAF node (has actual content)
+    const hasContent = section.content_improved &&
+      (typeof section.content_improved === 'object' || typeof section.content_improved === 'string');
+
+    if (hasContent) {
+      // LEAF NODE: Calculate direct progress
+      try {
+        let sections: any[] = [];
+        const contentSource = section.content_improved;
+        const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
+
+        if (contentString.startsWith('[') || contentString.startsWith('{')) {
+          if (typeof contentSource === 'string') {
+            sections = JSON.parse(contentSource);
+          } else if (Array.isArray(contentSource)) {
+            sections = contentSource;
+          }
+        } else {
+          // Plain text - count as 1 section
+          sections = [{ content: contentString }];
+        }
+
+        const totalSections = sections.filter(s => s.content && s.content.length > 0).length;
+
+        if (totalSections > 0) {
+          const stats = await getProgressStats(userId, sectionSlug, totalSections);
+          logger.info(`📊 Leaf progress for ${sectionSlug}: ${stats.percentage}%`);
+
+          // Cache the result
+          progressCache.set(cacheKey, { progress: stats.percentage, timestamp: now });
+          return stats.percentage;
+        }
+
+        // Cache zero progress
+        progressCache.set(cacheKey, { progress: 0, timestamp: now });
+        return 0;
+      } catch (error) {
+        logger.error(`Error parsing content for ${sectionSlug}:`, error);
+        return 0;
+      }
+    }
+
+    // 3. PARENT NODE: Fetch children
+    const { data: children, error: childrenError } = await supabase
+      .from('sections')
+      .select('slug')
+      .eq('parent_slug', sectionSlug)
+      .order('display_order', { ascending: true });
+
+    if (childrenError) {
+      logger.error(`Error fetching children for ${sectionSlug}:`, childrenError);
+      return 0;
+    }
+
+    if (!children || children.length === 0) {
+      // No children and no content = empty parent
+      logger.info(`📂 Empty parent node: ${sectionSlug}`);
+      return 0;
+    }
+
+    // 4. RECURSIVELY calculate progress for each child
+    const childProgressValues = await Promise.all(
+      children.map(child =>
+        getRecursiveProgressForSection(userId, child.slug, new Set(_visitedSlugs))
+      )
+    );
+
+    // 5. Calculate average progress across all children
+    const totalProgress = childProgressValues.reduce((sum, progress) => sum + progress, 0);
+    const averageProgress = Math.round(totalProgress / children.length);
+
+    logger.info(`📊 Parent progress for ${sectionSlug}: ${averageProgress}% (from ${children.length} children)`);
+
+    // Cache the result
+    progressCache.set(cacheKey, { progress: averageProgress, timestamp: now });
+    return averageProgress;
+
+  } catch (error) {
+    logger.error(`Error in recursive progress calculation for ${sectionSlug}:`, error);
+    return 0;
   }
 }

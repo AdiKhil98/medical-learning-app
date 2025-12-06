@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
 import { SecureLogger } from '@/lib/security';
 import { TimedLRUCache } from '@/lib/lruCache';
-import { getProgressStats } from '@/lib/progressService';
+import { getRecursiveProgressForSection } from '@/lib/progressService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -424,55 +424,30 @@ export default function SectionDetailScreen() {
     }
   }, [slug, session, offset, hasMore, loadingMore, ITEMS_PER_PAGE]);
 
-  // Calculate progress for all child items
+  // Calculate RECURSIVE/HIERARCHICAL progress for all child items
+  // This calculates progress by traversing the ENTIRE tree beneath each child
   useEffect(() => {
     const calculateChildProgress = async () => {
       if (!user?.id || childItems.length === 0) return;
 
+      SecureLogger.info(`🔄 Calculating recursive progress for ${childItems.length} children...`);
       const progressMap: Record<string, number> = {};
 
+      // Calculate progress for each child using recursive traversal
       for (const child of childItems) {
-        // Check if child has content
-        const hasContent = child.content_improved &&
-          (typeof child.content_improved === 'object' || typeof child.content_improved === 'string');
-
-        if (!hasContent) {
-          progressMap[child.slug] = 0;
-          continue;
-        }
-
-        // Count sections in content
         try {
-          let sections: any[] = [];
-          const contentSource = child.content_improved;
-          const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
-
-          if (contentString.startsWith('[') || contentString.startsWith('{')) {
-            if (typeof contentSource === 'string') {
-              sections = JSON.parse(contentSource);
-            } else if (Array.isArray(contentSource)) {
-              sections = contentSource;
-            }
-          } else {
-            // Plain text - count as 1 section
-            sections = [{ content: contentString }];
-          }
-
-          const totalSections = sections.filter(s => s.content && s.content.length > 0).length;
-
-          if (totalSections > 0) {
-            const stats = await getProgressStats(user.id, child.slug, totalSections);
-            progressMap[child.slug] = stats.percentage;
-          } else {
-            progressMap[child.slug] = 0;
-          }
+          // This recursively calculates progress through ALL descendants
+          const progress = await getRecursiveProgressForSection(user.id, child.slug);
+          progressMap[child.slug] = progress;
+          SecureLogger.info(`✅ Progress for ${child.slug}: ${progress}%`);
         } catch (error) {
-          SecureLogger.error('Error calculating progress for', child.slug, error);
+          SecureLogger.error('❌ Error calculating recursive progress for', child.slug, error);
           progressMap[child.slug] = 0;
         }
       }
 
       setChildProgress(progressMap);
+      SecureLogger.info('✅ Recursive progress calculation complete');
     };
 
     calculateChildProgress();
