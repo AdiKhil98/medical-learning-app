@@ -430,7 +430,7 @@ export default function SectionDetailScreen() {
     const calculateChildProgress = async () => {
       if (!user?.id || childItems.length === 0) return;
 
-      SecureLogger.info(`🔄 Calculating recursive progress for ${childItems.length} children...`);
+      SecureLogger.log(`🔄 Calculating recursive progress for ${childItems.length} children...`);
       const progressMap: Record<string, number> = {};
 
       // Calculate progress for each child using recursive traversal
@@ -439,7 +439,7 @@ export default function SectionDetailScreen() {
           // This recursively calculates progress through ALL descendants
           const progress = await getRecursiveProgressForSection(user.id, child.slug);
           progressMap[child.slug] = progress;
-          SecureLogger.info(`✅ Progress for ${child.slug}: ${progress}%`);
+          SecureLogger.log(`✅ Progress for ${child.slug}: ${progress}%`);
         } catch (error) {
           SecureLogger.error('❌ Error calculating recursive progress for', child.slug, error);
           progressMap[child.slug] = 0;
@@ -447,7 +447,7 @@ export default function SectionDetailScreen() {
       }
 
       setChildProgress(progressMap);
-      SecureLogger.info('✅ Recursive progress calculation complete');
+      SecureLogger.log('✅ Recursive progress calculation complete');
     };
 
     calculateChildProgress();
