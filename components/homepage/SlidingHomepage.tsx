@@ -31,6 +31,7 @@ import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 
@@ -50,10 +51,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+  const { user } = useAuth();
 
   // Fetch daily content and recent content
   const { dailyTip, dailyQuestion, loading: dailyLoading } = useDailyContent();
-  const { recentContent, loading: recentLoading } = useRecentContentForHomepage();
+  const { recentContent, loading: recentLoading } = useRecentContentForHomepage(user?.id);
 
   const totalSlides = 4;
 

@@ -12,7 +12,11 @@ interface UseRecentContentResult {
   removeRecentContent: (slug: string) => Promise<void>;
 }
 
-export function useRecentContent(): UseRecentContentResult {
+/**
+ * Hook for managing user-specific recent content
+ * @param userId - The user ID (required for user-specific storage)
+ */
+export function useRecentContent(userId?: string): UseRecentContentResult {
   const [recentContent, setRecentContent] = useState<RecentContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +25,17 @@ export function useRecentContent(): UseRecentContentResult {
     try {
       setLoading(true);
       setError(null);
-      
-      const items = await recentContentService.getRecentContent();
+
+      const items = await recentContentService.getRecentContent(userId);
       setRecentContent(items);
-      
+
     } catch (err) {
       logger.error('Error loading recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to load recent content');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   const refreshRecentContent = useCallback(async () => {
     await loadRecentContent();
@@ -39,40 +43,46 @@ export function useRecentContent(): UseRecentContentResult {
 
   const addRecentContent = useCallback(async (section: any) => {
     try {
-      await recentContentService.trackContentView(section);
+      await recentContentService.trackContentView(section, userId);
       // Refresh the list after adding
       await loadRecentContent();
     } catch (err) {
       logger.error('Error adding recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to add recent content');
     }
-  }, [loadRecentContent]);
+  }, [userId, loadRecentContent]);
 
   const clearRecentContent = useCallback(async () => {
     try {
-      await recentContentService.clearRecentContent();
+      await recentContentService.clearRecentContent(userId);
       setRecentContent([]);
     } catch (err) {
       logger.error('Error clearing recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear recent content');
     }
-  }, []);
+  }, [userId]);
 
   const removeRecentContent = useCallback(async (slug: string) => {
     try {
-      await recentContentService.removeRecentContent(slug);
+      await recentContentService.removeRecentContent(slug, userId);
       // Refresh the list after removing
       await loadRecentContent();
     } catch (err) {
       logger.error('Error removing recent content:', err);
       setError(err instanceof Error ? err.message : 'Failed to remove recent content');
     }
-  }, [loadRecentContent]);
+  }, [userId, loadRecentContent]);
 
-  // Load recent content on mount
+  // Load recent content on mount and when userId changes
   useEffect(() => {
-    loadRecentContent();
-  }, [loadRecentContent]);
+    if (userId) {
+      loadRecentContent();
+    } else {
+      // If no userId, clear the content
+      setRecentContent([]);
+      setLoading(false);
+    }
+  }, [userId, loadRecentContent]);
 
   return {
     recentContent,
@@ -85,25 +95,35 @@ export function useRecentContent(): UseRecentContentResult {
   };
 }
 
-export function useRecentContentForHomepage() {
+/**
+ * Hook for displaying recent content on homepage (top 3 items)
+ * @param userId - The user ID (required for user-specific storage)
+ */
+export function useRecentContentForHomepage(userId?: string) {
   const [recentContent, setRecentContent] = useState<RecentContentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadRecentContent = useCallback(async () => {
     try {
       setLoading(true);
-      const items = await recentContentService.getRecentContentForHomepage();
+      const items = await recentContentService.getRecentContentForHomepage(userId);
       setRecentContent(items);
     } catch (error) {
       logger.error('Error loading recent content for homepage:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    loadRecentContent();
-  }, [loadRecentContent]);
+    if (userId) {
+      loadRecentContent();
+    } else {
+      // If no userId, clear the content
+      setRecentContent([]);
+      setLoading(false);
+    }
+  }, [userId, loadRecentContent]);
 
   return {
     recentContent,

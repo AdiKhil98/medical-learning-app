@@ -89,7 +89,7 @@ const ContentDetailScreen = memo(() => {
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, isDarkMode } = useTheme();
-  const { session, loading: authLoading } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
 
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
@@ -131,8 +131,8 @@ const ContentDetailScreen = memo(() => {
           type: cached.type,
           icon: cached.icon,
           color: cached.color
-        });
-        SecureLogger.log('📖 Tracked cached content view:', cached.title);
+        }, user?.id);
+        SecureLogger.log('📖 Tracked cached content view:', cached.title, 'for user:', user?.id);
       } catch (trackingError) {
         SecureLogger.warn('⚠️ Failed to track cached content view:', trackingError);
       }
@@ -178,8 +178,8 @@ const ContentDetailScreen = memo(() => {
           type: sectionData.type,
           icon: sectionData.icon,
           color: sectionData.color
-        });
-        SecureLogger.log('📖 Tracked content view:', sectionData.title);
+        }, user?.id);
+        SecureLogger.log('📖 Tracked content view:', sectionData.title, 'for user:', user?.id);
       } catch (trackingError) {
         SecureLogger.warn('⚠️ Failed to track content view:', trackingError);
       }
