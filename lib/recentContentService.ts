@@ -49,6 +49,50 @@ class RecentContentService {
   }
 
   /**
+   * Migrate old global storage to user-specific storage
+   * This clears the old 'recent_medical_content' key to prevent cross-user data leaks
+   */
+  async migrateOldStorage(userId?: string): Promise<void> {
+    try {
+      // Check if old global key exists
+      const oldData = await AsyncStorage.getItem(STORAGE_KEY_PREFIX);
+
+      if (oldData && userId) {
+        logger.info('🔄 Migrating old recent content storage to user-specific key');
+
+        // Optionally migrate the data to the new user-specific key
+        const newKey = this.getStorageKey(userId);
+        const existingData = await AsyncStorage.getItem(newKey);
+
+        // Only migrate if the new key is empty
+        if (!existingData) {
+          await AsyncStorage.setItem(newKey, oldData);
+          logger.info('✅ Migrated old data to user-specific storage');
+        }
+      }
+
+      // Always remove the old global key to prevent data leaks
+      await AsyncStorage.removeItem(STORAGE_KEY_PREFIX);
+      logger.info('🧹 Cleared old global storage key');
+
+    } catch (error) {
+      logger.error('❌ Error during storage migration:', error);
+    }
+  }
+
+  /**
+   * Clear all legacy storage (for logout/cleanup)
+   */
+  async clearLegacyStorage(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY_PREFIX);
+      logger.info('🧹 Cleared legacy storage');
+    } catch (error) {
+      logger.error('❌ Error clearing legacy storage:', error);
+    }
+  }
+
+  /**
    * Add a medical content item to recent history
    * @param contentData - The content data to add
    * @param userId - The user ID (required for user-specific storage)

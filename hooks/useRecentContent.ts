@@ -75,13 +75,20 @@ export function useRecentContent(userId?: string): UseRecentContentResult {
 
   // Load recent content on mount and when userId changes
   useEffect(() => {
-    if (userId) {
-      loadRecentContent();
-    } else {
-      // If no userId, clear the content
-      setRecentContent([]);
-      setLoading(false);
-    }
+    const initializeRecentContent = async () => {
+      if (userId) {
+        // Migrate old storage on first load
+        await recentContentService.migrateOldStorage(userId);
+        await loadRecentContent();
+      } else {
+        // If no userId, clear the content and legacy storage
+        await recentContentService.clearLegacyStorage();
+        setRecentContent([]);
+        setLoading(false);
+      }
+    };
+
+    initializeRecentContent();
   }, [userId, loadRecentContent]);
 
   return {
@@ -116,13 +123,20 @@ export function useRecentContentForHomepage(userId?: string) {
   }, [userId]);
 
   useEffect(() => {
-    if (userId) {
-      loadRecentContent();
-    } else {
-      // If no userId, clear the content
-      setRecentContent([]);
-      setLoading(false);
-    }
+    const initializeRecentContent = async () => {
+      if (userId) {
+        // Migrate old storage on first load
+        await recentContentService.migrateOldStorage(userId);
+        await loadRecentContent();
+      } else {
+        // If no userId, clear the content and legacy storage
+        await recentContentService.clearLegacyStorage();
+        setRecentContent([]);
+        setLoading(false);
+      }
+    };
+
+    initializeRecentContent();
   }, [userId, loadRecentContent]);
 
   return {
