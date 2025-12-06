@@ -39,6 +39,7 @@ import SectionNotesModal from './SectionNotesModal';
 import Toast from './Toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveNote, loadNote, deleteNote } from '@/lib/notesService';
+import { saveProgress, loadProgress, removeProgress } from '@/lib/progressService';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
@@ -233,6 +234,21 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     loadAllNotes();
   }, [user?.id, parsedSections.length, supabaseRow.slug, supabaseRow.title]);
+
+  // Load progress for this lesson when component mounts
+  useEffect(() => {
+    const loadLessonProgress = async () => {
+      if (!user?.id || !supabaseRow.slug) return;
+
+      const { completedIndices } = await loadProgress(user.id, supabaseRow.slug);
+
+      // Convert array of indices to Set
+      setCompletedSections(new Set(completedIndices));
+      logger.info(`📚 Loaded ${completedIndices.length} completed sections for ${supabaseRow.slug}`);
+    };
+
+    loadLessonProgress();
+  }, [user?.id, supabaseRow.slug]);
 
   // Handle save note
   const handleSaveNote = async (sectionId: string, noteContent: string) => {
@@ -930,14 +946,23 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 {/* Right Side: Completion Status and Expand Arrow */}
                 <View style={styles.modernSectionActions}>
                   <TouchableOpacity
-                    onPress={(e) => {
+                    onPress={async (e) => {
                       e.stopPropagation();
+                      if (!user?.id || !supabaseRow.slug) return;
+
                       const newCompleted = new Set(completedSections);
-                      if (newCompleted.has(index)) {
+                      const isCurrentlyCompleted = newCompleted.has(index);
+
+                      if (isCurrentlyCompleted) {
+                        // Remove from completed
                         newCompleted.delete(index);
+                        await removeProgress(user.id, supabaseRow.slug, index);
                       } else {
+                        // Mark as completed
                         newCompleted.add(index);
+                        await saveProgress(user.id, supabaseRow.slug, index);
                       }
+
                       setCompletedSections(newCompleted);
                       triggerActivity();
                     }}
@@ -985,11 +1010,16 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                   <View style={styles.modernActionButtons}>
                     <TouchableOpacity
                       style={styles.modernPrimaryButton}
-                      onPress={() => {
+                      onPress={async () => {
+                        if (!user?.id || !supabaseRow.slug) return;
+
                         // Mark as complete and move to next section
                         const newCompleted = new Set(completedSections);
                         newCompleted.add(index);
                         setCompletedSections(newCompleted);
+
+                        // Save to database
+                        await saveProgress(user.id, supabaseRow.slug, index);
 
                         // Expand next section if available
                         if (index < filteredSections.length - 1) {

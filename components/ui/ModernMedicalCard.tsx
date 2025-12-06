@@ -9,6 +9,7 @@ interface ModernMedicalCardProps {
   gradient: string[];
   hoverGradient: string[];
   hasContent?: boolean;
+  progress?: number; // Learning progress percentage (0-100)
   onPress?: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function ModernMedicalCard({
   gradient,
   hoverGradient,
   hasContent = false,
+  progress = 0, // Default to 0% if not provided
   onPress,
 }: ModernMedicalCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -30,9 +32,6 @@ export default function ModernMedicalCard({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [isPressed, setIsPressed] = useState(false);
-
-  // Calculate progress (mock - in real app, this would come from props)
-  const progress = hasContent ? 100 : 0;
 
   useEffect(() => {
     // Initial fade in
@@ -200,8 +199,18 @@ export default function ModernMedicalCard({
               ]}
             />
 
-            {/* BEREIT Corner Badge */}
-            {hasContent && (
+            {/* Corner Badge - Show status based on progress */}
+            {progress === 100 && (
+              <View style={[styles.cornerBadge, { backgroundColor: 'rgba(34, 197, 94, 0.25)' }]}>
+                <Text style={styles.cornerBadgeText}>ABGESCHLOSSEN</Text>
+              </View>
+            )}
+            {progress > 0 && progress < 100 && (
+              <View style={[styles.cornerBadge, { backgroundColor: 'rgba(251, 146, 60, 0.25)' }]}>
+                <Text style={styles.cornerBadgeText}>IN ARBEIT</Text>
+              </View>
+            )}
+            {hasContent && progress === 0 && (
               <View style={styles.cornerBadge}>
                 <Text style={styles.cornerBadgeText}>BEREIT</Text>
               </View>
@@ -258,7 +267,7 @@ export default function ModernMedicalCard({
                   style={styles.buttonGradient}
                 >
                   <Text style={[styles.buttonText, isPressed && styles.buttonTextPressed]}>
-                    {hasContent ? 'BEREIT' : 'ANSEHEN'}
+                    {progress === 100 ? 'ABGESCHLOSSEN' : progress > 0 ? 'FORTSETZEN' : hasContent ? 'STARTEN' : 'ANSEHEN'}
                   </Text>
                   <Animated.View
                     style={{

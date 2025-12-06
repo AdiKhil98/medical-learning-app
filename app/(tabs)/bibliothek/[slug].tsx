@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ModernMedicalCard from '@/components/ui/ModernMedicalCard';
 import { SecureLogger } from '@/lib/security';
 import { TimedLRUCache } from '@/lib/lruCache';
+import { getProgressStats } from '@/lib/progressService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -181,7 +182,17 @@ const getIconComponent = (iconName: string) => {
 
 
 // Optimized Folder Card Component with memoized calculations
-const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: Section, parentSlug: string, onPress: () => void }) => {
+const FolderCard = React.memo(({
+  childItem,
+  parentSlug,
+  progress = 0,
+  onPress
+}: {
+  childItem: Section,
+  parentSlug: string,
+  progress?: number,
+  onPress: () => void
+}) => {
   // Memoize expensive calculations
   const itemDetails = useMemo(() => {
     return getItemDetails(childItem.title, childItem.type, parentSlug);
@@ -204,6 +215,7 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
         gradient={itemDetails.gradient}
         hoverGradient={itemDetails.hoverGradient}
         hasContent={Boolean(hasContent)}
+        progress={progress}
         onPress={onPress}
       />
     </View>
@@ -214,7 +226,8 @@ const FolderCard = React.memo(({ childItem, parentSlug, onPress }: { childItem: 
     prevProps.childItem.slug === nextProps.childItem.slug &&
     prevProps.childItem.title === nextProps.childItem.title &&
     prevProps.childItem.type === nextProps.childItem.type &&
-    prevProps.parentSlug === nextProps.parentSlug
+    prevProps.parentSlug === nextProps.parentSlug &&
+    prevProps.progress === nextProps.progress
   );
 });
 
@@ -222,7 +235,7 @@ export default function SectionDetailScreen() {
   const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  const { session, loading: authLoading } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
 
   const [currentItem, setCurrentItem] = useState<Section | null>(null);
   const [childItems, setChildItems] = useState<Section[]>([]);
@@ -233,6 +246,7 @@ export default function SectionDetailScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [childProgress, setChildProgress] = useState<Record<string, number>>({});
   const ITEMS_PER_PAGE = 20;
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -410,6 +424,60 @@ export default function SectionDetailScreen() {
     }
   }, [slug, session, offset, hasMore, loadingMore, ITEMS_PER_PAGE]);
 
+  // Calculate progress for all child items
+  useEffect(() => {
+    const calculateChildProgress = async () => {
+      if (!user?.id || childItems.length === 0) return;
+
+      const progressMap: Record<string, number> = {};
+
+      for (const child of childItems) {
+        // Check if child has content
+        const hasContent = child.content_improved &&
+          (typeof child.content_improved === 'object' || typeof child.content_improved === 'string');
+
+        if (!hasContent) {
+          progressMap[child.slug] = 0;
+          continue;
+        }
+
+        // Count sections in content
+        try {
+          let sections: any[] = [];
+          const contentSource = child.content_improved;
+          const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
+
+          if (contentString.startsWith('[') || contentString.startsWith('{')) {
+            if (typeof contentSource === 'string') {
+              sections = JSON.parse(contentSource);
+            } else if (Array.isArray(contentSource)) {
+              sections = contentSource;
+            }
+          } else {
+            // Plain text - count as 1 section
+            sections = [{ content: contentString }];
+          }
+
+          const totalSections = sections.filter(s => s.content && s.content.length > 0).length;
+
+          if (totalSections > 0) {
+            const stats = await getProgressStats(user.id, child.slug, totalSections);
+            progressMap[child.slug] = stats.percentage;
+          } else {
+            progressMap[child.slug] = 0;
+          }
+        } catch (error) {
+          SecureLogger.error('Error calculating progress for', child.slug, error);
+          progressMap[child.slug] = 0;
+        }
+      }
+
+      setChildProgress(progressMap);
+    };
+
+    calculateChildProgress();
+  }, [childItems, user?.id]);
+
   // Use focus effect instead of useEffect to handle tab switching properly
   useFocusEffect(
     useCallback(() => {
@@ -552,6 +620,7 @@ export default function SectionDetailScreen() {
                 key={childItem.slug}
                 childItem={childItem}
                 parentSlug={slug as string}
+                progress={childProgress[childItem.slug] || 0}
                 onPress={() => navigateToChild(childItem.slug, childItem)}
               />
             ))}
@@ -559,7 +628,7 @@ export default function SectionDetailScreen() {
         </LinearGradient>
       </View>
     );
-  }, [childItems, slug, navigateToChild]);
+  }, [childItems, slug, navigateToChild, childProgress]);
 
   if (authLoading || loading) {
     return (
