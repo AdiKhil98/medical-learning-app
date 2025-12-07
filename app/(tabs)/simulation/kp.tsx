@@ -117,8 +117,10 @@ function KPSimulationScreen() {
 
   // SESSION RECOVERY: Check for active session before resetting optimistic count
   useEffect(() => {
+    console.log('🚀 SESSION RECOVERY: useEffect triggered!');
     const recoverOrResetSession = async () => {
       try {
+        console.log('🔍 SESSION RECOVERY: Starting recovery function...');
         logger.info('[Session Recovery] Checking for active simulation session...');
 
         // Check if there's a saved session token in SecureStore
@@ -127,7 +129,7 @@ function KPSimulationScreen() {
 
         if (savedToken && savedStartTime) {
           logger.info('[Session Recovery] Found saved session:', {
-            token: `${savedToken.substring(0, 8)  }...`,
+            token: `${savedToken.substring(0, 8)}...`,
             startTime: new Date(parseInt(savedStartTime)).toISOString(),
           });
 
@@ -141,8 +143,8 @@ function KPSimulationScreen() {
             if (remaining > 0) {
               // Active session exists - KEEP optimistic state
               logger.info('[Session Recovery] ✅ Active session found!', {
-                elapsed: `${Math.floor(elapsed / 1000)  }s`,
-                remaining: `${Math.floor(remaining / 1000)  }s`,
+                elapsed: `${Math.floor(elapsed / 1000)}s`,
+                remaining: `${Math.floor(remaining / 1000)}s`,
                 counted: status.counted_toward_usage,
               });
 
