@@ -104,24 +104,30 @@ function FSPSimulationScreen() {
   // PAGE-LEVEL ACCESS CONTROL: Check access when page loads
   // SESSION RECOVERY: Check for active session before resetting optimistic count
   useEffect(() => {
-    console.log('🚀 SESSION RECOVERY: useEffect triggered!');
+    console.log('🚀🚀🚀 FSP SESSION RECOVERY: useEffect triggered!');
     const recoverOrResetSession = async () => {
       try {
-        console.log('🔍 SESSION RECOVERY: Starting recovery function...');
-        logger.info('[Session Recovery] Checking for active simulation session...');
+        console.log('🔍 FSP SESSION RECOVERY: Starting recovery function...');
+        console.log('[FSP Session Recovery] Checking for active simulation session...');
 
         // Check if there's a saved session token in SecureStore
         const savedToken = await SecureStore.getItemAsync('sim_session_token_fsp');
         const savedStartTime = await AsyncStorage.getItem('sim_start_time_fsp');
 
+        console.log('[FSP Session Recovery] Storage check:', {
+          hasToken: !!savedToken,
+          hasStartTime: !!savedStartTime,
+        });
+
         if (savedToken && savedStartTime) {
-          logger.info('[Session Recovery] Found saved session:', {
+          console.log('[FSP Session Recovery] Found saved session:', {
             token: `${savedToken.substring(0, 8)}...`,
             startTime: new Date(parseInt(savedStartTime)).toISOString(),
           });
 
           // Verify session is still active in database
           const status = await simulationTracker.getSimulationStatus(savedToken);
+          console.log('[FSP Session Recovery] Database status:', status);
 
           if (status && !status.ended_at) {
             const elapsed = Date.now() - parseInt(savedStartTime);
@@ -129,7 +135,7 @@ function FSPSimulationScreen() {
 
             if (remaining > 0) {
               // Active session exists - KEEP optimistic state and potentially resume
-              logger.info('[Session Recovery] ✅ Active session found!', {
+              console.log('[FSP Session Recovery] ✅ Active session found!', {
                 elapsed: `${Math.floor(elapsed / 1000)}s`,
                 remaining: `${Math.floor(remaining / 1000)}s`,
                 counted: status.counted_toward_usage,
@@ -148,28 +154,30 @@ function FSPSimulationScreen() {
                 usageMarkedRef.current = true;
               }
 
-              logger.info('[Session Recovery] ✅ Session state restored. User can continue or start fresh.');
+              console.log('[FSP Session Recovery] ✅ Session state restored. User can continue or start fresh.');
               return; // Don't reset optimistic count
             } else {
-              logger.info('[Session Recovery] Session expired (time exceeded), cleaning up...');
+              console.log('[FSP Session Recovery] Session expired (time exceeded), cleaning up...');
             }
           } else {
-            logger.info('[Session Recovery] Session already ended in database, cleaning up...');
+            console.log('[FSP Session Recovery] Session already ended in database, cleaning up...');
           }
         } else {
-          logger.info('[Session Recovery] No saved session found');
+          console.log('[FSP Session Recovery] No saved session found');
         }
 
         // No active session found - clear storage and reset optimistic count
-        logger.info('[Session Recovery] Clearing stale session data and resetting counter...');
+        console.log('[FSP Session Recovery] Clearing stale session data and resetting counter...');
         await SecureStore.deleteItemAsync('sim_session_token_fsp').catch(() => {});
         await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']).catch(
           () => {}
         );
 
+        console.log('[FSP Session Recovery] Calling resetOptimisticCount()...');
         resetOptimisticCount();
+        console.log('[FSP Session Recovery] ✅ Recovery complete');
       } catch (error) {
-        logger.error('[Session Recovery] Error during recovery:', error);
+        console.error('[FSP Session Recovery] ❌ Error during recovery:', error);
         // On error, safe default: reset optimistic count
         resetOptimisticCount();
       }
