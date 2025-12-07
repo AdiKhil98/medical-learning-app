@@ -115,11 +115,77 @@ function KPSimulationScreen() {
     stopGlobalVoiceflowCleanup();
   }, []);
 
-  // Reset optimistic count on page mount/refresh to show actual backend count
+  // SESSION RECOVERY: Check for active session before resetting optimistic count
   useEffect(() => {
-    logger.info('[Mount] Resetting optimistic count to show actual backend data...');
-    resetOptimisticCount();
-  }, [resetOptimisticCount]);
+    const recoverOrResetSession = async () => {
+      try {
+        logger.info('[Session Recovery] Checking for active simulation session...');
+
+        // Check if there's a saved session token in SecureStore
+        const savedToken = await SecureStore.getItemAsync('sim_session_token_kp');
+        const savedStartTime = await AsyncStorage.getItem('sim_start_time_kp');
+
+        if (savedToken && savedStartTime) {
+          logger.info('[Session Recovery] Found saved session:', {
+            token: `${savedToken.substring(0, 8)  }...`,
+            startTime: new Date(parseInt(savedStartTime)).toISOString(),
+          });
+
+          // Verify session is still active in database
+          const status = await simulationTracker.getSimulationStatus(savedToken);
+
+          if (status && !status.ended_at) {
+            const elapsed = Date.now() - parseInt(savedStartTime);
+            const remaining = SIMULATION_DURATION_SECONDS * 1000 - elapsed;
+
+            if (remaining > 0) {
+              // Active session exists - KEEP optimistic state
+              logger.info('[Session Recovery] ✅ Active session found!', {
+                elapsed: `${Math.floor(elapsed / 1000)  }s`,
+                remaining: `${Math.floor(remaining / 1000)  }s`,
+                counted: status.counted_toward_usage,
+              });
+
+              // Keep optimistic deduction if session was active
+              applyOptimisticDeduction();
+
+              // Set session token for potential continuation
+              setSessionToken(savedToken);
+              sessionTokenRef.current = savedToken;
+
+              // Update usage marked state if already counted
+              if (status.counted_toward_usage) {
+                setUsageMarked(true);
+                usageMarkedRef.current = true;
+              }
+
+              logger.info('[Session Recovery] ✅ Session state restored. User can continue or start fresh.');
+              return; // Don't reset optimistic count
+            } else {
+              logger.info('[Session Recovery] Session expired (time exceeded), cleaning up...');
+            }
+          } else {
+            logger.info('[Session Recovery] Session already ended in database, cleaning up...');
+          }
+        } else {
+          logger.info('[Session Recovery] No saved session found');
+        }
+
+        // No active session found - clear storage and reset optimistic count
+        logger.info('[Session Recovery] Clearing stale session data and resetting counter...');
+        await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+        await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
+
+        resetOptimisticCount();
+      } catch (error) {
+        logger.error('[Session Recovery] Error during recovery:', error);
+        // On error, safe default: reset optimistic count
+        resetOptimisticCount();
+      }
+    };
+
+    recoverOrResetSession();
+  }, [resetOptimisticCount, applyOptimisticDeduction]);
 
   // Add state for initialization tracking
   const [isInitializing, setIsInitializing] = useState(false);
@@ -710,7 +776,7 @@ function KPSimulationScreen() {
         if (remainingSeconds % 10 === 0 && remainingSeconds !== prev) {
           logger.info(
             '⏱️ DEBUG: Timer at',
-            `${Math.floor(remainingSeconds / 60)  }:${  String(remainingSeconds % 60).padStart(2, '0')}`,
+            `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}`,
             `(${remainingSeconds} seconds)`
           );
         }
