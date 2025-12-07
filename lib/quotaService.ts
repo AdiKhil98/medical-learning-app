@@ -46,6 +46,36 @@ export interface RecordUsageResult {
   total_simulations?: number;
 }
 
+export interface ActiveSimulation {
+  has_active_simulation: boolean;
+  session_token?: string;
+  simulation_type?: string;
+  started_at?: string;
+  elapsed_seconds?: number;
+  time_remaining_seconds?: number;
+  will_count_toward_usage?: boolean;
+  message?: string;
+}
+
+export interface StartSessionResult {
+  success: boolean;
+  message: string;
+  session_token?: string;
+  simulation_type?: string;
+  started_at?: string;
+  quota_info?: CanStartResult;
+  reason?: string;
+}
+
+export interface EndSessionResult {
+  success: boolean;
+  message: string;
+  session_token?: string;
+  duration_seconds?: number;
+  counted_toward_usage?: boolean;
+  message_detail?: string;
+}
+
 // ===== QUOTA SERVICE CLASS =====
 
 class QuotaService {
@@ -210,6 +240,119 @@ class QuotaService {
       return 'Unbegrenzt';
     }
     return `${used} / ${total}`;
+  }
+
+  /**
+   * ========================================
+   * SESSION TRACKING METHODS
+   * ========================================
+   */
+
+  /**
+   * Start a new simulation session
+   *
+   * This checks quota and creates a new session in simulation_usage_logs
+   *
+   * @param userId - User UUID
+   * @param simulationType - 'kp' or 'fsp'
+   * @param sessionToken - Optional session token (generated if not provided)
+   * @returns Promise with session info
+   */
+  async startSession(userId: string, simulationType: 'kp' | 'fsp', sessionToken?: string): Promise<StartSessionResult> {
+    try {
+      const { data, error } = await supabase.rpc('start_simulation_session', {
+        p_user_id: userId,
+        p_simulation_type: simulationType,
+        p_session_token: sessionToken || undefined,
+      });
+
+      if (error) {
+        console.error('Error starting simulation session:', error);
+        throw error;
+      }
+
+      return data as StartSessionResult;
+    } catch (error) {
+      console.error('Failed to start simulation session:', error);
+      return {
+        success: false,
+        message: 'Fehler beim Starten der Simulation',
+        reason: 'error',
+      };
+    }
+  }
+
+  /**
+   * End a simulation session
+   *
+   * This automatically calculates duration, determines if it counts,
+   * and updates quota if threshold met (>= 5 minutes)
+   *
+   * @param sessionToken - Session UUID
+   * @param userId - User UUID
+   * @returns Promise with end result
+   */
+  async endSession(sessionToken: string, userId: string): Promise<EndSessionResult> {
+    try {
+      const { data, error } = await supabase.rpc('end_simulation_session', {
+        p_session_token: sessionToken,
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('Error ending simulation session:', error);
+        throw error;
+      }
+
+      return data as EndSessionResult;
+    } catch (error) {
+      console.error('Failed to end simulation session:', error);
+      return {
+        success: false,
+        message: 'Fehler beim Beenden der Simulation',
+      };
+    }
+  }
+
+  /**
+   * Get active simulation for a user
+   *
+   * Returns info about any ongoing simulation including elapsed time
+   *
+   * @param userId - User UUID
+   * @returns Promise with active simulation info
+   */
+  async getActiveSimulation(userId: string): Promise<ActiveSimulation> {
+    try {
+      const { data, error } = await supabase.rpc('get_active_simulation', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('Error getting active simulation:', error);
+        throw error;
+      }
+
+      return data as ActiveSimulation;
+    } catch (error) {
+      console.error('Failed to get active simulation:', error);
+      return {
+        has_active_simulation: false,
+        message: 'Fehler beim Laden der aktiven Simulation',
+      };
+    }
+  }
+
+  /**
+   * Helper: Format time remaining for display
+   *
+   * @param seconds - Seconds remaining
+   * @returns Formatted string like "14:32" or "00:05"
+   */
+  formatTimeRemaining(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 }
 
