@@ -25,7 +25,6 @@ export interface SimulationUsageLog {
  * - Database determines: duration >= 300 seconds (5 minutes) = counted
  */
 class SimulationTrackingService {
-
   // Default timeout for RPC calls (10 seconds)
   private readonly RPC_TIMEOUT_MS = 10000;
 
@@ -46,9 +45,7 @@ class SimulationTrackingService {
   private async withTimeout<T>(promise: Promise<T>, timeoutMs: number = this.RPC_TIMEOUT_MS): Promise<T> {
     return Promise.race([
       promise,
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error(`RPC timeout after ${timeoutMs}ms`)), timeoutMs)
-      )
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`RPC timeout after ${timeoutMs}ms`)), timeoutMs)),
     ]);
   }
 
@@ -90,19 +87,22 @@ class SimulationTrackingService {
   async startSimulation(simulationType: SimulationType): Promise<{
     success: boolean;
     sessionToken?: string;
-    error?: string
+    error?: string;
   }> {
     try {
       logger.info('📊 Starting simulation:', simulationType);
 
       // DEBUG: Check session state
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
       logger.info('🔐 Session check:', {
         hasSession: !!session,
         hasAccessToken: !!session?.access_token,
         tokenLength: session?.access_token?.length,
         expiresAt: session?.expires_at,
-        sessionError: sessionError?.message
+        sessionError: sessionError?.message,
       });
 
       // If no session, try to refresh
@@ -117,12 +117,15 @@ class SimulationTrackingService {
         logger.info('✅ Session refreshed successfully');
       }
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       logger.info('👤 User check:', {
         hasUser: !!user,
         userId: user?.id,
         email: user?.email,
-        userError: userError?.message
+        userError: userError?.message,
       });
 
       if (!user) {
@@ -137,14 +140,14 @@ class SimulationTrackingService {
       logger.info('📤 Calling RPC start_simulation_session with:', {
         p_user_id: user.id,
         p_simulation_type: simulationType,
-        p_session_token: sessionToken
+        p_session_token: sessionToken,
       });
 
       const { data, error } = await this.withTimeout(
         supabase.rpc('start_simulation_session', {
           p_user_id: user.id,
           p_simulation_type: simulationType,
-          p_session_token: sessionToken
+          p_session_token: sessionToken,
         })
       );
 
@@ -156,7 +159,7 @@ class SimulationTrackingService {
           message: error.message,
           code: error.code,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
         });
         return { success: false, error: error.message };
       }
@@ -177,7 +180,6 @@ class SimulationTrackingService {
 
       logger.info('✅ Simulation started:', data);
       return { success: true, sessionToken };
-
     } catch (error: any) {
       logger.error('❌ Exception in startSimulation:', error);
       // ISSUE #18 FIX: Standardize to German
@@ -203,7 +205,9 @@ class SimulationTrackingService {
         return { success: false, error: 'Ungültiges Sitzungstoken' };
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         // ISSUE #18 FIX: Standardize to German
         return { success: false, error: 'Nicht angemeldet' };
@@ -212,7 +216,7 @@ class SimulationTrackingService {
       // Call database function - it handles validation and counter increment
       const { data, error } = await supabase.rpc('mark_simulation_counted', {
         p_session_token: sessionToken,
-        p_user_id: user.id
+        p_user_id: user.id,
       });
 
       if (error) {
@@ -226,7 +230,7 @@ class SimulationTrackingService {
           success: false,
           // ISSUE #18 FIX: Standardize to German
           error: data.error || 'Validierung fehlgeschlagen',
-          alreadyCounted: data.already_counted
+          alreadyCounted: data.already_counted,
         };
       }
 
@@ -235,9 +239,8 @@ class SimulationTrackingService {
 
       return {
         success: true,
-        alreadyCounted: data.already_counted
+        alreadyCounted: data.already_counted,
       };
-
     } catch (error: any) {
       logger.error('❌ Exception in markSimulationCounted:', error);
       // ISSUE #18 FIX: Standardize to German
@@ -254,7 +257,7 @@ class SimulationTrackingService {
     success: boolean;
     counted?: boolean;
     durationSeconds?: number;
-    error?: string
+    error?: string;
   }> {
     try {
       logger.info('🏁 Ending simulation:', sessionToken);
@@ -265,7 +268,9 @@ class SimulationTrackingService {
         return { success: false, error: 'Ungültiges Sitzungstoken' };
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         // ISSUE #18 FIX: Standardize to German
         return { success: false, error: 'Nicht angemeldet' };
@@ -274,7 +279,7 @@ class SimulationTrackingService {
       // Call database function to end session
       const { data, error } = await supabase.rpc('end_simulation_session', {
         p_session_token: sessionToken,
-        p_user_id: user.id
+        p_user_id: user.id,
       });
 
       if (error) {
@@ -295,9 +300,8 @@ class SimulationTrackingService {
       return {
         success: true,
         counted: data.counted_toward_usage,
-        durationSeconds: data.duration_seconds
+        durationSeconds: data.duration_seconds,
       };
-
     } catch (error: any) {
       logger.error('❌ Exception in endSimulation:', error);
       // ISSUE #18 FIX: Standardize to German
@@ -317,7 +321,10 @@ class SimulationTrackingService {
       }
 
       // SECURITY FIX: Better auth validation
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (authError) {
         logger.error('❌ Auth error in getSimulationStatus:', authError.message);
@@ -361,7 +368,9 @@ class SimulationTrackingService {
    */
   async getCountedSimulations(limit: number = 10): Promise<SimulationUsageLog[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -406,7 +415,7 @@ class SimulationTrackingService {
 
     return {
       success: result.success,
-      error: result.error
+      error: result.error,
     };
   }
 
@@ -428,7 +437,7 @@ class SimulationTrackingService {
 
     return {
       success: result.success,
-      error: result.error
+      error: result.error,
     };
   }
 
@@ -443,7 +452,7 @@ class SimulationTrackingService {
 
   /**
    * Check if user can start a simulation
-   * Uses database function for consistent validation logic
+   * Uses NEW database-driven quota system (user_simulation_quota table)
    * CRITICAL: Block only when remaining === 0
    */
   async canStartSimulation(simulationType: SimulationType): Promise<{
@@ -455,89 +464,91 @@ class SimulationTrackingService {
     totalLimit?: number;
   }> {
     try {
-      logger.info('[Backend Validation] Checking simulation access for type:', simulationType);
+      logger.info('[Quota Check] Checking simulation access for type:', simulationType);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        logger.info('[Backend Validation] Not authenticated');
+        logger.info('[Quota Check] Not authenticated');
         return {
           allowed: false,
           reason: 'not_authenticated',
           message: 'Nicht angemeldet',
           remaining: 0,
-          totalLimit: 0
+          totalLimit: 0,
         };
       }
 
-      // Use database function for validation
-      const { data, error } = await supabase
-        .rpc('check_simulation_limit_before_start', { p_user_id: user.id })
-        .single();
+      // Use NEW quota system database function
+      const { data, error } = await supabase.rpc('can_start_simulation', {
+        p_user_id: user.id,
+      });
 
       if (error) {
-        logger.error('[Backend Validation] Error checking limit:', error);
+        logger.error('[Quota Check] Error checking quota:', error);
         return {
           allowed: false,
           reason: 'database_error',
           message: 'Fehler bei der Überprüfung',
           remaining: 0,
-          totalLimit: 0
+          totalLimit: 0,
         };
       }
 
-      logger.info('[Backend Validation] Limit check result:', {
-        canStart: data.can_start,
-        remaining: data.remaining,
-        totalLimit: data.total_limit,
-        used: data.used_count,
-        calculation: `${data.total_limit} - ${data.used_count} = ${data.remaining}`
+      logger.info('[Quota Check] Result:', {
+        can_start: data.can_start,
+        reason: data.reason,
+        simulations_remaining: data.simulations_remaining,
+        simulations_used: data.simulations_used,
+        total_simulations: data.total_simulations,
       });
 
-      // CRITICAL: Only block if remaining === 0
-      if (!data.can_start || data.remaining === 0) {
-        logger.error('[Backend Validation] ❌ BLOCKED - Limit reached:', data.reason);
-        return {
-          allowed: false,
-          reason: data.remaining === 0 ? 'limit_reached' : 'blocked',
-          message: data.reason,
-          shouldUpgrade: data.remaining === 0,
-          remaining: data.remaining,
-          totalLimit: data.total_limit
-        };
-      }
-
       // Check for existing active sessions (concurrency check)
-      const hasActiveSession = await this.hasActiveSession(user.id);
-      if (hasActiveSession) {
-        logger.error('[Backend Validation] ❌ BLOCKED - User has active session');
+      if (data.can_start) {
+        const hasActiveSession = await this.hasActiveSession(user.id);
+        if (hasActiveSession) {
+          logger.error('[Quota Check] ❌ BLOCKED - User has active session');
+          return {
+            allowed: false,
+            reason: 'concurrent_session',
+            message: 'Sie haben bereits eine aktive Simulation',
+            remaining: data.simulations_remaining || 0,
+            totalLimit: data.total_simulations || 0,
+          };
+        }
+      }
+
+      // Return result based on quota check
+      if (!data.can_start) {
+        logger.error('[Quota Check] ❌ BLOCKED -', data.reason);
         return {
           allowed: false,
-          reason: 'concurrent_session',
-          message: 'Sie haben bereits eine aktive Simulation',
-          remaining: data.remaining,
-          totalLimit: data.total_limit
+          reason: data.reason === 'quota_exceeded' ? 'limit_reached' : data.reason,
+          message: data.message,
+          shouldUpgrade: data.reason === 'quota_exceeded',
+          remaining: data.simulations_remaining || 0,
+          totalLimit: data.total_simulations || 0,
         };
       }
 
-      // All checks passed
-      logger.info('[Backend Validation] ✅ ALLOWED - Remaining:', data.remaining);
+      logger.info('[Quota Check] ✅ ALLOWED - Remaining:', data.simulations_remaining);
       return {
         allowed: true,
-        reason: 'allowed',
-        message: data.reason,
+        reason: data.reason,
+        message: data.message,
         shouldUpgrade: false,
-        remaining: data.remaining,
-        totalLimit: data.total_limit
+        remaining: data.simulations_remaining || 0,
+        totalLimit: data.total_simulations || 0,
       };
-
     } catch (error: any) {
-      logger.error('[Backend Validation] Exception:', error);
+      logger.error('[Quota Check] Exception:', error);
       return {
         allowed: false,
         reason: 'system_error',
         message: 'Systemfehler bei der Validierung',
         remaining: 0,
-        totalLimit: 0
+        totalLimit: 0,
       };
     }
   }
@@ -559,7 +570,7 @@ class SimulationTrackingService {
         return false;
       }
 
-      const hasActive = (data && data.length > 0);
+      const hasActive = data && data.length > 0;
       logger.info('[hasActiveSession]', hasActive ? 'Found active session' : 'No active session');
       return hasActive;
     } catch (error) {
@@ -579,11 +590,7 @@ class SimulationTrackingService {
     const issues: string[] = [];
 
     try {
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data: user, error } = await supabase.from('users').select('*').eq('id', userId).single();
 
       if (error || !user) {
         issues.push('User not found');
@@ -625,10 +632,7 @@ class SimulationTrackingService {
 
       // Apply fixes if needed
       if (needsUpdate) {
-        const { error: updateError } = await supabase
-          .from('users')
-          .update(updates)
-          .eq('id', userId);
+        const { error: updateError } = await supabase.from('users').update(updates).eq('id', userId);
 
         if (updateError) {
           logger.error('[Edge Case Fix] Error updating user:', updateError);
@@ -640,7 +644,6 @@ class SimulationTrackingService {
       }
 
       return { fixed: false, issues: ['No issues found'] };
-
     } catch (error) {
       logger.error('[Edge Case Fix] Exception:', error);
       return { fixed: false, issues: ['Exception occurred'] };
@@ -653,13 +656,13 @@ class SimulationTrackingService {
    */
   private getDefaultLimitForTier(tier: string): number {
     const defaults: Record<string, number> = {
-      'basis': 30,
-      'profi': 60,
-      'unlimited': 999999,
+      basis: 30,
+      profi: 60,
+      unlimited: 999999,
       // Custom tiers
-      'custom_5': 5,
-      'custom_50': 50,
-      'custom_100': 100
+      custom_5: 5,
+      custom_50: 50,
+      custom_100: 100,
     };
     return defaults[tier] || 30; // Default to 30 if unknown
   }
