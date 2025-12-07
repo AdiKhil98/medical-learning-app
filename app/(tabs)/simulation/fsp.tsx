@@ -14,6 +14,7 @@ import {
   enableVoiceflowCleanup,
 } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
