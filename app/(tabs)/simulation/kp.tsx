@@ -31,6 +31,7 @@ import {
   HighlightBox,
   TimeBadge,
 } from '@/components/ui/InlineContent';
+import FlashcardCarousel from '@/components/ui/FlashcardCarousel';
 import {
   SIMULATION_DURATION_SECONDS,
   USAGE_THRESHOLD_SECONDS,
@@ -1647,57 +1648,7 @@ function KPSimulationScreen() {
     {
       id: 'overview',
       title: 'Überblick',
-      content: (
-        <InlineContent>
-          <Section title="🎯 Willkommen zu Ihrer Prüfungsvorbereitung">
-            <Paragraph>
-              Diese Simulation wurde entwickelt, um Sie optimal auf die <BoldText>Kenntnisprüfung (KP)</BoldText>{' '}
-              vorzubereiten. Wir haben großen Wert darauf gelegt, die reale Prüfungsatmosphäre so authentisch wie
-              möglich nachzubilden.
-            </Paragraph>
-          </Section>
-
-          <Section title="🎯 Unser Versprechen an Sie">
-            <HighlightBox type="success">
-              ✓ <BoldText>Realistische Prüfungssimulation</BoldText>
-            </HighlightBox>
-
-            <Paragraph>
-              Wir haben großen Wert darauf gelegt, die Simulation so authentisch wie möglich zu gestalten:
-            </Paragraph>
-
-            <View style={{ marginLeft: 16 }}>
-              <Paragraph>✓ Echte Prüfungsatmosphäre</Paragraph>
-              <Paragraph>✓ Realistische Patientengespräche</Paragraph>
-              <Paragraph>✓ Prüferfragen wie in der echten KP</Paragraph>
-              <Paragraph>✓ Faire und präzise Bewertung</Paragraph>
-              <Paragraph>✓ Konstruktives Feedback nach jedem Durchgang</Paragraph>
-            </View>
-
-            <InfoBox>
-              💡 <BoldText>100x üben = 1x bestehen</BoldText>
-              {'\n\n'}Unser Ziel ist es, dass Sie durch intensives Training die Prüfung beim ersten Versuch bestehen:
-              {'\n'}• 🔄 Unbegrenzt üben (je nach Plan)
-              {'\n'}• 📊 Jede Simulation wird ehrlich bewertet
-              {'\n'}• 💡 Sie erhalten nach jedem Durchgang wertvolles Feedback
-              {'\n'}• 📈 Sie können Ihren Fortschritt über Zeit verfolgen
-              {'\n'}• 🎯 Sie gewinnen Sicherheit und Routine
-            </InfoBox>
-          </Section>
-
-          <Section title="🚀 Kontinuierliche Verbesserung">
-            <Paragraph>Wir arbeiten ständig daran, die Simulation zu optimieren:</Paragraph>
-
-            <View style={{ marginLeft: 16 }}>
-              <Paragraph>⚡ Schnellere Ladezeiten</Paragraph>
-              <Paragraph>🎤 Bessere Sprachqualität</Paragraph>
-              <Paragraph>🧠 Intelligentere KI-Agenten</Paragraph>
-              <Paragraph>📋 Umfangreichere Fallbibliothek</Paragraph>
-              <Paragraph>🎯 Noch präzisere Evaluation</Paragraph>
-            </View>
-          </Section>
-        </InlineContent>
-      ),
+      content: <FlashcardCarousel />,
     },
     {
       id: 'process',
