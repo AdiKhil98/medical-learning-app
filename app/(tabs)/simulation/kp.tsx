@@ -294,20 +294,33 @@ function KPSimulationScreen() {
       try {
         const activeSimulation = await quotaService.getActiveSimulation(user.id);
 
-        if (activeSimulation.has_active_simulation && activeSimulation.session_token) {
-          logger.info(`✅ [${timestamp}] Found active simulation to restore:`, {
+        if (activeSimulation.has_active_simulation && activeSimulation.session_token && activeSimulation.started_at) {
+          // Check if session is recent (within last 30 minutes)
+          // Only restore recent sessions to avoid stale simulations from hours/days ago
+          const sessionStart = new Date(activeSimulation.started_at).getTime();
+          const now = Date.now();
+          const ageMinutes = (now - sessionStart) / (1000 * 60);
+
+          logger.info(`✅ [${timestamp}] Found active simulation:`, {
             sessionToken: `${activeSimulation.session_token.substring(0, 8)}...`,
             simulationType: activeSimulation.simulation_type,
             elapsedSeconds: activeSimulation.elapsed_seconds,
-            timeRemaining: activeSimulation.time_remaining_seconds,
+            ageMinutes: Math.round(ageMinutes),
           });
 
-          // Restore session token only - don't auto-start timer
-          // User must explicitly click "Start Timer" to resume
-          setSessionToken(activeSimulation.session_token);
-          sessionTokenRef.current = activeSimulation.session_token;
+          // Only restore if session is fresh (within 30 minutes grace period)
+          if (ageMinutes <= STALE_SESSION_GRACE_PERIOD_MINUTES) {
+            // Restore session token only - don't auto-start timer
+            // User must explicitly click "Start Timer" to resume
+            setSessionToken(activeSimulation.session_token);
+            sessionTokenRef.current = activeSimulation.session_token;
 
-          logger.info(`✅ [${timestamp}] Session token restored - user can resume by clicking Start Timer`);
+            logger.info(`✅ [${timestamp}] Session is recent (${Math.round(ageMinutes)}min old) - restored for resume`);
+          } else {
+            logger.warn(
+              `⚠️ [${timestamp}] Session is stale (${Math.round(ageMinutes)}min old) - NOT restoring. Will create new session.`
+            );
+          }
 
           // Continue with Voiceflow initialization
         } else {
