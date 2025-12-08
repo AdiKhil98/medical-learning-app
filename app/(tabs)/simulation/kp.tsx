@@ -575,7 +575,7 @@ function KPSimulationScreen() {
         logger.info(`🎉 [${timestamp}] ========================================`);
         logger.info(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
         logger.info(`🎉 [${timestamp}] User ID: ${userId}`);
-        logger.info(`🎉 [${timestamp}] Session Token: ${result.sessionToken.substring(0, 8)}...`);
+        logger.info(`🎉 [${timestamp}] Session Token: ${sessionTokenRef.current?.substring(0, 8)}...`);
         logger.info(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
         logger.info(`🎉 [${timestamp}] ========================================`);
 
