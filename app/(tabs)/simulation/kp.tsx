@@ -320,11 +320,29 @@ function KPSimulationScreen() {
             logger.warn(
               `⚠️ [${timestamp}] Session is stale (${Math.round(ageMinutes)}min old) - NOT restoring. Will create new session.`
             );
+
+            // IMPORTANT: Clear AsyncStorage to prevent SESSION RECOVERY useEffect from restoring stale data
+            try {
+              await SecureStore.deleteItemAsync('sim_session_token_kp');
+              await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
+              logger.info(`🧹 [${timestamp}] Cleared stale session data from AsyncStorage`);
+            } catch (error) {
+              logger.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
+            }
           }
 
           // Continue with Voiceflow initialization
         } else {
           logger.info(`ℹ️ [${timestamp}] No active simulation found - will create new session`);
+
+          // Clear any stale AsyncStorage data
+          try {
+            await SecureStore.deleteItemAsync('sim_session_token_kp');
+            await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
+            logger.info(`🧹 [${timestamp}] Cleared any stale session data from AsyncStorage`);
+          } catch (error) {
+            logger.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
+          }
         }
       } catch (error) {
         logger.error(`⚠️ [${timestamp}] Error checking for active simulation:`, error);
