@@ -29,8 +29,10 @@ import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 
 function KPSimulationScreen() {
+  console.log('🎯🎯🎯 KP SIMULATION COMPONENT RENDERING');
   const router = useRouter();
   const { user } = useAuth();
+  console.log('🎯 User in component:', user ? `ID: ${user.id.substring(0, 8)}...` : 'NOT FOUND');
   const {
     canUseSimulation,
     subscriptionStatus,
@@ -206,10 +208,19 @@ function KPSimulationScreen() {
     console.log('Platform.OS:', Platform.OS);
     console.log('User:', user ? 'Present' : 'Missing');
     console.log('checkAccess function:', typeof checkAccess);
+    console.log('widgetDebugLog state:', widgetDebugLog);
 
     const initializeVoiceflow = async () => {
       console.log('🚀🚀🚀 initializeVoiceflow() CALLED');
-      addDebugLog('useEffect fired - starting initialization');
+      console.log('About to call addDebugLog...');
+
+      try {
+        addDebugLog('useEffect fired - starting initialization');
+        console.log('✅ addDebugLog called successfully');
+      } catch (error) {
+        console.error('❌ Error calling addDebugLog:', error);
+      }
+
       const timestamp = new Date().toISOString();
 
       // ============================================
