@@ -81,6 +81,13 @@ function KPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
+  // Debug state for widget initialization
+  const [widgetDebugLog, setWidgetDebugLog] = useState<string[]>([]);
+  const addDebugLog = (message: string) => {
+    setWidgetDebugLog((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    logger.info(`[WIDGET DEBUG] ${message}`);
+  };
+
   // FIX: Helper to clear simulation storage (AsyncStorage + SecureStore)
   const clearSimulationStorage = async () => {
     try {
@@ -202,6 +209,7 @@ function KPSimulationScreen() {
 
     const initializeVoiceflow = async () => {
       console.log('🚀🚀🚀 initializeVoiceflow() CALLED');
+      addDebugLog('useEffect fired - starting initialization');
       const timestamp = new Date().toISOString();
 
       // ============================================
@@ -209,6 +217,7 @@ function KPSimulationScreen() {
       // ============================================
       if (hasInitializedRef.current) {
         logger.info(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        addDebugLog('Already initialized - skipping');
         return;
       }
 
@@ -242,17 +251,20 @@ function KPSimulationScreen() {
       }
 
       logger.info(`✅ [${timestamp}] User validated - ID: ${user.id}`);
+      addDebugLog(`User validated: ${user.id.substring(0, 8)}...`);
 
       // ============================================
       // STEP 2: CHECK ACCESS PERMISSIONS
       // ============================================
       logger.info(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
+      addDebugLog('Checking access permissions...');
 
       try {
         const accessCheck = await checkAccess();
 
         if (!accessCheck) {
           logger.error(`❌ [${timestamp}] Access check returned null/undefined`);
+          addDebugLog('ERROR: Access check failed');
           setInitializationError('Failed to verify access permissions');
           Alert.alert(
             'Zugriffsfehler',
@@ -270,13 +282,16 @@ function KPSimulationScreen() {
 
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
           logger.info(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
+          addDebugLog('BLOCKED: No simulations remaining');
           setInitializationError('No simulations remaining');
           return; // Do NOT initialize widget
         }
 
         logger.info(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
+        addDebugLog(`Access granted: ${accessCheck.remainingSimulations} remaining`);
       } catch (accessError) {
         logger.error(`❌ [${timestamp}] Error checking access:`, accessError);
+        addDebugLog(`ERROR: ${accessError instanceof Error ? accessError.message : String(accessError)}`);
         setInitializationError('Access check failed');
         Alert.alert(
           'Zugriffsfehler',
@@ -354,9 +369,11 @@ function KPSimulationScreen() {
       // ============================================
       if (Platform.OS === 'web') {
         logger.info(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
+        addDebugLog('Platform: web - initializing Voiceflow...');
         await initializeWithRetry(user.id, timestamp);
       } else {
         logger.info(`📱 [${timestamp}] Mobile platform detected - Voiceflow widget only available on web`);
+        addDebugLog(`Platform: ${Platform.OS} - widget not available`);
       }
     };
 
@@ -375,6 +392,7 @@ function KPSimulationScreen() {
 
       try {
         logger.info(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
+        addDebugLog(`Attempt ${attempt}/${maxRetryAttempts} starting...`);
         setIsInitializing(true);
         setInitializationError(null);
         initializationAttemptsRef.current = attempt;
@@ -552,6 +570,7 @@ function KPSimulationScreen() {
 
         // Mark as successfully initialized to prevent re-initialization
         hasInitializedRef.current = true;
+        addDebugLog('✅ SUCCESS! Widget initialized');
 
         setIsInitializing(false);
         setInitializationError(null);
@@ -564,6 +583,7 @@ function KPSimulationScreen() {
           error: errorMessage,
           stack: error instanceof Error ? error.stack : undefined,
         });
+        addDebugLog(`❌ Attempt ${attempt} failed: ${errorMessage}`);
 
         // If this was the last attempt, show error to user
         if (attempt === maxRetryAttempts) {
@@ -1819,6 +1839,20 @@ function KPSimulationScreen() {
               <FlashcardCarousel />
             </View>
 
+            {/* Debug Panel - Visible Log */}
+            {Platform.OS === 'web' && widgetDebugLog.length > 0 && (
+              <View style={styles.debugPanel}>
+                <Text style={styles.debugPanelTitle}>🔍 Widget Initialization Debug Log</Text>
+                <ScrollView style={styles.debugLogContainer} nestedScrollEnabled>
+                  {widgetDebugLog.map((log, index) => (
+                    <Text key={index} style={styles.debugLogText}>
+                      {log}
+                    </Text>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             {/* Widget Area */}
             <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
               {Platform.OS === 'web' ? (
@@ -2197,6 +2231,30 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     minHeight: 400,
+  },
+  debugPanel: {
+    backgroundColor: '#1f2937',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 20,
+    maxHeight: 300,
+    borderWidth: 2,
+    borderColor: '#10b981',
+  },
+  debugPanelTitle: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  debugLogContainer: {
+    maxHeight: 250,
+  },
+  debugLogText: {
+    color: '#d1d5db',
+    fontSize: 12,
+    fontFamily: 'monospace',
+    marginBottom: 4,
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space
