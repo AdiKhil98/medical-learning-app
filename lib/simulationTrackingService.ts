@@ -31,12 +31,13 @@ class SimulationTrackingService {
   /**
    * Generate unique session token using cryptographically secure random UUID
    * SECURITY: Uses crypto.randomUUID() instead of Math.random() to prevent token prediction
+   * Returns pure UUID format (no prefix) for database compatibility
    */
   private generateSessionToken(): string {
     // Use crypto.randomUUID() for cryptographically secure token generation
     // This prevents attackers from predicting session tokens
-    const secureUUID = crypto.randomUUID();
-    return `sim_${secureUUID}`;
+    // Returns pure UUID format for database uuid type compatibility
+    return crypto.randomUUID();
   }
 
   /**
