@@ -56,15 +56,18 @@ END $$;
 
 -- STEP 2: Nuclear option - Delete ALL simulation logs
 -- This gives us a clean slate since we have corrupted test data
-RAISE NOTICE '=== DELETING ALL SIMULATION LOGS ===';
-DELETE FROM simulation_usage_logs;
+DO $$
+BEGIN
+  RAISE NOTICE '=== DELETING ALL SIMULATION LOGS ===';
+  DELETE FROM simulation_usage_logs;
 
--- STEP 3: Reset ALL quota records to 0
-RAISE NOTICE '=== RESETTING ALL QUOTA RECORDS ===';
-UPDATE user_simulation_quota
-SET
-  simulations_used = 0,
-  updated_at = NOW();
+  -- Reset ALL quota records to 0
+  RAISE NOTICE '=== RESETTING ALL QUOTA RECORDS ===';
+  UPDATE user_simulation_quota
+  SET
+    simulations_used = 0,
+    updated_at = NOW();
+END $$;
 
 -- STEP 4: Verify the reset
 DO $$
