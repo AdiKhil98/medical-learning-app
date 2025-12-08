@@ -296,49 +296,18 @@ function KPSimulationScreen() {
 
         if (activeSimulation.has_active_simulation && activeSimulation.session_token) {
           logger.info(`✅ [${timestamp}] Found active simulation to restore:`, {
-            sessionToken: `${activeSimulation.session_token.substring(0, 8)  }...`,
+            sessionToken: `${activeSimulation.session_token.substring(0, 8)}...`,
             simulationType: activeSimulation.simulation_type,
             elapsedSeconds: activeSimulation.elapsed_seconds,
             timeRemaining: activeSimulation.time_remaining_seconds,
           });
 
-          // Restore session token
+          // Restore session token only - don't auto-start timer
+          // User must explicitly click "Start Timer" to resume
           setSessionToken(activeSimulation.session_token);
           sessionTokenRef.current = activeSimulation.session_token;
 
-          // Restore timer based on elapsed time
-          const elapsedSeconds = activeSimulation.elapsed_seconds || 0;
-          const remainingSeconds = Math.max(0, SIMULATION_DURATION_SECONDS - elapsedSeconds);
-
-          // Calculate absolute end time based on when the session started
-          const endTime = Date.now() + remainingSeconds * 1000;
-          setTimerEndTime(endTime);
-          timerEndTimeRef.current = endTime;
-          setTimeRemaining(remainingSeconds);
-          previousTimeRef.current = remainingSeconds;
-
-          // Start the timer interval
-          timerActiveRef.current = true;
-          setTimerActive(true);
-
-          logger.info(`🔄 [${timestamp}] Timer restored: ${remainingSeconds} seconds remaining`);
-
-          // Start timer interval
-          timerInterval.current = setInterval(() => {
-            const currentEndTime = timerEndTimeRef.current || endTime;
-            const remaining = currentEndTime - Date.now();
-            const remainingSecs = Math.floor(remaining / 1000);
-
-            if (remaining <= 0) {
-              setTimeRemaining(0);
-              previousTimeRef.current = 0;
-            } else {
-              setTimeRemaining(remainingSecs);
-              previousTimeRef.current = remainingSecs;
-            }
-          }, 1000);
-
-          logger.info(`✅ [${timestamp}] Session successfully restored from active simulation`);
+          logger.info(`✅ [${timestamp}] Session token restored - user can resume by clicking Start Timer`);
 
           // Continue with Voiceflow initialization
         } else {
@@ -763,31 +732,48 @@ function KPSimulationScreen() {
         setTimerActive(false);
       }
 
-      logger.info('⏰ KP: Starting 20-minute simulation timer');
+      logger.info('⏰ KP: Starting simulation timer');
       logger.info('🔍 KP DEBUG: Current timerActive state:', timerActive);
       logger.info('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
       logger.info('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
+
+      // Check if this is a resumed session (check for active simulation)
+      let remainingSeconds = SIMULATION_DURATION_SECONDS;
+      let isResumingSession = false;
+
+      try {
+        const activeSimulation = await quotaService.getActiveSimulation(user.id);
+        if (activeSimulation.has_active_simulation && activeSimulation.session_token === sessionTokenRef.current) {
+          // This is a resumed session - calculate remaining time
+          const elapsedSeconds = activeSimulation.elapsed_seconds || 0;
+          remainingSeconds = Math.max(0, SIMULATION_DURATION_SECONDS - elapsedSeconds);
+          isResumingSession = true;
+          logger.info(`🔄 KP: Resuming session - elapsed: ${elapsedSeconds}s, remaining: ${remainingSeconds}s`);
+        }
+      } catch (error) {
+        logger.error('⚠️ KP: Error checking for active simulation, starting fresh timer:', error);
+      }
 
       // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
       logger.info('🔍 DEBUG: Setting timer active IMMEDIATELY');
 
       // Set ref FIRST to prevent race conditions
       timerActiveRef.current = true;
-      previousTimeRef.current = 20 * 60;
+      previousTimeRef.current = remainingSeconds;
 
       // Then update React state
       setTimerActive(true);
-      setTimeRemaining(20 * 60);
+      setTimeRemaining(remainingSeconds);
 
       logger.info('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
       // Calculate end time upfront
       const startTime = Date.now();
-      const duration = 20 * 60 * 1000;
+      const duration = remainingSeconds * 1000;
       const endTime = startTime + duration;
       setTimerEndTime(endTime);
       timerEndTimeRef.current = endTime;
-      previousTimeRef.current = 20 * 60;
+      previousTimeRef.current = remainingSeconds;
 
       try {
         // Apply optimistic counter deduction (show immediate feedback to user)
