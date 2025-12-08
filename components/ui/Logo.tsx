@@ -206,30 +206,24 @@ export default function Logo({
             >
               {/* Professional logo branding with gradient text (web only) */}
               <View style={styles.medicalLogoContainer}>
-                {showText && Platform.OS === 'web' ? (
-                  <View
-                    style={{
-                      background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B6B 100%)' as any,
-                      WebkitBackgroundClip: 'text' as any,
-                      WebkitTextFillColor: 'transparent' as any,
-                      backgroundClip: 'text' as any,
-                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontWeight: '800',
-                      fontSize: size === 'small' ? 22 : size === 'large' ? 32 : 26,
-                      letterSpacing: -0.5,
-                      textAlign: 'center' as any,
-                      transition: 'all 0.3s ease' as any,
-                    }}
-                  >
-                    KP Med
-                  </View>
-                ) : showText ? (
+                {showText ? (
                   <Text
                     style={[
                       styles.medicalBrandText,
                       {
                         fontSize: size === 'small' ? 22 : size === 'large' ? 32 : 26,
-                        fontFamily: 'Inter',
+                        fontFamily:
+                          Platform.OS === 'web' ? 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' : 'Inter',
+                        fontWeight: '800',
+                        letterSpacing: -0.5,
+                        textAlign: 'center',
+                        ...(Platform.OS === 'web' && {
+                          background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B6B 100%)' as any,
+                          WebkitBackgroundClip: 'text' as any,
+                          WebkitTextFillColor: 'transparent' as any,
+                          backgroundClip: 'text' as any,
+                          transition: 'all 0.3s ease' as any,
+                        }),
                       },
                     ]}
                   >
