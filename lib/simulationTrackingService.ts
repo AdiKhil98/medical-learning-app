@@ -220,9 +220,9 @@ class SimulationTrackingService {
 
       if (!data.success) {
         logger.error('❌ Failed to start session:', data);
-        logger.error('❌ Function returned error:', data.error);
-        // ISSUE #18 FIX: Standardize to German
-        return { success: false, error: data.error || 'Unbekannter Fehler' };
+        logger.error('❌ Function returned error:', data.message || data.reason);
+        // Database function returns 'message' and 'reason' fields, not 'error'
+        return { success: false, error: data.message || data.reason || 'Unbekannter Fehler' };
       }
 
       logger.info('✅ Simulation started:', data);
@@ -336,8 +336,8 @@ class SimulationTrackingService {
 
       if (!data.success) {
         logger.error('❌ Failed to end session:', data);
-        // ISSUE #18 FIX: Standardize to German
-        return { success: false, error: data.error || 'Unbekannter Fehler' };
+        // Database function returns 'message' field, not 'error'
+        return { success: false, error: data.message || 'Unbekannter Fehler' };
       }
 
       logger.info('✅ Simulation ended:', data);
