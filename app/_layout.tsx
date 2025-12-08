@@ -70,6 +70,16 @@ export default function RootLayout() {
   // Fix mobile viewport on web
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Add Google Fonts (Inter) import
+      if (!document.getElementById('google-fonts-inter')) {
+        const link = document.createElement('link');
+        link.id = 'google-fonts-inter';
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
+        document.head.appendChild(link);
+        logger.info('✅ Google Fonts (Inter) loaded');
+      }
+
       // Add mobile viewport fix styles
       const style = document.createElement('style');
       style.id = 'mobile-viewport-fix';
@@ -85,6 +95,7 @@ export default function RootLayout() {
           width: 100%;
           max-width: 100vw;
           overflow-x: hidden;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
       `;
       if (!document.getElementById('mobile-viewport-fix')) {

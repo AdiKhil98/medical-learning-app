@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,8 @@ export default function UserAvatar({ size = 'medium' }: UserAvatarProps) {
   const { isDarkMode } = useTheme();
   const { getSubscriptionInfo } = useSubscription(user?.id);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const getInitials = () => {
     if (!user?.email) return 'ZA'; // Default for Zaid57
@@ -40,19 +42,61 @@ export default function UserAvatar({ size = 'medium' }: UserAvatarProps) {
 
   const avatarSize = getAvatarSize();
 
-  // Removed menu items - only show user info in dropdown
+  // Hover handlers for micro-interactions
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    Animated.spring(scaleAnim, {
+      toValue: 1.1,
+      useNativeDriver: true,
+      friction: 3,
+    }).start();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 3,
+    }).start();
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => setShowDropdown(true)} style={styles.avatarTouchable} activeOpacity={0.8}>
-        <LinearGradient
-          colors={['#10B981', '#059669', '#047857']} // Keep green for user avatar but with modern shades
-          style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text style={[styles.initials, { fontSize: avatarSize * 0.35 }]}>{getInitials()}</Text>
-        </LinearGradient>
+      <TouchableOpacity
+        onPress={() => setShowDropdown(true)}
+        style={styles.avatarTouchable}
+        activeOpacity={0.8}
+        {...(Platform.OS === 'web' && {
+          onMouseEnter: handleMouseEnter,
+          onMouseLeave: handleMouseLeave,
+          style: { cursor: 'pointer' } as any,
+        })}
+      >
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <LinearGradient
+            colors={['#10B981', '#059669', '#047857']} // Keep green for user avatar but with modern shades
+            style={[
+              styles.avatar,
+              {
+                width: avatarSize,
+                height: avatarSize,
+                ...(isHovered &&
+                  Platform.OS === 'web' && {
+                    shadowColor: '#10B981',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }),
+              },
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={[styles.initials, { fontSize: avatarSize * 0.35 }]}>{getInitials()}</Text>
+          </LinearGradient>
+        </Animated.View>
       </TouchableOpacity>
 
       {/* Dropdown Modal */}
@@ -119,6 +163,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 6,
+    ...(Platform.OS === 'web' && {
+      transition: 'all 0.2s ease' as any,
+    }),
   },
   initials: {
     color: 'white',

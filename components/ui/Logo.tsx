@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Shield, Plus, Stethoscope, Heart, Hexagon } from 'lucide-react-native';
@@ -24,6 +24,8 @@ export default function Logo({
   const { colors, isDarkMode } = useTheme();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverScale = useRef(new Animated.Value(1)).current;
 
   const getIconSize = () => {
     switch (size) {
@@ -166,23 +168,74 @@ export default function Logo({
         );
 
       case 'medical':
+        const handleMouseEnter = () => {
+          setIsHovered(true);
+          Animated.spring(hoverScale, {
+            toValue: 1.05,
+            useNativeDriver: true,
+            friction: 3,
+          }).start();
+        };
+
+        const handleMouseLeave = () => {
+          setIsHovered(false);
+          Animated.spring(hoverScale, {
+            toValue: 1,
+            useNativeDriver: true,
+            friction: 3,
+          }).start();
+        };
+
         return (
-          <Container style={styles.container} onPress={onPress}>
-            <Animated.View style={[styles.medicalContainer, { transform: [{ scale: animated ? pulseAnim : 1 }] }]}>
-              {/* Professional logo branding - no button styling */}
+          <Container
+            style={styles.container}
+            onPress={onPress}
+            {...(Platform.OS === 'web' && {
+              onMouseEnter: handleMouseEnter,
+              onMouseLeave: handleMouseLeave,
+              style: { cursor: onPress ? 'pointer' : 'default' } as any,
+            })}
+          >
+            <Animated.View
+              style={[
+                styles.medicalContainer,
+                {
+                  transform: [{ scale: hoverScale }],
+                },
+              ]}
+            >
+              {/* Professional logo branding with gradient text (web only) */}
               <View style={styles.medicalLogoContainer}>
-                {showText && (
+                {showText && Platform.OS === 'web' ? (
+                  <View
+                    style={{
+                      background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B6B 100%)' as any,
+                      WebkitBackgroundClip: 'text' as any,
+                      WebkitTextFillColor: 'transparent' as any,
+                      backgroundClip: 'text' as any,
+                      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontWeight: '800',
+                      fontSize: size === 'small' ? 22 : size === 'large' ? 32 : 26,
+                      letterSpacing: -0.5,
+                      textAlign: 'center' as any,
+                      transition: 'all 0.3s ease' as any,
+                    }}
+                  >
+                    KP Med
+                  </View>
+                ) : showText ? (
                   <Text
                     style={[
                       styles.medicalBrandText,
                       {
                         fontSize: size === 'small' ? 22 : size === 'large' ? 32 : 26,
+                        fontFamily: 'Inter',
                       },
                     ]}
                   >
                     KP Med
                   </Text>
-                )}
+                ) : null}
               </View>
             </Animated.View>
           </Container>

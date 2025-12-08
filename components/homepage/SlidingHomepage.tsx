@@ -49,6 +49,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const { user } = useAuth();
@@ -58,6 +59,19 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const { recentContent, loading: recentLoading } = useRecentContentForHomepage(user?.id);
 
   const totalSlides = 4;
+
+  // Scroll behavior for glassmorphism header effect (web only)
+  useEffect(() => {
+    if (IS_WEB && typeof window !== 'undefined') {
+      const handleScroll = () => {
+        const scrollY = window.scrollY || window.pageYOffset;
+        setIsScrolled(scrollY > 20);
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   const nextSlide = () => {
     const nextIndex = (currentSlide + 1) % totalSlides;
@@ -142,9 +156,51 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       {/* Clean gradient background */}
       <LinearGradient colors={backgroundGradient as any} style={styles.backgroundGradient} />
 
-      {/* Modern Header - Redesigned */}
-      <View style={styles.modernHeader}>
-        <LinearGradient colors={headerGradient as any} style={styles.headerGradient}>
+      {/* Modern Header - Redesigned with Glassmorphism */}
+      <View
+        style={[
+          styles.modernHeader,
+          IS_WEB && {
+            position: 'sticky' as any,
+            top: 0,
+            zIndex: 1000,
+            ...(isScrolled && IS_WEB
+              ? {
+                  backdropFilter: 'blur(12px)' as any,
+                  WebkitBackdropFilter: 'blur(12px)' as any,
+                  backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                }
+              : {}),
+          },
+        ]}
+      >
+        {/* Gradient accent line at top of header */}
+        {IS_WEB && (
+          <LinearGradient
+            colors={['#FF8C42', '#FF6B6B', '#FFA66B']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 3, width: '100%' }}
+          />
+        )}
+        <LinearGradient
+          colors={
+            isScrolled && IS_WEB
+              ? ['rgba(255, 255, 255, 0)' as any, 'rgba(255, 255, 255, 0)' as any]
+              : (headerGradient as any)
+          }
+          style={[
+            styles.headerGradient,
+            isScrolled &&
+              IS_WEB && {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 8,
+              },
+          ]}
+        >
           <View style={styles.headerContent}>
             {/* Left Section: Menu + Logo */}
             <View style={styles.headerLeft}>
@@ -639,7 +695,7 @@ const styles = StyleSheet.create({
     height: screenHeight,
   },
 
-  // Header Styles - Redesigned (Compact & Professional)
+  // Header Styles - Redesigned (Compact & Professional with Glassmorphism)
   modernHeader: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.08)',
@@ -649,6 +705,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 3,
+    ...(IS_WEB && {
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' as any,
+      willChange: 'transform, box-shadow, background-color' as any,
+    }),
   },
   headerGradient: {
     paddingVertical: IS_MOBILE ? SPACING.sm : SPACING.md, // Reduced from md/lg to sm/md
