@@ -13,18 +13,18 @@ interface LogoProps {
   onPress?: () => void;
 }
 
-export default function Logo({ 
-  size = 'medium', 
-  showText = true, 
-  textColor, 
-  variant = 'premium', 
-  animated = true, 
-  onPress 
+export default function Logo({
+  size = 'medium',
+  showText = true,
+  textColor,
+  variant = 'premium',
+  animated = true,
+  onPress,
 }: LogoProps) {
   const { colors, isDarkMode } = useTheme();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  
+
   const getIconSize = () => {
     switch (size) {
       case 'small':
@@ -38,10 +38,10 @@ export default function Logo({
   };
 
   const iconSize = getIconSize();
-  
+
   // Use provided textColor, or default to white in dark mode, dark green in light mode
   const finalTextColor = textColor || (isDarkMode ? '#FFFFFF' : '#2E7D32');
-  
+
   useEffect(() => {
     if (animated) {
       // Pulse animation
@@ -56,10 +56,10 @@ export default function Logo({
             toValue: 1,
             duration: 2000,
             useNativeDriver: true,
-          })
+          }),
         ])
       );
-      
+
       // Rotate animation for plus icon
       const rotateAnimation = Animated.loop(
         Animated.timing(rotateAnim, {
@@ -68,14 +68,14 @@ export default function Logo({
           useNativeDriver: true,
         })
       );
-      
+
       pulseAnimation.start();
       if (variant === 'minimalist') {
         rotateAnimation.start();
       }
     }
   }, [animated, variant]);
-  
+
   const rotate = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -83,7 +83,7 @@ export default function Logo({
 
   const renderLogo = () => {
     const Container = onPress ? TouchableOpacity : View;
-    
+
     switch (variant) {
       case 'modern':
         return (
@@ -100,17 +100,20 @@ export default function Logo({
             </Animated.View>
             {showText && (
               <View style={styles.modernTextContainer}>
-                <Text style={[styles.modernBrand, { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 32 : 24 }]}>
+                <Text
+                  style={[
+                    styles.modernBrand,
+                    { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 32 : 24 },
+                  ]}
+                >
                   KP|MED
                 </Text>
-                <Text style={[styles.modernTagline, { color: finalTextColor }]}>
-                  MEDICAL EXCELLENCE
-                </Text>
+                <Text style={[styles.modernTagline, { color: finalTextColor }]}>MEDICAL EXCELLENCE</Text>
               </View>
             )}
           </Container>
         );
-        
+
       case 'badge':
         return (
           <Container style={styles.container} onPress={onPress}>
@@ -126,17 +129,20 @@ export default function Logo({
             </Animated.View>
             {showText && (
               <View style={styles.badgeTextContainer}>
-                <Text style={[styles.badgeTitle, { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 28 : 22 }]}>
+                <Text
+                  style={[
+                    styles.badgeTitle,
+                    { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 28 : 22 },
+                  ]}
+                >
                   KPMed
                 </Text>
-                <Text style={[styles.badgeSubtitle, { color: finalTextColor }]}>
-                  Prüfungsvorbereitung
-                </Text>
+                <Text style={[styles.badgeSubtitle, { color: finalTextColor }]}>Prüfungsvorbereitung</Text>
               </View>
             )}
           </Container>
         );
-        
+
       case 'minimalist':
         return (
           <Container style={styles.container} onPress={onPress}>
@@ -154,24 +160,27 @@ export default function Logo({
               </LinearGradient>
             </Animated.View>
             {showText && size !== 'small' && (
-              <Text style={[styles.minimalistTagline, { color: finalTextColor }]}>
-                Medical Training Platform
-              </Text>
+              <Text style={[styles.minimalistTagline, { color: finalTextColor }]}>Medical Training Platform</Text>
             )}
           </Container>
         );
-        
+
       case 'medical':
         return (
           <Container style={styles.container} onPress={onPress}>
             <Animated.View style={[styles.medicalContainer, { transform: [{ scale: animated ? pulseAnim : 1 }] }]}>
-              {/* Simple solid background matching reference image */}
-              <View style={styles.medicalBackground}>
+              {/* Professional logo branding - no button styling */}
+              <View style={styles.medicalLogoContainer}>
                 {showText && (
-                  <Text style={[styles.medicalTitle, {
-                    fontSize: size === 'small' ? 18 : size === 'large' ? 24 : 20,
-                  }]}>
-                    + KP MED
+                  <Text
+                    style={[
+                      styles.medicalBrandText,
+                      {
+                        fontSize: size === 'small' ? 22 : size === 'large' ? 32 : 26,
+                      },
+                    ]}
+                  >
+                    KP Med
                   </Text>
                 )}
               </View>
@@ -193,20 +202,30 @@ export default function Logo({
                 >
                   <Heart size={iconSize * 0.5} color="white" fill="white" strokeWidth={2} />
                 </LinearGradient>
-                <View style={[styles.premiumOverlay, {
-                  width: iconSize * 0.5,
-                  height: iconSize * 0.3,
-                  top: iconSize * 0.35
-                }]}>
+                <View
+                  style={[
+                    styles.premiumOverlay,
+                    {
+                      width: iconSize * 0.5,
+                      height: iconSize * 0.3,
+                      top: iconSize * 0.35,
+                    },
+                  ]}
+                >
                   <Text style={[styles.premiumInitials, { fontSize: iconSize * 0.18 }]}>KP</Text>
                 </View>
               </Animated.View>
               {showText && (
                 <View style={styles.premiumTextContainer}>
-                  <Text style={[styles.premiumText, {
-                    color: finalTextColor,
-                    fontSize: size === 'small' ? 20 : size === 'large' ? 32 : 26
-                  }]}>
+                  <Text
+                    style={[
+                      styles.premiumText,
+                      {
+                        color: finalTextColor,
+                        fontSize: size === 'small' ? 20 : size === 'large' ? 32 : 26,
+                      },
+                    ]}
+                  >
                     KP Med
                   </Text>
                   {(size === 'large' || size === 'medium') && (
@@ -221,7 +240,7 @@ export default function Logo({
         );
     }
   };
-  
+
   return renderLogo();
 }
 
@@ -231,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // Modern Variant (KP|MED)
   modernIconContainer: {
     marginRight: 12,
@@ -264,7 +283,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginTop: -2,
   },
-  
+
   // Badge Variant
   badgeContainer: {
     marginRight: 10,
@@ -294,7 +313,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: -2,
   },
-  
+
   // Minimalist Variant (KP+)
   minimalistContainer: {
     marginRight: 8,
@@ -339,29 +358,20 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     marginLeft: 4,
   },
-  
-  // Medical Variant - Simple button style matching reference image
+
+  // Medical Variant - Professional branding (no button background)
   medicalContainer: {
     position: 'relative',
   },
-  medicalBackground: {
-    backgroundColor: '#FB923C',  // Orange-400, closest to brownish-terracotta #B8846A
-    borderRadius: 12,  // rounded-xl
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+  medicalLogoContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'rgba(251, 146, 60, 0.4)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  medicalTitle: {
+  medicalBrandText: {
     fontFamily: 'System',
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 1.5,
+    fontWeight: '800',
+    color: '#FB923C', // Orange-400 for brand color
+    letterSpacing: -0.5,
     textAlign: 'center',
   },
 

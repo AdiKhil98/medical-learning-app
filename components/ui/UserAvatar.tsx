@@ -10,9 +10,7 @@ interface UserAvatarProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-export default function UserAvatar({ 
-  size = 'medium'
-}: UserAvatarProps) {
+export default function UserAvatar({ size = 'medium' }: UserAvatarProps) {
   const { user, signOut } = useAuth();
   const { isDarkMode } = useTheme();
   const { getSubscriptionInfo } = useSubscription(user?.id);
@@ -31,12 +29,12 @@ export default function UserAvatar({
   const getAvatarSize = () => {
     switch (size) {
       case 'small':
-        return 32;
+        return 36;
       case 'large':
-        return 48;
+        return 56;
       case 'medium':
       default:
-        return 40;
+        return 48; // Increased from 40 to 48 for better prominence
     }
   };
 
@@ -46,20 +44,14 @@ export default function UserAvatar({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        onPress={() => setShowDropdown(true)}
-        style={styles.avatarTouchable}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity onPress={() => setShowDropdown(true)} style={styles.avatarTouchable} activeOpacity={0.8}>
         <LinearGradient
-          colors={['#10B981', '#059669', '#047857']}  // Keep green for user avatar but with modern shades
+          colors={['#10B981', '#059669', '#047857']} // Keep green for user avatar but with modern shades
           style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Text style={[styles.initials, { fontSize: avatarSize * 0.35 }]}>
-            {getInitials()}
-          </Text>
+          <Text style={[styles.initials, { fontSize: avatarSize * 0.35 }]}>{getInitials()}</Text>
         </LinearGradient>
       </TouchableOpacity>
 
@@ -70,11 +62,7 @@ export default function UserAvatar({
         animationType="fade"
         onRequestClose={() => setShowDropdown(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowDropdown(false)}
-        >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowDropdown(false)}>
           <View style={styles.dropdownContainer}>
             {/* User Info Header */}
             <LinearGradient
@@ -101,9 +89,7 @@ export default function UserAvatar({
 
             {/* Simulation status */}
             <View style={styles.infoContainer}>
-              <Text style={styles.simulationStatusText}>
-                {getSubscriptionInfo()?.message || 'Loading...'}
-              </Text>
+              <Text style={styles.simulationStatusText}>{getSubscriptionInfo()?.message || 'Loading...'}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -122,24 +108,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   avatar: {
-    borderRadius: 20,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',  // Subtle white border
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.4)', // More prominent white border
     shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 6,
   },
   initials: {
     color: 'white',
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  
+
   // Modal Styles
   modalOverlay: {
     flex: 1,

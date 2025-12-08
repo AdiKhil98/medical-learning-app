@@ -142,19 +142,23 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       {/* Clean gradient background */}
       <LinearGradient colors={backgroundGradient as any} style={styles.backgroundGradient} />
 
-      {/* Modern Header */}
+      {/* Modern Header - Redesigned */}
       <View style={styles.modernHeader}>
         <LinearGradient colors={headerGradient as any} style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
-              <LinearGradient
-                colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
-                style={styles.menuButtonGradient}
-              >
-                <MenuIcon size={24} color={MEDICAL_COLORS.warmOrange} />
-              </LinearGradient>
-            </TouchableOpacity>
-            <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={true} />
+            {/* Left Section: Menu + Logo */}
+            <View style={styles.headerLeft}>
+              <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+                <LinearGradient
+                  colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
+                  style={styles.menuButtonGradient}
+                >
+                  <MenuIcon size={22} color={MEDICAL_COLORS.warmOrange} />
+                </LinearGradient>
+              </TouchableOpacity>
+              <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={false} />
+            </View>
+            {/* Right Section: User Avatar */}
             <UserAvatar size="medium" />
           </View>
         </LinearGradient>
@@ -180,10 +184,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       {/* Main Content - Conditional: Vertical for Web, Horizontal Carousel for Mobile */}
       {IS_WEB ? (
         /* WEB: Vertical scrolling layout - all slides stacked */
-        <ScrollView
-          style={styles.mainContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
           <View style={styles.webContainer}>
             {/* SLIDE 0 - Welcome Card */}
             <View style={styles.webSlide}>
@@ -327,14 +328,12 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   </View>
                   <Text style={styles.questionHeaderText}>Wissensfrage</Text>
                 </View>
-                <Text style={styles.questionText}>
-                  {dailyQuestion?.question || 'Keine Frage für heute verfügbar'}
-                </Text>
+                <Text style={styles.questionText}>{dailyQuestion?.question || 'Keine Frage für heute verfügbar'}</Text>
                 <View style={styles.optionsContainer}>
                   <TouchableOpacity
                     style={[
                       styles.optionButton,
-                      selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer)
+                      selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer),
                     ]}
                     onPress={() => handleAnswerSelect('a')}
                     activeOpacity={0.7}
@@ -345,7 +344,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   <TouchableOpacity
                     style={[
                       styles.optionButton,
-                      selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer)
+                      selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer),
                     ]}
                     onPress={() => handleAnswerSelect('b')}
                     activeOpacity={0.7}
@@ -356,7 +355,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                   <TouchableOpacity
                     style={[
                       styles.optionButton,
-                      selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer)
+                      selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer),
                     ]}
                     onPress={() => handleAnswerSelect('c')}
                     activeOpacity={0.7}
@@ -372,242 +371,248 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
       ) : (
         /* MOBILE: Horizontal scrolling carousel */
         <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={styles.mainContent}
-        contentContainerStyle={styles.horizontalContentContainer}
-      >
-        {/* SLIDE 0 - Welcome Card */}
-        <View style={styles.slideWrapper}>
-          <ScrollView
-            style={styles.verticalScroll}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.slideContainer}>
-              <View style={dynamicStyles.heroCard}>
-                {/* Icon Container */}
-                <View style={styles.iconContainer}>
-                  <LinearGradient
-                    colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.iconGradient}
-                  >
-                    <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
-                  </LinearGradient>
-                </View>
-
-                {/* Heading */}
-                <Text style={styles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
-
-                {/* Subheading */}
-                <Text style={styles.subheading}>
-                  Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
-                </Text>
-
-                {/* CTA Buttons */}
-                <View style={styles.buttonsContainer}>
-                  {/* Button 1 - Simulation testen */}
-                  <TouchableOpacity
-                    style={styles.buttonWrapper}
-                    onPress={() => router.push('/(tabs)/simulation')}
-                    activeOpacity={0.7}
-                  >
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={styles.mainContent}
+          contentContainerStyle={styles.horizontalContentContainer}
+        >
+          {/* SLIDE 0 - Welcome Card */}
+          <View style={styles.slideWrapper}>
+            <ScrollView
+              style={styles.verticalScroll}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.slideContainer}>
+                <View style={dynamicStyles.heroCard}>
+                  {/* Icon Container */}
+                  <View style={styles.iconContainer}>
                     <LinearGradient
-                      colors={MEDICAL_COLORS.warmOrangeGradient}
+                      colors={[MEDICAL_COLORS.warmOrange, MEDICAL_COLORS.warmRed]}
                       start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.primaryButton}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.iconGradient}
                     >
-                      <Text style={styles.buttonText}>Simulation testen</Text>
+                      <BookOpen size={40} color={MEDICAL_COLORS.white} strokeWidth={2} />
                     </LinearGradient>
-                  </TouchableOpacity>
-
-                  {/* Button 2 - Abonnieren */}
-                  <TouchableOpacity
-                    style={styles.buttonWrapper}
-                    onPress={() => router.push('/subscription')}
-                    activeOpacity={0.7}
-                  >
-                    <LinearGradient
-                      colors={MEDICAL_COLORS.warmYellowGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.secondaryButton}
-                    >
-                      <Text style={styles.buttonText}>Abonnieren</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-
-                  {/* Button 3 - Über KP Med */}
-                  <TouchableOpacity
-                    style={styles.outlineButton}
-                    onPress={() => setShowAboutUs(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.outlineButtonText}>Über KP Med</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </ScrollView>
-        </View>
-
-        {/* SLIDE 1 - Zuletzt angesehen (Recently Viewed) */}
-        <View style={styles.slideWrapper}>
-          <ScrollView
-            style={styles.verticalScroll}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.slideContainer}>
-              <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
-
-              {recentContent.length > 0 ? (
-                <>
-                  <View style={styles.cardsContainer}>
-                    {recentContent.map((item) => (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={dynamicStyles.recentCard}
-                        activeOpacity={0.7}
-                        onPress={() => handleRecentContentClick(item.slug)}
-                      >
-                        <View style={styles.recentCardContent}>
-                          <View style={styles.recentCardLeft}>
-                            <View style={styles.recentIconContainer}>
-                              <Heart size={24} color={MEDICAL_COLORS.blue} />
-                            </View>
-                            <View>
-                              <Text style={styles.recentCardTitle}>{item.title}</Text>
-                              <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
-                            </View>
-                          </View>
-                          <View style={styles.recentCardRight}>
-                            <View style={styles.timeContainer}>
-                              <Clock size={16} color={MEDICAL_COLORS.slate400} />
-                              <Text style={styles.timeText}>{item.viewCount}</Text>
-                            </View>
-                            <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
                   </View>
 
-                  {/* Footer Link */}
-                  <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7} onPress={handleViewAllContent}>
-                    <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
-                    <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
-                    <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <View style={dynamicStyles.recentCard}>
-                  <Text style={styles.recentCardTitle}>Keine kürzlich angesehenen Inhalte</Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </View>
+                  {/* Heading */}
+                  <Text style={styles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
 
-        {/* SLIDE 2 - Tipp des Tages */}
-        <View style={styles.slideWrapper}>
-          <ScrollView
-            style={styles.verticalScroll}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.slideContainer}>
-              <Text style={styles.slideTitle}>Tipp des Tages</Text>
-
-              <View style={dynamicStyles.tipCard}>
-                <View style={styles.tipHeader}>
-                  <View style={styles.tipIconContainer}>
-                    <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
-                  </View>
-                  <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
-                </View>
-
-                <View style={styles.tipContentBox}>
-                  <Text style={styles.tipContent}>
-                    {dailyTip?.tip_content || dailyTip?.content || dailyTip?.tip || 'Kein Tipp für heute verfügbar'}
+                  {/* Subheading */}
+                  <Text style={styles.subheading}>
+                    Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
                   </Text>
-                </View>
-              </View>
-            </View>
-          </ScrollView>
-        </View>
 
-        {/* SLIDE 3 - Frage des Tages */}
-        <View style={styles.slideWrapper}>
-          <ScrollView
-            style={styles.verticalScroll}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.slideContainer}>
-              <Text style={styles.slideTitle}>Frage des Tages</Text>
+                  {/* CTA Buttons */}
+                  <View style={styles.buttonsContainer}>
+                    {/* Button 1 - Simulation testen */}
+                    <TouchableOpacity
+                      style={styles.buttonWrapper}
+                      onPress={() => router.push('/(tabs)/simulation')}
+                      activeOpacity={0.7}
+                    >
+                      <LinearGradient
+                        colors={MEDICAL_COLORS.warmOrangeGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.primaryButton}
+                      >
+                        <Text style={styles.buttonText}>Simulation testen</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
 
-              <View style={dynamicStyles.questionCard}>
-                <View style={styles.questionHeader}>
-                  <View style={styles.questionIconContainer}>
-                    <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
+                    {/* Button 2 - Abonnieren */}
+                    <TouchableOpacity
+                      style={styles.buttonWrapper}
+                      onPress={() => router.push('/subscription')}
+                      activeOpacity={0.7}
+                    >
+                      <LinearGradient
+                        colors={MEDICAL_COLORS.warmYellowGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.secondaryButton}
+                      >
+                        <Text style={styles.buttonText}>Abonnieren</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* Button 3 - Über KP Med */}
+                    <TouchableOpacity
+                      style={styles.outlineButton}
+                      onPress={() => setShowAboutUs(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.outlineButtonText}>Über KP Med</Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.questionHeaderText}>Wissensfrage</Text>
-                </View>
-
-                <Text style={styles.questionText}>
-                  {dailyQuestion?.question || 'Keine Frage für heute verfügbar'}
-                </Text>
-
-                <View style={styles.optionsContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.optionButton,
-                      selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer)
-                    ]}
-                    onPress={() => handleAnswerSelect('a')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.optionLabel}>A.</Text>
-                    <Text style={styles.optionText}>{dailyQuestion?.option_a || dailyQuestion?.choice_a || 'N/A'}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.optionButton,
-                      selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer)
-                    ]}
-                    onPress={() => handleAnswerSelect('b')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.optionLabel}>B.</Text>
-                    <Text style={styles.optionText}>{dailyQuestion?.option_b || dailyQuestion?.choice_b || 'N/A'}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.optionButton,
-                      selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer)
-                    ]}
-                    onPress={() => handleAnswerSelect('c')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.optionLabel}>C.</Text>
-                    <Text style={styles.optionText}>{dailyQuestion?.option_c || dailyQuestion?.choice_c || 'N/A'}</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          </ScrollView>
-        </View>
-      </ScrollView>
+            </ScrollView>
+          </View>
+
+          {/* SLIDE 1 - Zuletzt angesehen (Recently Viewed) */}
+          <View style={styles.slideWrapper}>
+            <ScrollView
+              style={styles.verticalScroll}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.slideContainer}>
+                <Text style={styles.slideTitle}>Zuletzt angesehen</Text>
+
+                {recentContent.length > 0 ? (
+                  <>
+                    <View style={styles.cardsContainer}>
+                      {recentContent.map((item) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={dynamicStyles.recentCard}
+                          activeOpacity={0.7}
+                          onPress={() => handleRecentContentClick(item.slug)}
+                        >
+                          <View style={styles.recentCardContent}>
+                            <View style={styles.recentCardLeft}>
+                              <View style={styles.recentIconContainer}>
+                                <Heart size={24} color={MEDICAL_COLORS.blue} />
+                              </View>
+                              <View>
+                                <Text style={styles.recentCardTitle}>{item.title}</Text>
+                                <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
+                              </View>
+                            </View>
+                            <View style={styles.recentCardRight}>
+                              <View style={styles.timeContainer}>
+                                <Clock size={16} color={MEDICAL_COLORS.slate400} />
+                                <Text style={styles.timeText}>{item.viewCount}</Text>
+                              </View>
+                              <ChevronRight size={20} color={MEDICAL_COLORS.slate400} />
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    {/* Footer Link */}
+                    <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7} onPress={handleViewAllContent}>
+                      <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
+                      <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
+                      <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <View style={dynamicStyles.recentCard}>
+                    <Text style={styles.recentCardTitle}>Keine kürzlich angesehenen Inhalte</Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* SLIDE 2 - Tipp des Tages */}
+          <View style={styles.slideWrapper}>
+            <ScrollView
+              style={styles.verticalScroll}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.slideContainer}>
+                <Text style={styles.slideTitle}>Tipp des Tages</Text>
+
+                <View style={dynamicStyles.tipCard}>
+                  <View style={styles.tipHeader}>
+                    <View style={styles.tipIconContainer}>
+                      <Lightbulb size={24} color={MEDICAL_COLORS.warmOrange} />
+                    </View>
+                    <Text style={styles.tipHeaderText}>Tipp des Tages</Text>
+                  </View>
+
+                  <View style={styles.tipContentBox}>
+                    <Text style={styles.tipContent}>
+                      {dailyTip?.tip_content || dailyTip?.content || dailyTip?.tip || 'Kein Tipp für heute verfügbar'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* SLIDE 3 - Frage des Tages */}
+          <View style={styles.slideWrapper}>
+            <ScrollView
+              style={styles.verticalScroll}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.slideContainer}>
+                <Text style={styles.slideTitle}>Frage des Tages</Text>
+
+                <View style={dynamicStyles.questionCard}>
+                  <View style={styles.questionHeader}>
+                    <View style={styles.questionIconContainer}>
+                      <HelpCircle size={24} color={MEDICAL_COLORS.warmOrange} />
+                    </View>
+                    <Text style={styles.questionHeaderText}>Wissensfrage</Text>
+                  </View>
+
+                  <Text style={styles.questionText}>
+                    {dailyQuestion?.question || 'Keine Frage für heute verfügbar'}
+                  </Text>
+
+                  <View style={styles.optionsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedAnswer === 'a' && (isCorrectAnswer('a') ? styles.correctAnswer : styles.wrongAnswer),
+                      ]}
+                      onPress={() => handleAnswerSelect('a')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionLabel}>A.</Text>
+                      <Text style={styles.optionText}>
+                        {dailyQuestion?.option_a || dailyQuestion?.choice_a || 'N/A'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedAnswer === 'b' && (isCorrectAnswer('b') ? styles.correctAnswer : styles.wrongAnswer),
+                      ]}
+                      onPress={() => handleAnswerSelect('b')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionLabel}>B.</Text>
+                      <Text style={styles.optionText}>
+                        {dailyQuestion?.option_b || dailyQuestion?.choice_b || 'N/A'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedAnswer === 'c' && (isCorrectAnswer('c') ? styles.correctAnswer : styles.wrongAnswer),
+                      ]}
+                      onPress={() => handleAnswerSelect('c')}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionLabel}>C.</Text>
+                      <Text style={styles.optionText}>
+                        {dailyQuestion?.option_c || dailyQuestion?.choice_c || 'N/A'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </ScrollView>
       )}
 
       {/* Carousel Indicators - Removed to prevent overlap with navigation */}
@@ -634,44 +639,49 @@ const styles = StyleSheet.create({
     height: screenHeight,
   },
 
-  // Header Styles - Enhanced for Mobile
+  // Header Styles - Redesigned (Compact & Professional)
   modernHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: 'rgba(0,0,0,0.08)',
     zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
   },
   headerGradient: {
-    paddingVertical: IS_MOBILE ? SPACING.md : SPACING.lg,
+    paddingVertical: IS_MOBILE ? SPACING.sm : SPACING.md, // Reduced from md/lg to sm/md
     paddingHorizontal: IS_MOBILE ? SPACING.lg : SPACING.xl,
-    paddingTop: IS_MOBILE ? SPACING.lg : SPACING.xxl,
-    shadowColor: 'rgba(0,0,0,0.08)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: SPACING.md,
-    elevation: 8,
+    paddingTop: IS_MOBILE ? SPACING.md : SPACING.lg, // Reduced from lg/xxl to md/lg
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 48, // Touch target minimum
+    minHeight: 44, // Reduced from 48 for more compact header
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
   },
   menuButton: {
-    borderRadius: IS_MOBILE ? BORDER_RADIUS.md : BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
-    minWidth: 48, // Touch target minimum
-    minHeight: 48,
+    minWidth: 44, // Slightly reduced
+    minHeight: 44,
   },
   menuButtonGradient: {
-    padding: IS_MOBILE ? SPACING.md : SPACING.md + 2,
-    borderRadius: IS_MOBILE ? BORDER_RADIUS.md : BORDER_RADIUS.lg,
+    padding: SPACING.sm + 2, // More compact padding
+    borderRadius: BORDER_RADIUS.md,
     shadowColor: 'rgba(0,0,0,0.05)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 4,
     elevation: 2,
-    minWidth: 48,
-    minHeight: 48,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
