@@ -25,6 +25,7 @@
 The simulation system tracks and limits user access to medical simulations based on their subscription tier. It uses a **credit-based system** where each completed simulation (≥5 minutes) decrements the user's available count.
 
 ### Key Components:
+
 - **Payment Provider**: LemonSqueezy (handles subscriptions)
 - **Webhook Handler**: Netlify Function (`lemonsqueezy.js`)
 - **Database**: Supabase PostgreSQL
@@ -55,39 +56,41 @@ The simulation system tracks and limits user access to medical simulations based
 
 ### Webhook Events Handled:
 
-| Event | Action | Database Update |
-|-------|--------|-----------------|
-| `subscription_created` | New subscription activated | Sets `subscription_tier`, `simulation_limit`, `subscription_status='active'` |
-| `subscription_updated` | Plan changed (upgrade/downgrade) | Updates `subscription_tier` and `simulation_limit` |
-| `subscription_cancelled` | Subscription cancelled | Sets `subscription_status='cancelled'`, keeps access until `subscription_expires_at` |
-| `subscription_expired` | Subscription expired | Sets `subscription_status='expired'`, removes `subscription_tier` and `simulation_limit` |
+| Event                    | Action                           | Database Update                                                                          |
+| ------------------------ | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `subscription_created`   | New subscription activated       | Sets `subscription_tier`, `simulation_limit`, `subscription_status='active'`             |
+| `subscription_updated`   | Plan changed (upgrade/downgrade) | Updates `subscription_tier` and `simulation_limit`                                       |
+| `subscription_cancelled` | Subscription cancelled           | Sets `subscription_status='cancelled'`, keeps access until `subscription_expires_at`     |
+| `subscription_expired`   | Subscription expired             | Sets `subscription_status='expired'`, removes `subscription_tier` and `simulation_limit` |
 
 ### Webhook Handler Location:
+
 **File:** `netlify/functions/lemonsqueezy.js`
 
 **Key Code:**
+
 ```javascript
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
-  'basis': {
+  basis: {
     name: 'Basis-Plan',
-    simulationLimit: 30  // 30 simulations/month
+    simulationLimit: 30, // 30 simulations/month
   },
-  'profi': {
+  profi: {
     name: 'Profi-Plan',
-    simulationLimit: 60  // 60 simulations/month
+    simulationLimit: 60, // 60 simulations/month
   },
-  'unlimited': {
+  unlimited: {
     name: 'Unlimited-Plan',
-    simulationLimit: null  // Unlimited
-  }
+    simulationLimit: null, // Unlimited
+  },
 };
 
 // Variant ID mapping (from LemonSqueezy product variants)
 const VARIANT_TIER_MAPPING = {
-  '1006948': 'basis',
-  '1006934': 'profi',
-  '1006947': 'unlimited'
+  1006948: 'basis',
+  1006934: 'profi',
+  1006947: 'unlimited',
 };
 
 // When subscription_created event received:
@@ -95,13 +98,14 @@ await updateUserSubscription(userId, {
   subscription_id: subscriptionId,
   variant_id: variantId,
   subscription_status: 'active',
-  subscription_tier: tier,  // 'basis', 'profi', or 'unlimited'
-  simulation_limit: tierConfig.simulationLimit,  // 30, 60, or null
-  lemon_squeezy_customer_email: customerEmail
+  subscription_tier: tier, // 'basis', 'profi', or 'unlimited'
+  simulation_limit: tierConfig.simulationLimit, // 30, 60, or null
+  lemon_squeezy_customer_email: customerEmail,
 });
 ```
 
 ### How It Finds the User:
+
 1. LemonSqueezy webhook includes `user_email`
 2. Webhook function queries: `SELECT * FROM users WHERE email = '{user_email}'`
 3. If user exists → Update their subscription fields
@@ -113,49 +117,49 @@ await updateUserSubscription(userId, {
 
 ### **`users` Table** (Main subscription & usage tracking)
 
-| Column | Type | Description | Example |
-|--------|------|-------------|---------|
-| `id` | UUID | Primary key | `a1b2c3d4-...` |
-| `email` | TEXT | User email (unique) | `user@example.com` |
-| `subscription_id` | TEXT | LemonSqueezy subscription ID | `12345` |
-| `variant_id` | TEXT | LemonSqueezy product variant | `1006948` |
-| `subscription_status` | TEXT | `active`, `cancelled`, `expired` | `active` |
-| `subscription_tier` | TEXT | `basis`, `profi`, `unlimited`, or NULL (free) | `basis` |
-| `simulation_limit` | INTEGER | Max simulations per month (NULL = unlimited) | `30` |
-| **`simulations_used_this_month`** | INTEGER | **Counter for paid tiers** | `5` |
-| **`free_simulations_used`** | INTEGER | **Counter for free tier** | `2` |
-| `subscription_period_start` | TIMESTAMPTZ | Start of current billing period | `2025-12-01` |
-| `subscription_period_end` | TIMESTAMPTZ | End of billing period (reset date) | `2025-12-31` |
-| `last_counter_reset` | TIMESTAMPTZ | Last time counter was reset | `2025-12-01` |
-| `subscription_created_at` | TIMESTAMPTZ | When subscription was created | `2025-11-15` |
-| `subscription_expires_at` | TIMESTAMPTZ | When subscription expires | `2025-12-31` |
+| Column                            | Type        | Description                                   | Example            |
+| --------------------------------- | ----------- | --------------------------------------------- | ------------------ |
+| `id`                              | UUID        | Primary key                                   | `a1b2c3d4-...`     |
+| `email`                           | TEXT        | User email (unique)                           | `user@example.com` |
+| `subscription_id`                 | TEXT        | LemonSqueezy subscription ID                  | `12345`            |
+| `variant_id`                      | TEXT        | LemonSqueezy product variant                  | `1006948`          |
+| `subscription_status`             | TEXT        | `active`, `cancelled`, `expired`              | `active`           |
+| `subscription_tier`               | TEXT        | `basis`, `profi`, `unlimited`, or NULL (free) | `basis`            |
+| `simulation_limit`                | INTEGER     | Max simulations per month (NULL = unlimited)  | `30`               |
+| **`simulations_used_this_month`** | INTEGER     | **Counter for paid tiers**                    | `5`                |
+| **`free_simulations_used`**       | INTEGER     | **Counter for free tier**                     | `2`                |
+| `subscription_period_start`       | TIMESTAMPTZ | Start of current billing period               | `2025-12-01`       |
+| `subscription_period_end`         | TIMESTAMPTZ | End of billing period (reset date)            | `2025-12-31`       |
+| `last_counter_reset`              | TIMESTAMPTZ | Last time counter was reset                   | `2025-12-01`       |
+| `subscription_created_at`         | TIMESTAMPTZ | When subscription was created                 | `2025-11-15`       |
+| `subscription_expires_at`         | TIMESTAMPTZ | When subscription expires                     | `2025-12-31`       |
 
 ### **`simulation_usage_logs` Table** (Session tracking)
 
-| Column | Type | Description | Example |
-|--------|------|-------------|---------|
-| `id` | UUID | Log entry ID | `x1y2z3...` |
-| `user_id` | UUID | FK to users.id | `a1b2c3d4-...` |
-| `simulation_type` | TEXT | `kp` or `fsp` | `kp` |
-| `session_token` | TEXT | Unique session identifier | `sim_abc123...` |
-| `started_at` | TIMESTAMPTZ | When simulation started | `2025-12-02 10:00:00` |
-| `ended_at` | TIMESTAMPTZ | When simulation ended | `2025-12-02 10:15:00` |
-| `duration_seconds` | INTEGER | Total duration | `900` |
-| **`counted_toward_usage`** | BOOLEAN | **Did it count?** | `true` |
-| `created_at` | TIMESTAMPTZ | Record created | `2025-12-02 10:00:00` |
+| Column                     | Type        | Description               | Example               |
+| -------------------------- | ----------- | ------------------------- | --------------------- |
+| `id`                       | UUID        | Log entry ID              | `x1y2z3...`           |
+| `user_id`                  | UUID        | FK to users.id            | `a1b2c3d4-...`        |
+| `simulation_type`          | TEXT        | `kp` or `fsp`             | `kp`                  |
+| `session_token`            | TEXT        | Unique session identifier | `sim_abc123...`       |
+| `started_at`               | TIMESTAMPTZ | When simulation started   | `2025-12-02 10:00:00` |
+| `ended_at`                 | TIMESTAMPTZ | When simulation ended     | `2025-12-02 10:15:00` |
+| `duration_seconds`         | INTEGER     | Total duration            | `900`                 |
+| **`counted_toward_usage`** | BOOLEAN     | **Did it count?**         | `true`                |
+| `created_at`               | TIMESTAMPTZ | Record created            | `2025-12-02 10:00:00` |
 
 ### **`webhook_events` Table** (Audit log)
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Event ID |
-| `event_type` | TEXT | `subscription_created`, etc. |
-| `event_data` | JSONB | Full webhook payload |
-| `subscription_id` | TEXT | LemonSqueezy subscription ID |
-| `user_id` | UUID | FK to users.id |
-| `status` | TEXT | `processed`, `failed`, `ignored` |
-| `error_message` | TEXT | Error if failed |
-| `created_at` | TIMESTAMPTZ | When webhook received |
+| Column            | Type        | Description                      |
+| ----------------- | ----------- | -------------------------------- |
+| `id`              | UUID        | Event ID                         |
+| `event_type`      | TEXT        | `subscription_created`, etc.     |
+| `event_data`      | JSONB       | Full webhook payload             |
+| `subscription_id` | TEXT        | LemonSqueezy subscription ID     |
+| `user_id`         | UUID        | FK to users.id                   |
+| `status`          | TEXT        | `processed`, `failed`, `ignored` |
+| `error_message`   | TEXT        | Error if failed                  |
+| `created_at`      | TIMESTAMPTZ | When webhook received            |
 
 ---
 
@@ -163,16 +167,17 @@ await updateUserSubscription(userId, {
 
 ### Tier Comparison:
 
-| Tier | Simulations/Month | Price | Counter Used | Reset Frequency |
-|------|-------------------|-------|--------------|-----------------|
-| **Free** | 3 (lifetime) | €0 | `free_simulations_used` | Never resets |
-| **Basis** | 30 | €X/month | `simulations_used_this_month` | Monthly |
-| **Profi** | 60 | €X/month | `simulations_used_this_month` | Monthly |
-| **Unlimited** | ∞ | €X/month | `simulations_used_this_month` | N/A (never blocked) |
+| Tier          | Simulations/Month | Price    | Counter Used                  | Reset Frequency     |
+| ------------- | ----------------- | -------- | ----------------------------- | ------------------- |
+| **Free**      | 3 (lifetime)      | €0       | `free_simulations_used`       | Never resets        |
+| **Basis**     | 30                | €X/month | `simulations_used_this_month` | Monthly             |
+| **Profi**     | 60                | €X/month | `simulations_used_this_month` | Monthly             |
+| **Unlimited** | ∞                 | €X/month | `simulations_used_this_month` | N/A (never blocked) |
 
 ### How Limits Are Set:
 
 **When user subscribes:**
+
 ```javascript
 // Webhook sets simulation_limit based on tier
 if (tier === 'basis') {
@@ -180,11 +185,12 @@ if (tier === 'basis') {
 } else if (tier === 'profi') {
   simulation_limit = 60;
 } else if (tier === 'unlimited') {
-  simulation_limit = null;  // No limit
+  simulation_limit = null; // No limit
 }
 ```
 
 **Free tier:**
+
 - No webhook needed
 - Default: `simulation_limit = NULL`, `subscription_tier = NULL`
 - Uses `free_simulations_used` counter (hardcoded limit: 3)
@@ -219,12 +225,12 @@ if (tier === 'basis') {
 └─────────────────────────────────────────────────────┘
 7. Frontend calls: simulationTracker.startSimulation('kp')
    ↓
-8. Generate session_token: `sim_${crypto.randomUUID()}`
+8. Generate session_token: crypto.randomUUID()
    ↓
 9. Database function: start_simulation_session()
    ↓
 10. INSERT INTO simulation_usage_logs:
-    - session_token = 'sim_abc123...'
+    - session_token = '550e8400-e29b-41d4-a716-446655440000'
     - user_id = {user_id}
     - simulation_type = 'kp'
     - started_at = NOW()
@@ -294,12 +300,12 @@ if (tier === 'basis') {
 
 ### Key Files Involved:
 
-| Phase | Frontend File | Backend Function |
-|-------|--------------|------------------|
-| Pre-Start | `hooks/useSubscription.ts` | `check_and_reset_monthly_counter()` |
-| Start | `lib/simulationTrackingService.ts` | `start_simulation_session()` |
-| 5-Min Mark | `app/(tabs)/simulation/kp.tsx:728` | `mark_simulation_counted()` |
-| End | `lib/simulationTrackingService.ts` | `end_simulation_session()` |
+| Phase      | Frontend File                      | Backend Function                    |
+| ---------- | ---------------------------------- | ----------------------------------- |
+| Pre-Start  | `hooks/useSubscription.ts`         | `check_and_reset_monthly_counter()` |
+| Start      | `lib/simulationTrackingService.ts` | `start_simulation_session()`        |
+| 5-Min Mark | `app/(tabs)/simulation/kp.tsx:728` | `mark_simulation_counted()`         |
+| End        | `lib/simulationTrackingService.ts` | `end_simulation_session()`          |
 
 ---
 
@@ -366,12 +372,14 @@ END IF
 ### Double-Counting Prevention:
 
 **Race Condition:**
+
 ```
 Thread 1: Check counted = false → Increment counter
 Thread 2: Check counted = false → Increment counter  ← DOUBLE COUNT!
 ```
 
 **Fix (Atomic Test-and-Set):**
+
 ```sql
 UPDATE simulation_usage_logs
 SET counted_toward_usage = true
@@ -481,6 +489,7 @@ $$;
 **For Paid Tiers Only** (basis, profi)
 
 1. **Billing Period Tracking:**
+
    ```
    subscription_period_start: 2025-12-01
    subscription_period_end:   2025-12-31
@@ -733,6 +742,7 @@ SELECT admin_reset_user_counter('user@example.com');
 ### Issue 1: Counter Not Decrementing
 
 **Symptoms:**
+
 - Simulation completes but `simulations_used_this_month` stays the same
 - User still shows full limit after using simulations
 
@@ -756,6 +766,7 @@ SELECT admin_reset_user_counter('user@example.com');
    - Check: Are you looking at the right column?
 
 **Debug Checklist:**
+
 ```sql
 -- 1. Check simulation log
 SELECT * FROM simulation_usage_logs
@@ -775,13 +786,14 @@ FROM users WHERE id = {user_id};
 -- 3. Check if function exists
 SELECT proname FROM pg_proc WHERE proname = 'mark_simulation_counted';
 
--- 4. Test function manually
-SELECT mark_simulation_counted('sim_abc123...', {user_id}::uuid);
+-- 4. Test function manually (use actual UUID, no prefix)
+SELECT mark_simulation_counted('550e8400-e29b-41d4-a716-446655440000'::uuid, {user_id}::uuid);
 ```
 
 ### Issue 2: User Can't Start Simulation (Has Remaining)
 
 **Symptoms:**
+
 - `remainingSimulations = 15` but button shows "Upgrade Required"
 
 **Possible Causes:**
@@ -799,13 +811,10 @@ SELECT mark_simulation_counted('sim_abc123...', {user_id}::uuid);
    - Solution: Call `check_and_reset_monthly_counter(user_id)`
 
 **Debug:**
+
 ```typescript
 // In browser console:
-const { data } = await supabase
-  .from('users')
-  .select('*')
-  .eq('id', user.id)
-  .single();
+const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
 
 console.log('Tier:', data.subscription_tier);
 console.log('Limit:', data.simulation_limit);
@@ -817,6 +826,7 @@ console.log('Remaining:', data.simulation_limit - data.simulations_used_this_mon
 ### Issue 3: Subscription Not Updating After Payment
 
 **Symptoms:**
+
 - User paid but still shows as free tier
 - `subscription_tier = NULL` even though LemonSqueezy shows active
 
@@ -824,6 +834,7 @@ console.log('Remaining:', data.simulation_limit - data.simulations_used_this_mon
 
 1. **Webhook Not Received:**
    - Check: `webhook_events` table for recent events
+
    ```sql
    SELECT * FROM webhook_events
    ORDER BY created_at DESC LIMIT 10;
@@ -843,6 +854,7 @@ console.log('Remaining:', data.simulation_limit - data.simulations_used_this_mon
    - Solution: Add new variant ID if missing
 
 **Debug:**
+
 ```javascript
 // In Netlify function logs, search for:
 "Processing webhook event: subscription_created"
@@ -863,17 +875,21 @@ ORDER BY created_at DESC;
 ### Issue 4: Double Counting
 
 **Symptoms:**
+
 - Counter increments by 2 for single simulation
 - `simulations_used_this_month` jumps from 5 to 7
 
 **Cause:**
+
 - Race condition: Multiple requests to `mark_simulation_counted()`
 
 **Fix:**
+
 - Migration `20251125000003_fix_mark_counted_race_condition.sql`
 - Uses atomic test-and-set UPDATE
 
 **Verify Fix:**
+
 ```sql
 -- Check function has race condition protection
 SELECT prosrc FROM pg_proc
@@ -886,14 +902,17 @@ WHERE proname = 'mark_simulation_counted';
 ### Issue 5: Free Tier Counter Resets
 
 **Symptoms:**
+
 - User had used 2/3 free sims
 - Next day shows 0/3 used again
 
 **This Should NOT Happen:**
+
 - Free tier counter never resets (by design)
 - Check: `check_and_reset_monthly_counter()` excludes free tier
 
 **If It Happens:**
+
 ```sql
 -- Check function logic
 SELECT prosrc FROM pg_proc
@@ -915,6 +934,7 @@ WHERE id = {user_id};
 ### Key Metrics to Track:
 
 1. **Counter Accuracy:**
+
    ```sql
    -- Check if logs match user counters
    SELECT
@@ -929,6 +949,7 @@ WHERE id = {user_id};
    ```
 
 2. **Webhook Success Rate:**
+
    ```sql
    SELECT
      event_type,
@@ -940,6 +961,7 @@ WHERE id = {user_id};
    ```
 
 3. **Subscription Distribution:**
+
    ```sql
    SELECT
      subscription_tier,

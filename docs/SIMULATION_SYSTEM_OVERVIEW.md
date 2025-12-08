@@ -796,7 +796,8 @@ const isValidSessionToken = (token: string): boolean => {
 
    ```javascript
    const generateSessionToken = () => {
-     return `sim_${crypto.randomUUID()}`;
+     // Returns pure UUID format for database compatibility
+     return crypto.randomUUID();
    };
    ```
 
