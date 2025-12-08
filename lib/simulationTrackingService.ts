@@ -34,10 +34,53 @@ class SimulationTrackingService {
    * Returns pure UUID format (no prefix) for database compatibility
    */
   private generateSessionToken(): string {
-    // Use crypto.randomUUID() for cryptographically secure token generation
-    // This prevents attackers from predicting session tokens
-    // Returns pure UUID format for database uuid type compatibility
-    return crypto.randomUUID();
+    try {
+      // Use crypto.randomUUID() for cryptographically secure token generation
+      // This prevents attackers from predicting session tokens
+      // Returns pure UUID format for database uuid type compatibility
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+
+      // Fallback for environments without crypto.randomUUID()
+      logger.warn('⚠️ crypto.randomUUID() not available, using fallback UUID generation');
+      return this.generateUUIDFallback();
+    } catch (error) {
+      logger.error('❌ Error generating session token:', error);
+      // Last resort fallback
+      return this.generateUUIDFallback();
+    }
+  }
+
+  /**
+   * Fallback UUID v4 generator for environments without crypto.randomUUID()
+   * Uses crypto.getRandomValues() if available, otherwise Math.random() (less secure)
+   */
+  private generateUUIDFallback(): string {
+    // Try to use crypto.getRandomValues() for better randomness
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+
+      // Set version (4) and variant bits
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+      // Convert to UUID format
+      const hex = Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+    }
+
+    // Last resort: Math.random() (not cryptographically secure, but works)
+    logger.warn('⚠️ Using Math.random() for UUID generation (not cryptographically secure)');
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 
   /**
@@ -51,13 +94,16 @@ class SimulationTrackingService {
   }
 
   /**
-   * Validate session token format
+   * Validate session token format (UUID v4)
+   * Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (8-4-4-4-12 hex digits)
    */
   private isValidSessionToken(token: string): boolean {
-    if (!token || typeof token !== 'string' || token.length < 10) {
+    if (!token || typeof token !== 'string') {
       return false;
     }
-    return /^sim_[a-zA-Z0-9_]+$/.test(token);
+    // UUID v4 regex pattern
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidPattern.test(token);
   }
 
   /**
