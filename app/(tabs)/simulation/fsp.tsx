@@ -300,11 +300,14 @@ function FSPSimulationScreen() {
       }
 
       // ============================================
-      // STEP 3: INITIALIZE WITH RETRY LOGIC
+      // STEP 3: INITIALIZE WITH RETRY LOGIC (WEB ONLY)
       // ============================================
-      logger.info(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
-
-      await initializeWithRetry(user.id, timestamp);
+      if (Platform.OS === 'web') {
+        logger.info(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
+        await initializeWithRetry(user.id, timestamp);
+      } else {
+        logger.info(`📱 [${timestamp}] Mobile platform detected - Voiceflow widget only available on web`);
+      }
     };
 
     initializeVoiceflow();
@@ -1713,8 +1716,24 @@ function FSPSimulationScreen() {
 
             {/* Widget Area */}
             <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
-              {/* Voiceflow widget loads here automatically via script injection */}
-              <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget wird geladen...</Text>
+              {Platform.OS === 'web' ? (
+                <>
+                  {/* Voiceflow widget loads here automatically via script injection */}
+                  <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget wird geladen...</Text>
+                  <Text style={styles.widgetHint}>
+                    Das Voiceflow-Widget sollte in wenigen Sekunden erscheinen. Falls nicht, überprüfen Sie bitte Ihre
+                    Internetverbindung.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.widgetPlaceholder}>📱 Mobil-Modus</Text>
+                  <Text style={styles.widgetHint}>
+                    Das Voiceflow-Widget ist nur in der Web-Version verfügbar. Öffnen Sie die App im Browser, um das
+                    Widget zu nutzen.
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -2076,10 +2095,19 @@ const styles = StyleSheet.create({
     // This area is where the Voiceflow widget will appear
   },
   widgetPlaceholder: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  widgetHint: {
     fontSize: 14,
     color: '#6b7280',
     textAlign: 'center',
-    marginTop: 20,
+    lineHeight: 20,
+    paddingHorizontal: 20,
   },
   // Final Warning Modal Styles
   finalWarningOverlay: {
