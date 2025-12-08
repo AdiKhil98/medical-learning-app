@@ -275,7 +275,7 @@ export class VoiceflowController {
         emailForUserID = await this.hashEmail(this.userEmail);
         logger.info('🔒 PRIVACY MODE: Email hashed for Voiceflow (SHA-256)');
         logger.info('   Original:', this.userEmail);
-        logger.info('   Hashed:', `${emailForUserID.substring(0, 16)  }...`);
+        logger.info('   Hashed:', `${emailForUserID.substring(0, 16)}...`);
       }
 
       // Voiceflow configuration with persistent IDs
@@ -328,6 +328,9 @@ export class VoiceflowController {
       // Load the widget
       window.voiceflow.chat.load(widgetConfig);
 
+      // Inject CSS to ensure widget is visible and above all content
+      this.injectWidgetCSS();
+
       this.widget = window.voiceflow.chat;
       this.isLoaded = true;
 
@@ -340,6 +343,57 @@ export class VoiceflowController {
     } catch (error) {
       logger.error('❌ Failed to initialize Voiceflow widget:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Inject CSS to ensure Voiceflow widget is visible and above all content
+   */
+  private injectWidgetCSS(): void {
+    try {
+      // Check if CSS is already injected
+      if (document.getElementById('voiceflow-widget-override-css')) {
+        logger.info('✅ Voiceflow widget CSS already injected');
+        return;
+      }
+
+      logger.info('💅 Injecting Voiceflow widget CSS overrides');
+
+      const style = document.createElement('style');
+      style.id = 'voiceflow-widget-override-css';
+      style.textContent = `
+        /* Ensure Voiceflow widget container is visible and above all content */
+        #voiceflow-chat {
+          position: fixed !important;
+          bottom: 20px !important;
+          right: 20px !important;
+          z-index: 999999 !important;
+          pointer-events: auto !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          display: block !important;
+        }
+
+        /* Ensure widget iframe/button is visible */
+        #voiceflow-chat iframe,
+        #voiceflow-chat button,
+        #voiceflow-chat > div {
+          z-index: 999999 !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+        }
+
+        /* Override any potential overflow hidden from parent containers */
+        body {
+          overflow: visible !important;
+        }
+      `;
+
+      document.head.appendChild(style);
+      logger.info('✅ Voiceflow widget CSS injected successfully');
+    } catch (error) {
+      logger.error('❌ Error injecting Voiceflow widget CSS:', error);
     }
   }
 
