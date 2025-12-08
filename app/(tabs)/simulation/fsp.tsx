@@ -1712,7 +1712,10 @@ function FSPSimulationScreen() {
             </View>
 
             {/* Widget Area */}
-            <View style={styles.widgetArea}>{/* Widget loads here automatically */}</View>
+            <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
+              {/* Voiceflow widget loads here automatically via script injection */}
+              <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget wird geladen...</Text>
+            </View>
           </View>
         </ScrollView>
 
@@ -2064,8 +2067,19 @@ const styles = StyleSheet.create({
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space
-    minHeight: 200,
+    minHeight: 600, // Increased to ensure widget has space
+    width: '100%',
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
     // This area is where the Voiceflow widget will appear
+  },
+  widgetPlaceholder: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 20,
   },
   // Final Warning Modal Styles
   finalWarningOverlay: {
