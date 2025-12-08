@@ -194,7 +194,13 @@ function KPSimulationScreen() {
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
+    console.log('🟢🟢🟢 KP SIMULATION useEffect FIRED');
+    console.log('Platform.OS:', Platform.OS);
+    console.log('User:', user ? 'Present' : 'Missing');
+    console.log('checkAccess function:', typeof checkAccess);
+
     const initializeVoiceflow = async () => {
+      console.log('🚀🚀🚀 initializeVoiceflow() CALLED');
       const timestamp = new Date().toISOString();
 
       // ============================================
