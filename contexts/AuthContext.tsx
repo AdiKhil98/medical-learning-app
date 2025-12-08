@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await ensureUserProfile(session.user);
 
         // Identify user in analytics for tracking
-        analytics.identify(session.user.id, {
+        analytics.identifyUser(session.user.id, {
           email: session.user.email,
         });
 
@@ -328,7 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         SecureLogger.log('Sign in successful');
 
         // Identify user in analytics
-        analytics.identify(data.user.id, {
+        analytics.identifyUser(data.user.id, {
           email: data.user.email,
         });
 
