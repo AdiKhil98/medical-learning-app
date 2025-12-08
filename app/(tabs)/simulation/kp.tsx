@@ -14,6 +14,7 @@ import {
   enableVoiceflowCleanup,
 } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
+import { quotaService } from '@/lib/quotaService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -286,6 +287,69 @@ function KPSimulationScreen() {
       }
 
       // ============================================
+      // STEP 2B: CHECK FOR ACTIVE SIMULATION (RESTORE SESSION)
+      // ============================================
+      logger.info(`🔍 [${timestamp}] Step 2b: Checking for active simulation to restore...`);
+
+      try {
+        const activeSimulation = await quotaService.getActiveSimulation(user.id);
+
+        if (activeSimulation.has_active_simulation && activeSimulation.session_token) {
+          logger.info(`✅ [${timestamp}] Found active simulation to restore:`, {
+            sessionToken: `${activeSimulation.session_token.substring(0, 8)  }...`,
+            simulationType: activeSimulation.simulation_type,
+            elapsedSeconds: activeSimulation.elapsed_seconds,
+            timeRemaining: activeSimulation.time_remaining_seconds,
+          });
+
+          // Restore session token
+          setSessionToken(activeSimulation.session_token);
+          sessionTokenRef.current = activeSimulation.session_token;
+
+          // Restore timer based on elapsed time
+          const elapsedSeconds = activeSimulation.elapsed_seconds || 0;
+          const remainingSeconds = Math.max(0, SIMULATION_DURATION_SECONDS - elapsedSeconds);
+
+          // Calculate absolute end time based on when the session started
+          const endTime = Date.now() + remainingSeconds * 1000;
+          setTimerEndTime(endTime);
+          timerEndTimeRef.current = endTime;
+          setTimeRemaining(remainingSeconds);
+          previousTimeRef.current = remainingSeconds;
+
+          // Start the timer interval
+          timerActiveRef.current = true;
+          setTimerActive(true);
+
+          logger.info(`🔄 [${timestamp}] Timer restored: ${remainingSeconds} seconds remaining`);
+
+          // Start timer interval
+          timerInterval.current = setInterval(() => {
+            const currentEndTime = timerEndTimeRef.current || endTime;
+            const remaining = currentEndTime - Date.now();
+            const remainingSecs = Math.floor(remaining / 1000);
+
+            if (remaining <= 0) {
+              setTimeRemaining(0);
+              previousTimeRef.current = 0;
+            } else {
+              setTimeRemaining(remainingSecs);
+              previousTimeRef.current = remainingSecs;
+            }
+          }, 1000);
+
+          logger.info(`✅ [${timestamp}] Session successfully restored from active simulation`);
+
+          // Continue with Voiceflow initialization
+        } else {
+          logger.info(`ℹ️ [${timestamp}] No active simulation found - will create new session`);
+        }
+      } catch (error) {
+        logger.error(`⚠️ [${timestamp}] Error checking for active simulation:`, error);
+        // Continue with normal initialization if check fails
+      }
+
+      // ============================================
       // STEP 3: INITIALIZE WITH RETRY LOGIC (WEB ONLY)
       // ============================================
       if (Platform.OS === 'web') {
@@ -321,28 +385,36 @@ function KPSimulationScreen() {
         stopGlobalVoiceflowCleanup();
 
         // ============================================
-        // STEP 3A: GENERATE SESSION TOKEN
+        // STEP 3A: GENERATE OR USE EXISTING SESSION TOKEN
         // ============================================
-        logger.info(`🔑 [${timestamp}] Step 3a: Generating session token before Voiceflow initialization`);
+        if (sessionTokenRef.current) {
+          // Session token already exists (restored from active simulation)
+          logger.info(
+            `🔑 [${timestamp}] Step 3a: Using restored session token: ${sessionTokenRef.current.substring(0, 8)}...`
+          );
+        } else {
+          // No session token, generate new one
+          logger.info(`🔑 [${timestamp}] Step 3a: Generating new session token before Voiceflow initialization`);
 
-        const result = await simulationTracker.startSimulation('kp');
+          const result = await simulationTracker.startSimulation('kp');
 
-        logger.info(`📋 [${timestamp}] Session token generation result:`, {
-          success: result.success,
-          hasToken: !!result.sessionToken,
-          error: result.error || 'none',
-        });
+          logger.info(`📋 [${timestamp}] Session token generation result:`, {
+            success: result.success,
+            hasToken: !!result.sessionToken,
+            error: result.error || 'none',
+          });
 
-        if (!result.success || !result.sessionToken) {
-          throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
+          if (!result.success || !result.sessionToken) {
+            throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
+          }
+
+          logger.info(
+            `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
+          );
+
+          setSessionToken(result.sessionToken);
+          sessionTokenRef.current = result.sessionToken;
         }
-
-        logger.info(
-          `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
-        );
-
-        setSessionToken(result.sessionToken);
-        sessionTokenRef.current = result.sessionToken;
 
         // ============================================
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
