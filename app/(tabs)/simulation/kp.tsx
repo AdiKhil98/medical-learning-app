@@ -1729,11 +1729,27 @@ function KPSimulationScreen() {
               {Platform.OS === 'web' ? (
                 <>
                   {/* Voiceflow widget loads here automatically via script injection */}
-                  <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget wird geladen...</Text>
-                  <Text style={styles.widgetHint}>
-                    Das Voiceflow-Widget sollte in wenigen Sekunden erscheinen. Falls nicht, überprüfen Sie bitte Ihre
-                    Internetverbindung.
-                  </Text>
+                  {isInitializing && (
+                    <Text style={styles.widgetStatusInitializing}>
+                      🔄 Initialisiere Voiceflow Widget... (Versuch {initializationAttemptsRef.current}/
+                      {maxRetryAttempts})
+                    </Text>
+                  )}
+                  {initializationError && (
+                    <Text style={styles.widgetStatusError}>
+                      ❌ Fehler beim Laden: {initializationError}
+                      {'\n'}Bitte Seite neu laden (F5)
+                    </Text>
+                  )}
+                  {!isInitializing && !initializationError && (
+                    <>
+                      <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget sollte erscheinen</Text>
+                      <Text style={styles.widgetHint}>
+                        Falls das Widget nicht erscheint, öffnen Sie die Browser-Konsole (F12) für Details oder laden
+                        Sie die Seite neu.
+                      </Text>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -2111,6 +2127,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 20,
+  },
+  widgetStatusInitializing: {
+    fontSize: 14,
+    color: '#3b82f6',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginTop: 20,
+  },
+  widgetStatusError: {
+    fontSize: 14,
+    color: '#dc2626',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginTop: 20,
+    lineHeight: 20,
   },
   // Final Warning Modal Styles
   finalWarningOverlay: {
