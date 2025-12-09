@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
 import FlashcardCarousel from '@/components/ui/FlashcardCarousel';
+import QuotaExhaustedCard from '@/components/simulation/QuotaExhaustedCard';
 import {
   SIMULATION_DURATION_SECONDS,
   USAGE_THRESHOLD_SECONDS,
@@ -1803,28 +1804,6 @@ function KPSimulationScreen() {
   return (
     <ErrorBoundary>
       <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
-        {/* Lock Overlay - Shows when simulation limit is reached */}
-        {isSimulationLocked && (
-          <View style={styles.lockOverlay}>
-            <View style={styles.lockOverlayContent}>
-              <View style={styles.lockIconContainer}>
-                <Text style={styles.lockIcon}>🔒</Text>
-              </View>
-              <Text style={styles.lockTitle}>Simulationslimit erreicht</Text>
-              <Text style={styles.lockMessage}>
-                {subscriptionStatus?.message || 'Sie haben Ihr Simulationslimit für diesen Zeitraum erreicht.'}
-              </Text>
-              <Text style={styles.lockSubMessage}>Upgraden Sie Ihren Plan, um mehr Simulationen zu erhalten.</Text>
-              <TouchableOpacity style={styles.lockUpgradeButton} onPress={() => router.push('subscription' as any)}>
-                <Text style={styles.lockUpgradeButtonText}>Upgrade durchführen</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.lockBackButton} onPress={() => router.push('/(tabs)/simulation')}>
-                <Text style={styles.lockBackButtonText}>Zurück zur Übersicht</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         {/* Header with back button and title */}
         <LinearGradient colors={['#4338ca', '#3730a3']} style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/simulation')}>
@@ -1886,6 +1865,16 @@ function KPSimulationScreen() {
           scrollEventThrottle={16}
         >
           <View style={styles.content}>
+            {/* Quota Exhausted Card - Shows when limit reached */}
+            {isSimulationLocked && subscriptionStatus && (
+              <QuotaExhaustedCard
+                simulationsUsed={subscriptionStatus.usedSimulations || 0}
+                totalSimulations={subscriptionStatus.totalSimulations || 3}
+                subscriptionTier={(subscriptionStatus.tier as 'free' | 'basic' | 'premium') || 'free'}
+                periodEnd={subscriptionStatus.periodEnd ? new Date(subscriptionStatus.periodEnd) : undefined}
+              />
+            )}
+
             {/* Flashcard Carousel - Educational Content */}
             <View style={styles.instructionsContainer}>
               <FlashcardCarousel />
@@ -1906,42 +1895,44 @@ function KPSimulationScreen() {
             )}
 
             {/* Widget Area */}
-            <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
-              {Platform.OS === 'web' ? (
-                <>
-                  {/* Voiceflow widget loads here automatically via script injection */}
-                  {isInitializing && (
-                    <Text style={styles.widgetStatusInitializing}>
-                      🔄 Initialisiere Voiceflow Widget... (Versuch {initializationAttemptsRef.current}/
-                      {maxRetryAttempts})
-                    </Text>
-                  )}
-                  {initializationError && (
-                    <Text style={styles.widgetStatusError}>
-                      ❌ Fehler beim Laden: {initializationError}
-                      {'\n'}Bitte Seite neu laden (F5)
-                    </Text>
-                  )}
-                  {!isInitializing && !initializationError && (
-                    <>
-                      <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget sollte erscheinen</Text>
-                      <Text style={styles.widgetHint}>
-                        Falls das Widget nicht erscheint, öffnen Sie die Browser-Konsole (F12) für Details oder laden
-                        Sie die Seite neu.
+            {!isSimulationLocked && (
+              <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
+                {Platform.OS === 'web' ? (
+                  <>
+                    {/* Voiceflow widget loads here automatically via script injection */}
+                    {isInitializing && (
+                      <Text style={styles.widgetStatusInitializing}>
+                        🔄 Initialisiere Voiceflow Widget... (Versuch {initializationAttemptsRef.current}/
+                        {maxRetryAttempts})
                       </Text>
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Text style={styles.widgetPlaceholder}>📱 Mobil-Modus</Text>
-                  <Text style={styles.widgetHint}>
-                    Das Voiceflow-Widget ist nur in der Web-Version verfügbar. Öffnen Sie die App im Browser, um das
-                    Widget zu nutzen.
-                  </Text>
-                </>
-              )}
-            </View>
+                    )}
+                    {initializationError && (
+                      <Text style={styles.widgetStatusError}>
+                        ❌ Fehler beim Laden: {initializationError}
+                        {'\n'}Bitte Seite neu laden (F5)
+                      </Text>
+                    )}
+                    {!isInitializing && !initializationError && (
+                      <>
+                        <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget sollte erscheinen</Text>
+                        <Text style={styles.widgetHint}>
+                          Falls das Widget nicht erscheint, öffnen Sie die Browser-Konsole (F12) für Details oder laden
+                          Sie die Seite neu.
+                        </Text>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.widgetPlaceholder}>📱 Mobil-Modus</Text>
+                    <Text style={styles.widgetHint}>
+                      Das Voiceflow-Widget ist nur in der Web-Version verfügbar. Öffnen Sie die App im Browser, um das
+                      Widget zu nutzen.
+                    </Text>
+                  </>
+                )}
+              </View>
+            )}
           </View>
         </ScrollView>
 

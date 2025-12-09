@@ -18,6 +18,8 @@ import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -25,6 +27,9 @@ export default function SimulationScreen() {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const { getSubscriptionInfo } = useSubscription(user?.id);
+  const subscriptionInfo = getSubscriptionInfo();
 
   // Theme-aware gradient colors
   const backgroundGradient = isDarkMode
@@ -190,10 +195,20 @@ export default function SimulationScreen() {
               </View>
 
               <View style={styles.cardInner}>
-                {/* Badge */}
-                <View style={styles.cardBadge}>
-                  <Target size={16} color="#FFFFFF" />
-                  <Text style={styles.cardBadgeText}>Klinische Prüfung</Text>
+                {/* Top Row: Badge and Quota */}
+                <View style={styles.cardTopRow}>
+                  {/* Badge */}
+                  <View style={styles.cardBadge}>
+                    <Target size={16} color="#FFFFFF" />
+                    <Text style={styles.cardBadgeText}>Klinische Prüfung</Text>
+                  </View>
+
+                  {/* Quota Badge */}
+                  {subscriptionInfo && (
+                    <View style={styles.quotaBadge}>
+                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remainingSimulations} verbleibend</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Title */}
@@ -254,10 +269,20 @@ export default function SimulationScreen() {
               </View>
 
               <View style={styles.cardInner}>
-                {/* Badge */}
-                <View style={styles.cardBadge}>
-                  <Mic size={16} color="#FFFFFF" />
-                  <Text style={styles.cardBadgeText}>Fachsprachprüfung</Text>
+                {/* Top Row: Badge and Quota */}
+                <View style={styles.cardTopRow}>
+                  {/* Badge */}
+                  <View style={styles.cardBadge}>
+                    <Mic size={16} color="#FFFFFF" />
+                    <Text style={styles.cardBadgeText}>Fachsprachprüfung</Text>
+                  </View>
+
+                  {/* Quota Badge */}
+                  {subscriptionInfo && (
+                    <View style={styles.quotaBadge}>
+                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remainingSimulations} verbleibend</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Title */}
@@ -549,19 +574,36 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 10,
   },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
   cardBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignSelf: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 9999,
-    marginBottom: 24,
   },
   cardBadgeText: {
     fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+  },
+  quotaBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  quotaBadgeText: {
+    fontSize: 12,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
   },
