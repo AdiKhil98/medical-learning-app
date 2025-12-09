@@ -6,6 +6,7 @@ DECLARE
   v_current_month_logs integer;
   v_quota_used integer;
   v_quota_limit integer;
+  v_record RECORD;
 BEGIN
   -- Get the first user_id
   SELECT user_id INTO v_user_id FROM user_simulation_quota LIMIT 1;
