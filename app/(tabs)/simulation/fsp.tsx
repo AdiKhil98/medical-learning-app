@@ -1214,7 +1214,45 @@ function FSPSimulationScreen() {
   // Handle navigation away from page with immediate cleanup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (timerActive) {
+      if (timerActive && sessionTokenRef.current) {
+        // CRITICAL FIX: End simulation in database before page unloads
+        // Use fetch with keepalive for reliability - guaranteed to send even during unload
+        logger.info('🚨 FSP: Page unloading with active simulation - ending session NOW');
+
+        try {
+          // Prepare the end session request
+          const {
+            data: { session },
+          } = supabase.auth.getSession();
+          if (session?.access_token && user?.id && sessionTokenRef.current) {
+            const payload = {
+              p_session_token: sessionTokenRef.current,
+              p_user_id: user.id,
+            };
+
+            // Send with authentication headers via fetch keepalive
+            // keepalive ensures request completes even if page closes
+            const beaconUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/rpc/end_simulation_session`;
+
+            fetch(beaconUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify(payload),
+              keepalive: true, // This ensures request completes even if page closes
+            }).catch((err) => {
+              logger.error('❌ FSP: Failed to end simulation on unload:', err);
+            });
+
+            logger.info('✅ FSP: Simulation end request sent (keepalive)');
+          }
+        } catch (error) {
+          logger.error('❌ FSP: Error ending simulation on unload:', error);
+        }
+
         e.preventDefault();
         e.returnValue = 'Simulation läuft. Möchten Sie wirklich die Seite verlassen?';
         return e.returnValue;
