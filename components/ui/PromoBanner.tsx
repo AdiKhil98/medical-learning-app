@@ -1,30 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'promo-banner-2025-dismissed';
-const { width: screenWidth } = Dimensions.get('window');
 
 export default function PromoBanner() {
   const [isVisible, setIsVisible] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const scrollAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
 
   useEffect(() => {
     checkDismissed();
   }, []);
-
-  useEffect(() => {
-    if (isVisible && !isPaused) {
-      startScrollAnimation();
-    }
-    return () => scrollAnim.stopAnimation();
-  }, [isVisible, isPaused]);
 
   const checkDismissed = async () => {
     try {
@@ -35,17 +25,6 @@ export default function PromoBanner() {
     } catch (error) {
       console.error('Error checking banner dismissal:', error);
     }
-  };
-
-  const startScrollAnimation = () => {
-    scrollAnim.setValue(0);
-    Animated.loop(
-      Animated.timing(scrollAnim, {
-        toValue: -1,
-        duration: 25000,
-        useNativeDriver: true,
-      })
-    ).start();
   };
 
   const handleClose = async (e?: any) => {
@@ -70,21 +49,7 @@ export default function PromoBanner() {
     router.push('/subscription');
   };
 
-  const handleMouseEnter = () => {
-    if (Platform.OS === 'web') {
-      setIsPaused(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (Platform.OS === 'web') {
-      setIsPaused(false);
-    }
-  };
-
   if (!isVisible) return null;
-
-  const text = 'Letzte Chance: 50% Rabatt bis 31.12.2025 – Jetzt Premium sichern!';
 
   return (
     <Animated.View
@@ -95,15 +60,7 @@ export default function PromoBanner() {
         },
       ]}
     >
-      <TouchableOpacity
-        activeOpacity={0.95}
-        onPress={handleBannerPress}
-        style={styles.touchable}
-        {...(Platform.OS === 'web' && {
-          onMouseEnter: handleMouseEnter,
-          onMouseLeave: handleMouseLeave,
-        })}
-      >
+      <TouchableOpacity activeOpacity={0.95} onPress={handleBannerPress} style={styles.touchable}>
         <LinearGradient
           colors={['#F97316', '#FB923C', '#FBBF24', '#FCD34D', '#FDE047']}
           start={{ x: 0, y: 0 }}
@@ -117,29 +74,11 @@ export default function PromoBanner() {
             </View>
           </View>
 
-          {/* Scrolling Text Content */}
+          {/* Static Text Content */}
           <View style={styles.contentContainer}>
-            <View style={styles.scrollContainer}>
-              <Animated.View
-                style={[
-                  styles.scrollingText,
-                  Platform.OS === 'web' && {
-                    transform: [
-                      {
-                        translateX: scrollAnim.interpolate({
-                          inputRange: [-1, 0],
-                          outputRange: [-screenWidth * 1.5, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Text style={styles.text}>{text}</Text>
-                <Text style={styles.text}>{text}</Text>
-                <Text style={styles.text}>{text}</Text>
-              </Animated.View>
-            </View>
+            <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
+              Letzte Chance: 50% Rabatt bis 31.12.2025 – Jetzt Premium sichern!
+            </Text>
           </View>
 
           {/* Right Actions */}
@@ -207,23 +146,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 180,
     marginRight: 100,
-    overflow: 'hidden',
-  },
-  scrollContainer: {
-    overflow: 'hidden',
-  },
-  scrollingText: {
-    flexDirection: 'row',
-    gap: 80,
-    ...(Platform.OS === 'web' && {
-      whiteSpace: 'nowrap' as any,
-    }),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     color: '#000000',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: 0.2,
+    textAlign: 'center',
     ...(Platform.OS === 'web' && {
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
       userSelect: 'none' as any,
