@@ -129,8 +129,8 @@ function FSPSimulationScreen() {
                 counted: status.counted_toward_usage,
               });
 
-              // Keep optimistic deduction if session was active
-              applyOptimisticDeduction();
+              // REMOVED: Optimistic deduction (new quota system handles this automatically)
+              // The quota is already updated in database if simulation was counted
 
               // Set session token for potential continuation
               setSessionToken(savedToken);
@@ -749,8 +749,9 @@ function FSPSimulationScreen() {
       setUsageMarked(false);
       usageMarkedRef.current = false;
 
-      // Apply optimistic counter deduction (show immediate feedback to user)
-      applyOptimisticDeduction();
+      // REMOVED: Optimistic deduction (causes premature quota exceeded lock)
+      // New quota system updates in real-time via database triggers
+      // No need for optimistic UI - actual count will update when simulation ends
 
       // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
       try {
