@@ -1,0 +1,281 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronRight, X } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY = 'promo-banner-2025-dismissed';
+const { width: screenWidth } = Dimensions.get('window');
+
+export default function PromoBanner() {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const router = useRouter();
+
+  useEffect(() => {
+    checkDismissed();
+  }, []);
+
+  useEffect(() => {
+    if (isVisible && !isPaused) {
+      startScrollAnimation();
+    }
+    return () => scrollAnim.stopAnimation();
+  }, [isVisible, isPaused]);
+
+  const checkDismissed = async () => {
+    try {
+      const dismissed = await AsyncStorage.getItem(STORAGE_KEY);
+      if (dismissed === 'true') {
+        setIsVisible(false);
+      }
+    } catch (error) {
+      console.error('Error checking banner dismissal:', error);
+    }
+  };
+
+  const startScrollAnimation = () => {
+    scrollAnim.setValue(0);
+    Animated.loop(
+      Animated.timing(scrollAnim, {
+        toValue: -1,
+        duration: 25000,
+        useNativeDriver: true,
+      })
+    ).start();
+  };
+
+  const handleClose = async (e?: any) => {
+    if (e) {
+      e.stopPropagation();
+    }
+
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, 'true');
+      Animated.timing(slideAnim, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setIsVisible(false));
+    } catch (error) {
+      console.error('Error saving banner dismissal:', error);
+      setIsVisible(false);
+    }
+  };
+
+  const handleBannerPress = () => {
+    router.push('/subscription');
+  };
+
+  const handleMouseEnter = () => {
+    if (Platform.OS === 'web') {
+      setIsPaused(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (Platform.OS === 'web') {
+      setIsPaused(false);
+    }
+  };
+
+  if (!isVisible) return null;
+
+  const text = 'Letzte Chance: 50% Rabatt bis 31.12.2025 – Jetzt Premium sichern!';
+
+  return (
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <TouchableOpacity
+        activeOpacity={0.95}
+        onPress={handleBannerPress}
+        style={styles.touchable}
+        {...(Platform.OS === 'web' && {
+          onMouseEnter: handleMouseEnter,
+          onMouseLeave: handleMouseLeave,
+        })}
+      >
+        <LinearGradient
+          colors={['#F97316', '#FB923C', '#FBBF24', '#FCD34D', '#FDE047']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gradient}
+        >
+          {/* Special Offer Badge */}
+          <View style={styles.badgeContainer}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Sonderangebot</Text>
+            </View>
+          </View>
+
+          {/* Scrolling Text Content */}
+          <View style={styles.contentContainer}>
+            <View style={styles.scrollContainer}>
+              <Animated.View
+                style={[
+                  styles.scrollingText,
+                  Platform.OS === 'web' && {
+                    transform: [
+                      {
+                        translateX: scrollAnim.interpolate({
+                          inputRange: [-1, 0],
+                          outputRange: [-screenWidth * 1.5, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.text}>{text}</Text>
+                <Text style={styles.text}>{text}</Text>
+                <Text style={styles.text}>{text}</Text>
+              </Animated.View>
+            </View>
+          </View>
+
+          {/* Right Actions */}
+          <View style={styles.actionsContainer}>
+            <ChevronRight size={20} color="#000000" strokeWidth={2.5} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClose}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <X size={24} color="#000000" strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: Platform.OS === 'web' ? ('sticky' as any) : 'relative',
+    top: 0,
+    zIndex: 1001,
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      position: 'sticky' as any,
+    }),
+  },
+  touchable: {
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      cursor: 'pointer' as any,
+    }),
+  },
+  gradient: {
+    width: '100%',
+    height: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    left: 20,
+    zIndex: 10,
+  },
+  badge: {
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  contentContainer: {
+    flex: 1,
+    marginLeft: 180,
+    marginRight: 100,
+    overflow: 'hidden',
+  },
+  scrollContainer: {
+    overflow: 'hidden',
+  },
+  scrollingText: {
+    flexDirection: 'row',
+    gap: 80,
+    ...(Platform.OS === 'web' && {
+      whiteSpace: 'nowrap' as any,
+    }),
+  },
+  text: {
+    color: '#000000',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    ...(Platform.OS === 'web' && {
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      userSelect: 'none' as any,
+    }),
+  },
+  actionsContainer: {
+    position: 'absolute',
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    zIndex: 10,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 4,
+    ...(Platform.OS === 'web' && {
+      cursor: 'pointer' as any,
+      transition: 'all 0.2s ease' as any,
+    }),
+  },
+
+  // Responsive styles for mobile
+  ...(Platform.OS !== 'web' &&
+    Dimensions.get('window').width < 768 && {
+      gradient: {
+        height: 45,
+        paddingHorizontal: 12,
+      },
+      badgeContainer: {
+        left: 12,
+      },
+      badge: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+      },
+      badgeText: {
+        fontSize: 12,
+      },
+      contentContainer: {
+        marginLeft: 140,
+        marginRight: 80,
+      },
+      text: {
+        fontSize: 13,
+      },
+      actionsContainer: {
+        right: 12,
+        gap: 8,
+      },
+    }),
+});

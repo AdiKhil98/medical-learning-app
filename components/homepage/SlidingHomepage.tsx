@@ -27,6 +27,7 @@ import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
+import PromoBanner from '@/components/ui/PromoBanner';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -153,6 +154,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
+      {/* Promotional Banner */}
+      <PromoBanner />
+
       {/* Clean gradient background */}
       <LinearGradient colors={backgroundGradient as any} style={styles.backgroundGradient} />
 
