@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   kpMedAmount: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#FF8C42',
+    color: '#FFFFFF',
     ...(Platform.OS === 'web' && {
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
