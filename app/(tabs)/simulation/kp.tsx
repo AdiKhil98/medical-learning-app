@@ -1868,9 +1868,9 @@ function KPSimulationScreen() {
             {/* Quota Exhausted Card - Shows when limit reached */}
             {isSimulationLocked && subscriptionStatus && (
               <QuotaExhaustedCard
-                simulationsUsed={subscriptionStatus.usedSimulations || 0}
-                totalSimulations={subscriptionStatus.totalSimulations || 3}
-                subscriptionTier={(subscriptionStatus.tier as 'free' | 'basic' | 'premium') || 'free'}
+                simulationsUsed={subscriptionStatus.simulationsUsed || 0}
+                totalSimulations={subscriptionStatus.simulationLimit || 0}
+                subscriptionTier={(subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium') || 'free'}
                 periodEnd={subscriptionStatus.periodEnd ? new Date(subscriptionStatus.periodEnd) : undefined}
               />
             )}

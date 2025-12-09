@@ -206,7 +206,7 @@ export default function SimulationScreen() {
                   {/* Quota Badge */}
                   {subscriptionInfo && (
                     <View style={styles.quotaBadge}>
-                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remainingSimulations} verbleibend</Text>
+                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remaining} verbleibend</Text>
                     </View>
                   )}
                 </View>
@@ -280,7 +280,7 @@ export default function SimulationScreen() {
                   {/* Quota Badge */}
                   {subscriptionInfo && (
                     <View style={styles.quotaBadge}>
-                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remainingSimulations} verbleibend</Text>
+                      <Text style={styles.quotaBadgeText}>{subscriptionInfo.remaining} verbleibend</Text>
                     </View>
                   )}
                 </View>
