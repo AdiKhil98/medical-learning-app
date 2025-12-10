@@ -142,7 +142,7 @@ class QuotaService {
    * not directly from client for security
    *
    * @param userId - User UUID
-   * @param newTier - New subscription tier ('free', 'basis', 'profi', 'unlimited')
+   * @param newTier - New subscription tier ('free', 'basic', 'premium')
    * @returns Promise with update result
    */
   async handleSubscriptionChange(userId: string, newTier: string): Promise<any> {
@@ -216,16 +216,18 @@ class QuotaService {
    * Get tier simulation limit (client-side helper)
    *
    * @param tier - Subscription tier
-   * @returns Number of simulations for tier (-1 for unlimited)
+   * @returns Number of simulations for tier
    */
   getTierLimit(tier: string): number {
     const limits: Record<string, number> = {
-      free: 5,
-      basis: 20,
-      profi: 100,
-      unlimited: -1,
+      free: 3,
+      basic: 30,
+      premium: 60,
+      // Legacy tier names for backward compatibility
+      basis: 30,
+      profi: 60,
     };
-    return limits[tier] || 5;
+    return limits[tier] || 3;
   }
 
   /**
@@ -385,5 +387,5 @@ export const quotaService = new QuotaService();
 /**
  * Example: Handle subscription change (backend/webhook only)
  *
- * await quotaService.handleSubscriptionChange(userId, 'profi');
+ * await quotaService.handleSubscriptionChange(userId, 'premium');
  */

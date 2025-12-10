@@ -6,17 +6,17 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
-  basis: {
-    name: 'Basis-Plan',
+  free: {
+    name: 'Free-Plan',
+    simulationLimit: 3,
+  },
+  basic: {
+    name: 'Basic-Plan',
     simulationLimit: 30,
   },
-  profi: {
-    name: 'Profi-Plan',
+  premium: {
+    name: 'Premium-Plan',
     simulationLimit: 60,
-  },
-  unlimited: {
-    name: 'Unlimited-Plan',
-    simulationLimit: null,
   },
 };
 
@@ -34,9 +34,8 @@ function verifyWebhookSignature(payload, signature, secret) {
 
 // Variant ID to subscription tier mapping
 const VARIANT_TIER_MAPPING = {
-  1006948: 'basis', // Basis Plan
-  1006934: 'profi', // Profi Plan
-  1006947: 'unlimited', // Unlimited Plan
+  1006948: 'basic', // Basic Plan (30 simulations/month)
+  1006934: 'premium', // Premium Plan (60 simulations/month)
 };
 
 // Helper function to determine subscription tier from variant ID
@@ -50,20 +49,20 @@ function determineSubscriptionTier(variantName, variantId) {
 
   // Fallback to name-based matching if variant ID not found
   const name = variantName?.toLowerCase() || '';
-  if (name.includes('basis') || name.includes('basic')) {
-    console.log(`Mapped variant name "${variantName}" to tier: basis`);
-    return 'basis';
-  } else if (name.includes('profi') || name.includes('pro')) {
-    console.log(`Mapped variant name "${variantName}" to tier: profi`);
-    return 'profi';
-  } else if (name.includes('unlimited') || name.includes('premium')) {
-    console.log(`Mapped variant name "${variantName}" to tier: unlimited`);
-    return 'unlimited';
+  if (name.includes('basic') || name.includes('basis')) {
+    console.log(`Mapped variant name "${variantName}" to tier: basic`);
+    return 'basic';
+  } else if (name.includes('premium') || name.includes('profi') || name.includes('pro')) {
+    console.log(`Mapped variant name "${variantName}" to tier: premium`);
+    return 'premium';
+  } else if (name.includes('free')) {
+    console.log(`Mapped variant name "${variantName}" to tier: free`);
+    return 'free';
   }
 
-  // Final fallback
-  console.warn(`Unknown subscription tier for variant: ${variantName} (ID: ${variantId}), defaulting to basis`);
-  return 'basis';
+  // Final fallback to free tier (safe default)
+  console.warn(`Unknown subscription tier for variant: ${variantName} (ID: ${variantId}), defaulting to free`);
+  return 'free';
 }
 
 // Helper function to update user quota

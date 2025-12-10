@@ -72,17 +72,21 @@ export const FINAL_COUNTDOWN_SECONDS = 10;
 
 // ===== SUBSCRIPTION LIMITS =====
 
-/** Free tier simulation limit */
-export const FREE_TIER_LIMIT = 5;
+/** Free tier simulation limit (3 simulations per month) */
+export const FREE_TIER_LIMIT = 3;
 
-/** Basis tier simulation limit */
-export const BASIS_TIER_LIMIT = 20;
+/** Basic tier simulation limit (30 simulations per month) */
+export const BASIC_TIER_LIMIT = 30;
 
-/** Profi tier simulation limit */
-export const PROFI_TIER_LIMIT = 100;
+/** Premium tier simulation limit (60 simulations per month) */
+export const PREMIUM_TIER_LIMIT = 60;
 
-/** Unlimited tier has no limit (represented as -1) */
-export const UNLIMITED_TIER_LIMIT = -1;
+// Legacy exports for backward compatibility
+/** @deprecated Use BASIC_TIER_LIMIT instead */
+export const BASIS_TIER_LIMIT = 30;
+
+/** @deprecated Use PREMIUM_TIER_LIMIT instead */
+export const PROFI_TIER_LIMIT = 60;
 
 // ===== HELPER FUNCTIONS =====
 

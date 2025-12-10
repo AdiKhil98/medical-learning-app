@@ -24,7 +24,7 @@ function generateSignature(payload, secret) {
 // Test scenarios
 const testScenarios = [
   {
-    name: 'Subscription Created - Basis Tier',
+    name: 'Subscription Created - Basic Tier',
     event: {
       meta: {
         event_name: 'subscription_created',
@@ -33,7 +33,7 @@ const testScenarios = [
         id: 'test-sub-001',
         attributes: {
           variant_id: '1006948',
-          variant_name: 'Basis-Plan',
+          variant_name: 'Basic-Plan',
           user_email: 'test@example.com',
           status: 'active',
           created_at: new Date().toISOString(),
@@ -43,11 +43,11 @@ const testScenarios = [
         },
       },
     },
-    expectedTier: 'basis',
-    expectedLimit: 20,
+    expectedTier: 'basic',
+    expectedLimit: 30,
   },
   {
-    name: 'Subscription Updated - Upgrade to Profi',
+    name: 'Subscription Updated - Upgrade to Premium',
     event: {
       meta: {
         event_name: 'subscription_updated',
@@ -56,7 +56,7 @@ const testScenarios = [
         id: 'test-sub-001',
         attributes: {
           variant_id: '1006934',
-          variant_name: 'Profi-Plan',
+          variant_name: 'Premium-Plan',
           user_email: 'test@example.com',
           status: 'active',
           created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -66,8 +66,8 @@ const testScenarios = [
         },
       },
     },
-    expectedTier: 'profi',
-    expectedLimit: 100,
+    expectedTier: 'premium',
+    expectedLimit: 60,
   },
   {
     name: 'Subscription Expired - Reset to Free',
@@ -79,7 +79,7 @@ const testScenarios = [
         id: 'test-sub-001',
         attributes: {
           variant_id: '1006934',
-          variant_name: 'Profi-Plan',
+          variant_name: 'Premium-Plan',
           user_email: 'test@example.com',
           status: 'expired',
           created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -89,7 +89,7 @@ const testScenarios = [
       },
     },
     expectedTier: 'free',
-    expectedLimit: 5,
+    expectedLimit: 3,
   },
 ];
 
