@@ -170,7 +170,60 @@ async function findUserByEmail(email) {
   return data;
 }
 
-// NEW: Use existing upsert_subscription_from_webhook database function
+// ATOMIC: Process subscription webhook atomically (subscription + quota in one transaction)
+async function processSubscriptionAtomically(userId, subscriptionData, eventType) {
+  const {
+    subscriptionId,
+    variantId,
+    variantName,
+    customerEmail,
+    tier,
+    status,
+    simulationLimit,
+    createdAt,
+    updatedAt,
+    expiresAt,
+    renewsAt,
+    periodStart,
+    periodEnd,
+  } = subscriptionData;
+
+  console.log('🔄 Processing subscription atomically:', {
+    userId,
+    subscriptionId,
+    tier,
+    status,
+    eventType,
+  });
+
+  const { data, error } = await supabase.rpc('process_subscription_webhook_atomic', {
+    p_user_id: userId,
+    p_lemonsqueezy_subscription_id: subscriptionId,
+    p_tier: tier,
+    p_status: status,
+    p_variant_id: String(variantId),
+    p_variant_name: variantName,
+    p_customer_email: customerEmail,
+    p_simulation_limit: simulationLimit,
+    p_created_at: createdAt,
+    p_updated_at: updatedAt,
+    p_expires_at: expiresAt,
+    p_renews_at: renewsAt,
+    p_period_start: periodStart,
+    p_period_end: periodEnd,
+    p_webhook_event: eventType,
+  });
+
+  if (error) {
+    console.error('❌ Atomic processing failed:', error);
+    throw error;
+  }
+
+  console.log('✅ Atomic processing succeeded:', data);
+  return data;
+}
+
+// LEGACY: Use existing upsert_subscription_from_webhook database function
 async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType) {
   const {
     subscriptionId,
@@ -366,12 +419,13 @@ exports.handler = async (event, context) => {
       case 'subscription_created':
         console.log(`📝 Creating subscription for user ${userId}`);
 
-        const createResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
+        // ✨ ATOMIC: Process subscription + quota in single transaction
+        const createResult = await processSubscriptionAtomically(userId, subData, eventType);
 
-        // ✨ NEW: Update quota for the new subscription
-        const createQuotaUpdate = await updateUserQuota(userId, tier);
-
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, createQuotaUpdate);
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
+          success: createResult.success,
+          tier: createResult.new_tier,
+        });
         console.log(`✅ Subscription created successfully for user ${userId}`);
         console.log('Create result:', createResult);
         break;
@@ -386,19 +440,22 @@ exports.handler = async (event, context) => {
         subData.tier = newTier;
         subData.simulationLimit = newTierConfig.simulationLimit;
 
-        const updateResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
+        // ✨ ATOMIC: Process subscription + quota in single transaction
+        const updateResult = await processSubscriptionAtomically(userId, subData, eventType);
 
-        // ✨ NEW: Update quota for the updated subscription
-        const updateQuotaUpdate = await updateUserQuota(userId, newTier);
-
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, updateQuotaUpdate);
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
+          success: updateResult.success,
+          tier_changed: updateResult.tier_changed,
+          old_tier: updateResult.old_tier,
+          new_tier: updateResult.new_tier,
+        });
         console.log(`✅ Subscription updated successfully for user ${userId}`);
         console.log('Update result:', updateResult);
 
         // Check if tier changed (upgrade/downgrade)
-        if (updateResult && updateResult.sync_result && updateResult.sync_result.tier_changed) {
-          console.log(`🎉 TIER CHANGED: ${updateResult.sync_result.old_tier} → ${updateResult.sync_result.new_tier}`);
-          console.log('✅ Counter and quota automatically reset');
+        if (updateResult.tier_changed) {
+          console.log(`🎉 TIER CHANGED: ${updateResult.old_tier} → ${updateResult.new_tier}`);
+          console.log('✅ Quota automatically updated');
         }
         break;
 
@@ -419,14 +476,17 @@ exports.handler = async (event, context) => {
 
         subData.status = 'expired';
         subData.expiresAt = new Date().toISOString();
+        subData.tier = 'free'; // Reset to free tier
+        subData.simulationLimit = 3;
 
-        const expireResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
+        // ✨ ATOMIC: Process subscription + quota in single transaction
+        const expireResult = await processSubscriptionAtomically(userId, subData, eventType);
 
-        // ✨ NEW: Reset quota to free tier when subscription expires
-        const expireQuotaUpdate = await updateUserQuota(userId, 'free');
-
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, expireQuotaUpdate);
-        console.log(`✅ Subscription expired for user ${userId}, access removed`);
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
+          success: expireResult.success,
+          reset_to_free: true,
+        });
+        console.log(`✅ Subscription expired for user ${userId}, reset to free tier`);
         console.log('Expire result:', expireResult);
         break;
 
