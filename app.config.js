@@ -9,7 +9,7 @@ module.exports = ({ config }) => {
     web: {
       ...config.web,
       bundler: 'metro',
-      favicon: './assets/favicon.png',
+      favicon: './assets/images/favicon.png',
 
       // PWA Configuration
       manifest: '/manifest.json',
