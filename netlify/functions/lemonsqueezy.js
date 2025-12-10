@@ -2,25 +2,22 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
-  'basis': {
+  basis: {
     name: 'Basis-Plan',
-    simulationLimit: 30
+    simulationLimit: 30,
   },
-  'profi': {
+  profi: {
     name: 'Profi-Plan',
-    simulationLimit: 60
+    simulationLimit: 60,
   },
-  'unlimited': {
+  unlimited: {
     name: 'Unlimited-Plan',
-    simulationLimit: null
-  }
+    simulationLimit: null,
+  },
 };
 
 // Helper function to verify webhook signature
@@ -32,17 +29,14 @@ function verifyWebhookSignature(payload, signature, secret) {
   // Remove 'sha256=' prefix if present
   const cleanSignature = signature.replace(/^sha256=/, '');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'hex'),
-    Buffer.from(cleanSignature, 'hex')
-  );
+  return crypto.timingSafeEqual(Buffer.from(expectedSignature, 'hex'), Buffer.from(cleanSignature, 'hex'));
 }
 
 // Variant ID to subscription tier mapping
 const VARIANT_TIER_MAPPING = {
-  '1006948': 'basis',     // Basis Plan
-  '1006934': 'profi',     // Profi Plan
-  '1006947': 'unlimited'  // Unlimited Plan
+  1006948: 'basis', // Basis Plan
+  1006934: 'profi', // Profi Plan
+  1006947: 'unlimited', // Unlimited Plan
 };
 
 // Helper function to determine subscription tier from variant ID
@@ -72,26 +66,82 @@ function determineSubscriptionTier(variantName, variantId) {
   return 'basis';
 }
 
+// Helper function to update user quota
+async function updateUserQuota(userId, tier) {
+  try {
+    console.log(`📊 Updating quota for user ${userId} to tier: ${tier}`);
+
+    const { data: quotaResult, error: quotaError } = await supabase.rpc('handle_subscription_change', {
+      p_user_id: userId,
+      p_new_tier: tier,
+    });
+
+    if (quotaError) {
+      console.error('❌ Error updating quota:', quotaError);
+      return {
+        success: false,
+        error: quotaError.message || quotaError,
+        result: null,
+      };
+    }
+
+    console.log('✅ Quota updated successfully:', quotaResult);
+    return {
+      success: true,
+      error: null,
+      result: quotaResult,
+    };
+  } catch (quotaErr) {
+    console.error('❌ Exception updating quota:', quotaErr);
+    return {
+      success: false,
+      error: quotaErr.message || String(quotaErr),
+      result: null,
+    };
+  }
+}
+
 // Helper function to log webhook events
-async function logWebhookEvent(eventType, eventData, subscriptionId, userId, status = 'processed', errorMessage = null) {
+async function logWebhookEvent(
+  eventType,
+  eventData,
+  subscriptionId,
+  userId,
+  status = 'processed',
+  errorMessage = null,
+  quotaUpdateResult = null
+) {
   try {
     console.log('Attempting to log webhook event:', {
       eventType,
       subscriptionId,
       userId,
       status,
-      hasSupabaseClient: !!supabase
+      hasSupabaseClient: !!supabase,
+      quotaUpdateSuccess: quotaUpdateResult?.success,
     });
+
+    // Add quota update info to event data
+    const enrichedEventData = {
+      ...eventData,
+      _quota_update: quotaUpdateResult
+        ? {
+            success: quotaUpdateResult.success,
+            error: quotaUpdateResult.error,
+            timestamp: new Date().toISOString(),
+          }
+        : null,
+    };
 
     const { data, error } = await supabase
       .from('webhook_events')
       .insert({
         event_type: eventType,
-        event_data: eventData,
+        event_data: enrichedEventData,
         subscription_id: subscriptionId,
         user_id: userId,
-        status: status,
-        error_message: errorMessage
+        status,
+        error_message: errorMessage,
       })
       .select();
 
@@ -110,13 +160,10 @@ async function logWebhookEvent(eventType, eventData, subscriptionId, userId, sta
 
 // Helper function to find user by email
 async function findUserByEmail(email) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
-    .single();
+  const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 = no rows returned
     console.error('Error finding user by email:', error);
     return null;
   }
@@ -139,7 +186,7 @@ async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType
     expiresAt,
     renewsAt,
     periodStart,
-    periodEnd
+    periodEnd,
   } = subscriptionData;
 
   console.log('🔄 Calling upsert_subscription_from_webhook:', {
@@ -147,7 +194,7 @@ async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType
     subscriptionId,
     tier,
     status,
-    variantId
+    variantId,
   });
 
   const { data, error } = await supabase.rpc('upsert_subscription_from_webhook', {
@@ -165,7 +212,7 @@ async function upsertSubscriptionViaFunction(userId, subscriptionData, eventType
     p_renews_at: renewsAt,
     p_period_start: periodStart,
     p_period_end: periodEnd,
-    p_webhook_event: eventType
+    p_webhook_event: eventType,
   });
 
   if (error) {
@@ -195,17 +242,16 @@ exports.handler = async (event, context) => {
         environment: {
           hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
           hasSupabaseUrl: !!process.env.SUPABASE_URL,
-          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-        }
-      })
+          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        },
+      }),
     };
   }
-
 
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
 
@@ -219,7 +265,7 @@ exports.handler = async (event, context) => {
       console.error('LEMONSQUEEZY_WEBHOOK_SECRET not configured');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Webhook secret not configured' })
+        body: JSON.stringify({ error: 'Webhook secret not configured' }),
       };
     }
 
@@ -227,7 +273,7 @@ exports.handler = async (event, context) => {
       console.error('No signature provided in webhook');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'No signature provided' })
+        body: JSON.stringify({ error: 'No signature provided' }),
       };
     }
 
@@ -236,7 +282,7 @@ exports.handler = async (event, context) => {
       console.error('Invalid webhook signature');
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid signature' })
+        body: JSON.stringify({ error: 'Invalid signature' }),
       };
     }
 
@@ -250,7 +296,7 @@ exports.handler = async (event, context) => {
       await logWebhookEvent('unknown', eventData, null, null, 'failed', 'Missing event_name in webhook');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing event_name' })
+        body: JSON.stringify({ error: 'Missing event_name' }),
       };
     }
 
@@ -266,17 +312,24 @@ exports.handler = async (event, context) => {
       await logWebhookEvent(eventType, eventData, subscriptionId, null, 'failed', 'Missing required subscription data');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing subscription ID or customer email' })
+        body: JSON.stringify({ error: 'Missing subscription ID or customer email' }),
       };
     }
 
     // Find user by email
     const user = await findUserByEmail(customerEmail);
     if (!user) {
-      await logWebhookEvent(eventType, eventData, subscriptionId, null, 'failed', `User not found for email: ${customerEmail}`);
+      await logWebhookEvent(
+        eventType,
+        eventData,
+        subscriptionId,
+        null,
+        'failed',
+        `User not found for email: ${customerEmail}`
+      );
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: 'User not found' })
+        body: JSON.stringify({ error: 'User not found' }),
       };
     }
 
@@ -289,20 +342,25 @@ exports.handler = async (event, context) => {
     // Prepare subscription data for upsert function
     const subData = {
       subscriptionId: String(subscriptionId),
-      variantId: variantId,
+      variantId,
       variantName: variantName || tierConfig.name,
-      customerEmail: customerEmail,
-      tier: tier,
-      status: status,
+      customerEmail,
+      tier,
+      status,
       simulationLimit: tierConfig.simulationLimit,
-      createdAt: subscriptionData?.created_at ? new Date(subscriptionData.created_at).toISOString() : new Date().toISOString(),
-      updatedAt: subscriptionData?.updated_at ? new Date(subscriptionData.updated_at).toISOString() : new Date().toISOString(),
+      createdAt: subscriptionData?.created_at
+        ? new Date(subscriptionData.created_at).toISOString()
+        : new Date().toISOString(),
+      updatedAt: subscriptionData?.updated_at
+        ? new Date(subscriptionData.updated_at).toISOString()
+        : new Date().toISOString(),
       expiresAt: subscriptionData?.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
       renewsAt: subscriptionData?.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null,
-      periodStart: subscriptionData?.billing_anchor ? new Date(subscriptionData.billing_anchor).toISOString() : new Date().toISOString(),
-      periodEnd: subscriptionData?.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null
+      periodStart: subscriptionData?.billing_anchor
+        ? new Date(subscriptionData.billing_anchor).toISOString()
+        : new Date().toISOString(),
+      periodEnd: subscriptionData?.renews_at ? new Date(subscriptionData.renews_at).toISOString() : null,
     };
-
 
     // Handle different event types
     switch (eventType) {
@@ -311,7 +369,10 @@ exports.handler = async (event, context) => {
 
         const createResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
+        // ✨ NEW: Update quota for the new subscription
+        const createQuotaUpdate = await updateUserQuota(userId, tier);
+
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, createQuotaUpdate);
         console.log(`✅ Subscription created successfully for user ${userId}`);
         console.log('Create result:', createResult);
         break;
@@ -328,14 +389,17 @@ exports.handler = async (event, context) => {
 
         const updateResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
+        // ✨ NEW: Update quota for the updated subscription
+        const updateQuotaUpdate = await updateUserQuota(userId, newTier);
+
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, updateQuotaUpdate);
         console.log(`✅ Subscription updated successfully for user ${userId}`);
         console.log('Update result:', updateResult);
 
         // Check if tier changed (upgrade/downgrade)
         if (updateResult && updateResult.sync_result && updateResult.sync_result.tier_changed) {
           console.log(`🎉 TIER CHANGED: ${updateResult.sync_result.old_tier} → ${updateResult.sync_result.new_tier}`);
-          console.log('✅ Counter automatically reset by sync function');
+          console.log('✅ Counter and quota automatically reset');
         }
         break;
 
@@ -359,14 +423,24 @@ exports.handler = async (event, context) => {
 
         const expireResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
 
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
+        // ✨ NEW: Reset quota to free tier when subscription expires
+        const expireQuotaUpdate = await updateUserQuota(userId, 'free');
+
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, expireQuotaUpdate);
         console.log(`✅ Subscription expired for user ${userId}, access removed`);
         console.log('Expire result:', expireResult);
         break;
 
       default:
         console.log(`Unhandled event type: ${eventType}`);
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'ignored', `Unhandled event type: ${eventType}`);
+        await logWebhookEvent(
+          eventType,
+          eventData,
+          subscriptionId,
+          userId,
+          'ignored',
+          `Unhandled event type: ${eventType}`
+        );
         break;
     }
 
@@ -379,10 +453,9 @@ exports.handler = async (event, context) => {
         success: true,
         message: `Event ${eventType} processed successfully`,
         user_id: userId,
-        subscription_id: subscriptionId
-      })
+        subscription_id: subscriptionId,
+      }),
     };
-
   } catch (error) {
     console.error('Webhook processing error:', error);
 
@@ -403,8 +476,8 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         error: 'Internal server error',
-        message: error.message
-      })
+        message: error.message,
+      }),
     };
   }
 };
