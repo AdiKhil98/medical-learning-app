@@ -9,6 +9,7 @@ import {
   Animated,
   TextInput,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import {
   ChevronDown,
   BookOpen,
@@ -32,7 +33,7 @@ import {
   StickyNote
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import TableOfContents from './TableOfContents';
 import SectionNotesModal from './SectionNotesModal';
@@ -65,7 +66,7 @@ interface InteractiveMedicalContentProps {
 }
 
 const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow, onBackPress, onOpenModal, currentSection }) => {
-  const { colors, isDarkMode } = useTheme();
+  
   const { triggerActivity } = useSessionTimeout();
   const { user } = useAuth();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });

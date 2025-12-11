@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { logger } from '@/utils/logger';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import InteractiveMedicalContent from './InteractiveMedicalContent';
+import { colors } from '@/constants/colors';
 
 interface MedicalContentLoaderProps {
   slug: string;
@@ -27,8 +27,7 @@ interface SupabaseRow {
 }
 
 const MedicalContentLoader: React.FC<MedicalContentLoaderProps> = ({ slug, onBackPress, onOpenModal, currentSection }) => {
-  const { colors } = useTheme();
-  const [data, setData] = useState<SupabaseRow | null>(null);
+    const [data, setData] = useState<SupabaseRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

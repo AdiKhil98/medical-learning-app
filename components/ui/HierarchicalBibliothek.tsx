@@ -25,7 +25,6 @@ import {
   Home,
   Menu as MenuIcon
 } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { SecureLogger } from '@/lib/security';
@@ -35,6 +34,7 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Menu from '@/components/ui/Menu';
 import { MobileBibliothekLayout } from '@/components/ui/MobileBibliothekLayout';
+import { colors } from '@/constants/colors';
 
 interface CategoryItem {
   id: string;
@@ -65,8 +65,7 @@ const itemsCache = new LRUCache<string, CategoryItem[]>(100);
 const childrenCache = new LRUCache<string, boolean>(200);
 
 const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavigateToContent }) => {
-  const { colors } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
 
   const [currentItems, setCurrentItems] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -330,7 +329,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
     </View>
   );
 
-
   // Loading skeleton for better perceived performance
   const LoadingSkeleton = useMemo(() => (
     <View style={styles.grid}>
@@ -345,7 +343,6 @@ const HierarchicalBibliothek: React.FC<HierarchicalBibliothekProps> = ({ onNavig
       ))}
     </View>
   ), [colors]);
-
 
   // Show skeleton only if no items and loading
   const showSkeleton = loading && currentItems.length === 0;

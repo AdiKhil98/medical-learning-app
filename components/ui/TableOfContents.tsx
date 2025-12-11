@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { List, X, ChevronRight } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 interface TableOfContentsItem {
   id: string;
@@ -31,8 +31,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   buttonStyle,
   iconSize = 20,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
 
@@ -127,7 +126,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                   opacity: fadeAnim,
                   transform: [{ translateY: slideAnim }],
                 },
-                isDarkMode && styles.darkModalShadow,
               ]}
               onStartShouldSetResponder={() => true}
             >
@@ -164,9 +162,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                     style={[
                       styles.sectionItem,
                       {
-                        backgroundColor: isDarkMode 
-                          ? 'rgba(255, 255, 255, 0.03)' 
-                          : 'rgba(0, 0, 0, 0.02)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
                         borderLeftColor: colors.primary,
                       },
                     ]}

@@ -27,12 +27,11 @@ import {
 } from '@/constants/simulationConstants';
 import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { colors, isDarkMode } = useTheme();
   const {
     canUseSimulation,
     subscriptionStatus,
@@ -1646,23 +1645,23 @@ function FSPSimulationScreen() {
     },
     lockIconContainer: {
       ...styles.lockIconContainer,
-      backgroundColor: isDarkMode ? colors.surface : '#FEE2E2',
+      backgroundColor: '#FEE2E2',
     },
     lockBackButton: {
       ...styles.lockBackButton,
-      backgroundColor: isDarkMode ? colors.surface : '#F3F4F6',
+      backgroundColor: '#F3F4F6',
     },
     timerNormal: {
       ...styles.timerNormal,
-      backgroundColor: isDarkMode ? colors.surface : '#F8F3E8',
+      backgroundColor: '#F8F3E8',
     },
     timerWarningYellow: {
       ...styles.timerWarningYellow,
-      backgroundColor: isDarkMode ? colors.surface : '#FFF4E6',
+      backgroundColor: '#FFF4E6',
     },
     timerWarningOrange: {
       ...styles.timerWarningOrange,
-      backgroundColor: isDarkMode ? colors.surface : '#FFE8D6',
+      backgroundColor: '#FFE8D6',
     },
   });
 

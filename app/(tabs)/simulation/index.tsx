@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 
@@ -25,20 +25,14 @@ const { width: screenWidth } = Dimensions.get('window');
 
 export default function SimulationScreen() {
   const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
   const { getSubscriptionInfo } = useSubscription(user?.id);
   const subscriptionInfo = getSubscriptionInfo();
 
-  // Theme-aware gradient colors
-  const backgroundGradient = isDarkMode
-    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
-    : ['#EEF2FF', '#FFFFFF', '#FFF7ED']; // Light gradient
-
-  const headerGradient = isDarkMode
-    ? ['rgba(31, 41, 55, 0.95)', 'rgba(31, 41, 55, 0.85)'] // Dark header gradient
-    : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']; // Light header gradient
+  // Light theme gradients
+  const backgroundGradient = ['#EEF2FF', '#FFFFFF', '#FFF7ED'];
+  const headerGradient = ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'];
 
   // Dynamic styles for dark mode support
   const dynamicStyles = StyleSheet.create({
@@ -68,7 +62,7 @@ export default function SimulationScreen() {
     },
     cardButton: {
       ...styles.cardButton,
-      backgroundColor: isDarkMode ? colors.card : '#FFFFFF',
+      backgroundColor: '#FFFFFF',
     },
     cardButtonText: {
       ...styles.cardButtonText,

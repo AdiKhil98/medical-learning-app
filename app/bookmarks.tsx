@@ -2,13 +2,12 @@ import React from 'react';
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import BookmarksList from '@/components/ui/BookmarksList';
+import { colors } from '@/constants/colors';
 
 export default function BookmarksPage() {
   const router = useRouter();
-  const { colors } = useTheme();
-
+  
   const handleGoBack = () => {
     if (router.canGoBack()) {
       router.back();

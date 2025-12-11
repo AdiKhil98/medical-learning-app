@@ -5,15 +5,16 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, X, AlertCircle } from 'lucide-react-native';
 import SubscriptionPlansEnhanced from '../components/ui/SubscriptionPlansEnhanced';
-import { useTheme } from '../contexts/ThemeContext';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/constants/colors';
 
 export default function SubscriptionPage() {
   const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
+  
   const { user } = useAuth();
   const { checkAccess } = useSubscription(user?.id);
   const [isUpdating, setIsUpdating] = useState(false);

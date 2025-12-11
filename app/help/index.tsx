@@ -22,10 +22,10 @@ import {
   User,
   Smartphone,
 } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '@/constants/colors';
 
 interface FAQ {
   id: string;
@@ -68,8 +68,7 @@ const faqs: FAQ[] = [
 ];
 
 export default function HelpSupportScreen() {
-  const { colors, isDarkMode, fontScale } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [animatedValues] = useState(() => 
     faqs.reduce((acc, faq) => {
@@ -162,10 +161,7 @@ export default function HelpSupportScreen() {
     }
   };
 
-
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -179,7 +175,7 @@ export default function HelpSupportScreen() {
       paddingTop: 60,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
     },
     backButton: {
       flexDirection: 'row',
@@ -196,7 +192,7 @@ export default function HelpSupportScreen() {
     },
     backText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: '#B87E70',
       marginLeft: 4,
       fontWeight: '600',
@@ -207,20 +203,20 @@ export default function HelpSupportScreen() {
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(28),
+      fontSize: 28,
       color: colors.text,
       marginBottom: 8,
     },
     subtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 32,
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     sectionTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(22),
+      fontSize: 22,
       color: colors.text,
       marginBottom: 16,
       marginTop: 24,
@@ -234,7 +230,7 @@ export default function HelpSupportScreen() {
       borderRadius: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
+      shadowOpacity: 0.05,
       shadowRadius: 8,
       elevation: 3,
       overflow: 'hidden',
@@ -258,9 +254,9 @@ export default function HelpSupportScreen() {
     faqQuestion: {
       flex: 1,
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
-      lineHeight: fontScale(22),
+      lineHeight: 22,
     },
     chevronContainer: {
       padding: 4,
@@ -271,9 +267,9 @@ export default function HelpSupportScreen() {
     },
     faqAnswerText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(15),
+      fontSize: 15,
       color: colors.text,
-      lineHeight: fontScale(22),
+      lineHeight: 22,
     },
     contactCard: {
       marginBottom: 24,
@@ -281,7 +277,7 @@ export default function HelpSupportScreen() {
       borderRadius: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 12,
       elevation: 6,
     },
@@ -301,12 +297,12 @@ export default function HelpSupportScreen() {
     },
     contactTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
+      fontSize: 20,
       color: colors.text,
     },
     contactSubtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.textSecondary,
       marginTop: 2,
     },
@@ -328,7 +324,7 @@ export default function HelpSupportScreen() {
     contactMethodText: {
       flex: 1,
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
     },
     chatButton: {
@@ -339,7 +335,7 @@ export default function HelpSupportScreen() {
     chatButtonText: {
       color: '#FFFFFF',
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
     },
   });
 
@@ -447,7 +443,6 @@ export default function HelpSupportScreen() {
             />
           </View>
         </Card>
-
 
         {/* Bottom spacing */}
         <View style={{ height: 32 }} />

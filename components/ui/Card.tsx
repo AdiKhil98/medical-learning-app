@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { SPACING, BORDER_RADIUS, SHADOWS, TYPOGRAPHY } from '@/constants/tokens';
+import { colors } from '@/constants/colors';
 
 interface CardProps {
   children: React.ReactNode;
@@ -27,8 +27,7 @@ const styles = StyleSheet.create({
 
 // FIX: Wrap in React.memo to prevent unnecessary re-renders
 export default React.memo(function Card({ children, title, style }: CardProps) {
-  const { colors } = useTheme();
-
+  
   return (
     <View style={[styles.card, { backgroundColor: colors.card }, style]}>
       {title && <Text style={[styles.title, { color: colors.text }]}>{title}</Text>}

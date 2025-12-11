@@ -2,9 +2,9 @@ import React, { useState, useCallback, useMemo, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Eye, Code, FileText, BookOpen, List, Lightbulb, Info, AlertCircle, ChevronDown } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import Card from './Card';
 import { MedicalSection, ContentSection, medicalContentService } from '@/lib/medicalContentService';
+import { colors } from '@/constants/colors';
 
 interface MedicalContentViewerProps {
   section: MedicalSection;
@@ -26,14 +26,12 @@ const IntegratedContentSection = memo(
     isExpanded,
     onToggle,
     colors,
-    isDarkMode,
     renderCompactHTML,
   }: {
     integratedSection: IntegratedContentSection;
     isExpanded: boolean;
     onToggle: () => void;
     colors: any;
-    isDarkMode: boolean;
     renderCompactHTML: (html: string) => React.ReactNode;
   }) => {
     const { structuredContent: contentSection, htmlContent, index } = integratedSection;
@@ -87,10 +85,10 @@ const IntegratedContentSection = memo(
       () => ({
         container: {
           ...styles.clinicalPearlContainer,
-          backgroundColor: isDarkMode ? colors.surface : '#FFFBEB',
+          backgroundColor: '#FFFBEB',
         },
       }),
-      [isDarkMode, colors.surface]
+      [ colors.surface]
     );
 
     const getSectionTitle = () => {
@@ -196,14 +194,12 @@ const StructuredContentSection = memo(
     isExpanded,
     onToggle,
     colors,
-    isDarkMode,
   }: {
     contentSection: ContentSection;
     index: number;
     isExpanded: boolean;
     onToggle: () => void;
     colors: any;
-    isDarkMode: boolean;
   }) => {
     const integratedSection: IntegratedContentSection = {
       structuredContent: contentSection,
@@ -217,7 +213,6 @@ const StructuredContentSection = memo(
         isExpanded={isExpanded}
         onToggle={onToggle}
         colors={colors}
-        isDarkMode={isDarkMode}
         renderCompactHTML={() => null}
       />
     );
@@ -226,8 +221,7 @@ const StructuredContentSection = memo(
 
 // Main component
 export default function MedicalContentViewer({ section, onError }: MedicalContentViewerProps) {
-  const { colors, isDarkMode } = useTheme();
-  const [viewMode, setViewMode] = useState<ViewMode>('integrated');
+    const [viewMode, setViewMode] = useState<ViewMode>('integrated');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [webViewError, setWebViewError] = useState<string | null>(null);
 
@@ -434,7 +428,6 @@ export default function MedicalContentViewer({ section, onError }: MedicalConten
             isExpanded={!!expandedSections[integratedSection.index.toString()]}
             onToggle={() => toggleSection(integratedSection.index.toString())}
             colors={colors}
-            isDarkMode={isDarkMode}
             renderCompactHTML={renderCompactHTML}
           />
         ))}

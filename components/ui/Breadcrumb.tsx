@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ChevronRight, Home } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { MedicalSection } from '@/lib/medicalContentService';
+import { colors } from '@/constants/colors';
 
 interface BreadcrumbProps {
   path: MedicalSection[];
@@ -12,8 +12,7 @@ interface BreadcrumbProps {
 }
 
 export default function Breadcrumb({ path, currentTitle, onNavigate }: BreadcrumbProps) {
-  const { colors } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
 
   const handleNavigate = (slug: string | null, index: number) => {
     if (slug) {

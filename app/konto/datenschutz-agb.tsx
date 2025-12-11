@@ -11,21 +11,18 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronDown, Shield, FileText, AlertTriangle } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import Card from '@/components/ui/Card';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '@/constants/colors';
 
 export default function DatenschutzAGBScreen() {
-  const { colors, isDarkMode, fontScale } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
 
   const toggle = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const gradient = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradient = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const stylesD = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -36,7 +33,7 @@ export default function DatenschutzAGBScreen() {
       paddingTop: 60,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31,41,55,0.9)' : 'rgba(255,255,255,0.9)',
+      backgroundColor: 'rgba(255,255,255,0.9)',
     },
     backBtn: {
       flexDirection: 'row',
@@ -53,7 +50,7 @@ export default function DatenschutzAGBScreen() {
     },
     backTxt: {
       marginLeft: 8,
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: '#B87E70',
       fontFamily: 'Inter-Medium',
       fontWeight: '600',
@@ -61,16 +58,16 @@ export default function DatenschutzAGBScreen() {
     content: { flex: 1, padding: 24 },
     pageTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(24),
+      fontSize: 24,
       color: colors.text,
       marginBottom: 8,
     },
     subtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 24,
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     card: {
       marginBottom: 16,
@@ -78,7 +75,7 @@ export default function DatenschutzAGBScreen() {
       borderRadius: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
+      shadowOpacity: 0.05,
       shadowRadius: 8,
       elevation: 3,
       overflow: 'hidden',
@@ -101,7 +98,7 @@ export default function DatenschutzAGBScreen() {
     sectionTitle: {
       flex: 1,
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(18),
+      fontSize: 18,
       color: colors.text,
     },
     chevron: {},
@@ -109,23 +106,23 @@ export default function DatenschutzAGBScreen() {
     sectionContent: { padding: 20, paddingTop: 0 },
     text: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(15),
+      fontSize: 15,
       color: colors.text,
-      lineHeight: fontScale(22),
+      lineHeight: 22,
       marginBottom: 12,
     },
     heading: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
       marginTop: 16,
       marginBottom: 8,
     },
     list: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(15),
+      fontSize: 15,
       color: colors.text,
-      lineHeight: fontScale(22),
+      lineHeight: 22,
       marginBottom: 8,
       paddingLeft: 16,
     },

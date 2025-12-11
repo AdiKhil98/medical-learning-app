@@ -4,17 +4,16 @@ import { View, Text, StyleSheet, SafeAreaView, Alert, ScrollView, TouchableOpaci
 import { useRouter } from 'expo-router';
 import { ChevronLeft, User, Mail, Save } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '@/constants/colors';
 
 export default function PersoenlicheDatenScreen() {
   const { user } = useAuth();
-  const { colors, isDarkMode } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -130,9 +129,7 @@ export default function PersoenlicheDatenScreen() {
     return name.trim() !== originalData.name || email.trim() !== originalData.email;
   };
 
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -145,7 +142,7 @@ export default function PersoenlicheDatenScreen() {
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
     },
     backButton: {
       flexDirection: 'row',
@@ -182,7 +179,7 @@ export default function PersoenlicheDatenScreen() {
       borderRadius: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 12,
       elevation: 6,
     },

@@ -7,7 +7,6 @@ import {
   User,
   Lock,
   CreditCard,
-  Moon,
   Type,
   Heart,
   HelpCircle,
@@ -16,9 +15,9 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { colors } from '@/constants/colors';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -41,7 +40,6 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   showArrow = true,
   rightComponent,
 }) => {
-  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
@@ -80,7 +78,6 @@ const ToggleSwitch: React.FC<{ active: boolean; onToggle: () => void }> = ({ act
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { colors, isDarkMode, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const [fontSize, setFontSize] = useState('Mittel');
 
@@ -287,13 +284,6 @@ export default function ProfileScreen() {
             <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Einstellungen</Text>
           </View>
           <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
-            <SettingsItem
-              icon={<Moon size={24} color="#6B7280" />}
-              iconBg="rgba(107, 114, 128, 0.15)"
-              title="Dunkelmodus"
-              showArrow={false}
-              rightComponent={<ToggleSwitch active={isDarkMode} onToggle={toggleTheme} />}
-            />
             <SettingsItem
               icon={<Type size={24} color="#3B82F6" />}
               iconBg="rgba(59, 130, 246, 0.15)"

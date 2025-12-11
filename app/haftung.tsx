@@ -2,14 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Shield } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { colors } from '@/constants/colors';
 
 export default function HaftungScreen() {
   const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
-
+  
   const dynamicStyles = StyleSheet.create({
     container: { 
       flex: 1, 
@@ -21,7 +20,7 @@ export default function HaftungScreen() {
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31,41,55,0.9)' : 'rgba(255,255,255,0.9)',
+      backgroundColor: 'rgba(255,255,255,0.9)',
     },
     backBtn: { 
       flexDirection: 'row', 
@@ -89,9 +88,7 @@ export default function HaftungScreen() {
     },
   });
 
-  const gradient = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#f8faff', '#e3f2fd', '#ffffff'];
+  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'];
 
   return (
     <SafeAreaView style={dynamicStyles.container}>

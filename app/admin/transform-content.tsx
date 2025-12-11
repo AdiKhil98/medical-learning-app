@@ -3,13 +3,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import MedicalContentTransformer from '@/components/ui/MedicalContentTransformer';
+import { colors } from '@/constants/colors';
 
 export default function TransformContentScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
-
+  
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>

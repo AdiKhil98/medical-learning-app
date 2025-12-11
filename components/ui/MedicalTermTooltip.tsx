@@ -9,8 +9,8 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   X,
   BookOpen,
@@ -42,8 +42,7 @@ const MedicalTermTooltip: React.FC<MedicalTermTooltipProps> = ({
   children,
   onTermPress,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
 

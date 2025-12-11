@@ -1,7 +1,6 @@
 import { Stack, usePathname } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
@@ -162,33 +161,31 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false, // Hide default headers globally
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="auth/login" />
-              <Stack.Screen name="auth/register" />
-              <Stack.Screen name="auth/forgot-password" />
-              <Stack.Screen name="auth/reset-password" />
-              <Stack.Screen name="auth/verify-email" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="subscription" />
-              <Stack.Screen name="updates" />
-              <Stack.Screen name="bookmarks" />
-              <Stack.Screen name="profile" />
-              <Stack.Screen name="feedback" />
-              <Stack.Screen name="impressum" />
-              <Stack.Screen name="haftung" />
-              <Stack.Screen name="datenschutz-einstellungen" />
-            </Stack>
-          </NotificationProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false, // Hide default headers globally
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="auth/login" />
+            <Stack.Screen name="auth/register" />
+            <Stack.Screen name="auth/forgot-password" />
+            <Stack.Screen name="auth/reset-password" />
+            <Stack.Screen name="auth/verify-email" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="subscription" />
+            <Stack.Screen name="updates" />
+            <Stack.Screen name="bookmarks" />
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="feedback" />
+            <Stack.Screen name="impressum" />
+            <Stack.Screen name="haftung" />
+            <Stack.Screen name="datenschutz-einstellungen" />
+          </Stack>
+        </NotificationProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

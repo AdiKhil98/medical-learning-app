@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,6 +40,7 @@ import type { Evaluation as ParsedEvaluation } from '@/types/evaluation';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
+import { colors } from '@/constants/colors';
 // Platform-specific Victory imports
 let VictoryChart: any, VictoryArea: any, VictoryAxis: any, VictoryTheme: any, VictoryScatter: any, VictoryLine: any;
 
@@ -95,7 +96,7 @@ interface Evaluation {
 
 function ProgressScreen() {
   const { user } = useAuth();
-  const { colors, isDarkMode } = useTheme();
+  
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);
@@ -707,19 +708,19 @@ function ProgressScreen() {
     },
     tab: {
       ...styles.tab,
-      backgroundColor: isDarkMode ? colors.surface : MEDICAL_COLORS.slate100,
+      backgroundColor: MEDICAL_COLORS.slate100,
     },
     statIconWrapperPurple: {
       ...styles.statIconWrapperPurple,
-      backgroundColor: isDarkMode ? colors.surface : '#F3E8FF',
+      backgroundColor: '#F3E8FF',
     },
     statIconWrapperPink: {
       ...styles.statIconWrapperPink,
-      backgroundColor: isDarkMode ? colors.surface : '#FCE7F3',
+      backgroundColor: '#FCE7F3',
     },
     statIconWrapperCyan: {
       ...styles.statIconWrapperCyan,
-      backgroundColor: isDarkMode ? colors.surface : '#CFFAFE',
+      backgroundColor: '#CFFAFE',
     },
     statCard: {
       ...styles.statCard,
@@ -735,15 +736,15 @@ function ProgressScreen() {
     },
     evaluationContentContainer: {
       ...styles.evaluationContentContainer,
-      backgroundColor: isDarkMode ? colors.surface : '#fafbfc',
+      backgroundColor: '#fafbfc',
     },
     parsedSection: {
       ...styles.parsedSection,
-      backgroundColor: isDarkMode ? colors.surface : '#FAFBFC',
+      backgroundColor: '#FAFBFC',
     },
     enhancedListItem: {
       ...styles.enhancedListItem,
-      backgroundColor: isDarkMode ? colors.surface : '#FDF8F6',
+      backgroundColor: '#FDF8F6',
     },
     emptyStateGradient: {
       ...styles.emptyStateGradient,

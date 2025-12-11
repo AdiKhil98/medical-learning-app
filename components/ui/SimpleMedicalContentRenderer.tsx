@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { ChevronDown, BookOpen } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 interface SimpleMedicalContentRendererProps {
   htmlContent?: string;
@@ -27,8 +27,7 @@ const SimpleMedicalContentRenderer: React.FC<SimpleMedicalContentRendererProps> 
   category = "Medizin",
   lastUpdated = "Juni 2025",
 }) => {
-  const { colors } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Debug: Log what we receive
   logger.info('🔍 SimpleMedicalContentRenderer received:');

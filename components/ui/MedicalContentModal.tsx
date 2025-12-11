@@ -30,10 +30,10 @@ import {
   Minimize2
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { supabase } from '@/lib/supabase';
 import TableOfContents from './TableOfContents';
+import { colors } from '@/constants/colors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -78,8 +78,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   availableSections = [],
   onSectionChange,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const { triggerActivity } = useSessionTimeout();
+    const { triggerActivity } = useSessionTimeout();
 
   // State management
   const [currentSlug, setCurrentSlug] = useState<string | null>(initialSlug || null);
@@ -483,7 +482,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
     >
       <StatusBar
         backgroundColor={isFullscreen ? colors.background : 'rgba(0,0,0,0.5)'}
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        barStyle={'dark-content'}
       />
 
       {!isFullscreen && (
@@ -624,9 +623,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
             <View style={styles.contentWrapper}>
               {/* Gradient Background */}
               <LinearGradient
-                colors={isDarkMode
-                  ? ['#1e1b4b', '#312e81', '#3730a3']
-                  : ['#6366f1', '#8b5cf6', '#a855f7']
+                colors={['#6366f1', '#8b5cf6', '#a855f7']
                 }
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}

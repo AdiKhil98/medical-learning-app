@@ -8,7 +8,7 @@ import {
   ViewStyle,
   Platform
 } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -26,8 +26,7 @@ export default function Input({
   rightIcon,
   ...props
 }: InputProps) {
-  const { colors } = useTheme();
-  const [isFocused, setIsFocused] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
 
   const dynamicStyles = StyleSheet.create({
     container: {

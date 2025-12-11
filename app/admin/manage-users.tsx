@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshControl, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { Users, Shield, UserX, Search, ChevronDown, RefreshCw } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
 interface User {
   id: string;
@@ -17,8 +17,7 @@ interface User {
 }
 
 export default function ManageUsers() {
-  const { colors } = useTheme();
-  const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

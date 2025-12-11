@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Platform } f
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { colors } from '@/constants/colors';
 
 interface UserAvatarProps {
   size?: 'small' | 'medium' | 'large';
@@ -12,8 +12,7 @@ interface UserAvatarProps {
 
 export default function UserAvatar({ size = 'medium' }: UserAvatarProps) {
   const { user, signOut } = useAuth();
-  const { isDarkMode } = useTheme();
-  const { getSubscriptionInfo } = useSubscription(user?.id);
+    const { getSubscriptionInfo } = useSubscription(user?.id);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;

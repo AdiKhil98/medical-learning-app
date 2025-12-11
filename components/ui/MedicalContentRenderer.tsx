@@ -6,8 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   ChevronDown,
   Activity,
@@ -44,8 +44,7 @@ const MedicalContentRenderer: React.FC<MedicalContentRendererProps> = ({
   category = "Medizin",
   lastUpdated = "Juni 2025",
   completionStatus = "Vollständiger Leitfaden" }) => {
-  const { colors } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Icon mapping for different section types
   const getIconComponent = useCallback((type: string) => {

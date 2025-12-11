@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ChevronRight, FileText, FolderIcon, File, BookOpen, FileCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import { MedicalSection } from '@/lib/medicalContentService';
 import Card from './Card';
+import { colors } from '@/constants/colors';
 
 interface HierarchicalSectionCardProps {
   section: MedicalSection;
@@ -17,8 +17,7 @@ export default function HierarchicalSectionCard({
   onPress, 
   hierarchyLevel = 0 
 }: HierarchicalSectionCardProps) {
-  const { colors, isDarkMode } = useTheme();
-
+  
   // Get appropriate icon based on hierarchy level and type
   const getHierarchyIcon = () => {
     if (section.has_content || section.type === 'file-text' || section.type === 'markdown') {
@@ -87,7 +86,7 @@ export default function HierarchicalSectionCard({
 
   const gradientColors = section.color 
     ? [`${section.color}15`, `${section.color}08`] 
-    : [isDarkMode ? '#374151' : '#F3F4F6', isDarkMode ? '#1F2937' : '#FFFFFF'];
+    : ['#F3F4F6', '#FFFFFF'];
 
   const dynamicStyles = StyleSheet.create({
     card: {
@@ -95,7 +94,7 @@ export default function HierarchicalSectionCard({
       backgroundColor: colors.card,
       shadowColor: section.color || colors.shadow,
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       overflow: 'hidden',
     },
     touchable: {

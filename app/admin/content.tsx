@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshControl, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { 
   FileText, 
@@ -15,6 +14,7 @@ import {
   Save,
   X
 } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
 interface Section {
   id: string;
@@ -32,8 +32,7 @@ interface Section {
 }
 
 export default function ContentManagement() {
-  const { colors } = useTheme();
-  const [sections, setSections] = useState<Section[]>([]);
+    const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

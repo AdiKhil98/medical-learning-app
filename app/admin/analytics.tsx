@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { 
   BarChart, 
@@ -14,6 +13,7 @@ import {
   Calendar,
   Target
 } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
 interface AnalyticsData {
   totalUsers: number;
@@ -29,8 +29,7 @@ interface AnalyticsData {
 }
 
 export default function Analytics() {
-  const { colors } = useTheme();
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalUsers: 0,

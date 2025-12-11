@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronDown, Package, ExternalLink } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import Card from '@/components/ui/Card';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '@/constants/colors';
 
 interface Dependency {
   name: string;
@@ -99,8 +99,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 };
 
 export default function LicensesScreen() {
-  const { colors, isDarkMode, fontScale } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDep, setExpandedDep] = useState<string | null>(null);
@@ -294,9 +293,7 @@ export default function LicensesScreen() {
     }
   };
 
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -309,7 +306,7 @@ export default function LicensesScreen() {
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
     },
     backButton: {
       flexDirection: 'row',
@@ -319,13 +316,13 @@ export default function LicensesScreen() {
     },
     backText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.primary,
       marginLeft: 4,
     },
     title: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
+      fontSize: 20,
       color: colors.text,
       flex: 1,
     },
@@ -335,16 +332,16 @@ export default function LicensesScreen() {
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(28),
+      fontSize: 28,
       color: colors.text,
       marginBottom: 8,
     },
     subtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 24,
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     loadingContainer: {
       flex: 1,
@@ -354,7 +351,7 @@ export default function LicensesScreen() {
     },
     loadingText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginTop: 16,
     },
@@ -371,19 +368,19 @@ export default function LicensesScreen() {
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
+      shadowOpacity: 0.05,
       shadowRadius: 8,
       elevation: 3,
     },
     statNumber: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(24),
+      fontSize: 24,
       color: colors.primary,
       marginBottom: 4,
     },
     statLabel: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(12),
+      fontSize: 12,
       color: colors.textSecondary,
       textAlign: 'center',
     },
@@ -393,7 +390,7 @@ export default function LicensesScreen() {
       borderRadius: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.05,
+      shadowOpacity: 0.05,
       shadowRadius: 8,
       elevation: 3,
       overflow: 'hidden',
@@ -419,13 +416,13 @@ export default function LicensesScreen() {
     },
     dependencyName: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
       marginBottom: 2,
     },
     dependencyVersion: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.textSecondary,
     },
     licenseTag: {
@@ -436,7 +433,7 @@ export default function LicensesScreen() {
     },
     licenseText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(12),
+      fontSize: 12,
       color: '#FFFFFF',
     },
     chevronContainer: {
@@ -448,10 +445,10 @@ export default function LicensesScreen() {
     },
     description: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
       marginBottom: 16,
-      lineHeight: fontScale(20),
+      lineHeight: 20,
     },
     licenseContent: {
       backgroundColor: colors.surface,
@@ -461,15 +458,15 @@ export default function LicensesScreen() {
     },
     licenseTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
       marginBottom: 8,
     },
     licenseFullText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(12),
+      fontSize: 12,
       color: colors.textSecondary,
-      lineHeight: fontScale(18),
+      lineHeight: 18,
       maxHeight: 200,
     },
     homepageLink: {
@@ -483,7 +480,7 @@ export default function LicensesScreen() {
     },
     homepageLinkText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.primary,
       flex: 1,
       marginRight: 8,

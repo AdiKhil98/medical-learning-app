@@ -8,8 +8,8 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   Search,
   X,
@@ -41,8 +41,7 @@ const ContentSearchBar: React.FC<ContentSearchBarProps> = ({
   onSearchResult,
   onSectionSelect,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([

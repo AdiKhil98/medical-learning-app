@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 type ViewMode = 'html' | 'improved' | 'json' | 'details';
 
@@ -19,8 +19,7 @@ interface ViewModeToggleProps {
 }
 
 export default function ViewModeToggle({ modes, currentMode, onModeChange }: ViewModeToggleProps) {
-  const { colors, isDarkMode } = useTheme();
-
+  
   if (modes.length <= 1) return null;
 
   const dynamicStyles = StyleSheet.create({
@@ -31,7 +30,7 @@ export default function ViewModeToggle({ modes, currentMode, onModeChange }: Vie
       marginBottom: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 8,
       elevation: 3,
     },
@@ -104,9 +103,7 @@ export default function ViewModeToggle({ modes, currentMode, onModeChange }: Vie
     if (isActive) {
       return [colors.primary, `${colors.primary}CC`];
     }
-    return isDarkMode 
-      ? ['rgba(75, 85, 99, 0.3)', 'rgba(55, 65, 81, 0.2)']
-      : ['rgba(249, 250, 251, 0.8)', 'rgba(243, 244, 246, 0.6)'];
+    return ['rgba(249, 250, 251, 0.8)', 'rgba(243, 244, 246, 0.6)'];
   };
 
   return (

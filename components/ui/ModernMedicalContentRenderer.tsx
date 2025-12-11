@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   ChevronDown,
   Activity,
@@ -35,6 +34,7 @@ import MedicalTermTooltip from './MedicalTermTooltip';
 import ContentSearchBar from './ContentSearchBar';
 import SectionNotesModal from './SectionNotesModal';
 import FavoritesManager from './FavoritesManager';
+import { colors } from '@/constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -72,8 +72,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
     hasPlainText: !!plainTextContent, 
     title 
   });
-  const { colors, isDarkMode } = useTheme();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [scrollY] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
@@ -858,7 +857,7 @@ const ModernMedicalContentRenderer: React.FC<ModernMedicalContentRendererProps> 
   return (
     <ScrollView
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5' }]}
+      style={[styles.container, { backgroundColor: '#f5f5f5' }]}
       showsVerticalScrollIndicator={false}
       onScroll={Animated.event(
         [{ nativeEvent: { contentOffset: { y: scrollY } } }],

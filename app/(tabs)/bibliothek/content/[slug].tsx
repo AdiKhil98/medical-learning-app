@@ -18,7 +18,7 @@ import {
   Info,
   Maximize2,
 } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
@@ -28,6 +28,7 @@ import MedicalContentModal from '@/components/ui/MedicalContentModal';
 import { recentContentService } from '@/lib/recentContentService';
 import { SecureLogger } from '@/lib/security';
 import { TimedLRUCache } from '@/lib/lruCache';
+import { colors } from '@/constants/colors';
 
 // Define Section type directly
 interface Section {
@@ -60,7 +61,7 @@ interface ContentSection {
 
 // Content skeleton loader
 const ContentSkeleton = memo(() => {
-  const { colors } = useTheme();
+  
   return (
     <View style={{ padding: 16 }}>
       {Array.from({ length: 3 }, (_, i) => (
@@ -88,7 +89,7 @@ const ContentDetailScreen = memo(() => {
   const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  const { colors, isDarkMode } = useTheme();
+  
   const { session, user, loading: authLoading } = useAuth();
 
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
@@ -282,12 +283,7 @@ const ContentDetailScreen = memo(() => {
     router.replace(`/(tabs)/bibliothek/content/${newSlug}`);
   }, [router]);
 
-  const gradientColors = useMemo(() =>
-    isDarkMode
-      ? ['#1F2937', '#111827', '#0F172A']
-      : ['#F8F3E8', '#FBEEEC', '#FFFFFF'],  // White Linen to light coral to white
-    [isDarkMode]
-  );
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'];  // White Linen to light coral to white
 
   const dynamicStyles = useMemo(() => StyleSheet.create({
     container: {

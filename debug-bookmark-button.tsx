@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookmarksService } from '@/lib/bookmarksService';
 import BookmarkButton from '@/components/ui/BookmarkButton';
+import { colors } from '@/constants/colors';
 
 /**
  * Debug component for testing bookmark button functionality
  * Add this to any screen temporarily to test bookmark buttons
  */
 export default function DebugBookmarkButton() {
-  const { colors } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   const [testResults, setTestResults] = useState<string[]>([]);
 
   const addLog = (message: string) => {

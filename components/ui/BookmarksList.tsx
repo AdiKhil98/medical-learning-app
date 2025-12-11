@@ -20,10 +20,10 @@ import {
   MessageCircle,
   BookOpen
 } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { bookmarksService, UserBookmark } from '@/lib/bookmarksService';
 import { format } from 'date-fns';
+import { colors } from '@/constants/colors';
 
 interface BookmarksListProps {
   onNavigateToContent?: (slug: string) => void;
@@ -38,8 +38,7 @@ const BookmarksList: React.FC<BookmarksListProps> = ({
   showCategories = true,
   maxItems,
 }) => {
-  const { colors } = useTheme();
-  const router = useRouter();
+    const router = useRouter();
   
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
   const [filteredBookmarks, setFilteredBookmarks] = useState<UserBookmark[]>([]);

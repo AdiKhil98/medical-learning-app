@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Wand2, Sparkles, RefreshCw } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
 interface MedicalSection {
   type: string;
@@ -15,8 +15,7 @@ interface MedicalSection {
 }
 
 const MedicalContentTransformer: React.FC = () => {
-  const { colors } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   const [isTransforming, setIsTransforming] = useState(false);
   const [transformedCount, setTransformedCount] = useState(0);
 

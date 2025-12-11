@@ -22,9 +22,9 @@ import {
   Bone,
   Eye,
 } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import Card from './Card';
 import { MedicalSection } from '@/lib/medicalContentService';
+import { colors } from '@/constants/colors';
 
 interface MedicalSectionCardProps {
   section: MedicalSection;
@@ -126,8 +126,7 @@ export default memo(function MedicalSectionCard({
   showCategory = true, 
   compact = false 
 }: MedicalSectionCardProps) {
-  const { colors } = useTheme();
-  
+    
   const IconComponent = useMemo(() => 
     getCategoryIcon(section.category || '', section.title, section.icon), 
     [section.category, section.title, section.icon]

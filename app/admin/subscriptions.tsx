@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { ArrowLeft, Search, AlertTriangle, CheckCircle, RefreshCw, Clock, CreditCard } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors } from '@/constants/colors';
 
 export default function SubscriptionManager() {
   const router = useRouter();
-  const { colors } = useTheme();
+  
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [duplicates, setDuplicates] = useState<any>(null);

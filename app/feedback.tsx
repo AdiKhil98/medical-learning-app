@@ -3,16 +3,15 @@ import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Bug, Lightbulb, Send, CheckCircle } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Picker } from '@react-native-picker/picker';
+import { colors } from '@/constants/colors';
 
 export default function FeedbackScreen() {
   const router = useRouter();
-  const { colors, isDarkMode, fontScale } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   
   const [feedbackType, setFeedbackType] = useState('bug');
   const [title, setTitle] = useState('');
@@ -69,9 +68,7 @@ export default function FeedbackScreen() {
     }
   };
 
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -87,16 +84,16 @@ export default function FeedbackScreen() {
     },
     title: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(28),
+      fontSize: 28,
       color: colors.text,
       marginBottom: 8,
     },
     subtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 32,
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     card: {
       backgroundColor: colors.card,
@@ -105,7 +102,7 @@ export default function FeedbackScreen() {
       marginBottom: 24,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 12,
       elevation: 6,
     },
@@ -114,7 +111,7 @@ export default function FeedbackScreen() {
     },
     label: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
       marginBottom: 8,
     },
@@ -134,7 +131,7 @@ export default function FeedbackScreen() {
       borderColor: colors.border,
       borderRadius: 12,
       padding: 16,
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
       backgroundColor: colors.surface,
       fontFamily: 'Inter-Regular',
@@ -154,7 +151,7 @@ export default function FeedbackScreen() {
     },
     submitButtonText: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: '#FFFFFF',
       marginLeft: 8,
     },
@@ -167,17 +164,17 @@ export default function FeedbackScreen() {
     },
     successTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(24),
+      fontSize: 24,
       color: colors.success,
       marginBottom: 8,
       textAlign: 'center',
     },
     successText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       textAlign: 'center',
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     typeIndicator: {
       flexDirection: 'row',
@@ -189,7 +186,7 @@ export default function FeedbackScreen() {
     },
     typeText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.textSecondary,
       marginLeft: 8,
     },

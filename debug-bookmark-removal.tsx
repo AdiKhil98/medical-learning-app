@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookmarksService, UserBookmark } from '@/lib/bookmarksService';
+import { colors } from '@/constants/colors';
 
 /**
  * Debug component for testing bookmark removal functionality
  * Add this to any screen temporarily to test removal
  */
 export default function DebugBookmarkRemoval() {
-  const { colors } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
   const [loading, setLoading] = useState(true);
 

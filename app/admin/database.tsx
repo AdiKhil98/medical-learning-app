@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { 
   Database, 
@@ -19,6 +18,7 @@ import {
   Users,
   FileText
 } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
 
 interface QueryResult {
   data?: any[];
@@ -28,8 +28,7 @@ interface QueryResult {
 }
 
 export default function DatabaseManagement() {
-  const { colors } = useTheme();
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
   const [queryText, setQueryText] = useState('');
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [dbStats, setDbStats] = useState({

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, Platform } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Shield, Plus, Stethoscope, Heart, Hexagon } from 'lucide-react-native';
 
@@ -21,7 +20,6 @@ export default function Logo({
   animated = true,
   onPress,
 }: LogoProps) {
-  const { colors, isDarkMode } = useTheme();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const [isHovered, setIsHovered] = useState(false);
@@ -41,8 +39,8 @@ export default function Logo({
 
   const iconSize = getIconSize();
 
-  // Use provided textColor, or default to white in dark mode, dark green in light mode
-  const finalTextColor = textColor || (isDarkMode ? '#FFFFFF' : '#2E7D32');
+  // Use provided textColor, or default to dark green
+  const finalTextColor = textColor || '#2E7D32';
 
   useEffect(() => {
     if (animated) {

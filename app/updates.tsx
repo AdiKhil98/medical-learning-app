@@ -3,11 +3,11 @@ import { logger } from '@/utils/logger';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { Bell, AlertCircle, CheckCircle, Info, ArrowLeft } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { colors } from '@/constants/colors';
 
 interface Update {
   id: string;
@@ -21,8 +21,7 @@ interface Update {
 
 export default function Updates() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const [updates, setUpdates] = useState<Update[]>([]);
+    const [updates, setUpdates] = useState<Update[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 

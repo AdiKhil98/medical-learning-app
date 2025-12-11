@@ -3,11 +3,11 @@ import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Bug, Lightbulb, Circle, Clock, CheckCircle2, Filter, MessageSquare, User, Calendar, Edit3, Save, X } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Picker } from '@react-native-picker/picker';
+import { colors } from '@/constants/colors';
 
 interface FeedbackItem {
   id: string;
@@ -27,8 +27,7 @@ interface FeedbackItem {
 
 export default function FeedbackManagerScreen() {
   const router = useRouter();
-  const { colors, isDarkMode, fontScale } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,9 +189,7 @@ export default function FeedbackManagerScreen() {
     });
   };
 
-  const gradientColors = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#F8F3E8', '#FBEEEC', '#FFFFFF'];  // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'];  // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -201,16 +198,16 @@ export default function FeedbackManagerScreen() {
     },
     title: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(28),
+      fontSize: 28,
       color: colors.text,
       marginBottom: 8,
     },
     subtitle: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       marginBottom: 24,
-      lineHeight: fontScale(24),
+      lineHeight: 24,
     },
     filtersContainer: {
       flexDirection: 'row',
@@ -222,7 +219,7 @@ export default function FeedbackManagerScreen() {
     },
     filterLabel: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
       marginBottom: 4,
     },
@@ -244,7 +241,7 @@ export default function FeedbackManagerScreen() {
       marginBottom: 12,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
     },
@@ -258,7 +255,7 @@ export default function FeedbackManagerScreen() {
     },
     feedbackTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.text,
       flex: 1,
     },
@@ -268,7 +265,7 @@ export default function FeedbackManagerScreen() {
     },
     statusText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(12),
+      fontSize: 12,
       marginLeft: 4,
     },
     feedbackMeta: {
@@ -283,15 +280,15 @@ export default function FeedbackManagerScreen() {
     },
     metaText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(12),
+      fontSize: 12,
       color: colors.textSecondary,
       marginLeft: 4,
     },
     feedbackDescription: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
-      lineHeight: fontScale(20),
+      lineHeight: 20,
       marginBottom: 12,
     },
     feedbackActions: {
@@ -309,7 +306,7 @@ export default function FeedbackManagerScreen() {
     },
     actionButtonText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(12),
+      fontSize: 12,
       color: '#FFFFFF',
       marginLeft: 4,
     },
@@ -329,7 +326,7 @@ export default function FeedbackManagerScreen() {
     },
     modalTitle: {
       fontFamily: 'Inter-Bold',
-      fontSize: fontScale(20),
+      fontSize: 20,
       color: colors.text,
       marginBottom: 16,
     },
@@ -338,7 +335,7 @@ export default function FeedbackManagerScreen() {
     },
     inputLabel: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
       marginBottom: 8,
     },
@@ -347,7 +344,7 @@ export default function FeedbackManagerScreen() {
       borderColor: colors.border,
       borderRadius: 8,
       padding: 12,
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: colors.text,
       backgroundColor: colors.surface,
       fontFamily: 'Inter-Regular',
@@ -375,7 +372,7 @@ export default function FeedbackManagerScreen() {
     },
     modalButtonText: {
       fontFamily: 'Inter-Medium',
-      fontSize: fontScale(14),
+      fontSize: 14,
       color: '#FFFFFF',
       marginLeft: 4,
     },
@@ -385,7 +382,7 @@ export default function FeedbackManagerScreen() {
     },
     emptyText: {
       fontFamily: 'Inter-Regular',
-      fontSize: fontScale(16),
+      fontSize: 16,
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: 16,

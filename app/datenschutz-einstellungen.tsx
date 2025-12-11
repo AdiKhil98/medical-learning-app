@@ -3,10 +3,10 @@ import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Settings, Shield, Bell, Eye, Database, Cookie } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '@/constants/colors';
 
 interface PrivacySettings {
   analytics: boolean;
@@ -18,8 +18,7 @@ interface PrivacySettings {
 
 export default function DataProtectionSettingsScreen() {
   const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
-  const [settings, setSettings] = useState<PrivacySettings>({
+    const [settings, setSettings] = useState<PrivacySettings>({
     analytics: false,
     marketing: false,
     functional: true,
@@ -98,7 +97,7 @@ export default function DataProtectionSettingsScreen() {
       paddingTop: 60,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: isDarkMode ? 'rgba(31,41,55,0.9)' : 'rgba(255,255,255,0.9)',
+      backgroundColor: 'rgba(255,255,255,0.9)',
     },
     backBtn: {
       flexDirection: 'row',
@@ -144,7 +143,7 @@ export default function DataProtectionSettingsScreen() {
       marginBottom: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 8,
       elevation: 3,
     },
@@ -200,9 +199,7 @@ export default function DataProtectionSettingsScreen() {
     },
   });
 
-  const gradient = isDarkMode
-    ? ['#1F2937', '#111827', '#0F172A']
-    : ['#f8faff', '#e3f2fd', '#ffffff'];
+  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'];
 
   if (loading) {
     return (

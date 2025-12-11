@@ -11,8 +11,8 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   X,
   Save,
@@ -41,8 +41,7 @@ const SectionNotesModal: React.FC<SectionNotesModalProps> = ({
   onDelete,
   onClose,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const [noteText, setNoteText] = useState(currentNote);
+    const [noteText, setNoteText] = useState(currentNote);
   const [scaleAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
 

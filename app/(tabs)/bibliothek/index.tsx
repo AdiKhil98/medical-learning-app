@@ -29,11 +29,12 @@ import { useRouter } from 'expo-router';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { SecureLogger } from '@/lib/security';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
+import { colors } from '@/constants/colors';
 
 interface Category {
   id: string;
@@ -291,7 +292,7 @@ type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
-  const { colors, isDarkMode } = useTheme();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -432,10 +433,8 @@ const BibliothekIndex: React.FC = () => {
   // Calculate total sections count
   const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
 
-  // Theme-aware gradient colors
-  const backgroundGradient = isDarkMode
-    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
-    : MEDICAL_COLORS.backgroundGradient; // Light gradient
+  // Gradient colors
+  const backgroundGradient = MEDICAL_COLORS.backgroundGradient;
 
   // Dynamic styles for dark mode support
   const dynamicStyles = StyleSheet.create({
@@ -469,17 +468,17 @@ const BibliothekIndex: React.FC = () => {
     searchInput: {
       ...styles.searchInput,
       backgroundColor: colors.card,
-      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate200,
+      borderColor: MEDICAL_COLORS.slate200,
       color: colors.text,
     },
     filterButton: {
       ...styles.filterButton,
       backgroundColor: colors.card,
-      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate200,
+      borderColor: MEDICAL_COLORS.slate200,
     },
     filterButtonActive: {
       ...styles.filterButtonActive,
-      backgroundColor: isDarkMode ? 'rgba(251, 146, 60, 0.15)' : MEDICAL_COLORS.warmOrangeBg,
+      backgroundColor: MEDICAL_COLORS.warmOrangeBg,
     },
     filterText: {
       ...styles.filterText,
@@ -499,7 +498,7 @@ const BibliothekIndex: React.FC = () => {
     },
     filterOption: {
       ...styles.filterOption,
-      backgroundColor: isDarkMode ? colors.surface : MEDICAL_COLORS.slate50,
+      backgroundColor: MEDICAL_COLORS.slate50,
     },
     filterOptionText: {
       ...styles.filterOptionText,
@@ -512,7 +511,7 @@ const BibliothekIndex: React.FC = () => {
     statCard: {
       ...styles.statCard,
       backgroundColor: colors.card,
-      borderColor: isDarkMode ? colors.border : MEDICAL_COLORS.slate100,
+      borderColor: MEDICAL_COLORS.slate100,
     },
     statLabel: {
       ...styles.statLabel,
@@ -528,11 +527,11 @@ const BibliothekIndex: React.FC = () => {
     },
     ctaButton: {
       ...styles.ctaButton,
-      backgroundColor: isDarkMode ? colors.card : MEDICAL_COLORS.white,
+      backgroundColor: MEDICAL_COLORS.white,
     },
     ctaButtonText: {
       ...styles.ctaButtonText,
-      color: isDarkMode ? MEDICAL_COLORS.warmOrange : MEDICAL_COLORS.warmOrangeDark,
+      color: MEDICAL_COLORS.warmOrangeDark,
     },
   });
 
@@ -779,7 +778,7 @@ const BibliothekIndex: React.FC = () => {
 
             <TouchableOpacity style={dynamicStyles.ctaButton} onPress={handleStartSimulation} activeOpacity={0.8}>
               <Text style={dynamicStyles.ctaButtonText}>Simulation starten</Text>
-              <ChevronRight size={20} color={isDarkMode ? MEDICAL_COLORS.warmOrange : MEDICAL_COLORS.warmOrangeDark} />
+              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrangeDark} />
             </TouchableOpacity>
           </LinearGradient>
         </ScrollView>

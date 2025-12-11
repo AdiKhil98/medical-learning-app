@@ -7,9 +7,9 @@ import {
   Alert,
 } from 'react-native';
 import { Plus, Check } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { bookmarksService } from '@/lib/bookmarksService';
 import { BORDER_WIDTH, SHADOWS } from '@/constants/tokens';
+import { colors } from '@/constants/colors';
 
 interface BookmarkButtonProps {
   sectionSlug: string;
@@ -30,8 +30,7 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
   onBookmarkChange,
   showAnimation = true,
 }) => {
-  const { colors } = useTheme();
-  const [isBookmarked, setIsBookmarked] = useState(false);
+    const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 

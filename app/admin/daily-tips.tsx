@@ -3,10 +3,10 @@ import { logger } from '@/utils/logger';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { Lightbulb, Calendar, RefreshCw, CheckCircle } from 'lucide-react-native';
 import Card from '@/components/ui/Card';
+import { colors } from '@/constants/colors';
 
 interface DailyTip {
   id?: string;
@@ -36,8 +36,7 @@ interface DailyQuestion {
 
 export default function DailyTipsManager() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [tips, setTips] = useState<DailyTip[]>([]);
   const [questions, setQuestions] = useState<DailyQuestion[]>([]);
 

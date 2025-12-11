@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, Star, Crown, Infinity, Shield, Calendar, ChevronDown, ChevronUp } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { colors } from '@/constants/colors';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -36,8 +36,7 @@ interface SubscriptionPlan {
 }
 
 export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
-  const { colors, isDarkMode } = useTheme();
-  const [isQuarterly, setIsQuarterly] = useState(false);  // Changed from isYearly to isQuarterly
+    const [isQuarterly, setIsQuarterly] = useState(false);  // Changed from isYearly to isQuarterly
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   const plans: SubscriptionPlan[] = [

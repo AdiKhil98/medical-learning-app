@@ -2,16 +2,15 @@ import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
 import { View, ActivityIndicator, Text, Platform, Dimensions } from 'react-native';
 import { Home, BookOpen, BarChart, Activity } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@/constants/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function TabLayout() {
-  const { colors, isDarkMode } = useTheme();
-  const { session, loading, isEmailVerified } = useAuth();
+    const { session, loading, isEmailVerified } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Initialize session timeout monitoring for authenticated screens
@@ -68,7 +67,7 @@ export default function TabLayout() {
           paddingTop: screenWidth < 600 ? 6 : 4,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: isDarkMode ? 0.3 : 0.05,
+          shadowOpacity: 0.05,
           shadowRadius: 4,
           elevation: 5,
         },

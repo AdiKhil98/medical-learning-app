@@ -11,6 +11,7 @@ import {
   NativeSyntheticEvent,
   Platform,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   BookOpen,
@@ -31,7 +32,7 @@ import PromoBanner from '@/components/ui/PromoBanner';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
-import { useTheme } from '@/contexts/ThemeContext';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
@@ -45,7 +46,7 @@ interface SlidingHomepageProps {
 }
 
 export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) {
-  const { colors, isDarkMode } = useTheme();
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -143,14 +144,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     },
   });
 
-  // Theme-aware gradient colors
-  const backgroundGradient = isDarkMode
-    ? ['#0F172A', '#111827', '#1F2937'] // Dark gradient
-    : MEDICAL_COLORS.backgroundGradient; // Light gradient
-
-  const headerGradient = isDarkMode
-    ? ['#1F2937', '#111827'] // Dark header gradient
-    : MEDICAL_COLORS.headerGradient; // Light header gradient
+  // Gradient colors
+  const backgroundGradient = MEDICAL_COLORS.backgroundGradient;
+  const headerGradient = MEDICAL_COLORS.headerGradient;
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
@@ -172,7 +168,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               ? {
                   backdropFilter: 'blur(12px)' as any,
                   WebkitBackdropFilter: 'blur(12px)' as any,
-                  backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 }
               : {}),
           },

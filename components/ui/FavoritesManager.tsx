@@ -9,8 +9,8 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   X,
   Heart,
@@ -50,8 +50,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
   onRemoveFavorite,
   onClearAll,
 }) => {
-  const { colors, isDarkMode } = useTheme();
-  const [scaleAnim] = useState(new Animated.Value(0));
+    const [scaleAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'category'>('recent');

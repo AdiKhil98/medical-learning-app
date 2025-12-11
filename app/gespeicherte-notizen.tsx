@@ -13,16 +13,15 @@ import {
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Edit3, Trash2, Calendar, FileText } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { loadAllNotes, deleteNote, UserNote } from '@/lib/notesService';
 import SectionNotesModal from '@/components/ui/SectionNotesModal';
 import Toast from '@/components/ui/Toast';
+import { colors } from '@/constants/colors';
 
 export default function GespeicherteNotizenPage() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const { user } = useAuth();
+    const { user } = useAuth();
   const [notes, setNotes] = useState<UserNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingNote, setEditingNote] = useState<UserNote | null>(null);

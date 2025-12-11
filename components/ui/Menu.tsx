@@ -3,11 +3,11 @@ import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark, User, LogOut, ChevronRight, StickyNote } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { colors } from '@/constants/colors';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -20,8 +20,7 @@ interface MenuProps {
 
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
-  const { user, signOut } = useAuth();
+    const { user, signOut } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
@@ -90,7 +89,6 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     },
   ];
 
-
   const submenuItems = [
     { label: 'Hilfe & Support', route: '/help' },
     { label: 'Fehler melden', route: '/feedback' },
@@ -116,9 +114,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     outputRange: [0, submenuItems.length * 44],
   });
 
-  const gradientColors = isDarkMode
-    ? MEDICAL_COLORS.darkMenuGradient
-    : MEDICAL_COLORS.lightMenuGradient;
+  const gradientColors = MEDICAL_COLORS.lightMenuGradient;
 
   const getUserInitials = () => {
     if (!user?.email) return '?';
@@ -152,7 +148,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
         width: 2,
         height: 0,
       },
-      shadowOpacity: isDarkMode ? 0.5 : 0.25,
+      shadowOpacity: 0.25,
       shadowRadius: 3.84,
       elevation: 5,
       overflow: 'hidden',
@@ -175,7 +171,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       backgroundColor: colors.card,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: isDarkMode ? 0.3 : 0.1,
+      shadowOpacity: 0.1,
       shadowRadius: 2,
       elevation: 1,
     },
