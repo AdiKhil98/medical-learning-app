@@ -2,7 +2,24 @@ import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Menu as MenuIcon, X, Home, Crown, Settings, Info, ChevronDown, ClipboardCheck, BarChart2, Bell, Shield, Bookmark, User, LogOut, ChevronRight, StickyNote } from 'lucide-react-native';
+import {
+  Menu as MenuIcon,
+  X,
+  Home,
+  Crown,
+  Settings,
+  Info,
+  ChevronDown,
+  ClipboardCheck,
+  BarChart2,
+  Bell,
+  Shield,
+  Bookmark,
+  User,
+  LogOut,
+  ChevronRight,
+  StickyNote,
+} from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
@@ -20,7 +37,7 @@ interface MenuProps {
 
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
-    const { user, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
@@ -57,35 +74,35 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       label: 'Profil',
       subtitle: 'Ihre persönlichen Daten',
       route: '/profile',
-      gradientColors: MEDICAL_COLORS.blueGradient
+      gradientColors: MEDICAL_COLORS.blueGradient,
     },
     {
       icon: Bell,
       label: 'Updates',
       subtitle: 'Neuigkeiten & Hinweise',
       route: '/updates',
-      gradientColors: MEDICAL_COLORS.purpleGradient
+      gradientColors: MEDICAL_COLORS.purpleGradient,
     },
     {
       icon: Crown,
       label: 'Subscription',
       subtitle: 'Ihr Abonnement verwalten',
       route: '/subscription',
-      gradientColors: MEDICAL_COLORS.amberGradient
+      gradientColors: MEDICAL_COLORS.amberGradient,
     },
     {
       icon: Bookmark,
       label: 'Bookmarks',
       subtitle: 'Gespeicherte Inhalte',
       route: '/bookmarks',
-      gradientColors: MEDICAL_COLORS.pinkGradient
+      gradientColors: MEDICAL_COLORS.pinkGradient,
     },
     {
       icon: StickyNote,
       label: 'Gespeicherte Notizen',
       subtitle: 'Ihre persönlichen Notizen',
       route: '/gespeicherte-notizen',
-      gradientColors: MEDICAL_COLORS.orangeGradient
+      gradientColors: MEDICAL_COLORS.orangeGradient,
     },
   ];
 
@@ -152,6 +169,10 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       shadowRadius: 3.84,
       elevation: 5,
       overflow: 'hidden',
+      // Additional web-specific overflow fix
+      ...(typeof window !== 'undefined' && {
+        clipPath: 'inset(0)',
+      }),
     },
     headerTitle: {
       fontFamily: 'Inter-Bold',
@@ -201,16 +222,8 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   return (
     <View style={styles.container}>
       <Pressable style={styles.overlay} onPress={onClose} />
-      <Animated.View 
-        style={[
-          dynamicStyles.menu,
-          { transform: [{ translateX: slideAnim }] }
-        ]}
-      >
-        <LinearGradient
-          colors={gradientColors}
-          style={styles.menuGradient}
-        />
+      <Animated.View style={[dynamicStyles.menu, { transform: [{ translateX: slideAnim }] }]}>
+        <LinearGradient colors={gradientColors} style={styles.menuGradient} />
 
         {/* Close Button */}
         <View style={styles.closeButtonContainer}>
@@ -221,10 +234,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
         {/* User Header Section */}
         <View style={styles.userHeader}>
-          <LinearGradient
-            colors={MEDICAL_COLORS.greenGradient}
-            style={styles.userAvatar}
-          >
+          <LinearGradient colors={MEDICAL_COLORS.greenGradient} style={styles.userAvatar}>
             <Text style={styles.userAvatarText}>{getUserInitials()}</Text>
           </LinearGradient>
           <View style={styles.userInfo}>
@@ -247,10 +257,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 onPress={() => handleMenuItemPress(item.route)}
                 activeOpacity={0.7}
               >
-                <LinearGradient
-                  colors={item.gradientColors}
-                  style={styles.menuIconGradient}
-                >
+                <LinearGradient colors={item.gradientColors} style={styles.menuIconGradient}>
                   <item.icon size={24} color={MEDICAL_COLORS.white} />
                 </LinearGradient>
                 <View style={styles.menuTextContainer}>
@@ -267,10 +274,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 onPress={() => handleMenuItemPress('/admin')}
                 activeOpacity={0.7}
               >
-                <LinearGradient
-                  colors={MEDICAL_COLORS.redGradient}
-                  style={styles.menuIconGradient}
-                >
+                <LinearGradient colors={MEDICAL_COLORS.redGradient} style={styles.menuIconGradient}>
                   <Shield size={24} color={MEDICAL_COLORS.white} />
                 </LinearGradient>
                 <View style={styles.menuTextContainer}>
@@ -282,15 +286,8 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             )}
 
             {/* Kontakt & Info - Expandable */}
-            <TouchableOpacity
-              style={styles.modernMenuItem}
-              onPress={toggleSubmenu}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={MEDICAL_COLORS.cyanGradient}
-                style={styles.menuIconGradient}
-              >
+            <TouchableOpacity style={styles.modernMenuItem} onPress={toggleSubmenu} activeOpacity={0.7}>
+              <LinearGradient colors={MEDICAL_COLORS.cyanGradient} style={styles.menuIconGradient}>
                 <Info size={24} color={MEDICAL_COLORS.white} />
               </LinearGradient>
               <View style={styles.menuTextContainer}>
@@ -320,11 +317,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
         {/* Logout Button at Bottom */}
         <View style={styles.logoutContainer}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
             <LinearGradient
               colors={MEDICAL_COLORS.redGradient}
               style={styles.logoutGradient}
@@ -349,6 +342,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1000,
+    overflow: 'hidden',
   },
   overlay: {
     position: 'absolute',
@@ -362,8 +356,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
+    width: MENU_WIDTH,
+    height: SCREEN_HEIGHT,
   },
   closeButtonContainer: {
     position: 'absolute',
