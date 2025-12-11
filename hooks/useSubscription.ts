@@ -216,13 +216,17 @@ export const useSubscription = (userId: string | undefined) => {
   /**
    * Get subscription display info for dashboard
    * UNIVERSAL: Works for any tier and any limit value
+   *
+   * IMPORTANT: Optimistic deduction ONLY affects display (displayUsed, usageText)
+   * Access control values (remaining) ALWAYS use real database values
    */
   const getSubscriptionInfo = useCallback(() => {
     if (!subscriptionStatus) return null;
 
-    const { subscriptionTier, simulationsUsed, simulationLimit, message } = subscriptionStatus;
+    const { subscriptionTier, simulationsUsed, simulationLimit, message, remainingSimulations } = subscriptionStatus;
 
     // Calculate display count (optimistic if active, actual otherwise)
+    // This is ONLY for visual feedback in the UI
     const displayUsed = hasOptimisticState ? simulationsUsed + optimisticDeduction : simulationsUsed;
 
     // UNIVERSAL: Map tier to display name (works for any tier)
@@ -255,9 +259,11 @@ export const useSubscription = (userId: string | undefined) => {
       canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis' || subscriptionTier === 'profi',
       isUnlimited: subscriptionTier === 'unlimited',
       // Additional info for universal handling
-      displayUsed,
+      displayUsed, // Visual counter (can be optimistic)
       totalLimit: simulationLimit,
-      remaining: simulationLimit ? simulationLimit - displayUsed : 0,
+      // CRITICAL FIX: Use REAL database value for access control decisions
+      // This ensures modal only shows when database confirms quota is exhausted
+      remaining: remainingSimulations ?? 0,
     };
   }, [subscriptionStatus, hasOptimisticState, optimisticDeduction]);
 
@@ -343,11 +349,11 @@ export const useSubscription = (userId: string | undefined) => {
     // Optimistic counter functions
     applyOptimisticDeduction,
     resetOptimisticCount,
-    // Helper properties
+    // Helper properties - ALWAYS use real database values for access control
     canUseSimulation: subscriptionStatus?.canUseSimulation || false,
     subscriptionTier: subscriptionStatus?.subscriptionTier,
-    simulationsRemaining: subscriptionStatus?.simulationLimit
-      ? subscriptionStatus.simulationLimit - subscriptionStatus.simulationsUsed
-      : null,
+    // CRITICAL FIX: Use real database value, not calculated
+    // This ensures access checks are based on actual quota, not optimistic display
+    simulationsRemaining: subscriptionStatus?.remainingSimulations ?? null,
   };
 };
