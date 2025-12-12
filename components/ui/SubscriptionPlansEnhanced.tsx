@@ -303,6 +303,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           marginRight: isMobile ? 0 : 15,
           marginLeft: isMobile ? 0 : 15,
           position: 'relative',
+          overflow: 'visible',
         },
         popularCard: {
           borderWidth: 3,
@@ -409,10 +410,11 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           letterSpacing: 0.5,
         },
         featuresList: {
-          marginTop: 0,
+          width: '100%',
         },
         featureCategory: {
           marginBottom: 20,
+          width: '100%',
         },
         categoryTitle: {
           fontWeight: '700',
@@ -426,6 +428,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexDirection: 'row',
           alignItems: 'flex-start',
           marginBottom: 12,
+          width: '100%',
         },
         featureItemUnavailable: {
           opacity: 0.4,
