@@ -216,7 +216,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexGrow: 1,
         },
         gradient: {
-          flex: 1,
+          width: '100%',
         },
         contentWrapper: {
           padding: isMobile ? 20 : 40,
@@ -289,11 +289,14 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexDirection: isMobile ? 'column' : 'row',
           marginBottom: 60,
           justifyContent: 'center',
+          alignItems: isMobile ? 'stretch' : 'flex-start',
+          width: '100%',
         },
         pricingCard: {
           backgroundColor: '#fff',
           borderRadius: 24,
           padding: isMobile ? 24 : 40,
+          width: isMobile ? '100%' : undefined,
           flex: isMobile ? 0 : 1,
           maxWidth: isMobile ? '100%' : 400,
           marginBottom: isMobile ? 30 : 0,
