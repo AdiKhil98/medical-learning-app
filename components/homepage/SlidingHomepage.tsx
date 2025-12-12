@@ -162,7 +162,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           styles.modernHeader,
           IS_WEB && {
             position: 'sticky' as any,
-            top: 0,
+            top: IS_MOBILE ? 20 : 0, // Offset for mobile browser UI
             zIndex: 1000,
             ...(isScrolled && IS_WEB
               ? {
@@ -172,11 +172,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 }
               : {}),
           },
-          // Add safe area padding for mobile web
-          IS_WEB &&
-            IS_MOBILE && {
-              paddingTop: 20, // Safe area padding for mobile browsers
-            },
         ]}
       >
         {/* Gradient accent line at top of header */}
