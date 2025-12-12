@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: screenWidth } = Dimensions.get('window');
+const isMobile = screenWidth < 768;
+const isSmallMobile = screenWidth < 375;
 
 const STORAGE_KEY = 'promo-banner-2025-dismissed';
 
@@ -117,41 +121,41 @@ const styles = StyleSheet.create({
   },
   gradient: {
     width: '100%',
-    height: 50,
+    height: isMobile ? (isSmallMobile ? 44 : 48) : 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: isMobile ? (isSmallMobile ? 8 : 12) : 20,
     overflow: 'hidden',
     position: 'relative',
   },
   badgeContainer: {
     position: 'absolute',
-    left: 20,
+    left: isMobile ? (isSmallMobile ? 8 : 12) : 20,
     zIndex: 10,
   },
   badge: {
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: isMobile ? (isSmallMobile ? 10 : 14) : 20,
+    paddingVertical: isMobile ? (isSmallMobile ? 4 : 6) : 8,
+    borderRadius: isMobile ? 16 : 20,
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: isMobile ? (isSmallMobile ? 11 : 12) : 14,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   contentContainer: {
     flex: 1,
-    marginLeft: 180,
-    marginRight: 100,
+    marginLeft: isMobile ? (isSmallMobile ? 95 : 120) : 180,
+    marginRight: isMobile ? (isSmallMobile ? 55 : 70) : 100,
     justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
     color: '#000000',
-    fontSize: 15,
+    fontSize: isMobile ? (isSmallMobile ? 12 : 13) : 15,
     fontWeight: '600',
     letterSpacing: 0.2,
     textAlign: 'center',
@@ -162,15 +166,15 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     position: 'absolute',
-    right: 20,
+    right: isMobile ? (isSmallMobile ? 8 : 12) : 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: isMobile ? (isSmallMobile ? 4 : 8) : 12,
     zIndex: 10,
   },
   closeButton: {
-    width: 40,
-    height: 40,
+    width: isMobile ? (isSmallMobile ? 32 : 36) : 40,
+    height: isMobile ? (isSmallMobile ? 32 : 36) : 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
@@ -179,34 +183,4 @@ const styles = StyleSheet.create({
       transition: 'all 0.2s ease' as any,
     }),
   },
-
-  // Responsive styles for mobile
-  ...(Platform.OS !== 'web' &&
-    Dimensions.get('window').width < 768 && {
-      gradient: {
-        height: 45,
-        paddingHorizontal: 12,
-      },
-      badgeContainer: {
-        left: 12,
-      },
-      badge: {
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-      },
-      badgeText: {
-        fontSize: 12,
-      },
-      contentContainer: {
-        marginLeft: 140,
-        marginRight: 80,
-      },
-      text: {
-        fontSize: 13,
-      },
-      actionsContainer: {
-        right: 12,
-        gap: 8,
-      },
-    }),
 });

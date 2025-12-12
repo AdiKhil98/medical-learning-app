@@ -11,6 +11,7 @@ import {
   Animated,
   ActivityIndicator,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -35,6 +36,11 @@ import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 import { colors } from '@/constants/colors';
+
+const { width: screenWidth } = Dimensions.get('window');
+const isSmallMobile = screenWidth < 375;
+const isMobile = screenWidth < 768;
+const isTablet = screenWidth >= 768 && screenWidth < 1024;
 
 interface Category {
   id: string;
@@ -292,7 +298,7 @@ type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -1048,14 +1054,18 @@ const styles = StyleSheet.create({
   // Stats Grid
   statsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: SPACING.md,
     marginBottom: SPACING.xxxl,
+    justifyContent: isSmallMobile ? 'space-between' : 'flex-start',
   },
   statCard: {
-    flex: 1,
+    flex: isSmallMobile ? 0 : 1,
+    minWidth: isSmallMobile ? '47%' : undefined,
+    maxWidth: isSmallMobile ? '48%' : undefined,
     backgroundColor: MEDICAL_COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.xl,
+    padding: isSmallMobile ? SPACING.md : SPACING.xl,
     alignItems: 'center',
     ...SHADOWS.lg,
     borderWidth: 1,
@@ -1088,11 +1098,11 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: isSmallMobile ? 'center' : 'space-between',
     marginBottom: SPACING.xxxxxl,
   },
   categoryCardWrapper: {
-    width: '48%',
+    width: isSmallMobile ? '100%' : isMobile ? '48%' : isTablet ? '31%' : '23%',
     marginBottom: SPACING.xxxl,
   },
   categoryCard: {

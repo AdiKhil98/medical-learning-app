@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
@@ -28,6 +28,9 @@ import {
 } from '@/constants/simulationConstants';
 import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
+
+const { width: screenWidth } = Dimensions.get('window');
+const isMobile = screenWidth < 768;
 
 function KPSimulationScreen() {
   console.log('🎯🎯🎯 KP SIMULATION COMPONENT RENDERING');
@@ -2091,8 +2094,8 @@ const styles = StyleSheet.create({
   lockOverlayContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 32,
-    maxWidth: 400,
+    padding: isMobile ? (screenWidth < 375 ? 20 : 28) : 32,
+    maxWidth: isMobile ? (screenWidth < 375 ? 280 : 340) : 400,
     width: '100%',
     alignItems: 'center',
     shadowColor: '#000',

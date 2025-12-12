@@ -39,6 +39,7 @@ import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const IS_MOBILE = isCompact(screenWidth);
+const IS_SMALL_MOBILE = screenWidth < 375;
 const IS_WEB = Platform.OS === 'web';
 
 interface SlidingHomepageProps {
@@ -46,7 +47,6 @@ interface SlidingHomepageProps {
 }
 
 export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) {
-  
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -792,8 +792,8 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: IS_MOBILE ? SPACING.xl : SPACING.lg,
-    paddingVertical: IS_MOBILE ? SPACING.xxxl : SPACING.xxl,
+    paddingHorizontal: IS_SMALL_MOBILE ? SPACING.md : IS_MOBILE ? SPACING.xl : SPACING.lg,
+    paddingVertical: IS_SMALL_MOBILE ? SPACING.xl : IS_MOBILE ? SPACING.xxxl : SPACING.xxl,
     paddingBottom: IS_MOBILE ? 80 : SPACING.xxl, // Extra space for bottom nav on mobile
   },
   slideContainer: {
@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: MEDICAL_COLORS.white,
     borderRadius: IS_MOBILE ? SPACING.xl : SPACING.xxl,
-    padding: IS_MOBILE ? 28 : SPACING.xxxxl,
+    padding: IS_SMALL_MOBILE ? 20 : IS_MOBILE ? 28 : SPACING.xxxxl,
     borderWidth: 1,
     borderColor: MEDICAL_COLORS.slate100,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
