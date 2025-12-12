@@ -207,216 +207,224 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
       <LinearGradient
         colors={['#ff9a56', '#ff6b6b', '#ff8e53']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Wählen Sie Ihren perfekten Plan</Text>
-          <Text style={styles.headerSubtitle}>
-            Bereiten Sie sich optimal auf Ihre Fachsprachprüfung vor. Flexibel, umfassend und effektiv.
-          </Text>
-        </View>
-
-        {/* Billing Toggle */}
-        <View style={styles.billingToggle}>
-          <View style={styles.billingOptions}>
-            <TouchableOpacity
-              style={[styles.billingOption, !isQuarterly && styles.billingOptionActive]}
-              onPress={() => setIsQuarterly(false)}
-            >
-              <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>MONATLICH</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.billingOption, isQuarterly && styles.billingOptionActive]}
-              onPress={() => setIsQuarterly(true)}
-            >
-              <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>3 MONATE</Text>
-            </TouchableOpacity>
+        <View style={styles.contentWrapper}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Wählen Sie Ihren perfekten Plan</Text>
+            <Text style={styles.headerSubtitle}>
+              Bereiten Sie sich optimal auf Ihre Fachsprachprüfung vor. Flexibel, umfassend und effektiv.
+            </Text>
           </View>
-          {isQuarterly && (
-            <View style={styles.savingsBadge}>
-              <Text style={styles.savingsBadgeText}>✨ SPARE 15%</Text>
+
+          {/* Billing Toggle */}
+          <View style={styles.billingToggle}>
+            <View style={styles.billingOptions}>
+              <TouchableOpacity
+                style={[styles.billingOption, !isQuarterly && styles.billingOptionActive]}
+                onPress={() => setIsQuarterly(false)}
+              >
+                <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>MONATLICH</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.billingOption, isQuarterly && styles.billingOptionActive]}
+                onPress={() => setIsQuarterly(true)}
+              >
+                <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>3 MONATE</Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
-
-        {/* Pricing Cards */}
-        <View style={styles.pricingGrid}>
-          {plans.map((plan) => (
-            <View key={plan.id} style={[styles.pricingCard, plan.popular && styles.popularCard]}>
-              {plan.popular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularBadgeText}>⭐ BELIEBTESTE WAHL</Text>
-                </View>
-              )}
-
-              {/* Plan Header */}
-              <View style={styles.planHeader}>
-                <View style={styles.planIcon}>
-                  <Text style={styles.planIconText}>{plan.icon}</Text>
-                </View>
-                <Text style={styles.planName}>{plan.name}</Text>
-                <Text style={styles.planDescription}>{plan.description}</Text>
+            {isQuarterly && (
+              <View style={styles.savingsBadge}>
+                <Text style={styles.savingsBadgeText}>✨ SPARE 15%</Text>
               </View>
+            )}
+          </View>
 
-              {/* Price Section */}
-              <View style={styles.priceSection}>
-                <View style={styles.priceRow}>
-                  {plan.id === 'free' ? (
-                    <Text style={styles.amount}>Frei</Text>
-                  ) : (
+          {/* Pricing Cards */}
+          <View style={styles.pricingGrid}>
+            {plans.map((plan) => (
+              <View key={plan.id} style={[styles.pricingCard, plan.popular && styles.popularCard]}>
+                {plan.popular && (
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularBadgeText}>⭐ BELIEBTESTE WAHL</Text>
+                  </View>
+                )}
+
+                {/* Plan Header */}
+                <View style={styles.planHeader}>
+                  <View style={styles.planIcon}>
+                    <Text style={styles.planIconText}>{plan.icon}</Text>
+                  </View>
+                  <Text style={styles.planName}>{plan.name}</Text>
+                  <Text style={styles.planDescription}>{plan.description}</Text>
+                </View>
+
+                {/* Price Section */}
+                <View style={styles.priceSection}>
+                  <View style={styles.priceRow}>
+                    {plan.id === 'free' ? (
+                      <Text style={styles.amount}>Frei</Text>
+                    ) : (
+                      <>
+                        {isQuarterly && plan.originalQuarterlyPrice > 0 && (
+                          <Text style={styles.originalPrice}>€{plan.originalQuarterlyPrice}</Text>
+                        )}
+                        <Text style={styles.currency}>€</Text>
+                        <Text style={styles.amount}>{getPrice(plan)}</Text>
+                        {plan.id !== 'free' && (
+                          <Text style={styles.period}>{isQuarterly ? '/3 Monate' : '/Monat'}</Text>
+                        )}
+                      </>
+                    )}
+                  </View>
+                  <Text style={styles.priceNote}>
+                    {plan.id === 'free'
+                      ? 'Kostenlos • Keine Kreditkarte erforderlich'
+                      : isQuarterly && plan.savings > 0
+                        ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
+                        : 'Monatlich kündbar'}
+                  </Text>
+                </View>
+
+                {/* CTA Button */}
+                <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
+                  <LinearGradient
+                    colors={plan.popular ? ['#ff7854', '#ff6b6b'] : ['#ff9a56', '#ff6b6b']}
+                    style={styles.ctaButton}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.ctaButtonText}>{plan.ctaText}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Features List */}
+                <View style={styles.featuresList}>
+                  {plan.mainFeatures.map((category, catIndex) => (
+                    <View key={catIndex} style={styles.featureCategory}>
+                      <Text style={styles.categoryTitle}>{category.title}</Text>
+                      {category.features.map((feature, featIndex) => (
+                        <View
+                          key={featIndex}
+                          style={[styles.featureItem, !feature.included && styles.featureItemUnavailable]}
+                        >
+                          <View style={[styles.featureIcon, !feature.included && styles.featureIconDisabled]}>
+                            <Text style={styles.featureIconText}>{feature.included ? '✓' : '✗'}</Text>
+                          </View>
+                          <Text style={[styles.featureText, !feature.included && styles.featureTextDisabled]}>
+                            {feature.text}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+
+                  {/* Expanded Features */}
+                  {plan.expandedFeatures.length > 0 && (
                     <>
-                      {isQuarterly && plan.originalQuarterlyPrice > 0 && (
-                        <Text style={styles.originalPrice}>€{plan.originalQuarterlyPrice}</Text>
-                      )}
-                      <Text style={styles.currency}>€</Text>
-                      <Text style={styles.amount}>{getPrice(plan)}</Text>
-                      {plan.id !== 'free' && <Text style={styles.period}>{isQuarterly ? '/3 Monate' : '/Monat'}</Text>}
+                      {expandedPlan === plan.id &&
+                        plan.expandedFeatures.map((category, catIndex) => (
+                          <View key={catIndex} style={styles.featureCategory}>
+                            <Text style={styles.categoryTitle}>{category.title}</Text>
+                            {category.features.map((feature, featIndex) => (
+                              <View key={featIndex} style={styles.featureItem}>
+                                <View style={styles.featureIcon}>
+                                  <Text style={styles.featureIconText}>✓</Text>
+                                </View>
+                                <Text style={styles.featureText}>{feature.text}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+
+                      <TouchableOpacity style={styles.expandButton} onPress={() => toggleExpand(plan.id)}>
+                        <Text style={styles.expandButtonText}>
+                          {expandedPlan === plan.id ? '− Weniger anzeigen' : '+ Alle Features anzeigen'}
+                        </Text>
+                      </TouchableOpacity>
                     </>
                   )}
                 </View>
-                <Text style={styles.priceNote}>
-                  {plan.id === 'free'
-                    ? 'Kostenlos • Keine Kreditkarte erforderlich'
-                    : isQuarterly && plan.savings > 0
-                      ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
-                      : 'Monatlich kündbar'}
-                </Text>
               </View>
-
-              {/* CTA Button */}
-              <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
-                <LinearGradient
-                  colors={plan.popular ? ['#ff7854', '#ff6b6b'] : ['#ff9a56', '#ff6b6b']}
-                  style={styles.ctaButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.ctaButtonText}>{plan.ctaText}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              {/* Features List */}
-              <View style={styles.featuresList}>
-                {plan.mainFeatures.map((category, catIndex) => (
-                  <View key={catIndex} style={styles.featureCategory}>
-                    <Text style={styles.categoryTitle}>{category.title}</Text>
-                    {category.features.map((feature, featIndex) => (
-                      <View
-                        key={featIndex}
-                        style={[styles.featureItem, !feature.included && styles.featureItemUnavailable]}
-                      >
-                        <View style={[styles.featureIcon, !feature.included && styles.featureIconDisabled]}>
-                          <Text style={styles.featureIconText}>{feature.included ? '✓' : '✗'}</Text>
-                        </View>
-                        <Text style={[styles.featureText, !feature.included && styles.featureTextDisabled]}>
-                          {feature.text}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                ))}
-
-                {/* Expanded Features */}
-                {plan.expandedFeatures.length > 0 && (
-                  <>
-                    {expandedPlan === plan.id &&
-                      plan.expandedFeatures.map((category, catIndex) => (
-                        <View key={catIndex} style={styles.featureCategory}>
-                          <Text style={styles.categoryTitle}>{category.title}</Text>
-                          {category.features.map((feature, featIndex) => (
-                            <View key={featIndex} style={styles.featureItem}>
-                              <View style={styles.featureIcon}>
-                                <Text style={styles.featureIconText}>✓</Text>
-                              </View>
-                              <Text style={styles.featureText}>{feature.text}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      ))}
-
-                    <TouchableOpacity style={styles.expandButton} onPress={() => toggleExpand(plan.id)}>
-                      <Text style={styles.expandButtonText}>
-                        {expandedPlan === plan.id ? '− Weniger anzeigen' : '+ Alle Features anzeigen'}
-                      </Text>
-                    </TouchableOpacity>
-                  </>
-                )}
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Trust Section */}
-        <View style={styles.trustSection}>
-          <Text style={styles.trustTitle}>Vertrauen Sie unserer Expertise</Text>
-          <Text style={styles.trustSubtitle}>Tausende Ärzte haben sich bereits erfolgreich vorbereitet</Text>
-          <View style={styles.trustBadges}>
-            <View style={styles.trustBadge}>
-              <View style={styles.trustIcon}>
-                <Lock size={28} color="#fff" />
-              </View>
-              <Text style={styles.trustText}>100% Datenschutz</Text>
-            </View>
-            <View style={styles.trustBadge}>
-              <View style={styles.trustIcon}>
-                <Zap size={28} color="#fff" />
-              </View>
-              <Text style={styles.trustText}>Sofortiger Zugang</Text>
-            </View>
-            <View style={styles.trustBadge}>
-              <View style={styles.trustIcon}>
-                <Text style={{ fontSize: 28 }}>💯</Text>
-              </View>
-              <Text style={styles.trustText}>14 Tage Geld-zurück</Text>
-            </View>
-            <View style={styles.trustBadge}>
-              <View style={styles.trustIcon}>
-                <Target size={28} color="#fff" />
-              </View>
-              <Text style={styles.trustText}>Prüfungsnah</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* FAQ Section */}
-        <View style={styles.faqSection}>
-          <Text style={styles.faqTitle}>Häufig gestellte Fragen</Text>
-          <Text style={styles.faqSubtitle}>Alles, was Sie über unsere Pläne wissen müssen</Text>
-
-          <View style={styles.faqList}>
-            {faqs.map((faq, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.faqItem, expandedFAQ === index && styles.faqItemActive]}
-                onPress={() => toggleFAQ(index)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.faqQuestion}>
-                  <Text style={styles.faqQuestionText}>{faq.question}</Text>
-                  <View style={styles.faqIcon}>
-                    {expandedFAQ === index ? (
-                      <ChevronUp size={14} color="#fff" />
-                    ) : (
-                      <ChevronDown size={14} color="#fff" />
-                    )}
-                  </View>
-                </View>
-                {expandedFAQ === index && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
-              </TouchableOpacity>
             ))}
           </View>
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2024 FSP & KP Simulation. Alle Rechte vorbehalten.</Text>
-          <Text style={styles.footerSubtext}>Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de</Text>
+          {/* Trust Section */}
+          <View style={styles.trustSection}>
+            <Text style={styles.trustTitle}>Vertrauen Sie unserer Expertise</Text>
+            <Text style={styles.trustSubtitle}>Tausende Ärzte haben sich bereits erfolgreich vorbereitet</Text>
+            <View style={styles.trustBadges}>
+              <View style={styles.trustBadge}>
+                <View style={styles.trustIcon}>
+                  <Lock size={28} color="#fff" />
+                </View>
+                <Text style={styles.trustText}>100% Datenschutz</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <View style={styles.trustIcon}>
+                  <Zap size={28} color="#fff" />
+                </View>
+                <Text style={styles.trustText}>Sofortiger Zugang</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <View style={styles.trustIcon}>
+                  <Text style={{ fontSize: 28 }}>💯</Text>
+                </View>
+                <Text style={styles.trustText}>14 Tage Geld-zurück</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <View style={styles.trustIcon}>
+                  <Target size={28} color="#fff" />
+                </View>
+                <Text style={styles.trustText}>Prüfungsnah</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* FAQ Section */}
+          <View style={styles.faqSection}>
+            <Text style={styles.faqTitle}>Häufig gestellte Fragen</Text>
+            <Text style={styles.faqSubtitle}>Alles, was Sie über unsere Pläne wissen müssen</Text>
+
+            <View style={styles.faqList}>
+              {faqs.map((faq, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.faqItem, expandedFAQ === index && styles.faqItemActive]}
+                  onPress={() => toggleFAQ(index)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.faqQuestion}>
+                    <Text style={styles.faqQuestionText}>{faq.question}</Text>
+                    <View style={styles.faqIcon}>
+                      {expandedFAQ === index ? (
+                        <ChevronUp size={14} color="#fff" />
+                      ) : (
+                        <ChevronDown size={14} color="#fff" />
+                      )}
+                    </View>
+                  </View>
+                  {expandedFAQ === index && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>© 2024 FSP & KP Simulation. Alle Rechte vorbehalten.</Text>
+            <Text style={styles.footerSubtext}>Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de</Text>
+          </View>
         </View>
       </LinearGradient>
     </ScrollView>
@@ -427,7 +435,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   gradient: {
+    flex: 1,
+  },
+  contentWrapper: {
     padding: isMobile ? 20 : 40,
     paddingTop: 40,
     paddingBottom: 40,
