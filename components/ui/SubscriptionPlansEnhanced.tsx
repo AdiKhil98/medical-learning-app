@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   gradient: {
     padding: isMobile ? 20 : 40,
     paddingTop: 40,
-    minHeight: '100%',
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
@@ -506,6 +506,8 @@ const styles = StyleSheet.create({
     padding: isMobile ? 24 : 40,
     flex: isMobile ? 0 : 1,
     maxWidth: isMobile ? '100%' : 400,
+    marginBottom: isMobile ? 30 : 0,
+    position: 'relative',
   },
   popularCard: {
     borderWidth: 3,
