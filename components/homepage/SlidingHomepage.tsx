@@ -172,6 +172,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 }
               : {}),
           },
+          // Add safe area padding for mobile web
+          IS_WEB &&
+            IS_MOBILE && {
+              paddingTop: 20, // Safe area padding for mobile browsers
+            },
         ]}
       >
         {/* Gradient accent line at top of header */}

@@ -79,7 +79,7 @@ export default function RootLayout() {
         logger.info('✅ Google Fonts (Inter) loaded');
       }
 
-      // Add mobile viewport fix styles with safe area support
+      // Add mobile viewport fix styles
       const style = document.createElement('style');
       style.id = 'mobile-viewport-fix';
       style.textContent = `
@@ -99,25 +99,6 @@ export default function RootLayout() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* Mobile Web Safe Area Fix */
-        #root {
-          width: 100%;
-          height: 100%;
-          /* Add safe area padding for mobile browsers */
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-          padding-left: env(safe-area-inset-left);
-          padding-right: env(safe-area-inset-right);
-        }
-
-        /* Fallback for browsers that don't support env() */
-        @supports not (padding: env(safe-area-inset-top)) {
-          #root {
-            /* Add fixed padding for mobile browsers (status bar height) */
-            padding-top: 20px;
-          }
-        }
-
         /* Additional mobile-specific adjustments */
         @media screen and (max-width: 768px) {
           body {
@@ -128,7 +109,7 @@ export default function RootLayout() {
       `;
       if (!document.getElementById('mobile-viewport-fix')) {
         document.head.appendChild(style);
-        logger.info('✅ Mobile viewport fix with safe area applied');
+        logger.info('✅ Mobile viewport fix applied');
       }
 
       // Add cache control meta tags to prevent HTML caching
