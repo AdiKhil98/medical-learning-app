@@ -10,21 +10,18 @@ import {
   Shield,
   Users,
   FileText,
-  TestTube,
   BarChart,
   Bell,
   Settings,
-  Database,
   MessageSquare,
   Lightbulb,
-  Wand2,
   CreditCard
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  
+
   const { user } = useAuth();
   const [feedbackCount, setFeedbackCount] = useState(0);
 
@@ -48,13 +45,6 @@ export default function AdminDashboard() {
   };
 
   const adminFeatures = [
-    {
-      title: 'Test Simulation',
-      icon: TestTube,
-      route: '/admin/test-simulation',
-      description: 'Simulationen testen',
-      color: '#10B981'
-    },
     {
       title: 'Post Update',
       icon: Bell,
@@ -104,20 +94,6 @@ export default function AdminDashboard() {
       route: '/admin/daily-tips',
       description: 'Tägliche Tipps verwalten',
       color: '#F59E0B'
-    },
-    {
-      title: 'Transform Medical Content',
-      icon: Wand2,
-      route: '/admin/transform-content',
-      description: 'Alle medizinischen Inhalte in erweiterte Formate umwandeln',
-      color: '#E2827F'
-    },
-    {
-      title: 'Database',
-      icon: Database,
-      route: '/admin/database',
-      description: 'Datenbank-Operationen',
-      color: '#06B6D4'
     }
   ];
 

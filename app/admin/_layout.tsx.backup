@@ -74,6 +74,14 @@ export default function AdminLayout() {
         }}
       />
       <Stack.Screen
+        name="test-simulation"
+        options={{
+          title: 'Test Simulation',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
         name="add-update"
         options={{
           title: 'Post Update',
@@ -90,14 +98,6 @@ export default function AdminLayout() {
         }}
       />
       <Stack.Screen
-        name="subscriptions"
-        options={{
-          title: 'Subscription Manager',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
         name="analytics"
         options={{
           title: 'Analytics',
@@ -109,6 +109,14 @@ export default function AdminLayout() {
         name="content"
         options={{
           title: 'Content Management',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="database"
+        options={{
+          title: 'Database Management',
           headerShown: true,
           lazy: true,
         }}
@@ -133,6 +141,14 @@ export default function AdminLayout() {
         name="feedback-manager"
         options={{
           title: 'Feedback Manager',
+          headerShown: true,
+          lazy: true,
+        }}
+      />
+      <Stack.Screen
+        name="transform-content"
+        options={{
+          title: 'Transform Content',
           headerShown: true,
           lazy: true,
         }}
