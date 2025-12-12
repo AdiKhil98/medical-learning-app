@@ -157,17 +157,24 @@ export default function ProfileScreen() {
 
   // Navigate to personal data page
   const handlePersonalData = () => {
-    router.push('/konto/persoenliche-daten');
+    // Use setTimeout to fix web navigation issues with nested routes
+    setTimeout(() => {
+      router.push('/konto/persoenliche-daten' as any);
+    }, 0);
   };
 
   // Navigate to password change page
   const handleChangePassword = () => {
-    router.push('/konto/passwort-aendern');
+    setTimeout(() => {
+      router.push('/konto/passwort-aendern' as any);
+    }, 0);
   };
 
   // Navigate to subscription page
   const handleSubscription = () => {
-    router.push('/subscription');
+    setTimeout(() => {
+      router.push('/subscription' as any);
+    }, 0);
   };
 
   // Toggle font size with cycling (Klein → Mittel → Groß → Klein)
@@ -202,22 +209,30 @@ export default function ProfileScreen() {
 
   // Navigate to saved content page
   const handleSavedContent = () => {
-    router.push('/gespeicherte-notizen');
+    setTimeout(() => {
+      router.push('/gespeicherte-notizen' as any);
+    }, 0);
   };
 
   // Navigate to help page
   const handleHelpSupport = () => {
-    router.push('/help');
+    setTimeout(() => {
+      router.push('/help' as any);
+    }, 0);
   };
 
   // Navigate to privacy terms page
   const handlePrivacyTerms = () => {
-    router.push('/konto/datenschutz-agb');
+    setTimeout(() => {
+      router.push('/konto/datenschutz-agb' as any);
+    }, 0);
   };
 
   // Navigate to impressum page
   const handleImprint = () => {
-    router.push('/impressum');
+    setTimeout(() => {
+      router.push('/impressum' as any);
+    }, 0);
   };
 
   const handleLogout = () => {
