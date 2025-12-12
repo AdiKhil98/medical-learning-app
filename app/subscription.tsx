@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
-import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text, Linking, Alert, ActivityIndicator, Modal } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  Text,
+  Linking,
+  Alert,
+  ActivityIndicator,
+  Modal,
+  Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, X, AlertCircle } from 'lucide-react-native';
@@ -12,9 +24,12 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/constants/colors';
 
+const { width } = Dimensions.get('window');
+const isMobile = width < 768;
+
 export default function SubscriptionPage() {
   const router = useRouter();
-  
+
   const { user } = useAuth();
   const { checkAccess } = useSubscription(user?.id);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -22,10 +37,10 @@ export default function SubscriptionPage() {
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
     visible: false,
     title: '',
-    message: ''
+    message: '',
   });
 
-    const handleSelectPlan = async (planId: string) => {
+  const handleSelectPlan = async (planId: string) => {
     logger.info('Selected plan:', planId);
 
     // Prevent spamming
@@ -45,9 +60,9 @@ export default function SubscriptionPage() {
 
     // Map planId to variant_id
     const variantIdMapping: Record<string, number> = {
-      'basic': 1006948,
-      'professional': 1006934,
-      'unlimited': 1006947
+      basic: 1006948,
+      professional: 1006934,
+      unlimited: 1006947,
     };
 
     const newVariantId = variantIdMapping[planId];
@@ -87,8 +102,8 @@ export default function SubscriptionPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user.id,
-            newVariantId: newVariantId
-          })
+            newVariantId,
+          }),
         });
 
         const result = await response.json();
@@ -106,18 +121,14 @@ export default function SubscriptionPage() {
         // Refresh subscription data
         await checkAccess();
 
-        Alert.alert(
-          'Erfolgreich!',
-          'Ihr Plan wurde erfolgreich geändert. Die Änderung wird in Kürze aktiv.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                router.replace('/(tabs)/dashboard');
-              }
-            }
-          ]
-        );
+        Alert.alert('Erfolgreich!', 'Ihr Plan wurde erfolgreich geändert. Die Änderung wird in Kürze aktiv.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(tabs)/dashboard');
+            },
+          },
+        ]);
       }
       // STEP 2B: User has NO subscription → NEW CHECKOUT
       else {
@@ -126,9 +137,9 @@ export default function SubscriptionPage() {
 
         const userEmail = encodeURIComponent(user?.email || '');
         const checkoutUrls: Record<string, string> = {
-          'basic': `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
-          'professional': `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
-          'unlimited': `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`
+          basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
+          professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
+          unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`,
         };
 
         const checkoutUrl = checkoutUrls[planId];
@@ -170,8 +181,8 @@ export default function SubscriptionPage() {
               onPress: () => {
                 // Go back to dashboard
                 router.replace('/(tabs)/dashboard');
-              }
-            }
+              },
+            },
           ]
         );
       } else {
@@ -179,7 +190,7 @@ export default function SubscriptionPage() {
         setErrorModal({
           visible: true,
           title: 'Nicht verfügbar',
-          message: result.error || 'Fehler beim Wechseln zum kostenlosen Plan'
+          message: result.error || 'Fehler beim Wechseln zum kostenlosen Plan',
         });
       }
     } catch (error) {
@@ -218,15 +229,15 @@ export default function SubscriptionPage() {
               onPress: () => {
                 // Go back to dashboard
                 router.replace('/(tabs)/dashboard');
-              }
-            }
+              },
+            },
           ]
         );
       } else {
         setErrorModal({
           visible: true,
           title: 'Fehler',
-          message: result.error || 'Fehler beim Wechseln des Plans'
+          message: result.error || 'Fehler beim Wechseln des Plans',
         });
       }
     } catch (error) {
@@ -330,7 +341,8 @@ export default function SubscriptionPage() {
       backgroundColor: '#FFFFFF',
       borderRadius: 20,
       width: '100%',
-      maxWidth: 400,
+      maxWidth: isMobile ? 280 : 400,
+      marginHorizontal: isMobile ? 20 : 0,
       shadowColor: 'rgba(181,87,64,0.3)',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.3,
@@ -397,11 +409,7 @@ export default function SubscriptionPage() {
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <SafeAreaView style={dynamicStyles.safeArea}>
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor="transparent"
-          translucent
-        />
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <View style={dynamicStyles.container}>
           <View style={dynamicStyles.header}>
             <TouchableOpacity
@@ -421,29 +429,17 @@ export default function SubscriptionPage() {
       </SafeAreaView>
 
       {/* Loading Modal */}
-      <Modal
-        visible={isUpdating}
-        transparent={true}
-        animationType="fade"
-        statusBarTranslucent={true}
-      >
+      <Modal visible={isUpdating} transparent={true} animationType="fade" statusBarTranslucent={true}>
         <View style={dynamicStyles.loadingOverlay}>
           <View style={dynamicStyles.loadingContainer}>
             <ActivityIndicator size="large" color="#4CAF50" />
-            <Text style={dynamicStyles.loadingText}>
-              {loadingMessage || 'Wird verarbeitet...'}
-            </Text>
+            <Text style={dynamicStyles.loadingText}>{loadingMessage || 'Wird verarbeitet...'}</Text>
           </View>
         </View>
       </Modal>
 
       {/* Custom Error Modal */}
-      <Modal
-        visible={errorModal.visible}
-        transparent={true}
-        animationType="fade"
-        statusBarTranslucent={true}
-      >
+      <Modal visible={errorModal.visible} transparent={true} animationType="fade" statusBarTranslucent={true}>
         <View style={dynamicStyles.errorOverlay}>
           <View style={dynamicStyles.errorContainer}>
             {/* Header with close button */}
@@ -461,9 +457,7 @@ export default function SubscriptionPage() {
             </View>
 
             {/* Message */}
-            <Text style={dynamicStyles.errorMessage}>
-              {errorModal.message}
-            </Text>
+            <Text style={dynamicStyles.errorMessage}>{errorModal.message}</Text>
 
             {/* Action buttons */}
             <View style={dynamicStyles.errorActions}>
@@ -484,7 +478,6 @@ export default function SubscriptionPage() {
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }

@@ -113,9 +113,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         },
         {
           title: '🎯 Support',
-          features: [
-            { text: 'E-Mail Support innerhalb 24h', included: true },
-          ],
+          features: [{ text: 'E-Mail Support innerhalb 24h', included: true }],
         },
       ],
     },
@@ -172,19 +170,23 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
   const faqs = [
     {
       question: 'Kann ich jederzeit kündigen?',
-      answer: 'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
+      answer:
+        'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
     },
     {
       question: 'Was passiert nach dem Ende meines kostenlosen Plans?',
-      answer: 'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
+      answer:
+        'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
     },
     {
       question: 'Wie funktioniert die 14-Tage Geld-zurück-Garantie?',
-      answer: 'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
+      answer:
+        'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
     },
     {
       question: 'Kann ich meinen Plan später ändern?',
-      answer: 'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
+      answer:
+        'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
     },
   ];
 
@@ -227,17 +229,13 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
               style={[styles.billingOption, !isQuarterly && styles.billingOptionActive]}
               onPress={() => setIsQuarterly(false)}
             >
-              <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>
-                MONATLICH
-              </Text>
+              <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>MONATLICH</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.billingOption, isQuarterly && styles.billingOptionActive]}
               onPress={() => setIsQuarterly(true)}
             >
-              <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>
-                3 MONATE
-              </Text>
+              <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>3 MONATE</Text>
             </TouchableOpacity>
           </View>
           {isQuarterly && (
@@ -250,10 +248,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         {/* Pricing Cards */}
         <View style={styles.pricingGrid}>
           {plans.map((plan) => (
-            <View
-              key={plan.id}
-              style={[styles.pricingCard, plan.popular && styles.popularCard]}
-            >
+            <View key={plan.id} style={[styles.pricingCard, plan.popular && styles.popularCard]}>
               {plan.popular && (
                 <View style={styles.popularBadge}>
                   <Text style={styles.popularBadgeText}>⭐ BELIEBTESTE WAHL</Text>
@@ -281,11 +276,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                       )}
                       <Text style={styles.currency}>€</Text>
                       <Text style={styles.amount}>{getPrice(plan)}</Text>
-                      {plan.id !== 'free' && (
-                        <Text style={styles.period}>
-                          {isQuarterly ? '/3 Monate' : '/Monat'}
-                        </Text>
-                      )}
+                      {plan.id !== 'free' && <Text style={styles.period}>{isQuarterly ? '/3 Monate' : '/Monat'}</Text>}
                     </>
                   )}
                 </View>
@@ -293,8 +284,8 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                   {plan.id === 'free'
                     ? 'Kostenlos • Keine Kreditkarte erforderlich'
                     : isQuarterly && plan.savings > 0
-                    ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
-                    : 'Monatlich kündbar'}
+                      ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
+                      : 'Monatlich kündbar'}
                 </Text>
               </View>
 
@@ -318,27 +309,12 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                     {category.features.map((feature, featIndex) => (
                       <View
                         key={featIndex}
-                        style={[
-                          styles.featureItem,
-                          !feature.included && styles.featureItemUnavailable,
-                        ]}
+                        style={[styles.featureItem, !feature.included && styles.featureItemUnavailable]}
                       >
-                        <View
-                          style={[
-                            styles.featureIcon,
-                            !feature.included && styles.featureIconDisabled,
-                          ]}
-                        >
-                          <Text style={styles.featureIconText}>
-                            {feature.included ? '✓' : '✗'}
-                          </Text>
+                        <View style={[styles.featureIcon, !feature.included && styles.featureIconDisabled]}>
+                          <Text style={styles.featureIconText}>{feature.included ? '✓' : '✗'}</Text>
                         </View>
-                        <Text
-                          style={[
-                            styles.featureText,
-                            !feature.included && styles.featureTextDisabled,
-                          ]}
-                        >
+                        <Text style={[styles.featureText, !feature.included && styles.featureTextDisabled]}>
                           {feature.text}
                         </Text>
                       </View>
@@ -364,10 +340,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                         </View>
                       ))}
 
-                    <TouchableOpacity
-                      style={styles.expandButton}
-                      onPress={() => toggleExpand(plan.id)}
-                    >
+                    <TouchableOpacity style={styles.expandButton} onPress={() => toggleExpand(plan.id)}>
                       <Text style={styles.expandButtonText}>
                         {expandedPlan === plan.id ? '− Weniger anzeigen' : '+ Alle Features anzeigen'}
                       </Text>
@@ -382,9 +355,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         {/* Trust Section */}
         <View style={styles.trustSection}>
           <Text style={styles.trustTitle}>Vertrauen Sie unserer Expertise</Text>
-          <Text style={styles.trustSubtitle}>
-            Tausende Ärzte haben sich bereits erfolgreich vorbereitet
-          </Text>
+          <Text style={styles.trustSubtitle}>Tausende Ärzte haben sich bereits erfolgreich vorbereitet</Text>
           <View style={styles.trustBadges}>
             <View style={styles.trustBadge}>
               <View style={styles.trustIcon}>
@@ -436,9 +407,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                     )}
                   </View>
                 </View>
-                {expandedFAQ === index && (
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
-                )}
+                {expandedFAQ === index && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
               </TouchableOpacity>
             ))}
           </View>
@@ -447,9 +416,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>© 2024 FSP & KP Simulation. Alle Rechte vorbehalten.</Text>
-          <Text style={styles.footerSubtext}>
-            Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de
-          </Text>
+          <Text style={styles.footerSubtext}>Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de</Text>
         </View>
       </LinearGradient>
     </ScrollView>
@@ -470,7 +437,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   headerTitle: {
-    fontSize: isMobile ? 32 : 52,
+    fontSize: width < 360 ? 24 : isMobile ? 28 : 52,
     fontWeight: '800',
     color: '#fff',
     textAlign: 'center',
@@ -501,8 +468,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   billingOption: {
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+    paddingVertical: isMobile ? 12 : 14,
+    paddingHorizontal: isMobile ? 20 : 32,
     borderRadius: 40,
   },
   billingOptionActive: {
@@ -511,7 +478,7 @@ const styles = StyleSheet.create({
   billingText: {
     fontWeight: '600',
     color: '#fff',
-    fontSize: 15,
+    fontSize: isMobile ? 13 : 15,
   },
   billingTextActive: {
     color: '#ff7854',
@@ -536,7 +503,7 @@ const styles = StyleSheet.create({
   pricingCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
-    padding: 40,
+    padding: isMobile ? 24 : 40,
     flex: isMobile ? 0 : 1,
     maxWidth: isMobile ? '100%' : 400,
   },
