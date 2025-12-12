@@ -248,7 +248,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         billingToggle: {
           alignItems: 'center',
           marginBottom: 40,
-          gap: 20,
         },
         billingOptions: {
           flexDirection: 'row',
@@ -279,6 +278,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           paddingHorizontal: 20,
           paddingVertical: 8,
           borderRadius: 30,
+          marginTop: 20,
         },
         savingsBadgeText: {
           color: '#fff',
@@ -287,7 +287,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         },
         pricingGrid: {
           flexDirection: isMobile ? 'column' : 'row',
-          gap: 30,
           marginBottom: 60,
           justifyContent: 'center',
         },
@@ -298,6 +297,8 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flex: isMobile ? 0 : 1,
           maxWidth: isMobile ? '100%' : 400,
           marginBottom: isMobile ? 30 : 0,
+          marginRight: isMobile ? 0 : 15,
+          marginLeft: isMobile ? 0 : 15,
           position: 'relative',
         },
         popularCard: {
@@ -361,22 +362,24 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexDirection: 'row',
           alignItems: 'baseline',
           marginBottom: 8,
-          gap: 5,
         },
         originalPrice: {
           textDecorationLine: 'line-through',
           color: '#9ca3af',
           fontSize: 18,
+          marginRight: 5,
         },
         currency: {
           fontSize: 24,
           fontWeight: '700',
           color: '#ff7854',
+          marginRight: 5,
         },
         amount: {
           fontSize: 56,
           fontWeight: '900',
           color: '#1f2937',
+          marginRight: 5,
         },
         period: {
           fontSize: 18,
@@ -403,10 +406,10 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           letterSpacing: 0.5,
         },
         featuresList: {
-          gap: 20,
+          marginTop: 0,
         },
         featureCategory: {
-          gap: 12,
+          marginBottom: 20,
         },
         categoryTitle: {
           fontWeight: '700',
@@ -414,11 +417,12 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           fontSize: 14,
           textTransform: 'uppercase',
           letterSpacing: 0.5,
+          marginBottom: 12,
         },
         featureItem: {
           flexDirection: 'row',
           alignItems: 'flex-start',
-          gap: 12,
+          marginBottom: 12,
         },
         featureItemUnavailable: {
           opacity: 0.4,
@@ -431,6 +435,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           justifyContent: 'center',
           alignItems: 'center',
           marginTop: 2,
+          marginRight: 12,
         },
         featureIconDisabled: {
           backgroundColor: '#e5e7eb',
@@ -488,11 +493,12 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexDirection: isMobile ? 'column' : 'row',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: isMobile ? 20 : 50,
         },
         trustBadge: {
           alignItems: 'center',
-          gap: 12,
+          marginRight: isMobile ? 0 : 25,
+          marginLeft: isMobile ? 0 : 25,
+          marginBottom: isMobile ? 20 : 0,
         },
         trustIcon: {
           width: 60,
@@ -501,6 +507,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           borderRadius: 16,
           justifyContent: 'center',
           alignItems: 'center',
+          marginBottom: 12,
         },
         trustText: {
           fontWeight: '600',
@@ -527,7 +534,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           textAlign: 'center',
         },
         faqList: {
-          gap: 16,
+          marginTop: 0,
         },
         faqItem: {
           backgroundColor: '#fff',
@@ -535,6 +542,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           padding: 24,
           borderWidth: 2,
           borderColor: '#f3f4f6',
+          marginBottom: 16,
         },
         faqItemActive: {
           borderColor: '#ff7854',
@@ -543,13 +551,13 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 20,
         },
         faqQuestionText: {
           fontWeight: '700',
           color: '#1f2937',
           fontSize: 17,
           flex: 1,
+          marginRight: 20,
         },
         faqIcon: {
           width: 32,
