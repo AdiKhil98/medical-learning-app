@@ -19,6 +19,9 @@ export default function PersoenlicheDatenScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [originalData, setOriginalData] = useState({ name: '', email: '' });
+  const [lastProfileUpdate, setLastProfileUpdate] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(true);
+  const [daysUntilEdit, setDaysUntilEdit] = useState(0);
 
   useEffect(() => {
     loadUserData();
@@ -27,7 +30,7 @@ export default function PersoenlicheDatenScreen() {
   const loadUserData = async () => {
     try {
       setLoading(true);
-      
+
       if (!user) {
         Alert.alert('Fehler', 'Benutzer nicht gefunden');
         router.back();
@@ -36,7 +39,7 @@ export default function PersoenlicheDatenScreen() {
 
       const { data, error } = await supabase
         .from('users')
-        .select('name, email')
+        .select('name, email, last_profile_update')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -46,6 +49,27 @@ export default function PersoenlicheDatenScreen() {
         setName(data.name || '');
         setEmail(data.email || user.email || '');
         setOriginalData({ name: data.name || '', email: data.email || user.email || '' });
+
+        // Check last profile update for weekly limit
+        if (data.last_profile_update) {
+          const lastUpdate = new Date(data.last_profile_update);
+          const now = new Date();
+          const daysSinceUpdate = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+
+          setLastProfileUpdate(data.last_profile_update);
+
+          if (daysSinceUpdate < 7) {
+            setCanEdit(false);
+            setDaysUntilEdit(7 - daysSinceUpdate);
+          } else {
+            setCanEdit(true);
+            setDaysUntilEdit(0);
+          }
+        } else {
+          // Never updated before - can edit
+          setCanEdit(true);
+          setLastProfileUpdate(null);
+        }
       } else {
         // If no user record exists, use auth data
         setEmail(user.email || '');
@@ -60,6 +84,11 @@ export default function PersoenlicheDatenScreen() {
   };
 
   const handleSave = async () => {
+    if (!canEdit) {
+      Alert.alert('Fehler', `Sie können Ihr Profil derzeit nicht bearbeiten. Bitte warten Sie ${daysUntilEdit} ${daysUntilEdit === 1 ? 'Tag' : 'Tage'}.`);
+      return;
+    }
+
     if (!name.trim()) {
       Alert.alert('Fehler', 'Bitte geben Sie einen Namen ein.');
       return;
@@ -83,9 +112,10 @@ export default function PersoenlicheDatenScreen() {
       // Update user profile in database
       const { error: updateError } = await supabase
         .from('users')
-        .update({ 
-          name: name.trim(), 
-          email: email.trim() 
+        .update({
+          name: name.trim(),
+          email: email.trim(),
+          last_profile_update: new Date().toISOString()
         })
         .eq('id', user.id);
 
@@ -103,7 +133,7 @@ export default function PersoenlicheDatenScreen() {
             .from('users')
             .update({ email: originalData.email })
             .eq('id', user.id);
-          
+
           throw new Error('E-Mail-Adresse konnte nicht aktualisiert werden. ' + authError.message);
         }
       }
@@ -127,6 +157,16 @@ export default function PersoenlicheDatenScreen() {
 
   const hasChanges = () => {
     return name.trim() !== originalData.name || email.trim() !== originalData.email;
+  };
+
+  const formatLastUpdateDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
@@ -222,11 +262,11 @@ export default function PersoenlicheDatenScreen() {
         colors={gradientColors}
         style={styles.gradientBackground}
       />
-      
+
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()} 
+        <TouchableOpacity
+          onPress={() => router.back()}
           style={dynamicStyles.backButton}
         >
           <ChevronLeft size={24} color={colors.primary} />
@@ -240,9 +280,28 @@ export default function PersoenlicheDatenScreen() {
           Verwalten Sie Ihre persönlichen Informationen. Änderungen an der E-Mail-Adresse erfordern eine Bestätigung.
         </Text>
 
+        {!canEdit && (
+          <Card style={styles.warningCard}>
+            <View style={styles.warningContent}>
+              <Text style={styles.warningIcon}>⏰</Text>
+              <View style={styles.warningTextContainer}>
+                <Text style={styles.warningTitle}>Bearbeitungslimit erreicht</Text>
+                <Text style={styles.warningText}>
+                  Sie können Ihr Profil in {daysUntilEdit} {daysUntilEdit === 1 ? 'Tag' : 'Tagen'} wieder bearbeiten.
+                </Text>
+                {lastProfileUpdate && (
+                  <Text style={styles.warningSubtext}>
+                    Letzte Aktualisierung: {formatLastUpdateDate(lastProfileUpdate)}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </Card>
+        )}
+
         <Card style={dynamicStyles.formCard}>
           <Text style={dynamicStyles.formTitle}>Grundinformationen</Text>
-          
+
           <Input
             label="Vollständiger Name"
             placeholder="Ihr vollständiger Name"
@@ -250,6 +309,7 @@ export default function PersoenlicheDatenScreen() {
             onChangeText={setName}
             leftIcon={<User size={20} color={colors.textSecondary} />}
             autoCapitalize="words"
+            editable={canEdit}
           />
 
           <Input
@@ -261,13 +321,14 @@ export default function PersoenlicheDatenScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            editable={canEdit}
           />
 
           <Button
             title={saving ? "Wird gespeichert..." : "Änderungen speichern"}
             onPress={handleSave}
             loading={saving}
-            disabled={saving || !hasChanges()}
+            disabled={saving || !hasChanges() || !canEdit}
             icon={<Save size={20} color="#FFFFFF" />}
             style={dynamicStyles.saveButton}
           />
@@ -315,5 +376,42 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 20,
     marginBottom: 8,
+  },
+  warningCard: {
+    marginBottom: 24,
+    backgroundColor: '#FEF3C7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+  },
+  warningContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 4,
+  },
+  warningIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  warningTextContainer: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 16,
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  warningText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    color: '#78350F',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  warningSubtext: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+    color: '#92400E',
+    marginTop: 4,
   },
 });

@@ -8,11 +8,11 @@ import { colors } from '@/constants/colors';
 
 export default function ImpressumScreen() {
   const router = useRouter();
-  
+
   const dynamicStyles = StyleSheet.create({
-    container: { 
-      flex: 1, 
-      backgroundColor: colors.background 
+    container: {
+      flex: 1,
+      backgroundColor: colors.background
     },
     header: {
       flexDirection: 'row',
@@ -43,9 +43,9 @@ export default function ImpressumScreen() {
       fontFamily: 'Inter-Medium',
       fontWeight: '600',
     },
-    content: { 
-      flex: 1, 
-      padding: 24 
+    content: {
+      flex: 1,
+      padding: 24
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
@@ -119,19 +119,19 @@ export default function ImpressumScreen() {
           <Building2 size={32} color={MEDICAL_COLORS.primary} />
           <Text style={dynamicStyles.pageTitle}>Impressum</Text>
         </View>
-        
+
         <Text style={dynamicStyles.subtitle}>
           Angaben gemäß § 5 TMG und rechtliche Informationen zur KP Med Plattform.
         </Text>
 
         <View style={dynamicStyles.companyCard}>
           <Text style={dynamicStyles.sectionTitle}>Anbieter</Text>
-          
+
           <View style={dynamicStyles.contactItem}>
             <Building2 size={20} color={MEDICAL_COLORS.primary} />
             <Text style={dynamicStyles.contactText}>KP Med GmbH</Text>
           </View>
-          
+
           <View style={dynamicStyles.contactItem}>
             <MapPin size={20} color={MEDICAL_COLORS.primary} />
             <Text style={dynamicStyles.contactText}>
@@ -139,7 +139,7 @@ export default function ImpressumScreen() {
               (Vollständige Adresse bei Bedarf verfügbar)
             </Text>
           </View>
-          
+
           <View style={dynamicStyles.contactItem}>
             <Mail size={20} color={MEDICAL_COLORS.primary} />
             <Text style={dynamicStyles.contactText}>info@kpmed.de</Text>
@@ -205,6 +205,15 @@ export default function ImpressumScreen() {
           <Text style={dynamicStyles.sectionTitle}>Urheberrecht</Text>
           <Text style={dynamicStyles.sectionText}>
             Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+          </Text>
+        </View>
+
+        <View style={dynamicStyles.section}>
+          <Text style={dynamicStyles.sectionTitle}>App Version</Text>
+          <Text style={dynamicStyles.sectionText}>
+            Version 1.0.0{'\n'}
+            Letzte Aktualisierung: Dezember 2024{'\n\n'}
+            © 2024 KP Med GmbH. Alle Rechte vorbehalten.
           </Text>
         </View>
 

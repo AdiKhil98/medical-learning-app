@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   ChevronLeft,
@@ -18,6 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { colors } from '@/constants/colors';
+import { logger } from '@/utils/logger';
+import { supabase } from '@/lib/supabase';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -79,7 +81,70 @@ const ToggleSwitch: React.FC<{ active: boolean; onToggle: () => void }> = ({ act
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const [fontSize, setFontSize] = useState('Mittel');
+  const [fontSize, setFontSize] = useState<'Klein' | 'Mittel' | 'Groß'>('Mittel');
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('Kostenlos');
+  const [loading, setLoading] = useState(true);
+
+  // Load user preferences on mount
+  useEffect(() => {
+    loadUserPreferences();
+  }, [user]);
+
+  const loadUserPreferences = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Load font size preference
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('font_size_preference, subscription_tier')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) {
+        logger.error('Error loading user preferences:', userError);
+      } else if (userData) {
+        // Set font size
+        if (userData.font_size_preference) {
+          setFontSize(userData.font_size_preference as 'Klein' | 'Mittel' | 'Groß');
+        }
+      }
+
+      // Load subscription tier from quota system
+      const { data: quotaData, error: quotaError} = await supabase.rpc('get_user_quota_status', {
+        p_user_id: user.id,
+      });
+
+      if (quotaError) {
+        logger.error('Error loading subscription tier:', quotaError);
+      } else if (quotaData) {
+        const tier = mapSubscriptionTier(quotaData);
+        setSubscriptionTier(tier);
+      }
+    } catch (error) {
+      logger.error('Error in loadUserPreferences:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mapSubscriptionTier = (quotaData: any): string => {
+    const totalSims = quotaData.total_simulations || 0;
+    const tier = quotaData.subscription_tier || 'free';
+
+    if (totalSims === -1 || tier === 'unlimited') {
+      return 'Premium Plan (Unbegrenzt)';
+    } else if (totalSims >= 100 || tier === 'profi') {
+      return 'Profi Plan (100 Simulationen)';
+    } else if (totalSims >= 20 || tier === 'basis') {
+      return 'Basis Plan (20 Simulationen)';
+    } else {
+      return 'Kostenlos (3 Simulationen)';
+    }
+  };
 
   const getUserInitials = () => {
     if (!user?.email) return 'U';
@@ -90,95 +155,69 @@ export default function ProfileScreen() {
     return user?.email?.split('@')[0] || 'Benutzer';
   };
 
-  const handleEditProfile = () => {
-    if (Platform.OS === 'web') {
-      alert('Profil bearbeiten - Funktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Profil bearbeiten', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
-    }
-  };
-
+  // Navigate to personal data page
   const handlePersonalData = () => {
-    if (Platform.OS === 'web') {
-      alert(`Name: ${getDisplayName()}\nE-Mail: ${user?.email}\n\nBearbeiten Sie Ihre persönlichen Daten.`);
-    } else {
-      Alert.alert(
-        'Persönliche Daten',
-        `Name: ${getDisplayName()}\nE-Mail: ${user?.email}\n\nDiese Funktion wird bald verfügbar sein.`,
-        [{ text: 'OK' }]
-      );
-    }
+    router.push('/konto/persoenliche-daten');
   };
 
+  // Navigate to password change page
   const handleChangePassword = () => {
-    if (Platform.OS === 'web') {
-      alert('Passwort ändern - Funktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Passwort ändern', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
-    }
+    router.push('/konto/passwort-aendern');
   };
 
+  // Navigate to subscription page
   const handleSubscription = () => {
-    if (Platform.OS === 'web') {
-      alert('Abonnement verwalten - Premium Plan\n\nFunktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Abonnement', 'Premium Plan\n\nDiese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
+    router.push('/subscription');
+  };
+
+  // Toggle font size with cycling (Klein → Mittel → Groß → Klein)
+  const handleFontSize = async () => {
+    const fontSizes: Array<'Klein' | 'Mittel' | 'Groß'> = ['Klein', 'Mittel', 'Groß'];
+    const currentIndex = fontSizes.indexOf(fontSize);
+    const nextIndex = (currentIndex + 1) % fontSizes.length;
+    const nextSize = fontSizes[nextIndex];
+
+    // Update state immediately for responsive UI
+    setFontSize(nextSize);
+
+    // Save to database
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ font_size_preference: nextSize })
+        .eq('id', user?.id);
+
+      if (error) {
+        logger.error('Error updating font size:', error);
+        // Revert on error
+        setFontSize(fontSize);
+        Alert.alert('Fehler', 'Schriftgröße konnte nicht gespeichert werden.');
+      }
+    } catch (error) {
+      logger.error('Error in handleFontSize:', error);
+      setFontSize(fontSize);
+      Alert.alert('Fehler', 'Schriftgröße konnte nicht gespeichert werden.');
     }
   };
 
-  const handleFontSize = () => {
-    const fontSizes = ['Klein', 'Mittel', 'Groß'];
-    if (Platform.OS === 'web') {
-      const size = prompt('Wählen Sie eine Schriftgröße:\n1. Klein\n2. Mittel\n3. Groß\n\nGeben Sie 1, 2 oder 3 ein:');
-      if (size === '1') setFontSize('Klein');
-      else if (size === '2') setFontSize('Mittel');
-      else if (size === '3') setFontSize('Groß');
-    } else {
-      Alert.alert('Schriftgröße', 'Wählen Sie eine Schriftgröße:', [
-        { text: 'Klein', onPress: () => setFontSize('Klein') },
-        { text: 'Mittel', onPress: () => setFontSize('Mittel') },
-        { text: 'Groß', onPress: () => setFontSize('Groß') },
-        { text: 'Abbrechen', style: 'cancel' },
-      ]);
-    }
-  };
-
+  // Navigate to saved content page
   const handleSavedContent = () => {
-    if (Platform.OS === 'web') {
-      alert('Gespeicherte Inhalte - Ihre Favoriten\n\nFunktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Gespeicherte Inhalte', 'Ihre Favoriten\n\nDiese Funktion wird bald verfügbar sein!', [
-        { text: 'OK' },
-      ]);
-    }
+    router.push('/gespeicherte-notizen');
   };
 
+  // Navigate to help page
   const handleHelpSupport = () => {
-    if (Platform.OS === 'web') {
-      alert('Hilfe & Support\n\nFAQ und Kontakt\n\nFunktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Hilfe & Support', 'FAQ und Kontakt\n\nDiese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
-    }
+    router.push('/help');
   };
 
+  // Navigate to privacy terms page
   const handlePrivacyTerms = () => {
-    if (Platform.OS === 'web') {
-      alert('Datenschutz & AGB\n\nFunktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert('Datenschutz & AGB', 'Diese Funktion wird bald verfügbar sein!', [{ text: 'OK' }]);
-    }
+    router.push('/konto/datenschutz-agb');
   };
 
+  // Navigate to impressum page
   const handleImprint = () => {
-    if (Platform.OS === 'web') {
-      alert('Impressum\n\nKP MED - Medical Learning App\nVersion 1.0.0\n\nFunktion wird bald verfügbar sein!');
-    } else {
-      Alert.alert(
-        'Impressum',
-        'KP MED - Medical Learning App\nVersion 1.0.0\n\nDiese Funktion wird bald verfügbar sein!',
-        [{ text: 'OK' }]
-      );
-    }
+    router.push('/impressum');
   };
 
   const handleLogout = () => {
@@ -239,103 +278,99 @@ export default function ProfileScreen() {
             <Text style={[styles.profileName, { color: colors.text }]}>{getDisplayName()}</Text>
             <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
           </View>
-          <TouchableOpacity style={styles.editProfileButton} activeOpacity={0.8} onPress={handleEditProfile}>
-            <LinearGradient colors={MEDICAL_COLORS.warmOrangeGradient} style={styles.editProfileGradient}>
-              <Text style={styles.editProfileText}>Bearbeiten</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
 
-        {/* Account Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
-            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Konto</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={MEDICAL_COLORS.warmOrangeDark} />
           </View>
-          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
-            <SettingsItem
-              icon={<User size={24} color="#3B82F6" />}
-              iconBg="rgba(59, 130, 246, 0.15)"
-              title="Persönliche Daten"
-              subtitle="Name, E-Mail und mehr"
-              onPress={handlePersonalData}
-            />
-            <SettingsItem
-              icon={<Lock size={24} color="#8B5CF6" />}
-              iconBg="rgba(139, 92, 246, 0.15)"
-              title="Passwort ändern"
-              subtitle="Ihr Konto schützen"
-              onPress={handleChangePassword}
-            />
-            <SettingsItem
-              icon={<CreditCard size={24} color="#F59E0B" />}
-              iconBg="rgba(245, 158, 11, 0.15)"
-              title="Abonnement"
-              subtitle="Premium Plan"
-              onPress={handleSubscription}
-            />
-          </View>
-        </View>
+        ) : (
+          <>
+            {/* Account Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+                <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Konto</Text>
+              </View>
+              <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+                <SettingsItem
+                  icon={<User size={24} color="#3B82F6" />}
+                  iconBg="rgba(59, 130, 246, 0.15)"
+                  title="Persönliche Daten"
+                  subtitle="Name, E-Mail und mehr"
+                  onPress={handlePersonalData}
+                />
+                <SettingsItem
+                  icon={<Lock size={24} color="#8B5CF6" />}
+                  iconBg="rgba(139, 92, 246, 0.15)"
+                  title="Passwort ändern"
+                  subtitle="Ihr Konto schützen"
+                  onPress={handleChangePassword}
+                />
+                <SettingsItem
+                  icon={<CreditCard size={24} color="#F59E0B" />}
+                  iconBg="rgba(245, 158, 11, 0.15)"
+                  title="Abonnement"
+                  subtitle={subscriptionTier}
+                  onPress={handleSubscription}
+                />
+              </View>
+            </View>
 
-        {/* Settings Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
-            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Einstellungen</Text>
-          </View>
-          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
-            <SettingsItem
-              icon={<Type size={24} color="#3B82F6" />}
-              iconBg="rgba(59, 130, 246, 0.15)"
-              title="Schriftgröße"
-              value={fontSize}
-              onPress={handleFontSize}
-            />
-          </View>
-        </View>
+            {/* Settings Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <User size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+                <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Einstellungen</Text>
+              </View>
+              <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+                <SettingsItem
+                  icon={<Type size={24} color="#3B82F6" />}
+                  iconBg="rgba(59, 130, 246, 0.15)"
+                  title="Schriftgröße"
+                  value={fontSize}
+                  onPress={handleFontSize}
+                />
+              </View>
+            </View>
 
-        {/* Support & Legal Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <HelpCircle size={20} color={MEDICAL_COLORS.warmOrangeDark} />
-            <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Support & Rechtliches</Text>
-          </View>
-          <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
-            <SettingsItem
-              icon={<Heart size={24} color="#EC4899" />}
-              iconBg="rgba(236, 72, 153, 0.15)"
-              title="Gespeicherte Inhalte"
-              subtitle="Ihre Favoriten"
-              onPress={handleSavedContent}
-            />
-            <SettingsItem
-              icon={<HelpCircle size={24} color="#3B82F6" />}
-              iconBg="rgba(59, 130, 246, 0.15)"
-              title="Hilfe & Support"
-              subtitle="FAQ und Kontakt"
-              onPress={handleHelpSupport}
-            />
-            <SettingsItem
-              icon={<FileText size={24} color="#6B7280" />}
-              iconBg="rgba(107, 114, 128, 0.15)"
-              title="Datenschutz & AGB"
-              onPress={handlePrivacyTerms}
-            />
-            <SettingsItem
-              icon={<Info size={24} color="#6B7280" />}
-              iconBg="rgba(107, 114, 128, 0.15)"
-              title="Impressum"
-              onPress={handleImprint}
-            />
-            <SettingsItem
-              icon={<Info size={24} color="#3B82F6" />}
-              iconBg="rgba(59, 130, 246, 0.15)"
-              title="Version"
-              value="1.0.0"
-              showArrow={false}
-            />
-          </View>
-        </View>
+            {/* Support & Legal Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <HelpCircle size={20} color={MEDICAL_COLORS.warmOrangeDark} />
+                <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Support & Rechtliches</Text>
+              </View>
+              <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
+                <SettingsItem
+                  icon={<Heart size={24} color="#EC4899" />}
+                  iconBg="rgba(236, 72, 153, 0.15)"
+                  title="Gespeicherte Inhalte"
+                  subtitle="Ihre Favoriten"
+                  onPress={handleSavedContent}
+                />
+                <SettingsItem
+                  icon={<HelpCircle size={24} color="#3B82F6" />}
+                  iconBg="rgba(59, 130, 246, 0.15)"
+                  title="Hilfe & Support"
+                  subtitle="FAQ und Kontakt"
+                  onPress={handleHelpSupport}
+                />
+                <SettingsItem
+                  icon={<FileText size={24} color="#6B7280" />}
+                  iconBg="rgba(107, 114, 128, 0.15)"
+                  title="Datenschutz & AGB"
+                  onPress={handlePrivacyTerms}
+                />
+                <SettingsItem
+                  icon={<Info size={24} color="#6B7280" />}
+                  iconBg="rgba(107, 114, 128, 0.15)"
+                  title="Impressum"
+                  onPress={handleImprint}
+                />
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
@@ -448,7 +483,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   profileInfo: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
   profileName: {
     fontSize: 24,
@@ -471,6 +506,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
     marginBottom: 32,

@@ -25,6 +25,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { colors } from '@/constants/colors';
+import { supabase } from '@/lib/supabase';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -42,6 +43,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
   const submenuHeightAnim = React.useRef(new Animated.Value(0)).current;
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('Ihr Abonnement verwalten');
 
   React.useEffect(() => {
     Animated.timing(slideAnim, {
@@ -50,6 +52,50 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       useNativeDriver: true,
     }).start();
   }, [isOpen]);
+
+  // Load subscription tier
+  React.useEffect(() => {
+    if (user?.id) {
+      loadSubscriptionTier();
+    }
+  }, [user?.id]);
+
+  const loadSubscriptionTier = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data: quotaData, error } = await supabase.rpc('get_user_quota_status', {
+        p_user_id: user.id,
+      });
+
+      if (error) {
+        logger.error('Error loading subscription tier in menu:', error);
+        return;
+      }
+
+      if (quotaData) {
+        const tier = mapSubscriptionTier(quotaData);
+        setSubscriptionTier(tier);
+      }
+    } catch (error) {
+      logger.error('Error in loadSubscriptionTier:', error);
+    }
+  };
+
+  const mapSubscriptionTier = (quotaData: any): string => {
+    const totalSims = quotaData.total_simulations || 0;
+    const tier = quotaData.subscription_tier || 'free';
+
+    if (totalSims === -1 || tier === 'unlimited') {
+      return 'Premium Plan (Unbegrenzt)';
+    } else if (totalSims >= 100 || tier === 'profi') {
+      return 'Profi Plan (100 Simulationen)';
+    } else if (totalSims >= 20 || tier === 'basis') {
+      return 'Basis Plan (20 Simulationen)';
+    } else {
+      return 'Kostenlos (3 Simulationen)';
+    }
+  };
 
   const toggleSubmenu = () => {
     const toValue = isSubmenuOpen ? 0 : 1;
@@ -86,7 +132,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     {
       icon: Crown,
       label: 'Subscription',
-      subtitle: 'Ihr Abonnement verwalten',
+      subtitle: subscriptionTier,
       route: '/subscription',
       gradientColors: MEDICAL_COLORS.amberGradient,
     },
