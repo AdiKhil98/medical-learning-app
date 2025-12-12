@@ -214,17 +214,14 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         },
         scrollContent: {
           flexGrow: 1,
-          backgroundColor: '#FFE5E5', // Light red - DEBUG
         },
         gradient: {
           width: '100%',
-          backgroundColor: '#E5F5FF', // Light blue - DEBUG
         },
         contentWrapper: {
           padding: isMobile ? 20 : 40,
           paddingTop: 40,
           paddingBottom: 40,
-          backgroundColor: '#E5FFE5', // Light green - DEBUG
         },
         header: {
           alignItems: 'center',
@@ -294,10 +291,9 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           justifyContent: 'center',
           alignItems: isMobile ? 'stretch' : 'flex-start',
           width: '100%',
-          backgroundColor: '#FFF5E5', // Light orange - DEBUG
         },
         pricingCard: {
-          backgroundColor: '#FFCCFF', // Light purple - DEBUG (was #fff)
+          backgroundColor: '#fff',
           borderRadius: 24,
           padding: isMobile ? 24 : 40,
           width: isMobile ? '100%' : undefined,
@@ -413,12 +409,10 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
         },
         featuresList: {
           width: '100%',
-          backgroundColor: '#FFFFCC', // Light yellow - DEBUG
         },
         featureCategory: {
           marginBottom: 20,
           width: '100%',
-          backgroundColor: '#CCE5FF', // Light cyan - DEBUG
         },
         categoryTitle: {
           fontWeight: '700',
@@ -433,7 +427,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           alignItems: 'flex-start',
           marginBottom: 12,
           width: '100%',
-          backgroundColor: '#E5CCFF', // Light lavender - DEBUG
         },
         featureItemUnavailable: {
           opacity: 0.4,
