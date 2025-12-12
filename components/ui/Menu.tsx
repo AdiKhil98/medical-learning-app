@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: BORDER_RADIUS.lg,
     backgroundColor: MEDICAL_COLORS.slate100,
     justifyContent: 'center',

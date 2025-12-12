@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeButton: {
-    width: isMobile ? (isSmallMobile ? 32 : 36) : 40,
-    height: isMobile ? (isSmallMobile ? 32 : 36) : 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
