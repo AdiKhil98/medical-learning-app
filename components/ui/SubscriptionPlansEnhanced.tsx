@@ -428,9 +428,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gradient: {
-    flex: 1,
     padding: isMobile ? 20 : 40,
     paddingTop: 40,
+    minHeight: '100%',
   },
   header: {
     alignItems: 'center',
