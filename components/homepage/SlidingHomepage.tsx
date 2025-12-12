@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StyleSheet,
-  Dimensions,
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -30,16 +29,14 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import PromoBanner from '@/components/ui/PromoBanner';
 import { useRouter } from 'expo-router';
-import { SPACING, BORDER_RADIUS, TYPOGRAPHY, BREAKPOINTS, isCompact } from '@/constants/tokens';
+import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
+import { useResponsive } from '@/hooks/useResponsive';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const IS_MOBILE = isCompact(screenWidth);
-const IS_SMALL_MOBILE = screenWidth < 375;
 const IS_WEB = Platform.OS === 'web';
 
 interface SlidingHomepageProps {
@@ -55,6 +52,9 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const { user } = useAuth();
+
+  // Get responsive values
+  const { isMobile, isSmallMobile, width: screenWidth, height: screenHeight } = useResponsive();
 
   // Fetch daily content and recent content
   const { dailyTip, dailyQuestion, loading: dailyLoading } = useDailyContent();
@@ -162,7 +162,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
           styles.modernHeader,
           IS_WEB && {
             position: 'sticky' as any,
-            top: IS_MOBILE ? 20 : 0, // Offset for mobile browser UI
+            top: 0,
             zIndex: 1000,
             ...(isScrolled && IS_WEB
               ? {
@@ -172,6 +172,11 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
                 }
               : {}),
           },
+          // Add safe padding for mobile web
+          IS_WEB &&
+            isMobile && {
+              paddingTop: 20,
+            },
         ]}
       >
         {/* Gradient accent line at top of header */}

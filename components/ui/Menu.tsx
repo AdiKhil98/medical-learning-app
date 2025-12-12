@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Menu as MenuIcon,
@@ -26,10 +26,7 @@ import { SPACING, BORDER_RADIUS, BORDER_WIDTH, TYPOGRAPHY, SHADOWS } from '@/con
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { colors } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const MENU_WIDTH = SCREEN_WIDTH * 0.75;
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface MenuProps {
   isOpen: boolean;
@@ -39,6 +36,11 @@ interface MenuProps {
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { width, height } = useResponsive();
+
+  // Calculate menu width responsively (75% of screen width)
+  const MENU_WIDTH = width * 0.75;
+
   const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
