@@ -87,14 +87,38 @@ export default function RootLayout() {
           -webkit-text-size-adjust: 100%;
           -ms-text-size-adjust: 100%;
           width: 100%;
+          height: 100%;
+          overflow-x: hidden;
         }
         body {
           margin: 0;
           padding: 0;
           width: 100%;
+          height: 100%;
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Root container - prevent horizontal scroll */
+        #root {
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+
+        /* Ensure all direct children respect container width */
+        #root > * {
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+
+        /* Additional mobile-specific adjustments */
+        @media screen and (max-width: 768px) {
+          body {
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior-y: contain;
+          }
         }
       `;
       if (!document.getElementById('mobile-viewport-fix')) {

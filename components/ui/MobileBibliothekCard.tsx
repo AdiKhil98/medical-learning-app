@@ -17,7 +17,7 @@ interface MobileBibliothekCardProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 cards per row with 16px margins and 16px gap
 
-export const MobileBibliothekCard = memo(function MobileBibliothekCard({
+export const MobileBibliothekCard = memo(({
   title,
   icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70', '#A0645D'],
@@ -25,8 +25,8 @@ export const MobileBibliothekCard = memo(function MobileBibliothekCard({
   onPress,
   itemCount,
   isBookmarked = false,
-  onBookmarkPress
-}: MobileBibliothekCardProps) {
+  onBookmarkPress,
+}: MobileBibliothekCardProps) => {
   const [isPressed, setIsPressed] = useState(false);
 
   const handlePressIn = useCallback(() => setIsPressed(true), []);
@@ -43,12 +43,7 @@ export const MobileBibliothekCard = memo(function MobileBibliothekCard({
       accessibilityLabel={`${title}${itemCount ? `, ${itemCount} Kategorien` : ''}`}
     >
       <View style={[styles.card, isPressed && styles.cardPressed]}>
-        <LinearGradient
-          colors={gradient}
-          style={styles.cardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <LinearGradient colors={gradient} style={styles.cardGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           {/* Header with bookmark */}
           <View style={styles.cardHeader}>
             {hasContent && (
@@ -107,7 +102,7 @@ export const MobileBibliothekCard = memo(function MobileBibliothekCard({
 });
 
 // Alternative list view for dense content
-export const MobileBibliothekListItem = memo(function MobileBibliothekListItem({
+export const MobileBibliothekListItem = memo(({
   title,
   icon: IconComponent = Stethoscope,
   gradient = ['#E2827F', '#B87E70'],
@@ -115,22 +110,13 @@ export const MobileBibliothekListItem = memo(function MobileBibliothekListItem({
   onPress,
   itemCount,
   isBookmarked = false,
-  onBookmarkPress
-}: MobileBibliothekCardProps) {
+  onBookmarkPress,
+}: MobileBibliothekCardProps) => {
   return (
-    <TouchableOpacity
-      style={styles.listItemContainer}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.listItemContainer} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.listItem}>
         {/* Icon with gradient background */}
-        <LinearGradient
-          colors={gradient}
-          style={styles.listIconContainer}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <LinearGradient colors={gradient} style={styles.listIconContainer} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           <IconComponent size={24} color="white" />
         </LinearGradient>
 
@@ -214,7 +200,7 @@ const styles = StyleSheet.create({
     margin: 1,
   },
   bookmarkButton: {
-    padding: 4,
+    padding: 14, // 14px padding + 16px icon = 44px touch target
   },
   cardContent: {
     flex: 1,
@@ -314,6 +300,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   listBookmarkButton: {
-    padding: 4,
+    padding: 14, // 14px padding + 16px icon = 44px touch target
   },
 });
