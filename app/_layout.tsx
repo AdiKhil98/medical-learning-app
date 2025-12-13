@@ -82,10 +82,14 @@ export default function RootLayout() {
         logger.info('✅ Google Fonts (Inter) loaded');
       }
 
-      // Add mobile viewport fix styles
+      // Add mobile viewport fix styles using 2025 best practices
       const style = document.createElement('style');
       style.id = 'mobile-viewport-fix';
       style.textContent = `
+        :root {
+          --app-height: 100vh;
+        }
+
         * {
           box-sizing: border-box;
         }
@@ -94,10 +98,7 @@ export default function RootLayout() {
           -webkit-text-size-adjust: 100%;
           -ms-text-size-adjust: 100%;
           width: 100%;
-          min-height: 100vh;
-          min-height: -webkit-fill-available;
           overflow-x: hidden;
-          /* Prevent iOS zoom on input focus */
           -webkit-tap-highlight-color: transparent;
         }
 
@@ -105,23 +106,16 @@ export default function RootLayout() {
           margin: 0;
           padding: 0;
           width: 100%;
-          min-height: 100vh;
-          min-height: -webkit-fill-available;
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          /* Prevent zoom and ensure stable scrolling */
-          touch-action: manipulation;
           -webkit-overflow-scrolling: touch;
-          overscroll-behavior-y: none;
         }
 
         /* Root container - prevent horizontal scroll */
         #root {
           width: 100%;
           max-width: 100vw;
-          min-height: 100vh;
-          min-height: -webkit-fill-available;
           overflow-x: hidden;
         }
 
@@ -131,27 +125,74 @@ export default function RootLayout() {
           overflow-x: hidden;
         }
 
-        /* Mobile-specific adjustments */
+        /* Mobile-specific adjustments - 2025 best practices */
         @media screen and (max-width: 768px) {
           html {
-            height: 100%;
+            /* Use modern dynamic viewport height with fallbacks */
+            height: 100vh; /* Fallback for older browsers */
+            height: -webkit-fill-available; /* Safari fallback */
+            height: var(--app-height); /* JavaScript fallback */
+          }
+
+          /* Modern browsers: use 100dvh (dynamic viewport height) */
+          @supports (height: 100dvh) {
+            html {
+              height: 100dvh;
+            }
+
+            body {
+              min-height: 100dvh;
+            }
+
+            #root {
+              min-height: 100dvh;
+            }
+          }
+
+          /* Older browsers: use CSS variables + JS */
+          @supports not (height: 100dvh) {
+            html {
+              height: -webkit-fill-available;
+            }
+
+            body {
+              min-height: 100vh;
+              min-height: -webkit-fill-available;
+              min-height: var(--app-height);
+            }
+
+            #root {
+              min-height: 100vh;
+              min-height: -webkit-fill-available;
+              min-height: var(--app-height);
+            }
           }
 
           body {
-            height: 100%;
             overflow: auto;
             overscroll-behavior: none;
-          }
-
-          #root {
-            min-height: 100%;
+            touch-action: manipulation;
           }
         }
       `;
       if (!document.getElementById('mobile-viewport-fix')) {
         document.head.appendChild(style);
-        logger.info('✅ Mobile viewport fix applied');
+        logger.info('✅ Mobile viewport fix applied (2025 best practices)');
       }
+
+      // JavaScript fallback: Set actual viewport height as CSS custom property
+      // This handles iOS Safari address bar and works on all browsers
+      const setAppHeight = () => {
+        const vh = window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', `${vh}px`);
+      };
+
+      // Set on load
+      setAppHeight();
+
+      // Update on resize (handles orientation change and address bar show/hide)
+      window.addEventListener('resize', setAppHeight);
+      window.addEventListener('orientationchange', setAppHeight);
 
       // Reset scroll position on load
       window.scrollTo(0, 0);
