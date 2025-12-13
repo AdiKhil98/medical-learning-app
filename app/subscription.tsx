@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import {
   View,
@@ -11,7 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,15 +24,39 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/constants/colors';
 
-const { width } = Dimensions.get('window');
-const isMobile = width < 768;
+// Variant ID mappings - centralized
+const VARIANT_TO_PLAN: Record<number, string> = {
+  1006948: 'basic',
+  1006934: 'professional',
+  1006947: 'unlimited',
+};
+
+const PLAN_TO_VARIANT: Record<string, number> = {
+  basic: 1006948,
+  professional: 1006934,
+  unlimited: 1006947,
+};
+
+// Checkout URL builder
+const getCheckoutUrl = (planId: string, userEmail: string): string => {
+  const encodedEmail = encodeURIComponent(userEmail || '');
+  const checkoutUrls: Record<string, string> = {
+    basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${encodedEmail}`,
+    professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${encodedEmail}`,
+    unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${encodedEmail}`,
+  };
+  return checkoutUrls[planId] || '';
+};
 
 export default function SubscriptionPage() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
 
   const { user } = useAuth();
   const { checkAccess } = useSubscription(user?.id);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoadingCurrentPlan, setIsLoadingCurrentPlan] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [currentVariantId, setCurrentVariantId] = useState<number | null>(null);
@@ -45,7 +69,10 @@ export default function SubscriptionPage() {
   // Load current subscription on mount
   useEffect(() => {
     const loadCurrentSubscription = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoadingCurrentPlan(false);
+        return;
+      }
 
       try {
         const { data: subscription, error } = await supabase
@@ -59,18 +86,12 @@ export default function SubscriptionPage() {
 
         if (error) {
           logger.error('Failed to load current subscription', error);
+          setIsLoadingCurrentPlan(false);
           return;
         }
 
         if (subscription) {
-          // Map variant ID back to plan ID
-          const variantToPlanMapping: Record<number, string> = {
-            1006948: 'basic',
-            1006934: 'professional',
-            1006947: 'unlimited',
-          };
-
-          const planId = variantToPlanMapping[subscription.lemonsqueezy_variant_id];
+          const planId = VARIANT_TO_PLAN[subscription.lemonsqueezy_variant_id];
           setCurrentPlanId(planId || null);
           setCurrentVariantId(subscription.lemonsqueezy_variant_id);
           logger.info('Current subscription loaded', {
@@ -83,6 +104,8 @@ export default function SubscriptionPage() {
         }
       } catch (error) {
         logger.error('Error loading current subscription', error);
+      } finally {
+        setIsLoadingCurrentPlan(false);
       }
     };
 
@@ -126,20 +149,13 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // Map planId to variant_id
-    const variantIdMapping: Record<string, number> = {
-      basic: 1006948,
-      professional: 1006934,
-      unlimited: 1006947,
-    };
-
-    const newVariantId = variantIdMapping[planId];
+    const newVariantId = PLAN_TO_VARIANT[planId];
     logger.debug('Mapped plan to variant ID', { planId, variantId: newVariantId });
 
     if (!newVariantId) {
       logger.error('Invalid plan ID - no variant mapping found', new Error('Invalid plan'), {
         planId,
-        availablePlans: Object.keys(variantIdMapping),
+        availablePlans: Object.keys(PLAN_TO_VARIANT),
       });
       Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
       return;
@@ -239,28 +255,12 @@ export default function SubscriptionPage() {
           setLoadingMessage('');
 
           Alert.alert(
-            'Abo-Änderung nicht verfügbar',
-            'Die Abo-Änderung funktioniert nur auf der deployed Version. Sie haben bereits ein aktives Abonnement.\n\nMöchten Sie stattdessen zur Checkout-Seite gehen, um ein neues Abo abzuschließen?\n\n(Hinweis: Bitte kündigen Sie Ihr altes Abo zuerst, um Doppelabbuchungen zu vermeiden)',
+            'Plan-Änderung nicht verfügbar',
+            'Sie haben bereits ein aktives Abonnement. Um den Plan zu ändern, wenden Sie sich bitte an den Support oder kündigen Sie Ihr aktuelles Abo zuerst.',
             [
               {
-                text: 'Abbrechen',
+                text: 'OK',
                 style: 'cancel',
-              },
-              {
-                text: 'Zur Checkout-Seite',
-                onPress: async () => {
-                  const userEmail = encodeURIComponent(user?.email || '');
-                  const checkoutUrls: Record<string, string> = {
-                    basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
-                    professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
-                    unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`,
-                  };
-
-                  const checkoutUrl = checkoutUrls[planId];
-                  if (checkoutUrl) {
-                    await Linking.openURL(checkoutUrl);
-                  }
-                },
               },
             ]
           );
@@ -280,6 +280,10 @@ export default function SubscriptionPage() {
         // Refresh subscription data
         await checkAccess();
 
+        // Update current plan state
+        setCurrentPlanId(planId);
+        setCurrentVariantId(newVariantId);
+
         Alert.alert('Erfolgreich!', 'Ihr Plan wurde erfolgreich geändert. Die Änderung wird in Kürze aktiv.', [
           {
             text: 'OK',
@@ -294,14 +298,7 @@ export default function SubscriptionPage() {
         logger.info('ℹ️ User has no subscription, redirecting to checkout...');
         setLoadingMessage('Weiterleitung zum Checkout...');
 
-        const userEmail = encodeURIComponent(user?.email || '');
-        const checkoutUrls: Record<string, string> = {
-          basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
-          professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
-          unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`,
-        };
-
-        const checkoutUrl = checkoutUrls[planId];
+        const checkoutUrl = getCheckoutUrl(planId, user?.email || '');
 
         if (checkoutUrl) {
           try {
@@ -325,12 +322,17 @@ export default function SubscriptionPage() {
   };
 
   const handleFreePlanSelection = async () => {
+    if (!user?.id) {
+      Alert.alert('Fehler', 'Sie müssen angemeldet sein, um ein Abonnement zu ändern.');
+      return;
+    }
+
     setIsUpdating(true);
     setLoadingMessage('Wechsel zum kostenlosen Plan...');
 
     try {
       logger.info('🎯 Starting free plan selection...');
-      const result = await SubscriptionService.updateUserSubscription(user!.id, 'free');
+      const result = await SubscriptionService.updateUserSubscription(user.id, 'free');
       logger.info('📊 Update result:', result);
 
       if (result.success) {
@@ -370,62 +372,6 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleInstantPlanSwitch = async (planId: string) => {
-    setIsUpdating(true);
-    setLoadingMessage(`Wechsel zum ${planId.toUpperCase()}-Plan...`);
-
-    try {
-      const result = await SubscriptionService.updateUserSubscription(user!.id, planId);
-
-      if (result.success) {
-        setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
-
-        // Refresh subscription data
-        await checkAccess();
-
-        const planDetails = SubscriptionService.getPlanDetails(planId);
-        const limitText = planDetails?.simulationLimit
-          ? `${planDetails.simulationLimit} Simulationen pro Monat`
-          : 'Unbegrenzte Simulationen';
-
-        Alert.alert(
-          'Erfolgreich!',
-          `Sie wurden erfolgreich zum ${planId.toUpperCase()}-Plan gewechselt. ${limitText}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Go back to dashboard
-                router.replace('/(tabs)/dashboard');
-              },
-            },
-          ]
-        );
-      } else {
-        setErrorModal({
-          visible: true,
-          title: 'Fehler',
-          message: result.error || 'Fehler beim Wechseln des Plans',
-        });
-      }
-    } catch (error) {
-      logger.error('Error switching plan:', error);
-      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
-    } finally {
-      setIsUpdating(false);
-      setLoadingMessage('');
-    }
-  };
-
-  const openLemonSqueezyCheckout = (checkoutUrl: string) => {
-    try {
-      Linking.openURL(checkoutUrl);
-    } catch (error) {
-      logger.error('Error opening checkout:', error);
-      Alert.alert('Fehler', 'Fehler beim Öffnen der Checkout-Seite');
-    }
-  };
-
   const handleGoBack = () => {
     // Try to go back, if no history then go to dashboard
     if (router.canGoBack()) {
@@ -435,144 +381,148 @@ export default function SubscriptionPage() {
     }
   };
 
-  const dynamicStyles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    safeArea: {
-      flex: 1,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 24,
-      paddingVertical: 16,
-      paddingTop: 60,
-    },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      backgroundColor: 'rgba(249, 246, 242, 0.95)',
-      shadowColor: 'rgba(181,87,64,0.3)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    backButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#B87E70',
-      marginLeft: 8,
-    },
-    content: {
-      flex: 1,
-    },
-    loadingOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    loadingContainer: {
-      backgroundColor: 'white',
-      borderRadius: 16,
-      padding: 32,
-      alignItems: 'center',
-      minWidth: 200,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 10,
-    },
-    loadingText: {
-      marginTop: 16,
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#333',
-      textAlign: 'center',
-      lineHeight: 22,
-    },
-    // Error Modal Styles - matching website aesthetic
-    errorOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    },
-    errorContainer: {
-      backgroundColor: '#FFFFFF',
-      borderRadius: 20,
-      width: '100%',
-      maxWidth: isMobile ? 280 : 400,
-      marginHorizontal: isMobile ? 20 : 0,
-      shadowColor: 'rgba(181,87,64,0.3)',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.3,
-      shadowRadius: 20,
-      elevation: 15,
-      overflow: 'hidden',
-    },
-    errorHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 24,
-      paddingBottom: 16,
-      backgroundColor: 'rgba(249, 246, 242, 0.3)',
-    },
-    errorTitleContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    errorIcon: {
-      marginRight: 12,
-    },
-    errorTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: '#2C2C2C',
-      flex: 1,
-    },
-    closeButton: {
-      padding: 8,
-      borderRadius: 20,
-      backgroundColor: 'rgba(184, 126, 112, 0.1)',
-    },
-    errorMessage: {
-      fontSize: 16,
-      lineHeight: 24,
-      color: '#4A4A4A',
-      paddingHorizontal: 24,
-      paddingVertical: 8,
-      textAlign: 'left',
-    },
-    errorActions: {
-      padding: 24,
-      paddingTop: 20,
-    },
-    errorButton: {
-      borderRadius: 12,
-      overflow: 'hidden',
-    },
-    errorButtonGradient: {
-      paddingVertical: 14,
-      paddingHorizontal: 24,
-      alignItems: 'center',
-    },
-    errorButtonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: '600',
-      letterSpacing: 0.5,
-    },
-  });
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+        },
+        safeArea: {
+          flex: 1,
+        },
+        header: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 24,
+          paddingVertical: 16,
+          paddingTop: 60,
+        },
+        backButton: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderRadius: 12,
+          backgroundColor: 'rgba(249, 246, 242, 0.95)',
+          shadowColor: 'rgba(181,87,64,0.3)',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+        },
+        backButtonText: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: '#B87E70',
+          marginLeft: 8,
+        },
+        content: {
+          flex: 1,
+        },
+        loadingOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        loadingContainer: {
+          backgroundColor: 'white',
+          borderRadius: 16,
+          padding: 32,
+          alignItems: 'center',
+          minWidth: 200,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+          elevation: 10,
+        },
+        loadingText: {
+          marginTop: 16,
+          fontSize: 16,
+          fontWeight: '600',
+          color: '#333',
+          textAlign: 'center',
+          lineHeight: 22,
+        },
+        // Error Modal Styles - matching website aesthetic
+        errorOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        },
+        errorContainer: {
+          backgroundColor: '#FFFFFF',
+          borderRadius: 20,
+          width: '100%',
+          maxWidth: isMobile ? 280 : 400,
+          marginHorizontal: isMobile ? 20 : 0,
+          shadowColor: 'rgba(181,87,64,0.3)',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          elevation: 15,
+          overflow: 'hidden',
+        },
+        errorHeader: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 24,
+          paddingBottom: 16,
+          backgroundColor: 'rgba(249, 246, 242, 0.3)',
+        },
+        errorTitleContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          flex: 1,
+        },
+        errorIcon: {
+          marginRight: 12,
+        },
+        errorTitle: {
+          fontSize: 20,
+          fontWeight: '700',
+          color: '#2C2C2C',
+          flex: 1,
+        },
+        closeButton: {
+          padding: 8,
+          borderRadius: 20,
+          backgroundColor: 'rgba(184, 126, 112, 0.1)',
+        },
+        errorMessage: {
+          fontSize: 16,
+          lineHeight: 24,
+          color: '#4A4A4A',
+          paddingHorizontal: 24,
+          paddingVertical: 8,
+          textAlign: 'left',
+        },
+        errorActions: {
+          padding: 24,
+          paddingTop: 20,
+        },
+        errorButton: {
+          borderRadius: 12,
+          overflow: 'hidden',
+        },
+        errorButtonGradient: {
+          paddingVertical: 14,
+          paddingHorizontal: 24,
+          alignItems: 'center',
+        },
+        errorButtonText: {
+          color: '#FFFFFF',
+          fontSize: 16,
+          fontWeight: '600',
+          letterSpacing: 0.5,
+        },
+      }),
+    [isMobile]
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -584,6 +534,9 @@ export default function SubscriptionPage() {
               style={[dynamicStyles.backButton, isUpdating && { opacity: 0.5 }]}
               onPress={handleGoBack}
               disabled={isUpdating}
+              accessibilityRole="button"
+              accessibilityLabel="Zurück zur vorherigen Seite"
+              accessibilityHint="Navigiert zurück zum Dashboard"
             >
               <ArrowLeft size={20} color="#B87E70" />
               <Text style={dynamicStyles.backButtonText}>Zurück</Text>
@@ -591,17 +544,33 @@ export default function SubscriptionPage() {
           </View>
 
           <View style={dynamicStyles.content}>
-            <SubscriptionPlansEnhanced onSelectPlan={handleSelectPlan} currentPlanId={currentPlanId} />
+            {isLoadingCurrentPlan ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#B15740" />
+                <Text style={{ marginTop: 16, color: '#6B7280' }}>Lade Ihre Abo-Informationen...</Text>
+              </View>
+            ) : (
+              <SubscriptionPlansEnhanced onSelectPlan={handleSelectPlan} currentPlanId={currentPlanId} />
+            )}
           </View>
         </View>
       </SafeAreaView>
 
       {/* Loading Modal */}
-      <Modal visible={isUpdating} transparent={true} animationType="fade" statusBarTranslucent={true}>
-        <View style={dynamicStyles.loadingOverlay}>
+      <Modal
+        visible={isUpdating}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+        onRequestClose={() => {}}
+        accessibilityViewIsModal={true}
+      >
+        <View style={dynamicStyles.loadingOverlay} accessibilityLiveRegion="polite">
           <View style={dynamicStyles.loadingContainer}>
             <ActivityIndicator size="large" color="#4CAF50" />
-            <Text style={dynamicStyles.loadingText}>{loadingMessage || 'Wird verarbeitet...'}</Text>
+            <Text style={dynamicStyles.loadingText} accessibilityLiveRegion="polite">
+              {loadingMessage || 'Wird verarbeitet...'}
+            </Text>
           </View>
         </View>
       </Modal>
