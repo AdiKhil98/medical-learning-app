@@ -92,6 +92,9 @@ export default function RootLayout() {
           width: 100%;
           height: 100%;
           overflow-x: hidden;
+          position: fixed;
+          /* Prevent iOS zoom on input focus */
+          -webkit-tap-highlight-color: transparent;
         }
         body {
           margin: 0;
@@ -101,6 +104,10 @@ export default function RootLayout() {
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          position: relative;
+          /* Prevent zoom and ensure stable scrolling */
+          touch-action: pan-y;
+          -webkit-overflow-scrolling: touch;
         }
 
         /* Root container - prevent horizontal scroll */
@@ -108,6 +115,8 @@ export default function RootLayout() {
           width: 100%;
           max-width: 100vw;
           overflow-x: hidden;
+          position: relative;
+          min-height: 100vh;
         }
 
         /* Ensure all direct children respect container width */
@@ -118,9 +127,32 @@ export default function RootLayout() {
 
         /* Additional mobile-specific adjustments */
         @media screen and (max-width: 768px) {
+          html, body {
+            /* Prevent pull-to-refresh and bouncing */
+            overscroll-behavior: none;
+            /* Fix viewport height for mobile browsers */
+            min-height: -webkit-fill-available;
+          }
+
+          #root {
+            min-height: -webkit-fill-available;
+          }
+
+          /* Prevent double-tap zoom */
+          * {
+            touch-action: manipulation;
+          }
+
+          /* Fix iOS Safari floating address bar issue */
           body {
-            /* Prevent pull-to-refresh on mobile */
-            overscroll-behavior-y: contain;
+            position: fixed;
+            overflow: hidden;
+          }
+
+          #root {
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
           }
         }
       `;
