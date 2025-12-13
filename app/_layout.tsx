@@ -131,11 +131,8 @@ export default function RootLayout() {
             /* Prevent pull-to-refresh and bouncing */
             overscroll-behavior: none;
             /* Fix viewport height for mobile browsers */
-            min-height: -webkit-fill-available;
-          }
-
-          #root {
-            min-height: -webkit-fill-available;
+            height: 100vh;
+            height: -webkit-fill-available;
           }
 
           /* Prevent double-tap zoom */
@@ -146,10 +143,21 @@ export default function RootLayout() {
           /* Fix iOS Safari floating address bar issue */
           body {
             position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             overflow: hidden;
           }
 
           #root {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 100vh;
+            height: -webkit-fill-available;
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
@@ -160,6 +168,26 @@ export default function RootLayout() {
         document.head.appendChild(style);
         logger.info('✅ Mobile viewport fix applied');
       }
+
+      // Reset scroll position to ensure content starts at top
+      const resetScroll = () => {
+        window.scrollTo(0, 0);
+        const root = document.getElementById('root');
+        if (root) {
+          root.scrollTop = 0;
+        }
+      };
+
+      // Reset immediately and on load
+      resetScroll();
+      window.addEventListener('load', resetScroll);
+
+      // Also reset when page becomes visible
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          resetScroll();
+        }
+      });
 
       // Add cache control meta tags to prevent HTML caching
       const addMetaTag = (name: string, content: string) => {
