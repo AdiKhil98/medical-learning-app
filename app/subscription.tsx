@@ -41,17 +41,25 @@ export default function SubscriptionPage() {
   });
 
   const handleSelectPlan = async (planId: string) => {
+    console.log('🟢 Subscription Page: handleSelectPlan called!');
+    console.log('🟢 Plan ID:', planId);
+    console.log('🟢 User ID:', user?.id);
+    console.log('🟢 Is Updating:', isUpdating);
     logger.info('Selected plan:', planId);
 
     // Prevent spamming
     if (isUpdating) {
+      console.log('⚠️ Already updating, returning early');
       return;
     }
 
     if (!user?.id) {
+      console.log('❌ No user logged in!');
       Alert.alert('Fehler', 'Sie müssen angemeldet sein, um ein Abonnement zu ändern.');
       return;
     }
+
+    console.log('✅ Proceeding with plan selection...');
 
     if (planId === 'free') {
       await handleFreePlanSelection();

@@ -195,6 +195,8 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
   };
 
   const handleSelectPlan = (planId: string) => {
+    console.log('🔵 SubscriptionPlansEnhanced: handleSelectPlan called with planId:', planId);
+    console.log('🔵 onSelectPlan prop exists:', !!onSelectPlan);
     onSelectPlan?.(planId);
   };
 
