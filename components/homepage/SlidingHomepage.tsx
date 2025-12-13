@@ -31,13 +31,19 @@ import PromoBanner from '@/components/ui/PromoBanner';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive, BREAKPOINTS, SMALL_MOBILE_THRESHOLD } from '@/hooks/useResponsive';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 
 const IS_WEB = Platform.OS === 'web';
+
+// Temporary constants for StyleSheet (will be refactored to dynamic styles)
+// These are approximations since we can't use hooks at module level
+const TEMP_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 768;
+const IS_MOBILE = TEMP_WIDTH < BREAKPOINTS.mobile;
+const IS_SMALL_MOBILE = TEMP_WIDTH < SMALL_MOBILE_THRESHOLD;
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
