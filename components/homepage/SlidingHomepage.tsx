@@ -9,6 +9,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -703,7 +704,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: screenHeight,
+    height: '100%',
   },
 
   // Header Styles - Redesigned (Compact & Professional with Glassmorphism)
@@ -794,7 +795,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   slideWrapper: {
-    width: screenWidth,
+    width: Dimensions.get('window').width,
     height: '100%',
   },
   verticalScroll: {
