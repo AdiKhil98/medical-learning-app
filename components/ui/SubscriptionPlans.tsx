@@ -21,13 +21,13 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  quarterlyPrice: number;  // Changed from yearlyPrice to quarterlyPrice
+  quarterlyPrice: number; // Changed from yearlyPrice to quarterlyPrice
   currency: string;
   period: string;
   simulations: number | string;
   badge: string;
-  keyFeatures: string[];  // Top 3-4 key differentiators
-  allFeatures: PlanFeature[];  // Full feature list for comparison
+  keyFeatures: string[]; // Top 3-4 key differentiators
+  allFeatures: PlanFeature[]; // Full feature list for comparison
   recommended?: boolean;
   icon: React.ComponentType<any>;
   gradient: string[];
@@ -36,7 +36,7 @@ interface SubscriptionPlan {
 }
 
 export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
-    const [isQuarterly, setIsQuarterly] = useState(false);  // Changed from isYearly to isQuarterly
+  const [isQuarterly, setIsQuarterly] = useState(false); // Changed from isYearly to isQuarterly
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   const plans: SubscriptionPlan[] = [
@@ -51,12 +51,8 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       badge: '3',
       ctaText: 'Kostenlos starten',
       icon: Star,
-      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient
-      keyFeatures: [
-        '3 Medizinische Simulationen',
-        'Grundlegende Funktionen',
-        'Standard Bibliothek',
-      ],
+      gradient: ['#B15740', '#A04A35'], // Unified coral gradient
+      keyFeatures: ['3 Medizinische Simulationen', 'Grundlegende Funktionen', 'Standard Bibliothek'],
       allFeatures: [
         { text: '3 Medizinische Simulationen (einmalig)', included: true },
         { text: 'Grundlegende Funktionen', included: true },
@@ -69,25 +65,25 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     {
       id: 'basic',
       name: 'Basis-Plan',
-      price: 50,
-      quarterlyPrice: 125,  // €125 for 3 months
+      price: 60,
+      quarterlyPrice: 170, // €170 for 3 months
       currency: '€',
       period: 'Monat',
       simulations: '30',
       badge: '30',
       recommended: true,
       ctaText: 'Jetzt starten',
-      savings: 'Sparen Sie €25 pro Quartal',  // 50*3=150, 150-125=25 savings
+      savings: 'Sparen Sie €10 pro Quartal', // 60*3=180, 180-170=10 savings
       icon: Crown,
       gradient: ['#B15740', '#A04A35'],
       keyFeatures: [
-        '90 Simulationen pro Quartal',  // Changed from monthly to quarterly
+        '90 Simulationen pro Quartal', // Changed from monthly to quarterly
         '14 Tage kostenlose Testversion',
         'E-Mail Support',
         'Mobile App Zugang',
       ],
       allFeatures: [
-        { text: '90 Medizinische Simulationen pro Quartal', included: true },  // 30*3=90
+        { text: '90 Medizinische Simulationen pro Quartal', included: true }, // 30*3=90
         { text: '14 Tage kostenlose Testversion', included: true },
         { text: 'Grundlegende Analysen', included: true },
         { text: 'E-Mail Support', included: true },
@@ -100,16 +96,16 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     {
       id: 'unlimited',
       name: 'Unlimited',
-      price: 150,
-      quarterlyPrice: 350,  // €350 for 3 months
+      price: 120,
+      quarterlyPrice: 340, // €340 for 3 months
       currency: '€',
       period: 'Monat',
       simulations: 'Unbegrenzt',
       badge: '∞',
       ctaText: 'Jetzt starten',
-      savings: 'Sparen Sie €100 pro Quartal',  // 150*3=450, 450-350=100 savings
+      savings: 'Sparen Sie €20 pro Quartal', // 120*3=360, 360-340=20 savings
       icon: Infinity,
-      gradient: ['#B15740', '#A04A35'],  // Unified coral gradient
+      gradient: ['#B15740', '#A04A35'], // Unified coral gradient
       keyFeatures: [
         'Unbegrenzte Simulationen',
         'VIP Support & Account Manager',
@@ -135,9 +131,9 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
 
   const getQuarterlySavingsPercent = () => {
     // Calculate based on Basis plan: Monthly price * 3 vs Quarterly price
-    const monthlyTotal = plans[1].price * 3;  // €50 * 3 = €150
-    const quarterlyTotal = plans[1].quarterlyPrice;  // €125
-    return Math.round(((monthlyTotal - quarterlyTotal) / monthlyTotal) * 100);  // (150-125)/150 = 16.67% ≈ 17%
+    const monthlyTotal = plans[1].price * 3; // €60 * 3 = €180
+    const quarterlyTotal = plans[1].quarterlyPrice; // €170
+    return Math.round(((monthlyTotal - quarterlyTotal) / monthlyTotal) * 100); // (180-170)/180 = 5.56% ≈ 6%
   };
 
   const handleSelectPlan = (planId: string) => {
@@ -240,7 +236,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     },
     cardsRow: {
       flexDirection: isMobile ? 'column' : 'row',
-      gap: isMobile ? 24 : 16,  // Increased mobile gap from 20px to 24px
+      gap: isMobile ? 24 : 16, // Increased mobile gap from 20px to 24px
       justifyContent: 'center',
       alignItems: 'stretch',
       width: '100%',
@@ -249,7 +245,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     planCard: {
       backgroundColor: '#F9F6F2',
       borderRadius: 20,
-      padding: isMobile ? 20 : 24,  // Mobile: 20px, Desktop: 24px
+      padding: isMobile ? 20 : 24, // Mobile: 20px, Desktop: 24px
       flex: isMobile ? 0 : 1,
       maxWidth: isMobile ? 380 : 360,
       width: '100%',
@@ -261,7 +257,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       borderWidth: 2,
       borderColor: 'transparent',
       position: 'relative',
-      minHeight: 'auto',  // Let content determine height
+      minHeight: 'auto', // Let content determine height
     },
     recommendedCard: {
       borderColor: '#B15740',
@@ -334,7 +330,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       alignItems: 'baseline',
     },
     planPrice: {
-      fontSize: isMobile ? 42 : 56,  // Reduced from 52 to 42 for better mobile fit
+      fontSize: isMobile ? 42 : 56, // Reduced from 52 to 42 for better mobile fit
       fontWeight: '900',
       color: '#B15740',
       lineHeight: isMobile ? 48 : 60,
@@ -419,7 +415,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
     },
     selectButton: {
       borderRadius: 12,
-      paddingVertical: isMobile ? 14 : 16,  // Mobile: 14px, Desktop: 16px
+      paddingVertical: isMobile ? 14 : 16, // Mobile: 14px, Desktop: 16px
       alignItems: 'center',
       justifyContent: 'center',
       shadowColor: 'rgba(177, 87, 64, 0.3)',
@@ -427,18 +423,18 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       shadowOpacity: 1,
       shadowRadius: 8,
       elevation: 6,
-      marginBottom: 8,  // Reduced from 12 to 8 for cancel text
-      marginHorizontal: isMobile ? 0 : 0,  // Full width on mobile
+      marginBottom: 8, // Reduced from 12 to 8 for cancel text
+      marginHorizontal: isMobile ? 0 : 0, // Full width on mobile
     },
     selectButtonGradient: {
       width: '100%',
-      paddingVertical: isMobile ? 14 : 16,  // Mobile: 52px total (14*2 + text), Desktop: 56px
+      paddingVertical: isMobile ? 14 : 16, // Mobile: 52px total (14*2 + text), Desktop: 56px
       borderRadius: 12,
       alignItems: 'center',
-      minHeight: isMobile ? 52 : 56,  // Ensure minimum tap target
+      minHeight: isMobile ? 52 : 56, // Ensure minimum tap target
     },
     selectButtonText: {
-      fontSize: isMobile ? 15 : 16,  // Mobile: 15px, Desktop: 16px
+      fontSize: isMobile ? 15 : 16, // Mobile: 15px, Desktop: 16px
       fontWeight: '700',
       color: '#ffffff',
       letterSpacing: 0.3,
@@ -475,25 +471,19 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
               style={[dynamicStyles.toggleOption, !isQuarterly && dynamicStyles.toggleOptionActive]}
               onPress={() => setIsQuarterly(false)}
             >
-              <Text style={[dynamicStyles.toggleText, !isQuarterly && dynamicStyles.toggleTextActive]}>
-                MONATLICH
-              </Text>
+              <Text style={[dynamicStyles.toggleText, !isQuarterly && dynamicStyles.toggleTextActive]}>MONATLICH</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[dynamicStyles.toggleOption, isQuarterly && dynamicStyles.toggleOptionActive]}
               onPress={() => setIsQuarterly(true)}
             >
-              <Text style={[dynamicStyles.toggleText, isQuarterly && dynamicStyles.toggleTextActive]}>
-                3 MONATE
-              </Text>
+              <Text style={[dynamicStyles.toggleText, isQuarterly && dynamicStyles.toggleTextActive]}>3 MONATE</Text>
             </TouchableOpacity>
           </View>
 
           {isQuarterly && (
             <View style={dynamicStyles.savingsBadge}>
-              <Text style={dynamicStyles.savingsBadgeText}>
-                ✨ SPAREN SIE BIS ZU {getQuarterlySavingsPercent()}%
-              </Text>
+              <Text style={dynamicStyles.savingsBadgeText}>✨ SPAREN SIE BIS ZU {getQuarterlySavingsPercent()}%</Text>
             </View>
           )}
 
@@ -514,10 +504,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
         <View style={dynamicStyles.cardsContainer}>
           <View style={dynamicStyles.cardsRow}>
             {plans.map((plan) => (
-              <View key={plan.id} style={[
-                dynamicStyles.planCard,
-                plan.recommended && dynamicStyles.recommendedCard
-              ]}>
+              <View key={plan.id} style={[dynamicStyles.planCard, plan.recommended && dynamicStyles.recommendedCard]}>
                 {plan.recommended && (
                   <View style={dynamicStyles.recommendedBadge}>
                     <View style={dynamicStyles.recommendedBadgeInner}>
@@ -539,15 +526,11 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
                         {plan.id === 'free' ? 'Frei' : `${plan.currency}${getPrice(plan)}`}
                       </Text>
                       {plan.id !== 'free' && (
-                        <Text style={dynamicStyles.planPeriod}>
-                          {isQuarterly ? '/3 Monate' : '/Monat'}
-                        </Text>
+                        <Text style={dynamicStyles.planPeriod}>{isQuarterly ? '/3 Monate' : '/Monat'}</Text>
                       )}
                     </View>
                   </View>
-                  {isQuarterly && plan.savings && (
-                    <Text style={dynamicStyles.savings}>{plan.savings}</Text>
-                  )}
+                  {isQuarterly && plan.savings && <Text style={dynamicStyles.savings}>{plan.savings}</Text>}
                 </View>
 
                 <Text style={dynamicStyles.keyFeaturesTitle}>Wichtigste Vorteile</Text>
@@ -564,10 +547,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
                 </View>
 
                 {/* Expand Button */}
-                <TouchableOpacity
-                  style={dynamicStyles.expandButton}
-                  onPress={() => toggleExpandPlan(plan.id)}
-                >
+                <TouchableOpacity style={dynamicStyles.expandButton} onPress={() => toggleExpandPlan(plan.id)}>
                   <Text style={dynamicStyles.expandButtonText}>
                     {expandedPlan === plan.id ? 'Weniger anzeigen' : 'Alle Funktionen anzeigen'}
                   </Text>
@@ -583,16 +563,15 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
                   <View style={dynamicStyles.expandedFeatures}>
                     {plan.allFeatures.map((feature, index) => (
                       <View key={index} style={dynamicStyles.featureItem}>
-                        <View style={[
-                          dynamicStyles.checkIcon,
-                          !feature.included && dynamicStyles.checkIconDisabled
-                        ]}>
+                        <View style={[dynamicStyles.checkIcon, !feature.included && dynamicStyles.checkIconDisabled]}>
                           {feature.included && <Check size={10} color="#ffffff" />}
                         </View>
-                        <Text style={[
-                          dynamicStyles.featureText,
-                          feature.included ? dynamicStyles.featureIncluded : dynamicStyles.featureNotIncluded
-                        ]}>
+                        <Text
+                          style={[
+                            dynamicStyles.featureText,
+                            feature.included ? dynamicStyles.featureIncluded : dynamicStyles.featureNotIncluded,
+                          ]}
+                        >
                           {feature.text}
                         </Text>
                       </View>
@@ -600,10 +579,7 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
                   </View>
                 )}
 
-                <TouchableOpacity
-                  onPress={() => handleSelectPlan(plan.id)}
-                  activeOpacity={0.9}
-                >
+                <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
                   <LinearGradient
                     colors={plan.gradient}
                     style={dynamicStyles.selectButtonGradient}
