@@ -37,6 +37,7 @@ import { useResponsive, BREAKPOINTS, SMALL_MOBILE_THRESHOLD } from '@/hooks/useR
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
+import { logger } from '@/utils/logger';
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -68,6 +69,19 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
   const { recentContent, loading: recentLoading } = useRecentContentForHomepage(user?.id);
 
   const totalSlides = 4;
+
+  // Logger test - shows immediately when homepage loads
+  useEffect(() => {
+    logger.info('🏠 Homepage loaded', {
+      component: 'SlidingHomepage',
+      userId: user?.id,
+      screenWidth,
+      screenHeight,
+      isMobile,
+      isSmallMobile,
+      platform: Platform.OS,
+    });
+  }, [user?.id, screenWidth, screenHeight, isMobile, isSmallMobile]);
 
   // Scroll behavior for glassmorphism header effect (web only)
   useEffect(() => {
