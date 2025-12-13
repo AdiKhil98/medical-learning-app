@@ -1,3 +1,6 @@
+// TEMPORARY: Force console output for debugging
+import '@/utils/forceConsole';
+
 import { Stack, usePathname } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { AuthProvider } from '@/contexts/AuthContext';
