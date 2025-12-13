@@ -86,37 +86,43 @@ export default function RootLayout() {
       const style = document.createElement('style');
       style.id = 'mobile-viewport-fix';
       style.textContent = `
+        * {
+          box-sizing: border-box;
+        }
+
         html {
           -webkit-text-size-adjust: 100%;
           -ms-text-size-adjust: 100%;
           width: 100%;
-          height: 100%;
+          min-height: 100vh;
+          min-height: -webkit-fill-available;
           overflow-x: hidden;
-          position: fixed;
           /* Prevent iOS zoom on input focus */
           -webkit-tap-highlight-color: transparent;
         }
+
         body {
           margin: 0;
           padding: 0;
           width: 100%;
-          height: 100%;
+          min-height: 100vh;
+          min-height: -webkit-fill-available;
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          position: relative;
           /* Prevent zoom and ensure stable scrolling */
-          touch-action: pan-y;
+          touch-action: manipulation;
           -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: none;
         }
 
         /* Root container - prevent horizontal scroll */
         #root {
           width: 100%;
           max-width: 100vw;
-          overflow-x: hidden;
-          position: relative;
           min-height: 100vh;
+          min-height: -webkit-fill-available;
+          overflow-x: hidden;
         }
 
         /* Ensure all direct children respect container width */
@@ -125,42 +131,20 @@ export default function RootLayout() {
           overflow-x: hidden;
         }
 
-        /* Additional mobile-specific adjustments */
+        /* Mobile-specific adjustments */
         @media screen and (max-width: 768px) {
-          html, body {
-            /* Prevent pull-to-refresh and bouncing */
-            overscroll-behavior: none;
-            /* Fix viewport height for mobile browsers */
-            height: 100vh;
-            height: -webkit-fill-available;
+          html {
+            height: 100%;
           }
 
-          /* Prevent double-tap zoom */
-          * {
-            touch-action: manipulation;
-          }
-
-          /* Fix iOS Safari floating address bar issue */
           body {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
+            height: 100%;
+            overflow: auto;
+            overscroll-behavior: none;
           }
 
           #root {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 100vh;
-            height: -webkit-fill-available;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
+            min-height: 100%;
           }
         }
       `;
@@ -169,25 +153,10 @@ export default function RootLayout() {
         logger.info('✅ Mobile viewport fix applied');
       }
 
-      // Reset scroll position to ensure content starts at top
-      const resetScroll = () => {
-        window.scrollTo(0, 0);
-        const root = document.getElementById('root');
-        if (root) {
-          root.scrollTop = 0;
-        }
-      };
-
-      // Reset immediately and on load
-      resetScroll();
-      window.addEventListener('load', resetScroll);
-
-      // Also reset when page becomes visible
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          resetScroll();
-        }
-      });
+      // Reset scroll position on load
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
 
       // Add cache control meta tags to prevent HTML caching
       const addMetaTag = (name: string, content: string) => {
