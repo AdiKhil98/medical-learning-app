@@ -1,17 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { logger } from '@/utils/logger';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  Menu as MenuIcon,
   X,
-  Home,
   Crown,
-  Settings,
   Info,
   ChevronDown,
-  ClipboardCheck,
-  BarChart2,
   Bell,
   Shield,
   Bookmark,
@@ -28,6 +23,12 @@ import { colors } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
 import { useResponsive } from '@/hooks/useResponsive';
 
+// Temporary constants for StyleSheet (will be refactored to dynamic styles)
+const TEMP_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1024;
+const TEMP_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 768;
+const MENU_WIDTH = TEMP_WIDTH * 0.75;
+const SCREEN_HEIGHT = TEMP_HEIGHT;
+
 interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,33 +37,34 @@ interface MenuProps {
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { width, height } = useResponsive();
+  const { width } = useResponsive();
 
   // Calculate menu width responsively (75% of screen width)
-  const MENU_WIDTH = width * 0.75;
+  const dynamicMenuWidth = width * 0.75;
 
-  const slideAnim = React.useRef(new Animated.Value(-MENU_WIDTH)).current;
+  const slideAnim = React.useRef(new Animated.Value(-dynamicMenuWidth)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const rotateAnim = React.useRef(new Animated.Value(0)).current;
   const submenuHeightAnim = React.useRef(new Animated.Value(0)).current;
   const [subscriptionTier, setSubscriptionTier] = useState<string>('Ihr Abonnement verwalten');
 
-  React.useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: isOpen ? 0 : -MENU_WIDTH,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [isOpen]);
+  // Helper function to map quota data to tier string
+  const mapSubscriptionTier = useCallback((quotaData: any): string => {
+    const totalSims = quotaData.total_simulations || 0;
+    const tier = quotaData.subscription_tier || 'free';
 
-  // Load subscription tier
-  React.useEffect(() => {
-    if (user?.id) {
-      loadSubscriptionTier();
+    if (totalSims === -1 || tier === 'unlimited') {
+      return 'Premium Plan (Unbegrenzt)';
+    } else if (totalSims >= 100 || tier === 'profi') {
+      return 'Profi Plan (100 Simulationen)';
+    } else if (totalSims >= 20 || tier === 'basis') {
+      return 'Basis Plan (20 Simulationen)';
+    } else {
+      return 'Kostenlos (3 Simulationen)';
     }
-  }, [user?.id]);
+  }, []);
 
-  const loadSubscriptionTier = async () => {
+  const loadSubscriptionTier = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -82,22 +84,22 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     } catch (error) {
       logger.error('Error in loadSubscriptionTier:', error);
     }
-  };
+  }, [user?.id, mapSubscriptionTier]);
 
-  const mapSubscriptionTier = (quotaData: any): string => {
-    const totalSims = quotaData.total_simulations || 0;
-    const tier = quotaData.subscription_tier || 'free';
+  React.useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: isOpen ? 0 : -dynamicMenuWidth,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [isOpen, dynamicMenuWidth, slideAnim]);
 
-    if (totalSims === -1 || tier === 'unlimited') {
-      return 'Premium Plan (Unbegrenzt)';
-    } else if (totalSims >= 100 || tier === 'profi') {
-      return 'Profi Plan (100 Simulationen)';
-    } else if (totalSims >= 20 || tier === 'basis') {
-      return 'Basis Plan (20 Simulationen)';
-    } else {
-      return 'Kostenlos (3 Simulationen)';
+  // Load subscription tier
+  React.useEffect(() => {
+    if (user?.id) {
+      loadSubscriptionTier();
     }
-  };
+  }, [user?.id, loadSubscriptionTier]);
 
   const toggleSubmenu = () => {
     const toValue = isSubmenuOpen ? 0 : 1;
@@ -206,7 +208,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
       top: 0,
       left: 0,
       bottom: 0,
-      width: MENU_WIDTH,
+      width: dynamicMenuWidth,
       backgroundColor: colors.surface,
       shadowColor: '#000',
       shadowOffset: {
