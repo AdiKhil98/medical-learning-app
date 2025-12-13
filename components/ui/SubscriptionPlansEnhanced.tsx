@@ -5,6 +5,7 @@ import { Check, X, ChevronDown, ChevronUp, Shield, Zap, Target, Lock } from 'luc
 
 interface SubscriptionPlansEnhancedProps {
   onSelectPlan?: (planId: string) => void;
+  currentPlanId?: string | null;
 }
 
 interface Feature {
@@ -32,7 +33,7 @@ interface Plan {
   expandedFeatures: FeatureCategory[];
 }
 
-export default function SubscriptionPlansEnhanced({ onSelectPlan }: SubscriptionPlansEnhancedProps) {
+export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId }: SubscriptionPlansEnhancedProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
@@ -403,12 +404,29 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           fontSize: 13,
           textAlign: 'center',
         },
+        currentPlanBadge: {
+          backgroundColor: '#10B981',
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 20,
+          marginBottom: 12,
+          alignSelf: 'center',
+        },
+        currentPlanText: {
+          color: '#fff',
+          fontSize: 14,
+          fontWeight: '600',
+          textAlign: 'center',
+        },
         ctaButton: {
           width: '100%',
           paddingVertical: 18,
           borderRadius: 14,
           alignItems: 'center',
           marginBottom: 30,
+        },
+        ctaButtonDisabled: {
+          opacity: 0.7,
         },
         ctaButtonText: {
           color: '#fff',
@@ -698,15 +716,34 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                   </Text>
                 </View>
 
+                {/* Current Plan Badge */}
+                {currentPlanId === plan.id && (
+                  <View style={styles.currentPlanBadge}>
+                    <Text style={styles.currentPlanText}>✓ Aktueller Plan</Text>
+                  </View>
+                )}
+
                 {/* CTA Button */}
-                <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
+                <TouchableOpacity
+                  onPress={() => handleSelectPlan(plan.id)}
+                  activeOpacity={0.9}
+                  disabled={currentPlanId === plan.id}
+                >
                   <LinearGradient
-                    colors={plan.popular ? ['#ff7854', '#ff6b6b'] : ['#ff9a56', '#ff6b6b']}
-                    style={styles.ctaButton}
+                    colors={
+                      currentPlanId === plan.id
+                        ? ['#9CA3AF', '#6B7280']
+                        : plan.popular
+                          ? ['#ff7854', '#ff6b6b']
+                          : ['#ff9a56', '#ff6b6b']
+                    }
+                    style={[styles.ctaButton, currentPlanId === plan.id && styles.ctaButtonDisabled]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Text style={styles.ctaButtonText}>{plan.ctaText}</Text>
+                    <Text style={styles.ctaButtonText}>
+                      {currentPlanId === plan.id ? 'Aktueller Plan' : plan.ctaText}
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
 

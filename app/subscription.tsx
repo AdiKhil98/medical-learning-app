@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import {
   View,
@@ -34,17 +34,67 @@ export default function SubscriptionPage() {
   const { checkAccess } = useSubscription(user?.id);
   const [isUpdating, setIsUpdating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [currentVariantId, setCurrentVariantId] = useState<number | null>(null);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
     visible: false,
     title: '',
     message: '',
   });
 
+  // Load current subscription on mount
+  useEffect(() => {
+    const loadCurrentSubscription = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data: subscription, error } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('status', ['active', 'on_trial'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          logger.error('Failed to load current subscription', error);
+          return;
+        }
+
+        if (subscription) {
+          // Map variant ID back to plan ID
+          const variantToPlanMapping: Record<number, string> = {
+            1006948: 'basic',
+            1006934: 'professional',
+            1006947: 'unlimited',
+          };
+
+          const planId = variantToPlanMapping[subscription.lemonsqueezy_variant_id];
+          setCurrentPlanId(planId || null);
+          setCurrentVariantId(subscription.lemonsqueezy_variant_id);
+          logger.info('Current subscription loaded', {
+            planId,
+            variantId: subscription.lemonsqueezy_variant_id,
+          });
+        } else {
+          setCurrentPlanId(null);
+          setCurrentVariantId(null);
+        }
+      } catch (error) {
+        logger.error('Error loading current subscription', error);
+      }
+    };
+
+    loadCurrentSubscription();
+  }, [user?.id]);
+
   const handleSelectPlan = async (planId: string) => {
     logger.info('Plan selection initiated', {
       planId,
       userId: user?.id,
       isUpdating,
+      currentPlanId,
       component: 'SubscriptionPage',
     });
 
@@ -57,6 +107,16 @@ export default function SubscriptionPage() {
     if (!user?.id) {
       logger.warn('Plan selection blocked - user not authenticated', { planId });
       Alert.alert('Fehler', 'Sie müssen angemeldet sein, um ein Abonnement zu ändern.');
+      return;
+    }
+
+    // Check if user is already on this plan
+    if (currentPlanId === planId) {
+      logger.warn('Plan selection blocked - already on this plan', { planId });
+      Alert.alert(
+        'Bereits abonniert',
+        `Sie haben bereits den ${planId.toUpperCase()}-Plan. Um zu einem anderen Plan zu wechseln, wählen Sie bitte einen anderen Plan aus.`
+      );
       return;
     }
 
@@ -535,7 +595,7 @@ export default function SubscriptionPage() {
           </View>
 
           <View style={dynamicStyles.content}>
-            <SubscriptionPlansEnhanced onSelectPlan={handleSelectPlan} />
+            <SubscriptionPlansEnhanced onSelectPlan={handleSelectPlan} currentPlanId={currentPlanId} />
           </View>
         </View>
       </SafeAreaView>
