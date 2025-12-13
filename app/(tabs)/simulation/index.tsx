@@ -450,14 +450,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   gradientTitle: {
-    fontSize: screenWidth < 600 ? 40 : 48,
+    fontSize: 40,
     fontFamily: 'Inter-Bold',
     color: '#8B5CF6',
     textAlign: 'center',
     letterSpacing: -1,
   },
   mainTitle: {
-    fontSize: screenWidth < 600 ? 40 : 48,
+    fontSize: 40,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
     textAlign: 'center',
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
   whyChooseSection: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: screenWidth < 600 ? 24 : 48,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
