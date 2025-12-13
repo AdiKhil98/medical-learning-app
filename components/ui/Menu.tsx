@@ -40,7 +40,8 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
   const { width } = useResponsive();
 
   // Calculate menu width responsively (75% of screen width)
-  const dynamicMenuWidth = width * 0.75;
+  const MENU_WIDTH_RATIO = 0.75;
+  const dynamicMenuWidth = width * MENU_WIDTH_RATIO;
 
   const slideAnim = React.useRef(new Animated.Value(-dynamicMenuWidth)).current;
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
@@ -406,8 +407,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: MENU_WIDTH,
-    height: SCREEN_HEIGHT,
+    width: '100%',
+    height: '100%',
   },
   closeButtonContainer: {
     position: 'absolute',
