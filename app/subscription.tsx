@@ -41,32 +41,27 @@ export default function SubscriptionPage() {
   });
 
   const handleSelectPlan = async (planId: string) => {
-    console.log('🟢 Subscription Page: handleSelectPlan called!');
-    console.log('🟢 Plan ID:', planId);
-    console.log('🟢 User ID:', user?.id);
-    console.log('🟢 Is Updating:', isUpdating);
-    logger.info('Selected plan:', planId);
-
-    // DEBUG: Show plan selection
-    alert(`DEBUG: Subscription page received plan: ${planId}\nUser ID: ${user?.id || 'NOT LOGGED IN'}`);
+    logger.info('Plan selection initiated', {
+      planId,
+      userId: user?.id,
+      isUpdating,
+      component: 'SubscriptionPage',
+    });
 
     // Prevent spamming
     if (isUpdating) {
-      console.log('⚠️ Already updating, returning early');
-      alert('DEBUG: Already updating, please wait...');
+      logger.warn('Plan selection blocked - already updating', { planId });
       return;
     }
 
     if (!user?.id) {
-      console.log('❌ No user logged in!');
+      logger.warn('Plan selection blocked - user not authenticated', { planId });
       Alert.alert('Fehler', 'Sie müssen angemeldet sein, um ein Abonnement zu ändern.');
       return;
     }
 
-    console.log('✅ Proceeding with plan selection...');
-
     if (planId === 'free') {
-      alert('DEBUG: Free plan selected, calling handleFreePlanSelection');
+      logger.info('Free plan selected, delegating to handleFreePlanSelection', { userId: user.id });
       await handleFreePlanSelection();
       return;
     }
@@ -79,9 +74,13 @@ export default function SubscriptionPage() {
     };
 
     const newVariantId = variantIdMapping[planId];
-    alert(`DEBUG: Variant ID for ${planId}: ${newVariantId}`);
+    logger.debug('Mapped plan to variant ID', { planId, variantId: newVariantId });
 
     if (!newVariantId) {
+      logger.error('Invalid plan ID - no variant mapping found', new Error('Invalid plan'), {
+        planId,
+        availablePlans: Object.keys(variantIdMapping),
+      });
       Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
       return;
     }
@@ -90,7 +89,7 @@ export default function SubscriptionPage() {
     setLoadingMessage('Überprüfe aktuelles Abonnement...');
 
     try {
-      alert('DEBUG: Checking for existing subscription...');
+      logger.debug('Checking for existing subscription', { userId: user.id });
 
       // STEP 1: Check if user has active subscription
       const { data: existingSubscription, error: subError } = await supabase
@@ -103,28 +102,41 @@ export default function SubscriptionPage() {
         .maybeSingle();
 
       if (subError) {
-        logger.error('Error checking subscription:', subError);
-        alert(`DEBUG ERROR: ${subError.message}`);
+        logger.error('Subscription check failed', subError, {
+          userId: user.id,
+          operation: 'check_subscription',
+        });
         Alert.alert('Fehler', 'Fehler beim Überprüfen des Abonnements');
         setIsUpdating(false);
         return;
       }
 
-      alert(`DEBUG: Existing subscription? ${existingSubscription ? 'YES' : 'NO'}`);
+      logger.info('Subscription check complete', {
+        hasSubscription: !!existingSubscription,
+        subscriptionId: existingSubscription?.id,
+        currentPlan: existingSubscription?.plan_name,
+      });
 
       // STEP 2A: User has active subscription → UPGRADE/DOWNGRADE
       if (existingSubscription) {
-        logger.info('✅ User has existing subscription, upgrading/downgrading...');
-        alert('DEBUG: User has subscription, attempting to change plan...');
+        logger.info('Upgrading/downgrading existing subscription', {
+          currentPlan: existingSubscription.plan_name,
+          targetPlan: planId,
+          targetVariantId: newVariantId,
+        });
         setLoadingMessage('Abo wird aktualisiert...');
-
-        alert('DEBUG: About to call Netlify function to change plan...');
 
         let response;
         let result;
         let functionCallFailed = false;
 
         try {
+          logger.debug('Calling Netlify function to change plan', {
+            endpoint: '/.netlify/functions/change-plan',
+            userId: user.id,
+            newVariantId,
+          });
+
           response = await fetch('/.netlify/functions/change-plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -134,19 +146,31 @@ export default function SubscriptionPage() {
             }),
           });
 
-          alert(`DEBUG: Netlify function response status: ${response.status}`);
+          logger.apiCall('/.netlify/functions/change-plan', 'POST', response.status, {
+            userId: user.id,
+            newVariantId,
+          });
 
           // Check if we got a 404 (function not found) - this happens when running locally
           if (response.status === 404) {
             functionCallFailed = true;
-            alert('DEBUG: Netlify function not found (404) - likely running locally');
+            logger.warn('Netlify function not found (404) - running locally', {
+              endpoint: '/.netlify/functions/change-plan',
+            });
           } else {
             result = await response.json();
-            alert(`DEBUG: Netlify function result: ${JSON.stringify(result).substring(0, 100)}`);
+            logger.debug('Netlify function response received', {
+              status: response.status,
+              resultPreview: JSON.stringify(result).substring(0, 100),
+            });
           }
         } catch (fetchError: any) {
           functionCallFailed = true;
-          alert(`DEBUG ERROR calling Netlify function: ${fetchError.message}`);
+          logger.error('Netlify function call failed', fetchError, {
+            endpoint: '/.netlify/functions/change-plan',
+            userId: user.id,
+            newVariantId,
+          });
         }
 
         // If Netlify function failed (running locally or network error), offer checkout redirect
