@@ -118,19 +118,74 @@ export default function SubscriptionPage() {
         alert('DEBUG: User has subscription, attempting to change plan...');
         setLoadingMessage('Abo wird aktualisiert...');
 
-        const response = await fetch('/.netlify/functions/change-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            newVariantId,
-          }),
-        });
+        alert('DEBUG: About to call Netlify function to change plan...');
 
-        const result = await response.json();
+        let response;
+        let result;
+        let functionCallFailed = false;
+
+        try {
+          response = await fetch('/.netlify/functions/change-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              newVariantId,
+            }),
+          });
+
+          alert(`DEBUG: Netlify function response status: ${response.status}`);
+
+          // Check if we got a 404 (function not found) - this happens when running locally
+          if (response.status === 404) {
+            functionCallFailed = true;
+            alert('DEBUG: Netlify function not found (404) - likely running locally');
+          } else {
+            result = await response.json();
+            alert(`DEBUG: Netlify function result: ${JSON.stringify(result).substring(0, 100)}`);
+          }
+        } catch (fetchError: any) {
+          functionCallFailed = true;
+          alert(`DEBUG ERROR calling Netlify function: ${fetchError.message}`);
+        }
+
+        // If Netlify function failed (running locally or network error), offer checkout redirect
+        if (functionCallFailed) {
+          setIsUpdating(false);
+          setLoadingMessage('');
+
+          Alert.alert(
+            'Abo-Änderung nicht verfügbar',
+            'Die Abo-Änderung funktioniert nur auf der deployed Version. Sie haben bereits ein aktives Abonnement.\n\nMöchten Sie stattdessen zur Checkout-Seite gehen, um ein neues Abo abzuschließen?\n\n(Hinweis: Bitte kündigen Sie Ihr altes Abo zuerst, um Doppelabbuchungen zu vermeiden)',
+            [
+              {
+                text: 'Abbrechen',
+                style: 'cancel',
+              },
+              {
+                text: 'Zur Checkout-Seite',
+                onPress: async () => {
+                  const userEmail = encodeURIComponent(user?.email || '');
+                  const checkoutUrls: Record<string, string> = {
+                    basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${userEmail}`,
+                    professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${userEmail}`,
+                    unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${userEmail}`,
+                  };
+
+                  const checkoutUrl = checkoutUrls[planId];
+                  if (checkoutUrl) {
+                    await Linking.openURL(checkoutUrl);
+                  }
+                },
+              },
+            ]
+          );
+          return;
+        }
 
         if (!response.ok) {
           logger.error('Plan change failed:', result);
+          alert(`DEBUG: Plan change failed - ${result.message || result.error || 'Unknown error'}`);
           Alert.alert('Fehler', result.message || result.error || 'Fehler beim Ändern des Plans');
           setIsUpdating(false);
           return;
@@ -165,7 +220,7 @@ export default function SubscriptionPage() {
         };
 
         const checkoutUrl = checkoutUrls[planId];
-        alert(`DEBUG: Checkout URL: ${checkoutUrl ? `${checkoutUrl.substring(0, 50)  }...` : 'NOT FOUND'}`);
+        alert(`DEBUG: Checkout URL: ${checkoutUrl ? `${checkoutUrl.substring(0, 50)}...` : 'NOT FOUND'}`);
 
         if (checkoutUrl) {
           alert('DEBUG: Opening payment page now...');
