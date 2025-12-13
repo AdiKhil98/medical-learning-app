@@ -197,6 +197,14 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
   const handleSelectPlan = (planId: string) => {
     console.log('🔵 SubscriptionPlansEnhanced: handleSelectPlan called with planId:', planId);
     console.log('🔵 onSelectPlan prop exists:', !!onSelectPlan);
+
+    // DEBUG: Alert to confirm button was clicked
+    if (!onSelectPlan) {
+      alert('ERROR: onSelectPlan callback is missing!');
+      return;
+    }
+
+    alert(`DEBUG: Button clicked for plan: ${planId}`);
     onSelectPlan?.(planId);
   };
 

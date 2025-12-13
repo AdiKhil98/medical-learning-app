@@ -47,9 +47,13 @@ export default function SubscriptionPage() {
     console.log('🟢 Is Updating:', isUpdating);
     logger.info('Selected plan:', planId);
 
+    // DEBUG: Show plan selection
+    alert(`DEBUG: Subscription page received plan: ${planId}\nUser ID: ${user?.id || 'NOT LOGGED IN'}`);
+
     // Prevent spamming
     if (isUpdating) {
       console.log('⚠️ Already updating, returning early');
+      alert('DEBUG: Already updating, please wait...');
       return;
     }
 
