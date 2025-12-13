@@ -66,6 +66,7 @@ export default function SubscriptionPage() {
     console.log('✅ Proceeding with plan selection...');
 
     if (planId === 'free') {
+      alert('DEBUG: Free plan selected, calling handleFreePlanSelection');
       await handleFreePlanSelection();
       return;
     }
@@ -78,6 +79,8 @@ export default function SubscriptionPage() {
     };
 
     const newVariantId = variantIdMapping[planId];
+    alert(`DEBUG: Variant ID for ${planId}: ${newVariantId}`);
+
     if (!newVariantId) {
       Alert.alert('Fehler', `Plan "${planId}" ist noch nicht verfügbar`);
       return;
@@ -87,6 +90,8 @@ export default function SubscriptionPage() {
     setLoadingMessage('Überprüfe aktuelles Abonnement...');
 
     try {
+      alert('DEBUG: Checking for existing subscription...');
+
       // STEP 1: Check if user has active subscription
       const { data: existingSubscription, error: subError } = await supabase
         .from('user_subscriptions')
@@ -99,14 +104,18 @@ export default function SubscriptionPage() {
 
       if (subError) {
         logger.error('Error checking subscription:', subError);
+        alert(`DEBUG ERROR: ${subError.message}`);
         Alert.alert('Fehler', 'Fehler beim Überprüfen des Abonnements');
         setIsUpdating(false);
         return;
       }
 
+      alert(`DEBUG: Existing subscription? ${existingSubscription ? 'YES' : 'NO'}`);
+
       // STEP 2A: User has active subscription → UPGRADE/DOWNGRADE
       if (existingSubscription) {
         logger.info('✅ User has existing subscription, upgrading/downgrading...');
+        alert('DEBUG: User has subscription, attempting to change plan...');
         setLoadingMessage('Abo wird aktualisiert...');
 
         const response = await fetch('/.netlify/functions/change-plan', {
@@ -145,6 +154,7 @@ export default function SubscriptionPage() {
       // STEP 2B: User has NO subscription → NEW CHECKOUT
       else {
         logger.info('ℹ️ User has no subscription, redirecting to checkout...');
+        alert('DEBUG: No existing subscription, preparing checkout redirect...');
         setLoadingMessage('Weiterleitung zum Checkout...');
 
         const userEmail = encodeURIComponent(user?.email || '');
@@ -155,12 +165,23 @@ export default function SubscriptionPage() {
         };
 
         const checkoutUrl = checkoutUrls[planId];
+        alert(`DEBUG: Checkout URL: ${checkoutUrl ? `${checkoutUrl.substring(0, 50)  }...` : 'NOT FOUND'}`);
+
         if (checkoutUrl) {
-          Linking.openURL(checkoutUrl);
+          alert('DEBUG: Opening payment page now...');
+          try {
+            await Linking.openURL(checkoutUrl);
+            alert('DEBUG: Linking.openURL called successfully');
+          } catch (linkError: any) {
+            alert(`DEBUG ERROR opening URL: ${linkError.message}`);
+          }
+        } else {
+          alert(`DEBUG ERROR: No checkout URL found for plan: ${planId}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error in handleSelectPlan:', error);
+      alert(`DEBUG CATCH ERROR: ${error.message || error}`);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
