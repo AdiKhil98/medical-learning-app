@@ -269,7 +269,6 @@ export default function SubscriptionPage() {
 
         if (!response.ok) {
           logger.error('Plan change failed:', result);
-          alert(`DEBUG: Plan change failed - ${result.message || result.error || 'Unknown error'}`);
           Alert.alert('Fehler', result.message || result.error || 'Fehler beim Ändern des Plans');
           setIsUpdating(false);
           return;
@@ -293,7 +292,6 @@ export default function SubscriptionPage() {
       // STEP 2B: User has NO subscription → NEW CHECKOUT
       else {
         logger.info('ℹ️ User has no subscription, redirecting to checkout...');
-        alert('DEBUG: No existing subscription, preparing checkout redirect...');
         setLoadingMessage('Weiterleitung zum Checkout...');
 
         const userEmail = encodeURIComponent(user?.email || '');
@@ -304,23 +302,21 @@ export default function SubscriptionPage() {
         };
 
         const checkoutUrl = checkoutUrls[planId];
-        alert(`DEBUG: Checkout URL: ${checkoutUrl ? `${checkoutUrl.substring(0, 50)}...` : 'NOT FOUND'}`);
 
         if (checkoutUrl) {
-          alert('DEBUG: Opening payment page now...');
           try {
             await Linking.openURL(checkoutUrl);
-            alert('DEBUG: Linking.openURL called successfully');
           } catch (linkError: any) {
-            alert(`DEBUG ERROR opening URL: ${linkError.message}`);
+            logger.error('Error opening checkout URL:', linkError);
+            Alert.alert('Fehler', 'Fehler beim Öffnen der Checkout-Seite');
           }
         } else {
-          alert(`DEBUG ERROR: No checkout URL found for plan: ${planId}`);
+          logger.error('No checkout URL found for plan:', planId);
+          Alert.alert('Fehler', 'Checkout-URL nicht gefunden');
         }
       }
     } catch (error: any) {
       logger.error('Error in handleSelectPlan:', error);
-      alert(`DEBUG CATCH ERROR: ${error.message || error}`);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten');
     } finally {
       setIsUpdating(false);
@@ -426,7 +422,7 @@ export default function SubscriptionPage() {
       Linking.openURL(checkoutUrl);
     } catch (error) {
       logger.error('Error opening checkout:', error);
-      alert('Fehler beim Öffnen der Checkout-Seite');
+      Alert.alert('Fehler', 'Fehler beim Öffnen der Checkout-Seite');
     }
   };
 
