@@ -1,17 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  SafeAreaView,
-  TouchableOpacity,
-  Platform,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Platform, Modal } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { useResponsive } from '@/hooks/useResponsive';
 
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
@@ -70,8 +61,6 @@ if (Platform.OS === 'web') {
   }
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 // Chart-specific colors (derived from MEDICAL_COLORS)
 const CHART_COLORS = {
   chartGradient: MEDICAL_COLORS.mintGreen, // #FDF7F6 - Very light coral for chart fill
@@ -96,7 +85,8 @@ interface Evaluation {
 
 function ProgressScreen() {
   const { user } = useAuth();
-  
+  const { width: SCREEN_WIDTH } = useResponsive();
+
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [activeTab, setActiveTab] = useState<'KP' | 'FSP'>('KP');
   const [chartData, setChartData] = useState<any>(null);

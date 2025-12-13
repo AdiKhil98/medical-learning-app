@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   ChevronRight,
@@ -20,8 +20,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function SimulationScreen() {
   const router = useRouter();
@@ -29,6 +28,7 @@ export default function SimulationScreen() {
   const { user } = useAuth();
   const { getSubscriptionInfo } = useSubscription(user?.id);
   const subscriptionInfo = getSubscriptionInfo();
+  const { width: screenWidth } = useResponsive();
 
   // Light theme gradients
   const backgroundGradient = ['#EEF2FF', '#FFFFFF', '#FFF7ED'];

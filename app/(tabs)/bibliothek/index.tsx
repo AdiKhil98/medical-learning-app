@@ -11,7 +11,6 @@ import {
   Animated,
   ActivityIndicator,
   Modal,
-  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -36,11 +35,7 @@ import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 import { colors } from '@/constants/colors';
-
-const { width: screenWidth } = Dimensions.get('window');
-const isSmallMobile = screenWidth < 375;
-const isMobile = screenWidth < 768;
-const isTablet = screenWidth >= 768 && screenWidth < 1024;
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface Category {
   id: string;
@@ -298,6 +293,7 @@ type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
 const BibliothekIndex: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
+  const { width: screenWidth, isMobile, isSmallMobile, isTablet } = useResponsive();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);

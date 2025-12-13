@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
-  Dimensions,
   ActivityIndicator,
   Animated,
 } from 'react-native';
@@ -17,10 +16,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, Lock, Eye, EyeOff, Stethoscope, Heart, Shield, Sparkles } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/ui/Input';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function Login() {
+  const { width: screenWidth } = useResponsive();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,11 +86,12 @@ export default function Login() {
     } catch (error: any) {
       // SECURITY FIX: Use generic messages to prevent user enumeration
       // Don't reveal whether email exists or is confirmed
-      if (error.message?.includes('Invalid login credentials') ||
-          error.message?.includes('Email not confirmed')) {
+      if (error.message?.includes('Invalid login credentials') || error.message?.includes('Email not confirmed')) {
         // Generic message for both invalid credentials AND unconfirmed email
         // This prevents attackers from knowing if an email exists
-        setLoginError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten oder bestätigen Sie Ihre E-Mail-Adresse.');
+        setLoginError(
+          'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten oder bestätigen Sie Ihre E-Mail-Adresse.'
+        );
       } else if (error.message?.includes('Too many requests')) {
         setLoginError('Zu viele Anmeldeversuche. Bitte warten Sie einen Moment.');
       } else if (error.message?.includes('Account locked')) {
@@ -109,10 +109,7 @@ export default function Login() {
   return (
     <View style={styles.container}>
       {/* Background Gradient */}
-      <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
@@ -123,10 +120,7 @@ export default function Login() {
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#D4A574', '#C19A6B']}
-                style={styles.logoGradient}
-              >
+              <LinearGradient colors={['#D4A574', '#C19A6B']} style={styles.logoGradient}>
                 <Stethoscope size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
@@ -137,9 +131,7 @@ export default function Login() {
           {/* Welcome Message */}
           <View style={styles.welcomeSection}>
             <Text style={styles.welcomeTitle}>Willkommen zurück</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Setzen Sie Ihre medizinische Lernreise fort
-            </Text>
+            <Text style={styles.welcomeSubtitle}>Setzen Sie Ihre medizinische Lernreise fort</Text>
           </View>
 
           {/* Login Card */}
@@ -177,11 +169,7 @@ export default function Login() {
                 leftIcon={<Lock size={20} color="#94A3B8" />}
                 rightIcon={
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    {showPassword ? (
-                      <EyeOff size={20} color="#94A3B8" />
-                    ) : (
-                      <Eye size={20} color="#94A3B8" />
-                    )}
+                    {showPassword ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
                   </TouchableOpacity>
                 }
                 editable={!loading}
@@ -211,20 +199,13 @@ export default function Login() {
                 <Text style={styles.rememberMeText}>Angemeldet bleiben</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => router.push('/auth/forgot-password')}
-                disabled={loading}
-              >
+              <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} disabled={loading}>
                 <Text style={styles.forgotPasswordLink}>Passwort vergessen?</Text>
               </TouchableOpacity>
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
               <LinearGradient
                 colors={['#FB923C', '#F97316', '#EF4444']}
                 start={{ x: 0, y: 0 }}
@@ -292,9 +273,7 @@ export default function Login() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              © 2025 KP MED. Exzellenz in medizinischer Ausbildung.
-            </Text>
+            <Text style={styles.footerText}>© 2025 KP MED. Exzellenz in medizinischer Ausbildung.</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
