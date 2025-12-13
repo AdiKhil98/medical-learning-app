@@ -1,17 +1,17 @@
 import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
-import { View, ActivityIndicator, Text, Platform, Dimensions } from 'react-native';
+import { View, ActivityIndicator, Text, Platform } from 'react-native';
 import { Home, BookOpen, BarChart, Activity } from 'lucide-react-native';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function TabLayout() {
-    const { session, loading, isEmailVerified } = useAuth();
+  const { session, loading, isEmailVerified } = useAuth();
   const insets = useSafeAreaInsets();
+  const { isMobile, width: screenWidth } = useResponsive();
 
   // Initialize session timeout monitoring for authenticated screens
   // Uses default 30-minute timeout from hook (HIPAA compliant)
@@ -39,11 +39,21 @@ export default function TabLayout() {
   // SECURITY FIX: Enforce email verification before app access
   if (!isEmailVerified) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: 24 }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+          padding: 24,
+        }}
+      >
         <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: 16, textAlign: 'center' }}>
           E-Mail-Bestätigung erforderlich
         </Text>
-        <Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 24 }}>
+        <Text
+          style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 24 }}
+        >
           Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben.
         </Text>
         <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
