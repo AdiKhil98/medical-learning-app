@@ -1053,15 +1053,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: SPACING.md,
     marginBottom: SPACING.xxxl,
-    justifyContent: isSmallMobile ? 'space-between' : 'flex-start',
+    justifyContent: 'flex-start',
   },
   statCard: {
-    flex: isSmallMobile ? 0 : 1,
-    minWidth: isSmallMobile ? '47%' : undefined,
-    maxWidth: isSmallMobile ? '48%' : undefined,
+    flex: 1,
+    minWidth: '47%',
     backgroundColor: MEDICAL_COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
-    padding: isSmallMobile ? SPACING.md : SPACING.xl,
+    padding: SPACING.xl,
     alignItems: 'center',
     ...SHADOWS.lg,
     borderWidth: 1,
@@ -1094,11 +1093,11 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: isSmallMobile ? 'center' : 'space-between',
+    justifyContent: 'space-between',
     marginBottom: SPACING.xxxxxl,
   },
   categoryCardWrapper: {
-    width: isSmallMobile ? '100%' : isMobile ? '48%' : isTablet ? '31%' : '23%',
+    width: '48%',
     marginBottom: SPACING.xxxl,
   },
   categoryCard: {
