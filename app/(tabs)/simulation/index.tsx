@@ -10,7 +10,6 @@ import {
   Sparkles,
   CheckCircle2,
   TrendingUp,
-  Zap,
   Award,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +19,6 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useResponsive } from '@/hooks/useResponsive';
 
 export default function SimulationScreen() {
   const router = useRouter();
@@ -28,7 +26,6 @@ export default function SimulationScreen() {
   const { user } = useAuth();
   const { getSubscriptionInfo } = useSubscription(user?.id);
   const subscriptionInfo = getSubscriptionInfo();
-  const { width: screenWidth } = useResponsive();
 
   // Light theme gradients
   const backgroundGradient = ['#EEF2FF', '#FFFFFF', '#FFF7ED'];
@@ -46,18 +43,6 @@ export default function SimulationScreen() {
     },
     subtitle: {
       ...styles.subtitle,
-      color: colors.textSecondary,
-    },
-    statCard: {
-      ...styles.statCard,
-      backgroundColor: colors.card,
-    },
-    statNumber: {
-      ...styles.statNumber,
-      color: colors.text,
-    },
-    statLabel: {
-      ...styles.statLabel,
       color: colors.textSecondary,
     },
     cardButton: {
@@ -139,33 +124,6 @@ export default function SimulationScreen() {
 
           {/* Subtitle */}
           <Text style={dynamicStyles.subtitle}>Realistische Simulationen mit KI-gestütztem Feedback für KP & FSP</Text>
-
-          {/* Stats Cards */}
-          <View style={styles.statsContainer}>
-            <View style={dynamicStyles.statCard}>
-              <CheckCircle2 size={20} color="#10B981" />
-              <View style={styles.statContent}>
-                <Text style={dynamicStyles.statNumber}>24</Text>
-                <Text style={dynamicStyles.statLabel}>Abgeschlossen</Text>
-              </View>
-            </View>
-
-            <View style={dynamicStyles.statCard}>
-              <TrendingUp size={20} color="#3B82F6" />
-              <View style={styles.statContent}>
-                <Text style={dynamicStyles.statNumber}>89%</Text>
-                <Text style={dynamicStyles.statLabel}>Erfolgsrate</Text>
-              </View>
-            </View>
-
-            <View style={dynamicStyles.statCard}>
-              <Zap size={20} color="#F97316" />
-              <View style={styles.statContent}>
-                <Text style={dynamicStyles.statNumber}>7 Tage</Text>
-                <Text style={dynamicStyles.statLabel}>Streak</Text>
-              </View>
-            </View>
-          </View>
         </View>
 
         {/* Simulation Cards */}
@@ -471,41 +429,6 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     maxWidth: '90%',
     marginBottom: 32,
-  },
-
-  // Stats Cards
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  statCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  statContent: {
-    alignItems: 'flex-start',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-  },
-  statLabel: {
-    fontSize: 13,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
   },
 
   // Simulation Cards
