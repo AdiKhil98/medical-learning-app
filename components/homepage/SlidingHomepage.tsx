@@ -731,6 +731,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 3,
+    marginTop: Platform.OS !== 'web' ? 50 : 0, // Space for absolutely positioned banner on mobile
     ...(IS_WEB && {
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' as any,
       willChange: 'transform, box-shadow, background-color' as any,
