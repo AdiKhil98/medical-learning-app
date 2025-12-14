@@ -700,22 +700,6 @@ function ProgressScreen() {
       ...styles.tab,
       backgroundColor: MEDICAL_COLORS.slate100,
     },
-    statIconWrapperPurple: {
-      ...styles.statIconWrapperPurple,
-      backgroundColor: '#F3E8FF',
-    },
-    statIconWrapperPink: {
-      ...styles.statIconWrapperPink,
-      backgroundColor: '#FCE7F3',
-    },
-    statIconWrapperCyan: {
-      ...styles.statIconWrapperCyan,
-      backgroundColor: '#CFFAFE',
-    },
-    statCard: {
-      ...styles.statCard,
-      backgroundColor: colors.card,
-    },
     modernChartContainer: {
       ...styles.modernChartContainer,
       backgroundColor: colors.card,
@@ -901,65 +885,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: MEDICAL_COLORS.slate500,
     lineHeight: 22,
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.xxxl,
-    gap: SPACING.lg,
-  },
-  statCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: SPACING.lg,
-    padding: SPACING.xxl,
-    gap: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  statIconWrapperPurple: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: '#F3E8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statIconWrapperPink: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: '#FCE7F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statIconWrapperCyan: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: '#CFFAFE',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statTextContent: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize['3xl'],
-    fontFamily: 'Inter-Bold',
-    color: MEDICAL_COLORS.slate900,
-    marginBottom: 2,
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs + 1,
-    fontFamily: 'Inter-Regular',
-    color: MEDICAL_COLORS.slate500,
-    flexShrink: 1,
   },
 
   // Modern Chart
