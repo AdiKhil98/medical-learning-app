@@ -359,7 +359,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                   onPress={() => handleMenuItemPress(item.route)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.submenuText}>{item.label}</Text>
+                  <Text style={styles.submenuText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+                    {item.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </Animated.View>
