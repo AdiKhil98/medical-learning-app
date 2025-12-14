@@ -168,7 +168,13 @@ export default function Login() {
                 secureTextEntry={!showPassword}
                 leftIcon={<Lock size={20} color="#94A3B8" />}
                 rightIcon={
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                    accessibilityState={{ selected: showPassword }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
                     {showPassword ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
                   </TouchableOpacity>
                 }
@@ -192,6 +198,10 @@ export default function Login() {
                 style={styles.rememberMeRow}
                 onPress={() => setRememberMe(!rememberMe)}
                 disabled={loading}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Angemeldet bleiben"
+                accessibilityState={{ checked: rememberMe }}
+                accessibilityHint="Aktivieren Sie diese Option, um angemeldet zu bleiben"
               >
                 <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                   {rememberMe && <Text style={styles.checkmark}>✓</Text>}
@@ -199,13 +209,27 @@ export default function Login() {
                 <Text style={styles.rememberMeText}>Angemeldet bleiben</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} disabled={loading}>
+              <TouchableOpacity
+                onPress={() => router.push('/auth/forgot-password')}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Passwort vergessen"
+                accessibilityHint="Öffnet die Seite zum Zurücksetzen des Passworts"
+              >
                 <Text style={styles.forgotPasswordLink}>Passwort vergessen?</Text>
               </TouchableOpacity>
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Jetzt anmelden"
+              accessibilityHint="Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an"
+              accessibilityState={{ disabled: loading, busy: loading }}
+            >
               <LinearGradient
                 colors={['#FB923C', '#F97316', '#EF4444']}
                 start={{ x: 0, y: 0 }}
@@ -231,7 +255,12 @@ export default function Login() {
             <View style={styles.registerRow}>
               <Text style={styles.registerText}>Noch kein Konto? </Text>
               <Link href="/auth/register" asChild>
-                <TouchableOpacity disabled={loading}>
+                <TouchableOpacity
+                  disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Jetzt registrieren"
+                  accessibilityHint="Öffnet die Registrierungsseite für ein neues Konto"
+                >
                   <Text style={styles.registerLink}>Jetzt registrieren</Text>
                 </TouchableOpacity>
               </Link>

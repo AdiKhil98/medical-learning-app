@@ -225,10 +225,13 @@ export default function RegisterScreen() {
           pathname: '/auth/verify-email',
           params: {
             email: email.toLowerCase().trim(),
-            message: 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'
-          }
+            message: 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.',
+          },
         });
-      } else if (error.message && (error.message.includes('USER_LIMIT_REACHED') || error.message.includes('user limit'))) {
+      } else if (
+        error.message &&
+        (error.message.includes('USER_LIMIT_REACHED') || error.message.includes('user limit'))
+      ) {
         // Registration limit reached - add to waitlist automatically
         logger.info('🚫 Backend returned USER_LIMIT_REACHED, adding to waitlist');
 
@@ -256,9 +259,11 @@ export default function RegisterScreen() {
         let errorMessage = error.message || 'Ein Fehler ist aufgetreten.';
 
         if (errorMsg.includes('rate limit')) {
-          errorMessage = 'Sie haben zu viele Registrierungsversuche gemacht. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
+          errorMessage =
+            'Sie haben zu viele Registrierungsversuche gemacht. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
         } else if (errorMsg.includes('already registered') || errorMsg.includes('user already exists')) {
-          errorMessage = 'Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail.';
+          errorMessage =
+            'Diese E-Mail-Adresse ist bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail.';
         }
 
         setSubmitError(errorMessage);
@@ -271,10 +276,7 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       {/* Background Gradient */}
-      <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
@@ -285,10 +287,7 @@ export default function RegisterScreen() {
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#D4A574', '#C19A6B']}
-                style={styles.logoGradient}
-              >
+              <LinearGradient colors={['#D4A574', '#C19A6B']} style={styles.logoGradient}>
                 <Stethoscope size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
@@ -299,9 +298,7 @@ export default function RegisterScreen() {
           {/* Welcome Message */}
           <View style={styles.welcomeSection}>
             <Text style={styles.welcomeTitle}>Konto erstellen</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Erstellen Sie ein Konto, um mit dem Lernen zu beginnen
-            </Text>
+            <Text style={styles.welcomeSubtitle}>Erstellen Sie ein Konto, um mit dem Lernen zu beginnen</Text>
           </View>
 
           {/* Registration Status Banner */}
@@ -353,22 +350,21 @@ export default function RegisterScreen() {
                 secureTextEntry={!showPassword}
                 leftIcon={<Lock size={20} color="#94A3B8" />}
                 rightIcon={
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    {showPassword ? (
-                      <EyeOff size={20} color="#94A3B8" />
-                    ) : (
-                      <Eye size={20} color="#94A3B8" />
-                    )}
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                    accessibilityState={{ selected: showPassword }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    {showPassword ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
                   </TouchableOpacity>
                 }
                 editable={!loading}
                 containerStyle={styles.inputContainer}
                 error={passwordError}
               />
-              <PasswordStrengthIndicator
-                password={password}
-                visible={passwordFocused || password.length > 0}
-              />
+              <PasswordStrengthIndicator password={password} visible={passwordFocused || password.length > 0} />
             </View>
 
             {/* Confirm Password Input */}
@@ -381,12 +377,14 @@ export default function RegisterScreen() {
                 secureTextEntry={!showConfirmPassword}
                 leftIcon={<Lock size={20} color="#94A3B8" />}
                 rightIcon={
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} color="#94A3B8" />
-                    ) : (
-                      <Eye size={20} color="#94A3B8" />
-                    )}
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                    accessibilityState={{ selected: showConfirmPassword }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
                   </TouchableOpacity>
                 }
                 editable={!loading}
@@ -408,6 +406,10 @@ export default function RegisterScreen() {
               disabled={loading}
               activeOpacity={0.8}
               style={styles.registerButtonContainer}
+              accessibilityRole="button"
+              accessibilityLabel="Registrieren"
+              accessibilityHint="Erstellen Sie ein neues Konto mit Ihren eingegebenen Daten"
+              accessibilityState={{ disabled: loading, busy: loading }}
             >
               <LinearGradient
                 colors={['#FB923C', '#F97316', '#EF4444']}
@@ -434,7 +436,12 @@ export default function RegisterScreen() {
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Bereits ein Konto? </Text>
               <Link href="/auth/login" asChild>
-                <TouchableOpacity disabled={loading}>
+                <TouchableOpacity
+                  disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Anmelden"
+                  accessibilityHint="Öffnet die Anmeldeseite für bestehende Konten"
+                >
                   <Text style={styles.loginLink}>Anmelden</Text>
                 </TouchableOpacity>
               </Link>
