@@ -779,43 +779,6 @@ function ProgressScreen() {
           <Text style={styles.pageSubtitle}>Verfolgen Sie Ihre Entwicklung in der medizinischen Ausbildung</Text>
         </View>
 
-        {/* Stats Overview Cards */}
-        <View style={styles.statsGrid}>
-          <View style={dynamicStyles.statCard}>
-            <View style={dynamicStyles.statIconWrapperPurple}>
-              <Award size={28} color="#8B5CF6" />
-            </View>
-            <View style={styles.statTextContent}>
-              <Text style={styles.statValue}>{averageScore}%</Text>
-              <Text style={styles.statLabel}>Durchschnitt</Text>
-            </View>
-          </View>
-
-          <View style={dynamicStyles.statCard}>
-            <View style={dynamicStyles.statIconWrapperPink}>
-              <Target size={28} color="#EC4899" />
-            </View>
-            <View style={styles.statTextContent}>
-              <Text style={styles.statValue}>
-                {passedCount}/{totalAttempts}
-              </Text>
-              <Text style={styles.statLabel}>Bestanden</Text>
-            </View>
-          </View>
-
-          <View style={dynamicStyles.statCard}>
-            <View style={dynamicStyles.statIconWrapperCyan}>
-              <TrendingUp size={28} color="#06B6D4" />
-            </View>
-            <View style={styles.statTextContent}>
-              <Text style={styles.statValue}>
-                {chartData ? (chartData.KP?.length || 0) + (chartData.FSP?.length || 0) : 0}
-              </Text>
-              <Text style={styles.statLabel}>Versuche</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Modern Chart Section */}
         <View style={dynamicStyles.modernChartContainer}>
           <View style={styles.chartHeader}>
