@@ -27,7 +27,7 @@ import {
   List,
   Settings,
   Maximize2,
-  Minimize2
+  Minimize2,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
@@ -78,7 +78,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   availableSections = [],
   onSectionChange,
 }) => {
-    const { triggerActivity } = useSessionTimeout();
+  const { triggerActivity } = useSessionTimeout();
 
   // State management
   const [currentSlug, setCurrentSlug] = useState<string | null>(initialSlug || null);
@@ -98,7 +98,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   const sectionRefs = useRef<{ [key: number]: View | null }>({});
 
   // Content cache for performance
-  const contentCache = useRef(new Map<string, { data: SupabaseRow, timestamp: number }>());
+  const contentCache = useRef(new Map<string, { data: SupabaseRow; timestamp: number }>());
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
   // Parse content sections
@@ -120,22 +120,28 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
           sections = contentSource;
         }
 
-        return sections.map((section, index) => ({
-          title: section?.title || `Section ${index + 1}`,
-          content: (section?.content || '').replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-        })).filter(section => section.content.length > 0);
+        return sections
+          .map((section, index) => ({
+            title: section?.title || `Section ${index + 1}`,
+            content: (section?.content || '').replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+          }))
+          .filter((section) => section.content.length > 0);
       } else {
-        return [{
-          title: currentSection.title || 'Medizinischer Inhalt',
-          content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-        }];
+        return [
+          {
+            title: currentSection.title || 'Medizinischer Inhalt',
+            content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+          },
+        ];
       }
     } catch (error) {
       const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
-      return [{
-        title: currentSection.title || 'Medizinischer Inhalt',
-        content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-      }];
+      return [
+        {
+          title: currentSection.title || 'Medizinischer Inhalt',
+          content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+        },
+      ];
     }
   }, [currentSection]);
 
@@ -144,9 +150,9 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
     if (!searchTerm.trim()) return parsedSections;
 
     const searchLower = searchTerm.toLowerCase();
-    return parsedSections.filter(section =>
-      section.title.toLowerCase().includes(searchLower) ||
-      section.content.toLowerCase().includes(searchLower)
+    return parsedSections.filter(
+      (section) =>
+        section.title.toLowerCase().includes(searchLower) || section.content.toLowerCase().includes(searchLower)
     );
   }, [parsedSections, searchTerm]);
 
@@ -155,7 +161,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
     return filteredSections.map((section, index) => ({
       id: `section-${index}`,
       title: section.title,
-      index: index,
+      index,
     }));
   }, [filteredSections]);
 
@@ -171,7 +177,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       const cached = contentCache.current.get(slug);
       const now = Date.now();
 
-      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      if (cached && now - cached.timestamp < CACHE_DURATION) {
         setCurrentSection(cached.data);
         setExpandedSections({});
         setLoading(false);
@@ -179,11 +185,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       }
 
       // Fetch from database
-      const { data: sectionData, error } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+      const { data: sectionData, error } = await supabase.from('sections').select('*').eq('slug', slug).maybeSingle();
 
       if (error) throw error;
       if (!sectionData) throw new Error('Abschnitt nicht gefunden');
@@ -202,15 +204,18 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   }, []);
 
   // Navigation between sections
-  const navigateToSection = useCallback((slug: string) => {
-    setCurrentSlug(slug);
-    fetchSection(slug);
-    onSectionChange?.(slug);
-    triggerActivity();
-  }, [fetchSection, onSectionChange, triggerActivity]);
+  const navigateToSection = useCallback(
+    (slug: string) => {
+      setCurrentSlug(slug);
+      fetchSection(slug);
+      onSectionChange?.(slug);
+      triggerActivity();
+    },
+    [fetchSection, onSectionChange, triggerActivity]
+  );
 
   const getCurrentSectionIndex = useCallback(() => {
-    return availableSections.findIndex(section => section.slug === currentSlug);
+    return availableSections.findIndex((section) => section.slug === currentSlug);
   }, [availableSections, currentSlug]);
 
   const navigateToNextSection = useCallback(() => {
@@ -330,49 +335,58 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   }, [visible, hideModal, navigateToNextSection, navigateToPreviousSection, isFullscreen]);
 
   // Search handler
-  const handleSearch = useCallback((text: string) => {
-    setSearchTerm(text);
-    triggerActivity();
-  }, [triggerActivity]);
+  const handleSearch = useCallback(
+    (text: string) => {
+      setSearchTerm(text);
+      triggerActivity();
+    },
+    [triggerActivity]
+  );
 
   // Section toggle
-  const toggleSection = useCallback((index: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-    triggerActivity();
-  }, [triggerActivity]);
+  const toggleSection = useCallback(
+    (index: string) => {
+      setExpandedSections((prev) => ({
+        ...prev,
+        [index]: !prev[index],
+      }));
+      triggerActivity();
+    },
+    [triggerActivity]
+  );
 
   // Navigate to section from table of contents
-  const handleNavigateToSection = useCallback((sectionIndex: number) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionIndex]: true
-    }));
-    triggerActivity();
+  const handleNavigateToSection = useCallback(
+    (sectionIndex: number) => {
+      setExpandedSections((prev) => ({
+        ...prev,
+        [sectionIndex]: true,
+      }));
+      triggerActivity();
 
-    setTimeout(() => {
-      const sectionRef = sectionRefs.current[sectionIndex];
-      if (sectionRef && scrollViewRef.current) {
-        sectionRef.measureLayout(
-          scrollViewRef.current as any,
-          (x, y) => {
-            scrollViewRef.current?.scrollTo({
-              y: Math.max(0, y - 20),
-              animated: true
-            });
-          },
-          () => {
-            scrollViewRef.current?.scrollTo({
-              y: sectionIndex * 200,
-              animated: true
-            });
-          }
-        );
-      }
-    }, 150);
-  }, [triggerActivity]);
+      setTimeout(() => {
+        const sectionRef = sectionRefs.current[sectionIndex];
+        if (sectionRef && scrollViewRef.current) {
+          sectionRef.measureLayout(
+            scrollViewRef.current as any,
+            (x, y) => {
+              scrollViewRef.current?.scrollTo({
+                y: Math.max(0, y - 20),
+                animated: true,
+              });
+            },
+            () => {
+              scrollViewRef.current?.scrollTo({
+                y: sectionIndex * 200,
+                animated: true,
+              });
+            }
+          );
+        }
+      }, 150);
+    },
+    [triggerActivity]
+  );
 
   // Render formatted text with highlighting
   const highlightSearchTerm = (text: string, searchTerm: string, baseStyle: any) => {
@@ -402,8 +416,8 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
   const renderFormattedContent = (content: string) => {
     const paragraphs = content
       .split(/\n\s*\n|\n/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
 
     if (paragraphs.length === 0) {
       return <Text style={[styles.contentText, { color: colors.text }]}>{content}</Text>;
@@ -480,23 +494,11 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
       statusBarTranslucent={true}
       onRequestClose={hideModal}
     >
-      <StatusBar
-        backgroundColor={isFullscreen ? colors.background : 'rgba(0,0,0,0.5)'}
-        barStyle={'dark-content'}
-      />
+      <StatusBar backgroundColor={isFullscreen ? colors.background : 'rgba(0,0,0,0.5)'} barStyle={'dark-content'} />
 
       {!isFullscreen && (
-        <Animated.View
-          style={[
-            styles.backdrop,
-            { opacity: fadeAnim }
-          ]}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            onPress={hideModal}
-            activeOpacity={1}
-          />
+        <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} onPress={hideModal} activeOpacity={1} />
         </Animated.View>
       )}
 
@@ -505,11 +507,8 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
           modalStyle,
           {
             opacity: fadeAnim,
-            transform: [
-              { scale: scaleAnim },
-              { translateY: isFullscreen ? 0 : slideAnim }
-            ]
-          }
+            transform: [{ scale: scaleAnim }, { translateY: isFullscreen ? 0 : slideAnim }],
+          },
         ]}
       >
         <SafeAreaView style={styles.safeArea}>
@@ -527,17 +526,23 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
               <TouchableOpacity
                 onPress={() => setIsFullscreen(!isFullscreen)}
                 style={[styles.headerButton, { backgroundColor: colors.card }]}
-                accessibilityLabel={isFullscreen ? "Vollbild verlassen" : "Vollbild"}
+                accessibilityLabel={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
               >
-                {isFullscreen ?
-                  <Minimize2 size={20} color={colors.text} /> :
+                {isFullscreen ? (
+                  <Minimize2 size={20} color={colors.text} />
+                ) : (
                   <Maximize2 size={20} color={colors.text} />
-                }
+                )}
               </TouchableOpacity>
             </View>
 
             <View style={styles.headerCenter}>
-              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>
+              <Text
+                style={[styles.modalTitle, { color: colors.text }]}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
                 {currentSection?.title || 'Medizinischer Inhalt'}
               </Text>
               {availableSections.length > 1 && (
@@ -564,20 +569,11 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
               <TouchableOpacity
                 onPress={navigateToPreviousSection}
                 disabled={!canNavigatePrevious}
-                style={[
-                  styles.navButton,
-                  !canNavigatePrevious && styles.navButtonDisabled
-                ]}
+                style={[styles.navButton, !canNavigatePrevious && styles.navButtonDisabled]}
               >
-                <ChevronLeft
-                  size={20}
-                  color={canNavigatePrevious ? colors.primary : colors.textSecondary}
-                />
+                <ChevronLeft size={20} color={canNavigatePrevious ? colors.primary : colors.textSecondary} />
                 <Text
-                  style={[
-                    styles.navButtonText,
-                    { color: canNavigatePrevious ? colors.primary : colors.textSecondary }
-                  ]}
+                  style={[styles.navButtonText, { color: canNavigatePrevious ? colors.primary : colors.textSecondary }]}
                 >
                   Vorherige
                 </Text>
@@ -586,23 +582,14 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
               <TouchableOpacity
                 onPress={navigateToNextSection}
                 disabled={!canNavigateNext}
-                style={[
-                  styles.navButton,
-                  !canNavigateNext && styles.navButtonDisabled
-                ]}
+                style={[styles.navButton, !canNavigateNext && styles.navButtonDisabled]}
               >
                 <Text
-                  style={[
-                    styles.navButtonText,
-                    { color: canNavigateNext ? colors.primary : colors.textSecondary }
-                  ]}
+                  style={[styles.navButtonText, { color: canNavigateNext ? colors.primary : colors.textSecondary }]}
                 >
                   Nächste
                 </Text>
-                <ChevronRight
-                  size={20}
-                  color={canNavigateNext ? colors.primary : colors.textSecondary}
-                />
+                <ChevronRight size={20} color={canNavigateNext ? colors.primary : colors.textSecondary} />
               </TouchableOpacity>
             </View>
           )}
@@ -610,9 +597,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
           {/* Content */}
           {loading ? (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                Lade medizinische Inhalte...
-              </Text>
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Lade medizinische Inhalte...</Text>
             </View>
           ) : error ? (
             <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
@@ -623,8 +608,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
             <View style={styles.contentWrapper}>
               {/* Gradient Background */}
               <LinearGradient
-                colors={['#6366f1', '#8b5cf6', '#a855f7']
-                }
+                colors={['#6366f1', '#8b5cf6', '#a855f7']}
                 style={styles.gradientBackground}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -639,14 +623,10 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
                     </Text>
                   </View>
                   <View style={styles.metaBadge}>
-                    <Text style={styles.metaItem}>
-                      ⏱️ {formatDate(currentSection.last_updated)}
-                    </Text>
+                    <Text style={styles.metaItem}>⏱️ {formatDate(currentSection.last_updated)}</Text>
                   </View>
                   <View style={styles.metaBadge}>
-                    <Text style={styles.metaItem}>
-                      📖 {filteredSections.length} Abschnitte
-                    </Text>
+                    <Text style={styles.metaItem}>📖 {filteredSections.length} Abschnitte</Text>
                   </View>
                 </View>
 
@@ -661,10 +641,7 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
                     onChangeText={handleSearch}
                   />
                   {searchTerm.length > 0 && (
-                    <TouchableOpacity
-                      onPress={() => handleSearch('')}
-                      style={styles.clearSearch}
-                    >
+                    <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearSearch}>
                       <Text style={styles.clearSearchText}>✕</Text>
                     </TouchableOpacity>
                   )}
@@ -701,7 +678,9 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
                 {filteredSections.map((section, index) => (
                   <View
                     key={index}
-                    ref={(ref) => { sectionRefs.current[index] = ref; }}
+                    ref={(ref) => {
+                      sectionRefs.current[index] = ref;
+                    }}
                     style={[styles.contentSection, { backgroundColor: colors.card }]}
                   >
                     <TouchableOpacity
@@ -710,16 +689,11 @@ const MedicalContentModal: React.FC<MedicalContentModalProps> = ({
                       accessibilityLabel={`${expandedSections[index] ? 'Ausklappen' : 'Einklappen'} Abschnitt ${section.title}`}
                     >
                       <BookOpen size={22} color={colors.primary} />
-                      <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                        {section.title}
-                      </Text>
+                      <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
                       <ChevronDown
                         size={20}
                         color={colors.textSecondary}
-                        style={[
-                          styles.chevronIcon,
-                          expandedSections[index] && { transform: [{ rotate: '180deg' }] }
-                        ]}
+                        style={[styles.chevronIcon, expandedSections[index] && { transform: [{ rotate: '180deg' }] }]}
                       />
                     </TouchableOpacity>
 
