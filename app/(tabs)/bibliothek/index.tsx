@@ -241,7 +241,9 @@ const AnimatedCategoryCard: React.FC<{
             </Animated.View>
 
             {/* Title */}
-            <Text style={styles.cardTitle}>{category.title}</Text>
+            <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
+              {category.title}
+            </Text>
 
             {/* Count and Arrow */}
             <View style={styles.cardFooter}>

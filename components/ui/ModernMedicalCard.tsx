@@ -163,10 +163,7 @@ export default function ModernMedicalCard({
         styles.cardWrapper,
         {
           opacity: fadeAnim,
-          transform: [
-            { scale: scaleAnim },
-            { translateY: translateYAnim },
-          ],
+          transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
         },
       ]}
     >
@@ -223,10 +220,7 @@ export default function ModernMedicalCard({
                 style={[
                   styles.iconContainer,
                   {
-                    transform: [
-                      { rotate: iconRotate },
-                      { scale: iconScaleAnim },
-                    ],
+                    transform: [{ rotate: iconRotate }, { scale: iconScaleAnim }],
                   },
                 ]}
               >
@@ -236,7 +230,7 @@ export default function ModernMedicalCard({
               </Animated.View>
 
               {/* Title */}
-              <Text style={styles.title} numberOfLines={2}>
+              <Text style={styles.title} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {title}
               </Text>
 
@@ -248,12 +242,7 @@ export default function ModernMedicalCard({
               {/* Progress Bar */}
               <View style={styles.progressContainer}>
                 <View style={styles.progressTrack}>
-                  <Animated.View
-                    style={[
-                      styles.progressFill,
-                      { width: progressWidth },
-                    ]}
-                  />
+                  <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
                 </View>
                 <Text style={styles.progressText}>{progress}%</Text>
               </View>
@@ -267,7 +256,13 @@ export default function ModernMedicalCard({
                   style={styles.buttonGradient}
                 >
                   <Text style={[styles.buttonText, isPressed && styles.buttonTextPressed]}>
-                    {progress === 100 ? 'ABGESCHLOSSEN' : progress > 0 ? 'FORTSETZEN' : hasContent ? 'STARTEN' : 'ANSEHEN'}
+                    {progress === 100
+                      ? 'ABGESCHLOSSEN'
+                      : progress > 0
+                        ? 'FORTSETZEN'
+                        : hasContent
+                          ? 'STARTEN'
+                          : 'ANSEHEN'}
                   </Text>
                   <Animated.View
                     style={{
