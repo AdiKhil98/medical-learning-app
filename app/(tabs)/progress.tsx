@@ -942,21 +942,20 @@ const styles = StyleSheet.create({
 
   // Stats Grid
   statsGrid: {
-    flexDirection: SCREEN_WIDTH < 400 ? 'column' : 'row',
+    flexDirection: 'row',
     paddingHorizontal: SPACING.xl,
     marginBottom: SPACING.xxxl,
     gap: SPACING.lg,
   },
   statCard: {
-    flex: SCREEN_WIDTH < 400 ? 0 : 1,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: MEDICAL_COLORS.white,
     borderRadius: SPACING.lg,
-    padding: SCREEN_WIDTH < 400 ? SPACING.lg : SPACING.xxl,
+    padding: SPACING.xxl,
     gap: SPACING.lg,
     ...SHADOWS.md,
-    minWidth: SCREEN_WIDTH < 400 ? '100%' : undefined,
   },
   statIconWrapperPurple: {
     width: 56,
