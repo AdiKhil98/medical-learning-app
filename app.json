@@ -28,7 +28,7 @@
       "themeColor": "#D4A574",
       "backgroundColor": "#F8FAFC",
       "meta": {
-        "viewport": "width=device-width, initial-scale=1.0, maximum-scale=5.0",
+        "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
         "theme-color": "#D4A574",
         "apple-mobile-web-app-capable": "yes",
         "apple-mobile-web-app-status-bar-style": "default",
@@ -49,9 +49,7 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#ffffff",
-          "sounds": [
-            "./assets/sounds/notification.wav"
-          ]
+          "sounds": ["./assets/sounds/notification.wav"]
         }
       ],
       "expo-font"

@@ -82,25 +82,34 @@ export default function RootLayout() {
         logger.info('✅ Google Fonts (Inter) loaded');
       }
 
-      // Add mobile viewport fix styles
+      // Add mobile viewport fix styles using 2025 best practices
       const style = document.createElement('style');
       style.id = 'mobile-viewport-fix';
       style.textContent = `
+        :root {
+          --app-height: 100vh;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
         html {
           -webkit-text-size-adjust: 100%;
           -ms-text-size-adjust: 100%;
           width: 100%;
-          height: 100%;
           overflow-x: hidden;
+          -webkit-tap-highlight-color: transparent;
         }
+
         body {
           margin: 0;
           padding: 0;
           width: 100%;
-          height: 100%;
           max-width: 100vw;
           overflow-x: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          -webkit-overflow-scrolling: touch;
         }
 
         /* Root container - prevent horizontal scroll */
@@ -116,18 +125,79 @@ export default function RootLayout() {
           overflow-x: hidden;
         }
 
-        /* Additional mobile-specific adjustments */
+        /* Mobile-specific adjustments - 2025 best practices */
         @media screen and (max-width: 768px) {
+          html {
+            /* Use modern dynamic viewport height with fallbacks */
+            height: 100vh; /* Fallback for older browsers */
+            height: -webkit-fill-available; /* Safari fallback */
+            height: var(--app-height); /* JavaScript fallback */
+          }
+
+          /* Modern browsers: use 100dvh (dynamic viewport height) */
+          @supports (height: 100dvh) {
+            html {
+              height: 100dvh;
+            }
+
+            body {
+              min-height: 100dvh;
+            }
+
+            #root {
+              min-height: 100dvh;
+            }
+          }
+
+          /* Older browsers: use CSS variables + JS */
+          @supports not (height: 100dvh) {
+            html {
+              height: -webkit-fill-available;
+            }
+
+            body {
+              min-height: 100vh;
+              min-height: -webkit-fill-available;
+              min-height: var(--app-height);
+            }
+
+            #root {
+              min-height: 100vh;
+              min-height: -webkit-fill-available;
+              min-height: var(--app-height);
+            }
+          }
+
           body {
-            /* Prevent pull-to-refresh on mobile */
-            overscroll-behavior-y: contain;
+            overflow: auto;
+            overscroll-behavior: none;
+            touch-action: manipulation;
           }
         }
       `;
       if (!document.getElementById('mobile-viewport-fix')) {
         document.head.appendChild(style);
-        logger.info('✅ Mobile viewport fix applied');
+        logger.info('✅ Mobile viewport fix applied (2025 best practices)');
       }
+
+      // JavaScript fallback: Set actual viewport height as CSS custom property
+      // This handles iOS Safari address bar and works on all browsers
+      const setAppHeight = () => {
+        const vh = window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', `${vh}px`);
+      };
+
+      // Set on load
+      setAppHeight();
+
+      // Update on resize (handles orientation change and address bar show/hide)
+      window.addEventListener('resize', setAppHeight);
+      window.addEventListener('orientationchange', setAppHeight);
+
+      // Reset scroll position on load
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
 
       // Add cache control meta tags to prevent HTML caching
       const addMetaTag = (name: string, content: string) => {

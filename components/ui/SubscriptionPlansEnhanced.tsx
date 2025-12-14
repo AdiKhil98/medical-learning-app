@@ -5,16 +5,7 @@ import { Check, X, ChevronDown, ChevronUp, Shield, Zap, Target, Lock } from 'luc
 
 interface SubscriptionPlansEnhancedProps {
   onSelectPlan?: (planId: string) => void;
-}
-
-interface Feature {
-  text: string;
-  included: boolean;
-}
-
-interface FeatureCategory {
-  title: string;
-  features: Feature[];
+  currentPlanId?: string | null;
 }
 
 interface Plan {
@@ -32,7 +23,169 @@ interface Plan {
   expandedFeatures: FeatureCategory[];
 }
 
-export default function SubscriptionPlansEnhanced({ onSelectPlan }: SubscriptionPlansEnhancedProps) {
+interface Feature {
+  text: string;
+  included: boolean;
+}
+
+interface FeatureCategory {
+  title: string;
+  features: Feature[];
+}
+
+// Plans data - moved outside component for better performance
+const PLANS_DATA: Plan[] = [
+  {
+    id: 'free',
+    name: 'Frei',
+    icon: '🎯',
+    description: 'Perfekt zum Ausprobieren und ersten Üben',
+    monthlyPrice: 0,
+    quarterlyPrice: 0,
+    originalQuarterlyPrice: 0,
+    savings: 0,
+    ctaText: 'Jetzt starten',
+    mainFeatures: [
+      {
+        title: '✨ Grundfunktionen',
+        features: [
+          { text: '3 FSP-Simulationen pro Monat', included: true },
+          { text: '3 KP-Simulationen pro Monat', included: true },
+          { text: 'Zugang zu allen Fachgebieten', included: true },
+          { text: 'Basis-Evaluation mit Punktzahl', included: true },
+        ],
+      },
+      {
+        title: '🔒 Eingeschränkt',
+        features: [
+          { text: 'Detailliertes Feedback', included: false },
+          { text: 'Verlaufsübersicht', included: false },
+          { text: 'Lernressourcen & Tipps', included: false },
+        ],
+      },
+    ],
+    expandedFeatures: [],
+  },
+  {
+    id: 'basic',
+    name: 'Standard',
+    icon: '🚀',
+    description: 'Optimal für regelmäßiges und fokussiertes Training',
+    monthlyPrice: 60,
+    quarterlyPrice: 170,
+    originalQuarterlyPrice: 180,
+    savings: 10,
+    popular: true,
+    ctaText: 'Jetzt upgraden',
+    mainFeatures: [
+      {
+        title: '✨ Alles aus Frei, plus:',
+        features: [
+          { text: 'Unbegrenzte FSP-Simulationen', included: true },
+          { text: 'Unbegrenzte KP-Simulationen', included: true },
+          { text: 'Detailliertes Feedback nach jeder Simulation', included: true },
+          { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
+        ],
+      },
+      {
+        title: '📊 Fortschrittsverfolgung',
+        features: [
+          { text: 'Vollständige Verlaufsübersicht', included: true },
+          { text: 'Leistungsstatistiken im Dashboard', included: true },
+          { text: 'Vergleich deiner Entwicklung', included: true },
+        ],
+      },
+    ],
+    expandedFeatures: [
+      {
+        title: '📚 Lernmaterialien',
+        features: [
+          { text: 'Zugang zu Lernressourcen', included: true },
+          { text: 'Prüfungstipps & Best Practices', included: true },
+          { text: 'Musterbeispiele erfolgreicher Gespräche', included: true },
+        ],
+      },
+      {
+        title: '🎯 Support',
+        features: [{ text: 'E-Mail Support innerhalb 24h', included: true }],
+      },
+    ],
+  },
+  {
+    id: 'unlimited',
+    name: 'Premium',
+    icon: '👑',
+    description: 'Maximale Vorbereitung mit persönlicher Betreuung',
+    monthlyPrice: 120,
+    quarterlyPrice: 340,
+    originalQuarterlyPrice: 360,
+    savings: 20,
+    ctaText: 'Premium werden',
+    mainFeatures: [
+      {
+        title: '✨ Alles aus Standard, plus:',
+        features: [
+          { text: 'Prioritäts-Support innerhalb 4h', included: true },
+          { text: 'Persönliche Lernplan-Erstellung', included: true },
+          { text: '1:1 Videokonsultation mit Experten (30 Min/Monat)', included: true },
+          { text: 'Individuelle Schwachstellen-Analyse', included: true },
+        ],
+      },
+      {
+        title: '🎓 Exklusiver Zugang',
+        features: [
+          { text: 'Premium-Fälle aus realen Prüfungen', included: true },
+          { text: 'Früher Zugang zu neuen Features', included: true },
+          { text: 'Spezial-Workshops & Webinare', included: true },
+          { text: 'Private Community-Zugang', included: true },
+        ],
+      },
+    ],
+    expandedFeatures: [
+      {
+        title: '📈 Erweiterte Analytik',
+        features: [
+          { text: 'Detaillierte Trend-Analysen', included: true },
+          { text: 'KI-gestützte Empfehlungen', included: true },
+          { text: 'Benchmark-Vergleich mit anderen Nutzern', included: true },
+        ],
+      },
+      {
+        title: '🎁 Bonus',
+        features: [
+          { text: 'Downloadbare PDF-Zusammenfassungen', included: true },
+          { text: 'Zertifikat nach Abschluss', included: true },
+        ],
+      },
+    ],
+  },
+];
+
+// FAQs data - moved outside component for better performance
+const FAQS_DATA = [
+  {
+    question: 'Kann ich jederzeit kündigen?',
+    answer:
+      'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
+  },
+  {
+    question: 'Was passiert nach dem Ende meines kostenlosen Plans?',
+    answer:
+      'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
+  },
+  {
+    question: 'Wie funktioniert die 14-Tage Geld-zurück-Garantie?',
+    answer:
+      'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
+  },
+  {
+    question: 'Kann ich meinen Plan später ändern?',
+    answer:
+      'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
+  },
+];
+
+export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId }: SubscriptionPlansEnhancedProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
@@ -40,162 +193,16 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
 
-  const plans: Plan[] = [
-    {
-      id: 'free',
-      name: 'Frei',
-      icon: '🎯',
-      description: 'Perfekt zum Ausprobieren und ersten Üben',
-      monthlyPrice: 0,
-      quarterlyPrice: 0,
-      originalQuarterlyPrice: 0,
-      savings: 0,
-      ctaText: 'Jetzt starten',
-      mainFeatures: [
-        {
-          title: '✨ Grundfunktionen',
-          features: [
-            { text: '3 FSP-Simulationen pro Monat', included: true },
-            { text: '3 KP-Simulationen pro Monat', included: true },
-            { text: 'Zugang zu allen Fachgebieten', included: true },
-            { text: 'Basis-Evaluation mit Punktzahl', included: true },
-          ],
-        },
-        {
-          title: '🔒 Eingeschränkt',
-          features: [
-            { text: 'Detailliertes Feedback', included: false },
-            { text: 'Verlaufsübersicht', included: false },
-            { text: 'Lernressourcen & Tipps', included: false },
-          ],
-        },
-      ],
-      expandedFeatures: [],
-    },
-    {
-      id: 'basic',
-      name: 'Standard',
-      icon: '🚀',
-      description: 'Optimal für regelmäßiges und fokussiertes Training',
-      monthlyPrice: 49,
-      quarterlyPrice: 125,
-      originalQuarterlyPrice: 147,
-      savings: 22,
-      popular: true,
-      ctaText: 'Jetzt upgraden',
-      mainFeatures: [
-        {
-          title: '✨ Alles aus Frei, plus:',
-          features: [
-            { text: 'Unbegrenzte FSP-Simulationen', included: true },
-            { text: 'Unbegrenzte KP-Simulationen', included: true },
-            { text: 'Detailliertes Feedback nach jeder Simulation', included: true },
-            { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
-          ],
-        },
-        {
-          title: '📊 Fortschrittsverfolgung',
-          features: [
-            { text: 'Vollständige Verlaufsübersicht', included: true },
-            { text: 'Leistungsstatistiken im Dashboard', included: true },
-            { text: 'Vergleich deiner Entwicklung', included: true },
-          ],
-        },
-      ],
-      expandedFeatures: [
-        {
-          title: '📚 Lernmaterialien',
-          features: [
-            { text: 'Zugang zu Lernressourcen', included: true },
-            { text: 'Prüfungstipps & Best Practices', included: true },
-            { text: 'Musterbeispiele erfolgreicher Gespräche', included: true },
-          ],
-        },
-        {
-          title: '🎯 Support',
-          features: [{ text: 'E-Mail Support innerhalb 24h', included: true }],
-        },
-      ],
-    },
-    {
-      id: 'unlimited',
-      name: 'Premium',
-      icon: '👑',
-      description: 'Maximale Vorbereitung mit persönlicher Betreuung',
-      monthlyPrice: 99,
-      quarterlyPrice: 252,
-      originalQuarterlyPrice: 297,
-      savings: 45,
-      ctaText: 'Premium werden',
-      mainFeatures: [
-        {
-          title: '✨ Alles aus Standard, plus:',
-          features: [
-            { text: 'Prioritäts-Support innerhalb 4h', included: true },
-            { text: 'Persönliche Lernplan-Erstellung', included: true },
-            { text: '1:1 Videokonsultation mit Experten (30 Min/Monat)', included: true },
-            { text: 'Individuelle Schwachstellen-Analyse', included: true },
-          ],
-        },
-        {
-          title: '🎓 Exklusiver Zugang',
-          features: [
-            { text: 'Premium-Fälle aus realen Prüfungen', included: true },
-            { text: 'Früher Zugang zu neuen Features', included: true },
-            { text: 'Spezial-Workshops & Webinare', included: true },
-            { text: 'Private Community-Zugang', included: true },
-          ],
-        },
-      ],
-      expandedFeatures: [
-        {
-          title: '📈 Erweiterte Analytik',
-          features: [
-            { text: 'Detaillierte Trend-Analysen', included: true },
-            { text: 'KI-gestützte Empfehlungen', included: true },
-            { text: 'Benchmark-Vergleich mit anderen Nutzern', included: true },
-          ],
-        },
-        {
-          title: '🎁 Bonus',
-          features: [
-            { text: 'Downloadbare PDF-Zusammenfassungen', included: true },
-            { text: 'Zertifikat nach Abschluss', included: true },
-          ],
-        },
-      ],
-    },
-  ];
-
-  const faqs = [
-    {
-      question: 'Kann ich jederzeit kündigen?',
-      answer:
-        'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
-    },
-    {
-      question: 'Was passiert nach dem Ende meines kostenlosen Plans?',
-      answer:
-        'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
-    },
-    {
-      question: 'Wie funktioniert die 14-Tage Geld-zurück-Garantie?',
-      answer:
-        'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
-    },
-    {
-      question: 'Kann ich meinen Plan später ändern?',
-      answer:
-        'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
-    },
-  ];
-
   const getPrice = (plan: Plan) => {
     return isQuarterly ? plan.quarterlyPrice : plan.monthlyPrice;
   };
 
   const handleSelectPlan = (planId: string) => {
-    onSelectPlan?.(planId);
+    if (!onSelectPlan) {
+      return;
+    }
+
+    onSelectPlan(planId);
   };
 
   const toggleExpand = (planId: string) => {
@@ -393,12 +400,29 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           fontSize: 13,
           textAlign: 'center',
         },
+        currentPlanBadge: {
+          backgroundColor: '#10B981',
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 20,
+          marginBottom: 12,
+          alignSelf: 'center',
+        },
+        currentPlanText: {
+          color: '#fff',
+          fontSize: 14,
+          fontWeight: '600',
+          textAlign: 'center',
+        },
         ctaButton: {
           width: '100%',
           paddingVertical: 18,
           borderRadius: 14,
           alignItems: 'center',
           marginBottom: 30,
+        },
+        ctaButtonDisabled: {
+          opacity: 0.7,
         },
         ctaButtonText: {
           color: '#fff',
@@ -595,7 +619,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
           textAlign: 'center',
         },
       }),
-    [isMobile, width]
+    [isMobile]
   );
 
   return (
@@ -644,7 +668,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
 
           {/* Pricing Cards */}
           <View style={styles.pricingGrid}>
-            {plans.map((plan) => (
+            {PLANS_DATA.map((plan) => (
               <View key={plan.id} style={[styles.pricingCard, plan.popular && styles.popularCard]}>
                 {plan.popular && (
                   <View style={styles.popularBadge}>
@@ -688,15 +712,34 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
                   </Text>
                 </View>
 
+                {/* Current Plan Badge */}
+                {currentPlanId === plan.id && (
+                  <View style={styles.currentPlanBadge}>
+                    <Text style={styles.currentPlanText}>✓ Aktueller Plan</Text>
+                  </View>
+                )}
+
                 {/* CTA Button */}
-                <TouchableOpacity onPress={() => handleSelectPlan(plan.id)} activeOpacity={0.9}>
+                <TouchableOpacity
+                  onPress={() => handleSelectPlan(plan.id)}
+                  activeOpacity={0.9}
+                  disabled={currentPlanId === plan.id}
+                >
                   <LinearGradient
-                    colors={plan.popular ? ['#ff7854', '#ff6b6b'] : ['#ff9a56', '#ff6b6b']}
-                    style={styles.ctaButton}
+                    colors={
+                      currentPlanId === plan.id
+                        ? ['#9CA3AF', '#6B7280']
+                        : plan.popular
+                          ? ['#ff7854', '#ff6b6b']
+                          : ['#ff9a56', '#ff6b6b']
+                    }
+                    style={[styles.ctaButton, currentPlanId === plan.id && styles.ctaButtonDisabled]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Text style={styles.ctaButtonText}>{plan.ctaText}</Text>
+                    <Text style={styles.ctaButtonText}>
+                      {currentPlanId === plan.id ? 'Aktueller Plan' : plan.ctaText}
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
@@ -789,7 +832,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan }: Subscription
             <Text style={styles.faqSubtitle}>Alles, was Sie über unsere Pläne wissen müssen</Text>
 
             <View style={styles.faqList}>
-              {faqs.map((faq, index) => (
+              {FAQS_DATA.map((faq, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[styles.faqItem, expandedFAQ === index && styles.faqItemActive]}
