@@ -214,7 +214,15 @@ const AnimatedCategoryCard: React.FC<{
         },
       ]}
     >
-      <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityLabel={`${category.title}, ${category.count} Kategorien`}
+        accessibilityHint="Tippen Sie, um die Kategorien anzuzeigen"
+      >
         <LinearGradient
           colors={category.gradientColors}
           start={{ x: 0, y: 0 }}
@@ -224,7 +232,17 @@ const AnimatedCategoryCard: React.FC<{
           {/* Content */}
           <View style={styles.cardContent}>
             {/* Favorite Button */}
-            <TouchableOpacity style={styles.favoriteButton} onPress={onToggleFavorite} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={onToggleFavorite}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isFavorite ? `${category.title} von Favoriten entfernen` : `${category.title} zu Favoriten hinzufügen`
+              }
+              accessibilityState={{ selected: isFavorite }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Heart size={24} color={MEDICAL_COLORS.white} fill={isFavorite ? MEDICAL_COLORS.white : 'none'} />
             </TouchableOpacity>
 
@@ -607,7 +625,14 @@ const BibliothekIndex: React.FC = () => {
             <View style={styles.headerContent}>
               {/* Left Section: Menu + Logo */}
               <View style={styles.headerLeft}>
-                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={styles.menuButton}
+                  onPress={() => setMenuOpen(true)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Menü öffnen"
+                  accessibilityHint="Öffnet das Navigationsmenü"
+                >
                   <LinearGradient
                     colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                     style={styles.menuButtonGradient}
@@ -651,6 +676,9 @@ const BibliothekIndex: React.FC = () => {
                 placeholderTextColor={colors.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                accessibilityLabel="Fachgebiet suchen"
+                accessibilityHint="Geben Sie den Namen eines Fachgebiets ein"
+                accessibilityRole="search"
               />
             </View>
 
@@ -661,6 +689,10 @@ const BibliothekIndex: React.FC = () => {
                 (showOnlyFavorites || sortBy !== 'alphabetical') && dynamicStyles.filterButtonActive,
               ]}
               onPress={() => setFilterModalVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Filter und Sortieren"
+              accessibilityHint="Öffnet Optionen zum Filtern und Sortieren der Fachgebiete"
+              accessibilityState={{ expanded: filterModalVisible }}
             >
               <Filter
                 size={20}
