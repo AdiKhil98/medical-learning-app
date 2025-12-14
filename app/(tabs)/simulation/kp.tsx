@@ -1883,20 +1883,6 @@ function KPSimulationScreen() {
               <FlashcardCarousel />
             </View>
 
-            {/* Debug Panel - Visible Log */}
-            {Platform.OS === 'web' && widgetDebugLog.length > 0 && (
-              <View style={styles.debugPanel}>
-                <Text style={styles.debugPanelTitle}>🔍 Widget Initialization Debug Log</Text>
-                <ScrollView style={styles.debugLogContainer} nestedScrollEnabled>
-                  {widgetDebugLog.map((log, index) => (
-                    <Text key={index} style={styles.debugLogText}>
-                      {log}
-                    </Text>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
             {/* Widget Area */}
             {!isSimulationLocked && (
               <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
@@ -2277,30 +2263,6 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     minHeight: 400,
-  },
-  debugPanel: {
-    backgroundColor: '#1f2937',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 20,
-    maxHeight: 300,
-    borderWidth: 2,
-    borderColor: '#10b981',
-  },
-  debugPanelTitle: {
-    color: '#10b981',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  debugLogContainer: {
-    maxHeight: 250,
-  },
-  debugLogText: {
-    color: '#d1d5db',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    marginBottom: 4,
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space
