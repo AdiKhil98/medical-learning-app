@@ -15,8 +15,48 @@
   
   <!-- Theme Colors -->
   <meta name="theme-color" content="#D4A574" />
-  
+
   <title>KP Med</title>
+
+  <!-- Keyboard Focus Indicators for Accessibility -->
+  <style>
+    /* Focus indicators for keyboard navigation only (not mouse clicks) */
+    *:focus-visible {
+      outline: 3px solid #D4A574 !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.2) !important;
+    }
+
+    /* Enhanced focus for buttons and links */
+    button:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible,
+    [role="link"]:focus-visible {
+      outline: 3px solid #D4A574 !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 0 5px rgba(212, 165, 116, 0.25) !important;
+    }
+
+    /* Focus for form inputs (already have border focus, add glow) */
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.3) !important;
+    }
+
+    /* Focus for menu items and navigation */
+    [role="menuitem"]:focus-visible,
+    [role="menu"]:focus-visible {
+      outline: 2px solid #D4A574 !important;
+      outline-offset: 2px !important;
+      background-color: rgba(212, 165, 116, 0.1) !important;
+    }
+
+    /* Skip default focus outline for mouse users */
+    *:focus:not(:focus-visible) {
+      outline: none !important;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
