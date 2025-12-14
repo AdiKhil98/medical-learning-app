@@ -1167,17 +1167,18 @@ const styles = StyleSheet.create({
     borderColor: MEDICAL_COLORS.slate100,
   },
   statNumber: {
-    fontSize: TYPOGRAPHY.fontSize.xxxl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: 6,
+    fontSize: 42,
+    fontWeight: '800',
+    marginBottom: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: MEDICAL_COLORS.slate500,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    color: MEDICAL_COLORS.slate700,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   // Section Header
