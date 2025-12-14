@@ -87,8 +87,8 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                 <Text style={styles.cardTitle}>Unsere Lösung: Fokussiertes Lernen + Realistische Simulation</Text>
                 <Text style={styles.cardText}>
                   Bei KP Med erhalten Sie genau das, was Sie brauchen: prüfungsrelevante medizinische Inhalte kombiniert
-                  mit realistischen KP & FSP Simulationen. Kein überflüssiges Wissen, keine Zeitverschwendung – nur das,
-                  was wirklich in der Prüfung vorkommt.
+                  mit realistischen Simulationen für Kenntnisprüfung und Fachsprachprüfung. Kein überflüssiges Wissen,
+                  keine Zeitverschwendung – nur das, was wirklich in der Prüfung vorkommt.
                 </Text>
               </View>
             </View>
@@ -123,7 +123,9 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                     <Users size={24} color="#FFFFFF" strokeWidth={2} />
                   </LinearGradient>
                   <View style={styles.featureContent}>
-                    <Text style={styles.featureTitle}>Professionelle KP & FSP Simulationen</Text>
+                    <Text style={styles.featureTitle}>
+                      Professionelle Simulationen für Kenntnisprüfung und Fachsprachprüfung
+                    </Text>
                     <Text style={styles.featureText}>
                       Realistische Prüfungssituationen, die Sie optimal vorbereiten. Üben Sie so oft Sie möchten in
                       einer sicheren Umgebung.
