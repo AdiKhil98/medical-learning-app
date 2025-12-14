@@ -982,11 +982,12 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   pageTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xxxl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.secondary,
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#000000',
     marginBottom: SPACING.md,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    letterSpacing: -0.5,
   },
   pageSubtitle: {
     fontSize: TYPOGRAPHY.fontSize.lg,
