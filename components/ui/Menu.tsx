@@ -272,13 +272,30 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.overlay} onPress={onClose} />
-      <Animated.View style={[dynamicStyles.menu, { transform: [{ translateX: slideAnim }] }]}>
+      <Pressable
+        style={styles.overlay}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Menü schließen"
+        accessibilityHint="Tippen Sie, um das Menü zu schließen"
+      />
+      <Animated.View
+        style={[dynamicStyles.menu, { transform: [{ translateX: slideAnim }] }]}
+        accessible={true}
+        accessibilityRole="menu"
+        accessibilityLabel="Hauptmenü"
+      >
         <LinearGradient colors={gradientColors} style={styles.menuGradient} />
 
         {/* Close Button */}
         <View style={styles.closeButtonContainer}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel="Menü schließen"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <X size={24} color={MEDICAL_COLORS.slate500} />
           </TouchableOpacity>
         </View>
@@ -307,6 +324,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={styles.modernMenuItem}
                 onPress={() => handleMenuItemPress(item.route)}
                 activeOpacity={0.7}
+                accessibilityRole="menuitem"
+                accessibilityLabel={`${item.label}, ${item.subtitle}`}
+                accessibilityHint={`Navigiert zu ${item.label}`}
               >
                 <LinearGradient colors={item.gradientColors} style={styles.menuIconGradient}>
                   <item.icon size={24} color={MEDICAL_COLORS.white} />
@@ -324,6 +344,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                 style={styles.modernMenuItem}
                 onPress={() => handleMenuItemPress('/admin')}
                 activeOpacity={0.7}
+                accessibilityRole="menuitem"
+                accessibilityLabel="Admin Panel, Verwaltung & Einstellungen"
+                accessibilityHint="Navigiert zum Admin-Bereich"
               >
                 <LinearGradient colors={MEDICAL_COLORS.redGradient} style={styles.menuIconGradient}>
                   <Shield size={24} color={MEDICAL_COLORS.white} />
@@ -337,7 +360,17 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             )}
 
             {/* Kontakt & Info - Expandable */}
-            <TouchableOpacity style={styles.modernMenuItem} onPress={toggleSubmenu} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.modernMenuItem}
+              onPress={toggleSubmenu}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Kontakt & Info, Hilfe & Support"
+              accessibilityHint={
+                isSubmenuOpen ? 'Tippen Sie, um das Untermenü zu schließen' : 'Tippen Sie, um das Untermenü zu öffnen'
+              }
+              accessibilityState={{ expanded: isSubmenuOpen }}
+            >
               <LinearGradient colors={MEDICAL_COLORS.cyanGradient} style={styles.menuIconGradient}>
                 <Info size={24} color={MEDICAL_COLORS.white} />
               </LinearGradient>
@@ -358,6 +391,9 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
                   style={styles.submenuItem}
                   onPress={() => handleMenuItemPress(item.route)}
                   activeOpacity={0.7}
+                  accessibilityRole="menuitem"
+                  accessibilityLabel={item.label}
+                  accessibilityHint={`Navigiert zu ${item.label}`}
                 >
                   <Text style={styles.submenuText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
                     {item.label}
@@ -370,7 +406,14 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
 
         {/* Logout Button at Bottom */}
         <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Abmelden"
+            accessibilityHint="Melden Sie sich von Ihrem Konto ab"
+          >
             <LinearGradient
               colors={MEDICAL_COLORS.redGradient}
               style={styles.logoutGradient}
