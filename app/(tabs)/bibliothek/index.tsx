@@ -24,11 +24,15 @@ import {
   AlertTriangle,
   Droplet,
   Scan,
+  Menu as MenuIcon,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import Menu from '@/components/ui/Menu';
+import Logo from '@/components/ui/Logo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 import { SecureLogger } from '@/lib/security';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -295,6 +299,7 @@ const BibliothekIndex: React.FC = () => {
   const { session } = useAuth();
   const { width: screenWidth, isMobile, isSmallMobile, isTablet } = useResponsive();
 
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -576,6 +581,46 @@ const BibliothekIndex: React.FC = () => {
       <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
+        {/* Modern Header - Matching Homepage */}
+        <View
+          style={[
+            styles.modernHeader,
+            Platform.OS === 'web' && {
+              position: 'sticky' as any,
+              top: 0,
+              zIndex: 1000,
+            },
+          ]}
+        >
+          {/* Orange accent line at top */}
+          {Platform.OS === 'web' && (
+            <LinearGradient
+              colors={['#FF8C42', '#FF6B6B', '#FFA66B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: 3, width: '100%' }}
+            />
+          )}
+          <LinearGradient colors={MEDICAL_COLORS.headerGradient as any} style={styles.headerGradient}>
+            <View style={styles.headerContent}>
+              {/* Left Section: Menu + Logo */}
+              <View style={styles.headerLeft}>
+                <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+                  <LinearGradient
+                    colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
+                    style={styles.menuButtonGradient}
+                  >
+                    <MenuIcon size={22} color={MEDICAL_COLORS.warmOrange} />
+                  </LinearGradient>
+                </TouchableOpacity>
+                <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={false} />
+              </View>
+              {/* Right Section: User Avatar */}
+              <UserAvatar size="medium" />
+            </View>
+          </LinearGradient>
+        </View>
+
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
@@ -784,6 +829,9 @@ const BibliothekIndex: React.FC = () => {
             </TouchableOpacity>
           </LinearGradient>
         </ScrollView>
+
+        {/* Menu */}
+        <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       </SafeAreaView>
     </View>
   );
@@ -803,9 +851,57 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+
+  // Header Styles - Matching Homepage
+  modernHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  headerGradient: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  menuButton: {
+    borderRadius: BORDER_RADIUS.md,
+    overflow: 'hidden',
+    minWidth: 44,
+    minHeight: 44,
+  },
+  menuButtonGradient: {
+    padding: SPACING.sm + 2,
+    borderRadius: BORDER_RADIUS.md,
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 24,
     paddingBottom: 96,
   },
 
@@ -893,10 +989,11 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   pageSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    lineHeight: 24,
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    color: MEDICAL_COLORS.slate600,
+    lineHeight: 26,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    fontWeight: TYPOGRAPHY.fontWeight.normal,
   },
 
   // Search & Filter Bar
