@@ -89,7 +89,14 @@ export default function SimulationScreen() {
       <View style={styles.modernHeader}>
         <LinearGradient colors={headerGradient} style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Menü öffnen"
+              accessibilityHint="Öffnet das Navigationsmenü"
+            >
               <LinearGradient
                 colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                 style={styles.menuButtonGradient}
@@ -133,6 +140,11 @@ export default function SimulationScreen() {
             onPress={() => router.push('/simulation/kp')}
             activeOpacity={0.9}
             style={styles.cardWrapper}
+            accessibilityRole="button"
+            accessibilityLabel={`KP-Simulation: Klinische Prüfung${
+              subscriptionInfo ? `, ${subscriptionInfo.remaining} Simulationen verbleibend` : ''
+            }`}
+            accessibilityHint="Startet die Kenntnisprüfung Simulation mit praxisnahen Fallbeispielen"
           >
             <LinearGradient
               colors={['#6366F1', '#8B5CF6', '#A855F7']}
@@ -207,6 +219,11 @@ export default function SimulationScreen() {
             onPress={() => router.push('/simulation/fsp')}
             activeOpacity={0.9}
             style={styles.cardWrapper}
+            accessibilityRole="button"
+            accessibilityLabel={`FSP-Simulation: Fachsprachprüfung${
+              subscriptionInfo ? `, ${subscriptionInfo.remaining} Simulationen verbleibend` : ''
+            }`}
+            accessibilityHint="Startet die Fachsprachprüfung Simulation mit realistischen Patientengesprächen"
           >
             <LinearGradient
               colors={['#F97316', '#FB923C', '#FBBF24']}
