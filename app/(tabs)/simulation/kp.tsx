@@ -1078,7 +1078,7 @@ function KPSimulationScreen() {
       }
 
       // Reset state
-      resetSimulationState();
+      await resetSimulationState();
       return;
     }
 
@@ -1110,7 +1110,7 @@ function KPSimulationScreen() {
     });
 
     // Reset simulation state to allow restart
-    resetSimulationState();
+    await resetSimulationState();
 
     // After a short delay, reinitialize the conversation monitoring for restart
     setTimeout(() => {
@@ -1174,7 +1174,7 @@ function KPSimulationScreen() {
     });
 
     // Reset simulation state
-    resetSimulationState();
+    await resetSimulationState();
 
     // Show completion modal after cleanup
     setTimeout(() => {
@@ -1226,9 +1226,9 @@ function KPSimulationScreen() {
   const navigateToProgress = navigateToEvaluation;
 
   // Close completion modal
-  const closeCompletionModal = () => {
+  const closeCompletionModal = async () => {
     setShowSimulationCompleted(false);
-    resetSimulationState();
+    await resetSimulationState();
   };
 
   // Early completion functions
@@ -1299,7 +1299,7 @@ function KPSimulationScreen() {
     }
 
     // Reset simulation state
-    resetSimulationState();
+    await resetSimulationState();
 
     // Show completion modal after cleanup
     setTimeout(() => {

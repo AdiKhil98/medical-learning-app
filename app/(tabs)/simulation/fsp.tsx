@@ -967,7 +967,7 @@ function FSPSimulationScreen() {
       }
 
       // Reset state
-      resetSimulationState();
+      await resetSimulationState();
       return;
     }
 
@@ -999,7 +999,7 @@ function FSPSimulationScreen() {
     });
 
     // Reset simulation state to allow restart
-    resetSimulationState();
+    await resetSimulationState();
 
     // After a short delay, reinitialize the conversation monitoring for restart
     setTimeout(() => {
@@ -1067,7 +1067,7 @@ function FSPSimulationScreen() {
     });
 
     // Reset simulation state
-    resetSimulationState();
+    await resetSimulationState();
 
     // Show completion modal after cleanup
     setTimeout(() => {
@@ -1088,9 +1088,9 @@ function FSPSimulationScreen() {
   };
 
   // Close completion modal
-  const closeCompletionModal = () => {
+  const closeCompletionModal = async () => {
     setShowSimulationCompleted(false);
-    resetSimulationState();
+    await resetSimulationState();
   };
 
   // Early completion functions
@@ -1158,7 +1158,7 @@ function FSPSimulationScreen() {
     }
 
     // Reset simulation state
-    resetSimulationState();
+    await resetSimulationState();
 
     // Show completion modal after cleanup
     setTimeout(() => {
