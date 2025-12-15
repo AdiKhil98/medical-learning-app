@@ -379,7 +379,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
             {/* SLIDE 2 - Tipp des Tages */}
             <View style={styles.webSlide}>
-              <Text style={styles.slideTitle}>Tipp des Tages</Text>
               <View style={dynamicStyles.tipCard}>
                 <View style={styles.tipHeader}>
                   <View style={styles.tipIconContainer}>
@@ -397,7 +396,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
 
             {/* SLIDE 3 - Frage des Tages */}
             <View style={styles.webSlide}>
-              <Text style={styles.slideTitle}>Frage des Tages</Text>
               <View style={dynamicStyles.questionCard}>
                 <View style={styles.questionHeader}>
                   <View style={styles.questionIconContainer}>
@@ -600,8 +598,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.slideContainer}>
-                <Text style={styles.slideTitle}>Tipp des Tages</Text>
-
                 <View style={dynamicStyles.tipCard}>
                   <View style={styles.tipHeader}>
                     <View style={styles.tipIconContainer}>
@@ -628,8 +624,6 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.slideContainer}>
-                <Text style={styles.slideTitle}>Frage des Tages</Text>
-
                 <View style={dynamicStyles.questionCard}>
                   <View style={styles.questionHeader}>
                     <View style={styles.questionIconContainer}>
