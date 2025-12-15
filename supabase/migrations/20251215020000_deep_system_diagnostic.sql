@@ -36,13 +36,13 @@ BEGIN
 
     -- Show details
     FOR r IN (
-      SELECT u.id, u.email, u.current_plan
+      SELECT u.id, u.email
       FROM users u
       LEFT JOIN user_simulation_quota usq ON u.id = usq.user_id
       WHERE usq.user_id IS NULL
       LIMIT 5
     ) LOOP
-      RAISE NOTICE '  User: % (email: %, plan: %)', r.id, r.email, r.current_plan;
+      RAISE NOTICE '  User: % (email: %)', r.id, r.email;
     END LOOP;
   ELSE
     RAISE NOTICE '✅ All users have quota records';
@@ -110,34 +110,38 @@ BEGIN
   RAISE NOTICE '';
 
   -- ============================================
-  -- CHECK 4: Users table vs users quota tier mismatch
+  -- CHECK 4: Subscription vs quota tier mismatch
   -- ============================================
-  RAISE NOTICE '📊 CHECK 4: Users table vs quota tier mismatch';
+  RAISE NOTICE '📊 CHECK 4: Subscription vs quota tier mismatch';
   RAISE NOTICE '---';
 
   SELECT COUNT(*) INTO v_count
-  FROM users u
-  INNER JOIN user_simulation_quota usq ON u.id = usq.user_id
-  WHERE u.current_plan != usq.subscription_tier
+  FROM user_subscriptions us
+  INNER JOIN user_simulation_quota usq ON us.user_id = usq.user_id
+  WHERE us.tier != usq.subscription_tier
+    AND us.status = 'active'
     AND usq.period_start = date_trunc('month', NOW());
 
   IF v_count > 0 THEN
-    RAISE WARNING '⚠️  Found % users with mismatched plan in users table vs quota!', v_count;
+    RAISE WARNING '⚠️  Found % users with mismatched subscription vs quota tier!', v_count;
     v_total_issues := v_total_issues + 1;
 
     FOR r IN (
-      SELECT u.id, u.email, u.current_plan as users_plan, usq.subscription_tier as quota_plan
-      FROM users u
-      INNER JOIN user_simulation_quota usq ON u.id = usq.user_id
-      WHERE u.current_plan != usq.subscription_tier
+      SELECT us.user_id, us.tier as subscription_tier,
+             usq.subscription_tier as quota_tier,
+             usq.total_simulations as quota_limit
+      FROM user_subscriptions us
+      INNER JOIN user_simulation_quota usq ON us.user_id = usq.user_id
+      WHERE us.tier != usq.subscription_tier
+        AND us.status = 'active'
         AND usq.period_start = date_trunc('month', NOW())
       LIMIT 5
     ) LOOP
-      RAISE NOTICE '  Mismatch: user=%, email=%, users.plan=%, quota.plan=%',
-        r.id, r.email, r.users_plan, r.quota_plan;
+      RAISE NOTICE '  Mismatch: user=%, subscription.tier=%, quota.tier=%, quota.limit=%',
+        r.user_id, r.subscription_tier, r.quota_tier, r.quota_limit;
     END LOOP;
   ELSE
-    RAISE NOTICE '✅ Users table and quota table plans are synced';
+    RAISE NOTICE '✅ Subscription and quota tiers are synced';
   END IF;
   RAISE NOTICE '';
 
@@ -375,7 +379,7 @@ BEGIN
   RAISE NOTICE '  1. Users without quota records';
   RAISE NOTICE '  2. Orphaned quota records';
   RAISE NOTICE '  3. Expired but active subscriptions';
-  RAISE NOTICE '  4. Users/quota tier mismatches';
+  RAISE NOTICE '  4. Subscription vs quota tier mismatches';
   RAISE NOTICE '  5. Orphaned simulation sessions';
   RAISE NOTICE '  6. Invalid simulation counts';
   RAISE NOTICE '  7. Multiple active subscriptions';
