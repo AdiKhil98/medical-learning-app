@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Alert,
-  Platform
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, RefreshCw, BriefcaseMedical } from 'lucide-react-native';
@@ -24,34 +16,37 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     // Listen for auth state changes to handle email verification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          setVerificationStatus('success');
-          
-          // Start countdown timer
-          const timer = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(timer);
-                router.replace('/auth/login');
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+        setVerificationStatus('success');
 
-          return () => clearInterval(timer);
-        }
+        // Start countdown timer
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              router.replace('/auth/login');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => clearInterval(timer);
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [router]);
 
   const handleResendVerification = async () => {
     if (!params.email) {
-      Alert.alert('Fehler', 'Keine E-Mail-Adresse gefunden. Bitte gehen Sie zurück und versuchen Sie sich erneut zu registrieren.');
+      Alert.alert(
+        'Fehler',
+        'Keine E-Mail-Adresse gefunden. Bitte gehen Sie zurück und versuchen Sie sich erneut zu registrieren.'
+      );
       return;
     }
 
@@ -61,20 +56,18 @@ export default function VerifyEmail() {
         type: 'signup',
         email: params.email as string,
         options: {
-          emailRedirectTo: Platform.OS === 'web' 
-            ? `${window.location.origin}/auth/verify-email`
-            : 'medicallearningapp://auth/verify-email'
-        }
+          emailRedirectTo:
+            Platform.OS === 'web'
+              ? `${window.location.origin}/auth/verify-email`
+              : 'medicallearningapp://auth/verify-email',
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      Alert.alert(
-        'E-Mail gesendet',
-        'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet.'
-      );
+      Alert.alert('E-Mail gesendet', 'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet.');
     } catch (error: any) {
       Alert.alert('Fehler', error.message || 'Fehler beim erneuten Senden der Bestätigungs-E-Mail');
     } finally {
@@ -89,20 +82,18 @@ export default function VerifyEmail() {
   return (
     <View style={styles.container}>
       {/* Background Gradient */}
-      <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#D4A574', '#C19A6B']}
-                style={styles.logoGradient}
-              >
+              <LinearGradient colors={['#D4A574', '#C19A6B']} style={styles.logoGradient}>
                 <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
@@ -122,9 +113,7 @@ export default function VerifyEmail() {
             {verificationStatus === 'success' ? (
               <>
                 <Text style={styles.title}>E-Mail erfolgreich bestätigt!</Text>
-                <Text style={styles.subtitle}>
-                  Ihr Konto wurde erfolgreich verifiziert.
-                </Text>
+                <Text style={styles.subtitle}>Ihr Konto wurde erfolgreich verifiziert.</Text>
                 <Text style={styles.instructions}>
                   Sie werden in {countdown} Sekunden automatisch zur Anmeldung weitergeleitet.
                 </Text>
@@ -135,9 +124,7 @@ export default function VerifyEmail() {
                 <Text style={styles.successMessage}>
                   {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
                 </Text>
-                <Text style={styles.subtitle}>
-                  Wir haben einen Bestätigungslink gesendet an:
-                </Text>
+                <Text style={styles.subtitle}>Wir haben einen Bestätigungslink gesendet an:</Text>
                 <View style={styles.emailContainer}>
                   <Text style={styles.email}>{params.email}</Text>
                 </View>
@@ -153,10 +140,7 @@ export default function VerifyEmail() {
           {/* Actions */}
           <View style={styles.actions}>
             {verificationStatus === 'success' ? (
-              <TouchableOpacity
-                onPress={handleBackToLogin}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity onPress={handleBackToLogin} activeOpacity={0.8}>
                 <LinearGradient
                   colors={['#10b981', '#059669']}
                   start={{ x: 0, y: 0 }}
@@ -168,32 +152,21 @@ export default function VerifyEmail() {
               </TouchableOpacity>
             ) : (
               <>
-                <TouchableOpacity
-                  onPress={handleResendVerification}
-                  disabled={resendLoading}
-                  activeOpacity={0.8}
-                >
+                <TouchableOpacity onPress={handleResendVerification} disabled={resendLoading} activeOpacity={0.8}>
                   <LinearGradient
                     colors={['#F0FDF4', '#DCFCE7']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.resendButtonGradient}
                   >
-                    <RefreshCw
-                      size={20}
-                      color="#10b981"
-                      style={resendLoading ? styles.spinning : undefined}
-                    />
+                    <RefreshCw size={20} color="#10b981" style={resendLoading ? styles.spinning : undefined} />
                     <Text style={styles.resendButtonText}>
                       {resendLoading ? 'Wird gesendet...' : 'E-Mail erneut senden'}
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={handleBackToLogin}
-                >
+                <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
                   <Text style={styles.backButtonText}>Zurück zur Anmeldung</Text>
                 </TouchableOpacity>
               </>
@@ -208,7 +181,7 @@ export default function VerifyEmail() {
               </Text>
             </View>
           )}
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -229,13 +202,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingTop: 40,
+    paddingBottom: 40,
     maxWidth: 480,
     width: '100%',
     alignSelf: 'center',
+    minHeight: '100%',
   },
   logoSection: {
     alignItems: 'center',
