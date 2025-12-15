@@ -464,9 +464,12 @@ exports.handler = async (event, context) => {
 
         subData.status = 'cancelled';
 
-        const cancelResult = await upsertSubscriptionViaFunction(userId, subData, eventType);
+        // ✨ ATOMIC: Process subscription + quota in single transaction
+        const cancelResult = await processSubscriptionAtomically(userId, subData, eventType);
 
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
+        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
+          success: cancelResult.success,
+        });
         console.log(`✅ Subscription cancelled for user ${userId}, access until ${subData.expiresAt}`);
         console.log('Cancel result:', cancelResult);
         break;
