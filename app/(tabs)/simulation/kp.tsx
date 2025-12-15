@@ -1565,7 +1565,7 @@ function KPSimulationScreen() {
   };
 
   // Reset simulation state for restart
-  const resetSimulationState = () => {
+  const resetSimulationState = async () => {
     logger.info('🔄 KP: Resetting simulation state for restart');
 
     // CRITICAL: Clear intervals FIRST before resetting refs
@@ -1597,8 +1597,6 @@ function KPSimulationScreen() {
     setTimerActive(false);
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
-    setSessionToken(null);
-    sessionTokenRef.current = null; // Also reset ref
     setUsageMarked(false);
     usageMarkedRef.current = false; // Also reset ref
 
@@ -1632,12 +1630,35 @@ function KPSimulationScreen() {
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
+    // CRITICAL FIX: Generate new session token for next simulation
+    // The old session is ended, we need a fresh token for the next run
+    logger.info('🔑 KP: Generating new session token for next simulation');
+    try {
+      const result = await simulationTracker.startSimulation('kp');
+
+      if (!result.success || !result.sessionToken) {
+        logger.error('❌ KP: Failed to generate new session token:', result.error);
+        setSessionToken(null);
+        sessionTokenRef.current = null;
+      } else {
+        logger.info(`✅ KP: New session token generated: ${result.sessionToken.substring(0, 8)}...`);
+        setSessionToken(result.sessionToken);
+        sessionTokenRef.current = result.sessionToken;
+      }
+    } catch (error) {
+      logger.error('❌ KP: Exception generating new session token:', error);
+      setSessionToken(null);
+      sessionTokenRef.current = null;
+    }
+
     logger.info('✅ KP: Simulation state reset completed - ready for next run');
     logger.info(
       '🔍 KP: Post-reset state - timerActiveRef:',
       timerActiveRef.current,
       'timerInterval:',
-      timerInterval.current
+      timerInterval.current,
+      'sessionToken:',
+      sessionTokenRef.current ? `${sessionTokenRef.current.substring(0, 8)}...` : 'null'
     );
 
     // Re-setup conversation monitoring for next run

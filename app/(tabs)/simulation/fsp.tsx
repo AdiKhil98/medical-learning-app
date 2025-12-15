@@ -1386,7 +1386,7 @@ function FSPSimulationScreen() {
   };
 
   // Reset simulation state for restart
-  const resetSimulationState = () => {
+  const resetSimulationState = async () => {
     logger.info('🔄 FSP: Resetting simulation state for restart');
 
     // CRITICAL: Clear intervals FIRST before resetting refs
@@ -1418,8 +1418,6 @@ function FSPSimulationScreen() {
     setTimerActive(false);
     setTimeRemaining(20 * 60);
     setTimerEndTime(0);
-    setSessionToken(null);
-    sessionTokenRef.current = null; // Also reset ref
     setUsageMarked(false);
     usageMarkedRef.current = false; // Also reset ref
 
@@ -1453,12 +1451,35 @@ function FSPSimulationScreen() {
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
 
+    // CRITICAL FIX: Generate new session token for next simulation
+    // The old session is ended, we need a fresh token for the next run
+    logger.info('🔑 FSP: Generating new session token for next simulation');
+    try {
+      const result = await simulationTracker.startSimulation('fsp');
+
+      if (!result.success || !result.sessionToken) {
+        logger.error('❌ FSP: Failed to generate new session token:', result.error);
+        setSessionToken(null);
+        sessionTokenRef.current = null;
+      } else {
+        logger.info(`✅ FSP: New session token generated: ${result.sessionToken.substring(0, 8)}...`);
+        setSessionToken(result.sessionToken);
+        sessionTokenRef.current = result.sessionToken;
+      }
+    } catch (error) {
+      logger.error('❌ FSP: Exception generating new session token:', error);
+      setSessionToken(null);
+      sessionTokenRef.current = null;
+    }
+
     logger.info('✅ FSP: Simulation state reset completed - ready for next run');
     logger.info(
       '🔍 FSP: Post-reset state - timerActiveRef:',
       timerActiveRef.current,
       'timerInterval:',
-      timerInterval.current
+      timerInterval.current,
+      'sessionToken:',
+      sessionTokenRef.current ? `${sessionTokenRef.current.substring(0, 8)}...` : 'null'
     );
 
     // Re-setup conversation monitoring for next run
