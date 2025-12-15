@@ -24,6 +24,7 @@
 DO $$
 DECLARE
   v_inconsistent_count integer;
+  r RECORD;
 BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'DIAGNOSING QUOTA/SUBSCRIPTION SYNC ISSUES';
