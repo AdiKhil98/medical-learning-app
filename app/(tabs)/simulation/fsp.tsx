@@ -749,6 +749,25 @@ function FSPSimulationScreen() {
       setUsageMarked(false);
       usageMarkedRef.current = false;
 
+      // CRITICAL FIX: Set timer start time in database
+      // This ensures duration is calculated from when timer actually starts, not session creation
+      try {
+        const { data: timerStartResult, error: timerStartError } = await supabase.rpc('set_simulation_timer_start', {
+          p_session_token: sessionTokenRef.current,
+          p_user_id: user.id,
+        });
+
+        if (timerStartError) {
+          logger.error('❌ FSP: Error setting timer start time:', timerStartError);
+        } else if (timerStartResult?.success) {
+          logger.info('✅ FSP: Timer start time recorded in database');
+        } else {
+          logger.warn('⚠️ FSP: Timer start time not set:', timerStartResult?.message);
+        }
+      } catch (error) {
+        logger.error('❌ FSP: Exception setting timer start time:', error);
+      }
+
       // REMOVED: Optimistic deduction (causes premature quota exceeded lock)
       // New quota system updates in real-time via database triggers
       // No need for optimistic UI - actual count will update when simulation ends

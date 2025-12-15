@@ -869,6 +869,25 @@ function KPSimulationScreen() {
         setUsageMarked(false);
         usageMarkedRef.current = false; // Initialize ref
 
+        // CRITICAL FIX: Set timer start time in database
+        // This ensures duration is calculated from when timer actually starts, not session creation
+        try {
+          const { data: timerStartResult, error: timerStartError } = await supabase.rpc('set_simulation_timer_start', {
+            p_session_token: sessionTokenRef.current,
+            p_user_id: user.id,
+          });
+
+          if (timerStartError) {
+            logger.error('❌ KP: Error setting timer start time:', timerStartError);
+          } else if (timerStartResult?.success) {
+            logger.info('✅ KP: Timer start time recorded in database');
+          } else {
+            logger.warn('⚠️ KP: Timer start time not set:', timerStartResult?.message);
+          }
+        } catch (error) {
+          logger.error('❌ KP: Exception setting timer start time:', error);
+        }
+
         logger.info('✅ KP: Timer started with existing session token');
       } catch (error) {
         logger.error('❌ KP: Error during timer setup:', error);
