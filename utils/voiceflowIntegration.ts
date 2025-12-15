@@ -719,8 +719,8 @@ export class VoiceflowController {
 export function createKPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
   return new VoiceflowController(
     {
-      projectID: '69356a499f9ed06b1b998cdb', // KP57 Project ID (updated 2025-12-07)
-      versionID: '69356a499f9ed06b1b998cdc', // KP57 Version ID
+      projectID: '693f33ad4878e78443a239b6', // KP57 Project ID (updated 2025-12-15)
+      versionID: '693f33ad4878e78443a239b7', // KP57 Version ID
       url: 'https://general-runtime.voiceflow.com',
       simulationType: 'kp',
       title: 'KP Simulation Assistant',
@@ -736,8 +736,8 @@ export function createKPController(supabaseUserId?: string, userEmail?: string):
 export function createFSPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
   return new VoiceflowController(
     {
-      projectID: '69356a50774816d337b5a519', // FSP57 Project ID (updated 2025-12-07)
-      versionID: '69356a50774816d337b5a51a', // FSP57 Version ID
+      projectID: '693f33b85b02b7e6d99c8afb', // FSP57 Project ID (updated 2025-12-15)
+      versionID: '693f33b85b02b7e6d99c8afc', // FSP57 Version ID
       url: 'https://general-runtime.voiceflow.com',
       simulationType: 'fsp',
       title: 'FSP Simulation Assistant',
