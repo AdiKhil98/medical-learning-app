@@ -17,9 +17,7 @@ export const useSubscription = (userId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Optimistic counter state
-  const [optimisticDeduction, setOptimisticDeduction] = useState<number>(0);
-  const [hasOptimisticState, setHasOptimisticState] = useState<boolean>(false);
+  // Note: Optimistic deduction was removed - quota updates happen server-side at 5-minute mark
 
   // ISSUE #10 FIX: Use ref to store latest checkAccess to avoid dependency issues
   const checkAccessRef = useRef<() => Promise<SubscriptionStatus>>();
@@ -216,18 +214,15 @@ export const useSubscription = (userId: string | undefined) => {
   /**
    * Get subscription display info for dashboard
    * UNIVERSAL: Works for any tier and any limit value
-   *
-   * IMPORTANT: Optimistic deduction ONLY affects display (displayUsed, usageText)
-   * Access control values (remaining) ALWAYS use real database values
+   * Uses real-time database values - no client-side optimistic updates
    */
   const getSubscriptionInfo = useCallback(() => {
     if (!subscriptionStatus) return null;
 
     const { subscriptionTier, simulationsUsed, simulationLimit, message, remainingSimulations } = subscriptionStatus;
 
-    // Calculate display count (optimistic if active, actual otherwise)
-    // This is ONLY for visual feedback in the UI
-    const displayUsed = hasOptimisticState ? simulationsUsed + optimisticDeduction : simulationsUsed;
+    // Use actual database count - quota updates happen at 5-minute mark server-side
+    const displayUsed = simulationsUsed;
 
     // UNIVERSAL: Map tier to display name (works for any tier)
     const tierDisplayNames: Record<string, string> = {
@@ -259,32 +254,19 @@ export const useSubscription = (userId: string | undefined) => {
       canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis' || subscriptionTier === 'profi',
       isUnlimited: subscriptionTier === 'unlimited',
       // Additional info for universal handling
-      displayUsed, // Visual counter (can be optimistic)
+      displayUsed, // Real-time database count
       totalLimit: simulationLimit,
-      // CRITICAL FIX: Use REAL database value for access control decisions
-      // This ensures modal only shows when database confirms quota is exhausted
-      remaining: remainingSimulations ?? 0,
+      remaining: remainingSimulations ?? 0, // Real database value
     };
-  }, [subscriptionStatus, hasOptimisticState, optimisticDeduction]);
+  }, [subscriptionStatus]);
 
   /**
-   * Apply optimistic deduction (call when simulation STARTS)
-   * Shows immediate feedback while backend handles actual deduction at 10-min mark
+   * Refresh quota from backend
+   * Call this on: page load, simulation completion, or when returning to dashboard
+   * Note: This replaces the old "resetOptimisticCount" - no client-side optimistic updates anymore
    */
-  const applyOptimisticDeduction = useCallback(() => {
-    logger.info('🎯 Applying optimistic deduction to counter...');
-    setOptimisticDeduction(1);
-    setHasOptimisticState(true);
-  }, []);
-
-  /**
-   * Reset optimistic count to show actual backend count
-   * Call this on: page refresh, simulation completion, or when returning to dashboard
-   */
-  const resetOptimisticCount = useCallback(() => {
-    logger.info('🔄 Resetting to actual backend count...');
-    setOptimisticDeduction(0);
-    setHasOptimisticState(false);
+  const refreshQuota = useCallback(() => {
+    logger.info('🔄 Refreshing quota from backend...');
     // Re-fetch actual count from backend
     checkAccess();
   }, [checkAccess]);
@@ -346,14 +328,13 @@ export const useSubscription = (userId: string | undefined) => {
     checkAccess,
     recordUsage,
     getSubscriptionInfo,
-    // Optimistic counter functions
-    applyOptimisticDeduction,
-    resetOptimisticCount,
-    // Helper properties - ALWAYS use real database values for access control
+    // Quota refresh function
+    refreshQuota,
+    // Deprecated: kept for backward compatibility (calls refreshQuota internally)
+    resetOptimisticCount: refreshQuota,
+    // Helper properties - uses real database values
     canUseSimulation: subscriptionStatus?.canUseSimulation || false,
     subscriptionTier: subscriptionStatus?.subscriptionTier,
-    // CRITICAL FIX: Use real database value, not calculated
-    // This ensures access checks are based on actual quota, not optimistic display
     simulationsRemaining: subscriptionStatus?.remainingSimulations ?? null,
   };
 };

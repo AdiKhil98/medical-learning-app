@@ -37,15 +37,8 @@ function KPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
   console.log('🎯 User in component:', user ? `ID: ${user.id.substring(0, 8)}...` : 'NOT FOUND');
-  const {
-    canUseSimulation,
-    subscriptionStatus,
-    recordUsage,
-    getSubscriptionInfo,
-    checkAccess,
-    applyOptimisticDeduction,
-    resetOptimisticCount,
-  } = useSubscription(user?.id);
+  const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess, resetOptimisticCount } =
+    useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
@@ -197,7 +190,7 @@ function KPSimulationScreen() {
     };
 
     recoverOrResetSession();
-  }, [resetOptimisticCount, applyOptimisticDeduction]);
+  }, [resetOptimisticCount]);
 
   // Add state for initialization tracking
   const [isInitializing, setIsInitializing] = useState(false);

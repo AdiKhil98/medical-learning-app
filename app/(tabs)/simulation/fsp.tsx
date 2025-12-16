@@ -32,15 +32,8 @@ import { colors } from '@/constants/colors';
 function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const {
-    canUseSimulation,
-    subscriptionStatus,
-    recordUsage,
-    getSubscriptionInfo,
-    checkAccess,
-    applyOptimisticDeduction,
-    resetOptimisticCount,
-  } = useSubscription(user?.id);
+  const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess, resetOptimisticCount } =
+    useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
@@ -172,7 +165,7 @@ function FSPSimulationScreen() {
     };
 
     recoverOrResetSession();
-  }, [resetOptimisticCount, applyOptimisticDeduction]);
+  }, [resetOptimisticCount]);
 
   // Monitor subscription status for lock state
   useEffect(() => {
