@@ -812,13 +812,13 @@ const BibliothekIndex: React.FC = () => {
           </Modal>
 
           {/* Stats Grid - Animated */}
-          <AnimatedStatsGrid
+          {/* <AnimatedStatsGrid
             favorites={favorites.length}
             totalCategories={categories.length}
             totalSections={totalSectionsCount}
             cardStyle={dynamicStyles.statCard}
             labelColor={colors.textSecondary}
-          />
+          /> */}
 
           {/* Section Header */}
           <Text style={dynamicStyles.sectionHeader}>
