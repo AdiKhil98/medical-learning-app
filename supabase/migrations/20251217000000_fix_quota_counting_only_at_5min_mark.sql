@@ -25,8 +25,11 @@
 -- Drop the trigger that counts quota when simulation ends
 DROP TRIGGER IF EXISTS trg_update_quota_on_simulation_end ON simulation_usage_logs;
 
-RAISE NOTICE 'Dropped trigger: trg_update_quota_on_simulation_end';
-RAISE NOTICE 'Quota will now ONLY be counted at 5-minute mark via mark_simulation_counted()';
+DO $$
+BEGIN
+  RAISE NOTICE 'Dropped trigger: trg_update_quota_on_simulation_end';
+  RAISE NOTICE 'Quota will now ONLY be counted at 5-minute mark via mark_simulation_counted()';
+END $$;
 
 -- ============================================
 -- STEP 2: Update calculate_simulation_duration_and_counting to use timer_started_at
@@ -242,5 +245,3 @@ BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE '';
 END $$;
-
-COMMIT;
