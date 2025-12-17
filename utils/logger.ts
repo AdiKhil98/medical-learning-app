@@ -197,6 +197,8 @@ class Logger {
 
   /**
    * Log to console with formatting
+   * IMPORTANT: Using console.log() for ALL levels to ensure visibility
+   * (console.info/debug are filtered by browsers by default)
    */
   private logToConsole(entry: LogEntry): void {
     const prefix = this.getLogPrefix(entry.level);
@@ -205,23 +207,18 @@ class Logger {
 
     const logMessage = `${prefix} ${timestamp} ${source} ${entry.message}`;
 
-    // Use appropriate console method
-    switch (entry.level) {
-      case LogLevel.DEBUG:
-        console.debug(logMessage, entry.context || '');
-        break;
-      case LogLevel.INFO:
-        console.info(logMessage, entry.context || '');
-        break;
-      case LogLevel.WARN:
-        console.warn(logMessage, entry.context || '');
-        break;
-      case LogLevel.ERROR:
-        console.error(logMessage, entry.context || '', entry.error || '');
-        if (entry.error?.stack) {
-          console.error('Stack trace:', entry.error.stack);
-        }
-        break;
+    // Use console.log() for ALL levels to ensure visibility in browser console
+    // Browsers filter console.info/debug by default, which hides most logs
+    console.log(logMessage, entry.context || '');
+
+    // For errors, also log the error object and stack trace
+    if (entry.level === LogLevel.ERROR) {
+      if (entry.error) {
+        console.log('Error object:', entry.error);
+      }
+      if (entry.error?.stack) {
+        console.log('Stack trace:', entry.error.stack);
+      }
     }
   }
 
