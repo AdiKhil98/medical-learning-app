@@ -26,7 +26,6 @@ import {
   USAGE_THRESHOLD_SECONDS,
   WARNING_5_MIN_REMAINING,
 } from '@/constants/simulationConstants';
-import { logger } from '@/utils/logger';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -87,7 +86,7 @@ function KPSimulationScreen() {
   const [widgetDebugLog, setWidgetDebugLog] = useState<string[]>([]);
   const addDebugLog = (message: string) => {
     setWidgetDebugLog((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-    logger.info(`[WIDGET DEBUG] ${message}`);
+    console.log(`[WIDGET DEBUG] ${message}`);
   };
 
   // FIX: Helper to clear simulation storage (AsyncStorage + SecureStore)
@@ -100,15 +99,15 @@ function KPSimulationScreen() {
       await SecureStore.deleteItemAsync('sim_session_token_kp');
       await SecureStore.deleteItemAsync('sim_user_id_kp');
 
-      logger.info('🧹 KP: Cleared simulation storage (AsyncStorage + SecureStore)');
+      console.log('🧹 KP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
-      logger.error('Error clearing simulation storage:', error);
+      console.error('Error clearing simulation storage:', error);
     }
   };
 
   // Disable global Voiceflow cleanup as soon as component mounts
   useEffect(() => {
-    logger.info('🛑 KP: Component mounted - disabling global Voiceflow cleanup');
+    console.log('🛑 KP: Component mounted - disabling global Voiceflow cleanup');
     disableVoiceflowCleanup();
     stopGlobalVoiceflowCleanup();
   }, []);
@@ -227,7 +226,7 @@ function KPSimulationScreen() {
       // PREVENT DOUBLE INITIALIZATION
       // ============================================
       if (hasInitializedRef.current) {
-        logger.info(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        console.log(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
         addDebugLog('Already initialized - skipping');
         return;
       }
@@ -235,16 +234,16 @@ function KPSimulationScreen() {
       // ============================================
       // STEP 1: VALIDATE USER DATA
       // ============================================
-      logger.info(`🔐 [${timestamp}] Step 1: Validating user data...`);
+      console.log(`🔐 [${timestamp}] Step 1: Validating user data...`);
 
       if (typeof window === 'undefined') {
-        logger.error(`❌ [${timestamp}] Window object not available - must run in browser`);
+        console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
         return;
       }
 
       if (!user) {
-        logger.error(`❌ [${timestamp}] No user object found`);
+        console.error(`❌ [${timestamp}] No user object found`);
         setInitializationError('User not authenticated');
         Alert.alert('Authentifizierungsfehler', 'Bitte melden Sie sich an, um fortzufahren.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
@@ -253,7 +252,7 @@ function KPSimulationScreen() {
       }
 
       if (!user.id) {
-        logger.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
+        console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
         Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
@@ -261,20 +260,20 @@ function KPSimulationScreen() {
         return;
       }
 
-      logger.info(`✅ [${timestamp}] User validated - ID: ${user.id}`);
+      console.log(`✅ [${timestamp}] User validated - ID: ${user.id}`);
       addDebugLog(`User validated: ${user.id.substring(0, 8)}...`);
 
       // ============================================
       // STEP 2: CHECK ACCESS PERMISSIONS
       // ============================================
-      logger.info(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
+      console.log(`🔒 [${timestamp}] Step 2: Checking access permissions...`);
       addDebugLog('Checking access permissions...');
 
       try {
         const accessCheck = await checkAccess();
 
         if (!accessCheck) {
-          logger.error(`❌ [${timestamp}] Access check returned null/undefined`);
+          console.error(`❌ [${timestamp}] Access check returned null/undefined`);
           addDebugLog('ERROR: Access check failed');
           setInitializationError('Failed to verify access permissions');
           Alert.alert(
@@ -285,23 +284,23 @@ function KPSimulationScreen() {
           return;
         }
 
-        logger.info(`📊 [${timestamp}] Access check result:`, {
+        console.log(`📊 [${timestamp}] Access check result:`, {
           canUse: accessCheck.canUseSimulation,
           remaining: accessCheck.remainingSimulations,
           limit: accessCheck.simulationLimit,
         });
 
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-          logger.info(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
+          console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           addDebugLog('BLOCKED: No simulations remaining');
           setInitializationError('No simulations remaining');
           return; // Do NOT initialize widget
         }
 
-        logger.info(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
+        console.log(`✅ [${timestamp}] Access granted - ${accessCheck.remainingSimulations} simulations remaining`);
         addDebugLog(`Access granted: ${accessCheck.remainingSimulations} remaining`);
       } catch (accessError) {
-        logger.error(`❌ [${timestamp}] Error checking access:`, accessError);
+        console.error(`❌ [${timestamp}] Error checking access:`, accessError);
         addDebugLog(`ERROR: ${accessError instanceof Error ? accessError.message : String(accessError)}`);
         setInitializationError('Access check failed');
         Alert.alert(
@@ -315,7 +314,7 @@ function KPSimulationScreen() {
       // ============================================
       // STEP 2B: CHECK FOR ACTIVE SIMULATION (RESTORE SESSION)
       // ============================================
-      logger.info(`🔍 [${timestamp}] Step 2b: Checking for active simulation to restore...`);
+      console.log(`🔍 [${timestamp}] Step 2b: Checking for active simulation to restore...`);
 
       try {
         const activeSimulation = await quotaService.getActiveSimulation(user.id);
@@ -327,7 +326,7 @@ function KPSimulationScreen() {
           const now = Date.now();
           const ageMinutes = (now - sessionStart) / (1000 * 60);
 
-          logger.info(`✅ [${timestamp}] Found active simulation:`, {
+          console.log(`✅ [${timestamp}] Found active simulation:`, {
             sessionToken: `${activeSimulation.session_token.substring(0, 8)}...`,
             simulationType: activeSimulation.simulation_type,
             elapsedSeconds: activeSimulation.elapsed_seconds,
@@ -341,9 +340,9 @@ function KPSimulationScreen() {
             setSessionToken(activeSimulation.session_token);
             sessionTokenRef.current = activeSimulation.session_token;
 
-            logger.info(`✅ [${timestamp}] Session is recent (${Math.round(ageMinutes)}min old) - restored for resume`);
+            console.log(`✅ [${timestamp}] Session is recent (${Math.round(ageMinutes)}min old) - restored for resume`);
           } else {
-            logger.warn(
+            console.warn(
               `⚠️ [${timestamp}] Session is stale (${Math.round(ageMinutes)}min old) - NOT restoring. Will create new session.`
             );
 
@@ -351,27 +350,27 @@ function KPSimulationScreen() {
             try {
               await SecureStore.deleteItemAsync('sim_session_token_kp');
               await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
-              logger.info(`🧹 [${timestamp}] Cleared stale session data from AsyncStorage`);
+              console.log(`🧹 [${timestamp}] Cleared stale session data from AsyncStorage`);
             } catch (error) {
-              logger.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
+              console.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
             }
           }
 
           // Continue with Voiceflow initialization
         } else {
-          logger.info(`ℹ️ [${timestamp}] No active simulation found - will create new session`);
+          console.log(`ℹ️ [${timestamp}] No active simulation found - will create new session`);
 
           // Clear any stale AsyncStorage data
           try {
             await SecureStore.deleteItemAsync('sim_session_token_kp');
             await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
-            logger.info(`🧹 [${timestamp}] Cleared any stale session data from AsyncStorage`);
+            console.log(`🧹 [${timestamp}] Cleared any stale session data from AsyncStorage`);
           } catch (error) {
-            logger.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
+            console.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
           }
         }
       } catch (error) {
-        logger.error(`⚠️ [${timestamp}] Error checking for active simulation:`, error);
+        console.error(`⚠️ [${timestamp}] Error checking for active simulation:`, error);
         // Continue with normal initialization if check fails
       }
 
@@ -379,11 +378,11 @@ function KPSimulationScreen() {
       // STEP 3: INITIALIZE WITH RETRY LOGIC (WEB ONLY)
       // ============================================
       if (Platform.OS === 'web') {
-        logger.info(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
+        console.log(`🚀 [${timestamp}] Step 3: Starting Voiceflow initialization with retry logic...`);
         addDebugLog('Platform: web - initializing Voiceflow...');
         await initializeWithRetry(user.id, timestamp);
       } else {
-        logger.info(`📱 [${timestamp}] Mobile platform detected - Voiceflow widget only available on web`);
+        console.log(`📱 [${timestamp}] Mobile platform detected - Voiceflow widget only available on web`);
         addDebugLog(`Platform: ${Platform.OS} - widget not available`);
       }
     };
@@ -402,14 +401,14 @@ function KPSimulationScreen() {
       const timestamp = new Date().toISOString();
 
       try {
-        logger.info(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
+        console.log(`🔄 [${timestamp}] Attempt ${attempt}/${maxRetryAttempts}: Initializing Voiceflow...`);
         addDebugLog(`Attempt ${attempt}/${maxRetryAttempts} starting...`);
         setIsInitializing(true);
         setInitializationError(null);
         initializationAttemptsRef.current = attempt;
 
         // Disable global cleanup to allow widget
-        logger.info(`🛑 [${timestamp}] Disabling global Voiceflow cleanup`);
+        console.log(`🛑 [${timestamp}] Disabling global Voiceflow cleanup`);
         disableVoiceflowCleanup();
         stopGlobalVoiceflowCleanup();
 
@@ -418,16 +417,16 @@ function KPSimulationScreen() {
         // ============================================
         if (sessionTokenRef.current) {
           // Session token already exists (restored from active simulation)
-          logger.info(
+          console.log(
             `🔑 [${timestamp}] Step 3a: Using restored session token: ${sessionTokenRef.current.substring(0, 8)}...`
           );
         } else {
           // No session token, generate new one
-          logger.info(`🔑 [${timestamp}] Step 3a: Generating new session token before Voiceflow initialization`);
+          console.log(`🔑 [${timestamp}] Step 3a: Generating new session token before Voiceflow initialization`);
 
           const result = await simulationTracker.startSimulation('kp');
 
-          logger.info(`📋 [${timestamp}] Session token generation result:`, {
+          console.log(`📋 [${timestamp}] Session token generation result:`, {
             success: result.success,
             hasToken: !!result.sessionToken,
             error: result.error || 'none',
@@ -437,7 +436,7 @@ function KPSimulationScreen() {
             throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
           }
 
-          logger.info(
+          console.log(
             `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
           );
 
@@ -448,8 +447,8 @@ function KPSimulationScreen() {
         // ============================================
         // STEP 3B: CREATE VOICEFLOW CONTROLLER
         // ============================================
-        logger.info(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
-        logger.info(`📧 [${timestamp}] User object:`, {
+        console.log(`🎮 [${timestamp}] Step 3b: Creating Voiceflow controller with Supabase user ID and email`);
+        console.log(`📧 [${timestamp}] User object:`, {
           id: user.id,
           email: user.email,
           has_email: !!user.email,
@@ -459,15 +458,15 @@ function KPSimulationScreen() {
         // FALLBACK: If email is not in user object, try to get it from Supabase session
         let userEmail = user.email;
         if (!userEmail) {
-          logger.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
+          console.warn(`⚠️ [${timestamp}] Email not found in user object, fetching from Supabase session...`);
           const {
             data: { session },
           } = await supabase.auth.getSession();
           if (session?.user?.email) {
             userEmail = session.user.email;
-            logger.info(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
+            console.log(`✅ [${timestamp}] Email retrieved from session: ${userEmail}`);
           } else {
-            logger.error(`❌ [${timestamp}] Could not retrieve email from session!`);
+            console.error(`❌ [${timestamp}] Could not retrieve email from session!`);
           }
         }
 
@@ -478,16 +477,16 @@ function KPSimulationScreen() {
         }
 
         voiceflowController.current = controller;
-        logger.info(`✅ [${timestamp}] Voiceflow controller created successfully`);
+        console.log(`✅ [${timestamp}] Voiceflow controller created successfully`);
 
         // ============================================
         // STEP 3C: INITIALIZE VOICEFLOW WITH PERSISTENT IDS
         // ============================================
-        logger.info(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
+        console.log(`🔗 [${timestamp}] Step 3c: Initializing Voiceflow with persistent session IDs`);
 
         // Get persistent IDs that will be used
         const persistentIds = controller.getIds();
-        logger.info(`📤 [${timestamp}] Persistent IDs:`, {
+        console.log(`📤 [${timestamp}] Persistent IDs:`, {
           user_id: persistentIds.user_id,
           session_id: persistentIds.session_id,
         });
@@ -498,12 +497,12 @@ function KPSimulationScreen() {
           throw new Error('Voiceflow initialization returned false');
         }
 
-        logger.info(`✅ [${timestamp}] Voiceflow initialized successfully with user credentials`);
+        console.log(`✅ [${timestamp}] Voiceflow initialized successfully with user credentials`);
 
         // ============================================
         // STEP 3D: VERIFY VOICEFLOW API AVAILABILITY
         // ============================================
-        logger.info(`🔍 [${timestamp}] Step 3d: Verifying Voiceflow API availability`);
+        console.log(`🔍 [${timestamp}] Step 3d: Verifying Voiceflow API availability`);
 
         if (!window.voiceflow) {
           throw new Error('Voiceflow API not available on window object after initialization');
@@ -513,42 +512,42 @@ function KPSimulationScreen() {
           throw new Error('Voiceflow chat API not available after initialization');
         }
 
-        logger.info(`✅ [${timestamp}] Voiceflow API verified and available`);
+        console.log(`✅ [${timestamp}] Voiceflow API verified and available`);
 
         // ============================================
         // STEP 3E: MAKE WIDGET VISIBLE
         // ============================================
-        logger.info(`👁️ [${timestamp}] Step 3e: Making widget visible`);
+        console.log(`👁️ [${timestamp}] Step 3e: Making widget visible`);
 
         setTimeout(() => {
           try {
             if (window.voiceflow?.chat) {
               window.voiceflow.chat.show();
-              logger.info(`✅ [${timestamp}] Widget made visible successfully`);
+              console.log(`✅ [${timestamp}] Widget made visible successfully`);
             } else {
-              logger.warn(`⚠️ [${timestamp}] Voiceflow chat API not available during visibility check`);
+              console.warn(`⚠️ [${timestamp}] Voiceflow chat API not available during visibility check`);
             }
           } catch (visibilityError) {
-            logger.error(`❌ [${timestamp}] Error making widget visible:`, visibilityError);
+            console.error(`❌ [${timestamp}] Error making widget visible:`, visibilityError);
           }
         }, 1000);
 
         // ============================================
         // STEP 3F: SET UP CONVERSATION MONITORING
         // ============================================
-        logger.info(`📡 [${timestamp}] Step 3f: Setting up conversation monitoring`);
+        console.log(`📡 [${timestamp}] Step 3f: Setting up conversation monitoring`);
         setupConversationMonitoring();
-        logger.info(`✅ [${timestamp}] Conversation monitoring initialized`);
+        console.log(`✅ [${timestamp}] Conversation monitoring initialized`);
 
         // ============================================
         // STEP 3G: ADD VOICEFLOW MESSAGE LISTENER
         // ============================================
-        logger.info(`🎧 [${timestamp}] Step 3g: Adding Voiceflow message event listener`);
+        console.log(`🎧 [${timestamp}] Step 3g: Adding Voiceflow message event listener`);
 
         if (window.voiceflow?.chat) {
           // Listen for Voiceflow events (if available in the API)
           const voiceflowEventListener = (event: any) => {
-            logger.info(`💬 [${new Date().toISOString()}] Voiceflow event received:`, {
+            console.log(`💬 [${new Date().toISOString()}] Voiceflow event received:`, {
               type: event.type,
               timestamp: new Date().toISOString(),
               hasUserData: !!event.user_id,
@@ -560,24 +559,24 @@ function KPSimulationScreen() {
           try {
             if (typeof window.voiceflow.chat.on === 'function') {
               window.voiceflow.chat.on('message', voiceflowEventListener);
-              logger.info(`✅ [${timestamp}] Voiceflow message listener added`);
+              console.log(`✅ [${timestamp}] Voiceflow message listener added`);
             } else {
-              logger.info(`ℹ️ [${timestamp}] Voiceflow event listener API not available`);
+              console.log(`ℹ️ [${timestamp}] Voiceflow event listener API not available`);
             }
           } catch (listenerError) {
-            logger.warn(`⚠️ [${timestamp}] Could not add Voiceflow event listener:`, listenerError);
+            console.warn(`⚠️ [${timestamp}] Could not add Voiceflow event listener:`, listenerError);
           }
         }
 
         // ============================================
         // SUCCESS - RESET ERROR STATE
         // ============================================
-        logger.info(`🎉 [${timestamp}] ========================================`);
-        logger.info(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
-        logger.info(`🎉 [${timestamp}] User ID: ${userId}`);
-        logger.info(`🎉 [${timestamp}] Session Token: ${sessionTokenRef.current?.substring(0, 8)}...`);
-        logger.info(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
-        logger.info(`🎉 [${timestamp}] ========================================`);
+        console.log(`🎉 [${timestamp}] ========================================`);
+        console.log(`🎉 [${timestamp}] VOICEFLOW INITIALIZATION SUCCESSFUL!`);
+        console.log(`🎉 [${timestamp}] User ID: ${userId}`);
+        console.log(`🎉 [${timestamp}] Session Token: ${sessionTokenRef.current?.substring(0, 8)}...`);
+        console.log(`🎉 [${timestamp}] Attempts needed: ${attempt}/${maxRetryAttempts}`);
+        console.log(`🎉 [${timestamp}] ========================================`);
 
         // Mark as successfully initialized to prevent re-initialization
         hasInitializedRef.current = true;
@@ -590,7 +589,7 @@ function KPSimulationScreen() {
         const timestamp = new Date().toISOString();
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        logger.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
+        console.error(`❌ [${timestamp}] Attempt ${attempt}/${maxRetryAttempts} failed:`, {
           error: errorMessage,
           stack: error instanceof Error ? error.stack : undefined,
         });
@@ -598,10 +597,10 @@ function KPSimulationScreen() {
 
         // If this was the last attempt, show error to user
         if (attempt === maxRetryAttempts) {
-          logger.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
+          console.error(`🚨 [${timestamp}] All ${maxRetryAttempts} initialization attempts failed`);
 
           // FIX: Clear storage on initialization failure
-          clearSimulationStorage().catch((err) => logger.error('Error clearing storage after init failure:', err));
+          clearSimulationStorage().catch((err) => console.error('Error clearing storage after init failure:', err));
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
@@ -626,7 +625,7 @@ function KPSimulationScreen() {
 
         // Calculate exponential backoff delay (1s, 2s, 3s)
         const delay = attempt * 1000;
-        logger.info(`⏳ [${timestamp}] Waiting ${delay}ms before retry attempt ${attempt + 1}...`);
+        console.log(`⏳ [${timestamp}] Waiting ${delay}ms before retry attempt ${attempt + 1}...`);
 
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -635,7 +634,7 @@ function KPSimulationScreen() {
 
   // Set up monitoring for conversation start
   const setupConversationMonitoring = () => {
-    logger.info('🔍 KP: Setting up passive microphone detection...');
+    console.log('🔍 KP: Setting up passive microphone detection...');
 
     // MEMORY LEAK FIX: Track listeners for cleanup
     const trackListeners: { track: MediaStreamTrack; handler: () => void }[] = [];
@@ -645,7 +644,7 @@ function KPSimulationScreen() {
     const originalGetUserMedia = navigator.mediaDevices?.getUserMedia;
     if (originalGetUserMedia) {
       navigator.mediaDevices.getUserMedia = async function (constraints) {
-        logger.info('🎤 KP: MediaStream requested with constraints:', constraints);
+        console.log('🎤 KP: MediaStream requested with constraints:', constraints);
 
         if (constraints?.audio) {
           try {
@@ -653,26 +652,26 @@ function KPSimulationScreen() {
 
             // Start timer when voice call begins (use ref to avoid closure issues)
             if (!timerActiveRef.current) {
-              logger.info('🎯 KP: Audio stream granted - voice call starting!');
-              logger.info('⏰ KP: Starting 20-minute timer due to voice call');
-              logger.info('🔍 DEBUG: About to call startSimulationTimer()');
+              console.log('🎯 KP: Audio stream granted - voice call starting!');
+              console.log('⏰ KP: Starting 20-minute timer due to voice call');
+              console.log('🔍 DEBUG: About to call startSimulationTimer()');
               startSimulationTimer();
             } else {
-              logger.info('⏰ KP: Timer already active, not starting again');
+              console.log('⏰ KP: Timer already active, not starting again');
             }
 
             // Monitor stream tracks for when they end
             const audioTracks = stream.getAudioTracks();
             audioTracks.forEach((track, index) => {
-              logger.info(`🎤 KP: Monitoring audio track ${index + 1}`);
+              console.log(`🎤 KP: Monitoring audio track ${index + 1}`);
 
               // Create handler and store for cleanup
               const endedHandler = () => {
-                logger.info(`🔇 KP: Audio track ${index + 1} ended - AUTOMATICALLY STOPPING TIMER`);
+                console.log(`🔇 KP: Audio track ${index + 1} ended - AUTOMATICALLY STOPPING TIMER`);
 
                 // Automatically stop the timer when the call ends
                 if (timerActiveRef.current) {
-                  logger.info(`⏹️ KP: Call ended naturally - stopping simulation timer automatically`);
+                  console.log(`⏹️ KP: Call ended naturally - stopping simulation timer automatically`);
                   stopSimulationTimer('completed');
                 }
               };
@@ -683,12 +682,12 @@ function KPSimulationScreen() {
               // Also monitor for track being stopped manually
               const originalStop = track.stop.bind(track);
               track.stop = () => {
-                logger.info(`🔇 KP: Audio track ${index + 1} stopped manually - AUTOMATICALLY STOPPING TIMER`);
+                console.log(`🔇 KP: Audio track ${index + 1} stopped manually - AUTOMATICALLY STOPPING TIMER`);
                 originalStop();
 
                 // Automatically stop the timer when the call ends
                 if (timerActiveRef.current) {
-                  logger.info(`⏹️ KP: Call ended - stopping simulation timer automatically`);
+                  console.log(`⏹️ KP: Call ended - stopping simulation timer automatically`);
                   stopSimulationTimer('completed');
                 }
               };
@@ -696,7 +695,7 @@ function KPSimulationScreen() {
 
             return stream;
           } catch (error) {
-            logger.info('❌ KP: Failed to get audio stream:', error);
+            console.log('❌ KP: Failed to get audio stream:', error);
             throw error;
           }
         }
@@ -711,7 +710,7 @@ function KPSimulationScreen() {
 
       // Only trigger on voiceflow-chat container clicks
       if (target.closest('#voiceflow-chat') && !timerActive) {
-        logger.info('🎯 KP: Click detected on Voiceflow widget - waiting for voice call...');
+        console.log('🎯 KP: Click detected on Voiceflow widget - waiting for voice call...');
         // Don't start timer immediately, wait for actual mic access
       }
     };
@@ -725,7 +724,7 @@ function KPSimulationScreen() {
 
   // Start the 20-minute simulation timer
   const startSimulationTimer = async () => {
-    logger.info(
+    console.log(
       '🔍 DEBUG: startSimulationTimer called, timerActive:',
       timerActive,
       'timerActiveRef:',
@@ -737,17 +736,17 @@ function KPSimulationScreen() {
     // CRITICAL: Atomic lock to prevent race conditions
     // Check and set lock in one operation BEFORE any async operations
     if (timerStartLockRef.current) {
-      logger.info('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
+      console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
       return;
     }
     timerStartLockRef.current = true; // Set lock immediately
 
     try {
       // STEP 7: STRICT ACCESS CHECK - Verify access before starting timer
-      logger.info('[Timer] KP: Attempting to start timer...');
+      console.log('[Timer] KP: Attempting to start timer...');
       const accessCheck = await checkAccess();
 
-      logger.info('[Timer] KP: Access check:', {
+      console.log('[Timer] KP: Access check:', {
         canStart: accessCheck?.canUseSimulation,
         remaining: accessCheck?.remainingSimulations,
         total: accessCheck?.simulationLimit,
@@ -755,7 +754,7 @@ function KPSimulationScreen() {
 
       // CRITICAL: Block if access is denied
       if (!accessCheck || !accessCheck.canUseSimulation) {
-        logger.error('[Timer] KP: ❌ ACCESS DENIED - Cannot start simulation');
+        console.error('[Timer] KP: ❌ ACCESS DENIED - Cannot start simulation');
 
         // Show upgrade modal
         setShowUpgradeModal(true);
@@ -770,34 +769,34 @@ function KPSimulationScreen() {
       }
 
       // Access granted - proceed with timer
-      logger.info('[Timer] KP: ✅ Access GRANTED - Starting timer...');
+      console.log('[Timer] KP: ✅ Access GRANTED - Starting timer...');
 
       // CRITICAL: Check if session token already exists (generated during initialization)
       if (!sessionTokenRef.current) {
-        logger.error('❌ KP: No session token found - this should have been generated during initialization');
+        console.error('❌ KP: No session token found - this should have been generated during initialization');
         return; // Lock released in finally
       }
 
-      logger.info('✅ KP: Using existing session token from initialization:', sessionTokenRef.current);
+      console.log('✅ KP: Using existing session token from initialization:', sessionTokenRef.current);
 
       // IMPORTANT: Check if timer is ACTUALLY active by checking the interval, not just the ref
       // This prevents false positives from stale state
       if (timerActiveRef.current && timerInterval.current !== null) {
-        logger.info('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
+        console.log('🔍 DEBUG: Timer already active (ref + interval exists), returning early');
         return; // Lock released in finally
       }
 
       // If ref is true but interval is null, we have stale state - reset it
       if (timerActiveRef.current && timerInterval.current === null) {
-        logger.warn('⚠️ KP: Detected stale timer state, resetting...');
+        console.warn('⚠️ KP: Detected stale timer state, resetting...');
         timerActiveRef.current = false;
         setTimerActive(false);
       }
 
-      logger.info('⏰ KP: Starting simulation timer');
-      logger.info('🔍 KP DEBUG: Current timerActive state:', timerActive);
-      logger.info('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
-      logger.info('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
+      console.log('⏰ KP: Starting simulation timer');
+      console.log('🔍 KP DEBUG: Current timerActive state:', timerActive);
+      console.log('🔍 KP DEBUG: Current timerActiveRef:', timerActiveRef.current);
+      console.log('🔍 KP DEBUG: Current timerInterval:', timerInterval.current);
 
       // Check if this is a resumed session (check for active simulation)
       let remainingSeconds = SIMULATION_DURATION_SECONDS;
@@ -810,14 +809,14 @@ function KPSimulationScreen() {
           const elapsedSeconds = activeSimulation.elapsed_seconds || 0;
           remainingSeconds = Math.max(0, SIMULATION_DURATION_SECONDS - elapsedSeconds);
           isResumingSession = true;
-          logger.info(`🔄 KP: Resuming session - elapsed: ${elapsedSeconds}s, remaining: ${remainingSeconds}s`);
+          console.log(`🔄 KP: Resuming session - elapsed: ${elapsedSeconds}s, remaining: ${remainingSeconds}s`);
         }
       } catch (error) {
-        logger.error('⚠️ KP: Error checking for active simulation, starting fresh timer:', error);
+        console.error('⚠️ KP: Error checking for active simulation, starting fresh timer:', error);
       }
 
       // SET TIMER ACTIVE IMMEDIATELY - before any async operations that might fail
-      logger.info('🔍 DEBUG: Setting timer active IMMEDIATELY');
+      console.log('🔍 DEBUG: Setting timer active IMMEDIATELY');
 
       // Set ref FIRST to prevent race conditions
       timerActiveRef.current = true;
@@ -827,7 +826,7 @@ function KPSimulationScreen() {
       setTimerActive(true);
       setTimeRemaining(remainingSeconds);
 
-      logger.info('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
+      console.log('🔍 KP DEBUG: Timer state updated - timerActiveRef:', timerActiveRef.current);
 
       // Calculate end time upfront
       const startTime = Date.now();
@@ -857,9 +856,9 @@ function KPSimulationScreen() {
             await SecureStore.setItemAsync('sim_user_id_kp', user.id);
           }
 
-          logger.info('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
+          console.log('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
         } catch (error) {
-          logger.error('❌ KP: Error saving simulation state:', error);
+          console.error('❌ KP: Error saving simulation state:', error);
         }
 
         setUsageMarked(false);
@@ -874,25 +873,25 @@ function KPSimulationScreen() {
           });
 
           if (timerStartError) {
-            logger.error('❌ KP: Error setting timer start time:', timerStartError);
+            console.error('❌ KP: Error setting timer start time:', timerStartError);
           } else if (timerStartResult?.success) {
-            logger.info('✅ KP: Timer start time recorded in database');
+            console.log('✅ KP: Timer start time recorded in database');
           } else {
-            logger.warn('⚠️ KP: Timer start time not set:', timerStartResult?.message);
+            console.warn('⚠️ KP: Timer start time not set:', timerStartResult?.message);
           }
         } catch (error) {
-          logger.error('❌ KP: Exception setting timer start time:', error);
+          console.error('❌ KP: Exception setting timer start time:', error);
         }
 
-        logger.info('✅ KP: Timer started with existing session token');
+        console.log('✅ KP: Timer started with existing session token');
       } catch (error) {
-        logger.error('❌ KP: Error during timer setup:', error);
+        console.error('❌ KP: Error during timer setup:', error);
       }
 
-      logger.info('🔍 DEBUG: Timer already active, now starting timer interval');
+      console.log('🔍 DEBUG: Timer already active, now starting timer interval');
       // NOTE: Heartbeat removed - deprecated/no-op in new system
 
-      logger.info('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
+      console.log('🔍 DEBUG: Creating timer interval with absolute time calculation, endTime:', endTime);
 
       // Use 1000ms interval for better mobile compatibility (less battery drain)
       timerInterval.current = setInterval(() => {
@@ -910,8 +909,8 @@ function KPSimulationScreen() {
           previousTimeRef.current = 0;
           clearInterval(timerInterval.current!);
           timerInterval.current = null;
-          logger.info('⏰ KP: Timer finished - 20 minutes elapsed');
-          logger.info('🔚 KP: Initiating graceful end sequence');
+          console.log('⏰ KP: Timer finished - 20 minutes elapsed');
+          console.log('🔚 KP: Initiating graceful end sequence');
           initiateGracefulEnd();
           return;
         } else {
@@ -921,7 +920,7 @@ function KPSimulationScreen() {
 
         // Log timer value every 10 seconds (only when value changes)
         if (remainingSeconds % 10 === 0 && remainingSeconds !== prev) {
-          logger.info(
+          console.log(
             '⏱️ DEBUG: Timer at',
             `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}`,
             `(${remainingSeconds} seconds)`
@@ -939,10 +938,10 @@ function KPSimulationScreen() {
           currentSessionToken
         ) {
           const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
-          logger.info('🔍 DEBUG: 5-minute mark reached, marking as used');
-          logger.info('🔍 DEBUG: Remaining seconds:', remainingSeconds);
-          logger.info('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
-          logger.info('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
+          console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
+          console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
+          console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
+          console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
           markSimulationAsUsed(clientElapsed);
         }
 
@@ -964,10 +963,10 @@ function KPSimulationScreen() {
         }
       }, 1000); // Check every 1000ms (1 second) for mobile compatibility
     } catch (error) {
-      logger.error('❌ KP: Error in startSimulationTimer:', error);
+      console.error('❌ KP: Error in startSimulationTimer:', error);
       // CRITICAL: Rollback optimistic counter deduction on error
       resetOptimisticCount();
-      logger.info('🔄 Rolled back optimistic counter deduction due to error');
+      console.log('🔄 Rolled back optimistic counter deduction due to error');
 
       // Reset timer state on error
       timerActiveRef.current = false;
@@ -980,7 +979,7 @@ function KPSimulationScreen() {
     } finally {
       // Always release the lock, even if function throws or returns early
       timerStartLockRef.current = false;
-      logger.info('🔓 Timer start lock released');
+      console.log('🔓 Timer start lock released');
     }
   };
 
@@ -989,39 +988,39 @@ function KPSimulationScreen() {
     const token = sessionTokenRef.current; // Use ref instead of state
     if (!token || usageMarkedRef.current) return;
 
-    logger.info('📊 KP: Marking simulation as used at 5-minute mark');
-    logger.info('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
-    logger.info('🔍 DEBUG: Using session token:', token);
+    console.log('📊 KP: Marking simulation as used at 5-minute mark');
+    console.log('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
+    console.log('🔍 DEBUG: Using session token:', token);
 
     try {
       const result = await simulationTracker.markSimulationUsed(token, clientElapsedSeconds);
       if (result.success) {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
-        logger.info('✅ KP: Simulation usage recorded in database with server validation');
-        logger.info('✅ KP: Counter automatically incremented by database function');
+        console.log('✅ KP: Simulation usage recorded in database with server validation');
+        console.log('✅ KP: Counter automatically incremented by database function');
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
         try {
           await getSubscriptionInfo();
-          logger.info('✅ KP: Quota counter refreshed - UI now shows updated count');
+          console.log('✅ KP: Quota counter refreshed - UI now shows updated count');
         } catch (refreshError) {
-          logger.error('❌ KP: Error refreshing quota display:', refreshError);
+          console.error('❌ KP: Error refreshing quota display:', refreshError);
         }
 
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
         // already increments the counter in the database. Calling recordUsage() would
         // result in double-counting (incrementing the counter twice).
       } else {
-        logger.error('❌ KP: Failed to mark simulation as used:', result.error);
+        console.error('❌ KP: Failed to mark simulation as used:', result.error);
 
         // If server rejected due to time manipulation, flag it
         if (result.error?.includes('insufficient_time')) {
-          logger.info('🛡️ SECURITY: Server blocked usage marking - possible time manipulation attempt');
+          console.log('🛡️ SECURITY: Server blocked usage marking - possible time manipulation attempt');
         }
       }
     } catch (error) {
-      logger.error('❌ KP: Error marking simulation as used:', error);
+      console.error('❌ KP: Error marking simulation as used:', error);
     }
   };
 
@@ -1030,7 +1029,7 @@ function KPSimulationScreen() {
     try {
       // Method 1: Try to close the Voiceflow widget
       if (window.voiceflow?.chat) {
-        logger.info('🔚 KP: Attempting to close Voiceflow widget');
+        console.log('🔚 KP: Attempting to close Voiceflow widget');
         window.voiceflow.chat.close && window.voiceflow.chat.close();
         window.voiceflow.chat.hide && window.voiceflow.chat.hide();
       }
@@ -1039,7 +1038,7 @@ function KPSimulationScreen() {
       navigator.mediaDevices
         ?.getUserMedia({ audio: true })
         .then((stream) => {
-          logger.info('🔚 KP: Stopping active audio streams');
+          console.log('🔚 KP: Stopping active audio streams');
           stream.getTracks().forEach((track) => track.stop());
         })
         .catch(() => {
@@ -1052,20 +1051,20 @@ function KPSimulationScreen() {
         for (const button of endButtons) {
           const buttonText = button.textContent?.toLowerCase();
           if (buttonText?.includes('end') || buttonText?.includes('hang') || buttonText?.includes('stop')) {
-            logger.info('🔚 KP: Found potential end call button, clicking it');
+            console.log('🔚 KP: Found potential end call button, clicking it');
             button.click();
             break;
           }
         }
       }, 500);
     } catch (error) {
-      logger.error('❌ KP: Error ending Voiceflow conversation:', error);
+      console.error('❌ KP: Error ending Voiceflow conversation:', error);
     }
   };
 
   // Stop the simulation timer
   const stopSimulationTimer = async (reason: 'completed' | 'aborted' = 'completed') => {
-    logger.info('🛑 KP: Stopping simulation timer');
+    console.log('🛑 KP: Stopping simulation timer');
 
     const elapsedSeconds = 20 * 60 - timeRemaining;
 
@@ -1075,10 +1074,10 @@ function KPSimulationScreen() {
       try {
         if (sessionToken) {
           await simulationTracker.updateSimulationStatus(sessionToken, 'completed', elapsedSeconds);
-          logger.info(`📊 KP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
+          console.log(`📊 KP: Graceful shutdown - Simulation marked as completed (${elapsedSeconds}s elapsed)`);
         }
       } catch (error) {
-        logger.error('❌ KP: Error updating session during graceful shutdown:', error);
+        console.error('❌ KP: Error updating session during graceful shutdown:', error);
       }
 
       // Reset state
@@ -1095,14 +1094,14 @@ function KPSimulationScreen() {
       // If aborted, check if it was before 5-minute mark
       if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
         finalStatus = 'incomplete';
-        logger.info('📊 KP: Marking as incomplete - ended before 5-minute mark');
+        console.log('📊 KP: Marking as incomplete - ended before 5-minute mark');
 
         // Reset optimistic counter since simulation ended before being charged
-        logger.info('🔄 KP: Resetting optimistic count - simulation ended before being charged');
+        console.log('🔄 KP: Resetting optimistic count - simulation ended before being charged');
         resetOptimisticCount();
       } else {
         finalStatus = 'aborted';
-        logger.info('📊 KP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
+        console.log('📊 KP: Marking as aborted - ended after 5-minute mark (or usage already recorded)');
       }
     }
 
@@ -1119,7 +1118,7 @@ function KPSimulationScreen() {
     // After a short delay, reinitialize the conversation monitoring for restart
     setTimeout(() => {
       if (voiceflowController.current) {
-        logger.info('🔄 KP: Reinitializing conversation monitoring after stop');
+        console.log('🔄 KP: Reinitializing conversation monitoring after stop');
         setupConversationMonitoring();
       }
     }, 1000);
@@ -1127,7 +1126,7 @@ function KPSimulationScreen() {
 
   // Initiate graceful end sequence
   const initiateGracefulEnd = () => {
-    logger.info('🎬 KP: Starting graceful end sequence');
+    console.log('🎬 KP: Starting graceful end sequence');
 
     // Prevent timer from continuing
     setIsGracefulShutdown(true);
@@ -1162,7 +1161,7 @@ function KPSimulationScreen() {
 
   // Execute simulation end
   const executeSimulationEnd = async () => {
-    logger.info('🏁 KP: Executing simulation end');
+    console.log('🏁 KP: Executing simulation end');
 
     // Hide final warning modal
     setShowFinalWarningModal(false);
@@ -1188,7 +1187,7 @@ function KPSimulationScreen() {
 
   // Show completion modal
   const showCompletionModal = () => {
-    logger.info('🎉 KP: Showing completion modal');
+    console.log('🎉 KP: Showing completion modal');
     setShowSimulationCompleted(true);
   };
 
@@ -1197,7 +1196,7 @@ function KPSimulationScreen() {
     try {
       setShowSimulationCompleted(false);
 
-      logger.info('Fetching latest KP evaluation for user...');
+      console.log('Fetching latest KP evaluation for user...');
 
       // Fetch the most recent KP evaluation for this user
       const { data, error } = await supabase
@@ -1210,17 +1209,17 @@ function KPSimulationScreen() {
         .single();
 
       if (error || !data) {
-        logger.error('Error fetching latest evaluation:', error);
+        console.error('Error fetching latest evaluation:', error);
         // Fallback to progress page if evaluation not found
         router.push('/(tabs)/progress');
         return;
       }
 
-      logger.info('Found evaluation ID:', data.id);
+      console.log('Found evaluation ID:', data.id);
       // Navigate to evaluation detail page
       router.push(`/evaluation/${data.id}` as any);
     } catch (err) {
-      logger.error('Exception fetching evaluation:', err);
+      console.error('Exception fetching evaluation:', err);
       // Fallback to progress page
       router.push('/(tabs)/progress');
     }
@@ -1237,17 +1236,17 @@ function KPSimulationScreen() {
 
   // Early completion functions
   const initiateEarlyCompletion = () => {
-    logger.info('🏁 KP: User initiated early completion');
+    console.log('🏁 KP: User initiated early completion');
     setShowEarlyCompletionModal(true);
   };
 
   const confirmEarlyCompletion = () => {
-    logger.info('✅ KP: User confirmed early completion');
+    console.log('✅ KP: User confirmed early completion');
     setShowEarlyCompletionModal(false);
 
     // Calculate elapsed time
     const elapsedSeconds = 20 * 60 - timeRemaining;
-    logger.info(
+    console.log(
       `📊 KP: Completed early after ${elapsedSeconds} seconds (${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, '0')})`
     );
 
@@ -1256,13 +1255,13 @@ function KPSimulationScreen() {
   };
 
   const cancelEarlyCompletion = () => {
-    logger.info('↩️ KP: User cancelled early completion');
+    console.log('↩️ KP: User cancelled early completion');
     setShowEarlyCompletionModal(false);
     setEarlyCompletionReason('');
   };
 
   const executeEarlyCompletion = async (elapsedSeconds: number) => {
-    logger.info('🏁 KP: Executing early completion');
+    console.log('🏁 KP: Executing early completion');
 
     // Set graceful shutdown flag
     setIsGracefulShutdown(true);
@@ -1286,19 +1285,19 @@ function KPSimulationScreen() {
           completion_type: 'early',
           completion_reason: earlyCompletionReason || 'user_finished_early',
         });
-        logger.info(
+        console.log(
           `📊 KP: Early completion recorded (${elapsedSeconds}s elapsed, reason: ${earlyCompletionReason || 'user_finished_early'})`
         );
 
         // Reset optimistic counter if simulation ended before being charged (< 5 minutes)
         if (!usageMarked && elapsedSeconds < USAGE_THRESHOLD_SECONDS) {
-          logger.info('🔄 KP: Early completion before 5-minute mark - resetting optimistic count');
+          console.log('🔄 KP: Early completion before 5-minute mark - resetting optimistic count');
           resetOptimisticCount();
         } else if (elapsedSeconds >= USAGE_THRESHOLD_SECONDS) {
-          logger.info('✅ KP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
+          console.log('✅ KP: Simulation reached 5-minute threshold - counter already deducted, no reset needed');
         }
       } catch (error) {
-        logger.error('❌ KP: Error updating early completion status:', error);
+        console.error('❌ KP: Error updating early completion status:', error);
       }
     }
 
@@ -1314,13 +1313,13 @@ function KPSimulationScreen() {
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
     return () => {
-      logger.info('🧹 KP: Component unmount cleanup started');
+      console.log('🧹 KP: Component unmount cleanup started');
 
       // Determine final status based on whether usage was recorded
       const finalStatus = usageMarkedRef.current ? 'completed' : 'aborted';
       const elapsedSeconds = 20 * 60 - timeRemaining;
 
-      logger.info(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
+      console.log(`🔍 KP: Cleanup - usageMarked=${usageMarkedRef.current}, marking session as ${finalStatus}`);
 
       // Use centralized cleanup (async but don't wait for it in cleanup)
       if (timerActiveRef.current && sessionTokenRef.current) {
@@ -1330,10 +1329,10 @@ function KPSimulationScreen() {
           skipDatabaseUpdate: false,
         })
           .then(() => {
-            logger.info('✅ KP: Cleanup completed successfully');
+            console.log('✅ KP: Cleanup completed successfully');
           })
           .catch((error) => {
-            logger.error('❌ KP: Error during cleanup:', error);
+            console.error('❌ KP: Error during cleanup:', error);
           });
       }
 
@@ -1349,9 +1348,9 @@ function KPSimulationScreen() {
         trackListeners.forEach(({ track, handler }: { track: MediaStreamTrack; handler: () => void }) => {
           try {
             track.removeEventListener('ended', handler);
-            logger.info('🧹 KP: Removed track event listener');
+            console.log('🧹 KP: Removed track event listener');
           } catch (error) {
-            logger.warn('⚠️ KP: Error removing track listener:', error);
+            console.warn('⚠️ KP: Error removing track listener:', error);
           }
         });
         trackListeners.length = 0; // Clear the array
@@ -1366,13 +1365,13 @@ function KPSimulationScreen() {
 
       // Run global cleanup to ensure widget is completely removed
       if (Platform.OS === 'web') {
-        logger.info('🌍 KP: Re-enabling global Voiceflow cleanup');
+        console.log('🌍 KP: Re-enabling global Voiceflow cleanup');
         enableVoiceflowCleanup();
-        logger.info('🌍 KP: Running global Voiceflow cleanup with force=true');
+        console.log('🌍 KP: Running global Voiceflow cleanup with force=true');
         globalVoiceflowCleanup(true);
       }
 
-      logger.info('✅ KP: Component unmount cleanup initiated');
+      console.log('✅ KP: Component unmount cleanup initiated');
     };
   }, []);
 
@@ -1382,7 +1381,7 @@ function KPSimulationScreen() {
       if (timerActive && sessionTokenRef.current) {
         // CRITICAL FIX: End simulation in database before page unloads
         // Use fetch with keepalive for reliability - guaranteed to send even during unload
-        logger.info('🚨 KP: Page unloading with active simulation - ending session NOW');
+        console.log('🚨 KP: Page unloading with active simulation - ending session NOW');
 
         try {
           // CRITICAL FIX: Use CACHED session instead of async getSession()
@@ -1408,15 +1407,15 @@ function KPSimulationScreen() {
               body: JSON.stringify(payload),
               keepalive: true, // This ensures request completes even if page closes
             }).catch((err) => {
-              logger.error('❌ KP: Failed to end simulation on unload:', err);
+              console.error('❌ KP: Failed to end simulation on unload:', err);
             });
 
-            logger.info('✅ KP: Simulation end request sent (keepalive)');
+            console.log('✅ KP: Simulation end request sent (keepalive)');
           } else {
-            logger.error('❌ KP: Cannot end simulation - auth session not cached!');
+            console.error('❌ KP: Cannot end simulation - auth session not cached!');
           }
         } catch (error) {
-          logger.error('❌ KP: Error ending simulation on unload:', error);
+          console.error('❌ KP: Error ending simulation on unload:', error);
         }
 
         e.preventDefault();
@@ -1428,7 +1427,7 @@ function KPSimulationScreen() {
     // Enhanced visibility change handler for immediate widget cleanup
     const handleVisibilityChange = async () => {
       if (timerActive && (document.visibilityState === 'hidden' || document.hidden)) {
-        logger.info('🚫 KP: Attempted to leave page during simulation - BLOCKED');
+        console.log('🚫 KP: Attempted to leave page during simulation - BLOCKED');
         // For mobile apps, prevent backgrounding during simulation
         if (Platform.OS !== 'web') {
           Alert.alert('Simulation läuft', 'Sie können die App nicht verlassen, während die Simulation läuft.', [
@@ -1440,11 +1439,11 @@ function KPSimulationScreen() {
 
       // Re-validate access when user returns to tab
       if (document.visibilityState === 'visible' && !document.hidden) {
-        logger.info('[Tab Visibility] KP: Tab became visible - re-validating access...');
+        console.log('[Tab Visibility] KP: Tab became visible - re-validating access...');
         const accessCheck = await checkAccess();
 
         if (accessCheck && !accessCheck.canUseSimulation) {
-          logger.warn('[Tab Visibility] KP: ⚠️ Access lost while away - locking simulation');
+          console.warn('[Tab Visibility] KP: ⚠️ Access lost while away - locking simulation');
           setIsSimulationLocked(true);
 
           if (timerActive) {
@@ -1458,7 +1457,7 @@ function KPSimulationScreen() {
     // Handle route changes - BLOCK during active simulation
     const handlePopState = (e: PopStateEvent) => {
       if (timerActive) {
-        logger.info('🚫 KP: Navigation blocked - simulation in progress');
+        console.log('🚫 KP: Navigation blocked - simulation in progress');
         e.preventDefault();
         // Push the current state back to prevent navigation
         window.history.pushState(null, '', window.location.href);
@@ -1492,7 +1491,7 @@ function KPSimulationScreen() {
 
   // Monitor subscription status for lock state
   useEffect(() => {
-    logger.info('[Lock Monitor] KP: useEffect triggered', {
+    console.log('[Lock Monitor] KP: useEffect triggered', {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
@@ -1501,7 +1500,7 @@ function KPSimulationScreen() {
 
     if (subscriptionStatus) {
       const shouldLock = !subscriptionStatus.canUseSimulation;
-      logger.info('[Lock Monitor] KP: Subscription status changed:', {
+      console.log('[Lock Monitor] KP: Subscription status changed:', {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
@@ -1509,15 +1508,15 @@ function KPSimulationScreen() {
       });
 
       if (shouldLock !== isSimulationLocked) {
-        logger.info(`[Lock Monitor] KP: 🔒 Setting lock state to: ${shouldLock}`);
+        console.log(`[Lock Monitor] KP: 🔒 Setting lock state to: ${shouldLock}`);
         setIsSimulationLocked(shouldLock);
       }
 
       if (shouldLock && timerActive) {
-        logger.warn('[Lock Monitor] KP: ⚠️ User ran out of simulations during active session!');
+        console.warn('[Lock Monitor] KP: ⚠️ User ran out of simulations during active session!');
       }
     } else {
-      logger.warn('[Lock Monitor] KP: No subscription status available yet');
+      console.warn('[Lock Monitor] KP: No subscription status available yet');
     }
   }, [subscriptionStatus, timerActive, isSimulationLocked]);
 
@@ -1535,12 +1534,12 @@ function KPSimulationScreen() {
               access_token: session.access_token,
               user_id: user.id,
             };
-            logger.info('✅ KP: Auth session cached for beforeunload handler');
+            console.log('✅ KP: Auth session cached for beforeunload handler');
           } else {
-            logger.warn('⚠️ KP: Failed to cache auth session:', error);
+            console.warn('⚠️ KP: Failed to cache auth session:', error);
           }
         } catch (err) {
-          logger.error('❌ KP: Error caching auth session:', err);
+          console.error('❌ KP: Error caching auth session:', err);
         }
       }
     };
@@ -1553,7 +1552,7 @@ function KPSimulationScreen() {
   // Immediate cleanup function for navigation events
   const performImmediateCleanup = () => {
     try {
-      logger.info('⚡ KP: Performing immediate cleanup');
+      console.log('⚡ KP: Performing immediate cleanup');
 
       // Immediately hide and destroy Voiceflow widget
       if (window.voiceflow?.chat) {
@@ -1575,7 +1574,7 @@ function KPSimulationScreen() {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element) => {
           element.remove();
-          logger.info(`🗑️ KP: Immediately removed element: ${selector}`);
+          console.log(`🗑️ KP: Immediately removed element: ${selector}`);
         });
       });
 
@@ -1585,26 +1584,26 @@ function KPSimulationScreen() {
         .then((stream) => {
           stream.getTracks().forEach((track) => {
             track.stop();
-            logger.info('🔇 KP: Stopped audio track during immediate cleanup');
+            console.log('🔇 KP: Stopped audio track during immediate cleanup');
           });
         })
         .catch(() => {});
 
-      logger.info('✅ KP: Immediate cleanup completed');
+      console.log('✅ KP: Immediate cleanup completed');
     } catch (error) {
-      logger.error('❌ KP: Error during immediate cleanup:', error);
+      console.error('❌ KP: Error during immediate cleanup:', error);
     }
   };
 
   // Reset simulation state for restart
   const resetSimulationState = async () => {
-    logger.info('🔄 KP: Resetting simulation state for restart');
+    console.log('🔄 KP: Resetting simulation state for restart');
 
     // CRITICAL: Clear intervals FIRST before resetting refs
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
-      logger.info('✅ KP: Cleared timer interval');
+      console.log('✅ KP: Cleared timer interval');
     }
 
     // NOTE: Heartbeat cleanup removed - deprecated/no-op in new system
@@ -1656,7 +1655,7 @@ function KPSimulationScreen() {
     }
 
     // FIX: Clear storage (fire-and-forget for non-blocking reset)
-    clearSimulationStorage().catch((err) => logger.error('Error clearing storage during reset:', err));
+    clearSimulationStorage().catch((err) => console.error('Error clearing storage during reset:', err));
 
     // Reset early completion state
     setShowEarlyCompletionModal(false);
@@ -1664,27 +1663,27 @@ function KPSimulationScreen() {
 
     // CRITICAL FIX: Generate new session token for next simulation
     // The old session is ended, we need a fresh token for the next run
-    logger.info('🔑 KP: Generating new session token for next simulation');
+    console.log('🔑 KP: Generating new session token for next simulation');
     try {
       const result = await simulationTracker.startSimulation('kp');
 
       if (!result.success || !result.sessionToken) {
-        logger.error('❌ KP: Failed to generate new session token:', result.error);
+        console.error('❌ KP: Failed to generate new session token:', result.error);
         setSessionToken(null);
         sessionTokenRef.current = null;
       } else {
-        logger.info(`✅ KP: New session token generated: ${result.sessionToken.substring(0, 8)}...`);
+        console.log(`✅ KP: New session token generated: ${result.sessionToken.substring(0, 8)}...`);
         setSessionToken(result.sessionToken);
         sessionTokenRef.current = result.sessionToken;
       }
     } catch (error) {
-      logger.error('❌ KP: Exception generating new session token:', error);
+      console.error('❌ KP: Exception generating new session token:', error);
       setSessionToken(null);
       sessionTokenRef.current = null;
     }
 
-    logger.info('✅ KP: Simulation state reset completed - ready for next run');
-    logger.info(
+    console.log('✅ KP: Simulation state reset completed - ready for next run');
+    console.log(
       '🔍 KP: Post-reset state - timerActiveRef:',
       timerActiveRef.current,
       'timerInterval:',
@@ -1696,7 +1695,7 @@ function KPSimulationScreen() {
     // Re-setup conversation monitoring for next run
     setTimeout(() => {
       if (voiceflowController.current) {
-        logger.info('🔄 KP: Re-initializing conversation monitoring after reset');
+        console.log('🔄 KP: Re-initializing conversation monitoring after reset');
         setupConversationMonitoring();
       }
     }, 500);
@@ -1714,16 +1713,16 @@ function KPSimulationScreen() {
   ) => {
     // Prevent concurrent cleanup operations
     if (isCleaningUpRef.current) {
-      logger.info('⚠️ KP: Cleanup already in progress, skipping...');
+      console.log('⚠️ KP: Cleanup already in progress, skipping...');
       return;
     }
 
-    logger.info('🧹 KP: Starting centralized widget cleanup...');
+    console.log('🧹 KP: Starting centralized widget cleanup...');
     isCleaningUpRef.current = true;
 
     try {
       // Step 1: Stop all intervals immediately
-      logger.info('🛑 KP: Step 1 - Clearing all intervals...');
+      console.log('🛑 KP: Step 1 - Clearing all intervals...');
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
         timerInterval.current = null;
@@ -1742,14 +1741,14 @@ function KPSimulationScreen() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 3: Close Voiceflow widget
-      logger.info('🔚 KP: Step 3 - Closing Voiceflow widget...');
+      console.log('🔚 KP: Step 3 - Closing Voiceflow widget...');
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.close && window.voiceflow.chat.close();
           window.voiceflow.chat.hide && window.voiceflow.chat.hide();
-          logger.info('✅ KP: Voiceflow widget closed');
+          console.log('✅ KP: Voiceflow widget closed');
         } catch (error) {
-          logger.error('❌ KP: Error closing Voiceflow widget:', error);
+          console.error('❌ KP: Error closing Voiceflow widget:', error);
         }
       }
 
@@ -1757,19 +1756,19 @@ function KPSimulationScreen() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Step 5: Destroy controller
-      logger.info('🔧 KP: Step 5 - Destroying controller...');
+      console.log('🔧 KP: Step 5 - Destroying controller...');
       if (voiceflowController.current) {
         try {
           voiceflowController.current.destroy();
           voiceflowController.current = null;
-          logger.info('✅ KP: Controller destroyed');
+          console.log('✅ KP: Controller destroyed');
         } catch (error) {
-          logger.error('❌ KP: Error destroying controller:', error);
+          console.error('❌ KP: Error destroying controller:', error);
         }
       }
 
       // Step 6: Force remove DOM elements
-      logger.info('🗑️ KP: Step 6 - Force removing DOM elements...');
+      console.log('🗑️ KP: Step 6 - Force removing DOM elements...');
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         try {
           const widgetSelectors = [
@@ -1783,41 +1782,41 @@ function KPSimulationScreen() {
             const elements = document.querySelectorAll(selector);
             elements.forEach((el) => {
               el.remove();
-              logger.info(`✅ KP: Removed element: ${selector}`);
+              console.log(`✅ KP: Removed element: ${selector}`);
             });
           });
         } catch (error) {
-          logger.error('❌ KP: Error removing DOM elements:', error);
+          console.error('❌ KP: Error removing DOM elements:', error);
         }
       }
 
       // Step 7: Update database if needed
       if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
-        logger.info('📊 KP: Step 7 - Updating database...');
+        console.log('📊 KP: Step 7 - Updating database...');
         try {
           await simulationTracker.updateSimulationStatus(
             sessionToken,
             options.finalStatus,
             options.elapsedSeconds || 0
           );
-          logger.info(`✅ KP: Database updated with status: ${options.finalStatus}`);
+          console.log(`✅ KP: Database updated with status: ${options.finalStatus}`);
         } catch (error) {
-          logger.error('❌ KP: Error updating database:', error);
+          console.error('❌ KP: Error updating database:', error);
         }
       }
 
       // Step 8: Clear storage (AsyncStorage + SecureStore)
-      logger.info('💾 KP: Step 8 - Clearing simulation storage...');
+      console.log('💾 KP: Step 8 - Clearing simulation storage...');
       await clearSimulationStorage();
 
-      logger.info('✅ KP: Centralized cleanup completed successfully');
+      console.log('✅ KP: Centralized cleanup completed successfully');
     } catch (error) {
-      logger.error('❌ KP: Error during centralized cleanup:', error);
+      console.error('❌ KP: Error during centralized cleanup:', error);
     } finally {
       // CRITICAL: Always clear session token to prevent reuse
       sessionTokenRef.current = null;
       setSessionToken(null);
-      logger.info('🔒 KP: Session token cleared');
+      console.log('🔒 KP: Session token cleared');
 
       // Always reset the cleanup flag
       isCleaningUpRef.current = false;
@@ -1840,7 +1839,7 @@ function KPSimulationScreen() {
 
   // Show timer warning with color and message
   const showTimerWarning = (message: string, level: 'yellow' | 'orange' | 'red', isPulsing: boolean) => {
-    logger.info(`⚠️ Timer warning: ${message} (${level})`);
+    console.log(`⚠️ Timer warning: ${message} (${level})`);
 
     // Update warning level
     setTimerWarningLevel(level);
