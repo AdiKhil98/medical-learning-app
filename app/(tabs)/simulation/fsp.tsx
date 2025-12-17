@@ -886,6 +886,14 @@ function FSPSimulationScreen() {
         logger.info('✅ FSP: Simulation usage recorded in database with server validation');
         logger.info('✅ FSP: Counter automatically incremented by database function');
 
+        // CRITICAL FIX: Refresh quota display in real-time after counting
+        try {
+          await getSubscriptionInfo();
+          logger.info('✅ FSP: Quota counter refreshed - UI now shows updated count');
+        } catch (refreshError) {
+          logger.error('❌ FSP: Error refreshing quota display:', refreshError);
+        }
+
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
         // already increments the counter in the database. Calling recordUsage() would
         // result in double-counting (incrementing the counter twice).

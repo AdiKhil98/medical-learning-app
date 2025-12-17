@@ -998,6 +998,14 @@ function KPSimulationScreen() {
         logger.info('✅ KP: Simulation usage recorded in database with server validation');
         logger.info('✅ KP: Counter automatically incremented by database function');
 
+        // CRITICAL FIX: Refresh quota display in real-time after counting
+        try {
+          await getSubscriptionInfo();
+          logger.info('✅ KP: Quota counter refreshed - UI now shows updated count');
+        } catch (refreshError) {
+          logger.error('❌ KP: Error refreshing quota display:', refreshError);
+        }
+
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
         // already increments the counter in the database. Calling recordUsage() would
         // result in double-counting (incrementing the counter twice).
