@@ -115,7 +115,14 @@ function KPSimulationScreen() {
 
   // Disable global Voiceflow cleanup as soon as component mounts
   useEffect(() => {
-    console.log('🛑 KP: Component mounted - disabling global Voiceflow cleanup');
+    console.warn('🚨🚨🚨 KP COMPONENT MOUNTED');
+
+    // Change page title to prove new code is loaded
+    if (typeof document !== 'undefined') {
+      document.title = '🚨 DEBUG MODE - KP Simulation';
+    }
+
+    alert(`DEBUG: KP Component Mounted at ${  new Date().toLocaleTimeString()  }! Check console now.`);
     disableVoiceflowCleanup();
     stopGlobalVoiceflowCleanup();
   }, []);
@@ -440,7 +447,7 @@ function KPSimulationScreen() {
             success: result.success,
             hasToken: !!result.sessionToken,
             error: result.error || 'none',
-            sessionToken: result.sessionToken ? `${result.sessionToken.substring(0, 16)  }...` : 'NULL',
+            sessionToken: result.sessionToken ? `${result.sessionToken.substring(0, 16)}...` : 'NULL',
           });
 
           if (!result.success || !result.sessionToken) {
@@ -1007,7 +1014,7 @@ function KPSimulationScreen() {
     console.table({
       action: 'MARK_SIMULATION_COUNTED',
       elapsedSeconds: clientElapsedSeconds,
-      sessionToken: `${token.substring(0, 16)  }...`,
+      sessionToken: `${token.substring(0, 16)}...`,
       timestamp: new Date().toISOString(),
     });
 
