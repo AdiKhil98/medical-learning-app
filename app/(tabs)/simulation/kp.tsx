@@ -122,7 +122,7 @@ function KPSimulationScreen() {
       document.title = '🚨 DEBUG MODE - KP Simulation';
     }
 
-    alert(`DEBUG: KP Component Mounted at ${  new Date().toLocaleTimeString()  }! Check console now.`);
+    alert(`DEBUG: KP Component Mounted at ${new Date().toLocaleTimeString()}! Check console now.`);
     disableVoiceflowCleanup();
     stopGlobalVoiceflowCleanup();
   }, []);
@@ -438,12 +438,12 @@ function KPSimulationScreen() {
         } else {
           // No session token, generate new one
           console.warn(`🚨🚨🚨 STARTING SIMULATION - CALLING startSimulation('kp')`);
-          console.table({ action: 'START_SIMULATION', type: 'kp', timestamp: new Date().toISOString() });
+          console.log({ action: 'START_SIMULATION', type: 'kp', timestamp: new Date().toISOString() });
 
           const result = await simulationTracker.startSimulation('kp');
 
           console.warn(`🚨🚨🚨 START SIMULATION RESULT:`, result);
-          console.table({
+          console.log({
             success: result.success,
             hasToken: !!result.sessionToken,
             error: result.error || 'none',
@@ -1011,7 +1011,7 @@ function KPSimulationScreen() {
     if (!token || usageMarkedRef.current) return;
 
     console.warn('🚨🚨🚨 5-MINUTE MARK REACHED - MARKING AS COUNTED');
-    console.table({
+    console.log({
       action: 'MARK_SIMULATION_COUNTED',
       elapsedSeconds: clientElapsedSeconds,
       sessionToken: `${token.substring(0, 16)}...`,
@@ -1022,7 +1022,7 @@ function KPSimulationScreen() {
       const result = await simulationTracker.markSimulationUsed(token, clientElapsedSeconds);
 
       console.warn('🚨 MARK SIMULATION RESULT:', result);
-      console.table({ success: result.success, error: result.error || 'none' });
+      console.log({ success: result.success, error: result.error || 'none' });
 
       if (result.success) {
         setUsageMarked(true);
@@ -1033,7 +1033,7 @@ function KPSimulationScreen() {
         try {
           const quotaInfo = await getSubscriptionInfo();
           console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
-          console.table({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
+          console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
         } catch (refreshError) {
           console.error('🚨 ERROR REFRESHING QUOTA:', refreshError);
         }
