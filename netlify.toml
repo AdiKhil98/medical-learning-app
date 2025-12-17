@@ -18,7 +18,7 @@
 
 [build.processing.js]
   bundle = true
-  minify = true
+  minify = false  # TEMPORARY: Disabled to preserve console.log for debugging
 
 [build.processing.html]
   pretty_urls = true
