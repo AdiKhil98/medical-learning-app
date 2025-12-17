@@ -32,10 +32,18 @@ const { width: screenWidth } = Dimensions.get('window');
 const isMobile = screenWidth < 768;
 
 function KPSimulationScreen() {
-  console.log('🎯🎯🎯 KP SIMULATION COMPONENT RENDERING');
+  // 🚨 SUPER VISIBLE DEBUGGING
+  console.warn('🚨🚨🚨 KP COMPONENT RENDERING AT:', new Date().toLocaleTimeString());
+  if (typeof window !== 'undefined') {
+    window.KP_DEBUG = { mounted: new Date().toISOString(), logs: [] };
+  }
+
   const router = useRouter();
   const { user } = useAuth();
-  console.log('🎯 User in component:', user ? `ID: ${user.id.substring(0, 8)}...` : 'NOT FOUND');
+  console.warn('🚨 USER:', user ? `ID: ${user.id}` : 'NO USER FOUND');
+  if (typeof window !== 'undefined' && user) {
+    window.KP_DEBUG.userId = user.id;
+  }
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess, resetOptimisticCount } =
     useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
@@ -422,19 +430,26 @@ function KPSimulationScreen() {
           );
         } else {
           // No session token, generate new one
-          console.log(`🔑 [${timestamp}] Step 3a: Generating new session token before Voiceflow initialization`);
+          console.warn(`🚨🚨🚨 STARTING SIMULATION - CALLING startSimulation('kp')`);
+          console.table({ action: 'START_SIMULATION', type: 'kp', timestamp: new Date().toISOString() });
 
           const result = await simulationTracker.startSimulation('kp');
 
-          console.log(`📋 [${timestamp}] Session token generation result:`, {
+          console.warn(`🚨🚨🚨 START SIMULATION RESULT:`, result);
+          console.table({
             success: result.success,
             hasToken: !!result.sessionToken,
             error: result.error || 'none',
+            sessionToken: result.sessionToken ? `${result.sessionToken.substring(0, 16)  }...` : 'NULL',
           });
 
           if (!result.success || !result.sessionToken) {
+            console.error('🚨🚨🚨 SIMULATION START FAILED!', result.error);
+            alert(`SIMULATION START FAILED: ${result.error || 'Unknown error'}`);
             throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
           }
+
+          console.warn(`✅✅✅ SIMULATION STARTED SUCCESSFULLY!`, result.sessionToken);
 
           console.log(
             `✅ [${timestamp}] Session token generated successfully: ${result.sessionToken.substring(0, 8)}...`
@@ -988,24 +1003,32 @@ function KPSimulationScreen() {
     const token = sessionTokenRef.current; // Use ref instead of state
     if (!token || usageMarkedRef.current) return;
 
-    console.log('📊 KP: Marking simulation as used at 5-minute mark');
-    console.log('🔍 DEBUG: Client elapsed seconds:', clientElapsedSeconds);
-    console.log('🔍 DEBUG: Using session token:', token);
+    console.warn('🚨🚨🚨 5-MINUTE MARK REACHED - MARKING AS COUNTED');
+    console.table({
+      action: 'MARK_SIMULATION_COUNTED',
+      elapsedSeconds: clientElapsedSeconds,
+      sessionToken: `${token.substring(0, 16)  }...`,
+      timestamp: new Date().toISOString(),
+    });
 
     try {
       const result = await simulationTracker.markSimulationUsed(token, clientElapsedSeconds);
+
+      console.warn('🚨 MARK SIMULATION RESULT:', result);
+      console.table({ success: result.success, error: result.error || 'none' });
+
       if (result.success) {
         setUsageMarked(true);
         usageMarkedRef.current = true; // Also update ref for cleanup closure
-        console.log('✅ KP: Simulation usage recorded in database with server validation');
-        console.log('✅ KP: Counter automatically incremented by database function');
+        console.warn('✅✅✅ SIMULATION MARKED AS COUNTED IN DATABASE');
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
         try {
-          await getSubscriptionInfo();
-          console.log('✅ KP: Quota counter refreshed - UI now shows updated count');
+          const quotaInfo = await getSubscriptionInfo();
+          console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
+          console.table({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
         } catch (refreshError) {
-          console.error('❌ KP: Error refreshing quota display:', refreshError);
+          console.error('🚨 ERROR REFRESHING QUOTA:', refreshError);
         }
 
         // NOTE: We do NOT call recordUsage() here because mark_simulation_counted
