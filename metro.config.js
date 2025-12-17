@@ -14,9 +14,9 @@ config.transformer = {
       keep_fnames: false,
     },
     compress: {
-      drop_console: true, // Remove console.logs in production
+      drop_console: false, // KEEP console.logs for debugging (changed from true)
       drop_debugger: true,
-      pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      // pure_funcs removed - we want to keep all console methods
     },
   },
 };
