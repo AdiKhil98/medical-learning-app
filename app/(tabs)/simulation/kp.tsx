@@ -54,6 +54,9 @@ function KPSimulationScreen() {
   const usageMarkedRef = useRef(false); // Ref to track usage marked state for cleanup closure
   // NOTE: heartbeatInterval removed - deprecated/no-op in new system
 
+  // CRITICAL FIX: Cache auth session for synchronous access in beforeunload handler
+  const cachedAuthSessionRef = useRef<{ access_token: string; user_id: string } | null>(null);
+
   // Timer warning system state
   const [timerWarningLevel, setTimerWarningLevel] = useState<'normal' | 'yellow' | 'orange' | 'red'>('normal');
   const [showWarningMessage, setShowWarningMessage] = useState(false);
@@ -1378,32 +1381,29 @@ function KPSimulationScreen() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (timerActive && sessionTokenRef.current) {
         // CRITICAL FIX: End simulation in database before page unloads
-        // Use sendBeacon for reliability - guaranteed to send even during unload
+        // Use fetch with keepalive for reliability - guaranteed to send even during unload
         logger.info('🚨 KP: Page unloading with active simulation - ending session NOW');
 
         try {
-          // Prepare the end session request
-          const {
-            data: { session },
-          } = supabase.auth.getSession();
-          if (session?.access_token && user?.id && sessionTokenRef.current) {
+          // CRITICAL FIX: Use CACHED session instead of async getSession()
+          const cachedAuth = cachedAuthSessionRef.current;
+          if (cachedAuth && sessionTokenRef.current) {
             const payload = {
               p_session_token: sessionTokenRef.current,
-              p_user_id: user.id,
+              p_user_id: cachedAuth.user_id,
             };
 
-            // Use sendBeacon to reliably end the simulation even if page closes
-            // This is a synchronous, guaranteed-delivery API designed for page unload
+            // Use fetch with keepalive to reliably end the simulation even if page closes
+            // keepalive ensures request completes even during page unload
             const beaconUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/rpc/end_simulation_session`;
-            const beaconData = new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
-            // Send with authentication headers via fetch keepalive (sendBeacon doesn't support custom headers well)
+            // Send with authentication headers via fetch keepalive
             fetch(beaconUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
-                Authorization: `Bearer ${session.access_token}`,
+                Authorization: `Bearer ${cachedAuth.access_token}`,
               },
               body: JSON.stringify(payload),
               keepalive: true, // This ensures request completes even if page closes
@@ -1412,6 +1412,8 @@ function KPSimulationScreen() {
             });
 
             logger.info('✅ KP: Simulation end request sent (keepalive)');
+          } else {
+            logger.error('❌ KP: Cannot end simulation - auth session not cached!');
           }
         } catch (error) {
           logger.error('❌ KP: Error ending simulation on unload:', error);
@@ -1518,6 +1520,35 @@ function KPSimulationScreen() {
       logger.warn('[Lock Monitor] KP: No subscription status available yet');
     }
   }, [subscriptionStatus, timerActive, isSimulationLocked]);
+
+  // CRITICAL FIX: Cache auth session for use in beforeunload handler
+  useEffect(() => {
+    const cacheAuthSession = async () => {
+      if (user?.id) {
+        try {
+          const {
+            data: { session },
+            error,
+          } = await supabase.auth.getSession();
+          if (session?.access_token && !error) {
+            cachedAuthSessionRef.current = {
+              access_token: session.access_token,
+              user_id: user.id,
+            };
+            logger.info('✅ KP: Auth session cached for beforeunload handler');
+          } else {
+            logger.warn('⚠️ KP: Failed to cache auth session:', error);
+          }
+        } catch (err) {
+          logger.error('❌ KP: Error caching auth session:', err);
+        }
+      }
+    };
+
+    cacheAuthSession();
+
+    // Re-cache when user changes
+  }, [user]);
 
   // Immediate cleanup function for navigation events
   const performImmediateCleanup = () => {
