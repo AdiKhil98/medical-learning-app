@@ -936,26 +936,23 @@ function KPSimulationScreen() {
         const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS;
         const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
 
+        // Calculate elapsed time for 5-minute check
+        const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
+
         // DEBUG: Log every 10 seconds to diagnose 5-minute check
         if (remainingSeconds % 10 === 0) {
           console.log('🔍 5-MIN CHECK DEBUG:', {
-            prev,
             remainingSeconds,
-            fiveMinutesRemaining,
-            'prev > fiveMinutesRemaining': prev > fiveMinutesRemaining,
-            'remainingSeconds <= fiveMinutesRemaining': remainingSeconds <= fiveMinutesRemaining,
+            elapsedSeconds: clientElapsed,
+            thresholdNeeded: USAGE_THRESHOLD_SECONDS,
+            'elapsedSeconds >= threshold': clientElapsed >= USAGE_THRESHOLD_SECONDS,
             usageMarked: usageMarkedRef.current,
             hasToken: !!currentSessionToken,
           });
         }
 
-        if (
-          prev > fiveMinutesRemaining &&
-          remainingSeconds <= fiveMinutesRemaining &&
-          !usageMarkedRef.current &&
-          currentSessionToken
-        ) {
-          const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
+        // Check if 5 minutes have elapsed (works regardless of session recovery)
+        if (clientElapsed >= USAGE_THRESHOLD_SECONDS && !usageMarkedRef.current && currentSessionToken) {
           console.log('🎯🎯🎯 5-MINUTE MARK REACHED - MARKING AS COUNTED!');
           console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
@@ -1027,7 +1024,9 @@ function KPSimulationScreen() {
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
         try {
-          const quotaInfo = await getSubscriptionInfo();
+          console.log('🔄 Refreshing quota from backend...');
+          await checkAccess(); // Fetch fresh data from backend
+          const quotaInfo = getSubscriptionInfo(); // Get updated info from state
           console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
           console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
         } catch (refreshError) {

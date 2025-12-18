@@ -128,6 +128,57 @@ class SimulationTrackingService {
   }
 
   /**
+   * Clean up orphaned sessions (sessions with ended_at = NULL)
+   * This prevents 409 Conflict errors when starting new simulations
+   */
+  private async cleanupOrphanedSessions(userId: string): Promise<void> {
+    try {
+      logger.info('🧹 Checking for orphaned sessions for user:', userId);
+
+      // Find active sessions (ended_at is NULL)
+      const { data: activeSessions, error: queryError } = await supabase
+        .from('simulation_usage_logs')
+        .select('session_token, started_at')
+        .eq('user_id', userId)
+        .is('ended_at', null);
+
+      if (queryError) {
+        logger.error('❌ Error querying orphaned sessions:', queryError);
+        return;
+      }
+
+      if (!activeSessions || activeSessions.length === 0) {
+        logger.info('✅ No orphaned sessions found');
+        return;
+      }
+
+      logger.warn('⚠️ Found orphaned sessions:', activeSessions.length);
+
+      // Close all orphaned sessions
+      for (const session of activeSessions) {
+        logger.info('🧹 Closing orphaned session:', session.session_token);
+
+        const { error: updateError } = await supabase
+          .from('simulation_usage_logs')
+          .update({
+            ended_at: new Date().toISOString(),
+            duration_seconds: 0, // Mark as incomplete
+          })
+          .eq('session_token', session.session_token);
+
+        if (updateError) {
+          logger.error('❌ Error closing orphaned session:', updateError);
+        } else {
+          logger.info('✅ Orphaned session closed:', session.session_token);
+        }
+      }
+    } catch (error) {
+      logger.error('❌ Exception in cleanupOrphanedSessions:', error);
+      // Don't throw - this is cleanup, we want to continue even if it fails
+    }
+  }
+
+  /**
    * Start a new simulation session
    * Simply creates a database row with started_at timestamp
    */
@@ -179,6 +230,10 @@ class SimulationTrackingService {
         // ISSUE #18 FIX: Standardize to German
         return { success: false, error: 'Nicht angemeldet' };
       }
+
+      // CRITICAL FIX: Clean up any orphaned sessions before starting new one
+      // This prevents 409 Conflict errors from the unique constraint
+      await this.cleanupOrphanedSessions(user.id);
 
       const sessionToken = this.generateSessionToken();
       logger.info('🎫 Session token:', sessionToken);
