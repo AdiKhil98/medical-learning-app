@@ -931,9 +931,26 @@ function FSPSimulationScreen() {
         try {
           console.log('🔄 Refreshing quota from backend...');
           await checkAccess(); // Fetch fresh data from backend
-          const quotaInfo = getSubscriptionInfo(); // Get updated info from state
-          console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
-          console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
+
+          // Wait for React state to update (state updates are async)
+          // Retry up to 5 times with 200ms delay between attempts
+          let quotaInfo = null;
+          let attempts = 0;
+          const maxAttempts = 5;
+
+          while (!quotaInfo && attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            quotaInfo = getSubscriptionInfo();
+            attempts++;
+            console.log(`🔄 Attempt ${attempts}/${maxAttempts}: quotaInfo =`, quotaInfo ? 'FOUND' : 'null');
+          }
+
+          if (quotaInfo) {
+            console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
+            console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
+          } else {
+            console.error('🚨 QUOTA REFRESH TIMEOUT: State did not update after', maxAttempts, 'attempts');
+          }
         } catch (refreshError) {
           console.error('🚨 ERROR REFRESHING QUOTA:', refreshError);
         }
