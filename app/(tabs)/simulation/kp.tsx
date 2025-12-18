@@ -434,7 +434,7 @@ function KPSimulationScreen() {
 
           if (!result.success || !result.sessionToken) {
             console.error('🚨🚨🚨 SIMULATION START FAILED!', result.error);
-            alert(`SIMULATION START FAILED: ${result.error || 'Unknown error'}`);
+            // Error is logged to console - no need for alert popup
             throw new Error(`Session token generation failed: ${result.error || 'Unknown error'}`);
           }
 
