@@ -25,6 +25,7 @@ import {
   SIMULATION_DURATION_SECONDS,
   USAGE_THRESHOLD_SECONDS,
   WARNING_5_MIN_REMAINING,
+  STALE_SESSION_GRACE_PERIOD_MINUTES,
 } from '@/constants/simulationConstants';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 
