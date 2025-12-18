@@ -943,6 +943,20 @@ function KPSimulationScreen() {
         // NOTE: Total duration = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (total-5) minutes REMAINING
         const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS;
         const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
+
+        // DEBUG: Log every 10 seconds to diagnose 5-minute check
+        if (remainingSeconds % 10 === 0) {
+          console.log('🔍 5-MIN CHECK DEBUG:', {
+            prev,
+            remainingSeconds,
+            fiveMinutesRemaining,
+            'prev > fiveMinutesRemaining': prev > fiveMinutesRemaining,
+            'remainingSeconds <= fiveMinutesRemaining': remainingSeconds <= fiveMinutesRemaining,
+            usageMarked: usageMarkedRef.current,
+            hasToken: !!currentSessionToken,
+          });
+        }
+
         if (
           prev > fiveMinutesRemaining &&
           remainingSeconds <= fiveMinutesRemaining &&
@@ -950,7 +964,7 @@ function KPSimulationScreen() {
           currentSessionToken
         ) {
           const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
-          console.log('🔍 DEBUG: 5-minute mark reached, marking as used');
+          console.log('🎯🎯🎯 5-MINUTE MARK REACHED - MARKING AS COUNTED!');
           console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
