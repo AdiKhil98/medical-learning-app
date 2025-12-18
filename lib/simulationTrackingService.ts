@@ -133,7 +133,7 @@ class SimulationTrackingService {
    */
   private async cleanupOrphanedSessions(userId: string): Promise<void> {
     try {
-      logger.info('🧹 Checking for orphaned sessions for user:', userId);
+      console.log('🧹🧹🧹 CLEANUP: Checking for orphaned sessions for user:', userId);
 
       // Find active sessions (ended_at is NULL)
       const { data: activeSessions, error: queryError } = await supabase
@@ -143,20 +143,23 @@ class SimulationTrackingService {
         .is('ended_at', null);
 
       if (queryError) {
+        console.error('❌ CLEANUP: Error querying orphaned sessions:', queryError);
         logger.error('❌ Error querying orphaned sessions:', queryError);
         return;
       }
 
+      console.log('🔍 CLEANUP: Found sessions:', activeSessions?.length || 0);
+
       if (!activeSessions || activeSessions.length === 0) {
-        logger.info('✅ No orphaned sessions found');
+        console.log('✅ CLEANUP: No orphaned sessions found');
         return;
       }
 
-      logger.warn('⚠️ Found orphaned sessions:', activeSessions.length);
+      console.warn('⚠️ CLEANUP: Found', activeSessions.length, 'orphaned session(s) - closing them now');
 
       // Close all orphaned sessions
       for (const session of activeSessions) {
-        logger.info('🧹 Closing orphaned session:', session.session_token);
+        console.log('🧹 CLEANUP: Closing orphaned session:', `${session.session_token.substring(0, 16)  }...`);
 
         const { error: updateError } = await supabase
           .from('simulation_usage_logs')
@@ -167,12 +170,19 @@ class SimulationTrackingService {
           .eq('session_token', session.session_token);
 
         if (updateError) {
+          console.error('❌ CLEANUP: Error closing orphaned session:', updateError);
           logger.error('❌ Error closing orphaned session:', updateError);
         } else {
-          logger.info('✅ Orphaned session closed:', session.session_token);
+          console.log('✅ CLEANUP: Successfully closed session:', `${session.session_token.substring(0, 16)  }...`);
         }
       }
+
+      // CRITICAL: Wait for database to commit changes before proceeding
+      console.log('⏳ CLEANUP: Waiting 500ms for database to commit changes...');
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      console.log('✅ CLEANUP: Complete - ready to start new session');
     } catch (error) {
+      console.error('❌ CLEANUP: Exception:', error);
       logger.error('❌ Exception in cleanupOrphanedSessions:', error);
       // Don't throw - this is cleanup, we want to continue even if it fails
     }
