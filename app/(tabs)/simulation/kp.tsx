@@ -32,18 +32,8 @@ const { width: screenWidth } = Dimensions.get('window');
 const isMobile = screenWidth < 768;
 
 function KPSimulationScreen() {
-  // 🚨 SUPER VISIBLE DEBUGGING
-  console.warn('🚨🚨🚨 KP COMPONENT RENDERING AT:', new Date().toLocaleTimeString());
-  if (typeof window !== 'undefined') {
-    window.KP_DEBUG = { mounted: new Date().toISOString(), logs: [] };
-  }
-
   const router = useRouter();
   const { user } = useAuth();
-  console.warn('🚨 USER:', user ? `ID: ${user.id}` : 'NO USER FOUND');
-  if (typeof window !== 'undefined' && user) {
-    window.KP_DEBUG.userId = user.id;
-  }
   const { canUseSimulation, subscriptionStatus, recordUsage, getSubscriptionInfo, checkAccess, resetOptimisticCount } =
     useSubscription(user?.id);
   const voiceflowController = useRef<VoiceflowController | null>(null);
