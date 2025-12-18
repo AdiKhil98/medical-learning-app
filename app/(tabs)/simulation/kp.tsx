@@ -105,14 +105,6 @@ function KPSimulationScreen() {
 
   // Disable global Voiceflow cleanup as soon as component mounts
   useEffect(() => {
-    console.warn('🚨🚨🚨 KP COMPONENT MOUNTED');
-
-    // Change page title to prove new code is loaded
-    if (typeof document !== 'undefined') {
-      document.title = '🚨 DEBUG MODE - KP Simulation';
-    }
-
-    alert(`DEBUG: KP Component Mounted at ${new Date().toLocaleTimeString()}! Check console now.`);
     disableVoiceflowCleanup();
     stopGlobalVoiceflowCleanup();
   }, []);
