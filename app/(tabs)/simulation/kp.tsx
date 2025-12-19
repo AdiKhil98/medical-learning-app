@@ -32,6 +32,10 @@ import { withErrorBoundary } from '@/components/withErrorBoundary';
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = screenWidth < 768;
 
+// CRITICAL FIX: Track burned tokens to prevent reuse after cleanup failure
+// Module-level Set persists across component re-renders within the same app session
+const burnedTokens = new Set<string>();
+
 function KPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -177,6 +181,18 @@ function KPSimulationScreen() {
             token: `${savedToken.substring(0, 8)}...`,
             startTime: new Date(parseInt(savedStartTime)).toISOString(),
           });
+
+          // CRITICAL FIX: Check if token was already used to end a simulation
+          if (burnedTokens.has(savedToken)) {
+            console.log('[KP Session Recovery] ⚠️ Token already burned (session ended), skipping recovery');
+            console.log('[KP Session Recovery] Cleaning up burned token from storage...');
+            await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+            await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(
+              () => {}
+            );
+            resetOptimisticCount();
+            return;
+          }
 
           // Verify session is still active in database
           const status = await simulationTracker.getSimulationStatus(savedToken);
@@ -1175,6 +1191,13 @@ function KPSimulationScreen() {
 
     const elapsedSeconds = 20 * 60 - timeRemaining;
 
+    // CRITICAL FIX: Mark token as burned BEFORE any cleanup to prevent reuse
+    // This prevents recovery attempts even if cleanup fails
+    if (sessionToken) {
+      burnedTokens.add(sessionToken);
+      console.log('[Token Security] 🔥 Token burned:', `${sessionToken.substring(0, 8)}...`);
+    }
+
     // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
       // Just update database
@@ -2095,7 +2118,7 @@ function KPSimulationScreen() {
               <View style={styles.helpButtonContainer}>
                 <TouchableOpacity style={styles.helpButton} onPress={handleShowTutorial} activeOpacity={0.7}>
                   <HelpCircle size={24} color="#6366f1" strokeWidth={2} />
-                  <Text style={styles.helpButtonText}>Tutorial anzeigen</Text>
+                  <Text style={styles.helpButtonText}>Anleitung anzeigen</Text>
                 </TouchableOpacity>
               </View>
             )}

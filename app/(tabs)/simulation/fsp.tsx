@@ -28,6 +28,10 @@ import {
 import { withErrorBoundary } from '@/components/withErrorBoundary';
 import { colors } from '@/constants/colors';
 
+// CRITICAL FIX: Track burned tokens to prevent reuse after cleanup failure
+// Module-level Set persists across component re-renders within the same app session
+const burnedTokens = new Set<string>();
+
 function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -1945,7 +1949,7 @@ function FSPSimulationScreen() {
               <View style={styles.helpButtonContainer}>
                 <TouchableOpacity style={styles.helpButton} onPress={handleShowTutorial} activeOpacity={0.7}>
                   <HelpCircle size={24} color="#6366f1" strokeWidth={2} />
-                  <Text style={styles.helpButtonText}>Tutorial anzeigen</Text>
+                  <Text style={styles.helpButtonText}>Anleitung anzeigen</Text>
                 </TouchableOpacity>
               </View>
             )}

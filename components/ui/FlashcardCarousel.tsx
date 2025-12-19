@@ -966,7 +966,7 @@ const FlashcardCarousel: React.FC<FlashcardCarouselProps> = ({ onDismiss }) => {
         <TouchableOpacity style={styles.dismissButton} onPress={onDismiss} activeOpacity={0.7}>
           <View style={styles.dismissButtonInner}>
             <X size={20} color="#6b7280" strokeWidth={2.5} />
-            <Text style={styles.dismissButtonText}>Tutorial ausblenden</Text>
+            <Text style={styles.dismissButtonText}>Anleitung schließen</Text>
           </View>
         </TouchableOpacity>
       )}
