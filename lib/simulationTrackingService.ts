@@ -130,56 +130,37 @@ class SimulationTrackingService {
   /**
    * Clean up orphaned sessions (sessions with ended_at = NULL)
    * This prevents 409 Conflict errors when starting new simulations
+   * UPDATED: Uses database RPC function to properly handle trigger execution
    */
   private async cleanupOrphanedSessions(userId: string): Promise<void> {
     try {
-      console.log('🧹🧹🧹 CLEANUP: Checking for orphaned sessions for user:', userId);
+      console.log('🧹🧹🧹 CLEANUP: Calling RPC to cleanup orphaned sessions for user:', userId);
 
-      // Find active sessions (ended_at is NULL)
-      const { data: activeSessions, error: queryError } = await supabase
-        .from('simulation_usage_logs')
-        .select('session_token, started_at')
-        .eq('user_id', userId)
-        .is('ended_at', null);
+      // Call database function to cleanup orphaned sessions
+      // This properly handles the duration calculation trigger
+      const { data, error } = await this.withTimeout(
+        supabase.rpc('cleanup_orphaned_sessions_for_user', {
+          p_user_id: userId,
+        })
+      );
 
-      if (queryError) {
-        console.error('❌ CLEANUP: Error querying orphaned sessions:', queryError);
-        logger.error('❌ Error querying orphaned sessions:', queryError);
+      if (error) {
+        console.error('❌ CLEANUP: RPC error:', error);
+        logger.error('❌ Error calling cleanup RPC:', error);
         return;
       }
 
-      console.log('🔍 CLEANUP: Found sessions:', activeSessions?.length || 0);
-
-      if (!activeSessions || activeSessions.length === 0) {
-        console.log('✅ CLEANUP: No orphaned sessions found');
-        return;
-      }
-
-      console.warn('⚠️ CLEANUP: Found', activeSessions.length, 'orphaned session(s) - closing them now');
-
-      // Close all orphaned sessions
-      for (const session of activeSessions) {
-        console.log('🧹 CLEANUP: Closing orphaned session:', `${session.session_token.substring(0, 16)  }...`);
-
-        const { error: updateError } = await supabase
-          .from('simulation_usage_logs')
-          .update({
-            ended_at: new Date().toISOString(),
-            duration_seconds: 0, // Mark as incomplete
-          })
-          .eq('session_token', session.session_token);
-
-        if (updateError) {
-          console.error('❌ CLEANUP: Error closing orphaned session:', updateError);
-          logger.error('❌ Error closing orphaned session:', updateError);
+      if (data) {
+        console.log('✅ CLEANUP: RPC response:', data);
+        if (data.closed_count > 0) {
+          console.warn(`⚠️ CLEANUP: ${data.message}`);
+          // Wait briefly for database to commit
+          await new Promise((resolve) => setTimeout(resolve, 300));
         } else {
-          console.log('✅ CLEANUP: Successfully closed session:', `${session.session_token.substring(0, 16)  }...`);
+          console.log('✅ CLEANUP: No orphaned sessions found');
         }
       }
 
-      // CRITICAL: Wait for database to commit changes before proceeding
-      console.log('⏳ CLEANUP: Waiting 500ms for database to commit changes...');
-      await new Promise((resolve) => setTimeout(resolve, 500));
       console.log('✅ CLEANUP: Complete - ready to start new session');
     } catch (error) {
       console.error('❌ CLEANUP: Exception:', error);
