@@ -280,12 +280,14 @@ export const useSubscription = (userId: string | undefined) => {
 
   // Real-time subscription to usage changes
   // ISSUE #10 FIX: Only depend on userId, use ref for checkAccess to prevent duplicate subscriptions
+  // ENHANCEMENT: Subscribe to both users and user_simulation_quota tables for comprehensive coverage
   useEffect(() => {
     if (!userId) return;
 
-    logger.info('[Real-time] Setting up subscription listener for user:', userId);
+    logger.info('[Real-time] Setting up subscription listeners for user:', userId);
 
-    // Subscribe to changes in the users table for this specific user
+    // Subscribe to changes in BOTH users and user_simulation_quota tables
+    // This ensures we catch quota updates regardless of which table is modified first
     const subscription = supabase
       .channel(`user-usage-${userId}`)
       .on(
@@ -297,9 +299,26 @@ export const useSubscription = (userId: string | undefined) => {
           filter: `id=eq.${userId}`,
         },
         (payload) => {
-          logger.info('[Real-time] Usage update detected:', payload);
+          logger.info('[Real-time] Users table update detected:', payload);
 
           // Re-check access when usage changes (use ref to get latest function)
+          if (checkAccessRef.current) {
+            checkAccessRef.current();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'user_simulation_quota',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          logger.info('[Real-time] Quota table update detected:', payload);
+
+          // Re-check access when quota changes (use ref to get latest function)
           if (checkAccessRef.current) {
             checkAccessRef.current();
           }
@@ -311,7 +330,7 @@ export const useSubscription = (userId: string | undefined) => {
 
     // Cleanup subscription on unmount
     return () => {
-      logger.info('[Real-time] Cleaning up subscription listener');
+      logger.info('[Real-time] Cleaning up subscription listeners');
       try {
         const result = subscription.unsubscribe();
         logger.info('[Real-time] Unsubscribe completed:', result);
