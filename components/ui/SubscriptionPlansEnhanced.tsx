@@ -112,7 +112,7 @@ const PLANS_DATA: Plan[] = [
     ],
   },
   {
-    id: 'unlimited',
+    id: 'premium',
     name: 'Premium',
     icon: '👑',
     description: 'Maximale Vorbereitung mit persönlicher Betreuung',

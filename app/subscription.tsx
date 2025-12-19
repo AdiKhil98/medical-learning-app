@@ -27,14 +27,12 @@ import { colors } from '@/constants/colors';
 // Variant ID mappings - centralized
 const VARIANT_TO_PLAN: Record<number, string> = {
   1006948: 'basic',
-  1006934: 'professional',
-  1006947: 'unlimited',
+  1006934: 'premium',
 };
 
 const PLAN_TO_VARIANT: Record<string, number> = {
   basic: 1006948,
-  professional: 1006934,
-  unlimited: 1006947,
+  premium: 1006934,
 };
 
 // Checkout URL builder
@@ -42,8 +40,7 @@ const getCheckoutUrl = (planId: string, userEmail: string): string => {
   const encodedEmail = encodeURIComponent(userEmail || '');
   const checkoutUrls: Record<string, string> = {
     basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${encodedEmail}`,
-    professional: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${encodedEmail}`,
-    unlimited: `https://kpmed.lemonsqueezy.com/buy/7fca01cc-1a9a-4f8d-abda-cc939f375320?enabled=1006947&checkout[email]=${encodedEmail}`,
+    premium: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${encodedEmail}`,
   };
   return checkoutUrls[planId] || '';
 };
