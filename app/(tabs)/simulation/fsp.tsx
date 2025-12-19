@@ -73,6 +73,9 @@ function FSPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
+  // CRITICAL FIX: Session recovery lock to prevent race conditions
+  const isRecoveringSessionRef = useRef(false);
+
   // Lock state for when limit is reached
   const [isSimulationLocked, setIsSimulationLocked] = useState(false);
 
@@ -123,6 +126,9 @@ function FSPSimulationScreen() {
   useEffect(() => {
     console.log('🚀🚀🚀 FSP SESSION RECOVERY: useEffect triggered!');
     const recoverOrResetSession = async () => {
+      // CRITICAL FIX: Set recovery lock to prevent race with start timer
+      isRecoveringSessionRef.current = true;
+
       try {
         console.log('🔍 FSP SESSION RECOVERY: Starting recovery function...');
         console.log('[FSP Session Recovery] Checking for active simulation session...');
@@ -197,6 +203,10 @@ function FSPSimulationScreen() {
         console.error('[FSP Session Recovery] ❌ Error during recovery:', error);
         // On error, safe default: reset optimistic count
         resetOptimisticCount();
+      } finally {
+        // CRITICAL FIX: Always clear recovery lock
+        isRecoveringSessionRef.current = false;
+        console.log('[FSP Session Recovery] 🔓 Recovery lock released');
       }
     };
 
@@ -704,6 +714,16 @@ function FSPSimulationScreen() {
       console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
       return;
     }
+
+    // CRITICAL FIX: Block if session recovery is still in progress
+    if (isRecoveringSessionRef.current) {
+      console.log('🔒 RACE CONDITION PREVENTED: Session recovery in progress, blocking timer start');
+      Alert.alert('Bitte warten', 'Sitzungswiederherstellung läuft... Bitte versuchen Sie es in einem Moment erneut.', [
+        { text: 'OK' },
+      ]);
+      return;
+    }
+
     timerStartLockRef.current = true; // Set lock immediately
 
     try {
@@ -1897,14 +1917,7 @@ function FSPSimulationScreen() {
             {!isSimulationLocked && (
               <View style={styles.widgetArea} nativeID="voiceflow-widget-container">
                 {Platform.OS === 'web' ? (
-                  <>
-                    {/* Voiceflow widget loads here automatically via script injection */}
-                    <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget wird geladen...</Text>
-                    <Text style={styles.widgetHint}>
-                      Das Voiceflow-Widget sollte in wenigen Sekunden erscheinen. Falls nicht, überprüfen Sie bitte Ihre
-                      Internetverbindung.
-                    </Text>
-                  </>
+                  <>{/* Voiceflow widget loads here automatically via script injection */}</>
                 ) : (
                   <>
                     <Text style={styles.widgetPlaceholder}>📱 Mobil-Modus</Text>

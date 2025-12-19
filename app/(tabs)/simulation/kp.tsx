@@ -81,6 +81,9 @@ function KPSimulationScreen() {
   // Cleanup coordination flag
   const isCleaningUpRef = useRef(false);
 
+  // CRITICAL FIX: Session recovery lock to prevent race conditions
+  const isRecoveringSessionRef = useRef(false);
+
   // Debug state for widget initialization
   const [widgetDebugLog, setWidgetDebugLog] = useState<string[]>([]);
   const addDebugLog = (message: string) => {
@@ -149,6 +152,9 @@ function KPSimulationScreen() {
   useEffect(() => {
     console.log('🚀🚀🚀 KP SESSION RECOVERY: useEffect triggered!');
     const recoverOrResetSession = async () => {
+      // CRITICAL FIX: Set recovery lock to prevent race with start timer
+      isRecoveringSessionRef.current = true;
+
       try {
         console.log('🔍 KP SESSION RECOVERY: Starting recovery function...');
         console.log('[KP Session Recovery] Checking for active simulation session...');
@@ -221,6 +227,10 @@ function KPSimulationScreen() {
         console.error('[KP Session Recovery] ❌ Error during recovery:', error);
         // On error, safe default: reset optimistic count
         resetOptimisticCount();
+      } finally {
+        // CRITICAL FIX: Always clear recovery lock
+        isRecoveringSessionRef.current = false;
+        console.log('[KP Session Recovery] 🔓 Recovery lock released');
       }
     };
 
@@ -779,6 +789,16 @@ function KPSimulationScreen() {
       console.log('🔒 RACE CONDITION PREVENTED: Timer start already in progress, blocking concurrent call');
       return;
     }
+
+    // CRITICAL FIX: Block if session recovery is still in progress
+    if (isRecoveringSessionRef.current) {
+      console.log('🔒 RACE CONDITION PREVENTED: Session recovery in progress, blocking timer start');
+      Alert.alert('Bitte warten', 'Sitzungswiederherstellung läuft... Bitte versuchen Sie es in einem Moment erneut.', [
+        { text: 'OK' },
+      ]);
+      return;
+    }
+
     timerStartLockRef.current = true; // Set lock immediately
 
     try {
@@ -2063,15 +2083,6 @@ function KPSimulationScreen() {
                         ❌ Fehler beim Laden: {initializationError}
                         {'\n'}Bitte Seite neu laden (F5)
                       </Text>
-                    )}
-                    {!isInitializing && !initializationError && (
-                      <>
-                        <Text style={styles.widgetPlaceholder}>💬 Voiceflow Widget sollte erscheinen</Text>
-                        <Text style={styles.widgetHint}>
-                          Falls das Widget nicht erscheint, öffnen Sie die Browser-Konsole (F12) für Details oder laden
-                          Sie die Seite neu.
-                        </Text>
-                      </>
                     )}
                   </>
                 ) : (
