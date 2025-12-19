@@ -336,6 +336,20 @@ export default function SubscriptionPage() {
             console.log('🚀 ATTEMPTING TO OPEN CHECKOUT URL...');
             await Linking.openURL(checkoutUrl);
             console.log('✅ CHECKOUT URL OPENED SUCCESSFULLY');
+
+            // Give user feedback about successful checkout redirect
+            Alert.alert(
+              'Weiterleitung erfolgreich',
+              'Sie werden zur Checkout-Seite weitergeleitet. Bitte schließen Sie den Kaufvorgang ab, um Ihr Abonnement zu aktivieren.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    router.replace('/(tabs)/dashboard');
+                  },
+                },
+              ]
+            );
           } catch (linkError: any) {
             console.error('❌ ERROR OPENING CHECKOUT URL:', linkError);
             logger.error('Error opening checkout URL:', linkError, {
