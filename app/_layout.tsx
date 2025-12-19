@@ -7,10 +7,11 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
 import { registerServiceWorker, checkForAppUpdate, skipWaitingAndReload } from '@/utils/serviceWorkerRegistration';
+import { SessionTimeoutManager } from '@/lib/security';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
@@ -255,6 +256,55 @@ export default function RootLayout() {
       previousPathRef.current = currentPath;
     }
   }, [pathname]);
+
+  // Track user activity for inactivity-based session timeout
+  useEffect(() => {
+    let lastActivityUpdate = Date.now();
+    const THROTTLE_DELAY = 60 * 1000; // Update once per minute maximum
+
+    const updateActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityUpdate >= THROTTLE_DELAY) {
+        lastActivityUpdate = now;
+        SessionTimeoutManager.updateLastActivity().catch((error) => {
+          logger.error('Failed to update activity timestamp', error);
+        });
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      // Web: Track mouse, keyboard, touch, and scroll events
+      const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+
+      events.forEach((event) => {
+        window.addEventListener(event, updateActivity, { passive: true });
+      });
+
+      logger.info('✅ Activity tracking initialized for web (throttled to 1 update/minute)');
+
+      return () => {
+        events.forEach((event) => {
+          window.removeEventListener(event, updateActivity);
+        });
+        logger.info('🧹 Activity tracking cleaned up');
+      };
+    } else {
+      // Mobile: Track app state changes (foreground/background)
+      const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+        if (nextAppState === 'active') {
+          updateActivity();
+          logger.info('📱 App became active - activity updated');
+        }
+      });
+
+      logger.info('✅ Activity tracking initialized for mobile (AppState monitoring)');
+
+      return () => {
+        subscription.remove();
+        logger.info('🧹 Activity tracking cleaned up');
+      };
+    }
+  }, []);
 
   return (
     <SafeAreaProvider>
