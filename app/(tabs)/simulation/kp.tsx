@@ -954,6 +954,11 @@ function KPSimulationScreen() {
 
         // Check if 5 minutes have elapsed (works regardless of session recovery)
         if (clientElapsed >= USAGE_THRESHOLD_SECONDS && !usageMarkedRef.current && currentSessionToken) {
+          // CRITICAL: Set flag IMMEDIATELY to prevent race condition
+          // Multiple timer ticks could pass the check simultaneously
+          usageMarkedRef.current = true;
+          setUsageMarked(true);
+
           console.log('🎯🎯🎯 5-MINUTE MARK REACHED - MARKING AS COUNTED!');
           console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
