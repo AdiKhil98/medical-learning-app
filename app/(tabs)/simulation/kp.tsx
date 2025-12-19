@@ -272,6 +272,13 @@ function KPSimulationScreen() {
     console.log('checkAccess function:', typeof checkAccess);
     console.log('widgetDebugLog state:', widgetDebugLog);
 
+    // RACE CONDITION FIX: Wait for user to load before initializing
+    // Prevents cascade of errors during component mount when AuthContext is still loading
+    if (!user) {
+      console.log('⏸️ KP: Waiting for user to load - skipping initialization');
+      return;
+    }
+
     const initializeVoiceflow = async () => {
       console.log('🚀🚀🚀 initializeVoiceflow() CALLED');
       console.log('About to call addDebugLog...');
