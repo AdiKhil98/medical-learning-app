@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface FlashcardData {
@@ -11,7 +11,11 @@ interface FlashcardData {
   answerContent: React.ReactNode;
 }
 
-const FlashcardCarousel: React.FC = () => {
+interface FlashcardCarouselProps {
+  onDismiss?: () => void;
+}
+
+const FlashcardCarousel: React.FC<FlashcardCarouselProps> = ({ onDismiss }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const flashcardsData: FlashcardData[] = [
@@ -957,6 +961,16 @@ const FlashcardCarousel: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* Dismiss Button */}
+      {onDismiss && (
+        <TouchableOpacity style={styles.dismissButton} onPress={onDismiss} activeOpacity={0.7}>
+          <View style={styles.dismissButtonInner}>
+            <X size={20} color="#6b7280" strokeWidth={2.5} />
+            <Text style={styles.dismissButtonText}>Tutorial ausblenden</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Card Counter */}
       <View style={styles.counterContainer}>
         <Text style={styles.counterText}>
@@ -1029,7 +1043,38 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 20,
     paddingHorizontal: 16,
+    position: 'relative',
   },
+
+  // Dismiss Button
+  dismissButton: {
+    position: 'absolute',
+    top: 20,
+    right: 16,
+    zIndex: 10,
+  },
+  dismissButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dismissButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+
   counterContainer: {
     alignItems: 'center',
     marginBottom: 20,
