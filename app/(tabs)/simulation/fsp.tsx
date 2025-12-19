@@ -304,6 +304,13 @@ function FSPSimulationScreen() {
 
   // Initialize Voiceflow widget when component mounts
   useEffect(() => {
+    // RACE CONDITION FIX: Wait for user to load before initializing
+    // Prevents cascade of errors during component mount when AuthContext is still loading
+    if (!user) {
+      console.log('⏸️ FSP: Waiting for user to load - skipping initialization');
+      return;
+    }
+
     const initializeVoiceflow = async () => {
       const timestamp = new Date().toISOString();
 
