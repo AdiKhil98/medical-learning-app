@@ -84,6 +84,10 @@ function KPSimulationScreen() {
   // CRITICAL FIX: Session recovery lock to prevent race conditions
   const isRecoveringSessionRef = useRef(false);
 
+  // CRITICAL FIX: Track tab visibility for timer continuation warning
+  const tabHiddenTimeRef = useRef<number | null>(null);
+  const lastVisibilityWarningRef = useRef<number>(0);
+
   // Debug state for widget initialization
   const [widgetDebugLog, setWidgetDebugLog] = useState<string[]>([]);
   const addDebugLog = (message: string) => {
@@ -1527,10 +1531,14 @@ function KPSimulationScreen() {
       }
     };
 
-    // Enhanced visibility change handler for immediate widget cleanup
+    // Enhanced visibility change handler with timer continuation warning
     const handleVisibilityChange = async () => {
       if (timerActive && (document.visibilityState === 'hidden' || document.hidden)) {
-        console.log('🚫 KP: Attempted to leave page during simulation - BLOCKED');
+        // CRITICAL FIX: Record when tab was hidden for elapsed time warning
+        tabHiddenTimeRef.current = Date.now();
+        console.log('⚠️ KP: Tab hidden during simulation - timer continues in background');
+        console.log('🕒 KP: Hidden at:', new Date().toLocaleTimeString());
+
         // For mobile apps, prevent backgrounding during simulation
         if (Platform.OS !== 'web') {
           Alert.alert('Simulation läuft', 'Sie können die App nicht verlassen, während die Simulation läuft.', [
@@ -1543,6 +1551,32 @@ function KPSimulationScreen() {
       // Re-validate access when user returns to tab
       if (document.visibilityState === 'visible' && !document.hidden) {
         console.log('[Tab Visibility] KP: Tab became visible - re-validating access...');
+
+        // CRITICAL FIX: Warn user if significant time elapsed while tab was hidden
+        if (timerActive && tabHiddenTimeRef.current) {
+          const now = Date.now();
+          const elapsedWhileHidden = Math.floor((now - tabHiddenTimeRef.current) / 1000);
+
+          // Only show warning if > 30 seconds elapsed and we haven't warned recently (avoid spam)
+          const timeSinceLastWarning = now - lastVisibilityWarningRef.current;
+          if (elapsedWhileHidden >= 30 && timeSinceLastWarning > 60000) {
+            const minutes = Math.floor(elapsedWhileHidden / 60);
+            const seconds = elapsedWhileHidden % 60;
+            const timeString = minutes > 0 ? `${minutes} Min ${seconds} Sek` : `${seconds} Sek`;
+
+            console.warn(`⏱️ KP: User was away for ${elapsedWhileHidden}s - showing warning`);
+            Alert.alert(
+              'Achtung: Timer läuft weiter',
+              `Die Simulation lief ${timeString} im Hintergrund weiter.\n\nDer Timer pausiert NICHT, wenn Sie den Tab wechseln oder die App verlassen.`,
+              [{ text: 'Verstanden' }]
+            );
+            lastVisibilityWarningRef.current = now;
+          }
+
+          // Clear the hidden time
+          tabHiddenTimeRef.current = null;
+        }
+
         const accessCheck = await checkAccess();
 
         if (accessCheck && !accessCheck.canUseSimulation) {
