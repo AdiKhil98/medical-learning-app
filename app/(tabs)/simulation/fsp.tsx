@@ -156,6 +156,18 @@ function FSPSimulationScreen() {
             startTime: new Date(parseInt(savedStartTime)).toISOString(),
           });
 
+          // CRITICAL FIX: Check if token was already used to end a simulation
+          if (burnedTokens.has(savedToken)) {
+            console.log('[FSP Session Recovery] ⚠️ Token already burned (session ended), skipping recovery');
+            console.log('[FSP Session Recovery] Cleaning up burned token from storage...');
+            await SecureStore.deleteItemAsync('sim_session_token_fsp').catch(() => {});
+            await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']).catch(
+              () => {}
+            );
+            resetOptimisticCount();
+            return;
+          }
+
           // Verify session is still active in database
           const status = await simulationTracker.getSimulationStatus(savedToken);
           console.log('[FSP Session Recovery] Database status:', status);
@@ -1083,6 +1095,13 @@ function FSPSimulationScreen() {
     console.log('🛑 FSP: Stopping simulation timer');
 
     const elapsedSeconds = 20 * 60 - timeRemaining;
+
+    // CRITICAL FIX: Mark token as burned BEFORE any cleanup to prevent reuse
+    // This prevents recovery attempts even if cleanup fails
+    if (sessionToken) {
+      burnedTokens.add(sessionToken);
+      console.log('[Token Security] 🔥 Token burned:', `${sessionToken.substring(0, 8)}...`);
+    }
 
     // If graceful shutdown is in progress, skip widget cleanup (already done)
     if (isGracefulShutdown && reason === 'completed') {
