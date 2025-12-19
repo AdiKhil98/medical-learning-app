@@ -113,6 +113,17 @@ export default function SubscriptionPage() {
   }, [user?.id]);
 
   const handleSelectPlan = async (planId: string) => {
+    console.log('═══════════════════════════════════════');
+    console.log('🎯 SUBSCRIPTION UPGRADE FLOW STARTED');
+    console.log('═══════════════════════════════════════');
+    console.log('👤 User ID:', user?.id);
+    console.log('📧 User Email:', user?.email);
+    console.log('📊 Current Plan ID:', currentPlanId);
+    console.log('📊 Current Variant ID:', currentVariantId);
+    console.log('🎯 Target Plan:', planId);
+    console.log('🔄 Is Updating:', isUpdating);
+    console.log('═══════════════════════════════════════');
+
     logger.info('Plan selection initiated', {
       planId,
       userId: user?.id,
@@ -186,6 +197,16 @@ export default function SubscriptionPage() {
         setIsUpdating(false);
         return;
       }
+
+      console.log('───────────────────────────────────────');
+      console.log('✅ SUBSCRIPTION CHECK COMPLETE');
+      console.log('───────────────────────────────────────');
+      console.log('Has Active Subscription:', !!existingSubscription);
+      console.log('Subscription ID:', existingSubscription?.id);
+      console.log('Subscription Status:', existingSubscription?.status);
+      console.log('Current Plan:', existingSubscription?.tier || existingSubscription?.plan_name);
+      console.log('Lemon Squeezy Sub ID:', existingSubscription?.lemonsqueezy_subscription_id);
+      console.log('───────────────────────────────────────');
 
       logger.info('Subscription check complete', {
         hasSubscription: !!existingSubscription,
@@ -295,19 +316,55 @@ export default function SubscriptionPage() {
       }
       // STEP 2B: User has NO subscription → NEW CHECKOUT
       else {
-        logger.info('ℹ️ User has no subscription, redirecting to checkout...');
+        logger.info('🆕 FREE USER CHECKOUT FLOW TRIGGERED', {
+          userId: user.id,
+          userEmail: user.email,
+          targetPlan: planId,
+          targetVariantId: newVariantId,
+        });
+
         setLoadingMessage('Weiterleitung zum Checkout...');
 
         const checkoutUrl = getCheckoutUrl(planId, user?.email || '');
 
+        console.log('🔗 CHECKOUT URL GENERATED:', checkoutUrl);
+        console.log('📧 USER EMAIL FOR CHECKOUT:', user?.email);
+        console.log('🎯 PLAN ID:', planId);
+
         if (checkoutUrl) {
           try {
+            console.log('🚀 ATTEMPTING TO OPEN CHECKOUT URL...');
             await Linking.openURL(checkoutUrl);
+            console.log('✅ CHECKOUT URL OPENED SUCCESSFULLY');
+
+            // Give user feedback about successful checkout redirect
+            Alert.alert(
+              'Weiterleitung erfolgreich',
+              'Sie werden zur Checkout-Seite weitergeleitet. Bitte schließen Sie den Kaufvorgang ab, um Ihr Abonnement zu aktivieren.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    router.replace('/(tabs)/dashboard');
+                  },
+                },
+              ]
+            );
           } catch (linkError: any) {
-            logger.error('Error opening checkout URL:', linkError);
+            console.error('❌ ERROR OPENING CHECKOUT URL:', linkError);
+            logger.error('Error opening checkout URL:', linkError, {
+              checkoutUrl,
+              planId,
+              userEmail: user?.email,
+            });
             Alert.alert('Fehler', 'Fehler beim Öffnen der Checkout-Seite');
           }
         } else {
+          console.error('❌ NO CHECKOUT URL GENERATED!', {
+            planId,
+            userEmail: user?.email,
+            availablePlans: Object.keys(PLAN_TO_VARIANT),
+          });
           logger.error('No checkout URL found for plan:', planId);
           Alert.alert('Fehler', 'Checkout-URL nicht gefunden');
         }
