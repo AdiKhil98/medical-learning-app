@@ -32,6 +32,11 @@ import { colors } from '@/constants/colors';
 // Module-level Set persists across component re-renders within the same app session
 const burnedTokens = new Set<string>();
 
+// CRITICAL FIX: Store Supabase config at module level for beforeunload handler
+// Extract from initialized supabase client to ensure runtime values are used
+const SUPABASE_URL = (supabase as any).supabaseUrl || '';
+const SUPABASE_ANON_KEY = (supabase as any).supabaseKey || '';
+
 function FSPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -1407,13 +1412,14 @@ function FSPSimulationScreen() {
 
             // Send with authentication headers via fetch keepalive
             // keepalive ensures request completes even if page closes
-            const beaconUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/rpc/end_simulation_session`;
+            // CRITICAL FIX: Use runtime config from module-level constants (not process.env which is undefined in browser)
+            const beaconUrl = `${SUPABASE_URL}/rest/v1/rpc/end_simulation_session`;
 
             fetch(beaconUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+                apikey: SUPABASE_ANON_KEY,
                 Authorization: `Bearer ${cachedAuth.access_token}`,
               },
               body: JSON.stringify(payload),
