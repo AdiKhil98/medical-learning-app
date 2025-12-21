@@ -163,103 +163,32 @@ function KPSimulationScreen() {
 
   // SESSION RECOVERY: Check for active session before resetting optimistic count
   useEffect(() => {
-    console.log('🚀🚀🚀 KP SESSION RECOVERY: useEffect triggered!');
-    const recoverOrResetSession = async () => {
-      // CRITICAL FIX: Set recovery lock to prevent race with start timer
+    console.log('🚀🚀🚀 KP SESSION CLEANUP: useEffect triggered!');
+    const clearOldSessionAndReset = async () => {
+      // ALWAYS START FRESH - Clear any old session data
       isRecoveringSessionRef.current = true;
 
       try {
-        console.log('🔍 KP SESSION RECOVERY: Starting recovery function...');
-        console.log('[KP Session Recovery] Checking for active simulation session...');
+        console.log('🧹 KP SESSION CLEANUP: Clearing old session storage...');
 
-        // Check if there's a saved session token in SecureStore
-        const savedToken = await SecureStore.getItemAsync('sim_session_token_kp');
-        const savedStartTime = await AsyncStorage.getItem('sim_start_time_kp');
-
-        console.log('[KP Session Recovery] Storage check:', {
-          hasToken: !!savedToken,
-          hasStartTime: !!savedStartTime,
-        });
-
-        if (savedToken && savedStartTime) {
-          console.log('[KP Session Recovery] Found saved session:', {
-            token: `${savedToken.substring(0, 8)}...`,
-            startTime: new Date(parseInt(savedStartTime)).toISOString(),
-          });
-
-          // CRITICAL FIX: Check if token was already used to end a simulation
-          if (burnedTokens.has(savedToken)) {
-            console.log('[KP Session Recovery] ⚠️ Token already burned (session ended), skipping recovery');
-            console.log('[KP Session Recovery] Cleaning up burned token from storage...');
-            await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
-            await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(
-              () => {}
-            );
-            resetOptimisticCount();
-            return;
-          }
-
-          // Verify session is still active in database
-          const status = await simulationTracker.getSimulationStatus(savedToken);
-          console.log('[KP Session Recovery] Database status:', status);
-
-          if (status && !status.ended_at) {
-            const elapsed = Date.now() - parseInt(savedStartTime);
-            const remaining = SIMULATION_DURATION_SECONDS * 1000 - elapsed;
-
-            if (remaining > 0) {
-              // Active session exists - restore state
-              console.log('[KP Session Recovery] ✅ Active session found!', {
-                elapsed: `${Math.floor(elapsed / 1000)}s`,
-                remaining: `${Math.floor(remaining / 1000)}s`,
-                counted: status.counted_toward_usage,
-              });
-
-              // REMOVED: Optimistic deduction (new quota system handles this automatically)
-              // The quota is already updated in database if simulation was counted
-
-              // Set session token for potential continuation
-              setSessionToken(savedToken);
-              sessionTokenRef.current = savedToken;
-
-              // Update usage marked state if already counted
-              if (status.counted_toward_usage) {
-                setUsageMarked(true);
-                usageMarkedRef.current = true;
-              }
-
-              console.log('[KP Session Recovery] ✅ Session state restored. User can continue or start fresh.');
-              return; // Don't reset optimistic count
-            } else {
-              console.log('[KP Session Recovery] Session expired (time exceeded), cleaning up...');
-            }
-          } else {
-            console.log('[KP Session Recovery] Session already ended in database, cleaning up...');
-          }
-        } else {
-          console.log('[KP Session Recovery] No saved session found');
-        }
-
-        // No active session found - clear storage and reset optimistic count
-        console.log('[KP Session Recovery] Clearing stale session data and resetting counter...');
+        // Always clear old session storage to ensure fresh start
         await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
         await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
 
-        console.log('[KP Session Recovery] Calling resetOptimisticCount()...');
+        console.log('🧹 KP SESSION CLEANUP: Resetting counter to fresh state...');
         resetOptimisticCount();
-        console.log('[KP Session Recovery] ✅ Recovery complete');
+        console.log('✅ KP SESSION CLEANUP: Complete - Ready for fresh simulation');
       } catch (error) {
-        console.error('[KP Session Recovery] ❌ Error during recovery:', error);
+        console.error('❌ KP SESSION CLEANUP: Error during cleanup:', error);
         // On error, safe default: reset optimistic count
         resetOptimisticCount();
       } finally {
-        // CRITICAL FIX: Always clear recovery lock
         isRecoveringSessionRef.current = false;
-        console.log('[KP Session Recovery] 🔓 Recovery lock released');
+        console.log('🔓 KP SESSION CLEANUP: Cleanup lock released');
       }
     };
 
-    recoverOrResetSession();
+    clearOldSessionAndReset();
   }, [resetOptimisticCount]);
 
   // Add state for initialization tracking
@@ -2174,9 +2103,9 @@ function KPSimulationScreen() {
           <View style={styles.finalWarningOverlay}>
             <View style={styles.finalWarningModal}>
               <Text style={styles.warningIcon}>⏱️</Text>
-              <Text style={styles.finalWarningTitle}>Simulation endet</Text>
+              <Text style={styles.finalWarningTitle}>Zeit abgelaufen!</Text>
               <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
-              <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
+              <Text style={styles.infoText}>Die Auswertung wird in Kürze an Ihre E-Mail gesendet</Text>
               <View style={styles.progressDots}>
                 <View style={[styles.dot, styles.dot1]} />
                 <View style={[styles.dot, styles.dot2]} />
