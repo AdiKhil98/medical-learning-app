@@ -862,25 +862,9 @@ function KPSimulationScreen() {
         // New quota system updates in real-time via database triggers
         // No need for optimistic UI - actual count will update when simulation ends
 
-        // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
-        try {
-          // Non-sensitive data - use AsyncStorage
-          await AsyncStorage.multiSet([
-            ['sim_start_time_kp', startTime.toString()],
-            ['sim_end_time_kp', endTime.toString()],
-            ['sim_duration_ms_kp', duration.toString()],
-          ]);
-
-          // Sensitive data - use SecureStore (encrypted storage)
-          await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
-          if (user?.id) {
-            await SecureStore.setItemAsync('sim_user_id_kp', user.id);
-          }
-
-          console.log('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
-        } catch (error) {
-          console.error('❌ KP: Error saving simulation state:', error);
-        }
+        // REMOVED: Session state persistence (causes timer to resume from old values)
+        // We always want fresh 20:00 timer, so don't save timestamps to storage
+        console.log('✅ KP: Timer state kept in memory only (no persistence for fresh start)')
 
         setUsageMarked(false);
         usageMarkedRef.current = false; // Initialize ref

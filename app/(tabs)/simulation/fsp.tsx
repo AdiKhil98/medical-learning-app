@@ -811,25 +811,9 @@ function FSPSimulationScreen() {
       // New quota system updates in real-time via database triggers
       // No need for optimistic UI - actual count will update when simulation ends
 
-      // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
-      try {
-        // Non-sensitive data - use AsyncStorage
-        await AsyncStorage.multiSet([
-          ['sim_start_time_fsp', startTime.toString()],
-          ['sim_end_time_fsp', endTime.toString()],
-          ['sim_duration_ms_fsp', duration.toString()],
-        ]);
-
-        // Sensitive data - use SecureStore (encrypted storage)
-        await SecureStore.setItemAsync('sim_session_token_fsp', existingSessionToken);
-        if (user?.id) {
-          await SecureStore.setItemAsync('sim_user_id_fsp', user.id);
-        }
-
-        console.log('💾 FSP: Saved simulation state securely (AsyncStorage + SecureStore)');
-      } catch (error) {
-        console.error('❌ FSP: Error saving simulation state:', error);
-      }
+      // REMOVED: Session state persistence (causes timer to resume from old values)
+      // We always want fresh 20:00 timer, so don't save timestamps to storage
+      console.log('✅ FSP: Timer state kept in memory only (no persistence for fresh start)')
 
       // NOTE: Heartbeat monitoring removed - deprecated/no-op in new system
 
