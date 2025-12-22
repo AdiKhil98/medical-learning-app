@@ -1685,6 +1685,15 @@ function KPSimulationScreen() {
   const resetSimulationState = async () => {
     console.log('🔄 KP: Resetting simulation state for restart');
 
+    // CRITICAL: Clear storage to prevent timer from reading old values
+    try {
+      await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+      await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
+      console.log('✅ KP: Cleared storage for fresh start');
+    } catch (error) {
+      console.error('❌ KP: Error clearing storage:', error);
+    }
+
     // CRITICAL: Clear intervals FIRST before resetting refs
     if (timerInterval.current) {
       clearInterval(timerInterval.current);

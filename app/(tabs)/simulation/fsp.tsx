@@ -1498,6 +1498,15 @@ function FSPSimulationScreen() {
   const resetSimulationState = async () => {
     console.log('🔄 FSP: Resetting simulation state for restart');
 
+    // CRITICAL: Clear storage to prevent timer from reading old values
+    try {
+      await SecureStore.deleteItemAsync('sim_session_token_fsp').catch(() => {});
+      await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']).catch(() => {});
+      console.log('✅ FSP: Cleared storage for fresh start');
+    } catch (error) {
+      console.error('❌ FSP: Error clearing storage:', error);
+    }
+
     // CRITICAL: Clear intervals FIRST before resetting refs
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
