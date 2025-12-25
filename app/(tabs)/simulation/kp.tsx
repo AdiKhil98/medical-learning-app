@@ -40,7 +40,6 @@ const SUPABASE_ANON_KEY = (supabase as any).supabaseKey || '';
 // CRITICAL FIX: Track burned tokens to prevent reuse after cleanup failure
 // Module-level Set persists across component re-renders within the same app session
 const burnedTokens = new Set<string>();
-
 function KPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -50,7 +49,13 @@ function KPSimulationScreen() {
   const [timerActive, setTimerActive] = useState(false);
   const timerActiveRef = useRef(false); // Ref to track timer state for closures
   const timerStartLockRef = useRef(false); // Atomic lock to prevent race conditions in timer start
-  const [timeRemaining, setTimeRemaining] = useState(SIMULATION_DURATION_SECONDS); // 15 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(SIMULATION_DURATION_SECONDS); // 20 minutes in seconds
+
+  // Debug state for 5-minute check visibility
+  const [debugStatus, setDebugStatus] = useState<string>('Waiting for timer...');
+  const [debugElapsed, setDebugElapsed] = useState<number>(0);
+  const [debugWillTrigger, setDebugWillTrigger] = useState<boolean>(false);
+
   const [timerEndTime, setTimerEndTime] = useState(0); // Absolute timestamp when timer should end
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
   const timerEndTimeRef = useRef<number>(0); // Ref for end time to avoid closure issues on mobile
@@ -1019,13 +1024,31 @@ function KPSimulationScreen() {
           );
         }
 
-        // Mark as used at 5-minute mark (only trigger once)
-        // NOTE: Total duration = SIMULATION_DURATION_SECONDS, so 5 minutes elapsed = (total-5) minutes REMAINING
-        const fiveMinutesRemaining = SIMULATION_DURATION_SECONDS - USAGE_THRESHOLD_SECONDS;
+        // Calculate elapsed time for 5-minute check (DEFINE FIRST!)
+        const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
         const currentSessionToken = sessionTokenRef.current; // Get from ref to avoid closure issues
 
-        // Calculate elapsed time for 5-minute check
-        const clientElapsed = SIMULATION_DURATION_SECONDS - remainingSeconds;
+        // Update debug UI state
+        setDebugElapsed(clientElapsed);
+        const willTrigger =
+          clientElapsed >= USAGE_THRESHOLD_SECONDS && !usageMarkedRef.current && !!currentSessionToken;
+        setDebugWillTrigger(willTrigger);
+
+        // Update status message for UI
+        if (clientElapsed < USAGE_THRESHOLD_SECONDS) {
+          const secondsUntil = USAGE_THRESHOLD_SECONDS - clientElapsed;
+          setDebugStatus(
+            `⏳ ${Math.floor(secondsUntil / 60)}:${String(secondsUntil % 60).padStart(2, '0')} until 5-min mark`
+          );
+        } else if (usageMarkedRef.current) {
+          setDebugStatus('✅ Already marked as counted');
+        } else if (!currentSessionToken) {
+          setDebugStatus('❌ ERROR: No session token!');
+        } else if (willTrigger) {
+          setDebugStatus('🎯 Should trigger NOW!');
+        } else {
+          setDebugStatus('⚠️ Threshold met but conditions failed');
+        }
 
         // DEBUG: Log every 10 seconds to diagnose 5-minute check
         if (remainingSeconds % 10 === 0) {
@@ -1050,7 +1073,16 @@ function KPSimulationScreen() {
           console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
           console.log('🔍 DEBUG: Using sessionToken from ref:', currentSessionToken);
-          markSimulationAsUsed(clientElapsed);
+
+          setDebugStatus('📞 Calling markSimulationAsUsed()...');
+
+          markSimulationAsUsed(clientElapsed)
+            .then(() => {
+              setDebugStatus('✅ Successfully marked as counted!');
+            })
+            .catch((err) => {
+              setDebugStatus(`❌ Error: ${err.message}`);
+            });
         }
 
         // Timer warnings (only trigger once per threshold)
@@ -1112,32 +1144,24 @@ function KPSimulationScreen() {
 
       if (result.success) {
         setUsageMarked(true);
-        usageMarkedRef.current = true; // Also update ref for cleanup closure
+        usageMarkedRef.current = true;
         console.warn('✅✅✅ SIMULATION MARKED AS COUNTED IN DATABASE');
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
         try {
-          console.log('🔄 Refreshing quota from backend...');
-          await checkAccess(); // Fetch fresh data from backend
+          console.warn('🔄 Refreshing quota from backend...');
+          await checkAccess();
 
-          // Wait for React state to update (state updates are async)
-          // Retry up to 5 times with 200ms delay between attempts
-          let quotaInfo = null;
-          let attempts = 0;
-          const maxAttempts = 5;
+          // Wait for React state to update
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
-          while (!quotaInfo && attempts < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            quotaInfo = getSubscriptionInfo();
-            attempts++;
-            console.log(`🔄 Attempt ${attempts}/${maxAttempts}: quotaInfo =`, quotaInfo ? 'FOUND' : 'null');
-          }
+          const quotaInfo = getSubscriptionInfo();
 
           if (quotaInfo) {
             console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
             console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
           } else {
-            console.error('🚨 QUOTA REFRESH TIMEOUT: State did not update after', maxAttempts, 'attempts');
+            console.error('🚨 QUOTA REFRESH: State did not update');
           }
         } catch (refreshError) {
           console.error('🚨 ERROR REFRESHING QUOTA:', refreshError);
@@ -2166,6 +2190,40 @@ function KPSimulationScreen() {
                 )}
               </View>
             )}
+
+            {/* 🔍 DEBUG PANEL - Remove after fixing */}
+            {timerActive && (
+              <View style={styles.debugPanel}>
+                <Text style={styles.debugTitle}>🔍 5-Minute Check Debug</Text>
+                <View style={styles.debugRow}>
+                  <Text style={styles.debugLabel}>Elapsed:</Text>
+                  <Text style={styles.debugValue}>
+                    {Math.floor(debugElapsed / 60)}:{String(debugElapsed % 60).padStart(2, '0')}
+                  </Text>
+                </View>
+                <View style={styles.debugRow}>
+                  <Text style={styles.debugLabel}>Threshold:</Text>
+                  <Text style={styles.debugValue}>5:00</Text>
+                </View>
+                <View style={styles.debugRow}>
+                  <Text style={styles.debugLabel}>Has Token:</Text>
+                  <Text style={styles.debugValue}>{sessionTokenRef.current ? '✅' : '❌'}</Text>
+                </View>
+                <View style={styles.debugRow}>
+                  <Text style={styles.debugLabel}>Already Marked:</Text>
+                  <Text style={styles.debugValue}>{usageMarkedRef.current ? '✅' : '❌'}</Text>
+                </View>
+                <View style={styles.debugRow}>
+                  <Text style={styles.debugLabel}>Will Trigger:</Text>
+                  <Text style={[styles.debugValue, debugWillTrigger && styles.debugValueGreen]}>
+                    {debugWillTrigger ? '✅ YES' : '❌ NO'}
+                  </Text>
+                </View>
+                <View style={styles.debugStatusBox}>
+                  <Text style={styles.debugStatusText}>{debugStatus}</Text>
+                </View>
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -3015,6 +3073,64 @@ const styles = StyleSheet.create({
   },
   counterBadgeText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  cancelButtonText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Debug panel styles
+  debugPanel: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  debugTitle: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  debugRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  debugLabel: {
+    color: '#AAAAAA',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  debugValue: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  debugValueGreen: {
+    color: '#4CAF50',
+  },
+  debugStatusBox: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  debugStatusText: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
