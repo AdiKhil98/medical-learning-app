@@ -168,32 +168,103 @@ function KPSimulationScreen() {
 
   // SESSION RECOVERY: Check for active session before resetting optimistic count
   useEffect(() => {
-    console.log('🚀🚀🚀 KP SESSION CLEANUP: useEffect triggered!');
-    const clearOldSessionAndReset = async () => {
-      // ALWAYS START FRESH - Clear any old session data
+    console.log('🚀🚀🚀 KP SESSION RECOVERY: useEffect triggered!');
+    const recoverOrResetSession = async () => {
+      // CRITICAL FIX: Set recovery lock to prevent race with start timer
       isRecoveringSessionRef.current = true;
 
       try {
-        console.log('🧹 KP SESSION CLEANUP: Clearing old session storage...');
+        console.log('🔍 KP SESSION RECOVERY: Starting recovery function...');
+        console.log('[KP Session Recovery] Checking for active simulation session...');
 
-        // Always clear old session storage to ensure fresh start
+        // Check if there's a saved session token in SecureStore
+        const savedToken = await SecureStore.getItemAsync('sim_session_token_kp');
+        const savedStartTime = await AsyncStorage.getItem('sim_start_time_kp');
+
+        console.log('[KP Session Recovery] Storage check:', {
+          hasToken: !!savedToken,
+          hasStartTime: !!savedStartTime,
+        });
+
+        if (savedToken && savedStartTime) {
+          console.log('[KP Session Recovery] Found saved session:', {
+            token: `${savedToken.substring(0, 8)}...`,
+            startTime: new Date(parseInt(savedStartTime)).toISOString(),
+          });
+
+          // CRITICAL FIX: Check if token was already used to end a simulation
+          if (burnedTokens.has(savedToken)) {
+            console.log('[KP Session Recovery] ⚠️ Token already burned (session ended), skipping recovery');
+            console.log('[KP Session Recovery] Cleaning up burned token from storage...');
+            await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+            await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(
+              () => {}
+            );
+            resetOptimisticCount();
+            return;
+          }
+
+          // Verify session is still active in database
+          const status = await simulationTracker.getSimulationStatus(savedToken);
+          console.log('[KP Session Recovery] Database status:', status);
+
+          if (status && !status.ended_at) {
+            const elapsed = Date.now() - parseInt(savedStartTime);
+            const remaining = SIMULATION_DURATION_SECONDS * 1000 - elapsed;
+
+            if (remaining > 0) {
+              // Active session exists - restore state
+              console.log('[KP Session Recovery] ✅ Active session found!', {
+                elapsed: `${Math.floor(elapsed / 1000)}s`,
+                remaining: `${Math.floor(remaining / 1000)}s`,
+                counted: status.counted_toward_usage,
+              });
+
+              // REMOVED: Optimistic deduction (new quota system handles this automatically)
+              // The quota is already updated in database if simulation was counted
+
+              // Set session token for potential continuation
+              setSessionToken(savedToken);
+              sessionTokenRef.current = savedToken;
+
+              // Update usage marked state if already counted
+              if (status.counted_toward_usage) {
+                setUsageMarked(true);
+                usageMarkedRef.current = true;
+              }
+
+              console.log('[KP Session Recovery] ✅ Session state restored. User can continue or start fresh.');
+              return; // Don't reset optimistic count
+            } else {
+              console.log('[KP Session Recovery] Session expired (time exceeded), cleaning up...');
+            }
+          } else {
+            console.log('[KP Session Recovery] Session already ended in database, cleaning up...');
+          }
+        } else {
+          console.log('[KP Session Recovery] No saved session found');
+        }
+
+        // No active session found - clear storage and reset optimistic count
+        console.log('[KP Session Recovery] Clearing stale session data and resetting counter...');
         await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
         await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
 
-        console.log('🧹 KP SESSION CLEANUP: Resetting counter to fresh state...');
+        console.log('[KP Session Recovery] Calling resetOptimisticCount()...');
         resetOptimisticCount();
-        console.log('✅ KP SESSION CLEANUP: Complete - Ready for fresh simulation');
+        console.log('[KP Session Recovery] ✅ Recovery complete');
       } catch (error) {
-        console.error('❌ KP SESSION CLEANUP: Error during cleanup:', error);
+        console.error('[KP Session Recovery] ❌ Error during recovery:', error);
         // On error, safe default: reset optimistic count
         resetOptimisticCount();
       } finally {
+        // CRITICAL FIX: Always clear recovery lock
         isRecoveringSessionRef.current = false;
-        console.log('🔓 KP SESSION CLEANUP: Cleanup lock released');
+        console.log('[KP Session Recovery] 🔓 Recovery lock released');
       }
     };
 
-    clearOldSessionAndReset();
+    recoverOrResetSession();
   }, [resetOptimisticCount]);
 
   // Add state for initialization tracking
@@ -867,9 +938,25 @@ function KPSimulationScreen() {
         // New quota system updates in real-time via database triggers
         // No need for optimistic UI - actual count will update when simulation ends
 
-        // REMOVED: Session state persistence (causes timer to resume from old values)
-        // We always want fresh 20:00 timer, so don't save timestamps to storage
-        console.log('✅ KP: Timer state kept in memory only (no persistence for fresh start)');
+        // FIX: Save simulation state using AsyncStorage (non-sensitive) and SecureStore (sensitive data)
+        try {
+          // Non-sensitive data - use AsyncStorage
+          await AsyncStorage.multiSet([
+            ['sim_start_time_kp', startTime.toString()],
+            ['sim_end_time_kp', endTime.toString()],
+            ['sim_duration_ms_kp', duration.toString()],
+          ]);
+
+          // Sensitive data - use SecureStore (encrypted storage)
+          await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
+          if (user?.id) {
+            await SecureStore.setItemAsync('sim_user_id_kp', user.id);
+          }
+
+          console.log('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');
+        } catch (error) {
+          console.error('❌ KP: Error saving simulation state:', error);
+        }
 
         setUsageMarked(false);
         usageMarkedRef.current = false; // Initialize ref
@@ -977,11 +1064,6 @@ function KPSimulationScreen() {
 
         // Check if 5 minutes have elapsed (works regardless of session recovery)
         if (clientElapsed >= USAGE_THRESHOLD_SECONDS && !usageMarkedRef.current && currentSessionToken) {
-          // CRITICAL: Set flag IMMEDIATELY to prevent race condition
-          // Multiple timer ticks could pass the check simultaneously
-          usageMarkedRef.current = true;
-          setUsageMarked(true);
-
           console.log('🎯🎯🎯 5-MINUTE MARK REACHED - MARKING AS COUNTED!');
           console.log('🔍 DEBUG: Remaining seconds:', remainingSeconds);
           console.log('🔍 DEBUG: Client calculated elapsed time:', clientElapsed, 'seconds');
@@ -1041,6 +1123,11 @@ function KPSimulationScreen() {
     const token = sessionTokenRef.current; // Use ref instead of state
     if (!token || usageMarkedRef.current) return;
 
+    // CRITICAL: Set flag IMMEDIATELY after check to prevent race conditions
+    // This ensures only one call proceeds even if multiple timer ticks happen
+    usageMarkedRef.current = true;
+    setUsageMarked(true);
+
     console.warn('🚨🚨🚨 5-MINUTE MARK REACHED - MARKING AS COUNTED');
     console.log({
       action: 'MARK_SIMULATION_COUNTED',
@@ -1056,8 +1143,6 @@ function KPSimulationScreen() {
       console.log({ success: result.success, error: result.error || 'none' });
 
       if (result.success) {
-        setUsageMarked(true);
-        usageMarkedRef.current = true;
         console.warn('✅✅✅ SIMULATION MARKED AS COUNTED IN DATABASE');
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
@@ -1072,7 +1157,7 @@ function KPSimulationScreen() {
 
           if (quotaInfo) {
             console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
-            console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
+            console.log({ used: quotaInfo.simulationsUsed, limit: quotaInfo.simulationsLimit });
           } else {
             console.error('🚨 QUOTA REFRESH: State did not update');
           }
@@ -1709,15 +1794,6 @@ function KPSimulationScreen() {
   const resetSimulationState = async () => {
     console.log('🔄 KP: Resetting simulation state for restart');
 
-    // CRITICAL: Clear storage to prevent timer from reading old values
-    try {
-      await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
-      await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
-      console.log('✅ KP: Cleared storage for fresh start');
-    } catch (error) {
-      console.error('❌ KP: Error clearing storage:', error);
-    }
-
     // CRITICAL: Clear intervals FIRST before resetting refs
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
@@ -2154,9 +2230,9 @@ function KPSimulationScreen() {
           <View style={styles.finalWarningOverlay}>
             <View style={styles.finalWarningModal}>
               <Text style={styles.warningIcon}>⏱️</Text>
-              <Text style={styles.finalWarningTitle}>Zeit abgelaufen!</Text>
+              <Text style={styles.finalWarningTitle}>Simulation endet</Text>
               <Text style={styles.countdownText}>{finalWarningCountdown}</Text>
-              <Text style={styles.infoText}>Die Auswertung wird in Kürze an Ihre E-Mail gesendet</Text>
+              <Text style={styles.infoText}>Ihre Antworten werden automatisch gespeichert</Text>
               <View style={styles.progressDots}>
                 <View style={[styles.dot, styles.dot1]} />
                 <View style={[styles.dot, styles.dot2]} />
