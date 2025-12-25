@@ -283,14 +283,21 @@ class SimulationTrackingService {
   /**
    * Mark simulation as counted (called at 5-minute mark from timer)
    * Database validates that >= 5 minutes have elapsed and increments counter
+   * FIXED: Now accepts and passes clientElapsedSeconds to database
    */
-  async markSimulationCounted(sessionToken: string): Promise<{
+  async markSimulationCounted(
+    sessionToken: string,
+    clientElapsedSeconds?: number
+  ): Promise<{
     success: boolean;
     error?: string;
     alreadyCounted?: boolean;
   }> {
     try {
       logger.info('✓ Marking simulation as counted:', sessionToken);
+      if (clientElapsedSeconds !== undefined) {
+        logger.info('⏱️ Client elapsed time:', clientElapsedSeconds, 'seconds');
+      }
 
       // ISSUE #19 FIX: Validate session token format
       if (!this.isValidSessionToken(sessionToken)) {
@@ -306,11 +313,20 @@ class SimulationTrackingService {
         return { success: false, error: 'Nicht angemeldet' };
       }
 
-      // Call database function - it handles validation and counter increment
+      // CRITICAL FIX: Pass clientElapsedSeconds to database
       const { data, error } = await supabase.rpc('mark_simulation_counted', {
         p_session_token: sessionToken,
         p_user_id: user.id,
+        p_client_elapsed_seconds: clientElapsedSeconds, // ✅ NOW PASSING THIS!
       });
+
+      // 🔍 ADDED DEBUG LOGGING
+      console.log('🔍 DEBUG: RPC CALL COMPLETED');
+      console.log('🔍 DEBUG: Error object:', error);
+      console.log('🔍 DEBUG: Data object:', data);
+      console.log('🔍 DEBUG: Error message:', error?.message);
+      console.log('🔍 DEBUG: Error code:', error?.code);
+      console.log('🔍 DEBUG: Data.success:', data?.success);
 
       if (error) {
         logger.error('❌ Database error marking counted:', error);
@@ -495,16 +511,17 @@ class SimulationTrackingService {
   /**
    * @deprecated Use markSimulationCounted() instead
    * Backward compatibility wrapper for old API
+   * FIXED: Now passes clientElapsedSeconds through
    */
   async markSimulationUsed(
     sessionToken: string,
     clientElapsedSeconds?: number
   ): Promise<{ success: boolean; error?: string }> {
     logger.info('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
-    logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds (ignored - using server time)');
+    logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds');
 
-    // Call the new method
-    const result = await this.markSimulationCounted(sessionToken);
+    // CRITICAL FIX: Pass clientElapsedSeconds to the new method
+    const result = await this.markSimulationCounted(sessionToken, clientElapsedSeconds);
 
     return {
       success: result.success,
