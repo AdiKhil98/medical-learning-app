@@ -522,15 +522,9 @@ class SimulationTrackingService {
     clientElapsedSeconds?: number
   ): Promise<{ success: boolean; error?: string }> {
     logger.info('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
-<<<<<<< HEAD
-    logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds');
-
-    // CRITICAL FIX: Pass clientElapsedSeconds to the new method
-=======
     logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds - PASSING TO DATABASE');
 
     // CRITICAL FIX: Pass client elapsed seconds to the new method
->>>>>>> 2279d78 (Fix: Disable session recovery and use client elapsed time for quota)
     const result = await this.markSimulationCounted(sessionToken, clientElapsedSeconds);
 
     return {
