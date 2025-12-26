@@ -283,7 +283,9 @@ class SimulationTrackingService {
   /**
    * Mark simulation as counted (called at 5-minute mark from timer)
    * Database validates that >= 5 minutes have elapsed and increments counter
-   * FIXED: Now accepts and passes clientElapsedSeconds to database
+   *
+   * @param sessionToken - The session UUID token
+   * @param clientElapsedSeconds - OPTIONAL: Client-calculated elapsed seconds (e.g., 300 for 5 minutes)
    */
   async markSimulationCounted(
     sessionToken: string,
@@ -295,8 +297,9 @@ class SimulationTrackingService {
   }> {
     try {
       logger.info('✓ Marking simulation as counted:', sessionToken);
+
       if (clientElapsedSeconds !== undefined) {
-        logger.info('⏱️ Client elapsed time:', clientElapsedSeconds, 'seconds');
+        logger.info('✓ Client elapsed time:', clientElapsedSeconds, 'seconds');
       }
 
       // ISSUE #19 FIX: Validate session token format
@@ -313,11 +316,11 @@ class SimulationTrackingService {
         return { success: false, error: 'Nicht angemeldet' };
       }
 
-      // CRITICAL FIX: Pass clientElapsedSeconds to database
+      // Call database function - pass client elapsed time if provided
       const { data, error } = await supabase.rpc('mark_simulation_counted', {
         p_session_token: sessionToken,
         p_user_id: user.id,
-        p_client_elapsed_seconds: clientElapsedSeconds, // ✅ NOW PASSING THIS!
+        p_client_elapsed_seconds: clientElapsedSeconds || null,
       });
 
       // 🔍 ADDED DEBUG LOGGING
@@ -345,6 +348,7 @@ class SimulationTrackingService {
 
       logger.info('✅ Simulation marked as counted:', data);
       logger.info('⏱️ Elapsed time:', data.elapsed_seconds, 'seconds');
+      logger.info('📊 Time source:', data.source || 'server');
 
       return {
         success: true,
@@ -518,9 +522,15 @@ class SimulationTrackingService {
     clientElapsedSeconds?: number
   ): Promise<{ success: boolean; error?: string }> {
     logger.info('⚠️ DEPRECATED: markSimulationUsed() called. Use markSimulationCounted() instead.');
+<<<<<<< HEAD
     logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds');
 
     // CRITICAL FIX: Pass clientElapsedSeconds to the new method
+=======
+    logger.info('📊 Client reported:', clientElapsedSeconds, 'seconds - PASSING TO DATABASE');
+
+    // CRITICAL FIX: Pass client elapsed seconds to the new method
+>>>>>>> 2279d78 (Fix: Disable session recovery and use client elapsed time for quota)
     const result = await this.markSimulationCounted(sessionToken, clientElapsedSeconds);
 
     return {

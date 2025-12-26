@@ -392,51 +392,41 @@ function KPSimulationScreen() {
       }
 
       // ============================================
-      // STEP 2B: CHECK FOR ACTIVE SIMULATION (RESTORE SESSION)
+      // STEP 2B: CHECK FOR ACTIVE SIMULATION (NO RECOVERY - ALWAYS START FRESH)
       // ============================================
-      console.log(`🔍 [${timestamp}] Step 2b: Checking for active simulation to restore...`);
+      // POLICY: User refreshes = their fault, always start fresh at 20:00
+      // Old sessions past 5-minute mark will still count as used (handled by database)
+      console.log(`🔍 [${timestamp}] Step 2b: Checking for old simulations (will NOT restore - always start fresh)...`);
 
       try {
         const activeSimulation = await quotaService.getActiveSimulation(user.id);
 
         if (activeSimulation.has_active_simulation && activeSimulation.session_token && activeSimulation.started_at) {
-          // Check if session is recent (within last 30 minutes)
-          // Only restore recent sessions to avoid stale simulations from hours/days ago
           const sessionStart = new Date(activeSimulation.started_at).getTime();
           const now = Date.now();
           const ageMinutes = (now - sessionStart) / (1000 * 60);
 
-          console.log(`✅ [${timestamp}] Found active simulation:`, {
+          console.log(`ℹ️ [${timestamp}] Found old simulation (will NOT restore):`, {
             sessionToken: `${activeSimulation.session_token.substring(0, 8)}...`,
             simulationType: activeSimulation.simulation_type,
             elapsedSeconds: activeSimulation.elapsed_seconds,
             ageMinutes: Math.round(ageMinutes),
           });
 
-          // Only restore if session is fresh (within 30 minutes grace period)
-          if (ageMinutes <= STALE_SESSION_GRACE_PERIOD_MINUTES) {
-            // Restore session token only - don't auto-start timer
-            // User must explicitly click "Start Timer" to resume
-            setSessionToken(activeSimulation.session_token);
-            sessionTokenRef.current = activeSimulation.session_token;
+          console.warn(
+            `🔄 [${timestamp}] POLICY: Session recovery DISABLED - old session will be cleaned up, starting fresh at 20:00`
+          );
 
-            console.log(`✅ [${timestamp}] Session is recent (${Math.round(ageMinutes)}min old) - restored for resume`);
-          } else {
-            console.warn(
-              `⚠️ [${timestamp}] Session is stale (${Math.round(ageMinutes)}min old) - NOT restoring. Will create new session.`
-            );
-
-            // IMPORTANT: Clear AsyncStorage to prevent SESSION RECOVERY useEffect from restoring stale data
-            try {
-              await SecureStore.deleteItemAsync('sim_session_token_kp');
-              await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
-              console.log(`🧹 [${timestamp}] Cleared stale session data from AsyncStorage`);
-            } catch (error) {
-              console.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
-            }
+          // Clear AsyncStorage to prevent any stale data restoration
+          try {
+            await SecureStore.deleteItemAsync('sim_session_token_kp');
+            await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
+            console.log(`🧹 [${timestamp}] Cleared old session data from AsyncStorage`);
+          } catch (error) {
+            console.error(`❌ [${timestamp}] Error clearing AsyncStorage:`, error);
           }
 
-          // Continue with Voiceflow initialization
+          // NOTE: Orphaned session cleanup will close this session in database before creating new one
         } else {
           console.log(`ℹ️ [${timestamp}] No active simulation found - will create new session`);
 
