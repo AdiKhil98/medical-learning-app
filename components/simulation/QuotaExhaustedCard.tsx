@@ -31,7 +31,7 @@ export default function QuotaExhaustedCard({
   };
 
   const handleUpgrade = () => {
-    router.push('/(tabs)/profile');
+    router.push('/subscription');
   };
 
   return (
