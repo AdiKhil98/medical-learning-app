@@ -1642,13 +1642,16 @@ function KPSimulationScreen() {
         const accessCheck = await checkAccess();
 
         if (accessCheck && !accessCheck.canUseSimulation) {
+          // CRITICAL FIX: Don't lock or stop if timer is active
+          // Let the user finish their current simulation
+          if (timerActive) {
+            console.log('[Tab Visibility] KP: ⏳ Quota exhausted but simulation still running - allowing completion');
+            // Don't lock or stop - let them finish
+            return;
+          }
+
           console.warn('[Tab Visibility] KP: ⚠️ Access lost while away - locking simulation');
           setIsSimulationLocked(true);
-
-          if (timerActive) {
-            // Stop the simulation if it's running
-            await stopSimulationTimer('aborted');
-          }
         }
       }
     };
@@ -1689,12 +1692,14 @@ function KPSimulationScreen() {
   }, [timerActive]);
 
   // Monitor subscription status for lock state
+  // CRITICAL: Don't lock during an active simulation - let the user finish
   useEffect(() => {
     console.log('[Lock Monitor] KP: useEffect triggered', {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
       currentLockState: isSimulationLocked,
+      timerActive,
     });
 
     if (subscriptionStatus) {
@@ -1703,16 +1708,21 @@ function KPSimulationScreen() {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
-        willUpdateLockState: shouldLock !== isSimulationLocked,
+        timerActive,
+        willUpdateLockState: shouldLock !== isSimulationLocked && !timerActive,
       });
+
+      // CRITICAL FIX: Don't lock if timer is active - let the simulation complete
+      // The lock will be applied when the timer stops (simulation ends)
+      if (shouldLock && timerActive) {
+        console.log('[Lock Monitor] KP: ⏳ Quota exhausted but timer active - deferring lock until simulation ends');
+        // Don't lock yet - simulation in progress
+        return;
+      }
 
       if (shouldLock !== isSimulationLocked) {
         console.log(`[Lock Monitor] KP: 🔒 Setting lock state to: ${shouldLock}`);
         setIsSimulationLocked(shouldLock);
-      }
-
-      if (shouldLock && timerActive) {
-        console.warn('[Lock Monitor] KP: ⚠️ User ran out of simulations during active session!');
       }
     } else {
       console.warn('[Lock Monitor] KP: No subscription status available yet');

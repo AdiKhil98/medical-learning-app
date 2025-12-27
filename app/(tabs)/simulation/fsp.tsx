@@ -168,12 +168,14 @@ function FSPSimulationScreen() {
   }, [resetOptimisticCount]);
 
   // Monitor subscription status for lock state
+  // CRITICAL: Don't lock during an active simulation - let the user finish
   useEffect(() => {
     console.log('[Lock Monitor] FSP: useEffect triggered', {
       hasSubscriptionStatus: !!subscriptionStatus,
       canUse: subscriptionStatus?.canUseSimulation,
       remaining: subscriptionStatus?.remainingSimulations,
       currentLockState: isSimulationLocked,
+      timerActive,
     });
 
     if (subscriptionStatus) {
@@ -182,18 +184,21 @@ function FSPSimulationScreen() {
         canUse: subscriptionStatus.canUseSimulation,
         remaining: subscriptionStatus.remainingSimulations,
         shouldLock,
-        willUpdateLockState: shouldLock !== isSimulationLocked,
+        timerActive,
+        willUpdateLockState: shouldLock !== isSimulationLocked && !timerActive,
       });
+
+      // CRITICAL FIX: Don't lock if timer is active - let the simulation complete
+      // The lock will be applied when the timer stops (simulation ends)
+      if (shouldLock && timerActive) {
+        console.log('[Lock Monitor] FSP: ⏳ Quota exhausted but timer active - deferring lock until simulation ends');
+        // Don't lock yet - simulation in progress
+        return;
+      }
 
       if (shouldLock !== isSimulationLocked) {
         console.log(`[Lock Monitor] FSP: 🔒 Setting lock state to: ${shouldLock}`);
         setIsSimulationLocked(shouldLock);
-      }
-
-      // If locked and timer is active, show warning
-      if (shouldLock && timerActive) {
-        console.warn('[Lock Monitor] FSP: ⚠️ User ran out of simulations during active session!');
-        // Note: Don't stop the current simulation, just prevent new ones
       }
     } else {
       console.warn('[Lock Monitor] FSP: No subscription status available yet');
@@ -1418,11 +1423,16 @@ function FSPSimulationScreen() {
         const accessCheck = await checkAccess();
 
         if (accessCheck && !accessCheck.canUseSimulation) {
+          // CRITICAL FIX: Don't lock or stop if timer is active
+          // Let the user finish their current simulation
+          if (timerActive) {
+            console.log('[Tab Visibility] FSP: ⏳ Quota exhausted but simulation still running - allowing completion');
+            // Don't lock or stop - let them finish
+            return;
+          }
+
           console.warn('[Tab Visibility] FSP: ⚠️ Access lost while away - locking simulation');
           setIsSimulationLocked(true);
-          if (timerActive) {
-            await stopSimulationTimer('aborted');
-          }
         }
       }
     };
