@@ -170,6 +170,120 @@ async function findUserByEmail(email) {
   return data;
 }
 
+// Cancel a subscription via LemonSqueezy API
+async function cancelLemonSqueezySubscription(subscriptionId) {
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
+
+  if (!apiKey) {
+    console.error('❌ LEMONSQUEEZY_API_KEY not configured - cannot cancel subscription');
+    return { success: false, error: 'API key not configured' };
+  }
+
+  try {
+    console.log(`🔄 Cancelling LemonSqueezy subscription: ${subscriptionId}`);
+
+    const response = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${subscriptionId}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Failed to cancel subscription ${subscriptionId}:`, response.status, errorText);
+      return { success: false, error: `API error: ${response.status}` };
+    }
+
+    console.log(`✅ Successfully cancelled subscription ${subscriptionId}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Error cancelling subscription ${subscriptionId}:`, error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// Get previous active subscriptions for a user (from webhook events)
+async function getPreviousSubscriptions(userId, currentSubscriptionId) {
+  try {
+    // Get all subscription_created events for this user
+    const { data: events, error } = await supabase
+      .from('webhook_events')
+      .select('subscription_id, event_data, created_at')
+      .eq('user_id', userId)
+      .eq('event_type', 'subscription_created')
+      .eq('status', 'processed')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching previous subscriptions:', error);
+      return [];
+    }
+
+    // Filter out the current subscription and get unique subscription IDs
+    const previousSubs = events
+      .filter((e) => e.subscription_id && e.subscription_id !== currentSubscriptionId)
+      .map((e) => ({
+        subscriptionId: e.subscription_id,
+        createdAt: e.created_at,
+        variantName: e.event_data?.data?.attributes?.variant_name || 'unknown',
+      }));
+
+    // Remove duplicates (keep first occurrence)
+    const uniqueSubs = [];
+    const seenIds = new Set();
+    for (const sub of previousSubs) {
+      if (!seenIds.has(sub.subscriptionId)) {
+        seenIds.add(sub.subscriptionId);
+        uniqueSubs.push(sub);
+      }
+    }
+
+    console.log(`📋 Found ${uniqueSubs.length} previous subscription(s) for user ${userId}`);
+    return uniqueSubs;
+  } catch (error) {
+    console.error('Error in getPreviousSubscriptions:', error);
+    return [];
+  }
+}
+
+// Cancel all previous subscriptions for a user when they create a new one
+async function cancelPreviousSubscriptions(userId, currentSubscriptionId) {
+  console.log(`🔍 Checking for previous subscriptions to cancel for user ${userId}...`);
+
+  const previousSubs = await getPreviousSubscriptions(userId, currentSubscriptionId);
+
+  if (previousSubs.length === 0) {
+    console.log('✅ No previous subscriptions to cancel');
+    return { cancelled: 0, errors: [] };
+  }
+
+  console.log(`⚠️ Found ${previousSubs.length} previous subscription(s) to cancel`);
+
+  let cancelled = 0;
+  const errors = [];
+
+  for (const sub of previousSubs) {
+    console.log(`  - Cancelling: ${sub.subscriptionId} (${sub.variantName})`);
+    const result = await cancelLemonSqueezySubscription(sub.subscriptionId);
+
+    if (result.success) {
+      cancelled++;
+    } else {
+      errors.push({ subscriptionId: sub.subscriptionId, error: result.error });
+    }
+  }
+
+  console.log(`📊 Cancellation summary: ${cancelled}/${previousSubs.length} cancelled`);
+  if (errors.length > 0) {
+    console.log('❌ Errors:', errors);
+  }
+
+  return { cancelled, errors };
+}
+
 // ROBUST: Process subscription with direct table updates (bypasses potentially broken RPC functions)
 async function processSubscriptionAtomically(userId, subscriptionData, eventType) {
   const {
@@ -491,12 +605,19 @@ exports.handler = async (event, context) => {
       case 'subscription_created':
         console.log(`📝 Creating subscription for user ${userId}`);
 
+        // 🔄 AUTO-CANCEL: Cancel any previous subscriptions to prevent double billing
+        const cancelResult = await cancelPreviousSubscriptions(userId, subscriptionId);
+        if (cancelResult.cancelled > 0) {
+          console.log(`✅ Auto-cancelled ${cancelResult.cancelled} previous subscription(s)`);
+        }
+
         // ✨ ATOMIC: Process subscription + quota in single transaction
         const createResult = await processSubscriptionAtomically(userId, subData, eventType);
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
           success: createResult.success,
           tier: createResult.new_tier,
+          previous_subscriptions_cancelled: cancelResult.cancelled,
         });
         console.log(`✅ Subscription created successfully for user ${userId}`);
         console.log('Create result:', createResult);
