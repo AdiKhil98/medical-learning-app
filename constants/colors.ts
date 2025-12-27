@@ -17,6 +17,7 @@ export const colors = {
   error: '#B15740', // Brown Rust for errors
   success: '#22C55E',
   warning: '#E5877E', // Tonys Pink for warnings/highlights
+  shadow: 'rgba(0, 0, 0, 0.1)', // Shadow color for cards
 };
 
 // Font sizes

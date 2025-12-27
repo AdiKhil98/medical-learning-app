@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '@/utils/logger';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
@@ -48,10 +48,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
             <Text style={styles.errorMessage}>
               Dieser Abschnitt konnte nicht geladen werden. Versuchen Sie es erneut.
             </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={this.handleRetry}
-            >
+            <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
               <RefreshCw size={16} color="white" />
               <Text style={styles.retryButtonText}>Erneut versuchen</Text>
             </TouchableOpacity>
@@ -64,7 +61,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
   }
 }
 
-const styles = {
+const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -109,4 +106,4 @@ const styles = {
     fontSize: 14,
     marginLeft: 8,
   },
-};
+});

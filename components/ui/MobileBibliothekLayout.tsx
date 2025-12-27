@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Grid3X3, List, Search, Stethoscope, Heart, Activity, Brain, Baby, Users, AlertTriangle, FileText, FolderOpen } from 'lucide-react-native';
+import {
+  Grid3X3,
+  List,
+  Search,
+  Stethoscope,
+  Heart,
+  Activity,
+  Brain,
+  Baby,
+  Users,
+  AlertTriangle,
+  FileText,
+  FolderOpen,
+} from 'lucide-react-native';
 import { MobileBibliothekCard, MobileBibliothekListItem } from './MobileBibliothekCard';
 
-interface Section {
+// Export Section type for compatibility with HierarchicalBibliothek
+export interface Section {
   id: string;
   slug: string;
   title: string;
-  type: string;
+  type: 'main-category' | 'sub-category' | 'section' | 'subsection' | 'content' | string;
+  icon?: string;
+  color?: string;
+  description?: string;
+  parent_slug?: string | null;
+  hasChildren?: boolean;
   content_improved?: any;
   childCount?: number;
 }
@@ -33,22 +52,22 @@ export function MobileBibliothekLayout({
   bookmarkedSections = new Set(),
   showViewToggle = true,
   subtitle,
-  loading = false
+  loading = false,
 }: MobileBibliothekLayoutProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const getIconComponent = (iconName: string) => {
     const iconMap: Record<string, any> = {
-      'Stethoscope': Stethoscope,
-      'Heart': Heart,
-      'Activity': Activity,
-      'Brain': Brain,
-      'Baby': Baby,
-      'Users': Users,
-      'AlertTriangle': AlertTriangle,
-      'Scan': Heart, // Replace magnifying glass with heart icon
-      'FileText': FileText,
-      'FolderOpen': FolderOpen,
+      Stethoscope,
+      Heart,
+      Activity,
+      Brain,
+      Baby,
+      Users,
+      AlertTriangle,
+      Scan: Heart, // Replace magnifying glass with heart icon
+      FileText,
+      FolderOpen,
     };
     return iconMap[iconName] || Stethoscope; // Default to Stethoscope instead of Search
   };
@@ -114,13 +133,9 @@ export function MobileBibliothekLayout({
         <View style={styles.contentHeader}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.headerTitle}>{title}</Text>
-            {loading && (
-              <View style={styles.headerLoader} />
-            )}
+            {loading && <View style={styles.headerLoader} />}
           </View>
-          {subtitle && (
-            <Text style={styles.headerSubtitle}>{subtitle}</Text>
-          )}
+          {subtitle && <Text style={styles.headerSubtitle}>{subtitle}</Text>}
         </View>
       )}
 
@@ -152,9 +167,7 @@ export function MobileBibliothekLayout({
       </View>
 
       {/* Content */}
-      <View style={styles.contentContainer}>
-        {viewMode === 'grid' ? renderGridView() : renderListView()}
-      </View>
+      <View style={styles.contentContainer}>{viewMode === 'grid' ? renderGridView() : renderListView()}</View>
     </ScrollView>
   );
 }

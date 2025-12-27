@@ -95,19 +95,19 @@ class MedicalContentService {
     // Remove potentially dangerous SQL keywords and special characters
     // While Supabase uses parameterized queries, we add extra protection
     const dangerousPatterns = [
-      /--/g,           // SQL comments
-      /\/\*/g,         // Multi-line comments start
-      /\*\//g,         // Multi-line comments end
-      /;/g,            // Statement terminators
-      /\bDROP\b/gi,    // DROP statements
-      /\bDELETE\b/gi,  // DELETE statements
-      /\bUPDATE\b/gi,  // UPDATE statements
-      /\bINSERT\b/gi,  // INSERT statements
-      /\bEXEC\b/gi,    // EXEC statements
-      /\bUNION\b/gi,   // UNION statements
-      /<script/gi,     // XSS attempts
+      /--/g, // SQL comments
+      /\/\*/g, // Multi-line comments start
+      /\*\//g, // Multi-line comments end
+      /;/g, // Statement terminators
+      /\bDROP\b/gi, // DROP statements
+      /\bDELETE\b/gi, // DELETE statements
+      /\bUPDATE\b/gi, // UPDATE statements
+      /\bINSERT\b/gi, // INSERT statements
+      /\bEXEC\b/gi, // EXEC statements
+      /\bUNION\b/gi, // UNION statements
+      /<script/gi, // XSS attempts
       /javascript:/gi, // XSS attempts
-      /on\w+=/gi,      // Event handlers (XSS)
+      /on\w+=/gi, // Event handlers (XSS)
     ];
 
     for (const pattern of dangerousPatterns) {
@@ -132,35 +132,38 @@ class MedicalContentService {
     return sanitized;
   }
 
-
   /**
    * DEBUG METHOD: Test basic database connectivity
    */
   async testDatabaseConnection(): Promise<any> {
     try {
       logger.info('🔍 TESTING DATABASE CONNECTION...');
-      
+
       // Check auth session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      logger.info('📊 Auth Session:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id, 
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      logger.info('📊 Auth Session:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
         email: session?.user?.email,
-        error: sessionError 
+        error: sessionError,
       });
 
       // Test simple query to see if sections table exists
       logger.info('🔍 Testing sections table access...');
-      const { data: testData, error: testError, count } = await supabase
-        .from('sections')
-        .select('*', { count: 'exact' })
-        .limit(5);
+      const {
+        data: testData,
+        error: testError,
+        count,
+      } = await supabase.from('sections').select('*', { count: 'exact' }).limit(5);
 
       logger.info('📊 Sections table test result:', {
         data: testData,
         error: testError,
-        count: count,
-        dataLength: testData?.length
+        count,
+        dataLength: testData?.length,
       });
 
       if (testError) {
@@ -170,13 +173,16 @@ class MedicalContentService {
 
       // If we have data, log the first few records
       if (testData && testData.length > 0) {
-        logger.info('✅ Sample sections data:', testData.map(s => ({ 
-          id: s.id, 
-          slug: s.slug, 
-          title: s.title, 
-          parent_slug: s.parent_slug, 
-          type: s.type 
-        })));
+        logger.info(
+          '✅ Sample sections data:',
+          testData.map((s) => ({
+            id: s.id,
+            slug: s.slug,
+            title: s.title,
+            parent_slug: s.parent_slug,
+            type: s.type,
+          }))
+        );
       } else {
         logger.info('⚠️ Sections table is empty');
       }
@@ -194,16 +200,15 @@ class MedicalContentService {
   async getRootSections(): Promise<MedicalSection[]> {
     const cacheKey = 'root_sections';
     const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      logger.info('📋 Returning cached root sections:', cached.data.length);
-      return cached.data;
+
+    if (cached) {
+      logger.info('📋 Returning cached root sections', { count: cached.length });
+      return cached;
     }
 
     try {
       logger.info('🔍 FETCHING ROOT SECTIONS FROM DATABASE...');
-      
+
       // First run our debug test
       const dbTest = await this.testDatabaseConnection();
       if (!dbTest.success) {
@@ -213,17 +218,19 @@ class MedicalContentService {
       logger.info('🔍 Querying for root sections (parent_slug IS NULL)...');
       const { data, error } = await supabase
         .from('sections')
-        .select(`
+        .select(
+          `
           id, slug, title, description, type, icon, color, display_order,
           category, image_url
-        `)
+        `
+        )
         .is('parent_slug', null)
         .order('display_order', { ascending: true });
 
-      logger.info('📊 Root sections query result:', { 
-        data: data?.map(s => ({ slug: s.slug, title: s.title, type: s.type })), 
-        error, 
-        count: data?.length 
+      logger.info('📊 Root sections query result:', {
+        data: data?.map((s) => ({ slug: s.slug, title: s.title, type: s.type })),
+        error,
+        count: data?.length,
       });
 
       if (error) {
@@ -232,12 +239,12 @@ class MedicalContentService {
       }
 
       const sections = (data || []) as MedicalSection[];
-      
+
       // Compute has_content for each section based on available content
-      sections.forEach(section => {
+      sections.forEach((section) => {
         section.has_content = this.hasAnyContent(section);
       });
-      
+
       logger.info(`✅ Found ${sections.length} root sections`);
 
       // If no sections found, try to populate with basic data
@@ -245,15 +252,17 @@ class MedicalContentService {
         logger.info('📝 No sections found, attempting to populate with basic medical categories...');
         try {
           await this.populateBasicSections();
-          
+
           // Retry the query after populating
           logger.info('🔄 Retrying root sections query after population...');
           const { data: newData, error: newError } = await supabase
             .from('sections')
-            .select(`
+            .select(
+              `
               id, slug, title, description, type, icon, color, display_order,
               category, image_url
-            `)
+            `
+            )
             .is('parent_slug', null)
             .order('display_order', { ascending: true });
 
@@ -261,14 +270,14 @@ class MedicalContentService {
             logger.error('❌ Retry query failed:', newError);
           } else {
             const newSections = (newData || []) as MedicalSection[];
-            
+
             // Compute has_content for each section
-            newSections.forEach(section => {
+            newSections.forEach((section) => {
               section.has_content = this.hasAnyContent(section);
             });
-            
+
             logger.info(`✅ After population, found ${newSections.length} root sections`);
-            
+
             // Update cache with new data
             listCache.set(cacheKey, { data: newSections, timestamp: now });
             SecureLogger.log(`Auto-populated ${newSections.length} root sections`);
@@ -278,13 +287,12 @@ class MedicalContentService {
           logger.error('❌ Failed to populate sections:', populationError);
         }
       }
-      
+
       // Update cache
       listCache.set(cacheKey, { data: sections, timestamp: now });
-      
+
       SecureLogger.log(`Fetched ${sections.length} root sections`);
       return sections;
-      
     } catch (error) {
       SecureLogger.log('Error fetching root sections:', error);
       throw error;
@@ -298,7 +306,7 @@ class MedicalContentService {
     try {
       const path: MedicalSection[] = [];
       let currentSlug = slug;
-      
+
       while (currentSlug) {
         const section = await this.getSectionBySlug(currentSlug);
         if (section) {
@@ -308,7 +316,7 @@ class MedicalContentService {
           break;
         }
       }
-      
+
       return path;
     } catch (error) {
       SecureLogger.log('Error getting hierarchical path:', error);
@@ -355,10 +363,12 @@ class MedicalContentService {
       // Get paginated data
       const { data, error } = await supabase
         .from('sections')
-        .select(`
+        .select(
+          `
           id, slug, title, description, type, icon, color, display_order,
           category, image_url
-        `)
+        `
+        )
         .eq('parent_slug', parentSlug)
         .order('display_order', { ascending: true })
         .range(offset, offset + limit - 1);
@@ -368,21 +378,20 @@ class MedicalContentService {
       const sections = (data || []) as MedicalSection[];
 
       // Compute has_content for each section
-      sections.forEach(section => {
+      sections.forEach((section) => {
         section.has_content = this.hasAnyContent(section);
       });
 
       const result = {
         sections,
         totalCount: totalCount || 0,
-        hasMore: (offset + limit) < (totalCount || 0),
+        hasMore: offset + limit < (totalCount || 0),
       };
 
       // Cache the result
       listCache.set(cacheKey, result);
 
       return result;
-
     } catch (error) {
       SecureLogger.error('Error fetching paginated sections by parent:', error);
       throw error;
@@ -428,10 +437,12 @@ class MedicalContentService {
       // Get paginated data
       const { data, error } = await supabase
         .from('sections')
-        .select(`
+        .select(
+          `
           id, slug, title, description, type, icon, color, display_order,
           category, image_url
-        `)
+        `
+        )
         .eq('category', category)
         .order('display_order', { ascending: true })
         .range(offset, offset + limit - 1);
@@ -441,21 +452,20 @@ class MedicalContentService {
       const sections = (data || []) as MedicalSection[];
 
       // Compute has_content for each section
-      sections.forEach(section => {
+      sections.forEach((section) => {
         section.has_content = this.hasAnyContent(section);
       });
 
       const result = {
         sections,
         totalCount: totalCount || 0,
-        hasMore: (offset + limit) < (totalCount || 0),
+        hasMore: offset + limit < (totalCount || 0),
       };
 
       // Cache the result
       listCache.set(cacheKey, result);
 
       return result;
-
     } catch (error) {
       SecureLogger.error('Error fetching paginated sections by category:', error);
       throw error;
@@ -493,19 +503,21 @@ class MedicalContentService {
       try {
         const { data, error } = await supabase
           .from('sections')
-          .select(`
+          .select(
+            `
             id, slug, title, description, type, icon, color, display_order,
             category, image_url, parent_slug, content_json, content_improved,
             content_html, content_details,
             hierarchy_level, created_at, updated_at
-          `)
+          `
+          )
           .eq('slug', slug)
           .maybeSingle();
 
         if (error) {
           SecureLogger.error(`Database error in getSection(${slug}):`, error);
           // If columns don't exist, try a simpler query
-          if (error.message && (error.message.includes('column') && error.message.includes('does not exist'))) {
+          if (error.message && error.message.includes('column') && error.message.includes('does not exist')) {
             SecureLogger.log('Columns missing, trying fallback query');
             return await this.getSectionFallback(slug);
           }
@@ -522,7 +534,6 @@ class MedicalContentService {
         sectionCache.set(slug, section);
 
         return section;
-
       } catch (error) {
         SecureLogger.error('Error fetching section:', error);
         throw error;
@@ -536,7 +547,7 @@ class MedicalContentService {
   async populateBasicSections(): Promise<void> {
     try {
       logger.info('🔧 POPULATING BASIC SECTIONS...');
-      
+
       const basicSections = [
         {
           slug: 'innere-medizin',
@@ -546,17 +557,17 @@ class MedicalContentService {
           icon: 'Stethoscope',
           color: '#E2827F',
           display_order: 1,
-          parent_slug: null
+          parent_slug: null,
         },
         {
           slug: 'chirurgie',
-          title: 'Chirurgie', 
+          title: 'Chirurgie',
           description: 'Systematische Übersicht der chirurgischen Fachgebiete',
           type: 'folder',
           icon: 'Scissors',
           color: '#E5877E',
           display_order: 2,
-          parent_slug: null
+          parent_slug: null,
         },
         {
           slug: 'notfallmedizin',
@@ -566,14 +577,11 @@ class MedicalContentService {
           icon: 'AlertTriangle',
           color: '#EF4444',
           display_order: 3,
-          parent_slug: null
-        }
+          parent_slug: null,
+        },
       ];
 
-      const { data, error } = await supabase
-        .from('sections')
-        .insert(basicSections)
-        .select();
+      const { data, error } = await supabase.from('sections').insert(basicSections).select();
 
       if (error) {
         logger.error('❌ Error populating sections:', error);
@@ -594,11 +602,13 @@ class MedicalContentService {
     try {
       const { data, error } = await supabase
         .from('sections')
-        .select(`
+        .select(
+          `
           id, slug, title, description, type, icon, color, display_order,
           category, image_url, parent_slug, content_json,
           hierarchy_level, created_at, updated_at
-        `)
+        `
+        )
         .eq('slug', slug)
         .maybeSingle();
 
@@ -606,15 +616,15 @@ class MedicalContentService {
       if (!data) return null;
 
       const section = data as MedicalSection;
-      
+
       // Set empty values for missing columns
       section.content_improved = [];
       section.content_html = '';
       section.content_details = '';
-      
+
       // Compute has_content based on available content
       section.has_content = this.hasAnyContent(section);
-      
+
       return section;
     } catch (error) {
       SecureLogger.log(`Fallback query also failed for section ${slug}:`, error);
@@ -648,10 +658,12 @@ class MedicalContentService {
       // Search in title and description using ilike
       const { data, error } = await supabase
         .from('sections')
-        .select(`
+        .select(
+          `
           id, slug, title, description, type, icon, color, display_order,
           category, image_url
-        `)
+        `
+        )
         .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
         .limit(safeLimit);
 
@@ -660,25 +672,23 @@ class MedicalContentService {
         throw error;
       }
 
-      const results: SearchResult[] = (data || []).map(section => {
+      const results: SearchResult[] = (data || []).map((section) => {
         const matchType = section.title.toLowerCase().includes(sanitizedQuery.toLowerCase())
-          ? 'title' as const
-          : 'description' as const;
+          ? ('title' as const)
+          : ('description' as const);
 
-        const snippet = matchType === 'description'
-          ? this.createSnippet(section.description || '', sanitizedQuery)
-          : undefined;
+        const snippet =
+          matchType === 'description' ? this.createSnippet(section.description || '', sanitizedQuery) : undefined;
 
         return {
           section: section as MedicalSection,
           matchType,
-          snippet
+          snippet,
         };
       });
 
       SecureLogger.log(`Search completed: "${sanitizedQuery}" returned ${results.length} results`);
       return results;
-
     } catch (error) {
       SecureLogger.error('Error searching sections:', error);
       throw error;
@@ -691,24 +701,19 @@ class MedicalContentService {
   async getCategories(): Promise<string[]> {
     const cacheKey = 'categories';
     const cached = listCache.get(cacheKey);
-    const now = Date.now();
-    
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return cached.data.map(item => item.category || '').filter(Boolean);
+
+    if (cached) {
+      return cached.map((item) => item.category || '').filter(Boolean);
     }
 
     try {
-      const { data, error } = await supabase
-        .from('sections')
-        .select('category')
-        .not('category', 'is', null);
+      const { data, error } = await supabase.from('sections').select('category').not('category', 'is', null);
 
       if (error) throw error;
 
-      const categories = [...new Set(data?.map(item => item.category).filter(Boolean) || [])];
-      
+      const categories = [...new Set(data?.map((item) => item.category).filter(Boolean) || [])];
+
       return categories;
-      
     } catch (error) {
       SecureLogger.log('Error fetching categories:', error);
       throw error;
@@ -743,17 +748,17 @@ class MedicalContentService {
    */
   private createSnippet(text: string, query: string, maxLength = 150): string {
     if (!text) return '';
-    
+
     const queryIndex = text.toLowerCase().indexOf(query.toLowerCase());
-    if (queryIndex === -1) return text.substring(0, maxLength) + '...';
-    
+    if (queryIndex === -1) return `${text.substring(0, maxLength)  }...`;
+
     const start = Math.max(0, queryIndex - 50);
     const end = Math.min(text.length, queryIndex + query.length + 50);
-    
+
     let snippet = text.substring(start, end);
-    if (start > 0) snippet = '...' + snippet;
-    if (end < text.length) snippet = snippet + '...';
-    
+    if (start > 0) snippet = `...${  snippet}`;
+    if (end < text.length) snippet = `${snippet  }...`;
+
     return snippet;
   }
 
@@ -775,8 +780,8 @@ class MedicalContentService {
    */
   getCacheStats(): { sectionCacheSize: number; listCacheSize: number } {
     return {
-      sectionCacheSize: sectionCache.size,
-      listCacheSize: listCache.size
+      sectionCacheSize: sectionCache.size(),
+      listCacheSize: listCache.size(),
     };
   }
 }

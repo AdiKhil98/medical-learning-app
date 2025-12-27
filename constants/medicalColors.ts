@@ -5,6 +5,9 @@ export const MEDICAL_COLORS = {
   secondary: '#B87E70', // Old Rose - dark accent
   primaryLight: '#E5877E', // Tonys Pink - light accent
   primaryDark: '#B15740', // Brown Rust - emphasis color
+  oldRose: '#B87E70', // Old Rose - alias for secondary
+  veryLightPink: '#FDF7F6', // Very light pink background
+  brownRust: '#B15740', // Brown Rust - alias for primaryDark
 
   // Status colors
   success: '#22C55E', // Keep green for success

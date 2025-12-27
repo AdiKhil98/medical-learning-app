@@ -45,10 +45,14 @@ export enum AnalyticsEvent {
   // Performance
   PAGE_LOADED = 'page_loaded',
   ERROR_OCCURRED = 'error_occurred',
+  SCREEN_VIEW = 'screen_view',
 
   // Features
   FEATURE_USED = 'feature_used',
   SETTINGS_CHANGED = 'settings_changed',
+
+  // Navigation/Links
+  EXTERNAL_LINK_CLICKED = 'external_link_clicked',
 }
 
 export interface AnalyticsProperties {

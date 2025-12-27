@@ -65,26 +65,26 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       '.vfrc-launcher',
       '#voiceflow-chat',
       '.widget-container',
-      
+
       // Common chat widget patterns
       'div[style*="z-index: 1000"]',
       'div[style*="position: fixed"][style*="bottom"]',
       'div[style*="position: fixed"][style*="right"]',
-      
+
       // Specific Voiceflow elements
       'div[data-cy="chat-widget"]',
       'div[role="dialog"][aria-label*="chat"]',
     ];
 
     let removedCount = 0;
-    selectors.forEach(selector => {
+    selectors.forEach((selector) => {
       try {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element: Element) => {
           const htmlElement = element as HTMLElement;
-          
+
           // Check if it's likely a Voiceflow element
-          const isVoiceflowElement = 
+          const isVoiceflowElement =
             element.id.toLowerCase().includes('voiceflow') ||
             element.className.toLowerCase().includes('voiceflow') ||
             element.className.toLowerCase().includes('vfrc') ||
@@ -93,8 +93,8 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
             (element as HTMLIFrameElement).src?.includes('general-runtime');
 
           // Also remove elements that match widget patterns
-          const isWidgetElement = 
-            selector.includes('voiceflow') || 
+          const isWidgetElement =
+            selector.includes('voiceflow') ||
             selector.includes('vfrc') ||
             selector.includes('chat') ||
             isVoiceflowElement;
@@ -117,7 +117,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
   const cleanupVoiceflowScripts = () => {
     try {
       const scripts = document.querySelectorAll('script[src*="voiceflow"]');
-      scripts.forEach(script => {
+      scripts.forEach((script) => {
         logger.info('🗑️ Removing Voiceflow script:', script.getAttribute('src'));
         script.remove();
       });
@@ -143,15 +143,18 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.toLowerCase().includes('voiceflow') &&
-            !key.toLowerCase().includes('auth') &&
-            !key.toLowerCase().includes('session') &&
-            !key.toLowerCase().includes('token')) {
+        if (
+          key &&
+          key.toLowerCase().includes('voiceflow') &&
+          !key.toLowerCase().includes('auth') &&
+          !key.toLowerCase().includes('session') &&
+          !key.toLowerCase().includes('token')
+        ) {
           keysToRemove.push(key);
         }
       }
 
-      keysToRemove.forEach(key => {
+      keysToRemove.forEach((key) => {
         localStorage.removeItem(key);
         logger.info(`🗑️ Removed localStorage key: ${key}`);
       });
@@ -160,19 +163,21 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       const sessionKeysToRemove = [];
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i);
-        if (key && key.toLowerCase().includes('voiceflow') &&
-            !key.toLowerCase().includes('auth') &&
-            !key.toLowerCase().includes('session') &&
-            !key.toLowerCase().includes('token')) {
+        if (
+          key &&
+          key.toLowerCase().includes('voiceflow') &&
+          !key.toLowerCase().includes('auth') &&
+          !key.toLowerCase().includes('session') &&
+          !key.toLowerCase().includes('token')
+        ) {
           sessionKeysToRemove.push(key);
         }
       }
 
-      sessionKeysToRemove.forEach(key => {
+      sessionKeysToRemove.forEach((key) => {
         sessionStorage.removeItem(key);
         logger.info(`🗑️ Removed sessionStorage key: ${key}`);
       });
-
     } catch (error) {
       logger.warn('⚠️ Error clearing global objects:', error);
     }
@@ -209,12 +214,14 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
+          const classNameStr =
+            typeof element.className === 'string' ? element.className : String(element.className || '');
           const isVoiceflowElement =
             element.id?.toLowerCase().includes('voiceflow') ||
-            (typeof element.className === 'string' ? element.className.toLowerCase() : element.className?.toString().toLowerCase())?.includes('voiceflow') ||
-            (typeof element.className === 'string' ? element.className.toLowerCase() : element.className?.toString().toLowerCase())?.includes('vfrc') ||
+            classNameStr.toLowerCase().includes('voiceflow') ||
+            classNameStr.toLowerCase().includes('vfrc') ||
             (element as HTMLElement).innerHTML?.toLowerCase().includes('voiceflow');
-          
+
           if (isVoiceflowElement) {
             shouldCleanup = true;
           }
@@ -230,7 +237,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
 
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
 
   // Store observer reference for cleanup
@@ -251,9 +258,9 @@ if (typeof window !== 'undefined') {
   // Check if we're on a simulation page
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/');
-  
+
   logger.info('🔍 Current path:', currentPath, 'Is simulation page:', isSimulationPage);
-  
+
   if (!isSimulationPage) {
     // Not on simulation page, run cleanup
     runGlobalVoiceflowCleanup();

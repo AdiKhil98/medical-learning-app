@@ -432,7 +432,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       SecureLogger.log('Sign up successful');
-      return authData;
+      // authData is intentionally not returned to match Promise<void> type
     } catch (error) {
       SecureLogger.error('Sign up error', error);
       throw error;

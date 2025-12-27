@@ -138,11 +138,12 @@ class SimulationTrackingService {
 
       // Call database function to cleanup orphaned sessions
       // This properly handles the duration calculation trigger
-      const { data, error } = await this.withTimeout(
+      const result = await this.withTimeout(
         supabase.rpc('cleanup_orphaned_sessions_for_user', {
           p_user_id: userId,
         })
       );
+      const { data, error } = result as { data: any; error: any };
 
       if (error) {
         console.error('❌ CLEANUP: RPC error:', error);
@@ -236,13 +237,14 @@ class SimulationTrackingService {
         p_session_token: sessionToken,
       });
 
-      const { data, error } = await this.withTimeout(
+      const result = await this.withTimeout(
         supabase.rpc('start_simulation_session', {
           p_user_id: user.id,
           p_simulation_type: simulationType,
           p_session_token: sessionToken,
         })
       );
+      const { data, error } = result as { data: any; error: any };
 
       logger.info('📥 RPC response:', { data, error });
 
@@ -449,7 +451,7 @@ class SimulationTrackingService {
         return null;
       }
 
-      const { data, error } = await this.withTimeout(
+      const result = await this.withTimeout(
         supabase
           .from('simulation_usage_logs')
           .select('*')
@@ -457,6 +459,7 @@ class SimulationTrackingService {
           .eq('user_id', user.id)
           .single()
       );
+      const { data, error } = result as { data: any; error: any };
 
       if (error) {
         logger.error('❌ Error fetching simulation status:', error);
