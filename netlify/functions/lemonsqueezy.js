@@ -170,7 +170,7 @@ async function findUserByEmail(email) {
   return data;
 }
 
-// ATOMIC: Process subscription webhook atomically (subscription + quota in one transaction)
+// ROBUST: Process subscription with direct table updates (bypasses potentially broken RPC functions)
 async function processSubscriptionAtomically(userId, subscriptionData, eventType) {
   const {
     subscriptionId,
@@ -188,39 +188,111 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
     periodEnd,
   } = subscriptionData;
 
-  console.log('🔄 Processing subscription atomically:', {
+  console.log('🔄 Processing subscription with direct updates:', {
     userId,
     subscriptionId,
     tier,
     status,
+    simulationLimit,
     eventType,
   });
 
-  const { data, error } = await supabase.rpc('process_subscription_webhook_atomic', {
-    p_user_id: userId,
-    p_lemonsqueezy_subscription_id: subscriptionId,
-    p_tier: tier,
-    p_status: status,
-    p_variant_id: String(variantId),
-    p_variant_name: variantName,
-    p_customer_email: customerEmail,
-    p_simulation_limit: simulationLimit,
-    p_created_at: createdAt,
-    p_updated_at: updatedAt,
-    p_expires_at: expiresAt,
-    p_renews_at: renewsAt,
-    p_period_start: periodStart,
-    p_period_end: periodEnd,
-    p_webhook_event: eventType,
+  let success = true;
+  const errors = [];
+
+  // STEP 1: Update user_simulation_quota table directly
+  // Production DB accepts: 'free', 'basic', 'premium' (English names)
+  console.log('📊 Step 1: Updating user_simulation_quota table...');
+
+  const periodStartDate = new Date();
+  const periodEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  // Delete existing quota record for this user (to handle period conflicts)
+  await supabase.from('user_simulation_quota').delete().eq('user_id', userId);
+
+  const { error: quotaError } = await supabase.from('user_simulation_quota').insert({
+    user_id: userId,
+    subscription_tier: tier, // 'basic' or 'premium' (English)
+    total_simulations: simulationLimit,
+    simulations_used: 0,
+    period_start: periodStartDate.toISOString(),
+    period_end: periodEndDate.toISOString(),
   });
 
-  if (error) {
-    console.error('❌ Atomic processing failed:', error);
-    throw error;
+  if (quotaError) {
+    console.error('❌ Failed to update quota table:', quotaError.message);
+    errors.push(`quota: ${quotaError.message}`);
+    success = false;
+  } else {
+    console.log('✅ Quota table updated successfully');
   }
 
-  console.log('✅ Atomic processing succeeded:', data);
-  return data;
+  // STEP 2: Update users table
+  // Users table uses German tier names: 'basis', 'profi'
+  const usersTier = tier === 'basic' ? 'basis' : tier === 'premium' ? 'profi' : tier;
+  console.log(`📊 Step 2: Updating users table (tier: ${usersTier})...`);
+
+  const { error: userError } = await supabase
+    .from('users')
+    .update({
+      subscription_tier: usersTier,
+      subscription_status: status === 'active' ? 'active' : 'inactive',
+      simulation_limit: simulationLimit,
+      simulations_used_this_month: 0,
+      subscription_updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (userError) {
+    console.error('❌ Failed to update users table:', userError.message);
+    errors.push(`users: ${userError.message}`);
+    success = false;
+  } else {
+    console.log('✅ Users table updated successfully');
+  }
+
+  // STEP 3: Try to insert into user_subscriptions (optional, for tracking)
+  console.log('📊 Step 3: Recording subscription in user_subscriptions...');
+
+  const { error: subError } = await supabase.from('user_subscriptions').upsert(
+    {
+      user_id: userId,
+      lemonsqueezy_subscription_id: subscriptionId,
+      tier,
+      status,
+      variant_id: String(variantId),
+      variant_name: variantName,
+      simulation_limit: simulationLimit,
+      created_at: createdAt,
+      updated_at: updatedAt,
+      expires_at: expiresAt,
+      renews_at: renewsAt,
+      period_start: periodStart,
+      period_end: periodEnd,
+      webhook_event: eventType,
+    },
+    { onConflict: 'user_id,lemonsqueezy_subscription_id' }
+  );
+
+  if (subError) {
+    // Non-critical - log but don't fail
+    console.warn('⚠️ Failed to record in user_subscriptions (non-critical):', subError.message);
+  } else {
+    console.log('✅ Subscription recorded in user_subscriptions');
+  }
+
+  if (!success) {
+    throw new Error(`Subscription processing failed: ${errors.join(', ')}`);
+  }
+
+  console.log('✅ All subscription updates completed successfully!');
+
+  return {
+    success: true,
+    tier_changed: true,
+    old_tier: 'unknown',
+    new_tier: tier,
+  };
 }
 
 // LEGACY: Use existing upsert_subscription_from_webhook database function
