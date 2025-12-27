@@ -94,9 +94,9 @@ function ProgressScreen() {
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  logger.info('ProgressScreen: Rendering, evaluations count:', evaluations.length);
-  logger.info('ProgressScreen: chartData:', chartData);
-  logger.info('ProgressScreen: activeTab:', activeTab);
+  logger.info(`ProgressScreen: Rendering, evaluations count: ${evaluations.length}`);
+  logger.info('ProgressScreen: chartData', { chartData });
+  logger.info(`ProgressScreen: activeTab: ${activeTab}`);
 
   useEffect(() => {
     fetchEvaluations();
@@ -110,7 +110,7 @@ function ProgressScreen() {
     logger.info('fetchEvaluations: Starting...');
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
-    logger.info('fetchEvaluations: userId:', userId);
+    logger.info('fetchEvaluations', { userId });
     if (!userId) return;
 
     const { data: evaluationsData, error } = await supabase
@@ -119,8 +119,8 @@ function ProgressScreen() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    logger.info('fetchEvaluations: evaluationsData:', evaluationsData);
-    logger.info('fetchEvaluations: error:', error);
+    logger.info('fetchEvaluations: evaluationsData', { count: evaluationsData?.length });
+    if (error) logger.info('fetchEvaluations: error', { error: error?.message });
 
     if (error) {
       logger.error('Error fetching evaluations:', error);
@@ -439,9 +439,9 @@ function ProgressScreen() {
       selectedEvaluation.conversation_type === 'patient' ? 'Patientengespräch' : 'Prüfergespräch'
     }`;
 
-    logger.info('Selected Evaluation:', selectedEvaluation);
-    logger.info('Has HTML Report:', !!selectedEvaluation.html_report);
-    logger.info('HTML Report Length:', selectedEvaluation.html_report?.length || 0);
+    logger.info('Selected Evaluation', { id: selectedEvaluation.id });
+    logger.info(`Has HTML Report: ${!!selectedEvaluation.html_report}`);
+    logger.info(`HTML Report Length: ${selectedEvaluation.html_report?.length || 0}`);
 
     // NEW APPROACH: Try HTML report first (pre-generated from Make.com)
     if (selectedEvaluation.html_report && selectedEvaluation.html_report.trim().length > 0) {

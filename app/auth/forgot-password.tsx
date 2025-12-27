@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { logger } from '@/utils/logger';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Alert,
-  ScrollView,
-  Platform
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, ArrowLeft, BriefcaseMedical } from 'lucide-react-native';
@@ -35,7 +26,7 @@ export default function ForgotPassword() {
   // Handle email input with validation
   const handleEmailChange = (text: string) => {
     setEmail(text);
-    
+
     if (emailTouched && text.length > 0) {
       if (!validateEmailFormat(text)) {
         setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
@@ -54,7 +45,7 @@ export default function ForgotPassword() {
   };
 
   const handleResetPassword = async () => {
-    logger.info('🔵 handleResetPassword called with email:', email);
+    logger.info('🔵 handleResetPassword called', { email });
     setSubmitError(''); // Clear previous errors
 
     if (!email) {
@@ -76,13 +67,14 @@ export default function ForgotPassword() {
 
     try {
       logger.info('🔵 Calling Supabase resetPasswordForEmail...');
-      const redirectUrl = Platform.OS === 'web'
-        ? `${window.location.origin}/auth/reset-password`
-        : 'medicallearningapp://auth/reset-password';
-      logger.info('🔵 Redirect URL:', redirectUrl);
+      const redirectUrl =
+        Platform.OS === 'web'
+          ? `${window.location.origin}/auth/reset-password`
+          : 'medicallearningapp://auth/reset-password';
+      logger.info('🔵 Redirect URL', { redirectUrl });
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl
+        redirectTo: redirectUrl,
       });
 
       logger.info('🔵 Supabase response received');
@@ -100,12 +92,14 @@ export default function ForgotPassword() {
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.';
 
       if (errorMsg.includes('rate limit')) {
-        errorMessage = 'Sie haben zu viele E-Mails angefordert. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
+        errorMessage =
+          'Sie haben zu viele E-Mails angefordert. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.';
       } else if (errorMsg.includes('for security purposes')) {
-        errorMessage = 'Aus Sicherheitsgründen können wir nicht bestätigen, ob diese E-Mail-Adresse in unserem System existiert. Falls sie existiert, haben Sie eine E-Mail erhalten.';
+        errorMessage =
+          'Aus Sicherheitsgründen können wir nicht bestätigen, ob diese E-Mail-Adresse in unserem System existiert. Falls sie existiert, haben Sie eine E-Mail erhalten.';
       }
 
-      logger.info('🔵 Setting error message:', errorMessage);
+      logger.info('🔵 Setting error message', { errorMessage });
       setSubmitError(errorMessage);
     } finally {
       logger.info('🔵 Finally block - setting loading to false');
@@ -121,23 +115,14 @@ export default function ForgotPassword() {
     return (
       <View style={styles.container}>
         {/* Background Gradient */}
-        <LinearGradient
-          colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
-          style={styles.backgroundGradient}
-        />
+        <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']} style={styles.backgroundGradient} />
 
         <SafeAreaView style={styles.safeArea}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {/* Logo Section */}
             <View style={styles.logoSection}>
               <View style={styles.logoContainer}>
-                <LinearGradient
-                  colors={['#D4A574', '#C19A6B']}
-                  style={styles.logoGradient}
-                >
+                <LinearGradient colors={['#D4A574', '#C19A6B']} style={styles.logoGradient}>
                   <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
                 </LinearGradient>
               </View>
@@ -156,22 +141,20 @@ export default function ForgotPassword() {
             <View style={styles.successMessageSection}>
               <Text style={styles.successTitle}>E-Mail versendet!</Text>
               <Text style={styles.successSubtitle}>
-                Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen des Passworts gesendet.
+                Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir Ihnen einen Link zum Zurücksetzen des
+                Passworts gesendet.
               </Text>
               <View style={styles.emailContainer}>
                 <Text style={styles.email}>{email}</Text>
               </View>
               <Text style={styles.instructions}>
-                Überprüfen Sie Ihren Posteingang und klicken Sie auf den Link, um Ihr Passwort zurückzusetzen. Der Link läuft in 1 Stunde ab.
+                Überprüfen Sie Ihren Posteingang und klicken Sie auf den Link, um Ihr Passwort zurückzusetzen. Der Link
+                läuft in 1 Stunde ab.
               </Text>
             </View>
 
             {/* Back to Login Button */}
-            <TouchableOpacity
-              onPress={handleBackToLogin}
-              activeOpacity={0.8}
-              style={styles.buttonSpacing}
-            >
+            <TouchableOpacity onPress={handleBackToLogin} activeOpacity={0.8} style={styles.buttonSpacing}>
               <LinearGradient
                 colors={['#FEF3C7', '#FDE68A']}
                 start={{ x: 0, y: 0 }}
@@ -186,7 +169,8 @@ export default function ForgotPassword() {
             {/* Help Text */}
             <View style={styles.helpSection}>
               <Text style={styles.helpText}>
-                E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder versuchen Sie es in ein paar Minuten erneut.
+                E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder versuchen Sie es in ein paar Minuten
+                erneut.
               </Text>
             </View>
           </ScrollView>
@@ -198,10 +182,7 @@ export default function ForgotPassword() {
   return (
     <View style={styles.container}>
       {/* Background Gradient */}
-      <LinearGradient
-        colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']}
-        style={styles.backgroundGradient}
-      />
+      <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#F1F5F9']} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
@@ -212,10 +193,7 @@ export default function ForgotPassword() {
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#D4A574', '#C19A6B']}
-                style={styles.logoGradient}
-              >
+              <LinearGradient colors={['#D4A574', '#C19A6B']} style={styles.logoGradient}>
                 <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
@@ -268,17 +246,12 @@ export default function ForgotPassword() {
                 end={{ x: 1, y: 0 }}
                 style={styles.resetButtonGradient}
               >
-                <Text style={styles.resetButtonText}>
-                  {loading ? 'Wird gesendet...' : 'Link senden'}
-                </Text>
+                <Text style={styles.resetButtonText}>{loading ? 'Wird gesendet...' : 'Link senden'}</Text>
               </LinearGradient>
             </TouchableOpacity>
 
             {/* Cancel Button */}
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleBackToLogin}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={handleBackToLogin}>
               <Text style={styles.cancelButtonText}>Abbrechen</Text>
             </TouchableOpacity>
           </View>

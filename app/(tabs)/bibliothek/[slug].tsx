@@ -1,7 +1,31 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect, Href } from 'expo-router';
-import { ChevronLeft, ChevronRight, Home, Stethoscope, Heart, Activity, Scissors, AlertTriangle, Shield, Droplets, Scan, BookOpen, FileText, Folder } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Stethoscope,
+  Heart,
+  Activity,
+  Scissors,
+  AlertTriangle,
+  Shield,
+  Droplets,
+  Scan,
+  BookOpen,
+  FileText,
+  Folder,
+} from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,14 +39,14 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 // Responsive grid calculation
 const getColumnsForScreen = () => {
   if (SCREEN_WIDTH >= 1024) return 3; // xl: 3 columns
-  if (SCREEN_WIDTH >= 768) return 2;  // md: 2 columns
+  if (SCREEN_WIDTH >= 768) return 2; // md: 2 columns
   return 1; // sm: 1 column
 };
 
 const COLUMNS = getColumnsForScreen();
 const CARD_PADDING = 24;
 const CARD_GAP = 16;
-const CARD_WIDTH = (SCREEN_WIDTH - (CARD_PADDING * 2) - (CARD_GAP * (COLUMNS - 1))) / COLUMNS;
+const CARD_WIDTH = (SCREEN_WIDTH - CARD_PADDING * 2 - CARD_GAP * (COLUMNS - 1)) / COLUMNS;
 
 interface Section {
   id: string;
@@ -34,6 +58,7 @@ interface Section {
   display_order: number;
   content_improved?: string;
   content_html?: string;
+  content_details?: string;
 }
 
 interface BreadcrumbItem {
@@ -131,105 +156,166 @@ const getItemDetails = (title: string, type: string, parentSlug?: string) => {
         break;
     }
   }
-  
+
   // Enhanced icon distribution based on content and medical specialty
   let icon = 'Folder';
   if (normalizedTitle.includes('kardio') || normalizedTitle.includes('herz') || normalizedTitle.includes('koronar')) {
     icon = 'Heart';
-  } else if (normalizedTitle.includes('chirurg') || normalizedTitle.includes('operation') || normalizedTitle.includes('trauma') || normalizedTitle.includes('op-')) {
+  } else if (
+    normalizedTitle.includes('chirurg') ||
+    normalizedTitle.includes('operation') ||
+    normalizedTitle.includes('trauma') ||
+    normalizedTitle.includes('op-')
+  ) {
     icon = 'Scissors';
-  } else if (normalizedTitle.includes('notfall') || normalizedTitle.includes('reanimat') || normalizedTitle.includes('akut') || normalizedTitle.includes('emergency')) {
+  } else if (
+    normalizedTitle.includes('notfall') ||
+    normalizedTitle.includes('reanimat') ||
+    normalizedTitle.includes('akut') ||
+    normalizedTitle.includes('emergency')
+  ) {
     icon = 'AlertTriangle';
-  } else if (normalizedTitle.includes('diagnostik') || normalizedTitle.includes('röntgen') || normalizedTitle.includes('tomograf') || normalizedTitle.includes('mrt') || normalizedTitle.includes('ct')) {
+  } else if (
+    normalizedTitle.includes('diagnostik') ||
+    normalizedTitle.includes('röntgen') ||
+    normalizedTitle.includes('tomograf') ||
+    normalizedTitle.includes('mrt') ||
+    normalizedTitle.includes('ct')
+  ) {
     icon = 'Scan';
-  } else if (normalizedTitle.includes('pneumo') || normalizedTitle.includes('lunge') || normalizedTitle.includes('atemweg') || normalizedTitle.includes('respirator')) {
+  } else if (
+    normalizedTitle.includes('pneumo') ||
+    normalizedTitle.includes('lunge') ||
+    normalizedTitle.includes('atemweg') ||
+    normalizedTitle.includes('respirator')
+  ) {
     icon = 'Activity';
-  } else if (normalizedTitle.includes('urolog') || normalizedTitle.includes('niere') || normalizedTitle.includes('harn') || normalizedTitle.includes('blase')) {
+  } else if (
+    normalizedTitle.includes('urolog') ||
+    normalizedTitle.includes('niere') ||
+    normalizedTitle.includes('harn') ||
+    normalizedTitle.includes('blase')
+  ) {
     icon = 'Droplets';
-  } else if (normalizedTitle.includes('infekt') || normalizedTitle.includes('hygiene') || normalizedTitle.includes('bakteri') || normalizedTitle.includes('viral') || normalizedTitle.includes('antibio')) {
+  } else if (
+    normalizedTitle.includes('infekt') ||
+    normalizedTitle.includes('hygiene') ||
+    normalizedTitle.includes('bakteri') ||
+    normalizedTitle.includes('viral') ||
+    normalizedTitle.includes('antibio')
+  ) {
     icon = 'Shield';
-  } else if (normalizedTitle.includes('medikament') || normalizedTitle.includes('pharma') || normalizedTitle.includes('dosier') || normalizedTitle.includes('therapie')) {
+  } else if (
+    normalizedTitle.includes('medikament') ||
+    normalizedTitle.includes('pharma') ||
+    normalizedTitle.includes('dosier') ||
+    normalizedTitle.includes('therapie')
+  ) {
     icon = 'FileText';
-  } else if (normalizedTitle.includes('labor') || normalizedTitle.includes('wert') || normalizedTitle.includes('analyse') || normalizedTitle.includes('befund')) {
+  } else if (
+    normalizedTitle.includes('labor') ||
+    normalizedTitle.includes('wert') ||
+    normalizedTitle.includes('analyse') ||
+    normalizedTitle.includes('befund')
+  ) {
     icon = 'Scan';
-  } else if (normalizedTitle.includes('anamnes') || normalizedTitle.includes('untersuch') || normalizedTitle.includes('klinik')) {
+  } else if (
+    normalizedTitle.includes('anamnes') ||
+    normalizedTitle.includes('untersuch') ||
+    normalizedTitle.includes('klinik')
+  ) {
     icon = 'Stethoscope';
   } else if ((type && type.toLowerCase().includes('content')) || normalizedTitle.includes('content')) {
     icon = 'FileText';
   } else {
     icon = 'Folder';
   }
-  
+
   return { icon, color: baseColor, gradient, hoverGradient };
 };
 
 const getIconComponent = (iconName: string) => {
   switch (iconName) {
-    case 'Heart': return Heart;
-    case 'Scissors': return Scissors;
-    case 'AlertTriangle': return AlertTriangle;
-    case 'Scan': return Scan;
-    case 'Activity': return Activity;
-    case 'Droplets': return Droplets;
-    case 'Shield': return Shield;
-    case 'Stethoscope': return Stethoscope;
-    case 'FileText': return FileText;
-    case 'BookOpen': return BookOpen;
+    case 'Heart':
+      return Heart;
+    case 'Scissors':
+      return Scissors;
+    case 'AlertTriangle':
+      return AlertTriangle;
+    case 'Scan':
+      return Scan;
+    case 'Activity':
+      return Activity;
+    case 'Droplets':
+      return Droplets;
+    case 'Shield':
+      return Shield;
+    case 'Stethoscope':
+      return Stethoscope;
+    case 'FileText':
+      return FileText;
+    case 'BookOpen':
+      return BookOpen;
     case 'Folder':
-    default: return Folder;
+    default:
+      return Folder;
   }
 };
 
-
 // Optimized Folder Card Component with memoized calculations
-const FolderCard = React.memo(({
-  childItem,
-  parentSlug,
-  progress = 0,
-  onPress
-}: {
-  childItem: Section,
-  parentSlug: string,
-  progress?: number,
-  onPress: () => void
-}) => {
-  // Memoize expensive calculations
-  const itemDetails = useMemo(() => {
-    return getItemDetails(childItem.title, childItem.type, parentSlug);
-  }, [childItem.title, childItem.type, parentSlug]);
+const FolderCard = React.memo(
+  ({
+    childItem,
+    parentSlug,
+    progress = 0,
+    onPress,
+  }: {
+    childItem: Section;
+    parentSlug: string;
+    progress?: number;
+    onPress: () => void;
+  }) => {
+    // Memoize expensive calculations
+    const itemDetails = useMemo(() => {
+      return getItemDetails(childItem.title, childItem.type, parentSlug);
+    }, [childItem.title, childItem.type, parentSlug]);
 
-  const IconComponent = useMemo(() => {
-    return getIconComponent(itemDetails.icon);
-  }, [itemDetails.icon]);
+    const IconComponent = useMemo(() => {
+      return getIconComponent(itemDetails.icon);
+    }, [itemDetails.icon]);
 
-  const hasContent = useMemo(() => {
-    return childItem.content_improved &&
-           (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string');
-  }, [childItem.content_improved]);
+    const hasContent = useMemo(() => {
+      return (
+        childItem.content_improved &&
+        (typeof childItem.content_improved === 'object' || typeof childItem.content_improved === 'string')
+      );
+    }, [childItem.content_improved]);
 
-  return (
-    <View style={{ width: CARD_WIDTH }}>
-      <ModernMedicalCard
-        title={childItem.title}
-        icon={IconComponent}
-        gradient={itemDetails.gradient}
-        hoverGradient={itemDetails.hoverGradient}
-        hasContent={Boolean(hasContent)}
-        progress={progress}
-        onPress={onPress}
-      />
-    </View>
-  );
-}, (prevProps, nextProps) => {
-  // FIX: Custom comparison function to prevent unnecessary re-renders
-  return (
-    prevProps.childItem.slug === nextProps.childItem.slug &&
-    prevProps.childItem.title === nextProps.childItem.title &&
-    prevProps.childItem.type === nextProps.childItem.type &&
-    prevProps.parentSlug === nextProps.parentSlug &&
-    prevProps.progress === nextProps.progress
-  );
-});
+    return (
+      <View style={{ width: CARD_WIDTH }}>
+        <ModernMedicalCard
+          title={childItem.title}
+          icon={IconComponent}
+          gradient={itemDetails.gradient}
+          hoverGradient={itemDetails.hoverGradient}
+          hasContent={Boolean(hasContent)}
+          progress={progress}
+          onPress={onPress}
+        />
+      </View>
+    );
+  },
+  (prevProps, nextProps) => {
+    // FIX: Custom comparison function to prevent unnecessary re-renders
+    return (
+      prevProps.childItem.slug === nextProps.childItem.slug &&
+      prevProps.childItem.title === nextProps.childItem.title &&
+      prevProps.childItem.type === nextProps.childItem.type &&
+      prevProps.parentSlug === nextProps.parentSlug &&
+      prevProps.progress === nextProps.progress
+    );
+  }
+);
 
 export default function SectionDetailScreen() {
   const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
@@ -270,121 +356,127 @@ export default function SectionDetailScreen() {
   }, []);
 
   // Optimized fetch with caching
-  const fetchItemData = useCallback(async (forceRefresh = false) => {
-    if (!slug || typeof slug !== 'string') return;
+  const fetchItemData = useCallback(
+    async (forceRefresh = false) => {
+      if (!slug || typeof slug !== 'string') return;
 
-    // Check cache first (uses LRU with automatic expiration)
-    const cacheKey = `${slug}-${session?.user?.id || 'anonymous'}`;
-    const cached = dataCache.current.getValue(cacheKey);
+      // Check cache first (uses LRU with automatic expiration)
+      const cacheKey = `${slug}-${session?.user?.id || 'anonymous'}`;
+      const cached = dataCache.current.getValue(cacheKey);
 
-    if (!forceRefresh && cached) {
-      setCurrentItem(cached.item);
-      setChildItems(cached.children);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      if (!session) {
-        setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
+      if (!forceRefresh && cached) {
+        setCurrentItem(cached.item);
+        setChildItems(cached.children);
+        setLoading(false);
         return;
       }
 
-      // Fetch current item
-      const { data: itemData, error: itemError } = await supabase
-        .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
-        .eq('slug', slug)
-        .maybeSingle();
+      try {
+        setLoading(true);
 
-      if (itemError) throw itemError;
-      if (!itemData) {
-        setError('Inhalt nicht gefunden.');
-        return;
-      }
+        if (!session) {
+          setError('Sie müssen angemeldet sein, um die Bibliothek zu nutzen.');
+          return;
+        }
 
-      // Fetch children with pagination - get total count first
-      const { count: totalCount } = await supabase
-        .from('sections')
-        .select('id', { count: 'exact', head: true })
-        .eq('parent_slug', slug);
-
-      // Fetch first page of children
-      const { data: childItemsData, error: childItemsError } = await supabase
-        .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
-        .eq('parent_slug', slug)
-        .order('display_order', { ascending: true })
-        .range(0, ITEMS_PER_PAGE - 1);
-
-      if (childItemsError) {
-        throw childItemsError;
-      }
-
-      setCurrentItem(itemData);
-
-      // Update navigation title with the actual title
-      navigation.setOptions({
-        headerTitle: itemData.title || slug,
-      });
-
-      const children = childItemsData || [];
-      setChildItems(children);
-
-      // Set pagination state
-      setOffset(ITEMS_PER_PAGE);
-      setHasMore((totalCount || 0) > ITEMS_PER_PAGE);
-
-      // Build breadcrumb trail
-      const trail: BreadcrumbItem[] = [];
-      let currentSlug = itemData.parent_slug;
-
-      // Fetch parent sections to build breadcrumb trail
-      while (currentSlug) {
-        const { data: parentData } = await supabase
+        // Fetch current item
+        const { data: itemData, error: itemError } = await supabase
           .from('sections')
-          .select('slug, title, parent_slug')
-          .eq('slug', currentSlug)
+          .select(
+            'id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details'
+          )
+          .eq('slug', slug)
           .maybeSingle();
 
-        if (parentData) {
-          trail.unshift({ slug: parentData.slug, title: parentData.title });
-          currentSlug = parentData.parent_slug;
-        } else {
-          break;
+        if (itemError) throw itemError;
+        if (!itemData) {
+          setError('Inhalt nicht gefunden.');
+          return;
         }
-      }
 
-      setBreadcrumbs(trail);
+        // Fetch children with pagination - get total count first
+        const { count: totalCount } = await supabase
+          .from('sections')
+          .select('id', { count: 'exact', head: true })
+          .eq('parent_slug', slug);
 
-      // Cache the results (LRU cache handles timestamp automatically)
-      dataCache.current.setValue(cacheKey, {
-        item: itemData,
-        children: children
-      });
+        // Fetch first page of children
+        const { data: childItemsData, error: childItemsError } = await supabase
+          .from('sections')
+          .select(
+            'id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details'
+          )
+          .eq('parent_slug', slug)
+          .order('display_order', { ascending: true })
+          .range(0, ITEMS_PER_PAGE - 1);
 
-    } catch (e) {
-      SecureLogger.error('Error fetching item data:', e);
-      // FIX: Provide more specific error messages
-      let errorMessage = 'Fehler beim Laden des Inhalts';
-      if (e instanceof Error) {
-        if (e.message.includes('network') || e.message.includes('fetch')) {
-          errorMessage = 'Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.';
-        } else if (e.message.includes('timeout')) {
-          errorMessage = 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.';
-        } else if (e.message.includes('auth') || e.message.includes('permission')) {
-          errorMessage = 'Sie haben keine Berechtigung für diesen Inhalt.';
-        } else {
-          errorMessage = e.message;
+        if (childItemsError) {
+          throw childItemsError;
         }
+
+        setCurrentItem(itemData);
+
+        // Update navigation title with the actual title
+        navigation.setOptions({
+          headerTitle: itemData.title || slug,
+        });
+
+        const children = childItemsData || [];
+        setChildItems(children);
+
+        // Set pagination state
+        setOffset(ITEMS_PER_PAGE);
+        setHasMore((totalCount || 0) > ITEMS_PER_PAGE);
+
+        // Build breadcrumb trail
+        const trail: BreadcrumbItem[] = [];
+        let currentSlug = itemData.parent_slug;
+
+        // Fetch parent sections to build breadcrumb trail
+        while (currentSlug) {
+          const { data: parentData } = await supabase
+            .from('sections')
+            .select('slug, title, parent_slug')
+            .eq('slug', currentSlug)
+            .maybeSingle();
+
+          if (parentData) {
+            trail.unshift({ slug: parentData.slug, title: parentData.title });
+            currentSlug = parentData.parent_slug;
+          } else {
+            break;
+          }
+        }
+
+        setBreadcrumbs(trail);
+
+        // Cache the results (LRU cache handles timestamp automatically)
+        dataCache.current.setValue(cacheKey, {
+          item: itemData,
+          children,
+        });
+      } catch (e) {
+        SecureLogger.error('Error fetching item data:', e);
+        // FIX: Provide more specific error messages
+        let errorMessage = 'Fehler beim Laden des Inhalts';
+        if (e instanceof Error) {
+          if (e.message.includes('network') || e.message.includes('fetch')) {
+            errorMessage = 'Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.';
+          } else if (e.message.includes('timeout')) {
+            errorMessage = 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.';
+          } else if (e.message.includes('auth') || e.message.includes('permission')) {
+            errorMessage = 'Sie haben keine Berechtigung für diesen Inhalt.';
+          } else {
+            errorMessage = e.message;
+          }
+        }
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
       }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [slug, session]);
+    },
+    [slug, session]
+  );
 
   // Handle scroll to show/hide back-to-top button
   const handleScroll = useCallback((event: any) => {
@@ -406,7 +498,9 @@ export default function SectionDetailScreen() {
 
       const { data: moreItems, error } = await supabase
         .from('sections')
-        .select('id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details')
+        .select(
+          'id, slug, title, parent_slug, description, type, display_order, content_improved, content_html, content_details'
+        )
         .eq('parent_slug', slug)
         .order('display_order', { ascending: true })
         .range(offset, offset + ITEMS_PER_PAGE - 1);
@@ -469,96 +563,91 @@ export default function SectionDetailScreen() {
     }
   }, []); // Empty dependency array for initial load only
 
-  const navigateToChild = useCallback(async (childSlug: string, childItem?: Section) => {
-    // FIX: Set navigation intent to track which navigation is intended
-    navigationIntentRef.current = childSlug;
+  const navigateToChild = useCallback(
+    async (childSlug: string, childItem?: Section) => {
+      // FIX: Set navigation intent to track which navigation is intended
+      navigationIntentRef.current = childSlug;
 
-    // FIX: Cancel any previous ongoing navigation request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // FIX: Create new AbortController for this navigation
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    const currentPath = `/(tabs)/bibliothek/${slug}`;
-
-    // Check if child has any content (improved, html, or details)
-    const hasContent = childItem && !!(
-      (childItem.content_improved &&
-       (typeof childItem.content_improved === 'object' ||
-        (typeof childItem.content_improved === 'string' && childItem.content_improved.trim()))) ||
-      (childItem.content_html && childItem.content_html.trim()) ||
-      (childItem.content_details && childItem.content_details.trim())
-    );
-
-    // Check if child has children (subdivisions) first - this is the key fix
-    try {
-      const { data: childrenData, error: childrenError } = await supabase
-        .from('sections')
-        .select('id')
-        .eq('parent_slug', childSlug)
-        .limit(1)
-        .abortSignal(abortController.signal);
-
-      // FIX: Check if navigation intent has changed (user clicked another item)
-      if (navigationIntentRef.current !== childSlug) {
-        return;
+      // FIX: Cancel any previous ongoing navigation request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
-      if (childrenError) {
-        // Check if error is from abort
-        if (childrenError.message?.includes('aborted')) {
+      // FIX: Create new AbortController for this navigation
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      const currentPath = `/(tabs)/bibliothek/${slug}`;
+
+      // Check if child has any content (improved, html, or details)
+      const hasContent =
+        childItem &&
+        !!(
+          (childItem.content_improved &&
+            (typeof childItem.content_improved === 'object' ||
+              (typeof childItem.content_improved === 'string' && childItem.content_improved.trim()))) ||
+          (childItem.content_html && childItem.content_html.trim()) ||
+          (childItem.content_details && childItem.content_details.trim())
+        );
+
+      // Check if child has children (subdivisions) first - this is the key fix
+      try {
+        const { data: childrenData, error: childrenError } = await supabase
+          .from('sections')
+          .select('id')
+          .eq('parent_slug', childSlug)
+          .limit(1)
+          .abortSignal(abortController.signal);
+
+        // FIX: Check if navigation intent has changed (user clicked another item)
+        if (navigationIntentRef.current !== childSlug) {
           return;
         }
-        SecureLogger.warn('Error checking for children:', childrenError);
-      }
 
-      const hasSubdivisions = childrenData && childrenData.length > 0;
+        if (childrenError) {
+          // Check if error is from abort
+          if (childrenError.message?.includes('aborted')) {
+            return;
+          }
+          SecureLogger.warn('Error checking for children:', childrenError);
+        }
 
-      // FIX: Final check before navigation - ensure intent hasn't changed
-      if (navigationIntentRef.current !== childSlug) {
-        return;
-      }
+        const hasSubdivisions = childrenData && childrenData.length > 0;
 
-      // FIXED LOGIC: Priority is subdivisions over content
-      // If has children/subdivisions, always go to category page for navigation
-      // Only go to content page if it has content but no children
-      if (hasSubdivisions) {
-        router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}` as Href,
-          params: { previousPage: currentPath }
-        });
-      } else if (hasContent) {
-        router.push({
-          pathname: `/(tabs)/bibliothek/content/${childSlug}` as Href,
-          params: { previousPage: currentPath }
-        });
-      } else {
-        router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}` as Href,
-          params: { previousPage: currentPath }
-        });
-      }
-    } catch (error) {
-      // FIX: Check if error is from abort
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
+        // FIX: Final check before navigation - ensure intent hasn't changed
+        if (navigationIntentRef.current !== childSlug) {
+          return;
+        }
 
-      SecureLogger.error('Error in navigateToChild:', error);
+        // FIXED LOGIC: Priority is subdivisions over content
+        // If has children/subdivisions, always go to category page for navigation
+        // Only go to content page if it has content but no children
+        if (hasSubdivisions) {
+          router.push(`/(tabs)/bibliothek/${childSlug}?previousPage=${encodeURIComponent(currentPath)}` as Href);
+        } else if (hasContent) {
+          router.push(
+            `/(tabs)/bibliothek/content/${childSlug}?previousPage=${encodeURIComponent(currentPath)}` as Href
+          );
+        } else {
+          router.push(`/(tabs)/bibliothek/${childSlug}?previousPage=${encodeURIComponent(currentPath)}` as Href);
+        }
+      } catch (error) {
+        // FIX: Check if error is from abort
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
 
-      // FIX: Only fallback if intent hasn't changed
-      if (navigationIntentRef.current === childSlug) {
-        // Fallback to category page on error
-        router.push({
-          pathname: `/(tabs)/bibliothek/${childSlug}`,
-          params: { previousPage: currentPath }
-        });
+        SecureLogger.error('Error in navigateToChild:', error);
+
+        // FIX: Only fallback if intent hasn't changed
+        if (navigationIntentRef.current === childSlug) {
+          // Fallback to category page on error
+          router.push(`/(tabs)/bibliothek/${childSlug}` as Href);
+        }
       }
-    }
-  }, [router, slug, supabase]);
+    },
+    [router, slug, supabase]
+  );
 
   const handleBackPress = useCallback(() => {
     try {
@@ -614,11 +703,11 @@ export default function SectionDetailScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         />
-        
+
         <View style={styles.modernHeader}>
           <View style={styles.skeletonBackButton} />
         </View>
-        
+
         <ScrollView style={styles.modernContent} showsVerticalScrollIndicator={false}>
           <View style={styles.sectionPanel}>
             <LinearGradient
@@ -677,13 +766,10 @@ export default function SectionDetailScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
-      
+
       {/* Modern Header */}
       <View style={styles.modernHeader}>
-        <TouchableOpacity
-          onPress={handleBackPress}
-          style={styles.modernBackButton}
-        >
+        <TouchableOpacity onPress={handleBackPress} style={styles.modernBackButton}>
           <LinearGradient
             colors={['#0891b2', '#0e7490']}
             style={styles.backButtonGradient}
@@ -705,14 +791,9 @@ export default function SectionDetailScreen() {
             {breadcrumbs.map((crumb, index) => (
               <View key={crumb.slug} style={styles.breadcrumbItem}>
                 <ChevronRight size={14} color="#94a3b8" style={styles.breadcrumbSeparator} />
-                <TouchableOpacity
-                  onPress={() => router.push(`/(tabs)/bibliothek/${crumb.slug}` as Href)}
-                >
+                <TouchableOpacity onPress={() => router.push(`/(tabs)/bibliothek/${crumb.slug}` as Href)}>
                   <Text
-                    style={[
-                      styles.breadcrumbText,
-                      index === breadcrumbs.length - 1 && styles.breadcrumbTextLast,
-                    ]}
+                    style={[styles.breadcrumbText, index === breadcrumbs.length - 1 && styles.breadcrumbTextLast]}
                     numberOfLines={1}
                   >
                     {crumb.title}
@@ -736,18 +817,13 @@ export default function SectionDetailScreen() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-
         {/* FIX: Use memoized folder grid */}
         {folderGrid}
 
         {/* Load More Button */}
         {hasMore && childItems.length > 0 && (
           <View style={styles.loadMoreContainer}>
-            <TouchableOpacity
-              style={styles.loadMoreButton}
-              onPress={loadMore}
-              disabled={loadingMore}
-            >
+            <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore} disabled={loadingMore}>
               <LinearGradient
                 colors={['#0891b2', '#0e7490']}
                 style={styles.loadMoreGradient}
@@ -761,9 +837,7 @@ export default function SectionDetailScreen() {
                 )}
               </LinearGradient>
             </TouchableOpacity>
-            <Text style={styles.loadMoreHint}>
-              {childItems.length} von vielen Einträgen geladen
-            </Text>
+            <Text style={styles.loadMoreHint}>{childItems.length} von vielen Einträgen geladen</Text>
           </View>
         )}
 
@@ -777,9 +851,7 @@ export default function SectionDetailScreen() {
               end={{ x: 1, y: 1 }}
             >
               <BookOpen size={48} color="#94a3b8" />
-              <Text style={styles.modernEmptyStateText}>
-                Keine Inhalte oder Unterkategorien verfügbar.
-              </Text>
+              <Text style={styles.modernEmptyStateText}>Keine Inhalte oder Unterkategorien verfügbar.</Text>
             </LinearGradient>
           </View>
         )}
@@ -789,11 +861,7 @@ export default function SectionDetailScreen() {
 
       {/* Back to Top Button */}
       {showBackToTop && (
-        <TouchableOpacity
-          style={styles.backToTopButton}
-          onPress={scrollToTop}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.backToTopButton} onPress={scrollToTop} activeOpacity={0.8}>
           <LinearGradient
             colors={['#0891b2', '#0e7490']}
             style={styles.backToTopGradient}
@@ -821,7 +889,7 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
   },
-  
+
   // Loading & Error States
   loadingContainer: {
     flex: 1,

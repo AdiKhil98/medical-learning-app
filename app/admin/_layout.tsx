@@ -20,8 +20,7 @@ export default function AdminLayout() {
 
       try {
         // Verify admin role directly from database using auth.uid()
-        const { data, error } = await supabase
-          .rpc('verify_admin_role');
+        const { data, error } = await supabase.rpc('verify_admin_role');
 
         if (error) {
           logger.error('Admin verification error:', error);
@@ -58,85 +57,16 @@ export default function AdminLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        // Enable lazy loading for all admin screens
-        // Reduces initial bundle size since admin screens aren't needed for regular users
-        lazy: true,
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          title: 'Admin Dashboard',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="add-update"
-        options={{
-          title: 'Post Update',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="manage-users"
-        options={{
-          title: 'Manage Users',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="subscriptions"
-        options={{
-          title: 'Subscription Manager',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="content"
-        options={{
-          title: 'Content Management',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="monitoring"
-        options={{
-          title: 'System Monitoring',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="daily-tips"
-        options={{
-          title: 'Daily Tips Management',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
-      <Stack.Screen
-        name="feedback-manager"
-        options={{
-          title: 'Feedback Manager',
-          headerShown: true,
-          lazy: true,
-        }}
-      />
+    <Stack screenOptions={{ headerShown: true }}>
+      <Stack.Screen name="index" options={{ title: 'Admin Dashboard' }} />
+      <Stack.Screen name="add-update" options={{ title: 'Post Update' }} />
+      <Stack.Screen name="manage-users" options={{ title: 'Manage Users' }} />
+      <Stack.Screen name="subscriptions" options={{ title: 'Subscription Manager' }} />
+      <Stack.Screen name="analytics" options={{ title: 'Analytics' }} />
+      <Stack.Screen name="content" options={{ title: 'Content Management' }} />
+      <Stack.Screen name="monitoring" options={{ title: 'System Monitoring' }} />
+      <Stack.Screen name="daily-tips" options={{ title: 'Daily Tips Management' }} />
+      <Stack.Screen name="feedback-manager" options={{ title: 'Feedback Manager' }} />
     </Stack>
   );
 }

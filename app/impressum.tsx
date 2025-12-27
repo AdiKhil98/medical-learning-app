@@ -12,7 +12,7 @@ export default function ImpressumScreen() {
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background
+      backgroundColor: colors.background,
     },
     header: {
       flexDirection: 'row',
@@ -45,7 +45,7 @@ export default function ImpressumScreen() {
     },
     content: {
       flex: 1,
-      padding: 24
+      padding: 24,
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
@@ -101,7 +101,7 @@ export default function ImpressumScreen() {
     },
   });
 
-  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'];
+  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'] as const;
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
@@ -148,9 +148,7 @@ export default function ImpressumScreen() {
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Geschäftsführung</Text>
-          <Text style={dynamicStyles.sectionText}>
-            Geschäftsführer der KP Med GmbH
-          </Text>
+          <Text style={dynamicStyles.sectionText}>Geschäftsführer der KP Med GmbH</Text>
         </View>
 
         <View style={dynamicStyles.section}>
@@ -172,9 +170,7 @@ export default function ImpressumScreen() {
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Aufsichtsbehörde</Text>
-          <Text style={dynamicStyles.sectionText}>
-            [Zuständige Aufsichtsbehörde je nach Geschäftszweig]
-          </Text>
+          <Text style={dynamicStyles.sectionText}>[Zuständige Aufsichtsbehörde je nach Geschäftszweig]</Text>
         </View>
 
         <View style={dynamicStyles.section}>
@@ -189,22 +185,29 @@ export default function ImpressumScreen() {
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Streitschlichtung</Text>
           <Text style={dynamicStyles.sectionText}>
-            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr/{'\n\n'}
-            Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:
+            https://ec.europa.eu/consumers/odr/{'\n\n'}
+            Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+            Verbraucherschlichtungsstelle teilzunehmen.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Haftung für Inhalte</Text>
           <Text style={dynamicStyles.sectionText}>
-            Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht unter der Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+            Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen
+            Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht unter der
+            Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu
+            forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Urheberrecht</Text>
           <Text style={dynamicStyles.sectionText}>
-            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen
+            Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der
+            Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
           </Text>
         </View>
 
@@ -212,8 +215,7 @@ export default function ImpressumScreen() {
           <Text style={dynamicStyles.sectionTitle}>App Version</Text>
           <Text style={dynamicStyles.sectionText}>
             Version 1.0.0{'\n'}
-            Letzte Aktualisierung: Dezember 2024{'\n\n'}
-            © 2024 KP Med GmbH. Alle Rechte vorbehalten.
+            Letzte Aktualisierung: Dezember 2024{'\n\n'}© 2024 KP Med GmbH. Alle Rechte vorbehalten.
           </Text>
         </View>
 

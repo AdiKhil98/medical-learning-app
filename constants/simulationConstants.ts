@@ -1,117 +1,48 @@
-/**
- * Simulation Constants
- *
- * Centralized constants for simulation timing, thresholds, and limits
- * to ensure consistency across KP and FSP simulations
- */
-
-// ===== SIMULATION DURATION =====
-
-/** Total simulation duration in seconds (20 minutes) */
-export const SIMULATION_DURATION_SECONDS = 1200;
-
-/** Total simulation duration in milliseconds (20 minutes) */
-export const SIMULATION_DURATION_MS = 1200000;
-
-// ===== USAGE THRESHOLDS =====
+// Simulation timing constants
+// These values control the simulation duration and usage tracking
 
 /**
- * Threshold for marking simulation as "used" and counting toward limits
- * If simulation runs for this duration or longer, it counts as used (5 minutes)
+ * Total simulation duration in seconds
+ * IMPORTANT: This should be 20 minutes (1200 seconds) according to system docs
  */
-export const USAGE_THRESHOLD_SECONDS = 300;
+export const SIMULATION_DURATION_SECONDS = 1200; // 20 minutes = 1200 seconds
 
 /**
- * Threshold in milliseconds (5 minutes)
+ * Threshold for marking simulation as "used" (counted toward quota)
+ * When elapsed time reaches this value, increment the user's counter
+ * IMPORTANT: This is 5 minutes (300 seconds)
  */
-export const USAGE_THRESHOLD_MS = 300000;
-
-// ===== TIMER WARNING LEVELS =====
-
-/** Warning at 5 minutes remaining (15 minutes elapsed) */
-export const WARNING_5_MIN_REMAINING = 300;
-
-/** Warning at 2 minutes remaining (18 minutes elapsed) */
-export const WARNING_2_MIN_REMAINING = 120;
-
-/** Warning at 1 minute remaining (19 minutes elapsed) */
-export const WARNING_1_MIN_REMAINING = 60;
-
-/** Final warning at 30 seconds remaining */
-export const WARNING_30_SEC_REMAINING = 30;
-
-/** Critical warning at 10 seconds remaining (start countdown) */
-export const WARNING_10_SEC_REMAINING = 10;
-
-// ===== GRACE PERIODS AND TIMEOUTS =====
+export const USAGE_THRESHOLD_SECONDS = 300; // 5 minutes = 300 seconds
 
 /**
- * Grace period for stale session cleanup
- *
- * Calculation:
- * - 20 minutes: Normal simulation duration
- * - 5 minutes: Buffer for network delays, app slowdowns
- * - 5 minutes: Additional safety margin for edge cases
- * = 30 minutes total
- *
- * This ensures legitimate sessions aren't prematurely ended due to:
- * - Network connectivity issues
- * - Device performance problems
- * - User taking brief break (emergency call, etc.)
+ * Warning threshold - show warning when this many seconds REMAINING
+ * 5 minutes remaining = 15 minutes elapsed
  */
-export const STALE_SESSION_GRACE_PERIOD_MINUTES = 30;
-
-/** Heartbeat interval in milliseconds (30 seconds) */
-export const HEARTBEAT_INTERVAL_MS = 30000;
-
-/** Widget script load timeout in milliseconds (30 seconds) */
-export const WIDGET_LOAD_TIMEOUT_MS = 30000;
-
-/** Final countdown duration for graceful end (10 seconds) */
-export const FINAL_COUNTDOWN_SECONDS = 10;
-
-// ===== SUBSCRIPTION LIMITS =====
-
-/** Free tier simulation limit (3 simulations per month) */
-export const FREE_TIER_LIMIT = 3;
-
-/** Basic tier simulation limit (30 simulations per month) */
-export const BASIC_TIER_LIMIT = 30;
-
-/** Premium tier simulation limit (60 simulations per month) */
-export const PREMIUM_TIER_LIMIT = 60;
-
-// Legacy exports for backward compatibility
-/** @deprecated Use BASIC_TIER_LIMIT instead */
-export const BASIS_TIER_LIMIT = 30;
-
-/** @deprecated Use PREMIUM_TIER_LIMIT instead */
-export const PROFI_TIER_LIMIT = 60;
-
-// ===== HELPER FUNCTIONS =====
+export const WARNING_5_MIN_REMAINING = 300; // 5 minutes
 
 /**
- * Convert seconds to MM:SS format for display
+ * Grace period for considering a session "stale" (in minutes)
+ * Sessions older than this won't be automatically resumed
  */
-export function formatTimeRemaining(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+export const STALE_SESSION_GRACE_PERIOD_MINUTES = 30; // 30 minutes
+
+/**
+ * Validation: Ensure constants are correct
+ */
+if (SIMULATION_DURATION_SECONDS !== 1200) {
+  console.error('❌ SIMULATION_DURATION_SECONDS should be 1200 (20 minutes)');
 }
 
-/**
- * Check if simulation has reached usage threshold
- */
-export function hasReachedUsageThreshold(elapsedSeconds: number): boolean {
-  return elapsedSeconds >= USAGE_THRESHOLD_SECONDS;
+if (USAGE_THRESHOLD_SECONDS !== 300) {
+  console.error('❌ USAGE_THRESHOLD_SECONDS should be 300 (5 minutes)');
 }
 
-/**
- * Get warning level based on remaining time
- */
-export function getWarningLevel(remainingSeconds: number): 'normal' | 'yellow' | 'orange' | 'red' {
-  if (remainingSeconds <= WARNING_1_MIN_REMAINING) return 'red';
-  if (remainingSeconds <= WARNING_2_MIN_REMAINING) return 'orange';
-  if (remainingSeconds <= WARNING_5_MIN_REMAINING) return 'yellow';
-  return 'normal';
-}
+// Log constants on module load for debugging
+console.log('📊 Simulation Constants Loaded:', {
+  SIMULATION_DURATION_SECONDS,
+  USAGE_THRESHOLD_SECONDS,
+  WARNING_5_MIN_REMAINING,
+  STALE_SESSION_GRACE_PERIOD_MINUTES,
+  'Duration (minutes)': SIMULATION_DURATION_SECONDS / 60,
+  'Usage threshold (minutes)': USAGE_THRESHOLD_SECONDS / 60,
+});

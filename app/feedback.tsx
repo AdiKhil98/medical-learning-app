@@ -11,8 +11,8 @@ import { colors } from '@/constants/colors';
 
 export default function FeedbackScreen() {
   const router = useRouter();
-    const { user } = useAuth();
-  
+  const { user } = useAuth();
+
   const [feedbackType, setFeedbackType] = useState('bug');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -33,17 +33,15 @@ export default function FeedbackScreen() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('user_feedback')
-        .insert([
-          {
-            user_id: user.id,
-            type: feedbackType,
-            title: title.trim(),
-            description: description.trim(),
-            status: 'new',
-          }
-        ]);
+      const { error } = await supabase.from('user_feedback').insert([
+        {
+          user_id: user.id,
+          type: feedbackType,
+          title: title.trim(),
+          description: description.trim(),
+          status: 'new',
+        },
+      ]);
 
       if (error) {
         logger.error('Error submitting feedback:', error);
@@ -54,12 +52,11 @@ export default function FeedbackScreen() {
       setIsSubmitted(true);
       setTitle('');
       setDescription('');
-      
+
       // Show success message briefly then navigate back
       setTimeout(() => {
         router.back();
       }, 2000);
-
     } catch (error) {
       logger.error('Error submitting feedback:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
@@ -68,7 +65,7 @@ export default function FeedbackScreen() {
     }
   };
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -195,10 +192,7 @@ export default function FeedbackScreen() {
   if (isSubmitted) {
     return (
       <SafeAreaView style={dynamicStyles.container}>
-        <LinearGradient
-          colors={gradientColors}
-          style={dynamicStyles.gradientBackground}
-        />
+        <LinearGradient colors={gradientColors} style={dynamicStyles.gradientBackground} />
         <View style={styles.content}>
           <View style={dynamicStyles.card}>
             <View style={dynamicStyles.successContainer}>
@@ -216,28 +210,20 @@ export default function FeedbackScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={dynamicStyles.gradientBackground}
-      />
-      
-      <ScrollView 
+      <LinearGradient colors={gradientColors} style={dynamicStyles.gradientBackground} />
+
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <ChevronLeft size={24} color={colors.primary} />
           </TouchableOpacity>
-          
+
           <Text style={dynamicStyles.title}>Feedback</Text>
-          <Text style={dynamicStyles.subtitle}>
-            Teilen Sie uns Bugs mit oder machen Sie Verbesserungsvorschläge
-          </Text>
+          <Text style={dynamicStyles.subtitle}>Teilen Sie uns Bugs mit oder machen Sie Verbesserungsvorschläge</Text>
         </View>
 
         <View style={dynamicStyles.card}>
@@ -255,7 +241,7 @@ export default function FeedbackScreen() {
                 <Picker.Item label="💡 Verbesserungsvorschlag" value="suggestion" />
               </Picker>
             </View>
-            
+
             <View style={dynamicStyles.typeIndicator}>
               {feedbackType === 'bug' ? (
                 <Bug size={16} color={colors.error} />
@@ -263,10 +249,9 @@ export default function FeedbackScreen() {
                 <Lightbulb size={16} color={colors.warning} />
               )}
               <Text style={dynamicStyles.typeText}>
-                {feedbackType === 'bug' 
+                {feedbackType === 'bug'
                   ? 'Melden Sie technische Probleme oder Fehler'
-                  : 'Schlagen Sie neue Features oder Verbesserungen vor'
-                }
+                  : 'Schlagen Sie neue Features oder Verbesserungen vor'}
               </Text>
             </View>
           </View>
@@ -289,9 +274,10 @@ export default function FeedbackScreen() {
             <Text style={dynamicStyles.label}>Beschreibung</Text>
             <TextInput
               style={[dynamicStyles.textInput, dynamicStyles.textArea]}
-              placeholder={feedbackType === 'bug' 
-                ? 'Beschreiben Sie das Problem im Detail. Welche Schritte führten zu dem Fehler?' 
-                : 'Beschreiben Sie Ihren Vorschlag im Detail. Wie würde das die App verbessern?'
+              placeholder={
+                feedbackType === 'bug'
+                  ? 'Beschreiben Sie das Problem im Detail. Welche Schritte führten zu dem Fehler?'
+                  : 'Beschreiben Sie Ihren Vorschlag im Detail. Wie würde das die App verbessern?'
               }
               placeholderTextColor={colors.textSecondary}
               value={description}
@@ -303,15 +289,9 @@ export default function FeedbackScreen() {
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity
-            style={dynamicStyles.submitButton}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          >
+          <TouchableOpacity style={dynamicStyles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
             <Send size={20} color="#FFFFFF" />
-            <Text style={dynamicStyles.submitButtonText}>
-              {isSubmitting ? 'Wird gesendet...' : 'Feedback senden'}
-            </Text>
+            <Text style={dynamicStyles.submitButtonText}>{isSubmitting ? 'Wird gesendet...' : 'Feedback senden'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

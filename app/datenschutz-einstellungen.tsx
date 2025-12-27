@@ -18,7 +18,7 @@ interface PrivacySettings {
 
 export default function DataProtectionSettingsScreen() {
   const router = useRouter();
-    const [settings, setSettings] = useState<PrivacySettings>({
+  const [settings, setSettings] = useState<PrivacySettings>({
     analytics: false,
     marketing: false,
     functional: true,
@@ -47,7 +47,7 @@ export default function DataProtectionSettingsScreen() {
   const updateSetting = async (key: keyof PrivacySettings, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
-    
+
     try {
       await AsyncStorage.setItem('privacy-settings', JSON.stringify(newSettings));
     } catch (error) {
@@ -62,8 +62,8 @@ export default function DataProtectionSettingsScreen() {
       'Möchten Sie wirklich alle Datenschutzeinstellungen auf die Standardwerte zurücksetzen?',
       [
         { text: 'Abbrechen', style: 'cancel' },
-        { 
-          text: 'Zurücksetzen', 
+        {
+          text: 'Zurücksetzen',
           style: 'destructive',
           onPress: async () => {
             const defaultSettings: PrivacySettings = {
@@ -79,16 +79,16 @@ export default function DataProtectionSettingsScreen() {
             } catch (error) {
               logger.error('Error resetting privacy settings:', error);
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   const dynamicStyles = StyleSheet.create({
-    container: { 
-      flex: 1, 
-      backgroundColor: colors.background 
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
     header: {
       flexDirection: 'row',
@@ -119,9 +119,9 @@ export default function DataProtectionSettingsScreen() {
       fontFamily: 'Inter-Medium',
       fontWeight: '600',
     },
-    content: { 
-      flex: 1, 
-      padding: 24 
+    content: {
+      flex: 1,
+      padding: 24,
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
@@ -199,7 +199,7 @@ export default function DataProtectionSettingsScreen() {
     },
   });
 
-  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'];
+  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'] as const;
 
   if (loading) {
     return (
@@ -228,14 +228,16 @@ export default function DataProtectionSettingsScreen() {
           <Settings size={32} color={MEDICAL_COLORS.primary} />
           <Text style={dynamicStyles.pageTitle}>Datenschutzeinstellungen</Text>
         </View>
-        
+
         <Text style={dynamicStyles.subtitle}>
-          Verwalten Sie Ihre Datenschutz- und Cookie-Einstellungen. Sie können jederzeit ändern, welche Daten erfasst und wie sie verwendet werden.
+          Verwalten Sie Ihre Datenschutz- und Cookie-Einstellungen. Sie können jederzeit ändern, welche Daten erfasst
+          und wie sie verwendet werden.
         </Text>
 
         <View style={dynamicStyles.infoBox}>
           <Text style={dynamicStyles.infoText}>
-            ℹ️ Ihre Privatsphäre ist uns wichtig. Diese Einstellungen helfen Ihnen zu kontrollieren, wie Ihre Daten verwendet werden.
+            ℹ️ Ihre Privatsphäre ist uns wichtig. Diese Einstellungen helfen Ihnen zu kontrollieren, wie Ihre Daten
+            verwendet werden.
           </Text>
         </View>
 

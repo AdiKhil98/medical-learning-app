@@ -7,12 +7,12 @@ import { colors } from '@/constants/colors';
 
 export default function BookmarksPage() {
   const router = useRouter();
-  
+
   const handleGoBack = () => {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(tabs)' as any);
     }
   };
 
@@ -51,10 +51,7 @@ export default function BookmarksPage() {
   return (
     <SafeAreaView style={dynamicStyles.container}>
       <View style={dynamicStyles.headerContainer}>
-        <TouchableOpacity
-          style={dynamicStyles.backButton}
-          onPress={handleGoBack}
-        >
+        <TouchableOpacity style={dynamicStyles.backButton} onPress={handleGoBack}>
           <ArrowLeft size={20} color="#B87E70" />
           <Text style={dynamicStyles.backButtonText}>Zurück</Text>
         </TouchableOpacity>

@@ -1,8 +1,7 @@
 /**
- * Simulation Layout with Code Splitting
+ * Simulation Layout
  *
- * Lazy loads simulation screens to reduce initial bundle size.
- * KP and FSP are heavy screens (~2700 lines each) that don't need to load upfront.
+ * Layout for simulation screens (KP and FSP).
  */
 
 import React from 'react';
@@ -13,23 +12,11 @@ export default function SimulationLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        // Enable lazy loading for better performance
-        lazy: true,
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen
-        name="fsp"
-        options={{
-          lazy: true, // Lazy load FSP simulation
-        }}
-      />
-      <Stack.Screen
-        name="kp"
-        options={{
-          lazy: true, // Lazy load KP simulation
-        }}
-      />
+      <Stack.Screen name="fsp" />
+      <Stack.Screen name="kp" />
     </Stack>
   );
 }

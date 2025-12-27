@@ -1,14 +1,7 @@
 // app/(tabs)/konto/datenschutz-agb.tsx
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronDown, Shield, FileText, AlertTriangle } from 'lucide-react-native';
 import Card from '@/components/ui/Card';
@@ -16,13 +9,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '@/constants/colors';
 
 export default function DatenschutzAGBScreen() {
-    const router = useRouter();
+  const router = useRouter();
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
 
-  const toggle = (key: string) =>
-    setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const gradient = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradient = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const stylesD = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -132,18 +124,16 @@ export default function DatenschutzAGBScreen() {
     <>
       <Text style={stylesD.heading}>1. Verantwortlicher</Text>
       <Text style={stylesD.text}>
-        <Text style={{ fontFamily: 'Inter-Bold' }}>KP Med GmbH</Text>{'\n'}
+        <Text style={{ fontFamily: 'Inter-Bold' }}>KP Med GmbH</Text>
+        {'\n'}
         Sitz in Österreich{'\n'}
         E-Mail: datenschutz@kpmed.de
       </Text>
 
       <Text style={stylesD.heading}>2. Verarbeitete Daten</Text>
       <Text style={stylesD.text}>
-        • Bestandsdaten (z. B. Name, Adresse){'\n'}
-        • Kontaktdaten (z. B. E-Mail){'\n'}
-        • Inhaltsdaten (z. B. Texteingaben){'\n'}
-        • Nutzungsdaten (z. B. besuchte Seiten){'\n'}
-        • Meta-/Kommunikationsdaten (z. B. IP-Adresse)
+        • Bestandsdaten (z. B. Name, Adresse){'\n'}• Kontaktdaten (z. B. E-Mail){'\n'}• Inhaltsdaten (z. B.
+        Texteingaben){'\n'}• Nutzungsdaten (z. B. besuchte Seiten){'\n'}• Meta-/Kommunikationsdaten (z. B. IP-Adresse)
       </Text>
 
       <Text style={stylesD.heading}>3. Zweck der Verarbeitung</Text>
@@ -173,14 +163,10 @@ export default function DatenschutzAGBScreen() {
       </Text>
 
       <Text style={stylesD.heading}>8. Speicherdauer</Text>
-      <Text style={stylesD.text}>
-        Löschung nach gesetzlichen Vorgaben oder Vertragsende.
-      </Text>
+      <Text style={stylesD.text}>Löschung nach gesetzlichen Vorgaben oder Vertragsende.</Text>
 
       <Text style={stylesD.heading}>9. Änderungen</Text>
-      <Text style={stylesD.text}>
-        Diese Erklärung kann jederzeit aktualisiert werden.
-      </Text>
+      <Text style={stylesD.text}>Diese Erklärung kann jederzeit aktualisiert werden.</Text>
     </>
   );
 
@@ -192,44 +178,28 @@ export default function DatenschutzAGBScreen() {
       </Text>
 
       <Text style={stylesD.heading}>§ 2 Vertragsgegenstand</Text>
-      <Text style={stylesD.text}>
-        Digitale Lernplattform mit Materialien, Übungsfragen und Simulationen.
-      </Text>
+      <Text style={stylesD.text}>Digitale Lernplattform mit Materialien, Übungsfragen und Simulationen.</Text>
 
       <Text style={stylesD.heading}>§ 3 Vertragsschluss</Text>
-      <Text style={stylesD.text}>
-        Registrierung stellt Angebot dar, Annahme erfolgt durch Bestätigung.
-      </Text>
+      <Text style={stylesD.text}>Registrierung stellt Angebot dar, Annahme erfolgt durch Bestätigung.</Text>
 
       <Text style={stylesD.heading}>§ 4 Nutzungsrechte</Text>
-      <Text style={stylesD.text}>
-        Einfaches, nicht übertragbares Recht zur privaten Prüfungsvorbereitung.
-      </Text>
+      <Text style={stylesD.text}>Einfaches, nicht übertragbares Recht zur privaten Prüfungsvorbereitung.</Text>
 
       <Text style={stylesD.heading}>§ 5 Pflichten</Text>
-      <Text style={stylesD.text}>
-        Wahrheitsgemäße Angaben und Geheimhaltung der Zugangsdaten.
-      </Text>
+      <Text style={stylesD.text}>Wahrheitsgemäße Angaben und Geheimhaltung der Zugangsdaten.</Text>
 
       <Text style={stylesD.heading}>§ 6 Verfügbarkeit</Text>
-      <Text style={stylesD.text}>
-        Hohe Verfügbarkeit angestrebt, Wartung kann Einschränkungen bringen.
-      </Text>
+      <Text style={stylesD.text}>Hohe Verfügbarkeit angestrebt, Wartung kann Einschränkungen bringen.</Text>
 
       <Text style={stylesD.heading}>§ 7 Haftung</Text>
-      <Text style={stylesD.text}>
-        Haftung nur bei Vorsatz und grober Fahrlässigkeit.
-      </Text>
+      <Text style={stylesD.text}>Haftung nur bei Vorsatz und grober Fahrlässigkeit.</Text>
 
       <Text style={stylesD.heading}>§ 8 Kündigung</Text>
-      <Text style={stylesD.text}>
-        Beide Seiten können mit 30 Tagen Frist kündigen.
-      </Text>
+      <Text style={stylesD.text}>Beide Seiten können mit 30 Tagen Frist kündigen.</Text>
 
       <Text style={stylesD.heading}>§ 9 Anwendbares Recht</Text>
-      <Text style={stylesD.text}>
-        Österreichisches Recht, Gerichtsstand Wien.
-      </Text>
+      <Text style={stylesD.text}>Österreichisches Recht, Gerichtsstand Wien.</Text>
     </>
   );
 
@@ -237,38 +207,40 @@ export default function DatenschutzAGBScreen() {
     <>
       <Text style={stylesD.heading}>Medizinischer Haftungsausschluss</Text>
       <Text style={stylesD.text}>
-        Diese Plattform richtet sich ausschließlich an approbierte medizinische Fachkräfte und Studierende der Medizin. Die bereitgestellten Inhalte dienen der Prüfungsvorbereitung und Fortbildung.
+        Diese Plattform richtet sich ausschließlich an approbierte medizinische Fachkräfte und Studierende der Medizin.
+        Die bereitgestellten Inhalte dienen der Prüfungsvorbereitung und Fortbildung.
       </Text>
 
       <Text style={stylesD.heading}>Keine medizinische Beratung</Text>
       <Text style={stylesD.text}>
-        Die Inhalte dieser Plattform stellen keine medizinische, rechtliche oder sonstige professionelle Beratung dar. Sie ersetzen nicht die persönliche Beratung, Untersuchung oder Behandlung durch qualifizierte medizinische Fachkräfte.
+        Die Inhalte dieser Plattform stellen keine medizinische, rechtliche oder sonstige professionelle Beratung dar.
+        Sie ersetzen nicht die persönliche Beratung, Untersuchung oder Behandlung durch qualifizierte medizinische
+        Fachkräfte.
       </Text>
 
       <Text style={stylesD.heading}>Verwendung der Inhalte</Text>
       <Text style={stylesD.text}>
-        • Die Materialien sind für Lehr- und Lernzwecke bestimmt{'\n'}
-        • Keine Anwendung am Patienten ohne zusätzliche Verifikation{'\n'}
-        • Klinische Entscheidungen bedürfen immer professioneller Bewertung{'\n'}
-        • Bei Unsicherheiten konsultieren Sie erfahrene Kollegen oder Fachliteratur
+        • Die Materialien sind für Lehr- und Lernzwecke bestimmt{'\n'}• Keine Anwendung am Patienten ohne zusätzliche
+        Verifikation{'\n'}• Klinische Entscheidungen bedürfen immer professioneller Bewertung{'\n'}• Bei Unsicherheiten
+        konsultieren Sie erfahrene Kollegen oder Fachliteratur
       </Text>
 
       <Text style={stylesD.heading}>Zielgruppe</Text>
       <Text style={stylesD.text}>
-        Diese Plattform ist ausschließlich für:{'\n'}
-        • Approbierte Ärzte und Zahnärzte{'\n'}
-        • Studierende der Human- und Zahnmedizin{'\n'}
-        • Andere medizinische Fachkräfte mit entsprechender Ausbildung
+        Diese Plattform ist ausschließlich für:{'\n'}• Approbierte Ärzte und Zahnärzte{'\n'}• Studierende der Human- und
+        Zahnmedizin{'\n'}• Andere medizinische Fachkräfte mit entsprechender Ausbildung
       </Text>
 
       <Text style={stylesD.heading}>Haftungsausschluss</Text>
       <Text style={stylesD.text}>
-        KP Med GmbH übernimmt keine Haftung für Schäden, die durch die Verwendung der bereitgestellten Informationen entstehen. Die Nutzung erfolgt auf eigene Verantwortung.
+        KP Med GmbH übernimmt keine Haftung für Schäden, die durch die Verwendung der bereitgestellten Informationen
+        entstehen. Die Nutzung erfolgt auf eigene Verantwortung.
       </Text>
 
       <Text style={stylesD.heading}>Aktualität der Inhalte</Text>
       <Text style={stylesD.text}>
-        Medizinische Erkenntnisse entwickeln sich ständig weiter. Trotz sorgfältiger Erstellung können die Inhalte nicht immer dem neuesten Stand entsprechen. Prüfen Sie wichtige Informationen stets anhand aktueller Fachliteratur.
+        Medizinische Erkenntnisse entwickeln sich ständig weiter. Trotz sorgfältiger Erstellung können die Inhalte nicht
+        immer dem neuesten Stand entsprechen. Prüfen Sie wichtige Informationen stets anhand aktueller Fachliteratur.
       </Text>
     </>
   );
@@ -286,16 +258,10 @@ export default function DatenschutzAGBScreen() {
 
       <ScrollView style={stylesD.content} showsVerticalScrollIndicator={false}>
         <Text style={stylesD.pageTitle}>Datenschutz & AGB</Text>
-        <Text style={stylesD.subtitle}>
-          Lesen Sie unsere Datenschutzerklärung und Allgemeine Geschäftsbedingungen.
-        </Text>
+        <Text style={stylesD.subtitle}>Lesen Sie unsere Datenschutzerklärung und Allgemeine Geschäftsbedingungen.</Text>
 
         <Card style={stylesD.card}>
-          <TouchableOpacity
-            style={stylesD.headerSection}
-            onPress={() => toggle('privacy')}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={stylesD.headerSection} onPress={() => toggle('privacy')} activeOpacity={0.7}>
             <View style={[stylesD.iconWrap, { backgroundColor: '#22C55E20' }]}>
               <Shield size={20} color="#22C55E" />
             </View>
@@ -306,17 +272,11 @@ export default function DatenschutzAGBScreen() {
               style={expanded['privacy'] ? stylesD.chevronOpen : stylesD.chevron}
             />
           </TouchableOpacity>
-          {expanded['privacy'] && (
-            <View style={stylesD.sectionContent}>{datenschutz}</View>
-          )}
+          {expanded['privacy'] && <View style={stylesD.sectionContent}>{datenschutz}</View>}
         </Card>
 
         <Card style={stylesD.card}>
-          <TouchableOpacity
-            style={stylesD.headerSection}
-            onPress={() => toggle('terms')}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={stylesD.headerSection} onPress={() => toggle('terms')} activeOpacity={0.7}>
             <View style={[stylesD.iconWrap, { backgroundColor: '#E2827F20' }]}>
               <FileText size={20} color="#E2827F" />
             </View>
@@ -327,17 +287,11 @@ export default function DatenschutzAGBScreen() {
               style={expanded['terms'] ? stylesD.chevronOpen : stylesD.chevron}
             />
           </TouchableOpacity>
-          {expanded['terms'] && (
-            <View style={stylesD.sectionContent}>{agb}</View>
-          )}
+          {expanded['terms'] && <View style={stylesD.sectionContent}>{agb}</View>}
         </Card>
 
         <Card style={stylesD.card}>
-          <TouchableOpacity
-            style={stylesD.headerSection}
-            onPress={() => toggle('medical')}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={stylesD.headerSection} onPress={() => toggle('medical')} activeOpacity={0.7}>
             <View style={[stylesD.iconWrap, { backgroundColor: '#EF444420' }]}>
               <AlertTriangle size={20} color="#EF4444" />
             </View>
@@ -348,9 +302,7 @@ export default function DatenschutzAGBScreen() {
               style={expanded['medical'] ? stylesD.chevronOpen : stylesD.chevron}
             />
           </TouchableOpacity>
-          {expanded['medical'] && (
-            <View style={stylesD.sectionContent}>{medicalDisclaimer}</View>
-          )}
+          {expanded['medical'] && <View style={stylesD.sectionContent}>{medicalDisclaimer}</View>}
         </Card>
       </ScrollView>
     </SafeAreaView>

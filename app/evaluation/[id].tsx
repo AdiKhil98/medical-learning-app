@@ -30,14 +30,10 @@ export default function EvaluationPage() {
       setLoading(true);
       setError(null);
 
-      logger.info('Fetching evaluation with ID:', id);
+      logger.info('Fetching evaluation with ID', { id });
 
       // Fetch from Supabase evaluation_scores table (existing webhook system)
-      const { data, error: fetchError } = await supabase
-        .from('evaluation_scores')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error: fetchError } = await supabase.from('evaluation_scores').select('*').eq('id', id).single();
 
       if (fetchError) {
         logger.error('Supabase fetch error:', fetchError);
@@ -92,10 +88,7 @@ export default function EvaluationPage() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient
-          colors={['#F8FAFC', '#FFFFFF', '#EFF6FF']}
-          style={styles.gradient}
-        >
+        <LinearGradient colors={['#F8FAFC', '#FFFFFF', '#EFF6FF']} style={styles.gradient}>
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color="#3B82F6" />
             <Text style={styles.loadingText}>Evaluation wird geladen...</Text>
@@ -109,23 +102,16 @@ export default function EvaluationPage() {
   if (error || !evaluation) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient
-          colors={['#FEF2F2', '#FFFFFF', '#FEE2E2']}
-          style={styles.gradient}
-        >
+        <LinearGradient colors={['#FEF2F2', '#FFFFFF', '#FEE2E2']} style={styles.gradient}>
           <View style={styles.centerContainer}>
             <View style={styles.errorIcon}>
               <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
             </View>
             <Text style={styles.errorTitle}>Fehler beim Laden</Text>
-            <Text style={styles.errorMessage}>
-              {error || 'Evaluation konnte nicht gefunden werden'}
-            </Text>
+            <Text style={styles.errorMessage}>{error || 'Evaluation konnte nicht gefunden werden'}</Text>
             <View style={styles.errorDetails}>
               <Ionicons name="information-circle" size={20} color="#64748B" />
-              <Text style={styles.errorDetailsText}>
-                Evaluation ID: {id}
-              </Text>
+              <Text style={styles.errorDetailsText}>Evaluation ID: {id}</Text>
             </View>
           </View>
         </LinearGradient>

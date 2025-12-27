@@ -13,7 +13,7 @@ import { colors } from '@/constants/colors';
 
 export default function PersoenlicheDatenScreen() {
   const { user } = useAuth();
-    const router = useRouter();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -85,7 +85,10 @@ export default function PersoenlicheDatenScreen() {
 
   const handleSave = async () => {
     if (!canEdit) {
-      Alert.alert('Fehler', `Sie können Ihr Profil derzeit nicht bearbeiten. Bitte warten Sie ${daysUntilEdit} ${daysUntilEdit === 1 ? 'Tag' : 'Tage'}.`);
+      Alert.alert(
+        'Fehler',
+        `Sie können Ihr Profil derzeit nicht bearbeiten. Bitte warten Sie ${daysUntilEdit} ${daysUntilEdit === 1 ? 'Tag' : 'Tage'}.`
+      );
       return;
     }
 
@@ -115,7 +118,7 @@ export default function PersoenlicheDatenScreen() {
         .update({
           name: name.trim(),
           email: email.trim(),
-          last_profile_update: new Date().toISOString()
+          last_profile_update: new Date().toISOString(),
         })
         .eq('id', user.id);
 
@@ -124,29 +127,23 @@ export default function PersoenlicheDatenScreen() {
       // If email changed, update auth email as well
       if (email !== originalData.email) {
         const { error: authError } = await supabase.auth.updateUser({
-          email: email.trim()
+          email: email.trim(),
         });
 
         if (authError) {
           // If auth update fails, revert database change
-          await supabase
-            .from('users')
-            .update({ email: originalData.email })
-            .eq('id', user.id);
+          await supabase.from('users').update({ email: originalData.email }).eq('id', user.id);
 
-          throw new Error('E-Mail-Adresse konnte nicht aktualisiert werden. ' + authError.message);
+          throw new Error(`E-Mail-Adresse konnte nicht aktualisiert werden. ${  authError.message}`);
         }
       }
 
       // Update original data to reflect saved changes
       setOriginalData({ name: name.trim(), email: email.trim() });
 
-      Alert.alert(
-        'Erfolgreich gespeichert',
-        'Ihre persönlichen Daten wurden erfolgreich aktualisiert.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-
+      Alert.alert('Erfolgreich gespeichert', 'Ihre persönlichen Daten wurden erfolgreich aktualisiert.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
     } catch (error: any) {
       logger.error('Error saving user data:', error);
       Alert.alert('Fehler', error.message || 'Daten konnten nicht gespeichert werden.');
@@ -165,11 +162,11 @@ export default function PersoenlicheDatenScreen() {
     return date.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -258,17 +255,11 @@ export default function PersoenlicheDatenScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
 
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={dynamicStyles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={dynamicStyles.backButton}>
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
         </TouchableOpacity>
@@ -325,7 +316,7 @@ export default function PersoenlicheDatenScreen() {
           />
 
           <Button
-            title={saving ? "Wird gespeichert..." : "Änderungen speichern"}
+            title={saving ? 'Wird gespeichert...' : 'Änderungen speichern'}
             onPress={handleSave}
             loading={saving}
             disabled={saving || !hasChanges() || !canEdit}
@@ -340,12 +331,8 @@ export default function PersoenlicheDatenScreen() {
             <Text style={styles.infoText}>
               • Änderungen an der E-Mail-Adresse erfordern eine Bestätigung über die neue E-Mail-Adresse
             </Text>
-            <Text style={styles.infoText}>
-              • Ihr Name wird in der App und in Kommunikationen verwendet
-            </Text>
-            <Text style={styles.infoText}>
-              • Alle Änderungen werden sofort wirksam
-            </Text>
+            <Text style={styles.infoText}>• Ihr Name wird in der App und in Kommunikationen verwendet</Text>
+            <Text style={styles.infoText}>• Alle Änderungen werden sofort wirksam</Text>
           </View>
         </Card>
       </ScrollView>

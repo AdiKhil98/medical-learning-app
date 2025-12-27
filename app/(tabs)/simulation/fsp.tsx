@@ -971,7 +971,7 @@ function FSPSimulationScreen() {
 
           if (quotaInfo) {
             console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
-            console.log({ used: quotaInfo?.simulationsUsed, limit: quotaInfo?.simulationsLimit });
+            console.log({ used: quotaInfo?.displayUsed, limit: quotaInfo?.totalLimit });
           } else {
             console.error('🚨 QUOTA REFRESH TIMEOUT: State did not update after', maxAttempts, 'attempts');
           }
@@ -1114,12 +1114,6 @@ function FSPSimulationScreen() {
     if (timerInterval.current) {
       clearInterval(timerInterval.current);
       timerInterval.current = null;
-    }
-
-    // Clear heartbeat interval
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = null;
     }
 
     // Show 10-second warning modal
@@ -1316,8 +1310,8 @@ function FSPSimulationScreen() {
       if (Platform.OS === 'web') {
         console.log('🌍 FSP: Re-enabling global Voiceflow cleanup');
         enableVoiceflowCleanup();
-        console.log('🌍 FSP: Running global Voiceflow cleanup with force=true');
-        globalVoiceflowCleanup(true);
+        console.log('🌍 FSP: Running global Voiceflow cleanup');
+        globalVoiceflowCleanup();
       }
 
       console.log('✅ FSP: Component unmount cleanup initiated');
@@ -1675,10 +1669,6 @@ function FSPSimulationScreen() {
         clearInterval(timerInterval.current);
         timerInterval.current = null;
       }
-      if (heartbeatInterval.current) {
-        clearInterval(heartbeatInterval.current);
-        heartbeatInterval.current = null;
-      }
       if (warningTimeoutRef.current) {
         clearTimeout(warningTimeoutRef.current);
         warningTimeoutRef.current = null;
@@ -1914,7 +1904,6 @@ function FSPSimulationScreen() {
                 simulationsUsed={subscriptionStatus.simulationsUsed || 0}
                 totalSimulations={subscriptionStatus.simulationLimit || 0}
                 subscriptionTier={(subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium') || 'free'}
-                periodEnd={subscriptionStatus.periodEnd ? new Date(subscriptionStatus.periodEnd) : undefined}
               />
             )}
 

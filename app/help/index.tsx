@@ -38,48 +38,56 @@ const faqs: FAQ[] = [
   {
     id: '1',
     question: 'Wie kann ich mein Passwort zurücksetzen?',
-    answer: 'Gehen Sie zu den Einstellungen > Persönliche Daten > Passwort ändern. Dort können Sie Ihr aktuelles Passwort eingeben und ein neues festlegen. Falls Sie Ihr aktuelles Passwort vergessen haben, kontaktieren Sie unseren Support.',
+    answer:
+      'Gehen Sie zu den Einstellungen > Persönliche Daten > Passwort ändern. Dort können Sie Ihr aktuelles Passwort eingeben und ein neues festlegen. Falls Sie Ihr aktuelles Passwort vergessen haben, kontaktieren Sie unseren Support.',
     icon: Lock,
   },
   {
     id: '2',
     question: 'Wo finde ich meinen Lernfortschritt?',
-    answer: 'Ihren Lernfortschritt finden Sie im Tab "Fortschritt" in der unteren Navigation. Dort sehen Sie Ihre Lernserie, bearbeitete Fälle und detaillierte Statistiken zu Ihrem Lernverhalten.',
+    answer:
+      'Ihren Lernfortschritt finden Sie im Tab "Fortschritt" in der unteren Navigation. Dort sehen Sie Ihre Lernserie, bearbeitete Fälle und detaillierte Statistiken zu Ihrem Lernverhalten.',
     icon: BarChart,
   },
   {
     id: '3',
     question: 'Wie funktioniert die Simulation?',
-    answer: 'Die Simulation ist ein interaktives Lernwerkzeug, das realistische Patientenfälle simuliert. Tippen Sie auf den Simulation-Tab und folgen Sie den Anweisungen. Sie können mit dem virtuellen Patienten sprechen und Diagnosen stellen.',
+    answer:
+      'Die Simulation ist ein interaktives Lernwerkzeug, das realistische Patientenfälle simuliert. Tippen Sie auf den Simulation-Tab und folgen Sie den Anweisungen. Sie können mit dem virtuellen Patienten sprechen und Diagnosen stellen.',
     icon: Smartphone,
   },
   {
     id: '4',
     question: 'Kann ich meine Daten exportieren?',
-    answer: 'Ja, Sie können Ihre Lerndaten exportieren. Gehen Sie zu Einstellungen > Persönliche Daten und wählen Sie "Daten exportieren". Sie erhalten eine E-Mail mit Ihren Daten im JSON-Format.',
+    answer:
+      'Ja, Sie können Ihre Lerndaten exportieren. Gehen Sie zu Einstellungen > Persönliche Daten und wählen Sie "Daten exportieren". Sie erhalten eine E-Mail mit Ihren Daten im JSON-Format.',
     icon: User,
   },
   {
     id: '5',
     question: 'Wie kontaktiere ich den Support?',
-    answer: 'Sie können uns per E-Mail unter support@kpmed.at erreichen oder den Chat-Button in dieser Hilfe-Sektion verwenden. Wir antworten normalerweise innerhalb von 24 Stunden.',
+    answer:
+      'Sie können uns per E-Mail unter support@kpmed.at erreichen oder den Chat-Button in dieser Hilfe-Sektion verwenden. Wir antworten normalerweise innerhalb von 24 Stunden.',
     icon: HelpCircle,
   },
 ];
 
 export default function HelpSupportScreen() {
-    const router = useRouter();
+  const router = useRouter();
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
-  const [animatedValues] = useState(() => 
-    faqs.reduce((acc, faq) => {
-      acc[faq.id] = new Animated.Value(0);
-      return acc;
-    }, {} as Record<string, Animated.Value>)
+  const [animatedValues] = useState(() =>
+    faqs.reduce(
+      (acc, faq) => {
+        acc[faq.id] = new Animated.Value(0);
+        return acc;
+      },
+      {} as Record<string, Animated.Value>
+    )
   );
 
   const toggleFAQ = (faqId: string) => {
     const isExpanding = expandedFAQ !== faqId;
-    
+
     // Collapse currently expanded FAQ
     if (expandedFAQ && expandedFAQ !== faqId) {
       Animated.timing(animatedValues[expandedFAQ], {
@@ -112,22 +120,23 @@ export default function HelpSupportScreen() {
     const email = 'support@kpmed.at';
     const subject = 'KP Med App - Support Anfrage';
     const body = 'Hallo KP Med Team,\n\nIch benötige Hilfe bei:\n\n[Beschreiben Sie hier Ihr Problem]\n\nVielen Dank!';
-    
+
     const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert(
-          'E-Mail nicht verfügbar',
-          `Bitte senden Sie eine E-Mail an: ${email}`,
-          [
-            { text: 'E-Mail kopieren', onPress: () => {/* Copy to clipboard logic */} },
-            { text: 'OK' }
-          ]
-        );
+        Alert.alert('E-Mail nicht verfügbar', `Bitte senden Sie eine E-Mail an: ${email}`, [
+          {
+            text: 'E-Mail kopieren',
+            onPress: () => {
+              /* Copy to clipboard logic */
+            },
+          },
+          { text: 'OK' },
+        ]);
       }
     } catch (error) {
       Alert.alert('Fehler', 'E-Mail konnte nicht geöffnet werden.');
@@ -138,30 +147,32 @@ export default function HelpSupportScreen() {
     // Open email composer for chat support as well
     const email = 'support@kpmed.at';
     const subject = 'KP Med App - Chat Support Anfrage';
-    const body = 'Hallo KP Med Team,\n\nIch möchte gerne mit dem Support-Team chatten bezüglich:\n\n[Beschreiben Sie hier Ihr Anliegen]\n\nBitte kontaktieren Sie mich für weitere Unterstützung.\n\nVielen Dank!';
-    
+    const body =
+      'Hallo KP Med Team,\n\nIch möchte gerne mit dem Support-Team chatten bezüglich:\n\n[Beschreiben Sie hier Ihr Anliegen]\n\nBitte kontaktieren Sie mich für weitere Unterstützung.\n\nVielen Dank!';
+
     const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert(
-          'E-Mail nicht verfügbar',
-          `Bitte senden Sie eine E-Mail an: ${email}`,
-          [
-            { text: 'E-Mail kopieren', onPress: () => {/* Copy to clipboard logic */} },
-            { text: 'OK' }
-          ]
-        );
+        Alert.alert('E-Mail nicht verfügbar', `Bitte senden Sie eine E-Mail an: ${email}`, [
+          {
+            text: 'E-Mail kopieren',
+            onPress: () => {
+              /* Copy to clipboard logic */
+            },
+          },
+          { text: 'OK' },
+        ]);
       }
     } catch (error) {
       Alert.alert('Fehler', 'E-Mail konnte nicht geöffnet werden.');
     }
   };
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -341,44 +352,32 @@ export default function HelpSupportScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
-      
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={dynamicStyles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={dynamicStyles.backButton}>
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={dynamicStyles.content} 
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
+      <ScrollView style={dynamicStyles.content} showsVerticalScrollIndicator={false} bounces={false}>
         <Text style={dynamicStyles.pageTitle}>Hilfe & Support</Text>
         <Text style={dynamicStyles.subtitle}>
           Finden Sie Antworten auf häufige Fragen oder kontaktieren Sie unser Support-Team für persönliche Hilfe.
         </Text>
 
         {/* FAQs Section */}
-        <Text style={[dynamicStyles.sectionTitle, dynamicStyles.firstSectionTitle]}>
-          ❓ Häufig gestellte Fragen
-        </Text>
-        
+        <Text style={[dynamicStyles.sectionTitle, dynamicStyles.firstSectionTitle]}>❓ Häufig gestellte Fragen</Text>
+
         {faqs.map((faq) => {
           const isExpanded = expandedFAQ === faq.id;
           const animatedHeight = animatedValues[faq.id].interpolate({
             inputRange: [0, 1],
             outputRange: [0, 200], // Adjust based on content
           });
-          
+
           const rotateInterpolate = animatedValues[faq.id].interpolate({
             inputRange: [0, 1],
             outputRange: ['0deg', '180deg'],
@@ -386,11 +385,7 @@ export default function HelpSupportScreen() {
 
           return (
             <Card key={faq.id} style={dynamicStyles.faqCard}>
-              <TouchableOpacity
-                style={dynamicStyles.faqHeader}
-                onPress={() => toggleFAQ(faq.id)}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={dynamicStyles.faqHeader} onPress={() => toggleFAQ(faq.id)} activeOpacity={0.7}>
                 <View style={dynamicStyles.faqIconContainer}>
                   <faq.icon size={20} color={colors.primary} />
                 </View>
@@ -401,7 +396,7 @@ export default function HelpSupportScreen() {
                   </Animated.View>
                 </View>
               </TouchableOpacity>
-              
+
               {isExpanded && (
                 <Animated.View style={[dynamicStyles.faqAnswer, { maxHeight: animatedHeight }]}>
                   <Text style={dynamicStyles.faqAnswerText}>{faq.answer}</Text>
@@ -423,17 +418,13 @@ export default function HelpSupportScreen() {
               <Text style={dynamicStyles.contactSubtitle}>Unser Support-Team ist für Sie da</Text>
             </View>
           </View>
-          
+
           <View style={dynamicStyles.contactMethods}>
-            <TouchableOpacity 
-              style={dynamicStyles.contactMethod}
-              onPress={handleEmailSupport}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={dynamicStyles.contactMethod} onPress={handleEmailSupport} activeOpacity={0.7}>
               <Mail size={20} color={colors.primary} style={dynamicStyles.contactMethodIcon} />
               <Text style={dynamicStyles.contactMethodText}>support@kpmed.at</Text>
             </TouchableOpacity>
-            
+
             <Button
               title="Chat mit uns"
               onPress={handleChatSupport}

@@ -1161,7 +1161,7 @@ function KPSimulationScreen() {
 
           if (quotaInfo) {
             console.warn('✅✅✅ QUOTA COUNTER REFRESHED:', quotaInfo);
-            console.log({ used: quotaInfo.simulationsUsed, limit: quotaInfo.simulationsLimit });
+            console.log({ used: quotaInfo.displayUsed, limit: quotaInfo.totalLimit });
           } else {
             console.error('🚨 QUOTA REFRESH: State did not update');
           }
@@ -1535,8 +1535,8 @@ function KPSimulationScreen() {
       if (Platform.OS === 'web') {
         console.log('🌍 KP: Re-enabling global Voiceflow cleanup');
         enableVoiceflowCleanup();
-        console.log('🌍 KP: Running global Voiceflow cleanup with force=true');
-        globalVoiceflowCleanup(true);
+        console.log('🌍 KP: Running global Voiceflow cleanup');
+        globalVoiceflowCleanup();
       }
 
       console.log('✅ KP: Component unmount cleanup initiated');
@@ -2154,7 +2154,6 @@ function KPSimulationScreen() {
                 simulationsUsed={subscriptionStatus.simulationsUsed || 0}
                 totalSimulations={subscriptionStatus.simulationLimit || 0}
                 subscriptionTier={(subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium') || 'free'}
-                periodEnd={subscriptionStatus.periodEnd ? new Date(subscriptionStatus.periodEnd) : undefined}
               />
             )}
 

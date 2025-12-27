@@ -28,8 +28,8 @@ export default function SimulationScreen() {
   const subscriptionInfo = getSubscriptionInfo();
 
   // Light theme gradients
-  const backgroundGradient = ['#EEF2FF', '#FFFFFF', '#FFF7ED'];
-  const headerGradient = ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'];
+  const backgroundGradient = ['#EEF2FF', '#FFFFFF', '#FFF7ED'] as const;
+  const headerGradient = ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)'] as const;
 
   // Dynamic styles for dark mode support
   const dynamicStyles = StyleSheet.create({

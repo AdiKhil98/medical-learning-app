@@ -1,8 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Modal,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Bug, Lightbulb, Circle, Clock, CheckCircle2, Filter, MessageSquare, User, Calendar, Edit3, Save, X } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Bug,
+  Lightbulb,
+  Circle,
+  Clock,
+  CheckCircle2,
+  Filter,
+  MessageSquare,
+  User,
+  Calendar,
+  Edit3,
+  Save,
+  X,
+} from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,8 +51,8 @@ interface FeedbackItem {
 
 export default function FeedbackManagerScreen() {
   const router = useRouter();
-    const { user } = useAuth();
-  
+  const { user } = useAuth();
+
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -44,29 +68,31 @@ export default function FeedbackManagerScreen() {
       router.back();
       return;
     }
-    
+
     loadFeedback();
   }, [user]);
 
   const loadFeedback = async () => {
     try {
       setLoading(true);
-      
+
       let query = supabase
         .from('user_feedback')
-        .select(`
+        .select(
+          `
           *,
           users (
             name,
             email
           )
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (filterStatus !== 'all') {
         query = query.eq('status', filterStatus);
       }
-      
+
       if (filterType !== 'all') {
         query = query.eq('type', filterType);
       }
@@ -90,10 +116,7 @@ export default function FeedbackManagerScreen() {
 
   const handleStatusChange = async (feedbackId: string, newStatus: 'new' | 'in_progress' | 'resolved') => {
     try {
-      const { error } = await supabase
-        .from('user_feedback')
-        .update({ status: newStatus })
-        .eq('id', feedbackId);
+      const { error } = await supabase.from('user_feedback').update({ status: newStatus }).eq('id', feedbackId);
 
       if (error) {
         logger.error('Error updating status:', error);
@@ -102,13 +125,7 @@ export default function FeedbackManagerScreen() {
       }
 
       // Update local state
-      setFeedback(prev => 
-        prev.map(item => 
-          item.id === feedbackId 
-            ? { ...item, status: newStatus }
-            : item
-        )
-      );
+      setFeedback((prev) => prev.map((item) => (item.id === feedbackId ? { ...item, status: newStatus } : item)));
     } catch (error) {
       logger.error('Error updating status:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
@@ -121,9 +138,9 @@ export default function FeedbackManagerScreen() {
     try {
       const { error } = await supabase
         .from('user_feedback')
-        .update({ 
+        .update({
           admin_notes: editingNotes,
-          status: editingStatus
+          status: editingStatus,
         })
         .eq('id', selectedFeedback.id);
 
@@ -134,11 +151,9 @@ export default function FeedbackManagerScreen() {
       }
 
       // Update local state
-      setFeedback(prev => 
-        prev.map(item => 
-          item.id === selectedFeedback.id 
-            ? { ...item, admin_notes: editingNotes, status: editingStatus }
-            : item
+      setFeedback((prev) =>
+        prev.map((item) =>
+          item.id === selectedFeedback.id ? { ...item, admin_notes: editingNotes, status: editingStatus } : item
         )
       );
 
@@ -159,19 +174,27 @@ export default function FeedbackManagerScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return colors.error;
-      case 'in_progress': return colors.warning;
-      case 'resolved': return colors.success;
-      default: return colors.textSecondary;
+      case 'new':
+        return colors.error;
+      case 'in_progress':
+        return colors.warning;
+      case 'resolved':
+        return colors.success;
+      default:
+        return colors.textSecondary;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'new': return Circle;
-      case 'in_progress': return Clock;
-      case 'resolved': return CheckCircle2;
-      default: return Circle;
+      case 'new':
+        return Circle;
+      case 'in_progress':
+        return Clock;
+      case 'resolved':
+        return CheckCircle2;
+      default:
+        return Circle;
     }
   };
 
@@ -185,11 +208,11 @@ export default function FeedbackManagerScreen() {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'];  // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -391,28 +414,20 @@ export default function FeedbackManagerScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
-      
-      <ScrollView 
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <ChevronLeft size={24} color={colors.primary} />
           </TouchableOpacity>
-          
+
           <Text style={dynamicStyles.title}>Feedback Manager</Text>
-          <Text style={dynamicStyles.subtitle}>
-            Verwalten Sie Benutzerfeedback und Bug-Reports
-          </Text>
+          <Text style={dynamicStyles.subtitle}>Verwalten Sie Benutzerfeedback und Bug-Reports</Text>
         </View>
 
         {/* Filters */}
@@ -435,7 +450,7 @@ export default function FeedbackManagerScreen() {
               </Picker>
             </View>
           </View>
-          
+
           <View style={dynamicStyles.filterGroup}>
             <Text style={dynamicStyles.filterLabel}>Typ</Text>
             <View style={dynamicStyles.pickerContainer}>
@@ -463,57 +478,47 @@ export default function FeedbackManagerScreen() {
         ) : feedback.length === 0 ? (
           <View style={dynamicStyles.emptyState}>
             <MessageSquare size={48} color={colors.textSecondary} />
-            <Text style={dynamicStyles.emptyText}>
-              Kein Feedback gefunden
-            </Text>
+            <Text style={dynamicStyles.emptyText}>Kein Feedback gefunden</Text>
           </View>
         ) : (
           feedback.map((item) => {
             const StatusIcon = getStatusIcon(item.status);
             const TypeIcon = getTypeIcon(item.type);
-            
+
             return (
               <View key={item.id} style={dynamicStyles.feedbackCard}>
                 <View style={dynamicStyles.feedbackHeader}>
-                  <TypeIcon 
-                    size={20} 
-                    color={item.type === 'bug' ? colors.error : colors.warning} 
+                  <TypeIcon
+                    size={20}
+                    color={item.type === 'bug' ? colors.error : colors.warning}
                     style={dynamicStyles.typeIcon}
                   />
                   <Text style={dynamicStyles.feedbackTitle}>{item.title}</Text>
                   <View style={dynamicStyles.statusContainer}>
                     <StatusIcon size={16} color={getStatusColor(item.status)} />
                     <Text style={[dynamicStyles.statusText, { color: getStatusColor(item.status) }]}>
-                      {item.status === 'new' ? 'Neu' : 
-                       item.status === 'in_progress' ? 'Bearbeitung' : 'Erledigt'}
+                      {item.status === 'new' ? 'Neu' : item.status === 'in_progress' ? 'Bearbeitung' : 'Erledigt'}
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={dynamicStyles.feedbackMeta}>
                   <View style={dynamicStyles.metaItem}>
                     <User size={12} color={colors.textSecondary} />
-                    <Text style={dynamicStyles.metaText}>
-                      {item.users?.name || 'Unbekannt'}
-                    </Text>
+                    <Text style={dynamicStyles.metaText}>{item.users?.name || 'Unbekannt'}</Text>
                   </View>
                   <View style={dynamicStyles.metaItem}>
                     <Calendar size={12} color={colors.textSecondary} />
-                    <Text style={dynamicStyles.metaText}>
-                      {formatDate(item.created_at)}
-                    </Text>
+                    <Text style={dynamicStyles.metaText}>{formatDate(item.created_at)}</Text>
                   </View>
                 </View>
-                
+
                 <Text style={dynamicStyles.feedbackDescription} numberOfLines={3}>
                   {item.description}
                 </Text>
-                
+
                 <View style={dynamicStyles.feedbackActions}>
-                  <TouchableOpacity 
-                    style={dynamicStyles.actionButton}
-                    onPress={() => openEditModal(item)}
-                  >
+                  <TouchableOpacity style={dynamicStyles.actionButton} onPress={() => openEditModal(item)}>
                     <Edit3 size={14} color="#FFFFFF" />
                     <Text style={dynamicStyles.actionButtonText}>Bearbeiten</Text>
                   </TouchableOpacity>
@@ -525,16 +530,11 @@ export default function FeedbackManagerScreen() {
       </ScrollView>
 
       {/* Edit Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
         <View style={dynamicStyles.modalOverlay}>
           <View style={dynamicStyles.modalContent}>
             <Text style={dynamicStyles.modalTitle}>Feedback bearbeiten</Text>
-            
+
             <View style={dynamicStyles.inputGroup}>
               <Text style={dynamicStyles.inputLabel}>Status</Text>
               <View style={dynamicStyles.pickerContainer}>
@@ -549,7 +549,7 @@ export default function FeedbackManagerScreen() {
                 </Picker>
               </View>
             </View>
-            
+
             <View style={dynamicStyles.inputGroup}>
               <Text style={dynamicStyles.inputLabel}>Admin-Notizen</Text>
               <TextInput
@@ -562,20 +562,17 @@ export default function FeedbackManagerScreen() {
                 numberOfLines={4}
               />
             </View>
-            
+
             <View style={dynamicStyles.modalActions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[dynamicStyles.modalButton, dynamicStyles.cancelButton]}
                 onPress={() => setModalVisible(false)}
               >
                 <X size={16} color="#FFFFFF" />
                 <Text style={dynamicStyles.modalButtonText}>Abbrechen</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[dynamicStyles.modalButton, dynamicStyles.saveButton]}
-                onPress={handleSaveNotes}
-              >
+
+              <TouchableOpacity style={[dynamicStyles.modalButton, dynamicStyles.saveButton]} onPress={handleSaveNotes}>
                 <Save size={16} color="#FFFFFF" />
                 <Text style={dynamicStyles.modalButtonText}>Speichern</Text>
               </TouchableOpacity>

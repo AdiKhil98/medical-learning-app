@@ -15,7 +15,7 @@ import {
   Settings,
   MessageSquare,
   Lightbulb,
-  CreditCard
+  CreditCard,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
@@ -50,21 +50,21 @@ export default function AdminDashboard() {
       icon: Bell,
       route: '/admin/add-update',
       description: 'Neue Updates veröffentlichen',
-      color: '#E2827F'
+      color: '#E2827F',
     },
     {
       title: 'Manage Users',
       icon: Users,
       route: '/admin/manage-users',
       description: 'Benutzer verwalten',
-      color: '#E2827F'
+      color: '#E2827F',
     },
     {
       title: 'Subscription Manager',
       icon: CreditCard,
       route: '/admin/subscriptions',
       description: 'Abonnements & Duplikate verwalten',
-      color: '#8B5CF6'
+      color: '#8B5CF6',
     },
     {
       title: 'Feedback Manager',
@@ -72,29 +72,29 @@ export default function AdminDashboard() {
       route: '/admin/feedback-manager',
       description: 'Bug-Reports & Vorschläge',
       color: '#F97316',
-      badge: feedbackCount > 0 ? feedbackCount : null
+      badge: feedbackCount > 0 ? feedbackCount : null,
     },
     {
       title: 'Analytics',
       icon: BarChart,
       route: '/admin/analytics',
       description: 'App-Statistiken anzeigen',
-      color: '#F59E0B'
+      color: '#F59E0B',
     },
     {
       title: 'Content Management',
       icon: FileText,
       route: '/admin/content',
       description: 'Fragen & Inhalte verwalten',
-      color: '#EF4444'
+      color: '#EF4444',
     },
     {
       title: 'Daily Tips',
       icon: Lightbulb,
       route: '/admin/daily-tips',
       description: 'Tägliche Tipps verwalten',
-      color: '#F59E0B'
-    }
+      color: '#F59E0B',
+    },
   ];
 
   return (
@@ -103,9 +103,7 @@ export default function AdminDashboard() {
         <Shield size={28} color={colors.primary} />
         <View style={styles.headerText}>
           <Text style={[styles.title, { color: colors.text }]}>Admin Panel</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Angemeldet als: {user?.email}
-          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Angemeldet als: {user?.email}</Text>
         </View>
       </View>
 
@@ -115,10 +113,10 @@ export default function AdminDashboard() {
             <TouchableOpacity
               key={index}
               style={[styles.card, { backgroundColor: colors.card }]}
-              onPress={() => router.push(feature.route)}
+              onPress={() => router.push(feature.route as any)}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: feature.color + '20' }]}>
+                <View style={[styles.iconContainer, { backgroundColor: `${feature.color  }20` }]}>
                   <feature.icon size={32} color={feature.color} />
                   {feature.badge && (
                     <View style={[styles.badge, { backgroundColor: '#EF4444' }]}>
@@ -127,12 +125,8 @@ export default function AdminDashboard() {
                   )}
                 </View>
               </View>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>
-                {feature.title}
-              </Text>
-              <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                {feature.description}
-              </Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>{feature.title}</Text>
+              <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>{feature.description}</Text>
             </TouchableOpacity>
           ))}
         </View>

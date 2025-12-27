@@ -45,7 +45,7 @@ interface Category {
   id: string;
   title: string;
   count: number;
-  gradientColors: string[];
+  gradientColors: readonly [string, string, ...string[]];
   iconName: string;
   slug: string;
   description?: string;
@@ -276,24 +276,28 @@ const AnimatedCategoryCard: React.FC<{
 };
 
 // Helper function to get gradient colors based on slug
-const getGradientForSlug = (slug: string): string[] => {
-  const gradientMap: Record<string, string[]> = {
-    chirurgie: MEDICAL_COLORS.redGradient,
-    'innere-medizin': MEDICAL_COLORS.primaryGradient,
-    kardiologie: MEDICAL_COLORS.pinkGradient,
-    pneumologie: MEDICAL_COLORS.primaryGradient,
-    gastroenterologie: MEDICAL_COLORS.orangeGradient,
-    nephrologie: MEDICAL_COLORS.cyanGradient,
-    'endokrinologie-und-stoffwechsel': MEDICAL_COLORS.purpleGradient,
-    notfallmedizin: MEDICAL_COLORS.warmOrangeGradient,
-    infektiologie: MEDICAL_COLORS.greenGradient,
-    urologie: MEDICAL_COLORS.amberGradient,
-    radiologie: MEDICAL_COLORS.blueGradient,
-    dermatologie: MEDICAL_COLORS.pinkGradient,
-    neurologie: MEDICAL_COLORS.purpleGradient,
-    orthopädie: [...MEDICAL_COLORS.darkMenuGradient].reverse(),
+const getGradientForSlug = (slug: string): readonly [string, string, ...string[]] => {
+  const gradientMap: Record<string, readonly [string, string, ...string[]]> = {
+    chirurgie: MEDICAL_COLORS.redGradient as unknown as readonly [string, string, ...string[]],
+    'innere-medizin': MEDICAL_COLORS.primaryGradient as unknown as readonly [string, string, ...string[]],
+    kardiologie: MEDICAL_COLORS.pinkGradient as unknown as readonly [string, string, ...string[]],
+    pneumologie: MEDICAL_COLORS.primaryGradient as unknown as readonly [string, string, ...string[]],
+    gastroenterologie: MEDICAL_COLORS.orangeGradient as unknown as readonly [string, string, ...string[]],
+    nephrologie: MEDICAL_COLORS.cyanGradient as unknown as readonly [string, string, ...string[]],
+    'endokrinologie-und-stoffwechsel': MEDICAL_COLORS.purpleGradient as unknown as readonly [
+      string,
+      string,
+      ...string[],
+    ],
+    notfallmedizin: MEDICAL_COLORS.warmOrangeGradient as unknown as readonly [string, string, ...string[]],
+    infektiologie: MEDICAL_COLORS.greenGradient as unknown as readonly [string, string, ...string[]],
+    urologie: MEDICAL_COLORS.amberGradient as unknown as readonly [string, string, ...string[]],
+    radiologie: MEDICAL_COLORS.blueGradient as unknown as readonly [string, string, ...string[]],
+    dermatologie: MEDICAL_COLORS.pinkGradient as unknown as readonly [string, string, ...string[]],
+    neurologie: MEDICAL_COLORS.purpleGradient as unknown as readonly [string, string, ...string[]],
+    orthopädie: [...MEDICAL_COLORS.darkMenuGradient].reverse() as unknown as readonly [string, string, ...string[]],
   };
-  return gradientMap[slug] || MEDICAL_COLORS.cyanGradient; // Default cyan
+  return gradientMap[slug] || (MEDICAL_COLORS.cyanGradient as unknown as readonly [string, string, ...string[]]); // Default cyan
 };
 
 // Helper function to get icon name based on slug
@@ -460,8 +464,8 @@ const BibliothekIndex: React.FC = () => {
   // Calculate total sections count
   const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
 
-  // Gradient colors
-  const backgroundGradient = MEDICAL_COLORS.backgroundGradient;
+  // Gradient colors (cast to tuple type for LinearGradient compatibility)
+  const backgroundGradient = MEDICAL_COLORS.backgroundGradient as unknown as readonly [string, string, ...string[]];
 
   // Dynamic styles for dark mode support
   const dynamicStyles = StyleSheet.create({
@@ -849,7 +853,7 @@ const BibliothekIndex: React.FC = () => {
 
           {/* Call to Action Banner */}
           <LinearGradient
-            colors={MEDICAL_COLORS.warmOrangeGradient}
+            colors={MEDICAL_COLORS.warmOrangeGradient as unknown as readonly [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.ctaBanner}
@@ -959,7 +963,7 @@ const styles = StyleSheet.create({
     padding: SPACING.xxxxxl,
   },
   errorTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontSize: TYPOGRAPHY.fontSize['2xl'],
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: MEDICAL_COLORS.warmRed,
     marginBottom: SPACING.md,
@@ -1094,8 +1098,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: MEDICAL_COLORS.white,
-    borderTopLeftRadius: BORDER_RADIUS.xxl,
-    borderTopRightRadius: BORDER_RADIUS.xxl,
+    borderTopLeftRadius: BORDER_RADIUS['2xl'],
+    borderTopRightRadius: BORDER_RADIUS['2xl'],
     paddingTop: SPACING.xxl,
     paddingBottom: SPACING.xxxxxl,
     paddingHorizontal: SPACING.xxl,
@@ -1111,7 +1115,7 @@ const styles = StyleSheet.create({
     borderBottomColor: MEDICAL_COLORS.slate200,
   },
   modalTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontSize: TYPOGRAPHY.fontSize['2xl'],
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: MEDICAL_COLORS.slate900,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
@@ -1215,7 +1219,7 @@ const styles = StyleSheet.create({
 
   // Section Header
   sectionHeader: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontSize: TYPOGRAPHY.fontSize['2xl'],
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: MEDICAL_COLORS.slate900,
     marginBottom: SPACING.xxl,
@@ -1234,7 +1238,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xxxl,
   },
   categoryCard: {
-    borderRadius: BORDER_RADIUS.xxxl,
+    borderRadius: BORDER_RADIUS['3xl'],
     paddingVertical: SPACING.xxxl,
     paddingHorizontal: SPACING.xl,
     minHeight: 220,
@@ -1305,7 +1309,7 @@ const styles = StyleSheet.create({
 
   // CTA Banner
   ctaBanner: {
-    borderRadius: BORDER_RADIUS.xxl,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.xxxxxl,
     alignItems: 'center',
     marginTop: SPACING.xxxxxl,

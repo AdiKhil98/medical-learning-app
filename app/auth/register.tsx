@@ -56,7 +56,7 @@ export default function RegisterScreen() {
       logger.info('📋 Register page: Checking registration status on mount...');
       const status = await checkRegistrationStatus();
 
-      logger.info('📋 Register page: Status received:', status);
+      logger.info('📋 Register page: Status received', { status });
 
       if (status && !status.allowed) {
         // Redirect to waitlist immediately if registration is closed
@@ -64,7 +64,7 @@ export default function RegisterScreen() {
         showAlert(
           'Registrierung geschlossen',
           'Wir haben das Limit der Benutzer erreicht, die sich registrieren können. Bitte tragen Sie sich in unsere Warteliste ein. Wenn die Registrierung wieder geöffnet wird, erhalten Sie eine E-Mail. Vielen Dank für Ihre Geduld.',
-          () => router.push('/waitlist')
+          () => router.push('/waitlist' as any)
         );
         return;
       }
@@ -172,7 +172,7 @@ export default function RegisterScreen() {
     // Double-check registration status before submitting
     logger.info('🔄 Double-checking registration status before submission...');
     const status = await checkRegistrationStatus();
-    logger.info('📊 Status result:', status);
+    logger.info('📊 Status result', { status });
 
     if (status && !status.allowed) {
       logger.info('🚫 Registration not allowed, adding to waitlist');

@@ -21,10 +21,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Redirect } from 'expo-router';
 
 function MonitoringScreen() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   // Check if user is admin
-  if (!user || !profile || profile.role !== 'admin') {
+  if (!user || user.role !== 'admin') {
     return <Redirect href="/(tabs)" />;
   }
 

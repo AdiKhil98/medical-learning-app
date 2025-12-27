@@ -27,7 +27,7 @@ interface Dependency {
 
 // Common license texts
 const LICENSE_TEXTS: Record<string, string> = {
-  'MIT': `MIT License
+  MIT: `MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -77,7 +77,7 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.`,
 
-  'ISC': `ISC License
+  ISC: `ISC License
 
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 
@@ -99,7 +99,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 };
 
 export default function LicensesScreen() {
-    const router = useRouter();
+  const router = useRouter();
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDep, setExpandedDep] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export default function LicensesScreen() {
   const loadDependencies = async () => {
     try {
       setLoading(true);
-      
+
       // Simulate loading dependencies from package.json
       // In a real implementation, you would read from package.json or use a library
       const mockDependencies: Dependency[] = [
@@ -155,7 +155,7 @@ export default function LicensesScreen() {
           name: 'react-native-reanimated',
           version: '~3.6.1',
           license: 'Apache-2.0',
-          description: 'React Native\'s Animated library reimplemented',
+          description: "React Native's Animated library reimplemented",
           homepage: 'https://docs.swmansion.com/react-native-reanimated/',
         },
         {
@@ -225,9 +225,9 @@ export default function LicensesScreen() {
 
       // Sort dependencies alphabetically
       const sortedDeps = mockDependencies.sort((a, b) => a.name.localeCompare(b.name));
-      
+
       // Initialize animated values for each dependency
-      sortedDeps.forEach(dep => {
+      sortedDeps.forEach((dep) => {
         if (!animatedValues.has(dep.name)) {
           animatedValues.set(dep.name, new Animated.Value(0));
         }
@@ -243,7 +243,7 @@ export default function LicensesScreen() {
 
   const toggleDependency = (depName: string) => {
     const isExpanding = expandedDep !== depName;
-    
+
     // Collapse currently expanded dependency
     if (expandedDep && expandedDep !== depName) {
       const currentAnimValue = animatedValues.get(expandedDep);
@@ -279,21 +279,30 @@ export default function LicensesScreen() {
   };
 
   const getLicenseText = (license: string): string => {
-    return LICENSE_TEXTS[license] || `${license} License\n\nFull license text not available. Please visit the package homepage for more information.`;
+    return (
+      LICENSE_TEXTS[license] ||
+      `${license} License\n\nFull license text not available. Please visit the package homepage for more information.`
+    );
   };
 
   const getLicenseColor = (license: string): string => {
     switch (license) {
-      case 'MIT': return '#22C55E';
-      case 'Apache-2.0': return '#EF4444';
-      case 'BSD-3-Clause': return '#E2827F';
-      case 'ISC': return '#E2827F';
-      case 'GPL-3.0': return '#F59E0B';
-      default: return colors.textSecondary;
+      case 'MIT':
+        return '#22C55E';
+      case 'Apache-2.0':
+        return '#EF4444';
+      case 'BSD-3-Clause':
+        return '#E2827F';
+      case 'ISC':
+        return '#E2827F';
+      case 'GPL-3.0':
+        return '#F59E0B';
+      default:
+        return colors.textSecondary;
     }
   };
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -490,16 +499,10 @@ export default function LicensesScreen() {
   if (loading) {
     return (
       <SafeAreaView style={dynamicStyles.container}>
-        <LinearGradient
-          colors={gradientColors}
-          style={styles.gradientBackground}
-        />
-        
+        <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+
         <View style={dynamicStyles.header}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            style={dynamicStyles.backButton}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={dynamicStyles.backButton}>
             <ChevronLeft size={24} color={colors.primary} />
             <Text style={dynamicStyles.backText}>Zurück</Text>
           </TouchableOpacity>
@@ -514,35 +517,26 @@ export default function LicensesScreen() {
     );
   }
 
-  const licenseTypes = [...new Set(dependencies.map(dep => dep.license))];
+  const licenseTypes = [...new Set(dependencies.map((dep) => dep.license))];
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
-      
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()} 
-          style={dynamicStyles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={dynamicStyles.backButton}>
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
         </TouchableOpacity>
         <Text style={dynamicStyles.title}>Lizenzen</Text>
       </View>
 
-      <ScrollView 
-        style={dynamicStyles.content} 
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
+      <ScrollView style={dynamicStyles.content} showsVerticalScrollIndicator={false} bounces={false}>
         <Text style={dynamicStyles.pageTitle}>Open Source Lizenzen</Text>
         <Text style={dynamicStyles.subtitle}>
-          Diese App verwendet verschiedene Open-Source-Bibliotheken. Hier finden Sie eine vollständige Liste aller Abhängigkeiten und deren Lizenzen.
+          Diese App verwendet verschiedene Open-Source-Bibliotheken. Hier finden Sie eine vollständige Liste aller
+          Abhängigkeiten und deren Lizenzen.
         </Text>
 
         {/* Statistics */}
@@ -561,12 +555,12 @@ export default function LicensesScreen() {
         {dependencies.map((dep) => {
           const isExpanded = expandedDep === dep.name;
           const animValue = animatedValues.get(dep.name);
-          
+
           const animatedHeight = animValue?.interpolate({
             inputRange: [0, 1],
             outputRange: [0, 400], // Adjust based on content
           });
-          
+
           const rotateInterpolate = animValue?.interpolate({
             inputRange: [0, 1],
             outputRange: ['0deg', '180deg'],
@@ -586,10 +580,7 @@ export default function LicensesScreen() {
                   <Text style={dynamicStyles.dependencyName}>{dep.name}</Text>
                   <Text style={dynamicStyles.dependencyVersion}>v{dep.version}</Text>
                 </View>
-                <View style={[
-                  dynamicStyles.licenseTag,
-                  { backgroundColor: getLicenseColor(dep.license) }
-                ]}>
+                <View style={[dynamicStyles.licenseTag, { backgroundColor: getLicenseColor(dep.license) }]}>
                   <Text style={dynamicStyles.licenseText}>{dep.license}</Text>
                 </View>
                 <View style={dynamicStyles.chevronContainer}>
@@ -598,31 +589,27 @@ export default function LicensesScreen() {
                   </Animated.View>
                 </View>
               </TouchableOpacity>
-              
+
               {isExpanded && animatedHeight && (
                 <Animated.View style={[dynamicStyles.dependencyContent, { maxHeight: animatedHeight }]}>
-                  {dep.description && (
-                    <Text style={dynamicStyles.description}>{dep.description}</Text>
-                  )}
-                  
+                  {dep.description && <Text style={dynamicStyles.description}>{dep.description}</Text>}
+
                   <View style={dynamicStyles.licenseContent}>
                     <Text style={dynamicStyles.licenseTitle}>{dep.license} Lizenz</Text>
                     <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
-                      <Text style={dynamicStyles.licenseFullText}>
-                        {getLicenseText(dep.license)}
-                      </Text>
+                      <Text style={dynamicStyles.licenseFullText}>{getLicenseText(dep.license)}</Text>
                     </ScrollView>
                   </View>
 
                   {dep.homepage && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={dynamicStyles.homepageLink}
-                      onPress={() => {/* Open homepage */}}
+                      onPress={() => {
+                        /* Open homepage */
+                      }}
                       activeOpacity={0.7}
                     >
-                      <Text style={dynamicStyles.homepageLinkText}>
-                        Projekt-Homepage besuchen
-                      </Text>
+                      <Text style={dynamicStyles.homepageLinkText}>Projekt-Homepage besuchen</Text>
                       <ExternalLink size={16} color={colors.primary} />
                     </TouchableOpacity>
                   )}

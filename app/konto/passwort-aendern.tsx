@@ -13,7 +13,7 @@ import { colors } from '@/constants/colors';
 
 export default function PasswortAendernScreen() {
   const { user } = useAuth();
-    const router = useRouter();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -60,7 +60,7 @@ export default function PasswortAendernScreen() {
       // First, verify the current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
-        password: currentPassword
+        password: currentPassword,
       });
 
       if (signInError) {
@@ -70,7 +70,7 @@ export default function PasswortAendernScreen() {
 
       // Update the password
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (updateError) {
@@ -82,17 +82,14 @@ export default function PasswortAendernScreen() {
       setNewPassword('');
       setConfirmPassword('');
 
-      Alert.alert(
-        'Passwort geändert',
-        'Ihr Passwort wurde erfolgreich geändert. Sie bleiben angemeldet.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-
+      Alert.alert('Passwort geändert', 'Ihr Passwort wurde erfolgreich geändert. Sie bleiben angemeldet.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
     } catch (error: any) {
       logger.error('Error changing password:', error);
-      
+
       let errorMessage = 'Passwort konnte nicht geändert werden.';
-      
+
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = 'Das aktuelle Passwort ist nicht korrekt.';
       } else if (error.message?.includes('Password should be at least')) {
@@ -100,7 +97,7 @@ export default function PasswortAendernScreen() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       Alert.alert('Fehler', errorMessage);
     } finally {
       setLoading(false);
@@ -119,7 +116,7 @@ export default function PasswortAendernScreen() {
 
   const passwordStrength = getPasswordStrength(newPassword);
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'] as const; // White Linen to light coral to white
 
   const dynamicStyles = StyleSheet.create({
     container: {
@@ -216,17 +213,11 @@ export default function PasswortAendernScreen() {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradientBackground}
-      />
-      
+      <LinearGradient colors={gradientColors} style={styles.gradientBackground} />
+
       {/* Header */}
       <View style={dynamicStyles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()} 
-          style={dynamicStyles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={dynamicStyles.backButton}>
           <ChevronLeft size={24} color={colors.primary} />
           <Text style={dynamicStyles.backText}>Zurück</Text>
         </TouchableOpacity>
@@ -240,7 +231,7 @@ export default function PasswortAendernScreen() {
 
         <Card style={dynamicStyles.formCard}>
           <Text style={dynamicStyles.formTitle}>Passwort aktualisieren</Text>
-          
+
           <Input
             label="Aktuelles Passwort"
             placeholder="Geben Sie Ihr aktuelles Passwort ein"
@@ -250,10 +241,11 @@ export default function PasswortAendernScreen() {
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
             rightIcon={
               <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
-                {showCurrentPassword ? 
-                  <EyeOff size={20} color={colors.textSecondary} /> : 
+                {showCurrentPassword ? (
+                  <EyeOff size={20} color={colors.textSecondary} />
+                ) : (
                   <Eye size={20} color={colors.textSecondary} />
-                }
+                )}
               </TouchableOpacity>
             }
           />
@@ -267,10 +259,11 @@ export default function PasswortAendernScreen() {
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
             rightIcon={
               <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                {showNewPassword ? 
-                  <EyeOff size={20} color={colors.textSecondary} /> : 
+                {showNewPassword ? (
+                  <EyeOff size={20} color={colors.textSecondary} />
+                ) : (
                   <Eye size={20} color={colors.textSecondary} />
-                }
+                )}
               </TouchableOpacity>
             }
           />
@@ -278,14 +271,14 @@ export default function PasswortAendernScreen() {
           {newPassword.length > 0 && (
             <View style={dynamicStyles.passwordStrengthContainer}>
               <View style={dynamicStyles.passwordStrengthBar}>
-                <View 
+                <View
                   style={[
                     dynamicStyles.passwordStrengthFill,
-                    { 
+                    {
                       width: `${(passwordStrength.strength / 4) * 100}%`,
-                      backgroundColor: passwordStrength.color 
-                    }
-                  ]} 
+                      backgroundColor: passwordStrength.color,
+                    },
+                  ]}
                 />
               </View>
               <Text style={[dynamicStyles.passwordStrengthText, { color: passwordStrength.color }]}>
@@ -303,16 +296,17 @@ export default function PasswortAendernScreen() {
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
             rightIcon={
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                {showConfirmPassword ? 
-                  <EyeOff size={20} color={colors.textSecondary} /> : 
+                {showConfirmPassword ? (
+                  <EyeOff size={20} color={colors.textSecondary} />
+                ) : (
                   <Eye size={20} color={colors.textSecondary} />
-                }
+                )}
               </TouchableOpacity>
             }
           />
 
           <Button
-            title={loading ? "Wird geändert..." : "Passwort ändern"}
+            title={loading ? 'Wird geändert...' : 'Passwort ändern'}
             onPress={handlePasswordChange}
             loading={loading}
             disabled={loading}
@@ -333,9 +327,7 @@ export default function PasswortAendernScreen() {
             <Text style={styles.securityText}>
               • Vermeiden Sie persönliche Informationen wie Namen oder Geburtsdaten
             </Text>
-            <Text style={styles.securityText}>
-              • Ändern Sie Ihr Passwort regelmäßig für optimale Sicherheit
-            </Text>
+            <Text style={styles.securityText}>• Ändern Sie Ihr Passwort regelmäßig für optimale Sicherheit</Text>
           </View>
         </Card>
       </ScrollView>

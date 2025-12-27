@@ -8,11 +8,11 @@ import { colors } from '@/constants/colors';
 
 export default function HaftungScreen() {
   const router = useRouter();
-  
+
   const dynamicStyles = StyleSheet.create({
-    container: { 
-      flex: 1, 
-      backgroundColor: colors.background 
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
     header: {
       flexDirection: 'row',
@@ -22,10 +22,10 @@ export default function HaftungScreen() {
       borderBottomColor: colors.border,
       backgroundColor: 'rgba(255,255,255,0.9)',
     },
-    backBtn: { 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      marginRight: 16 
+    backBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 16,
     },
     backTxt: {
       marginLeft: 4,
@@ -39,9 +39,9 @@ export default function HaftungScreen() {
       fontSize: 20,
       color: colors.text,
     },
-    content: { 
-      flex: 1, 
-      padding: 24 
+    content: {
+      flex: 1,
+      padding: 24,
     },
     pageTitle: {
       fontFamily: 'Inter-Bold',
@@ -88,7 +88,7 @@ export default function HaftungScreen() {
     },
   });
 
-  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'];
+  const gradient = ['#f8faff', '#e3f2fd', '#ffffff'] as const;
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
@@ -107,7 +107,7 @@ export default function HaftungScreen() {
           <Shield size={32} color={MEDICAL_COLORS.warning} />
           <Text style={dynamicStyles.pageTitle}>Haftungsausschluss</Text>
         </View>
-        
+
         <Text style={dynamicStyles.subtitle}>
           Wichtige Informationen zur Haftung und zu den rechtlichen Bestimmungen der KP Med Plattform.
         </Text>
@@ -121,60 +121,62 @@ export default function HaftungScreen() {
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>1. Medizinische Inhalte</Text>
           <Text style={dynamicStyles.sectionText}>
-            Die auf dieser Plattform bereitgestellten medizinischen Inhalte dienen ausschließlich der Bildung und Prüfungsvorbereitung. Sie stellen keine medizinische, diagnostische oder therapeutische Beratung dar und ersetzen nicht die professionelle medizinische Beurteilung durch qualifizierte Ärzte.
+            Die auf dieser Plattform bereitgestellten medizinischen Inhalte dienen ausschließlich der Bildung und
+            Prüfungsvorbereitung. Sie stellen keine medizinische, diagnostische oder therapeutische Beratung dar und
+            ersetzen nicht die professionelle medizinische Beurteilung durch qualifizierte Ärzte.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>2. Keine Behandlungsempfehlungen</Text>
           <Text style={dynamicStyles.sectionText}>
-            Die Informationen auf dieser Plattform sollen nicht zur Diagnose oder Behandlung von Krankheiten verwendet werden. Bei gesundheitlichen Problemen wenden Sie sich immer an einen qualifizierten Arzt oder andere medizinische Fachkraft.
+            Die Informationen auf dieser Plattform sollen nicht zur Diagnose oder Behandlung von Krankheiten verwendet
+            werden. Bei gesundheitlichen Problemen wenden Sie sich immer an einen qualifizierten Arzt oder andere
+            medizinische Fachkraft.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>3. Haftungsausschluss</Text>
+          <Text style={dynamicStyles.sectionText}>KP Med GmbH übernimmt keine Haftung für:</Text>
           <Text style={dynamicStyles.sectionText}>
-            KP Med GmbH übernimmt keine Haftung für:
-          </Text>
-          <Text style={dynamicStyles.sectionText}>
-            • Schäden, die durch die Nutzung der bereitgestellten Informationen entstehen{'\n'}
-            • Die Richtigkeit, Vollständigkeit oder Aktualität der Inhalte{'\n'}
-            • Entscheidungen, die auf Basis der Plattforminhalte getroffen werden{'\n'}
-            • Technische Störungen oder Ausfälle der Plattform
+            • Schäden, die durch die Nutzung der bereitgestellten Informationen entstehen{'\n'}• Die Richtigkeit,
+            Vollständigkeit oder Aktualität der Inhalte{'\n'}• Entscheidungen, die auf Basis der Plattforminhalte
+            getroffen werden{'\n'}• Technische Störungen oder Ausfälle der Plattform
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>4. Eigenverantwortung</Text>
           <Text style={dynamicStyles.sectionText}>
-            Die Nutzung dieser Plattform erfolgt auf eigene Verantwortung. Nutzer sind dafür verantwortlich, die Angemessenheit der Inhalte für ihre spezifischen Lernziele zu bewerten.
+            Die Nutzung dieser Plattform erfolgt auf eigene Verantwortung. Nutzer sind dafür verantwortlich, die
+            Angemessenheit der Inhalte für ihre spezifischen Lernziele zu bewerten.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>5. Fachliche Qualifikation</Text>
+          <Text style={dynamicStyles.sectionText}>Diese Plattform richtet sich ausschließlich an:</Text>
           <Text style={dynamicStyles.sectionText}>
-            Diese Plattform richtet sich ausschließlich an:
-          </Text>
-          <Text style={dynamicStyles.sectionText}>
-            • Approbierte Ärzte und Zahnärzte{'\n'}
-            • Studierende der Human- und Zahnmedizin{'\n'}
-            • Andere medizinische Fachkräfte mit entsprechender Ausbildung
+            • Approbierte Ärzte und Zahnärzte{'\n'}• Studierende der Human- und Zahnmedizin{'\n'}• Andere medizinische
+            Fachkräfte mit entsprechender Ausbildung
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>6. Aktualität der Informationen</Text>
           <Text style={dynamicStyles.sectionText}>
-            Medizinische Erkenntnisse entwickeln sich ständig weiter. Trotz sorgfältiger Erstellung können die Inhalte nicht immer dem neuesten Stand entsprechen. Prüfen Sie wichtige Informationen stets anhand aktueller medizinischer Fachliteratur.
+            Medizinische Erkenntnisse entwickeln sich ständig weiter. Trotz sorgfältiger Erstellung können die Inhalte
+            nicht immer dem neuesten Stand entsprechen. Prüfen Sie wichtige Informationen stets anhand aktueller
+            medizinischer Fachliteratur.
           </Text>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>7. Rechtliche Hinweise</Text>
           <Text style={dynamicStyles.sectionText}>
-            Sollten einzelne Bestimmungen dieses Haftungsausschlusses unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt. Es gilt österreichisches Recht.
+            Sollten einzelne Bestimmungen dieses Haftungsausschlusses unwirksam sein, bleibt die Wirksamkeit der übrigen
+            Bestimmungen unberührt. Es gilt österreichisches Recht.
           </Text>
         </View>
 

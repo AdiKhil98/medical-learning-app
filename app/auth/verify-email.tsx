@@ -16,25 +16,25 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     // Listen for auth state changes to handle email verification
+    let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         setVerificationStatus('success');
 
         // Start countdown timer
-        const timer = setInterval(() => {
+        countdownTimer = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
-              clearInterval(timer);
+              if (countdownTimer) clearInterval(countdownTimer);
               router.replace('/auth/login');
               return 0;
             }
             return prev - 1;
           });
         }, 1000);
-
-        return () => clearInterval(timer);
       }
     });
 
