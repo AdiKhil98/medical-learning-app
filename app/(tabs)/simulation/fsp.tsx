@@ -256,6 +256,11 @@ function FSPSimulationScreen() {
         return;
       }
 
+      // CRITICAL FIX: Set guard IMMEDIATELY to prevent race conditions
+      // This must happen BEFORE any async operations to block concurrent calls
+      hasInitializedRef.current = true;
+      console.log(`🔒 [${timestamp}] Initialization guard set - blocking concurrent calls`);
+
       // ============================================
       // STEP 1: VALIDATE USER DATA
       // ============================================
@@ -264,6 +269,7 @@ function FSPSimulationScreen() {
       if (typeof window === 'undefined') {
         console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         return;
       }
 
@@ -271,12 +277,14 @@ function FSPSimulationScreen() {
         console.warn(`⏳ [${timestamp}] User object not loaded yet, waiting...`);
         // Don't show error - user might still be loading
         // The useEffect will re-run when user loads (it's in dependencies)
+        hasInitializedRef.current = false; // Reset guard to allow retry when user loads
         return;
       }
 
       if (!user.id) {
         console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
         ]);
@@ -296,6 +304,7 @@ function FSPSimulationScreen() {
         if (!accessCheck) {
           console.error(`❌ [${timestamp}] Access check returned null/undefined`);
           setInitializationError('Failed to verify access permissions');
+          hasInitializedRef.current = false; // Reset guard to allow retry
           Alert.alert(
             'Zugriffsfehler',
             'Zugriffsberechtigungen konnten nicht überprüft werden. Bitte versuchen Sie es erneut.',
@@ -313,6 +322,7 @@ function FSPSimulationScreen() {
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
           console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           setInitializationError('No simulations remaining');
+          hasInitializedRef.current = false; // Reset guard to allow retry after upgrade
           return; // Do NOT initialize widget
         }
 
@@ -320,6 +330,7 @@ function FSPSimulationScreen() {
       } catch (accessError) {
         console.error(`❌ [${timestamp}] Error checking access:`, accessError);
         setInitializationError('Access check failed');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert(
           'Zugriffsfehler',
           'Fehler beim Überprüfen der Zugriffsberechtigungen. Bitte versuchen Sie es erneut.',
@@ -542,6 +553,9 @@ function FSPSimulationScreen() {
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
+
+          // Reset guard to allow retry via button or page refresh
+          hasInitializedRef.current = false;
 
           Alert.alert(
             'Initialisierungsfehler',

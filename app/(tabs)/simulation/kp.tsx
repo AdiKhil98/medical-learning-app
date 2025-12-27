@@ -311,6 +311,11 @@ function KPSimulationScreen() {
         return;
       }
 
+      // CRITICAL FIX: Set guard IMMEDIATELY to prevent race conditions
+      // This must happen BEFORE any async operations to block concurrent calls
+      hasInitializedRef.current = true;
+      console.log(`🔒 [${timestamp}] Initialization guard set - blocking concurrent calls`);
+
       // ============================================
       // STEP 1: VALIDATE USER DATA
       // ============================================
@@ -319,12 +324,14 @@ function KPSimulationScreen() {
       if (typeof window === 'undefined') {
         console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         return;
       }
 
       if (!user) {
         console.error(`❌ [${timestamp}] No user object found`);
         setInitializationError('User not authenticated');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Bitte melden Sie sich an, um fortzufahren.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
         ]);
@@ -334,6 +341,7 @@ function KPSimulationScreen() {
       if (!user.id) {
         console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
         ]);
@@ -356,6 +364,7 @@ function KPSimulationScreen() {
           console.error(`❌ [${timestamp}] Access check returned null/undefined`);
           addDebugLog('ERROR: Access check failed');
           setInitializationError('Failed to verify access permissions');
+          hasInitializedRef.current = false; // Reset guard to allow retry
           Alert.alert(
             'Zugriffsfehler',
             'Zugriffsberechtigungen konnten nicht überprüft werden. Bitte versuchen Sie es erneut.',
@@ -374,6 +383,7 @@ function KPSimulationScreen() {
           console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           addDebugLog('BLOCKED: No simulations remaining');
           setInitializationError('No simulations remaining');
+          hasInitializedRef.current = false; // Reset guard to allow retry after upgrade
           return; // Do NOT initialize widget
         }
 
@@ -383,6 +393,7 @@ function KPSimulationScreen() {
         console.error(`❌ [${timestamp}] Error checking access:`, accessError);
         addDebugLog(`ERROR: ${accessError instanceof Error ? accessError.message : String(accessError)}`);
         setInitializationError('Access check failed');
+        hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert(
           'Zugriffsfehler',
           'Fehler beim Überprüfen der Zugriffsberechtigungen. Bitte versuchen Sie es erneut.',
@@ -681,6 +692,9 @@ function KPSimulationScreen() {
 
           setIsInitializing(false);
           setInitializationError(errorMessage);
+
+          // Reset guard to allow retry via button
+          hasInitializedRef.current = false;
 
           Alert.alert(
             'Initialisierungsfehler',
