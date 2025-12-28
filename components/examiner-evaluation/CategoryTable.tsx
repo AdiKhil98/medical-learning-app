@@ -53,7 +53,7 @@ export default function CategoryTable({ categories, deductions, deductionReason,
               {category.score}/{category.maxScore}
             </Text>
             <Text style={[styles.tableCell, styles.catPercent]}>{category.percentage}%</Text>
-            <View style={[styles.tableCell, styles.catBarContainer]}>
+            <View style={styles.catBarContainer}>
               <View style={styles.barBackground}>
                 <Animated.View
                   style={[

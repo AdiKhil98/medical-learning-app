@@ -427,4 +427,26 @@ export const sectionStyles = StyleSheet.create({
     color: 'white',
     fontWeight: '700' as const,
   },
+
+  // QuickAccessSection styles
+  heroButtonsContainer: {
+    flexDirection: 'row' as const,
+    gap: 12,
+    marginTop: 16,
+  },
+  quickAccessSection: {
+    marginBottom: screenWidth > 768 ? 24 : 16,
+  },
+  quickAccessTitleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: 8,
+  },
+  quickAccessBadge: {
+    backgroundColor: `${MEDICAL_COLORS.primary}20`,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
 });

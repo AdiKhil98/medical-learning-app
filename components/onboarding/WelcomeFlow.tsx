@@ -9,10 +9,21 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckCircle, User, Shield, BookOpen, X, ArrowRight, Stethoscope, GraduationCap, FileText, Sparkles } from 'lucide-react-native';
+import {
+  CheckCircle,
+  User,
+  Shield,
+  BookOpen,
+  X,
+  ArrowRight,
+  Stethoscope,
+  GraduationCap,
+  FileText,
+  Sparkles,
+} from 'lucide-react-native';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -34,44 +45,43 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       subtitle: 'Die führende Plattform für Ärztinnen und Ärzte',
       icon: Stethoscope,
       iconColor: '#667eea',
-      bgGradient: ['#667eea', '#764ba2'],
-      content: 'KP Med ist nicht einfach eine weitere Lernplattform. Es ist eine exklusive, spezialisierte Umgebung, entwickelt für internationale Mediziner, die die Fachsprachprüfung, Kenntnisprüfung oder ähnliche Hürden erfolgreich meistern wollen.\n\nHochwertige medizinische Inhalte treffen auf KI-gestützte Lerntechnologie, die sich individuell an Ihre Stärken und Schwächen anpasst. Bei KP Med lernen Sie nicht einfach – Sie bereiten sich strategisch und effizient auf den echten Prüfungstag vor.\n\nMedizinerinnen und Mediziner, die sich gezielt für Exzellenz entschieden haben, haben mit KP Med den entscheidenden Schritt gemacht.\n\nJetzt ist es Ihre Gelegenheit, sich denselben Vorsprung zu verschaffen – mit einer Vorbereitung, die Sie konsequent an Ihr Ziel bringt.\n\nWenn Bestehen Ihr Ziel ist, ist KP Med Ihr Schlüssel. Wenn Exzellenz Ihr Anspruch ist, ist KP Med Ihr Zuhause.',
+      bgGradient: ['#667eea', '#764ba2'] as readonly [string, string],
+      content:
+        'KP Med ist nicht einfach eine weitere Lernplattform. Es ist eine exklusive, spezialisierte Umgebung, entwickelt für internationale Mediziner, die die Fachsprachprüfung, Kenntnisprüfung oder ähnliche Hürden erfolgreich meistern wollen.\n\nHochwertige medizinische Inhalte treffen auf KI-gestützte Lerntechnologie, die sich individuell an Ihre Stärken und Schwächen anpasst. Bei KP Med lernen Sie nicht einfach – Sie bereiten sich strategisch und effizient auf den echten Prüfungstag vor.\n\nMedizinerinnen und Mediziner, die sich gezielt für Exzellenz entschieden haben, haben mit KP Med den entscheidenden Schritt gemacht.\n\nJetzt ist es Ihre Gelegenheit, sich denselben Vorsprung zu verschaffen – mit einer Vorbereitung, die Sie konsequent an Ihr Ziel bringt.\n\nWenn Bestehen Ihr Ziel ist, ist KP Med Ihr Schlüssel. Wenn Exzellenz Ihr Anspruch ist, ist KP Med Ihr Zuhause.',
       features: [
         'Personalisierte Lernpfade',
         'Realistische Patientensimulationen',
-        'Detailliertes Feedback & Analytics'
-      ]
+        'Detailliertes Feedback & Analytics',
+      ],
     },
     {
       title: 'Unsere Inhalte – Medizinisches Wissen, das zählt',
       subtitle: 'Hochrelevant, klinisch fokussiert und prüfungsoptimiert',
       icon: GraduationCap,
       iconColor: '#f093fb',
-      bgGradient: ['#f093fb', '#f5576c'],
-      content: 'Die Inhalte von KP Med gehen weit über Standardwissen hinaus – sie sind hochrelevant, klinisch fokussiert und genau auf die Prüfungsanforderungen in Deutschland abgestimmt. Entwickelt von Ärztinnen und Ärzten mit echter Prüfungserfahrung, ist jedes Modul auf Präzision, Verstehen und Nachhaltigkeit ausgerichtet.\n\nKeine PDFs von gestern, keine zusammengewürfelten Notizen.\nBei KP Med finden Sie strukturierte, verständliche Inhalte, die auf das Wesentliche reduziert sind – perfekt zum gezielten Lernen und schnellen Fortschritt.\n\nUnsere Lernpfade fördern nicht nur das Verstehen, sondern auch das diagnostische Denken, das in deutschen Prüfungen erwartet wird. Sie lernen nicht nur – Sie werden klinisch denken und handeln.\n\nKP Med ist Ihr Partner für gezielte, effektive Prüfungsvorbereitung.',
-      features: [
-        'Von Ärzten für Ärzte entwickelt',
-        'Klinisch fokussierte Inhalte',
-        'Diagnostisches Denken fördern'
-      ]
+      bgGradient: ['#f093fb', '#f5576c'] as readonly [string, string],
+      content:
+        'Die Inhalte von KP Med gehen weit über Standardwissen hinaus – sie sind hochrelevant, klinisch fokussiert und genau auf die Prüfungsanforderungen in Deutschland abgestimmt. Entwickelt von Ärztinnen und Ärzten mit echter Prüfungserfahrung, ist jedes Modul auf Präzision, Verstehen und Nachhaltigkeit ausgerichtet.\n\nKeine PDFs von gestern, keine zusammengewürfelten Notizen.\nBei KP Med finden Sie strukturierte, verständliche Inhalte, die auf das Wesentliche reduziert sind – perfekt zum gezielten Lernen und schnellen Fortschritt.\n\nUnsere Lernpfade fördern nicht nur das Verstehen, sondern auch das diagnostische Denken, das in deutschen Prüfungen erwartet wird. Sie lernen nicht nur – Sie werden klinisch denken und handeln.\n\nKP Med ist Ihr Partner für gezielte, effektive Prüfungsvorbereitung.',
+      features: ['Von Ärzten für Ärzte entwickelt', 'Klinisch fokussierte Inhalte', 'Diagnostisches Denken fördern'],
     },
     {
       title: 'Die Simulation – Die Prüfung vor der Prüfung',
       subtitle: 'KI-basierte Prüfungssimulation für maximalen Erfolg',
       icon: FileText,
       iconColor: '#4facfe',
-      bgGradient: ['#4facfe', '#00f2fe'],
-      content: 'Mit KP Med erhalten Sie Zugang zur modernsten und realistischsten Prüfungssimulation, die es für internationale Ärzte in Deutschland gibt. Unsere KI-basierte Simulation repliziert die echte Prüfungssituation, bewertet Ihre Antworten intelligent und liefert eine detaillierte Analyse Ihrer individuellen Stärken und Schwächen.\n\nDas bedeutet: Sie testen nicht nur Ihr Wissen – Sie verbessern aktiv Ihre Strategie, Ihr Zeitmanagement und Ihre Prüfungskompetenz.\nJede Simulation bringt Sie messbar weiter – zielgerichtet, datenbasiert und personalisiert.\n\nÄrztinnen und Ärzte, die mit KP Med trainiert haben, gehen selbstsicher, fokussiert und mit echter Prüfungsroutine in die Prüfung.\n\nKP Med ist nicht einfach ein Test – es ist Ihre Generalprobe mit maximaler Wirkung.',
+      bgGradient: ['#4facfe', '#00f2fe'] as readonly [string, string],
+      content:
+        'Mit KP Med erhalten Sie Zugang zur modernsten und realistischsten Prüfungssimulation, die es für internationale Ärzte in Deutschland gibt. Unsere KI-basierte Simulation repliziert die echte Prüfungssituation, bewertet Ihre Antworten intelligent und liefert eine detaillierte Analyse Ihrer individuellen Stärken und Schwächen.\n\nDas bedeutet: Sie testen nicht nur Ihr Wissen – Sie verbessern aktiv Ihre Strategie, Ihr Zeitmanagement und Ihre Prüfungskompetenz.\nJede Simulation bringt Sie messbar weiter – zielgerichtet, datenbasiert und personalisiert.\n\nÄrztinnen und Ärzte, die mit KP Med trainiert haben, gehen selbstsicher, fokussiert und mit echter Prüfungsroutine in die Prüfung.\n\nKP Med ist nicht einfach ein Test – es ist Ihre Generalprobe mit maximaler Wirkung.',
       features: [
         'Realistische KI-Prüfungssimulation',
         'Intelligente Leistungsanalyse',
-        'Personalisierte Verbesserungsstrategien'
-      ]
-    }
+        'Personalisierte Verbesserungsstrategien',
+      ],
+    },
   ];
 
   const handleNext = () => {
-    logger.info('WelcomeFlow: handleNext called, currentStep:', currentStep);
+    logger.info(`WelcomeFlow: handleNext called, currentStep: ${currentStep}`);
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -81,9 +91,9 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
   const handleComplete = () => {
     logger.info('WelcomeFlow: handleComplete called');
-    logger.info('Professional verified:', professionalVerified);
-    logger.info('Disclaimer accepted:', disclaimerAccepted);
-    
+    logger.info(`Professional verified: ${professionalVerified}`);
+    logger.info(`Disclaimer accepted: ${disclaimerAccepted}`);
+
     if (!professionalVerified) {
       Alert.alert(
         'Bestätigung erforderlich',
@@ -114,36 +124,20 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
   const currentStepData = steps[currentStep];
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      statusBarTranslucent
-    >
+    <Modal visible={visible} animationType="slide" transparent={false} statusBarTranslucent>
       <SafeAreaView style={styles.modernContainer}>
-        <LinearGradient
-          colors={['#f8fafc', '#e2e8f0', '#ffffff']}
-          style={styles.gradientBackground}
-        />
+        <LinearGradient colors={['#f8fafc', '#e2e8f0', '#ffffff']} style={styles.gradientBackground} />
 
         {/* Modern Header */}
         <View style={styles.modernHeader}>
-          <TouchableOpacity
-            style={styles.modernSkipButton}
-            onPress={handleSkip}
-          >
+          <TouchableOpacity style={styles.modernSkipButton} onPress={handleSkip}>
             <Text style={styles.skipButtonText}>Überspringen</Text>
           </TouchableOpacity>
-          
+
           {/* Modern Progress Indicator */}
           <View style={styles.modernProgressContainer}>
             <View style={styles.progressTrack}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { width: `${((currentStep + 1) / steps.length) * 100}%` }
-                ]} 
-              />
+              <View style={[styles.progressFill, { width: `${((currentStep + 1) / steps.length) * 100}%` }]} />
             </View>
           </View>
         </View>
@@ -151,10 +145,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
         <ScrollView style={styles.modernContent} contentContainerStyle={styles.modernContentContainer}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <LinearGradient
-              colors={currentStepData.bgGradient}
-              style={styles.heroGradient}
-            >
+            <LinearGradient colors={currentStepData.bgGradient} style={styles.heroGradient}>
               <View style={styles.heroContent}>
                 <View style={styles.modernIconContainer}>
                   <LinearGradient
@@ -171,7 +162,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
                     <Sparkles size={8} color="rgba(255,255,255,0.4)" />
                   </View>
                 </View>
-                
+
                 <Text style={styles.modernStepTitle}>{currentStepData.title}</Text>
                 <Text style={styles.modernStepSubtitle}>{currentStepData.subtitle}</Text>
               </View>
@@ -181,7 +172,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
           {/* Content Card */}
           <View style={styles.contentCard}>
             <Text style={styles.modernStepContent}>{currentStepData.content}</Text>
-            
+
             {/* Features List */}
             <View style={styles.featuresList}>
               {currentStepData.features.map((feature, index) => (
@@ -197,22 +188,13 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
           {currentStep === 1 && (
             <View style={styles.modernVerificationContainer}>
               <TouchableOpacity
-                style={[
-                  styles.modernCheckboxContainer,
-                  professionalVerified && styles.modernCheckboxChecked
-                ]}
+                style={[styles.modernCheckboxContainer, professionalVerified && styles.modernCheckboxChecked]}
                 onPress={() => setProfessionalVerified(!professionalVerified)}
               >
                 <View style={[styles.checkboxIcon, professionalVerified && styles.checkboxIconChecked]}>
-                  <CheckCircle
-                    size={20}
-                    color={professionalVerified ? 'white' : currentStepData.iconColor}
-                  />
+                  <CheckCircle size={20} color={professionalVerified ? 'white' : currentStepData.iconColor} />
                 </View>
-                <Text style={[
-                  styles.modernCheckboxText,
-                  professionalVerified && styles.modernCheckboxTextChecked
-                ]}>
+                <Text style={[styles.modernCheckboxText, professionalVerified && styles.modernCheckboxTextChecked]}>
                   Ich bestätige, dass ich eine approbierte medizinische Fachkraft oder Medizinstudent bin
                 </Text>
               </TouchableOpacity>
@@ -223,22 +205,13 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
           {currentStep === 2 && (
             <View style={styles.modernVerificationContainer}>
               <TouchableOpacity
-                style={[
-                  styles.modernCheckboxContainer,
-                  disclaimerAccepted && styles.modernCheckboxChecked
-                ]}
+                style={[styles.modernCheckboxContainer, disclaimerAccepted && styles.modernCheckboxChecked]}
                 onPress={() => setDisclaimerAccepted(!disclaimerAccepted)}
               >
                 <View style={[styles.checkboxIcon, disclaimerAccepted && styles.checkboxIconChecked]}>
-                  <CheckCircle
-                    size={20}
-                    color={disclaimerAccepted ? 'white' : currentStepData.iconColor}
-                  />
+                  <CheckCircle size={20} color={disclaimerAccepted ? 'white' : currentStepData.iconColor} />
                 </View>
-                <Text style={[
-                  styles.modernCheckboxText,
-                  disclaimerAccepted && styles.modernCheckboxTextChecked
-                ]}>
+                <Text style={[styles.modernCheckboxText, disclaimerAccepted && styles.modernCheckboxTextChecked]}>
                   Ich habe den medizinischen Haftungsausschluss gelesen und akzeptiert
                 </Text>
               </TouchableOpacity>
@@ -248,15 +221,8 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
         {/* Modern Footer */}
         <View style={styles.modernFooter}>
-          <TouchableOpacity
-            style={styles.modernNextButton}
-            onPress={handleNext}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={currentStepData.bgGradient}
-              style={styles.modernNextButtonGradient}
-            >
+          <TouchableOpacity style={styles.modernNextButton} onPress={handleNext} activeOpacity={0.8}>
+            <LinearGradient colors={currentStepData.bgGradient} style={styles.modernNextButtonGradient}>
               <Text style={styles.modernNextButtonText}>
                 {currentStep === steps.length - 1 ? 'Jetzt starten' : 'Weiter'}
               </Text>
@@ -281,7 +247,7 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
   },
-  
+
   // Modern Header
   modernHeader: {
     paddingTop: 50,
@@ -330,7 +296,7 @@ const styles = StyleSheet.create({
     padding: 0,
     paddingBottom: 40,
   },
-  
+
   // Hero Section
   heroSection: {
     marginHorizontal: 20,

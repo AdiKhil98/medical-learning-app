@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ScoreBreakdown } from '@/types/evaluation';
 
 interface Subcategory {
   name: string;
@@ -10,23 +11,24 @@ interface Subcategory {
   comment?: string;
 }
 
-interface CategoryDetail {
-  name: string;
-  score: number;
-  max: number;
-  percentage: number;
+// Extended type that may include subcategories for detailed breakdown
+interface CategoryWithSubcategories extends ScoreBreakdown {
   subcategories?: Subcategory[];
 }
 
 interface Props {
-  categories: CategoryDetail[];
+  categories: ScoreBreakdown[] | CategoryWithSubcategories[];
 }
 
 export default function DetailedBreakdown({ categories }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Only show if there are subcategories
-  const hasSubcategories = categories.some(cat => cat.subcategories && cat.subcategories.length > 0);
+  const hasSubcategories = categories.some(
+    (cat) =>
+      (cat as CategoryWithSubcategories).subcategories &&
+      ((cat as CategoryWithSubcategories).subcategories?.length ?? 0) > 0
+  );
 
   if (!hasSubcategories) {
     return null;
@@ -34,34 +36,27 @@ export default function DetailedBreakdown({ categories }: Props) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setIsExpanded(!isExpanded)}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.header} onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.7}>
         <Text style={styles.headerTitle}>📊 Detaillierte Kategorienbewertung</Text>
-        <Ionicons
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color="#1e3a5f"
-        />
+        <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#1e3a5f" />
       </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.content}>
           {categories.map((category, catIndex) => {
-            if (!category.subcategories || category.subcategories.length === 0) {
+            const catWithSubs = category as CategoryWithSubcategories;
+            if (!catWithSubs.subcategories || catWithSubs.subcategories.length === 0) {
               return null;
             }
 
             return (
               <View key={catIndex} style={styles.categoryDetail}>
                 <Text style={styles.categoryTitle}>
-                  📊 {category.name.toUpperCase()}: {category.score}/{category.max} ({category.percentage}%)
+                  📊 {category.category.toUpperCase()}: {category.score}/{category.maxScore} ({category.percentage}%)
                 </Text>
 
                 <View style={styles.subcategoriesList}>
-                  {category.subcategories.map((subcat, subIndex) => {
+                  {catWithSubs.subcategories?.map((subcat, subIndex) => {
                     const percentage = (subcat.score / subcat.max) * 100;
 
                     return (
@@ -86,9 +81,7 @@ export default function DetailedBreakdown({ categories }: Props) {
                           </View>
                         </View>
 
-                        {subcat.comment && (
-                          <Text style={styles.subcatComment}>{subcat.comment}</Text>
-                        )}
+                        {subcat.comment && <Text style={styles.subcatComment}>{subcat.comment}</Text>}
                       </View>
                     );
                   })}

@@ -34,27 +34,27 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
   // DEBUG LOGGING
   logger.info('='.repeat(50));
   logger.info('EvaluationDetailScreen RENDER');
-  logger.info('Theme prop received:', theme);
-  logger.info('isExaminer:', isExaminer);
+  logger.info(`Theme prop received: ${theme}`);
+  logger.info(`isExaminer: ${isExaminer}`);
   logger.info('='.repeat(50));
 
   const colors = {
     // Hero background gradient
-    heroBg: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    heroBg: (isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2']) as readonly [string, string],
     // Hero top line
-    heroTopLine: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a'],
+    heroTopLine: (isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a']) as readonly [string, string],
     // Circle progress stroke
     circleStroke: isExaminer ? '#2c5aa0' : '#4caf50',
     // Circle score number
     circleNumber: isExaminer ? '#1e3a5f' : '#4caf50',
     // Category score badge gradient
-    categoryScore: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#667eea', '#764ba2'],
+    categoryScore: (isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#667eea', '#764ba2']) as readonly [string, string],
     // Category progress bar gradient
-    categoryBar: isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a'],
+    categoryBar: (isExaminer ? ['#2c5aa0', '#4a90e2'] : ['#4caf50', '#8bc34a']) as readonly [string, string],
     // Phase badge gradient
-    phaseBadge: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    phaseBadge: (isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2']) as readonly [string, string],
     // Primary button gradient
-    primaryBtn: isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2'],
+    primaryBtn: (isExaminer ? ['#1e3a5f', '#2c5aa0'] : ['#667eea', '#764ba2']) as readonly [string, string],
     // Primary button shadow color
     primaryBtnShadow: isExaminer ? '#1e3a5f' : '#667eea',
     // Secondary button border color
@@ -62,28 +62,28 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
     // Secondary button text color
     secondaryBtnText: isExaminer ? '#2c5aa0' : '#667eea',
     // Resource card gradient
-    resourceCard: isExaminer ? ['#e8eaf6', '#c5cae9'] : ['#e3f2fd', '#bbdefb'],
+    resourceCard: (isExaminer ? ['#e8eaf6', '#c5cae9'] : ['#e3f2fd', '#bbdefb']) as readonly [string, string],
     // Resource card border
     resourceCardBorder: isExaminer ? '#2c5aa0' : '#1976d2',
     // Resource text color
     resourceText: isExaminer ? '#2c5aa0' : '#1565c0',
     // Context hint gradient
-    contextHint: isExaminer ? ['#e3f2fd', '#bbdefb'] : ['#e8f5e9', '#c8e6c9'],
+    contextHint: (isExaminer ? ['#e3f2fd', '#bbdefb'] : ['#e8f5e9', '#c8e6c9']) as readonly [string, string],
     // Context hint border
     contextHintBorder: isExaminer ? '#2c5aa0' : '#4caf50',
     // Context hint text
     contextHintText: isExaminer ? '#1565c0' : '#1b5e20',
   };
 
-  logger.info('Colors object created:');
-  logger.info('  heroBg:', colors.heroBg);
-  logger.info('  circleStroke:', colors.circleStroke);
-  logger.info('  categoryBar:', colors.categoryBar);
+  logger.info('Colors object created');
+  logger.info(`  heroBg: ${JSON.stringify(colors.heroBg)}`);
+  logger.info(`  circleStroke: ${colors.circleStroke}`);
+  logger.info(`  categoryBar: ${JSON.stringify(colors.categoryBar)}`);
 
   useEffect(() => {
     logger.info('EvaluationDetailScreen mounted with MODERN ENHANCED design');
-    logger.info('Theme:', theme);
-    logger.info('Evaluation data:', JSON.stringify(evaluation, null, 2));
+    logger.info(`Theme: ${theme}`);
+    logger.info(`Evaluation data: ${JSON.stringify(evaluation, null, 2)}`);
 
     // Entrance animation
     Animated.parallel([
@@ -151,30 +151,25 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
   });
 
   return (
-    <LinearGradient
-      colors={colors.heroBg}
-      style={styles.container}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
+    <LinearGradient colors={colors.heroBg} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
       {/* Close Button (Top Right) */}
       <TouchableOpacity onPress={onClose} style={styles.closeButtonTop}>
         <Ionicons name="close" size={28} color="#ffffff" />
       </TouchableOpacity>
 
       {/* TEMPORARY DEBUG: Show current theme */}
-      <View style={{
-        position: 'absolute',
-        top: Platform.OS === 'ios' ? 90 : 60,
-        left: 20,
-        backgroundColor: theme === 'examiner' ? '#1e3a5f' : '#667eea',
-        padding: 10,
-        borderRadius: 8,
-        zIndex: 100,
-      }}>
-        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>
-          THEME: {theme.toUpperCase()}
-        </Text>
+      <View
+        style={{
+          position: 'absolute',
+          top: Platform.OS === 'ios' ? 90 : 60,
+          left: 20,
+          backgroundColor: theme === 'examiner' ? '#1e3a5f' : '#667eea',
+          padding: 10,
+          borderRadius: 8,
+          zIndex: 100,
+        }}
+      >
+        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>THEME: {theme.toUpperCase()}</Text>
       </View>
 
       <ScrollView
@@ -211,14 +206,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
               <View style={styles.scoreCircle}>
                 <Svg width={180} height={180}>
                   {/* Background Circle */}
-                  <Circle
-                    cx="90"
-                    cy="90"
-                    r="80"
-                    stroke="#e0e0e0"
-                    strokeWidth="12"
-                    fill="none"
-                  />
+                  <Circle cx="90" cy="90" r="80" stroke="#e0e0e0" strokeWidth="12" fill="none" />
                   {/* Progress Circle */}
                   <Circle
                     cx="90"
@@ -245,13 +233,8 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                 <Text style={styles.celebrationMessage}>
                   {celebrationEmoji} {celebrationMessage}
                 </Text>
-                <View style={[
-                  styles.statusBadge,
-                  !evaluation.passed && styles.statusBadgeFail
-                ]}>
-                  <Text style={styles.statusBadgeText}>
-                    {evaluation.passed ? '✅ Bestanden' : '✗ Nicht Bestanden'}
-                  </Text>
+                <View style={[styles.statusBadge, !evaluation.passed && styles.statusBadgeFail]}>
+                  <Text style={styles.statusBadgeText}>{evaluation.passed ? '✅ Bestanden' : '✗ Nicht Bestanden'}</Text>
                 </View>
               </View>
             </View>
@@ -275,12 +258,14 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                     styles.categoryCard,
                     {
                       opacity: fadeAnim,
-                      transform: [{
-                        translateY: fadeAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [30, 0],
-                        }),
-                      }],
+                      transform: [
+                        {
+                          translateY: fadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [30, 0],
+                          }),
+                        },
+                      ],
                     },
                   ]}
                 >
@@ -302,10 +287,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                       colors={colors.categoryBar}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={[
-                        styles.categoryFill,
-                        { width: `${category.percentage}%` },
-                      ]}
+                      style={[styles.categoryFill, { width: `${category.percentage}%` }]}
                     />
                   </View>
                   <Text style={styles.categoryPercentage}>{category.percentage}% erreicht</Text>
@@ -318,9 +300,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
           {evaluation.deductions && evaluation.deductions > 0 && (
             <View style={styles.deductionsContainer}>
               <View style={styles.deductionsBadge}>
-                <Text style={styles.deductionsText}>
-                  ⚠️ Abzüge: -{evaluation.deductions} Punkte
-                </Text>
+                <Text style={styles.deductionsText}>⚠️ Abzüge: -{evaluation.deductions} Punkte</Text>
               </View>
             </View>
           )}
@@ -345,7 +325,10 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                   icon = '🔍';
                 } else if (title.toLowerCase().includes('empathie') || title.toLowerCase().includes('einfühlsam')) {
                   icon = '❤️';
-                } else if (title.toLowerCase().includes('professionell') || title.toLowerCase().includes('professional')) {
+                } else if (
+                  title.toLowerCase().includes('professionell') ||
+                  title.toLowerCase().includes('professional')
+                ) {
                   icon = '👔';
                 } else if (title.toLowerCase().includes('zeit') || title.toLowerCase().includes('effizient')) {
                   icon = '⏱️';
@@ -390,10 +373,10 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                 // Build detailed explanation
                 let fullExplanation = error.explanation || '';
                 if (error.whyProblematic) {
-                  fullExplanation += fullExplanation ? ' ' + error.whyProblematic : error.whyProblematic;
+                  fullExplanation += fullExplanation ? ` ${  error.whyProblematic}` : error.whyProblematic;
                 }
                 if (error.betterApproach) {
-                  fullExplanation += fullExplanation ? ' ' + error.betterApproach : error.betterApproach;
+                  fullExplanation += fullExplanation ? ` ${  error.betterApproach}` : error.betterApproach;
                 }
 
                 return (
@@ -442,19 +425,16 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
               <Text style={styles.sectionTitle}>📚 Ihre Lernprioritäten</Text>
               <View style={styles.priorityContainer}>
                 {evaluation.priorities.map((priority, index) => {
-                  const gradientColors =
+                  const gradientColors = (
                     priority.level === 'DRINGEND'
                       ? ['#ff6b6b', '#ee5a6f']
                       : priority.level === 'WICHTIG'
-                      ? ['#ffd93d', '#ffc107']
-                      : ['#6bcf7f', '#4caf50'];
+                        ? ['#ffd93d', '#ffc107']
+                        : ['#6bcf7f', '#4caf50']
+                  ) as readonly [string, string];
 
                   const labelColor =
-                    priority.level === 'DRINGEND'
-                      ? '#dc3545'
-                      : priority.level === 'WICHTIG'
-                      ? '#ffc107'
-                      : '#28a745';
+                    priority.level === 'DRINGEND' ? '#dc3545' : priority.level === 'WICHTIG' ? '#ffc107' : '#28a745';
 
                   return (
                     <View key={index} style={styles.priorityCard}>
@@ -467,9 +447,7 @@ export default function EvaluationDetailScreen({ evaluation, onClose, theme = 'p
                         <Text style={styles.priorityEmoji}>{priority.emoji}</Text>
                       </LinearGradient>
                       <View style={styles.priorityContent}>
-                        <Text style={[styles.priorityLabel, { color: labelColor }]}>
-                          {priority.level}
-                        </Text>
+                        <Text style={[styles.priorityLabel, { color: labelColor }]}>{priority.level}</Text>
                         <Text style={styles.priorityText}>{priority.text}</Text>
                       </View>
                     </View>

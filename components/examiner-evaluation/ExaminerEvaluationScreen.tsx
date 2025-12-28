@@ -23,7 +23,7 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
 
   useEffect(() => {
     logger.info('ExaminerEvaluationScreen mounted with professional design');
-    logger.info('Evaluation data:', JSON.stringify(evaluation, null, 2));
+    logger.info(`Evaluation data: ${JSON.stringify(evaluation, null, 2)}`);
 
     // Entrance animation
     Animated.timing(fadeAnim, {
@@ -67,9 +67,7 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
           showsVerticalScrollIndicator={false}
         >
           {/* Summary */}
-          {evaluation.summary?.mainIssue && (
-            <SummaryBox summary={evaluation.summary.mainIssue} />
-          )}
+          {evaluation.summary?.mainIssue && <SummaryBox summary={evaluation.summary.mainIssue} />}
 
           {/* Category Breakdown Table */}
           <CategoryTable
@@ -81,9 +79,7 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
           />
 
           {/* Correct Answers */}
-          {evaluation.positives && evaluation.positives.length > 0 && (
-            <CorrectAnswers answers={evaluation.positives} />
-          )}
+          {evaluation.positives && evaluation.positives.length > 0 && <CorrectAnswers answers={evaluation.positives} />}
 
           {/* Missing Answers */}
           {evaluation.missedQuestions && evaluation.missedQuestions.length > 0 && (
@@ -91,9 +87,7 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
           )}
 
           {/* Context Hint (if standalone and not used in CategoryTable) */}
-          {evaluation.contextHint && !evaluation.deductions && (
-            <SummaryBox summary={`💡 ${evaluation.contextHint}`} />
-          )}
+          {evaluation.contextHint && !evaluation.deductions && <SummaryBox summary={`💡 ${evaluation.contextHint}`} />}
 
           {/* Learning Priorities */}
           {evaluation.priorities && evaluation.priorities.length > 0 && (
@@ -101,10 +95,7 @@ export default function ExaminerEvaluationScreen({ evaluation, onClose }: Props)
           )}
 
           {/* Learning Steps & Resources */}
-          <LearningResources
-            learningSteps={evaluation.nextSteps}
-            resources={evaluation.resources}
-          />
+          <LearningResources learningSteps={evaluation.nextSteps} resources={evaluation.resources} />
 
           {/* Detailed Breakdown (Collapsible) */}
           <DetailedBreakdown categories={evaluation.scoreBreakdown} />

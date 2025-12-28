@@ -1137,14 +1137,11 @@ const styles = StyleSheet.create({
     height: SPACING.sm,
     borderRadius: SPACING.xs,
     backgroundColor: MEDICAL_COLORS.slate300,
-    transition: 'all 0.3s ease',
-    cursor: 'default',
   },
   indicatorDotActive: {
     width: SPACING.xxl,
     height: SPACING.sm,
     borderRadius: SPACING.xs,
     backgroundColor: MEDICAL_COLORS.warmOrange,
-    cursor: 'default',
   },
 });

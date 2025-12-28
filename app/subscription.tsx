@@ -285,14 +285,14 @@ export default function SubscriptionPage() {
           return;
         }
 
-        if (!response.ok) {
-          logger.error('Plan change failed:', result);
+        if (!response || !response.ok) {
+          logger.error(`Plan change failed: ${JSON.stringify(result)}`);
           Alert.alert('Fehler', result.message || result.error || 'Fehler beim Ändern des Plans');
           setIsUpdating(false);
           return;
         }
 
-        logger.info('✅ Plan changed successfully:', result);
+        logger.info(`✅ Plan changed successfully: ${JSON.stringify(result)}`);
         setLoadingMessage('Erfolgreich! Aktualisiere Daten...');
 
         // Refresh subscription data
@@ -306,7 +306,7 @@ export default function SubscriptionPage() {
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(tabs)/dashboard');
+              router.replace('/(tabs)/dashboard' as any);
             },
           },
         ]);
@@ -342,7 +342,7 @@ export default function SubscriptionPage() {
                 {
                   text: 'OK',
                   onPress: () => {
-                    router.replace('/(tabs)/dashboard');
+                    router.replace('/(tabs)/dashboard' as any);
                   },
                 },
               ]
@@ -404,13 +404,13 @@ export default function SubscriptionPage() {
               text: 'OK',
               onPress: () => {
                 // Go back to dashboard
-                router.replace('/(tabs)/dashboard');
+                router.replace('/(tabs)/dashboard' as any);
               },
             },
           ]
         );
       } else {
-        logger.info('❌ Free plan update failed:', result.error);
+        logger.info(`❌ Free plan update failed: ${result.error}`);
         setErrorModal({
           visible: true,
           title: 'Nicht verfügbar',
@@ -431,7 +431,7 @@ export default function SubscriptionPage() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(tabs)/dashboard' as any);
     }
   };
 
