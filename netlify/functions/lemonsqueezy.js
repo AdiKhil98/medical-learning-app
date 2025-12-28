@@ -205,10 +205,54 @@ async function cancelLemonSqueezySubscription(subscriptionId) {
   }
 }
 
-// Get previous active subscriptions for a user (from webhook events)
+// Get previous active subscriptions for a user (from user_subscriptions table)
 async function getPreviousSubscriptions(userId, currentSubscriptionId) {
   try {
-    // Get all subscription_created events for this user
+    // Query user_subscriptions table directly for active subscriptions
+    // This is more reliable than querying webhook_events
+    const { data: subscriptions, error } = await supabase
+      .from('user_subscriptions')
+      .select('lemonsqueezy_subscription_id, variant_name, status, created_at')
+      .eq('user_id', userId)
+      .in('status', ['active', 'on_trial', 'past_due']) // Only get currently active subscriptions
+      .neq('lemonsqueezy_subscription_id', String(currentSubscriptionId)) // Exclude current subscription
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching previous subscriptions from user_subscriptions:', error);
+
+      // Fallback to webhook_events if user_subscriptions fails
+      console.log('Falling back to webhook_events table...');
+      return await getPreviousSubscriptionsFromWebhookEvents(userId, currentSubscriptionId);
+    }
+
+    if (!subscriptions || subscriptions.length === 0) {
+      console.log(`📋 No active previous subscriptions found for user ${userId}`);
+      return [];
+    }
+
+    const previousSubs = subscriptions.map((sub) => ({
+      subscriptionId: sub.lemonsqueezy_subscription_id,
+      createdAt: sub.created_at,
+      variantName: sub.variant_name || 'unknown',
+      status: sub.status,
+    }));
+
+    console.log(
+      `📋 Found ${previousSubs.length} active previous subscription(s) for user ${userId}:`,
+      previousSubs.map((s) => `${s.subscriptionId} (${s.variantName}, ${s.status})`).join(', ')
+    );
+
+    return previousSubs;
+  } catch (error) {
+    console.error('Error in getPreviousSubscriptions:', error);
+    return [];
+  }
+}
+
+// Fallback: Get previous subscriptions from webhook_events (less reliable)
+async function getPreviousSubscriptionsFromWebhookEvents(userId, currentSubscriptionId) {
+  try {
     const { data: events, error } = await supabase
       .from('webhook_events')
       .select('subscription_id, event_data, created_at')
@@ -218,20 +262,19 @@ async function getPreviousSubscriptions(userId, currentSubscriptionId) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching previous subscriptions:', error);
+      console.error('Error fetching from webhook_events:', error);
       return [];
     }
 
-    // Filter out the current subscription and get unique subscription IDs
     const previousSubs = events
-      .filter((e) => e.subscription_id && e.subscription_id !== currentSubscriptionId)
+      .filter((e) => e.subscription_id && e.subscription_id !== String(currentSubscriptionId))
       .map((e) => ({
         subscriptionId: e.subscription_id,
         createdAt: e.created_at,
         variantName: e.event_data?.data?.attributes?.variant_name || 'unknown',
       }));
 
-    // Remove duplicates (keep first occurrence)
+    // Remove duplicates
     const uniqueSubs = [];
     const seenIds = new Set();
     for (const sub of previousSubs) {
@@ -241,10 +284,10 @@ async function getPreviousSubscriptions(userId, currentSubscriptionId) {
       }
     }
 
-    console.log(`📋 Found ${uniqueSubs.length} previous subscription(s) for user ${userId}`);
+    console.log(`📋 (Fallback) Found ${uniqueSubs.length} previous subscription(s) from webhook_events`);
     return uniqueSubs;
   } catch (error) {
-    console.error('Error in getPreviousSubscriptions:', error);
+    console.error('Error in getPreviousSubscriptionsFromWebhookEvents:', error);
     return [];
   }
 }
@@ -271,6 +314,21 @@ async function cancelPreviousSubscriptions(userId, currentSubscriptionId) {
 
     if (result.success) {
       cancelled++;
+
+      // Update the subscription status in our database to prevent future re-cancellation attempts
+      const { error: updateError } = await supabase
+        .from('user_subscriptions')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('lemonsqueezy_subscription_id', sub.subscriptionId);
+
+      if (updateError) {
+        console.warn(`⚠️ Failed to update subscription ${sub.subscriptionId} status in DB:`, updateError.message);
+      } else {
+        console.log(`✅ Updated subscription ${sub.subscriptionId} status to 'cancelled' in DB`);
+      }
     } else {
       errors.push({ subscriptionId: sub.subscriptionId, error: result.error });
     }
