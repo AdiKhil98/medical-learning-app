@@ -935,9 +935,14 @@ function FSPSimulationScreen() {
   };
 
   // Mark simulation as used at 5-minute mark with server-side validation
+  // NOTE: usageMarkedRef is already set TRUE before this function is called (to prevent race conditions)
+  // So we only check for token here, not the flag
   const markSimulationAsUsed = async (clientElapsedSeconds: number) => {
     const token = sessionTokenRef.current; // Use ref instead of state
-    if (!token || usageMarkedRef.current) return;
+    if (!token) {
+      console.log('❌ FSP: markSimulationAsUsed called but no token available');
+      return;
+    }
 
     console.log('📊 FSP: Marking simulation as used at 5-minute mark');
     console.log('🔍 DEBUG: Client elapsed seconds being sent:', clientElapsedSeconds);

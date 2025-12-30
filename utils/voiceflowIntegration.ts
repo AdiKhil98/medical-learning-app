@@ -736,8 +736,8 @@ export function createKPController(supabaseUserId?: string, userEmail?: string):
 export function createFSPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
   return new VoiceflowController(
     {
-      projectID: '694efb236f20de2ac2f80306', // FSP57 Project ID (updated 2025-12-20)
-      versionID: '694efb236f20de2ac2f80307', // FSP57 Version ID
+      projectID: '6952af1c54ef7466939ba7a9', // FSP57 Project ID (updated 2025-12-29)
+      versionID: '6952af1c54ef7466939ba7aa', // FSP57 Version ID
       url: 'https://general-runtime.voiceflow.com',
       simulationType: 'fsp',
       title: 'FSP Simulation Assistant',

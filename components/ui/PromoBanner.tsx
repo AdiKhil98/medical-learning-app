@@ -81,7 +81,7 @@ export default function PromoBanner() {
           {/* Static Text Content */}
           <View style={styles.contentContainer}>
             <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-              Letzte Chance: 50% Rabatt bis 31.12.2025 – Jetzt Premium sichern!
+              Letzte Chance: 50 % Rabatt – Jetzt Premium sichern mit dem Code U4NJUYOA!
             </Text>
           </View>
 
