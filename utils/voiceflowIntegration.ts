@@ -192,6 +192,22 @@ export class VoiceflowController {
 
       // Load script if not present
       if (!document.querySelector('script[src*="voiceflow.com"]')) {
+        // CRITICAL FIX: If script is gone but window.voiceflow exists (from previous session),
+        // we must delete it to allow proper re-initialization. The Voiceflow bundle skips
+        // initialization when window.voiceflow already exists, leaving the widget broken.
+        if (window.voiceflow) {
+          logger.info('🧹 Clearing stale window.voiceflow before reloading script...');
+          try {
+            // Try to clean up any existing widget state
+            if (window.voiceflow.chat) {
+              window.voiceflow.chat.destroy?.();
+            }
+          } catch (e) {
+            logger.warn('⚠️ Error during stale widget cleanup:', e);
+          }
+          delete (window as any).voiceflow;
+          logger.info('✅ Stale window.voiceflow cleared');
+        }
         logger.info('📡 Loading Voiceflow script from CDN...');
         const script = document.createElement('script');
         script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';

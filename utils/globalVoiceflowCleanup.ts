@@ -126,17 +126,27 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     }
   };
 
-  // Function to clear global objects (less aggressive to avoid auth issues)
+  // Function to clear global objects
   const clearGlobalObjects = () => {
     try {
-      // Only hide the widget, don't delete the global object completely
+      // Properly cleanup the Voiceflow widget to allow re-initialization later
       if (window.voiceflow?.chat) {
         try {
-          window.voiceflow.chat.hide();
-          logger.info('✅ Hidden Voiceflow widget');
+          window.voiceflow.chat.hide?.();
+          window.voiceflow.chat.close?.();
+          window.voiceflow.chat.destroy?.();
+          logger.info('✅ Voiceflow widget hidden and destroyed');
         } catch (error) {
-          logger.warn('⚠️ Error hiding Voiceflow widget:', error);
+          logger.warn('⚠️ Error cleaning up Voiceflow widget:', error);
         }
+      }
+
+      // Delete the global object to allow proper re-initialization
+      // This is critical: if window.voiceflow exists but script is removed,
+      // reloading the script won't re-initialize the widget
+      if (window.voiceflow) {
+        delete (window as any).voiceflow;
+        logger.info('✅ Deleted window.voiceflow');
       }
 
       // Be more selective about storage cleanup - avoid auth-related keys
