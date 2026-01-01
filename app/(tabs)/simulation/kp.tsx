@@ -558,7 +558,7 @@ function KPSimulationScreen() {
           }
         }
 
-        const controller = createKPController(user.id, userEmail);
+        const controller = await createKPController(user.id, userEmail);
 
         if (!controller) {
           throw new Error('Failed to create Voiceflow controller - returned null/undefined');

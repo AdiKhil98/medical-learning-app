@@ -429,7 +429,7 @@ function FSPSimulationScreen() {
           }
         }
 
-        const controller = createFSPController(user.id, userEmail);
+        const controller = await createFSPController(user.id, userEmail);
 
         if (!controller) {
           throw new Error('Failed to create Voiceflow controller - returned null/undefined');

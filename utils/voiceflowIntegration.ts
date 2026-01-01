@@ -10,6 +10,54 @@
 
 import { getPersistentIds, resetSimulation, logCurrentIds, SimulationType } from './persistentIdManager';
 import { logger } from './logger';
+import { supabase } from '@/lib/supabase';
+
+// =====================================================
+// VOICEFLOW CONFIG FROM SUPABASE
+// =====================================================
+
+interface VoiceflowActiveConfig {
+  project_id: string;
+  version_id: string;
+}
+
+const configCache: { FSP?: VoiceflowActiveConfig; KP?: VoiceflowActiveConfig } = {};
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+async function getVoiceflowConfig(type: 'FSP' | 'KP'): Promise<VoiceflowActiveConfig> {
+  const now = Date.now();
+
+  // Return cached config if still valid
+  if (configCache[type] && now - cacheTimestamp < CACHE_DURATION) {
+    return configCache[type]!;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('voiceflow_active_config')
+      .select('project_id, version_id')
+      .eq('type', type)
+      .single();
+
+    if (error) throw error;
+
+    configCache[type] = data;
+    cacheTimestamp = now;
+    logger.info(`[Voiceflow] Loaded ${type} config from Supabase:`, data.project_id);
+    return data;
+  } catch (error) {
+    logger.error(`[Voiceflow] Failed to fetch ${type} config from Supabase:`, error);
+
+    // Fallback to hardcoded values if Supabase fetch fails
+    const fallbacks: Record<string, VoiceflowActiveConfig> = {
+      FSP: { project_id: '6952af1c54ef7466939ba7a9', version_id: '6952af1c54ef7466939ba7aa' },
+      KP: { project_id: '694efb186f20de2ac2f80300', version_id: '694efb186f20de2ac2f80301' },
+    };
+    logger.warn(`[Voiceflow] Using fallback ${type} config`);
+    return fallbacks[type];
+  }
+}
 
 export interface VoiceflowConfig {
   projectID: string;
@@ -731,12 +779,15 @@ export class VoiceflowController {
 
 /**
  * Create controller for KP simulation
+ * Now fetches project/version IDs from Supabase with fallback to hardcoded values
  */
-export function createKPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
+export async function createKPController(supabaseUserId?: string, userEmail?: string): Promise<VoiceflowController> {
+  const kpConfig = await getVoiceflowConfig('KP');
+
   return new VoiceflowController(
     {
-      projectID: '694efb186f20de2ac2f80300', // KP57 Project ID (updated 2025-12-20)
-      versionID: '694efb186f20de2ac2f80301', // KP57 Version ID
+      projectID: kpConfig.project_id,
+      versionID: kpConfig.version_id,
       url: 'https://general-runtime.voiceflow.com',
       simulationType: 'kp',
       title: 'KP Simulation Assistant',
@@ -748,12 +799,15 @@ export function createKPController(supabaseUserId?: string, userEmail?: string):
 
 /**
  * Create controller for FSP simulation
+ * Now fetches project/version IDs from Supabase with fallback to hardcoded values
  */
-export function createFSPController(supabaseUserId?: string, userEmail?: string): VoiceflowController {
+export async function createFSPController(supabaseUserId?: string, userEmail?: string): Promise<VoiceflowController> {
+  const fspConfig = await getVoiceflowConfig('FSP');
+
   return new VoiceflowController(
     {
-      projectID: '6952af1c54ef7466939ba7a9', // FSP57 Project ID (updated 2025-12-29)
-      versionID: '6952af1c54ef7466939ba7aa', // FSP57 Version ID
+      projectID: fspConfig.project_id,
+      versionID: fspConfig.version_id,
       url: 'https://general-runtime.voiceflow.com',
       simulationType: 'fsp',
       title: 'FSP Simulation Assistant',
