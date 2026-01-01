@@ -40,6 +40,48 @@ const SUPABASE_ANON_KEY = (supabase as any).supabaseKey || '';
 // CRITICAL FIX: Track burned tokens to prevent reuse after cleanup failure
 // Module-level Set persists across component re-renders within the same app session
 const burnedTokens = new Set<string>();
+
+// CRITICAL FIX: Module-level initialization guard to prevent React StrictMode double-init
+// This persists across component remounts in StrictMode development environment
+let moduleInitialized = false;
+
+// Platform-aware SecureStore wrapper - falls back to localStorage on web
+const SecureStorage = {
+  async deleteItemAsync(key: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Ignore errors on web
+      }
+    } else {
+      await SecureStorage.deleteItemAsync(key);
+    }
+  },
+  async setItemAsync(key: string, value: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        // Ignore errors on web
+      }
+    } else {
+      await SecureStorage.setItemAsync(key, value);
+    }
+  },
+  async getItemAsync(key: string): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    } else {
+      return SecureStorage.getItemAsync(key);
+    }
+  },
+};
+
 function KPSimulationScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -120,8 +162,8 @@ function KPSimulationScreen() {
       await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
 
       // Clear SecureStore items (sensitive data)
-      await SecureStore.deleteItemAsync('sim_session_token_kp');
-      await SecureStore.deleteItemAsync('sim_user_id_kp');
+      await SecureStorage.deleteItemAsync('sim_session_token_kp');
+      await SecureStorage.deleteItemAsync('sim_user_id_kp');
 
       console.log('🧹 KP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
@@ -178,7 +220,7 @@ function KPSimulationScreen() {
         console.log('[KP Session Recovery] Checking for active simulation session...');
 
         // Check if there's a saved session token in SecureStore
-        const savedToken = await SecureStore.getItemAsync('sim_session_token_kp');
+        const savedToken = await SecureStorage.getItemAsync('sim_session_token_kp');
         const savedStartTime = await AsyncStorage.getItem('sim_start_time_kp');
 
         console.log('[KP Session Recovery] Storage check:', {
@@ -196,7 +238,7 @@ function KPSimulationScreen() {
           if (burnedTokens.has(savedToken)) {
             console.log('[KP Session Recovery] ⚠️ Token already burned (session ended), skipping recovery');
             console.log('[KP Session Recovery] Cleaning up burned token from storage...');
-            await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+            await SecureStorage.deleteItemAsync('sim_session_token_kp').catch(() => {});
             await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(
               () => {}
             );
@@ -247,7 +289,7 @@ function KPSimulationScreen() {
 
         // No active session found - clear storage and reset optimistic count
         console.log('[KP Session Recovery] Clearing stale session data and resetting counter...');
-        await SecureStore.deleteItemAsync('sim_session_token_kp').catch(() => {});
+        await SecureStorage.deleteItemAsync('sim_session_token_kp').catch(() => {});
         await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']).catch(() => {});
 
         console.log('[KP Session Recovery] Calling resetOptimisticCount()...');
@@ -303,18 +345,27 @@ function KPSimulationScreen() {
       const timestamp = new Date().toISOString();
 
       // ============================================
-      // PREVENT DOUBLE INITIALIZATION
+      // PREVENT DOUBLE INITIALIZATION (module-level + ref guards)
       // ============================================
+      // Module-level guard prevents React StrictMode double-mount re-initialization
+      if (moduleInitialized) {
+        console.log(`⚠️ [${timestamp}] Skipping initialization - module already initialized (StrictMode protection)`);
+        addDebugLog('Module already initialized - skipping (StrictMode)');
+        return;
+      }
+
+      // Ref guard prevents concurrent initialization within same mount
       if (hasInitializedRef.current) {
-        console.log(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        console.log(`⚠️ [${timestamp}] Skipping initialization - ref guard active`);
         addDebugLog('Already initialized - skipping');
         return;
       }
 
-      // CRITICAL FIX: Set guard IMMEDIATELY to prevent race conditions
+      // CRITICAL FIX: Set BOTH guards IMMEDIATELY to prevent race conditions
       // This must happen BEFORE any async operations to block concurrent calls
+      moduleInitialized = true;
       hasInitializedRef.current = true;
-      console.log(`🔒 [${timestamp}] Initialization guard set - blocking concurrent calls`);
+      console.log(`🔒 [${timestamp}] Initialization guards set - blocking concurrent calls`);
 
       // ============================================
       // STEP 1: VALIDATE USER DATA
@@ -324,14 +375,16 @@ function KPSimulationScreen() {
       if (typeof window === 'undefined') {
         console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
-        hasInitializedRef.current = false; // Reset guard to allow retry
+        moduleInitialized = false; // Reset module guard to allow retry
+        hasInitializedRef.current = false; // Reset ref guard to allow retry
         return;
       }
 
       if (!user) {
         console.error(`❌ [${timestamp}] No user object found`);
         setInitializationError('User not authenticated');
-        hasInitializedRef.current = false; // Reset guard to allow retry
+        moduleInitialized = false; // Reset module guard to allow retry
+        hasInitializedRef.current = false; // Reset ref guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Bitte melden Sie sich an, um fortzufahren.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
         ]);
@@ -341,7 +394,8 @@ function KPSimulationScreen() {
       if (!user.id) {
         console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
-        hasInitializedRef.current = false; // Reset guard to allow retry
+        moduleInitialized = false; // Reset module guard to allow retry
+        hasInitializedRef.current = false; // Reset ref guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
         ]);
@@ -364,7 +418,8 @@ function KPSimulationScreen() {
           console.error(`❌ [${timestamp}] Access check returned null/undefined`);
           addDebugLog('ERROR: Access check failed');
           setInitializationError('Failed to verify access permissions');
-          hasInitializedRef.current = false; // Reset guard to allow retry
+          moduleInitialized = false; // Reset module guard to allow retry
+          hasInitializedRef.current = false; // Reset ref guard to allow retry
           Alert.alert(
             'Zugriffsfehler',
             'Zugriffsberechtigungen konnten nicht überprüft werden. Bitte versuchen Sie es erneut.',
@@ -383,7 +438,8 @@ function KPSimulationScreen() {
           console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           addDebugLog('BLOCKED: No simulations remaining');
           setInitializationError('No simulations remaining');
-          hasInitializedRef.current = false; // Reset guard to allow retry after upgrade
+          moduleInitialized = false; // Reset module guard to allow retry after upgrade
+          hasInitializedRef.current = false; // Reset ref guard to allow retry after upgrade
           return; // Do NOT initialize widget
         }
 
@@ -393,7 +449,8 @@ function KPSimulationScreen() {
         console.error(`❌ [${timestamp}] Error checking access:`, accessError);
         addDebugLog(`ERROR: ${accessError instanceof Error ? accessError.message : String(accessError)}`);
         setInitializationError('Access check failed');
-        hasInitializedRef.current = false; // Reset guard to allow retry
+        moduleInitialized = false; // Reset module guard to allow retry
+        hasInitializedRef.current = false; // Reset ref guard to allow retry
         Alert.alert(
           'Zugriffsfehler',
           'Fehler beim Überprüfen der Zugriffsberechtigungen. Bitte versuchen Sie es erneut.',
@@ -430,7 +487,7 @@ function KPSimulationScreen() {
 
           // Clear AsyncStorage to prevent any stale data restoration
           try {
-            await SecureStore.deleteItemAsync('sim_session_token_kp');
+            await SecureStorage.deleteItemAsync('sim_session_token_kp');
             await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
             console.log(`🧹 [${timestamp}] Cleared old session data from AsyncStorage`);
           } catch (error) {
@@ -443,7 +500,7 @@ function KPSimulationScreen() {
 
           // Clear any stale AsyncStorage data
           try {
-            await SecureStore.deleteItemAsync('sim_session_token_kp');
+            await SecureStorage.deleteItemAsync('sim_session_token_kp');
             await AsyncStorage.multiRemove(['sim_start_time_kp', 'sim_end_time_kp', 'sim_duration_ms_kp']);
             console.log(`🧹 [${timestamp}] Cleared any stale session data from AsyncStorage`);
           } catch (error) {
@@ -472,6 +529,7 @@ function KPSimulationScreen() {
 
     // Cleanup function to reset initialization flag on unmount
     return () => {
+      moduleInitialized = false; // Reset module guard on unmount
       hasInitializedRef.current = false;
     };
   }, [checkAccess, user]);
@@ -694,6 +752,7 @@ function KPSimulationScreen() {
           setInitializationError(errorMessage);
 
           // Reset guard to allow retry via button
+          moduleInitialized = false; // Reset module guard to allow retry
           hasInitializedRef.current = false;
 
           Alert.alert(
@@ -952,9 +1011,9 @@ function KPSimulationScreen() {
           ]);
 
           // Sensitive data - use SecureStore (encrypted storage)
-          await SecureStore.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
+          await SecureStorage.setItemAsync('sim_session_token_kp', sessionTokenRef.current);
           if (user?.id) {
-            await SecureStore.setItemAsync('sim_user_id_kp', user.id);
+            await SecureStorage.setItemAsync('sim_user_id_kp', user.id);
           }
 
           console.log('💾 KP: Saved simulation state securely (AsyncStorage + SecureStore)');

@@ -32,10 +32,50 @@ import { colors } from '@/constants/colors';
 // Module-level Set persists across component re-renders within the same app session
 const burnedTokens = new Set<string>();
 
+// CRITICAL FIX: Module-level initialization guard to prevent React StrictMode double-init
+let moduleInitialized = false;
+
 // CRITICAL FIX: Store Supabase config at module level for beforeunload handler
 // Extract from initialized supabase client to ensure runtime values are used
 const SUPABASE_URL = (supabase as any).supabaseUrl || '';
 const SUPABASE_ANON_KEY = (supabase as any).supabaseKey || '';
+
+// Platform-aware SecureStore wrapper - falls back to localStorage on web
+const SecureStorage = {
+  async deleteItemAsync(key: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Ignore errors on web
+      }
+    } else {
+      await SecureStorage.deleteItemAsync(key);
+    }
+  },
+  async setItemAsync(key: string, value: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        // Ignore errors on web
+      }
+    } else {
+      await SecureStore.setItemAsync(key, value);
+    }
+  },
+  async getItemAsync(key: string): Promise<string | null> {
+    if (Platform.OS === 'web') {
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    } else {
+      return SecureStore.getItemAsync(key);
+    }
+  },
+};
 
 function FSPSimulationScreen() {
   const router = useRouter();
@@ -146,7 +186,7 @@ function FSPSimulationScreen() {
         console.log('🧹 FSP SESSION CLEANUP: Clearing old session storage...');
 
         // Always clear old session storage to ensure fresh start
-        await SecureStore.deleteItemAsync('sim_session_token_fsp').catch(() => {});
+        await SecureStorage.deleteItemAsync('sim_session_token_fsp').catch(() => {});
         await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']).catch(
           () => {}
         );
@@ -256,15 +296,22 @@ function FSPSimulationScreen() {
       // ============================================
       // PREVENT DOUBLE INITIALIZATION
       // ============================================
+      // Module-level guard prevents React StrictMode double-mount re-initialization
+      if (moduleInitialized) {
+        console.log(`⚠️ [${timestamp}] Skipping initialization - module already initialized (StrictMode protection)`);
+        return;
+      }
+      // Ref guard prevents concurrent initialization within same mount
       if (hasInitializedRef.current) {
-        console.log(`⚠️ [${timestamp}] Skipping initialization - already initialized`);
+        console.log(`⚠️ [${timestamp}] Skipping initialization - ref guard active`);
         return;
       }
 
-      // CRITICAL FIX: Set guard IMMEDIATELY to prevent race conditions
+      // CRITICAL FIX: Set BOTH guards IMMEDIATELY to prevent race conditions
       // This must happen BEFORE any async operations to block concurrent calls
+      moduleInitialized = true;
       hasInitializedRef.current = true;
-      console.log(`🔒 [${timestamp}] Initialization guard set - blocking concurrent calls`);
+      console.log(`🔒 [${timestamp}] Initialization guards set (module + ref) - blocking concurrent calls`);
 
       // ============================================
       // STEP 1: VALIDATE USER DATA
@@ -274,6 +321,7 @@ function FSPSimulationScreen() {
       if (typeof window === 'undefined') {
         console.error(`❌ [${timestamp}] Window object not available - must run in browser`);
         setInitializationError('Initialization failed: Not running in browser environment');
+        moduleInitialized = false; // Reset module guard to allow retry
         hasInitializedRef.current = false; // Reset guard to allow retry
         return;
       }
@@ -282,6 +330,7 @@ function FSPSimulationScreen() {
         console.warn(`⏳ [${timestamp}] User object not loaded yet, waiting...`);
         // Don't show error - user might still be loading
         // The useEffect will re-run when user loads (it's in dependencies)
+        moduleInitialized = false; // Reset module guard to allow retry when user loads
         hasInitializedRef.current = false; // Reset guard to allow retry when user loads
         return;
       }
@@ -289,6 +338,7 @@ function FSPSimulationScreen() {
       if (!user.id) {
         console.error(`❌ [${timestamp}] User object exists but user.id is missing:`, user);
         setInitializationError('User ID not found');
+        moduleInitialized = false; // Reset module guard to allow retry
         hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert('Authentifizierungsfehler', 'Benutzer-ID fehlt. Bitte melden Sie sich erneut an.', [
           { text: 'OK', onPress: () => router.push('/(tabs)/simulation') },
@@ -309,6 +359,7 @@ function FSPSimulationScreen() {
         if (!accessCheck) {
           console.error(`❌ [${timestamp}] Access check returned null/undefined`);
           setInitializationError('Failed to verify access permissions');
+          moduleInitialized = false; // Reset module guard to allow retry
           hasInitializedRef.current = false; // Reset guard to allow retry
           Alert.alert(
             'Zugriffsfehler',
@@ -327,6 +378,7 @@ function FSPSimulationScreen() {
         if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
           console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
           setInitializationError('No simulations remaining');
+          moduleInitialized = false; // Reset module guard to allow retry after upgrade
           hasInitializedRef.current = false; // Reset guard to allow retry after upgrade
           return; // Do NOT initialize widget
         }
@@ -335,6 +387,7 @@ function FSPSimulationScreen() {
       } catch (accessError) {
         console.error(`❌ [${timestamp}] Error checking access:`, accessError);
         setInitializationError('Access check failed');
+        moduleInitialized = false; // Reset module guard to allow retry
         hasInitializedRef.current = false; // Reset guard to allow retry
         Alert.alert(
           'Zugriffsfehler',
@@ -359,6 +412,7 @@ function FSPSimulationScreen() {
 
     // Cleanup function to reset initialization flag on unmount
     return () => {
+      moduleInitialized = false; // Reset module guard on unmount
       hasInitializedRef.current = false;
     };
   }, [checkAccess, user]);
@@ -560,6 +614,7 @@ function FSPSimulationScreen() {
           setInitializationError(errorMessage);
 
           // Reset guard to allow retry via button or page refresh
+          moduleInitialized = false; // Reset module guard to allow retry
           hasInitializedRef.current = false;
 
           Alert.alert(
@@ -570,6 +625,7 @@ function FSPSimulationScreen() {
               {
                 text: 'Erneut versuchen',
                 onPress: () => {
+                  moduleInitialized = false; // Reset module guard for retry
                   hasInitializedRef.current = false;
                   initializeWithRetry(userId, initialTimestamp);
                 },
@@ -1523,7 +1579,7 @@ function FSPSimulationScreen() {
 
     // CRITICAL: Clear storage to prevent timer from reading old values
     try {
-      await SecureStore.deleteItemAsync('sim_session_token_fsp').catch(() => {});
+      await SecureStorage.deleteItemAsync('sim_session_token_fsp').catch(() => {});
       await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']).catch(() => {});
       console.log('✅ FSP: Cleared storage for fresh start');
     } catch (error) {
@@ -1639,8 +1695,8 @@ function FSPSimulationScreen() {
       await AsyncStorage.multiRemove(['sim_start_time_fsp', 'sim_end_time_fsp', 'sim_duration_ms_fsp']);
 
       // Clear SecureStore items (sensitive data)
-      await SecureStore.deleteItemAsync('sim_session_token_fsp');
-      await SecureStore.deleteItemAsync('sim_user_id_fsp');
+      await SecureStorage.deleteItemAsync('sim_session_token_fsp');
+      await SecureStorage.deleteItemAsync('sim_user_id_fsp');
 
       console.log('✅ FSP: Cleared simulation storage (AsyncStorage + SecureStore)');
     } catch (error) {
