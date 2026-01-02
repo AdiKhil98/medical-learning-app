@@ -376,8 +376,13 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
   // Production DB accepts: 'free', 'basic', 'premium' (English names)
   console.log('📊 Step 1: Updating user_simulation_quota table...');
 
-  const periodStartDate = new Date();
-  const periodEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  // ⭐ USE REAL BILLING DATES FROM LEMON SQUEEZY ⭐
+  // Extract the actual billing period from webhook data
+  const periodStartDate = periodStart ? new Date(periodStart) : new Date();
+  const periodEndDate = periodEnd ? new Date(periodEnd) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  console.log(`📅 Billing period: ${periodStartDate.toISOString()} → ${periodEndDate.toISOString()}`);
+  console.log(`📅 Next renewal: ${renewsAt}`);
 
   // Delete existing quota record for this user (to handle period conflicts)
   await supabase.from('user_simulation_quota').delete().eq('user_id', userId);
@@ -683,6 +688,56 @@ exports.handler = async (event, context) => {
 
       case 'subscription_updated':
         console.log(`🔄 Updating subscription for user ${userId}`);
+
+        // ⭐ CHECK IF THIS IS A RENEWAL (new billing period started) ⭐
+        console.log('🔍 Checking if billing period renewed...');
+
+        const { data: existingQuota } = await supabase
+          .from('user_simulation_quota')
+          .select('period_end, simulations_used')
+          .eq('user_id', userId)
+          .order('period_start', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingQuota) {
+          const existingPeriodEnd = new Date(existingQuota.period_end);
+          const newPeriodEnd = new Date(periodEnd);
+
+          console.log(`   Existing period end: ${existingPeriodEnd.toISOString()}`);
+          console.log(`   New period end: ${newPeriodEnd.toISOString()}`);
+
+          // If the period end has moved forward, this is a renewal
+          if (newPeriodEnd > existingPeriodEnd) {
+            console.log('✅ BILLING PERIOD RENEWED - Resetting simulation counter!');
+
+            // Update quota with reset counter and new period
+            const { error: resetError } = await supabase
+              .from('user_simulation_quota')
+              .update({
+                simulations_used: 0,  // ⭐ RESET COUNTER ⭐
+                period_start: periodStart,
+                period_end: periodEnd,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userId);
+
+            if (resetError) {
+              console.error('❌ Error resetting quota:', resetError);
+            } else {
+              console.log(`✅ Counter reset from ${existingQuota.simulations_used} → 0`);
+
+              // Also sync users table
+              await supabase
+                .from('users')
+                .update({ simulations_used_this_month: 0 })
+                .eq('id', userId);
+            }
+          } else {
+            console.log('ℹ️  No renewal detected (period end unchanged)');
+          }
+        }
+
 
         // Re-determine tier in case of upgrade/downgrade
         const newTier = determineSubscriptionTier(variantName, variantId);
