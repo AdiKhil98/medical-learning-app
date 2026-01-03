@@ -103,13 +103,13 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
             isVoiceflowElement;
 
           if (isWidgetElement) {
-            logger.info(`🗑️ Removing Voiceflow element: ${selector}`, element);
+            logger.info(`🗑️ Removing Voiceflow element: ${selector}`);
             element.remove();
             removedCount++;
           }
         });
       } catch (error) {
-        logger.warn(`⚠️ Error removing elements with selector ${selector}:`, error);
+        logger.error(`⚠️ Error removing elements with selector ${selector}`, error);
       }
     });
 
@@ -126,11 +126,11 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
           logger.info('✅ Keeping support widget script');
           return;
         }
-        logger.info('🗑️ Removing Voiceflow script:', script.getAttribute('src'));
+        logger.info(`🗑️ Removing Voiceflow script: ${script.getAttribute('src')}`);
         script.remove();
       });
     } catch (error) {
-      logger.warn('⚠️ Error removing Voiceflow scripts:', error);
+      logger.error('⚠️ Error removing Voiceflow scripts', error);
     }
   };
 
@@ -145,7 +145,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
           window.voiceflow.chat.destroy?.();
           logger.info('✅ Voiceflow widget hidden and destroyed');
         } catch (error) {
-          logger.warn('⚠️ Error cleaning up Voiceflow widget:', error);
+          logger.error('⚠️ Error cleaning up Voiceflow widget', error);
         }
       }
 
@@ -197,7 +197,7 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
         logger.info(`🗑️ Removed sessionStorage key: ${key}`);
       });
     } catch (error) {
-      logger.warn('⚠️ Error clearing global objects:', error);
+      logger.error('⚠️ Error clearing global objects', error);
     }
   };
 
@@ -212,54 +212,9 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     logger.info(`🧹 Global cleanup completed: ${removedCount + additionalRemoved} elements removed`);
   }, 500);
 
-  // Set up mutation observer to catch new Voiceflow elements (only on non-simulation pages)
-  const observer = new MutationObserver((mutations) => {
-    // Check global disable flag first
-    if (cleanupDisabled) {
-      return; // Cleanup is globally disabled
-    }
-
-    // Check current path before cleaning up
-    const currentPath = window.location?.pathname || '';
-    const isSimulationPage = currentPath.includes('/simulation/kp') || currentPath.includes('/simulation/fsp');
-
-    if (isSimulationPage) {
-      return; // Don't clean up on simulation pages
-    }
-
-    let shouldCleanup = false;
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          const classNameStr =
-            typeof element.className === 'string' ? element.className : String(element.className || '');
-          const isVoiceflowElement =
-            element.id?.toLowerCase().includes('voiceflow') ||
-            classNameStr.toLowerCase().includes('voiceflow') ||
-            classNameStr.toLowerCase().includes('vfrc') ||
-            (element as HTMLElement).innerHTML?.toLowerCase().includes('voiceflow');
-
-          if (isVoiceflowElement) {
-            shouldCleanup = true;
-          }
-        }
-      });
-    });
-
-    if (shouldCleanup) {
-      logger.info('🔍 Detected new Voiceflow elements on non-simulation page, cleaning up...');
-      setTimeout(cleanupVoiceflowElements, 100);
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-
-  // Store observer reference for cleanup
-  (window as any).voiceflowCleanupObserver = observer;
+  // NOTE: MutationObserver removed - it was interfering with the support widget
+  // The support widget manages its own visibility based on pathname
+  // Simulation pages handle their own Voiceflow cleanup when navigating away
 }
 
 // Function to stop the cleanup observer
@@ -277,7 +232,7 @@ if (typeof window !== 'undefined') {
   const currentPath = window.location?.pathname || '';
   const isSimulationPage = currentPath.includes('/simulation/');
 
-  logger.info('🔍 Current path:', currentPath, 'Is simulation page:', isSimulationPage);
+  logger.info(`🔍 Current path: ${currentPath}, Is simulation page: ${isSimulationPage}`);
 
   if (!isSimulationPage) {
     // Not on simulation page, run cleanup
