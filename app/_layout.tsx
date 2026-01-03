@@ -217,23 +217,9 @@ export default function RootLayout() {
     }
   }, []);
 
-  // Run global Voiceflow cleanup on app start (but not on simulation pages)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Small delay to ensure DOM is ready, then check if we should run cleanup
-      setTimeout(() => {
-        const currentPath = window.location?.pathname || '';
-        const isSimulationPage = currentPath.includes('/simulation/');
-
-        if (!isSimulationPage) {
-          logger.info('🧹 Root layout cleanup - not on simulation page');
-          runGlobalVoiceflowCleanup();
-        } else {
-          logger.info('🚫 Root layout - on simulation page, skipping cleanup');
-        }
-      }, 1000);
-    }
-  }, []);
+  // NOTE: Removed initial cleanup on app start - it was destroying the support widget
+  // The support widget manages its own visibility based on pathname
+  // Cleanup only runs when navigating AWAY from simulation pages (see next useEffect)
 
   // Clean up Voiceflow widget when navigating away from simulation pages
   useEffect(() => {

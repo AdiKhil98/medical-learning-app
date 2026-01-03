@@ -27,7 +27,6 @@ import {
   Menu as MenuIcon,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import Menu from '@/components/ui/Menu';
@@ -333,12 +332,8 @@ const BibliothekIndex: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('alphabetical');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
-  // Ensure Voiceflow widget is cleaned up when entering Bibliothek
-  useEffect(() => {
-    runGlobalVoiceflowCleanup();
-    const timeout = setTimeout(() => runGlobalVoiceflowCleanup(), 500);
-    return () => clearTimeout(timeout);
-  }, []);
+  // NOTE: Removed Voiceflow cleanup - support widget should be visible on this page
+  // Cleanup only runs when navigating away from simulation pages
 
   // Fetch top-level categories from database
   const fetchCategories = useCallback(async () => {

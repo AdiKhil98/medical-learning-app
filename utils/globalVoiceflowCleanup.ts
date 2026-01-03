@@ -226,16 +226,6 @@ export function stopGlobalVoiceflowCleanup() {
   }
 }
 
-// Auto-run cleanup when this module is loaded (but not on simulation pages)
-if (typeof window !== 'undefined') {
-  // Check if we're on a simulation page
-  const currentPath = window.location?.pathname || '';
-  const isSimulationPage = currentPath.includes('/simulation/');
-
-  logger.info(`🔍 Current path: ${currentPath}, Is simulation page: ${isSimulationPage}`);
-
-  if (!isSimulationPage) {
-    // Not on simulation page, run cleanup
-    runGlobalVoiceflowCleanup();
-  }
-}
+// NOTE: Removed auto-run cleanup on module load - it was destroying the support widget
+// Cleanup should only run when explicitly called (e.g., when navigating away from simulation pages)
+// The support widget component manages its own visibility
