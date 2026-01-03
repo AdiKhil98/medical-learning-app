@@ -15,7 +15,7 @@ import {
 } from '@/utils/globalVoiceflowCleanup';
 import { simulationTracker } from '@/lib/simulationTrackingService';
 import { quotaService } from '@/lib/quotaService';
-import { verifyAndFixQuota, getCurrentQuotaUsed } from '@/lib/quotaFallback';
+
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -1208,13 +1208,6 @@ function KPSimulationScreen() {
 
       if (result.success) {
         console.warn('✅✅✅ SIMULATION MARKED AS COUNTED IN DATABASE');
-
-        // CRITICAL FIX: Verify quota was actually incremented and fix if needed
-        const usedBefore = await getCurrentQuotaUsed(user?.id);
-        const fallbackResult = await verifyAndFixQuota(user?.id, usedBefore);
-        if (fallbackResult.fixed) {
-          console.warn('🔧 Quota was fixed via fallback mechanism');
-        }
 
         // CRITICAL FIX: Refresh quota display in real-time after counting
         try {
