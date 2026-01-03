@@ -6,6 +6,7 @@ import SlidingHomepage from '@/components/homepage/SlidingHomepage';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import { withMonitoring } from '@/components/withMonitoring';
+import VoiceflowSupportWidget from '@/components/VoiceflowSupportWidget';
 
 function DashboardScreen() {
   const { user } = useAuth();
@@ -23,24 +24,20 @@ function DashboardScreen() {
   };
 
   if (onboardingLoading) {
-    return (
-      <SlidingHomepage onGetStarted={handleGetStarted} />
-    );
+    return <SlidingHomepage onGetStarted={handleGetStarted} />;
   }
 
   return (
     <>
       <SlidingHomepage onGetStarted={handleGetStarted} />
-      
+
       {/* Welcome Flow for new users */}
-      <WelcomeFlow
-        visible={showWelcomeFlow}
-        onComplete={handleOnboardingComplete}
-        onDismiss={completeOnboarding}
-      />
+      <WelcomeFlow visible={showWelcomeFlow} onComplete={handleOnboardingComplete} onDismiss={completeOnboarding} />
+
+      {/* Voiceflow Support Chat Widget - only shows on web */}
+      <VoiceflowSupportWidget />
     </>
   );
 }
 
 export default withMonitoring(DashboardScreen, 'Home');
-
