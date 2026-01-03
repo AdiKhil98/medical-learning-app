@@ -1230,10 +1230,10 @@ function FSPSimulationScreen() {
     setShowSimulationCompleted(true);
   };
 
-  // Navigate to progress page
+  // Navigate to dashboard (progress page hidden temporarily)
   const navigateToProgress = () => {
     setShowSimulationCompleted(false);
-    router.push('/(tabs)/progress');
+    router.push('/(tabs)');
   };
 
   // Close completion modal

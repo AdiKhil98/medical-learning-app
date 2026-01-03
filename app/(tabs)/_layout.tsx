@@ -124,9 +124,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Activity size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}
       />
+      {/* Progress tab hidden temporarily - can be re-enabled by removing href: null */}
       <Tabs.Screen
         name="progress"
         options={{
+          href: null, // Hide from tab bar
           title: 'Fortschritt',
           tabBarIcon: ({ color }) => <BarChart size={screenWidth < 600 ? 20 : 24} color={color} />,
         }}

@@ -18,27 +18,20 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
       <View style={styles.sectionHero}>
         <View style={styles.heroContent}>
           <View style={styles.heroTitleContainer}>
-            <Text style={styles.splitScreenHeroTitle}>
-              Schnellzugriff zu deinen Lernmaterialien
-            </Text>
+            <Text style={styles.splitScreenHeroTitle}>Schnellzugriff zu deinen Lernmaterialien</Text>
           </View>
           <View style={styles.heroSubtitleContainer}>
-            <Text style={styles.splitScreenHeroSubtitle}>
-              Setze dein Lernen nahtlos fort
-            </Text>
+            <Text style={styles.splitScreenHeroSubtitle}>Setze dein Lernen nahtlos fort</Text>
           </View>
           <View style={styles.heroButtonsContainer}>
-            <TouchableOpacity 
-              style={styles.primaryButton}
-              onPress={() => router.push('/(tabs)/bibliothek')}
-            >
+            <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/(tabs)/bibliothek')}>
               <Text style={styles.primaryButtonText}>Zur Bibliothek</Text>
               <ArrowRight size={18} color="white" style={styles.buttonIcon} />
             </TouchableOpacity>
           </View>
         </View>
       </View>
-      
+
       {/* Section content */}
       <View style={styles.sectionContentInner}>
         <View style={styles.quickAccessSection}>
@@ -51,15 +44,15 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
             </View>
             <Text style={styles.modernSectionSubtitle}>Setze dein Lernen nahtlos fort</Text>
           </View>
-          
+
           <View style={styles.quickAccessGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickAccessCard}
               onPress={() => router.push('/(tabs)/bibliothek')}
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={['#E2827F', '#B87E70', '#B15740']}  // DRAMATIC coral gradient
+                colors={['#E2827F', '#B87E70', '#B15740']} // DRAMATIC coral gradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.quickAccessGradient}
@@ -69,8 +62,8 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
                 <Text style={styles.quickAccessSubtitle}>Lernmaterialien</Text>
               </LinearGradient>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.quickAccessCard}
               onPress={() => router.push('/(tabs)/simulation')}
               activeOpacity={0.9}
@@ -86,8 +79,9 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
                 <Text style={styles.quickAccessSubtitle}>Prüfungstraining</Text>
               </LinearGradient>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            {/* Progress card hidden temporarily
+            <TouchableOpacity
               style={styles.quickAccessCard}
               onPress={() => router.push('/(tabs)/progress')}
               activeOpacity={0.9}
@@ -103,6 +97,7 @@ const QuickAccessSection = React.memo<QuickAccessSectionProps>(() => {
                 <Text style={styles.quickAccessSubtitle}>Deine Statistiken</Text>
               </LinearGradient>
             </TouchableOpacity>
+            */}
           </View>
         </View>
       </View>

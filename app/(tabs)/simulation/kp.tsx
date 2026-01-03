@@ -1438,8 +1438,8 @@ function KPSimulationScreen() {
 
       if (error || !data) {
         console.error('Error fetching latest evaluation:', error);
-        // Fallback to progress page if evaluation not found
-        router.push('/(tabs)/progress');
+        // Fallback to dashboard if evaluation not found (progress page hidden)
+        router.push('/(tabs)');
         return;
       }
 
@@ -1448,8 +1448,8 @@ function KPSimulationScreen() {
       router.push(`/evaluation/${data.id}` as any);
     } catch (err) {
       console.error('Exception fetching evaluation:', err);
-      // Fallback to progress page
-      router.push('/(tabs)/progress');
+      // Fallback to dashboard (progress page hidden)
+      router.push('/(tabs)');
     }
   };
 
