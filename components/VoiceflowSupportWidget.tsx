@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import { usePathname } from 'expo-router';
 import { logger } from '@/utils/logger';
-import { disableVoiceflowCleanup, stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 
 // Type declaration for Voiceflow
 declare global {
@@ -18,6 +18,7 @@ declare global {
         destroy?: () => void;
       };
     };
+    voiceflowSupportLoaded?: boolean;
   }
 }
 
@@ -28,15 +29,18 @@ interface VoiceflowSupportWidgetProps {
 /**
  * Voiceflow Support Chat Widget
  *
- * This is a standalone support chat widget for the dashboard.
- * It uses a different project ID than the simulation widgets.
+ * This is a standalone support chat widget for the dashboard ONLY.
+ * It hides itself when on simulation pages.
  * Only loads on web platform.
  */
 export default function VoiceflowSupportWidget({
   projectID = '695939f1f022b12146822729',
 }: VoiceflowSupportWidgetProps) {
-  const isLoadedRef = useRef(false);
   const scriptIdRef = useRef('voiceflow-support-widget-script');
+  const pathname = usePathname();
+
+  // Check if we're on a simulation page
+  const isSimulationPage = pathname?.includes('/simulation/kp') || pathname?.includes('/simulation/fsp');
 
   useEffect(() => {
     // Only load on web
@@ -44,19 +48,41 @@ export default function VoiceflowSupportWidget({
       return;
     }
 
-    // CRITICAL: Disable cleanup so the widget doesn't get removed
-    disableVoiceflowCleanup();
-    stopGlobalVoiceflowCleanup();
-    logger.info('Support widget: Disabled Voiceflow cleanup');
+    // If on simulation page, hide the widget and don't load
+    if (isSimulationPage) {
+      logger.info('Support widget: On simulation page, hiding widget');
+      if (window.voiceflow?.chat?.hide) {
+        window.voiceflow.chat.hide();
+      }
+      // Also hide the widget container directly
+      const widgetElements = document.querySelectorAll(
+        '#voiceflow-chat, [class*="vfrc-widget"], [class*="vfrc-launcher"]'
+      );
+      widgetElements.forEach((el) => {
+        (el as HTMLElement).style.display = 'none';
+      });
+      return;
+    }
+
+    // Not on simulation page - show the widget
+    logger.info('Support widget: Not on simulation page, showing widget');
+
+    // If widget already loaded, just show it
+    if (window.voiceflowSupportLoaded && window.voiceflow?.chat?.show) {
+      window.voiceflow.chat.show();
+      // Also show the widget container
+      const widgetElements = document.querySelectorAll(
+        '#voiceflow-chat, [class*="vfrc-widget"], [class*="vfrc-launcher"]'
+      );
+      widgetElements.forEach((el) => {
+        (el as HTMLElement).style.display = '';
+      });
+      return;
+    }
 
     // Check if script already exists
     if (document.getElementById(scriptIdRef.current)) {
       logger.info('Voiceflow support widget script already loaded');
-      return;
-    }
-
-    // Don't load if already loaded
-    if (isLoadedRef.current) {
       return;
     }
 
@@ -77,7 +103,7 @@ export default function VoiceflowSupportWidget({
             url: 'https://runtime-api.voiceflow.com',
           },
         });
-        isLoadedRef.current = true;
+        window.voiceflowSupportLoaded = true;
         logger.info('Voiceflow support widget loaded successfully');
       }
     };
@@ -87,14 +113,7 @@ export default function VoiceflowSupportWidget({
     };
 
     document.body.appendChild(script);
-
-    // Cleanup on unmount - but DON'T re-enable cleanup since we want the widget persistent
-    return () => {
-      // We intentionally don't clean up or re-enable cleanup here
-      // because the widget should persist across the dashboard
-      logger.info('Support widget: Component unmounting (widget persists)');
-    };
-  }, [projectID]);
+  }, [projectID, isSimulationPage, pathname]);
 
   // This component doesn't render anything - the widget is injected into the DOM
   return null;
