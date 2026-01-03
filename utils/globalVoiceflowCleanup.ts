@@ -5,6 +5,9 @@ import { logger } from './logger';
 // Global flag to completely disable cleanup (set by simulation pages)
 let cleanupDisabled = false;
 
+// Support widget should never be cleaned up
+const SUPPORT_WIDGET_SCRIPT_ID = 'voiceflow-support-widget-script';
+
 /**
  * Disable Voiceflow cleanup globally
  * Call this BEFORE loading Voiceflow widget on simulation pages
@@ -113,11 +116,16 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
     return removedCount;
   };
 
-  // Function to clean up scripts
+  // Function to clean up scripts (but not support widget)
   const cleanupVoiceflowScripts = () => {
     try {
       const scripts = document.querySelectorAll('script[src*="voiceflow"]');
       scripts.forEach((script) => {
+        // Don't remove the support widget script
+        if (script.id === SUPPORT_WIDGET_SCRIPT_ID) {
+          logger.info('✅ Keeping support widget script');
+          return;
+        }
         logger.info('🗑️ Removing Voiceflow script:', script.getAttribute('src'));
         script.remove();
       });

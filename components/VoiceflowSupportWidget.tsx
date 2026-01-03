@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
+import { disableVoiceflowCleanup, stopGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 
 // Type declaration for Voiceflow
 declare global {
@@ -43,6 +44,11 @@ export default function VoiceflowSupportWidget({
       return;
     }
 
+    // CRITICAL: Disable cleanup so the widget doesn't get removed
+    disableVoiceflowCleanup();
+    stopGlobalVoiceflowCleanup();
+    logger.info('Support widget: Disabled Voiceflow cleanup');
+
     // Check if script already exists
     if (document.getElementById(scriptIdRef.current)) {
       logger.info('Voiceflow support widget script already loaded');
@@ -82,23 +88,11 @@ export default function VoiceflowSupportWidget({
 
     document.body.appendChild(script);
 
-    // Cleanup on unmount
+    // Cleanup on unmount - but DON'T re-enable cleanup since we want the widget persistent
     return () => {
-      const existingScript = document.getElementById(scriptIdRef.current);
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      // Clean up Voiceflow widget
-      if (window.voiceflow?.chat?.destroy) {
-        try {
-          window.voiceflow.chat.destroy();
-        } catch (e) {
-          logger.warn('Error destroying Voiceflow widget:', e);
-        }
-      }
-
-      isLoadedRef.current = false;
+      // We intentionally don't clean up or re-enable cleanup here
+      // because the widget should persist across the dashboard
+      logger.info('Support widget: Component unmounting (widget persists)');
     };
   }, [projectID]);
 
