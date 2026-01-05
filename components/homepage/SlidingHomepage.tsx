@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDailyContent } from '@/hooks/useDailyContent';
 import { useRecentContentForHomepage } from '@/hooks/useRecentContent';
 import { logger } from '@/utils/logger';
+import { HomepageSkeleton } from './HomepageSkeleton';
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -51,7 +52,7 @@ interface SlidingHomepageProps {
   onGetStarted?: () => void;
 }
 
-export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) {
+export default function SlidingHomepage({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -114,7 +115,7 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     setCurrentSlide(index);
   };
 
-  const scrollToSlide = (index: number) => {
+  const _scrollToSlide = (index: number) => {
     scrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
     setCurrentSlide(index);
   };
@@ -141,33 +142,47 @@ export default function SlidingHomepage({ onGetStarted }: SlidingHomepageProps) 
     router.push('/(tabs)/bibliothek');
   };
 
-  // Dynamic styles for dark mode support
-  const dynamicStyles = StyleSheet.create({
-    container: {
-      ...styles.container,
-      backgroundColor: colors.background,
-    },
-    heroCard: {
-      ...styles.heroCard,
-      backgroundColor: colors.card,
-    },
-    recentCard: {
-      ...styles.recentCard,
-      backgroundColor: colors.card,
-    },
-    tipCard: {
-      ...styles.tipCard,
-      backgroundColor: colors.card,
-    },
-    questionCard: {
-      ...styles.questionCard,
-      backgroundColor: colors.card,
-    },
-  });
+  // PERFORMANCE FIX: Memoize dynamic styles to prevent recreation on every render
+  // These styles support dark mode by merging base styles with theme colors
+  // Note: colors are from module scope, so empty deps array is intentional
+  const dynamicStyles = useMemo(
+    () => ({
+      container: {
+        ...styles.container,
+        backgroundColor: colors.background,
+      },
+      heroCard: {
+        ...styles.heroCard,
+        backgroundColor: colors.card,
+      },
+      recentCard: {
+        ...styles.recentCard,
+        backgroundColor: colors.card,
+      },
+      tipCard: {
+        ...styles.tipCard,
+        backgroundColor: colors.card,
+      },
+      questionCard: {
+        ...styles.questionCard,
+        backgroundColor: colors.card,
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   // Gradient colors
   const backgroundGradient = MEDICAL_COLORS.backgroundGradient;
   const headerGradient = MEDICAL_COLORS.headerGradient;
+
+  // PERFORMANCE FIX: Show skeleton while critical data is loading
+  // This prevents CLS (Cumulative Layout Shift) by reserving space immediately
+  // Note: This early return is AFTER all hooks to comply with Rules of Hooks
+  const isInitialLoading = dailyLoading && recentLoading;
+  if (isInitialLoading) {
+    return <HomepageSkeleton />;
+  }
 
   return (
     <SafeAreaView style={dynamicStyles.container}>

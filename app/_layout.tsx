@@ -70,17 +70,53 @@ export default function RootLayout() {
     }
   }, []);
 
+  // Preload Google Fonts early for better LCP
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // PERFORMANCE FIX: Add preconnect and preload hints first (before stylesheet)
+      // This tells the browser to start fetching fonts early in the loading process
+
+      // Preconnect to Google Fonts domains (high priority)
+      if (!document.getElementById('preconnect-google-fonts')) {
+        const preconnect1 = document.createElement('link');
+        preconnect1.id = 'preconnect-google-fonts';
+        preconnect1.rel = 'preconnect';
+        preconnect1.href = 'https://fonts.googleapis.com';
+        document.head.insertBefore(preconnect1, document.head.firstChild);
+
+        const preconnect2 = document.createElement('link');
+        preconnect2.rel = 'preconnect';
+        preconnect2.href = 'https://fonts.gstatic.com';
+        preconnect2.crossOrigin = 'anonymous';
+        document.head.insertBefore(preconnect2, document.head.firstChild);
+
+        logger.info('✅ Font preconnect hints added');
+      }
+
+      // Preload the font stylesheet (tells browser to fetch early)
+      if (!document.getElementById('preload-google-fonts')) {
+        const preloadLink = document.createElement('link');
+        preloadLink.id = 'preload-google-fonts';
+        preloadLink.rel = 'preload';
+        preloadLink.as = 'style';
+        preloadLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
+        document.head.insertBefore(preloadLink, document.head.firstChild);
+        logger.info('✅ Font preload hint added');
+      }
+    }
+  }, []);
+
   // Fix mobile viewport on web
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      // Add Google Fonts (Inter) import
+      // Add Google Fonts (Inter) import - now loads faster due to preload above
       if (!document.getElementById('google-fonts-inter')) {
         const link = document.createElement('link');
         link.id = 'google-fonts-inter';
         link.rel = 'stylesheet';
         link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
         document.head.appendChild(link);
-        logger.info('✅ Google Fonts (Inter) loaded');
+        logger.info('✅ Google Fonts (Inter) stylesheet loaded');
       }
 
       // Add mobile viewport fix styles using 2025 best practices
