@@ -702,7 +702,7 @@ exports.handler = async (event, context) => {
 
         if (existingQuota) {
           const existingPeriodEnd = new Date(existingQuota.period_end);
-          const newPeriodEnd = new Date(periodEnd);
+          const newPeriodEnd = new Date(subData.periodEnd);
 
           console.log(`   Existing period end: ${existingPeriodEnd.toISOString()}`);
           console.log(`   New period end: ${newPeriodEnd.toISOString()}`);
@@ -716,8 +716,8 @@ exports.handler = async (event, context) => {
               .from('user_simulation_quota')
               .update({
                 simulations_used: 0,  // ⭐ RESET COUNTER ⭐
-                period_start: periodStart,
-                period_end: periodEnd,
+                period_start: subData.periodStart,
+                period_end: subData.periodEnd,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', userId);
