@@ -139,6 +139,72 @@ export class SubscriptionService {
       }
 
       console.log('✅ Subscription updated successfully:', data);
+
+      // ⭐ CREATE QUOTA RECORD FOR FREE TIER ⭐
+      if (plan.tier === 'free') {
+        console.log('📊 Creating quota record for free tier user...');
+
+        const periodStart = new Date();
+        const periodEnd = new Date(periodStart);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+        // Check if quota already exists
+        const { data: existingQuota } = await supabase
+          .from('user_simulation_quota')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+
+        if (existingQuota) {
+          // Update existing quota
+          const { error: quotaError } = await supabase
+            .from('user_simulation_quota')
+            .update({
+              subscription_tier: 'free',
+              total_simulations: 3,
+              simulations_used: 0,
+              period_start: periodStart.toISOString(),
+              period_end: periodEnd.toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+
+          if (quotaError) {
+            console.error('❌ Error updating quota:', quotaError);
+            // Rollback: reset has_used_free_tier flag
+            await supabase
+              .from('users')
+              .update({ has_used_free_tier: false })
+              .eq('id', userId);
+            return { success: false, error: 'Fehler beim Aktualisieren der Simulation-Quota' };
+          }
+        } else {
+          // Create new quota
+          const { error: quotaError } = await supabase
+            .from('user_simulation_quota')
+            .insert({
+              user_id: userId,
+              subscription_tier: 'free',
+              total_simulations: 3,
+              simulations_used: 0,
+              period_start: periodStart.toISOString(),
+              period_end: periodEnd.toISOString()
+            });
+
+          if (quotaError) {
+            console.error('❌ Error creating quota:', quotaError);
+            // Rollback: reset has_used_free_tier flag
+            await supabase
+              .from('users')
+              .update({ has_used_free_tier: false })
+              .eq('id', userId);
+            return { success: false, error: 'Fehler beim Erstellen der Simulation-Quota' };
+          }
+        }
+
+        console.log('✅ Quota record created/updated successfully');
+      }
+
       return { success: true };
 
     } catch (error) {
