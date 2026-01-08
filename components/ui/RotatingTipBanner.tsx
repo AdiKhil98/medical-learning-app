@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { X, Lightbulb } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions } from 'react-native';
+import { X, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Tips array - always relevant regardless of simulation phase
 const SIMULATION_TIPS = [
@@ -15,7 +17,7 @@ const SIMULATION_TIPS = [
     id: 2,
     emoji: '➡️',
     title: 'Nächste Phase',
-    text: '"Ich habe keine weitere Fragen" → wechselt zur nächsten Phase',
+    text: '"Ich habe keine weitere Fragen" → nächste Phase',
   },
   {
     id: 3,
@@ -27,7 +29,7 @@ const SIMULATION_TIPS = [
     id: 4,
     emoji: '⏱️',
     title: 'Tempo',
-    text: 'Nehmen Sie sich Zeit - Qualität vor Geschwindigkeit',
+    text: 'Nehmen Sie sich Zeit - Qualität zählt',
   },
   {
     id: 5,
@@ -55,7 +57,7 @@ const SIMULATION_TIPS = [
   },
 ];
 
-const ROTATION_INTERVAL_MS = 60000; // 60 seconds
+const ROTATION_INTERVAL_MS = 45000; // 45 seconds auto-rotation
 
 interface RotatingTipBannerProps {
   visible?: boolean;
@@ -67,68 +69,99 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
   const [isVisible, setIsVisible] = useState(visible);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const lastInteraction = useRef(Date.now());
 
-  // Pulse animation for the emoji
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
+  // Navigate to next tip
+  const goToNext = () => {
+    lastInteraction.current = Date.now();
+    animateTransition('next');
+  };
+
+  // Navigate to previous tip
+  const goToPrev = () => {
+    lastInteraction.current = Date.now();
+    animateTransition('prev');
+  };
+
+  // Navigate to specific tip
+  const goToTip = (index: number) => {
+    if (index === currentTipIndex) return;
+    lastInteraction.current = Date.now();
+    const direction = index > currentTipIndex ? 'next' : 'prev';
+    animateTransition(direction, index);
+  };
+
+  // Animate transition between tips
+  const animateTransition = (direction: 'next' | 'prev', specificIndex?: number) => {
+    const slideOut = direction === 'next' ? -30 : 30;
+    const slideIn = direction === 'next' ? 30 : -30;
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: slideOut,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (specificIndex !== undefined) {
+        setCurrentTipIndex(specificIndex);
+      } else {
+        setCurrentTipIndex((prev) =>
+          direction === 'next'
+            ? (prev + 1) % SIMULATION_TIPS.length
+            : (prev - 1 + SIMULATION_TIPS.length) % SIMULATION_TIPS.length
+        );
+      }
+      slideAnim.setValue(slideIn);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 1000,
+          duration: 150,
           useNativeDriver: true,
         }),
-      ])
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
 
-  // Rotate tips every 60 seconds with slide animation
+  // Swipe gesture handler
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -50) {
+          goToNext();
+        } else if (gestureState.dx > 50) {
+          goToPrev();
+        }
+      },
+    })
+  ).current;
+
+  // Auto-rotate tips (resets after manual interaction)
   useEffect(() => {
     if (!isVisible) return;
 
     const interval = setInterval(() => {
-      // Slide out and fade
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -20,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        // Change tip
-        setCurrentTipIndex((prev) => (prev + 1) % SIMULATION_TIPS.length);
-        // Reset position
-        slideAnim.setValue(20);
-        // Slide in and fade
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(slideAnim, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      });
+      const timeSinceInteraction = Date.now() - lastInteraction.current;
+      if (timeSinceInteraction >= ROTATION_INTERVAL_MS) {
+        animateTransition('next');
+      }
     }, ROTATION_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [isVisible, fadeAnim, slideAnim]);
+  }, [isVisible]);
 
   // Handle visibility prop changes
   useEffect(() => {
@@ -175,52 +208,82 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
   const currentTip = SIMULATION_TIPS[currentTipIndex];
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]} {...panResponder.panHandlers}>
       <LinearGradient
         colors={['#6366f1', '#8b5cf6']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        {/* Left side - Emoji with pulse */}
-        <Animated.View style={[styles.emojiContainer, { transform: [{ scale: pulseAnim }] }]}>
-          <Text style={styles.emoji}>{currentTip.emoji}</Text>
-        </Animated.View>
-
-        {/* Middle - Content */}
-        <Animated.View
-          style={[
-            styles.contentContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateX: slideAnim }],
-            },
-          ]}
+        {/* Left arrow - tap to go previous */}
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={goToPrev}
+          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
         >
-          <View style={styles.labelRow}>
-            <Text style={styles.label}>TIPP</Text>
-            <View style={styles.titleBadge}>
-              <Text style={styles.titleText}>{currentTip.title}</Text>
-            </View>
-          </View>
-          <Text style={styles.tipText} numberOfLines={2}>
-            {currentTip.text}
-          </Text>
-        </Animated.View>
+          <ChevronLeft size={20} color="rgba(255,255,255,0.6)" />
+        </TouchableOpacity>
 
-        {/* Right side - Dismiss */}
+        {/* Center content */}
+        <View style={styles.centerContent}>
+          {/* Emoji circle */}
+          <View style={styles.emojiContainer}>
+            <Text style={styles.emoji}>{currentTip.emoji}</Text>
+          </View>
+
+          {/* Text content */}
+          <Animated.View
+            style={[
+              styles.contentContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateX: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>TIPP</Text>
+              <View style={styles.titleBadge}>
+                <Text style={styles.titleText}>{currentTip.title}</Text>
+              </View>
+              <Text style={styles.counter}>
+                {currentTipIndex + 1}/{SIMULATION_TIPS.length}
+              </Text>
+            </View>
+            <Text style={styles.tipText} numberOfLines={2}>
+              {currentTip.text}
+            </Text>
+          </Animated.View>
+        </View>
+
+        {/* Right arrow - tap to go next */}
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={goToNext}
+          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
+        >
+          <ChevronRight size={20} color="rgba(255,255,255,0.6)" />
+        </TouchableOpacity>
+
+        {/* Dismiss button */}
         <TouchableOpacity
           style={styles.dismissButton}
           onPress={handleDismiss}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <X size={18} color="rgba(255,255,255,0.7)" />
+          <X size={16} color="rgba(255,255,255,0.6)" />
         </TouchableOpacity>
 
-        {/* Progress dots */}
+        {/* Progress dots - tappable */}
         <View style={styles.dotsContainer}>
           {SIMULATION_TIPS.map((_, index) => (
-            <View key={index} style={[styles.dot, index === currentTipIndex && styles.dotActive]} />
+            <TouchableOpacity
+              key={index}
+              onPress={() => goToTip(index)}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            >
+              <View style={[styles.dot, index === currentTipIndex && styles.dotActive]} />
+            </TouchableOpacity>
           ))}
         </View>
       </LinearGradient>
@@ -235,65 +298,84 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 6,
   },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 16,
-    minHeight: 80,
+    minHeight: 85,
+  },
+  navButton: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   emojiContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   emoji: {
-    fontSize: 22,
+    fontSize: 20,
   },
   contentContainer: {
     flex: 1,
-    paddingRight: 8,
+    paddingRight: 4,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   label: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.8)',
-    letterSpacing: 1,
-    marginRight: 8,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.8,
+    marginRight: 6,
   },
   titleBadge: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   titleText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     color: '#ffffff',
   },
+  counter: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.5)',
+    marginLeft: 'auto',
+    marginRight: 4,
+  },
   tipText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#ffffff',
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '500',
   },
   dismissButton: {
-    padding: 6,
-    marginLeft: 4,
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
   },
   dotsContainer: {
     position: 'absolute',
@@ -302,16 +384,16 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: 'rgba(255,255,255,0.3)',
   },
   dotActive: {
-    width: 12,
+    width: 16,
     backgroundColor: 'rgba(255,255,255,0.9)',
   },
   showButton: {
