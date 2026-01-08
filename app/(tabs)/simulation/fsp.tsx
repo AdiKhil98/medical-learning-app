@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
-import { RotatingTipBanner } from '@/components/ui/RotatingTipBanner';
+import { RotatingTipBannerFSP } from '@/components/ui/RotatingTipBannerFSP';
 import QuotaExhaustedCard from '@/components/simulation/QuotaExhaustedCard';
 import {
   SIMULATION_DURATION_SECONDS,
@@ -1938,7 +1938,7 @@ function FSPSimulationScreen() {
             )}
 
             {/* Rotating Tip Banner */}
-            <RotatingTipBanner visible={showTipBanner} onDismiss={() => setShowTipBanner(false)} />
+            <RotatingTipBannerFSP visible={showTipBanner} onDismiss={() => setShowTipBanner(false)} />
 
             {/* Widget Area */}
             {!isSimulationLocked && (
