@@ -238,8 +238,8 @@ export class VoiceflowController {
       logger.info(`📧 Email for widget: ${this.userEmail || 'NOT_AVAILABLE'}`);
       logCurrentIds(this.config.simulationType);
 
-      // Load script if not present
-      if (!document.querySelector('script[src*="voiceflow.com"]')) {
+      // Load script if not present - check for both old and new CDN URLs
+      if (!document.querySelector('script[src*="cdn.voiceflow.com"]')) {
         // CRITICAL FIX: If script is gone but window.voiceflow exists (from previous session),
         // we must delete it to allow proper re-initialization. The Voiceflow bundle skips
         // initialization when window.voiceflow already exists, leaving the widget broken.
@@ -258,9 +258,10 @@ export class VoiceflowController {
         }
         logger.info('📡 Loading Voiceflow script from CDN...');
         const script = document.createElement('script');
-        // UPDATED 2025: Use cached CDN for faster, more reliable loading
-        // This URL is recommended by Voiceflow docs and has better global edge caching
-        script.src = 'https://widget-cache.pages.dev/bundle.mjs';
+        // UPDATED 2026: Use official Voiceflow CDN with new widget-next
+        // Legacy widget was deprecated June 2025 - must use widget-next
+        // Docs: https://docs.voiceflow.com/docs/web-chat-migration
+        script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
         script.type = 'text/javascript';
 
         // Add 45-second timeout (increased from 30s for slow mobile connections)
