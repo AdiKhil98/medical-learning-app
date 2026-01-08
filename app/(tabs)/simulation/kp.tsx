@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Brain, Clock, Info, Lock, HelpCircle } from 'lucide-react-native';
+import { ArrowLeft, Brain, Clock, Info, Lock } from 'lucide-react-native';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +20,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { UpgradeRequiredModal } from '@/components/UpgradeRequiredModal';
-import FlashcardCarousel from '@/components/ui/FlashcardCarousel';
+import { RotatingTipBanner } from '@/components/ui/RotatingTipBanner';
 import QuotaExhaustedCard from '@/components/simulation/QuotaExhaustedCard';
 import {
   SIMULATION_DURATION_SECONDS,
@@ -152,9 +152,8 @@ function KPSimulationScreen() {
     console.log(`[WIDGET DEBUG] ${message}`);
   };
 
-  // Tutorial visibility state
-  const [showTutorial, setShowTutorial] = useState(true);
-  const TUTORIAL_STORAGE_KEY = 'kp_simulation_tutorial_dismissed';
+  // Tip banner visibility state
+  const [showTipBanner, setShowTipBanner] = useState(true);
 
   // FIX: Helper to clear simulation storage (AsyncStorage + SecureStore)
   const clearSimulationStorage = async () => {
@@ -170,37 +169,6 @@ function KPSimulationScreen() {
     } catch (error) {
       console.error('Error clearing simulation storage:', error);
     }
-  };
-
-  // Load tutorial visibility preference from localStorage
-  useEffect(() => {
-    const loadTutorialPreference = async () => {
-      try {
-        const dismissed = await AsyncStorage.getItem(TUTORIAL_STORAGE_KEY);
-        if (dismissed === 'true') {
-          setShowTutorial(false);
-        }
-      } catch (error) {
-        console.error('Error loading tutorial preference:', error);
-      }
-    };
-    loadTutorialPreference();
-  }, []);
-
-  // Handle tutorial dismiss
-  const handleDismissTutorial = async () => {
-    try {
-      await AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
-      setShowTutorial(false);
-      console.log('✅ Tutorial dismissed and preference saved');
-    } catch (error) {
-      console.error('Error saving tutorial preference:', error);
-    }
-  };
-
-  // Handle tutorial show (when help button is clicked)
-  const handleShowTutorial = () => {
-    setShowTutorial(true);
   };
 
   // Disable global Voiceflow cleanup as soon as component mounts
@@ -2200,6 +2168,9 @@ function KPSimulationScreen() {
           </View>
         )}
 
+        {/* Rotating Tip Banner */}
+        <RotatingTipBanner visible={showTipBanner} onDismiss={() => setShowTipBanner(false)} />
+
         <ScrollView
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
@@ -2215,20 +2186,6 @@ function KPSimulationScreen() {
                 totalSimulations={subscriptionStatus.simulationLimit || 0}
                 subscriptionTier={(subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium') || 'free'}
               />
-            )}
-
-            {/* Flashcard Carousel - Educational Content */}
-            {showTutorial ? (
-              <View style={styles.instructionsContainer}>
-                <FlashcardCarousel onDismiss={handleDismissTutorial} />
-              </View>
-            ) : (
-              <View style={styles.helpButtonContainer}>
-                <TouchableOpacity style={styles.helpButton} onPress={handleShowTutorial} activeOpacity={0.7}>
-                  <HelpCircle size={24} color="#6366f1" strokeWidth={2} />
-                  <Text style={styles.helpButtonText}>Anleitung anzeigen</Text>
-                </TouchableOpacity>
-              </View>
             )}
 
             {/* Widget Area */}
@@ -2633,34 +2590,6 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'column',
     paddingBottom: 20,
-  },
-  instructionsContainer: {
-    minHeight: 400,
-  },
-  helpButtonContainer: {
-    alignItems: 'center',
-    paddingVertical: 30,
-  },
-  helpButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#f0f0ff',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: '#6366f1',
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  helpButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6366f1',
   },
   widgetArea: {
     flex: 1, // Takes up 1/3 of available space
