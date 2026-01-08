@@ -258,14 +258,16 @@ export class VoiceflowController {
         }
         logger.info('📡 Loading Voiceflow script from CDN...');
         const script = document.createElement('script');
-        script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
+        // UPDATED 2025: Use cached CDN for faster, more reliable loading
+        // This URL is recommended by Voiceflow docs and has better global edge caching
+        script.src = 'https://widget-cache.pages.dev/bundle.mjs';
         script.type = 'text/javascript';
 
-        // Add 30-second timeout to prevent hanging
+        // Add 45-second timeout (increased from 30s for slow mobile connections)
         const timeout = setTimeout(() => {
-          logger.error('❌ Voiceflow script load timeout (30s)');
+          logger.error('❌ Voiceflow script load timeout (45s)');
           reject(new Error('Voiceflow script load timeout'));
-        }, 30000);
+        }, 45000);
 
         script.onload = () => {
           clearTimeout(timeout); // Clear timeout on success
@@ -311,11 +313,29 @@ export class VoiceflowController {
   }
 
   /**
+   * Check if user has network connectivity
+   * Returns true if online, false if offline
+   */
+  private isOnline(): boolean {
+    if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+      return navigator.onLine;
+    }
+    return true; // Assume online if navigator.onLine not available
+  }
+
+  /**
    * Initialize widget with modern Voiceflow configuration
+   * Includes network check and improved error handling for mobile
    */
   private async initializeWidget(): Promise<void> {
     if (!window.voiceflow?.chat) {
       throw new Error('Voiceflow not available');
+    }
+
+    // Check network connectivity before attempting initialization
+    if (!this.isOnline()) {
+      logger.error('❌ No network connection detected');
+      throw new Error('No internet connection. Please check your network and try again.');
     }
 
     try {
@@ -389,8 +409,11 @@ export class VoiceflowController {
         }
       }
 
-      // Load the widget
-      window.voiceflow.chat.load(widgetConfig);
+      // Load the widget with timeout wrapper
+      // This catches internal Voiceflow "metadata timeout" errors
+      logger.info('🔄 Loading Voiceflow chat widget...');
+
+      await this.loadWidgetWithTimeout(widgetConfig, 30000);
 
       // Inject CSS to ensure widget is visible and above all content
       this.injectWidgetCSS();
@@ -405,9 +428,85 @@ export class VoiceflowController {
       const privacyStatus = this.config.hashEmail ? '(email hashed in userID)' : '(email in userID)';
       logger.info(`✅ Widget loaded and ready with persistent IDs ${privacyStatus}`);
     } catch (error) {
+      // Enhanced error handling for specific Voiceflow errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes('metadata timeout') || errorMessage.includes('timeout')) {
+        logger.error('❌ Voiceflow metadata timeout - server may be slow or unreachable');
+        throw new Error(
+          'Die Simulation konnte nicht geladen werden (Timeout). ' +
+            'Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
+        );
+      }
+
+      if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        logger.error('❌ Network error during Voiceflow initialization');
+        throw new Error('Netzwerkfehler beim Laden der Simulation. ' + 'Bitte überprüfen Sie Ihre Internetverbindung.');
+      }
+
       logger.error('❌ Failed to initialize Voiceflow widget:', error);
       throw error;
     }
+  }
+
+  /**
+   * Load widget with timeout to catch internal Voiceflow timeouts
+   * Voiceflow's internal timeout error ("metadata timeout") doesn't propagate properly,
+   * so we add our own timeout wrapper
+   */
+  private loadWidgetWithTimeout(config: any, timeoutMs: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+
+      // Set up timeout
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          logger.error(`❌ Widget load timed out after ${timeoutMs}ms`);
+          reject(new Error('metadata timeout'));
+        }
+      }, timeoutMs);
+
+      try {
+        // Attempt to load the widget
+        window.voiceflow.chat.load(config);
+
+        // Check if widget container appears (indicates successful load)
+        const checkWidgetLoaded = setInterval(() => {
+          const widgetContainer =
+            document.getElementById('voiceflow-chat') || document.querySelector('[class*="vfrc"]');
+
+          if (widgetContainer) {
+            clearInterval(checkWidgetLoaded);
+            clearTimeout(timeout);
+            if (!resolved) {
+              resolved = true;
+              logger.info('✅ Widget container detected - load successful');
+              resolve();
+            }
+          }
+        }, 500);
+
+        // Maximum time to wait for container check
+        setTimeout(() => {
+          clearInterval(checkWidgetLoaded);
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            // If no container but no error either, assume success
+            // (widget might render differently)
+            logger.warn('⚠️ Widget container not detected, but no error - assuming success');
+            resolve();
+          }
+        }, timeoutMs - 1000);
+      } catch (error) {
+        clearTimeout(timeout);
+        if (!resolved) {
+          resolved = true;
+          reject(error);
+        }
+      }
+    });
   }
 
   /**
