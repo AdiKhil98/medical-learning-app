@@ -1,63 +1,106 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder, Dimensions } from 'react-native';
-import { X, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder } from 'react-native';
+import {
+  X,
+  Lightbulb,
+  ChevronLeft,
+  ChevronRight,
+  Mic,
+  Clock,
+  Mail,
+  Stethoscope,
+  HelpCircle,
+  ListChecks,
+  AlertCircle,
+  Phone,
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Tips array - always relevant regardless of simulation phase
+// Tip categories with proper icons and detailed content
 const SIMULATION_TIPS = [
   {
     id: 1,
-    emoji: '🎤',
-    title: 'Mikrofon',
-    text: 'Sprechen Sie klar und deutlich',
+    category: 'wichtig',
+    icon: AlertCircle,
+    iconColor: '#fbbf24',
+    title: 'Wichtigster Satz',
+    text: '"Ich habe keine weitere Fragen"',
+    subtext: 'Dieser Satz beendet jede Phase und führt Sie zum nächsten Schritt',
   },
   {
     id: 2,
-    emoji: '➡️',
-    title: 'Nächste Phase',
-    text: '"Ich habe keine weitere Fragen" → nächste Phase',
+    category: 'bedienung',
+    icon: Phone,
+    iconColor: '#f87171',
+    title: 'Mikrofon starten',
+    text: 'Rotes Telefon-Symbol unten rechts',
+    subtext: 'Tippen Sie darauf, um die Sprachverbindung zu starten',
   },
   {
     id: 3,
-    emoji: '📍',
-    title: 'Widget',
-    text: 'Mikrofon-Button: unten rechts (rotes Symbol)',
+    category: 'tipp',
+    icon: Mic,
+    iconColor: '#60a5fa',
+    title: 'Deutlich sprechen',
+    text: 'Klar und in normalem Tempo sprechen',
+    subtext: 'Die KI versteht Sie besser bei deutlicher Aussprache',
   },
   {
     id: 4,
-    emoji: '⏱️',
-    title: 'Tempo',
-    text: 'Nehmen Sie sich Zeit - Qualität zählt',
+    category: 'tipp',
+    icon: Clock,
+    iconColor: '#60a5fa',
+    title: 'Zeit nehmen',
+    text: 'Qualität vor Geschwindigkeit',
+    subtext: 'Sie haben 20 Minuten - nutzen Sie die Zeit für gründliche Anamnese',
   },
   {
     id: 5,
-    emoji: '📧',
-    title: 'Bewertung',
-    text: 'Ergebnis kommt per E-Mail nach der Simulation',
+    category: 'tipp',
+    icon: Stethoscope,
+    iconColor: '#60a5fa',
+    title: 'Fachsprache nutzen',
+    text: 'Deutsche medizinische Fachbegriffe verwenden',
+    subtext: 'Z.B. "Dyspnoe" statt "Atemnot", "Cephalgie" statt "Kopfschmerzen"',
   },
   {
     id: 6,
-    emoji: '🏥',
-    title: 'Fachsprache',
-    text: 'Verwenden Sie deutsche Fachbegriffe',
+    category: 'tipp',
+    icon: ListChecks,
+    iconColor: '#60a5fa',
+    title: 'Strukturiert vorgehen',
+    text: 'Systematische Anamnese durchführen',
+    subtext: 'Aktuelle Beschwerden → Vorerkrankungen → Medikamente → Soziales',
   },
   {
     id: 7,
-    emoji: '❓',
-    title: 'Nachfragen',
-    text: 'Bei Unklarheiten: Nachfragen ist erlaubt',
+    category: 'tipp',
+    icon: HelpCircle,
+    iconColor: '#60a5fa',
+    title: 'Nachfragen erlaubt',
+    text: 'Bei Unklarheiten ruhig nachfragen',
+    subtext: 'Der Patient beantwortet Ihre Fragen gerne ausführlicher',
   },
   {
     id: 8,
-    emoji: '📋',
-    title: 'Struktur',
-    text: 'Strukturieren Sie Ihre Antworten logisch',
+    category: 'info',
+    icon: Mail,
+    iconColor: '#a78bfa',
+    title: 'Bewertung per E-Mail',
+    text: 'Detailliertes Feedback nach der Simulation',
+    subtext: 'Sie erhalten eine ausführliche Auswertung innerhalb von 24 Stunden',
   },
 ];
 
-const ROTATION_INTERVAL_MS = 45000; // 45 seconds auto-rotation
+const ROTATION_INTERVAL_MS = 30000; // 30 seconds
+
+// Category badge colors
+const CATEGORY_STYLES = {
+  wichtig: { bg: '#fef3c7', text: '#92400e', label: 'WICHTIG' },
+  bedienung: { bg: '#fee2e2', text: '#991b1b', label: 'BEDIENUNG' },
+  tipp: { bg: '#dbeafe', text: '#1e40af', label: 'TIPP' },
+  info: { bg: '#ede9fe', text: '#5b21b6', label: 'INFO' },
+};
 
 interface RotatingTipBannerProps {
   visible?: boolean;
@@ -93,18 +136,18 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
 
   // Animate transition between tips
   const animateTransition = (direction: 'next' | 'prev', specificIndex?: number) => {
-    const slideOut = direction === 'next' ? -30 : 30;
-    const slideIn = direction === 'next' ? 30 : -30;
+    const slideOut = direction === 'next' ? -20 : 20;
+    const slideIn = direction === 'next' ? 20 : -20;
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: slideOut,
-        duration: 150,
+        duration: 120,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -121,12 +164,12 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 150,
+          duration: 120,
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 150,
+          duration: 120,
           useNativeDriver: true,
         }),
       ]).start();
@@ -137,33 +180,32 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
+        return Math.abs(gestureState.dx) > 15;
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -50) {
+        if (gestureState.dx < -40) {
           goToNext();
-        } else if (gestureState.dx > 50) {
+        } else if (gestureState.dx > 40) {
           goToPrev();
         }
       },
     })
   ).current;
 
-  // Auto-rotate tips (resets after manual interaction)
+  // Auto-rotate tips
   useEffect(() => {
     if (!isVisible) return;
 
     const interval = setInterval(() => {
       const timeSinceInteraction = Date.now() - lastInteraction.current;
       if (timeSinceInteraction >= ROTATION_INTERVAL_MS) {
-        animateTransition('next');
+        goToNext();
       }
     }, ROTATION_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [isVisible]);
 
-  // Handle visibility prop changes
   useEffect(() => {
     setIsVisible(visible);
   }, [visible]);
@@ -189,7 +231,7 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
     }).start();
   };
 
-  // Show small button when dismissed
+  // Collapsed state - small floating button
   if (!isVisible) {
     return (
       <TouchableOpacity style={styles.showButton} onPress={handleShow}>
@@ -199,94 +241,114 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
           end={{ x: 1, y: 1 }}
           style={styles.showButtonGradient}
         >
-          <Lightbulb size={16} color="#ffffff" />
+          <Lightbulb size={18} color="#ffffff" />
         </LinearGradient>
+        <View style={styles.showButtonBadge}>
+          <Text style={styles.showButtonBadgeText}>?</Text>
+        </View>
       </TouchableOpacity>
     );
   }
 
   const currentTip = SIMULATION_TIPS[currentTipIndex];
+  const categoryStyle = CATEGORY_STYLES[currentTip.category as keyof typeof CATEGORY_STYLES];
+  const IconComponent = currentTip.icon;
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]} {...panResponder.panHandlers}>
-      <LinearGradient
-        colors={['#6366f1', '#8b5cf6']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        {/* Left arrow - tap to go previous */}
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={goToPrev}
-          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
-        >
-          <ChevronLeft size={20} color="rgba(255,255,255,0.6)" />
-        </TouchableOpacity>
-
-        {/* Center content */}
-        <View style={styles.centerContent}>
-          {/* Emoji circle */}
-          <View style={styles.emojiContainer}>
-            <Text style={styles.emoji}>{currentTip.emoji}</Text>
+    <Animated.View style={[styles.container]} {...panResponder.panHandlers}>
+      {/* Main card */}
+      <View style={styles.card}>
+        {/* Header row */}
+        <View style={styles.header}>
+          {/* Category badge */}
+          <View style={[styles.categoryBadge, { backgroundColor: categoryStyle.bg }]}>
+            <Text style={[styles.categoryText, { color: categoryStyle.text }]}>{categoryStyle.label}</Text>
           </View>
 
-          {/* Text content */}
+          {/* Counter */}
+          <Text style={styles.counter}>
+            {currentTipIndex + 1} von {SIMULATION_TIPS.length}
+          </Text>
+
+          {/* Close button */}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={handleDismiss}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <X size={18} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Content row */}
+        <View style={styles.contentRow}>
+          {/* Left nav */}
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={goToPrev}
+            hitSlop={{ top: 20, bottom: 20, left: 10, right: 5 }}
+          >
+            <ChevronLeft size={24} color="#6366f1" />
+          </TouchableOpacity>
+
+          {/* Icon and text */}
           <Animated.View
             style={[
-              styles.contentContainer,
+              styles.mainContent,
               {
                 opacity: fadeAnim,
                 transform: [{ translateX: slideAnim }],
               },
             ]}
           >
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>TIPP</Text>
-              <View style={styles.titleBadge}>
-                <Text style={styles.titleText}>{currentTip.title}</Text>
-              </View>
-              <Text style={styles.counter}>
-                {currentTipIndex + 1}/{SIMULATION_TIPS.length}
-              </Text>
+            {/* Icon circle */}
+            <View style={[styles.iconCircle, { backgroundColor: `${currentTip.iconColor}15` }]}>
+              <IconComponent size={28} color={currentTip.iconColor} strokeWidth={2} />
             </View>
-            <Text style={styles.tipText} numberOfLines={2}>
-              {currentTip.text}
-            </Text>
+
+            {/* Text content */}
+            <View style={styles.textContent}>
+              <Text style={styles.title}>{currentTip.title}</Text>
+              <Text style={styles.mainText}>{currentTip.text}</Text>
+              <Text style={styles.subText}>{currentTip.subtext}</Text>
+            </View>
           </Animated.View>
+
+          {/* Right nav */}
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={goToNext}
+            hitSlop={{ top: 20, bottom: 20, left: 5, right: 10 }}
+          >
+            <ChevronRight size={24} color="#6366f1" />
+          </TouchableOpacity>
         </View>
 
-        {/* Right arrow - tap to go next */}
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={goToNext}
-          hitSlop={{ top: 15, bottom: 15, left: 10, right: 10 }}
-        >
-          <ChevronRight size={20} color="rgba(255,255,255,0.6)" />
-        </TouchableOpacity>
-
-        {/* Dismiss button */}
-        <TouchableOpacity
-          style={styles.dismissButton}
-          onPress={handleDismiss}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <X size={16} color="rgba(255,255,255,0.6)" />
-        </TouchableOpacity>
-
-        {/* Progress dots - tappable */}
-        <View style={styles.dotsContainer}>
-          {SIMULATION_TIPS.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => goToTip(index)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <View style={[styles.dot, index === currentTipIndex && styles.dotActive]} />
-            </TouchableOpacity>
-          ))}
+        {/* Progress dots */}
+        <View style={styles.dotsRow}>
+          {SIMULATION_TIPS.map((tip, index) => {
+            const isActive = index === currentTipIndex;
+            return (
+              <TouchableOpacity
+                key={tip.id}
+                onPress={() => goToTip(index)}
+                hitSlop={{ top: 8, bottom: 8, left: 3, right: 3 }}
+              >
+                <View
+                  style={[
+                    styles.dot,
+                    isActive && styles.dotActive,
+                    isActive && { backgroundColor: currentTip.iconColor },
+                  ]}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </LinearGradient>
+
+        {/* Swipe hint - only show on first tip */}
+        {currentTipIndex === 0 && <Text style={styles.swipeHint}>← Wischen oder tippen Sie die Pfeile →</Text>}
+      </View>
     </Animated.View>
   );
 };
@@ -294,124 +356,146 @@ export const RotatingTipBanner: React.FC<RotatingTipBannerProps> = ({ visible = 
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: 10,
+  },
+  card: {
+    backgroundColor: '#ffffff',
     borderRadius: 16,
+    padding: 16,
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  gradient: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    minHeight: 85,
+    marginBottom: 12,
   },
-  navButton: {
-    padding: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
+  categoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  centerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  emojiContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  emoji: {
-    fontSize: 20,
-  },
-  contentContainer: {
-    flex: 1,
-    paddingRight: 4,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 3,
-  },
-  label: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.7)',
-    letterSpacing: 0.8,
-    marginRight: 6,
-  },
-  titleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  titleText: {
+  categoryText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   counter: {
-    fontSize: 9,
-    color: 'rgba(255,255,255,0.5)',
-    marginLeft: 'auto',
-    marginRight: 4,
-  },
-  tipText: {
-    fontSize: 13,
-    color: '#ffffff',
-    lineHeight: 18,
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#9ca3af',
     fontWeight: '500',
   },
-  dismissButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+  closeButton: {
     padding: 4,
   },
-  dotsContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: 0,
-    right: 0,
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  navButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+  },
+  mainContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  textContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  mainText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4b5563',
+    marginBottom: 4,
+  },
+  subText: {
+    fontSize: 12,
+    color: '#6b7280',
+    lineHeight: 16,
+  },
+  dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    alignItems: 'center',
+    marginTop: 14,
+    gap: 8,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#e5e7eb',
   },
   dotActive: {
-    width: 16,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    width: 20,
+    borderRadius: 4,
+  },
+  swipeHint: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 8,
   },
   showButton: {
-    alignSelf: 'flex-end',
-    marginRight: 16,
-    marginVertical: 8,
+    position: 'absolute',
+    right: 16,
+    top: 8,
+    zIndex: 100,
   },
   showButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  showButtonBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#ef4444',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  showButtonBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
   },
 });
 
