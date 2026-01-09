@@ -364,8 +364,10 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                             <View style={styles.recentIconContainer}>
                               <Heart size={24} color={MEDICAL_COLORS.blue} />
                             </View>
-                            <View>
-                              <Text style={styles.recentCardTitle}>{item.title}</Text>
+                            <View style={styles.recentTextContainer}>
+                              <Text style={styles.recentCardTitle} numberOfLines={1} ellipsizeMode="tail">
+                                {item.title}
+                              </Text>
                               <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
                             </View>
                           </View>
@@ -588,8 +590,10 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                               <View style={styles.recentIconContainer}>
                                 <Heart size={24} color={MEDICAL_COLORS.blue} />
                               </View>
-                              <View>
-                                <Text style={styles.recentCardTitle}>{item.title}</Text>
+                              <View style={styles.recentTextContainer}>
+                                <Text style={styles.recentCardTitle} numberOfLines={1} ellipsizeMode="tail">
+                                  {item.title}
+                                </Text>
                                 <Text style={styles.recentCardSubtitle}>{item.category || 'Sonstiges'}</Text>
                               </View>
                             </View>
@@ -1016,6 +1020,10 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     color: MEDICAL_COLORS.slate500,
     marginTop: 2,
+  },
+  recentTextContainer: {
+    flex: 1,
+    overflow: 'hidden',
   },
   recentCardRight: {
     flexDirection: 'row',
