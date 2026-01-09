@@ -458,6 +458,20 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                 </View>
               </View>
             </View>
+
+            {/* Contact Footer - Inside Scroll */}
+            <View style={styles.contactFooterInScroll}>
+              <TouchableOpacity
+                onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+                style={styles.contactFooterButton}
+                activeOpacity={0.7}
+              >
+                <Mail size={16} color={MEDICAL_COLORS.primary} />
+                <Text style={styles.contactFooterText}>
+                  Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       ) : (
@@ -705,19 +719,21 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
 
       {/* Carousel Indicators - Removed to prevent overlap with navigation */}
 
-      {/* Contact Footer */}
-      <View style={styles.contactFooter}>
-        <TouchableOpacity
-          onPress={() => Linking.openURL('mailto:support@kpmed.de')}
-          style={styles.contactFooterButton}
-          activeOpacity={0.7}
-        >
-          <Mail size={16} color={MEDICAL_COLORS.primary} />
-          <Text style={styles.contactFooterText}>
-            Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Contact Footer - Only show fixed on mobile */}
+      {!IS_WEB && (
+        <View style={styles.contactFooter}>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+            style={styles.contactFooterButton}
+            activeOpacity={0.7}
+          >
+            <Mail size={16} color={MEDICAL_COLORS.primary} />
+            <Text style={styles.contactFooterText}>
+              Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1199,5 +1215,11 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.primary,
     fontFamily: 'Inter-SemiBold',
     fontWeight: '600',
+  },
+  contactFooterInScroll: {
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    marginTop: SPACING.xxl,
   },
 });
