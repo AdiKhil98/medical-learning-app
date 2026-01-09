@@ -9,8 +9,9 @@ import {
   SafeAreaView,
   Dimensions,
   Platform,
+  Linking,
 } from 'react-native';
-import { X, AlertTriangle, CheckCircle, BookOpen, Users, BarChart3, Quote } from 'lucide-react-native';
+import { X, AlertTriangle, CheckCircle, BookOpen, Users, BarChart3, Quote, Mail } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
@@ -218,6 +219,19 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                   <Text style={styles.ctaButtonLargeText}>Jetzt Premium sichern →</Text>
                 </LinearGradient>
               </TouchableOpacity>
+
+              {/* Contact Section */}
+              <View style={styles.contactSection}>
+                <Text style={styles.contactTitle}>Noch Fragen? Wir helfen gerne!</Text>
+                <TouchableOpacity
+                  onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+                  style={styles.contactButton}
+                  activeOpacity={0.7}
+                >
+                  <Mail size={20} color="#FF6B6B" />
+                  <Text style={styles.contactEmail}>support@kpmed.de</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -737,6 +751,42 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
+    ...(Platform.OS === 'web' && {
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
+  },
+  contactSection: {
+    marginTop: 40,
+    paddingTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  contactTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 16,
+    textAlign: 'center',
+    ...(Platform.OS === 'web' && {
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  contactEmail: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF6B6B',
     ...(Platform.OS === 'web' && {
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     }),

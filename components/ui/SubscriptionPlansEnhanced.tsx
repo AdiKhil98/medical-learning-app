@@ -858,7 +858,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>© 2024 FSP & KP Simulation. Alle Rechte vorbehalten.</Text>
-            <Text style={styles.footerSubtext}>Fragen? Kontaktieren Sie uns unter support@fsp-kp-simulation.de</Text>
+            <Text style={styles.footerSubtext}>Fragen? Kontaktieren Sie uns unter support@kpmed.de</Text>
           </View>
         </View>
       </LinearGradient>

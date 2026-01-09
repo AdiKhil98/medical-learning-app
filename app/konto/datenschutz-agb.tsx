@@ -127,7 +127,7 @@ export default function DatenschutzAGBScreen() {
         <Text style={{ fontFamily: 'Inter-Bold' }}>KP Med GmbH</Text>
         {'\n'}
         Sitz in Österreich{'\n'}
-        E-Mail: datenschutz@kpmed.de
+        E-Mail: support@kpmed.de
       </Text>
 
       <Text style={stylesD.heading}>2. Verarbeitete Daten</Text>

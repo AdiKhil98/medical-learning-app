@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   Platform,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,6 +24,7 @@ import {
   FileText,
   Lightbulb,
   HelpCircle,
+  Mail,
 } from 'lucide-react-native';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
@@ -703,6 +705,20 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
 
       {/* Carousel Indicators - Removed to prevent overlap with navigation */}
 
+      {/* Contact Footer */}
+      <View style={styles.contactFooter}>
+        <TouchableOpacity
+          onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+          style={styles.contactFooterButton}
+          activeOpacity={0.7}
+        >
+          <Mail size={16} color={MEDICAL_COLORS.primary} />
+          <Text style={styles.contactFooterText}>
+            Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Menu */}
       <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
@@ -1158,5 +1174,30 @@ const styles = StyleSheet.create({
     height: SPACING.sm,
     borderRadius: SPACING.xs,
     backgroundColor: MEDICAL_COLORS.warmOrange,
+  },
+  contactFooter: {
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(226, 232, 240, 0.5)',
+    alignItems: 'center',
+  },
+  contactFooterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  contactFooterText: {
+    fontSize: 14,
+    color: MEDICAL_COLORS.slate600,
+    fontFamily: 'Inter-Regular',
+  },
+  contactFooterEmail: {
+    color: MEDICAL_COLORS.primary,
+    fontFamily: 'Inter-SemiBold',
+    fontWeight: '600',
   },
 });

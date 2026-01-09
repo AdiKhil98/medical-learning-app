@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Building2, Mail, Phone, MapPin } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -140,10 +140,14 @@ export default function ImpressumScreen() {
             </Text>
           </View>
 
-          <View style={dynamicStyles.contactItem}>
+          <TouchableOpacity
+            style={dynamicStyles.contactItem}
+            onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+            activeOpacity={0.7}
+          >
             <Mail size={20} color={MEDICAL_COLORS.primary} />
-            <Text style={dynamicStyles.contactText}>info@kpmed.de</Text>
-          </View>
+            <Text style={dynamicStyles.contactText}>support@kpmed.de</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={dynamicStyles.section}>
