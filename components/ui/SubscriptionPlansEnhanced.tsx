@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X, ChevronDown, ChevronUp, Shield, Zap, Target, Lock } from 'lucide-react-native';
-import TrustBadges from '@/components/ui/TrustBadges';
 
 interface SubscriptionPlansEnhancedProps {
   onSelectPlan?: (planId: string) => void;
@@ -602,11 +601,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
           fontSize: 15,
           lineHeight: 24,
         },
-        trustBadgesContainer: {
-          marginVertical: 12,
-          paddingHorizontal: 20,
-          alignItems: 'center',
-        },
         footer: {
           alignItems: 'center',
           paddingBottom: 40,
@@ -859,11 +853,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-
-          {/* Trust Badges */}
-          <View style={styles.trustBadgesContainer}>
-            <TrustBadges variant="horizontal" size="small" />
           </View>
 
           {/* Footer */}
