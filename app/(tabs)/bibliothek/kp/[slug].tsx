@@ -1,229 +1,166 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// app/(tabs)/bibliothek/kp/[slug].tsx
+// Improved KP Topic Detail Page - Beautiful medical content display
+
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
-  ScrollView,
   StyleSheet,
-  SafeAreaView,
-  Platform,
-  Animated,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
+  Platform,
+  RefreshControl,
+  Dimensions,
 } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  BookOpen,
-  AlertCircle,
-  Lightbulb,
-  FileText,
-  ListChecks,
-  Stethoscope,
-  Activity,
-  Pill,
-  ClipboardList,
-  HeartPulse,
-  Microscope,
-  ShieldAlert,
-} from 'lucide-react-native';
-import { useLocalSearchParams, useRouter, Href } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { SecureLogger } from '@/lib/security';
-import { MEDICAL_COLORS } from '@/constants/medicalColors';
-import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
-import { withErrorBoundary } from '@/components/withErrorBoundary';
 
-interface KPContentDetail {
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Types
+interface TableData {
+  titel: string;
+  spalten: string[];
+  zeilen: string[][];
+}
+
+interface Section {
+  content: string;
+  merke?: string;
+  pruefungsrelevanz?: string;
+  tabellen?: TableData[];
+}
+
+interface KPContent {
   id: string;
   slug: string;
   title_de: string;
-  title_short: string;
+  title_short: string | null;
   fachgebiet: string;
   bereich: string;
   priority: string;
-  status: string;
-  content: any;
+  content: string;
 }
 
-// Section configuration with icons and colors
-const SECTION_CONFIG: Record<string, { icon: any; color: string; title: string }> = {
-  definition: { icon: BookOpen, color: '#6366f1', title: 'Definition' },
-  epidemiologie: { icon: Activity, color: '#8b5cf6', title: 'Epidemiologie' },
-  aetiologie: { icon: Microscope, color: '#ec4899', title: 'Ätiologie' },
-  klassifikation: { icon: ListChecks, color: '#14b8a6', title: 'Klassifikation' },
-  pathophysiologie: { icon: HeartPulse, color: '#f43f5e', title: 'Pathophysiologie' },
-  symptome: { icon: Stethoscope, color: '#f97316', title: 'Symptome / Klinik' },
-  diagnostik: { icon: ClipboardList, color: '#0ea5e9', title: 'Diagnostik' },
-  differentialdiagnosen: { icon: ShieldAlert, color: '#eab308', title: 'Differentialdiagnosen' },
-  therapie: { icon: Pill, color: '#22c55e', title: 'Therapie' },
-  komplikationen: { icon: AlertCircle, color: '#ef4444', title: 'Komplikationen' },
-  prognose: { icon: FileText, color: '#64748b', title: 'Prognose' },
-  praevention: { icon: ShieldAlert, color: '#06b6d4', title: 'Prävention' },
-  besonderheiten: { icon: Lightbulb, color: '#a855f7', title: 'Besonderheiten' },
+interface ParsedContent {
+  definition?: Section;
+  epidemiologie?: Section;
+  aetiologie?: Section;
+  klassifikation?: Section;
+  pathophysiologie?: Section;
+  symptome?: Section;
+  diagnostik?: Section;
+  differentialdiagnosen?: Section;
+  therapie?: Section;
+  komplikationen?: Section;
+  prognose?: Section;
+  praevention?: Section;
+  pruefungsfokus?: Section;
+}
+
+// Section configuration
+const SECTION_CONFIG: Record<string, { title: string; icon: string; color: string; emoji: string }> = {
+  definition: { title: 'Definition', icon: 'book-outline', color: '#6366f1', emoji: '📖' },
+  epidemiologie: { title: 'Epidemiologie', icon: 'stats-chart-outline', color: '#0ea5e9', emoji: '📊' },
+  aetiologie: { title: 'Ätiologie & Risikofaktoren', icon: 'git-branch-outline', color: '#8b5cf6', emoji: '🔬' },
+  klassifikation: { title: 'Klassifikation', icon: 'layers-outline', color: '#ec4899', emoji: '📋' },
+  pathophysiologie: { title: 'Pathophysiologie', icon: 'pulse-outline', color: '#f59e0b', emoji: '⚙️' },
+  symptome: { title: 'Symptome & Klinik', icon: 'body-outline', color: '#ef4444', emoji: '🩺' },
+  diagnostik: { title: 'Diagnostik', icon: 'search-outline', color: '#10b981', emoji: '🔍' },
+  differentialdiagnosen: { title: 'Differentialdiagnosen', icon: 'git-compare-outline', color: '#6366f1', emoji: '⚖️' },
+  therapie: { title: 'Therapie', icon: 'medkit-outline', color: '#14b8a6', emoji: '💊' },
+  komplikationen: { title: 'Komplikationen', icon: 'warning-outline', color: '#f97316', emoji: '⚠️' },
+  prognose: { title: 'Prognose', icon: 'trending-up-outline', color: '#84cc16', emoji: '📈' },
+  praevention: { title: 'Prävention', icon: 'shield-checkmark-outline', color: '#22c55e', emoji: '🛡️' },
+  pruefungsfokus: { title: 'Prüfungsfokus', icon: 'school-outline', color: '#dc2626', emoji: '🎯' },
 };
 
-// Priority badge colors
-const PRIORITY_STYLES = {
-  '+++': { bg: '#fee2e2', text: '#991b1b', label: 'Sehr wichtig' },
-  '++': { bg: '#ffedd5', text: '#9a3412', label: 'Wichtig' },
-  '+': { bg: '#dbeafe', text: '#1e40af', label: 'Relevant' },
+// Section order for display
+const SECTION_ORDER = [
+  'definition',
+  'epidemiologie',
+  'aetiologie',
+  'klassifikation',
+  'pathophysiologie',
+  'symptome',
+  'diagnostik',
+  'differentialdiagnosen',
+  'therapie',
+  'komplikationen',
+  'prognose',
+  'praevention',
+  'pruefungsfokus',
+];
+
+// Priority styles
+const getPriorityConfig = (priority: string) => {
+  switch (priority) {
+    case '+++':
+      return {
+        bg: '#fef2f2',
+        text: '#dc2626',
+        border: '#fecaca',
+        label: 'Sehr hohe Prüfungsrelevanz',
+        stars: '⭐⭐⭐',
+      };
+    case '++':
+      return {
+        bg: '#fffbeb',
+        text: '#d97706',
+        border: '#fde68a',
+        label: 'Hohe Prüfungsrelevanz',
+        stars: '⭐⭐',
+      };
+    case '+':
+      return {
+        bg: '#eff6ff',
+        text: '#2563eb',
+        border: '#bfdbfe',
+        label: 'Normale Prüfungsrelevanz',
+        stars: '⭐',
+      };
+    default:
+      return {
+        bg: '#f9fafb',
+        text: '#6b7280',
+        border: '#e5e7eb',
+        label: priority,
+        stars: '',
+      };
+  }
 };
 
-// Collapsible Section Component
-const ContentSection: React.FC<{
-  sectionKey: string;
-  content: any;
-  defaultExpanded?: boolean;
-}> = ({ sectionKey, content, defaultExpanded = false }) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const rotateAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
-  const heightAnim = useRef(new Animated.Value(defaultExpanded ? 1 : 0)).current;
-
-  const config = SECTION_CONFIG[sectionKey] || {
-    icon: FileText,
-    color: '#64748b',
-    title: sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1),
-  };
-
-  const IconComponent = config.icon;
-
-  const toggleExpanded = () => {
-    const newValue = !isExpanded;
-    setIsExpanded(newValue);
-    Animated.parallel([
-      Animated.spring(rotateAnim, {
-        toValue: newValue ? 1 : 0,
-        useNativeDriver: true,
-      }),
-      Animated.timing(heightAnim, {
-        toValue: newValue ? 1 : 0,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  // Parse content - handle string or object
-  const renderContent = () => {
-    if (!content) return null;
-
-    // If content is a string, render as text
-    if (typeof content === 'string') {
-      return <Text style={styles.contentText}>{content}</Text>;
-    }
-
-    // If content is an array, render each item
-    if (Array.isArray(content)) {
-      return content.map((item, index) => {
-        if (typeof item === 'string') {
-          return (
-            <View key={index} style={styles.bulletItem}>
-              <View style={[styles.bullet, { backgroundColor: config.color }]} />
-              <Text style={styles.bulletText}>{item}</Text>
-            </View>
-          );
-        }
-        // Handle nested objects
-        if (typeof item === 'object') {
-          return (
-            <View key={index} style={styles.nestedContent}>
-              {Object.entries(item).map(([key, value]) => (
-                <View key={key} style={styles.nestedItem}>
-                  <Text style={styles.nestedLabel}>{key}:</Text>
-                  <Text style={styles.nestedValue}>{typeof value === 'string' ? value : JSON.stringify(value)}</Text>
-                </View>
-              ))}
-            </View>
-          );
-        }
-        return null;
-      });
-    }
-
-    // If content is an object, render key-value pairs
-    if (typeof content === 'object') {
-      return Object.entries(content).map(([key, value]) => (
-        <View key={key} style={styles.keyValuePair}>
-          <Text style={styles.keyText}>{key}</Text>
-          <Text style={styles.valueText}>
-            {typeof value === 'string' ? value : Array.isArray(value) ? value.join(', ') : JSON.stringify(value)}
-          </Text>
-        </View>
-      ));
-    }
-
-    return null;
-  };
-
-  // Check for MERKE boxes (important notes)
-  const renderMerkeBox = () => {
-    if (content?.merke || content?.MERKE) {
-      const merkeContent = content.merke || content.MERKE;
-      return (
-        <View style={styles.merkeBox}>
-          <View style={styles.merkeHeader}>
-            <Lightbulb size={18} color="#92400e" />
-            <Text style={styles.merkeTitle}>MERKE</Text>
-          </View>
-          <Text style={styles.merkeText}>
-            {typeof merkeContent === 'string' ? merkeContent : JSON.stringify(merkeContent)}
-          </Text>
-        </View>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <View style={styles.sectionContainer}>
-      <TouchableOpacity onPress={toggleExpanded} style={styles.sectionHeader} activeOpacity={0.7}>
-        <View style={styles.sectionHeaderLeft}>
-          <View style={[styles.sectionIconContainer, { backgroundColor: `${config.color}15` }]}>
-            <IconComponent size={20} color={config.color} />
-          </View>
-          <Text style={styles.sectionTitle}>{config.title}</Text>
-        </View>
-        {isExpanded ? (
-          <ChevronUp size={20} color={MEDICAL_COLORS.slate500} />
-        ) : (
-          <ChevronDown size={20} color={MEDICAL_COLORS.slate500} />
-        )}
-      </TouchableOpacity>
-
-      {isExpanded && (
-        <View style={styles.sectionBody}>
-          {renderMerkeBox()}
-          {renderContent()}
-        </View>
-      )}
-    </View>
-  );
+// Relevance badge styles
+const getRelevanceConfig = (relevance: string) => {
+  switch (relevance?.toLowerCase()) {
+    case 'hoch':
+      return { bg: '#fef2f2', text: '#dc2626', label: 'Hoch' };
+    case 'mittel':
+      return { bg: '#fffbeb', text: '#d97706', label: 'Mittel' };
+    case 'niedrig':
+      return { bg: '#f0fdf4', text: '#16a34a', label: 'Niedrig' };
+    default:
+      return { bg: '#f9fafb', text: '#6b7280', label: relevance || '' };
+  }
 };
 
-const KPTopicDetailScreen: React.FC = () => {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+export default function KPTopicDetail() {
+  const { slug } = useLocalSearchParams();
   const router = useRouter();
-  const { session } = useAuth();
-
-  const [topic, setTopic] = useState<KPContentDetail | null>(null);
+  const [topic, setTopic] = useState<KPContent | null>(null);
+  const [parsedContent, setParsedContent] = useState<ParsedContent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [allExpanded, setAllExpanded] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(SECTION_ORDER));
 
+  // Fetch topic
   const fetchTopic = useCallback(async () => {
-    if (!session || !slug) {
-      setError('Sie müssen angemeldet sein.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      setLoading(true);
       setError(null);
-
       const { data, error: fetchError } = await supabase
         .from('kp_medical_content')
         .select('*')
@@ -231,60 +168,173 @@ const KPTopicDetailScreen: React.FC = () => {
         .single();
 
       if (fetchError) throw fetchError;
-      if (!data) {
-        setError('Thema nicht gefunden.');
-        return;
-      }
+      setTopic(data);
 
-      // Parse content if it's a string
-      let contentObj = data.content;
-      if (typeof contentObj === 'string') {
+      // Parse JSON content
+      if (data?.content) {
         try {
-          // Remove any leading text before the JSON object
-          const jsonStart = contentObj.indexOf('{');
-          if (jsonStart > 0) {
-            contentObj = contentObj.substring(jsonStart);
+          let contentObj = data.content;
+          if (typeof contentObj === 'string') {
+            const jsonStart = contentObj.indexOf('{');
+            if (jsonStart > 0) {
+              contentObj = contentObj.substring(jsonStart);
+            }
+            contentObj = JSON.parse(contentObj);
           }
-          contentObj = JSON.parse(contentObj);
-        } catch (e) {
-          SecureLogger.warn('Could not parse content as JSON:', e);
+          setParsedContent(contentObj);
+        } catch (parseError) {
+          console.error('Error parsing content:', parseError);
+          setError('Inhalt konnte nicht geladen werden');
         }
       }
-
-      setTopic({ ...data, content: contentObj });
-    } catch (e) {
-      SecureLogger.error('Error fetching KP topic:', e);
-      setError(e instanceof Error ? e.message : 'Fehler beim Laden des Themas');
+    } catch (err) {
+      console.error('Error fetching topic:', err);
+      setError('Thema nicht gefunden');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [session, slug]);
+  }, [slug]);
 
   useEffect(() => {
     fetchTopic();
   }, [fetchTopic]);
 
-  const handleBackPress = () => {
-    router.push('/(tabs)/bibliothek/kp' as Href);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchTopic();
+  }, [fetchTopic]);
+
+  // Toggle section
+  const toggleSection = (key: string) => {
+    setExpandedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
   };
 
+  // Expand/collapse all
   const toggleAllSections = () => {
-    setAllExpanded(!allExpanded);
+    if (expandedSections.size === SECTION_ORDER.length) {
+      setExpandedSections(new Set());
+    } else {
+      setExpandedSections(new Set(SECTION_ORDER));
+    }
   };
 
-  const backgroundGradient = MEDICAL_COLORS.backgroundGradient as unknown as readonly [string, string, ...string[]];
+  // Render table
+  const renderTable = (table: TableData, index: number) => (
+    <View key={`table-${index}`} style={styles.tableWrapper}>
+      <View style={styles.tableHeader}>
+        <Ionicons name="grid-outline" size={14} color="#6366f1" />
+        <Text style={styles.tableTitle}>{table.titel}</Text>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.tableScroll}>
+        <View style={styles.table}>
+          {/* Header Row */}
+          <View style={styles.tableHeaderRow}>
+            {table.spalten.map((header, idx) => (
+              <View key={idx} style={[styles.tableCell, styles.tableHeaderCell]}>
+                <Text style={styles.tableHeaderText}>{header}</Text>
+              </View>
+            ))}
+          </View>
+          {/* Data Rows */}
+          {table.zeilen.map((row, rowIdx) => (
+            <View key={rowIdx} style={[styles.tableDataRow, rowIdx % 2 === 0 && styles.tableRowStriped]}>
+              {row.map((cell, cellIdx) => (
+                <View key={cellIdx} style={styles.tableCell}>
+                  <Text style={styles.tableCellText}>{cell}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+
+  // Render MERKE box
+  const renderMerkeBox = (merke: string) => (
+    <View style={styles.merkeBox}>
+      <LinearGradient
+        colors={['#fef3c7', '#fde68a']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.merkeGradient}
+      >
+        <View style={styles.merkeIconContainer}>
+          <Text style={styles.merkeIcon}>💡</Text>
+        </View>
+        <View style={styles.merkeContent}>
+          <Text style={styles.merkeLabel}>MERKE</Text>
+          <Text style={styles.merkeText}>{merke}</Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+
+  // Render section
+  const renderSection = (key: string, section: Section) => {
+    const config = SECTION_CONFIG[key];
+    if (!config) return null;
+
+    const isExpanded = expandedSections.has(key);
+    const isPruefungsfokus = key === 'pruefungsfokus';
+    const relevanceConfig = section.pruefungsrelevanz ? getRelevanceConfig(section.pruefungsrelevanz) : null;
+
+    return (
+      <View key={key} style={[styles.sectionCard, isPruefungsfokus && styles.sectionCardHighlight]}>
+        {/* Section Header */}
+        <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection(key)} activeOpacity={0.7}>
+          <View style={styles.sectionHeaderLeft}>
+            <View style={[styles.sectionIconBg, { backgroundColor: `${config.color  }15` }]}>
+              <Text style={styles.sectionEmoji}>{config.emoji}</Text>
+            </View>
+            <Text style={styles.sectionTitle}>{config.title}</Text>
+          </View>
+          <View style={styles.sectionHeaderRight}>
+            {relevanceConfig && relevanceConfig.label && (
+              <View style={[styles.relevanceBadge, { backgroundColor: relevanceConfig.bg }]}>
+                <Text style={[styles.relevanceText, { color: relevanceConfig.text }]}>{relevanceConfig.label}</Text>
+              </View>
+            )}
+            <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#9ca3af" />
+          </View>
+        </TouchableOpacity>
+
+        {/* Section Content */}
+        {isExpanded && (
+          <View style={styles.sectionBody}>
+            {/* Main Content Text */}
+            <Text style={styles.contentText}>{section.content}</Text>
+
+            {/* Tables */}
+            {section.tabellen && section.tabellen.length > 0 && (
+              <View style={styles.tablesContainer}>
+                {section.tabellen.map((table, idx) => renderTable(table, idx))}
+              </View>
+            )}
+
+            {/* MERKE Box - Always at the end */}
+            {section.merke && renderMerkeBox(section.merke)}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   // Loading state
   if (loading) {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#ec4899" />
-            <Text style={styles.loadingText}>Thema wird geladen...</Text>
-          </View>
-        </SafeAreaView>
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#6366f1" />
+        <Text style={styles.loadingText}>Lade Inhalt...</Text>
       </View>
     );
   }
@@ -292,410 +342,436 @@ const KPTopicDetailScreen: React.FC = () => {
   // Error state
   if (error || !topic) {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Fehler</Text>
-            <Text style={styles.errorText}>{error || 'Thema nicht gefunden.'}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={handleBackPress}>
-              <Text style={styles.retryButtonText}>Zurück zur Übersicht</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorEmoji}>😕</Text>
+        <Text style={styles.errorText}>{error || 'Thema nicht gefunden'}</Text>
+        <TouchableOpacity style={styles.errorButton} onPress={() => router.back()}>
+          <Text style={styles.errorButtonText}>Zurück</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  const priorityStyle = PRIORITY_STYLES[topic.priority as keyof typeof PRIORITY_STYLES] || PRIORITY_STYLES['+'];
-
-  // Get content sections
-  const contentSections =
-    topic.content && typeof topic.content === 'object'
-      ? Object.keys(topic.content).filter((key) => SECTION_CONFIG[key])
-      : [];
+  const priorityConfig = getPriorityConfig(topic.priority);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
-
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <LinearGradient
-              colors={['#ec4899', '#f472b6']}
-              style={styles.backButtonGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <ChevronLeft size={20} color="#ffffff" />
-            </LinearGradient>
-            <Text style={styles.backButtonText}>Zurück</Text>
+      {/* Header */}
+      <LinearGradient colors={['#6366f1', '#8b5cf6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
+        {/* Top Bar */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-
-          <TouchableOpacity onPress={toggleAllSections} style={styles.expandButton}>
-            <Text style={styles.expandButtonText}>{allExpanded ? 'Alle einklappen' : 'Alle aufklappen'}</Text>
+          <TouchableOpacity style={styles.expandButton} onPress={toggleAllSections}>
+            <Text style={styles.expandButtonText}>
+              {expandedSections.size === SECTION_ORDER.length ? 'Alle einklappen' : 'Alle ausklappen'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Topic Header Card */}
-          <View style={styles.topicHeader}>
-            <LinearGradient
-              colors={['#ec4899', '#f472b6', '#fda4af']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.topicHeaderGradient}
-            >
-              <View style={styles.topicMeta}>
-                <View style={[styles.priorityBadge, { backgroundColor: 'rgba(255,255,255,0.9)' }]}>
-                  <Text style={[styles.priorityText, { color: priorityStyle.text }]}>
-                    {topic.priority} {priorityStyle.label}
-                  </Text>
-                </View>
-                <Text style={styles.examRelevance}>Prüfungsrelevant</Text>
-              </View>
-
-              <Text style={styles.topicTitle}>{topic.title_de}</Text>
-
-              <View style={styles.topicTags}>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{topic.fachgebiet}</Text>
-                </View>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{topic.bereich}</Text>
-                </View>
-              </View>
-            </LinearGradient>
+        {/* Title Area */}
+        <View style={styles.titleArea}>
+          <View style={styles.breadcrumb}>
+            <Text style={styles.breadcrumbText}>{topic.fachgebiet}</Text>
+            <Ionicons name="chevron-forward" size={12} color="rgba(255,255,255,0.6)" />
+            <Text style={styles.breadcrumbText}>{topic.bereich}</Text>
           </View>
 
-          {/* Content Sections */}
-          <View style={styles.sectionsContainer}>
-            {contentSections.length > 0 ? (
-              contentSections.map((sectionKey) => (
-                <ContentSection
-                  key={sectionKey}
-                  sectionKey={sectionKey}
-                  content={topic.content[sectionKey]}
-                  defaultExpanded={allExpanded || sectionKey === 'definition'}
-                />
-              ))
-            ) : (
-              <View style={styles.noContent}>
-                <BookOpen size={48} color={MEDICAL_COLORS.slate300} />
-                <Text style={styles.noContentText}>Keine strukturierten Inhalte verfügbar.</Text>
-              </View>
-            )}
-          </View>
+          <Text style={styles.topicTitle}>{topic.title_de}</Text>
 
-          {/* Extra content sections not in config */}
-          {topic.content && typeof topic.content === 'object' && (
-            <View style={styles.extraSections}>
-              {Object.keys(topic.content)
-                .filter((key) => !SECTION_CONFIG[key] && key !== 'merke' && key !== 'MERKE')
-                .map((sectionKey) => (
-                  <ContentSection
-                    key={sectionKey}
-                    sectionKey={sectionKey}
-                    content={topic.content[sectionKey]}
-                    defaultExpanded={allExpanded}
-                  />
-                ))}
+          {topic.title_short && <Text style={styles.topicShort}>({topic.title_short})</Text>}
+
+          {/* Priority Badge */}
+          <View style={styles.priorityContainer}>
+            <View style={[styles.priorityBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+              <Text style={styles.priorityStars}>{priorityConfig.stars}</Text>
+              <Text style={styles.priorityLabel}>{priorityConfig.label}</Text>
             </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* Quick Nav */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.quickNav}
+        contentContainerStyle={styles.quickNavContent}
+      >
+        {SECTION_ORDER.map((key) => {
+          if (!parsedContent || !parsedContent[key as keyof ParsedContent]) return null;
+          const config = SECTION_CONFIG[key];
+          return (
+            <TouchableOpacity
+              key={key}
+              style={styles.quickNavItem}
+              onPress={() => {
+                if (!expandedSections.has(key)) {
+                  setExpandedSections((prev) => new Set([...prev, key]));
+                }
+                // TODO: Scroll to section
+              }}
+            >
+              <Text style={styles.quickNavEmoji}>{config.emoji}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {parsedContent &&
+          SECTION_ORDER.map((key) => {
+            const section = parsedContent[key as keyof ParsedContent];
+            return section ? renderSection(key, section) : null;
+          })}
+
+        {/* Bottom Spacer */}
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f3f4f6',
   },
-  backgroundGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  safeArea: {
+  centerContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+    padding: 20,
   },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  errorEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorButton: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  errorButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Header
   header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 20,
+  },
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  backButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  backButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.slate700,
   },
   expandButton: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    backgroundColor: MEDICAL_COLORS.slate100,
-    borderRadius: BORDER_RADIUS.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   expandButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: MEDICAL_COLORS.slate600,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
   },
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: 100,
+  titleArea: {
+    paddingHorizontal: 20,
   },
-  topicHeader: {
-    marginBottom: SPACING.xl,
-    borderRadius: BORDER_RADIUS.xl,
-    overflow: 'hidden',
-    ...SHADOWS.lg,
-  },
-  topicHeaderGradient: {
-    padding: SPACING.xxl,
-  },
-  topicMeta: {
+  breadcrumb: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
+    marginBottom: 8,
   },
-  priorityBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  priorityText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: '700',
-  },
-  examRelevance: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  breadcrumbText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    marginHorizontal: 4,
   },
   topicTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginBottom: SPACING.lg,
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#fff',
     lineHeight: 32,
   },
-  topicTags: {
+  topicShort: {
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+  },
+  priorityContainer: {
+    marginTop: 16,
+  },
+  priorityBadge: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  tag: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
+  priorityStars: {
+    fontSize: 14,
+    marginRight: 8,
   },
-  tagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    color: '#ffffff',
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  priorityLabel: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '600',
   },
-  sectionsContainer: {
-    gap: SPACING.md,
+
+  // Quick Nav
+  quickNav: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    maxHeight: 56,
   },
-  sectionContainer: {
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
+  quickNavContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  quickNavItem: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  quickNavEmoji: {
+    fontSize: 18,
+  },
+
+  // Scroll Content
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+  },
+  bottomSpacer: {
+    height: 100,
+  },
+
+  // Section Card
+  sectionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
     overflow: 'hidden',
-    ...SHADOWS.sm,
-    marginBottom: SPACING.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+      },
+    }),
+  },
+  sectionCardHighlight: {
+    borderWidth: 2,
+    borderColor: '#dc2626',
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: SPACING.lg,
-    backgroundColor: MEDICAL_COLORS.slate50,
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    flex: 1,
   },
-  sectionIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  sectionIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
+  },
+  sectionEmoji: {
+    fontSize: 20,
   },
   sectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.slate900,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    flex: 1,
+  },
+  sectionHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  relevanceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  relevanceText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   sectionBody: {
-    padding: SPACING.lg,
-    paddingTop: 0,
+    padding: 20,
   },
+
+  // Content Text
   contentText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate700,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 26,
+    color: '#374151',
+    marginBottom: 16,
   },
-  bulletItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.sm,
+
+  // Tables
+  tablesContainer: {
+    marginBottom: 16,
   },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 8,
-    marginRight: SPACING.md,
+  tableWrapper: {
+    marginBottom: 20,
   },
-  bulletText: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate700,
-    lineHeight: 22,
-  },
-  nestedContent: {
-    backgroundColor: MEDICAL_COLORS.slate50,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.sm,
-  },
-  nestedItem: {
-    marginBottom: SPACING.xs,
-  },
-  nestedLabel: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.slate600,
-  },
-  nestedValue: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: MEDICAL_COLORS.slate700,
-    marginTop: 2,
-  },
-  keyValuePair: {
-    marginBottom: SPACING.md,
-    paddingBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.slate100,
-  },
-  keyText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.slate900,
-    marginBottom: SPACING.xs,
-  },
-  valueText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate600,
-    lineHeight: 22,
-  },
-  merkeBox: {
-    backgroundColor: '#fef3c7',
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.lg,
-    marginTop: SPACING.md,
-  },
-  merkeHeader: {
+  tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
+    marginBottom: 10,
   },
-  merkeTitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: '800',
+  tableTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6366f1',
+    marginLeft: 8,
+  },
+  tableScroll: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  tableHeaderRow: {
+    flexDirection: 'row',
+    backgroundColor: '#1f2937',
+  },
+  tableDataRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+  },
+  tableRowStriped: {
+    backgroundColor: '#f9fafb',
+  },
+  tableCell: {
+    minWidth: 120,
+    maxWidth: 200,
+    padding: 12,
+    borderRightWidth: 1,
+    borderRightColor: '#e5e7eb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  tableHeaderCell: {
+    borderRightColor: '#374151',
+    borderBottomColor: '#374151',
+  },
+  tableHeaderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  tableCellText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 20,
+  },
+
+  // MERKE Box
+  merkeBox: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  merkeGradient: {
+    flexDirection: 'row',
+    padding: 16,
+  },
+  merkeIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  merkeIcon: {
+    fontSize: 22,
+  },
+  merkeContent: {
+    flex: 1,
+  },
+  merkeLabel: {
+    fontSize: 12,
+    fontWeight: '700',
     color: '#92400e',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   merkeText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: '#78350f',
+    fontSize: 14,
     lineHeight: 22,
-  },
-  extraSections: {
-    marginTop: SPACING.xl,
-  },
-  noContent: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xxxxxl,
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
-    ...SHADOWS.sm,
-  },
-  noContentText: {
-    marginTop: SPACING.lg,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxxxxl,
-  },
-  loadingText: {
-    marginTop: SPACING.lg,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxxxxl,
-  },
-  errorTitle: {
-    fontSize: TYPOGRAPHY.fontSize['2xl'],
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.warmRed,
-    marginBottom: SPACING.md,
-  },
-  errorText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    textAlign: 'center',
-    marginBottom: SPACING.xxl,
-    lineHeight: 24,
-  },
-  retryButton: {
-    backgroundColor: '#ec4899',
-    paddingHorizontal: SPACING.xxxl,
-    paddingVertical: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  retryButtonText: {
-    color: MEDICAL_COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: '#78350f',
+    fontStyle: 'italic',
   },
 });
-
-export default withErrorBoundary(KPTopicDetailScreen, 'KP Thema');
