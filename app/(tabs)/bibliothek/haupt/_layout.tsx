@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import BibliothekErrorBoundary from '@/components/BibliothekErrorBoundary';
 
-export default function BibliothekLayout() {
+export default function HauptBibliothekLayout() {
   return (
     <ErrorBoundary>
       <BibliothekErrorBoundary fallbackTitle="Bibliothek konnte nicht geladen werden">
@@ -17,18 +17,6 @@ export default function BibliothekLayout() {
         >
           <Stack.Screen
             name="index"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="haupt"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="kp"
             options={{
               headerShown: false,
             }}

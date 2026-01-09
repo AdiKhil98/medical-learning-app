@@ -1,175 +1,41 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  StyleSheet,
-  SafeAreaView,
-  Platform,
-  Animated,
-  ActivityIndicator,
-  Modal,
-} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Home,
-  ChevronRight,
-  Search,
-  Filter,
-  Heart,
-  Stethoscope,
-  Activity,
-  AlertTriangle,
-  Droplet,
-  Scan,
-  Menu as MenuIcon,
-} from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { BookOpen, GraduationCap, ChevronRight, Menu as MenuIcon, Library, FileText } from 'lucide-react-native';
+import { useRouter, Href } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
-
-import { SecureLogger } from '@/lib/security';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/tokens';
 import { withErrorBoundary } from '@/components/withErrorBoundary';
-import { colors } from '@/constants/colors';
-import { useResponsive } from '@/hooks/useResponsive';
 
-interface Category {
-  id: string;
+// Selection Card Component with Animations
+const SelectionCard: React.FC<{
   title: string;
-  count: number;
-  gradientColors: readonly [string, string, ...string[]];
-  iconName: string;
-  slug: string;
-  description?: string;
-}
-
-// Individual Stat Card Component (extracted to properly use hooks)
-const AnimatedStatCard: React.FC<{
-  number: string;
-  label: string;
-  color: string;
-  index: number;
-  cardStyle?: StyleSheet.NamedStyles<unknown>;
-  labelColor?: string;
-}> = ({ number, label, color, index, cardStyle, labelColor }) => {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        delay: index * 80,
-        friction: 4,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [index, scaleAnim, fadeAnim]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.statCard,
-        cardStyle,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-        },
-      ]}
-    >
-      <Text style={[styles.statNumber, { color }]}>{number}</Text>
-      <Text style={[styles.statLabel, labelColor && { color: labelColor }]}>{label}</Text>
-    </Animated.View>
-  );
-};
-
-// Animated Stats Grid Component
-const AnimatedStatsGrid: React.FC<{
-  favorites: number;
-  totalCategories: number;
-  totalSections: number;
-  cardStyle?: StyleSheet.NamedStyles<unknown>;
-  labelColor?: string;
-}> = ({ favorites, totalCategories, totalSections, cardStyle, labelColor }) => {
-  const statCards = [
-    { number: totalCategories.toString(), label: 'Fachgebiete', color: MEDICAL_COLORS.secondary },
-    { number: totalSections.toString(), label: 'Kategorien', color: MEDICAL_COLORS.blue },
-    { number: '1.2k', label: 'Fragen', color: MEDICAL_COLORS.success },
-    { number: favorites.toString(), label: 'Favoriten', color: MEDICAL_COLORS.warmOrangeDark },
-  ];
-
-  return (
-    <View style={styles.statsGrid}>
-      {statCards.map((stat, index) => (
-        <AnimatedStatCard
-          key={index}
-          number={stat.number}
-          label={stat.label}
-          color={stat.color}
-          index={index}
-          cardStyle={cardStyle}
-          labelColor={labelColor}
-        />
-      ))}
-    </View>
-  );
-};
-
-// Enhanced Category Card Component with Animations
-const AnimatedCategoryCard: React.FC<{
-  category: Category;
-  isFavorite: boolean;
+  subtitle: string;
+  description: string;
+  icon: React.ReactNode;
+  gradient: readonly [string, string, ...string[]];
   onPress: () => void;
-  onToggleFavorite: () => void;
   index: number;
-}> = ({ category, isFavorite, onPress, onToggleFavorite, index }) => {
+}> = ({ title, subtitle, description, icon, gradient, onPress, index }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const iconPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Staggered fade-in animation on mount
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 400,
-      delay: index * 100,
+      delay: index * 150,
       useNativeDriver: true,
     }).start();
-
-    // Subtle continuous pulse for icon
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(iconPulse, {
-          toValue: 1.1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(iconPulse, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+  }, [index, fadeAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.95,
+      toValue: 0.98,
       useNativeDriver: true,
     }).start();
   };
@@ -183,30 +49,10 @@ const AnimatedCategoryCard: React.FC<{
     }).start();
   };
 
-  const getIconComponent = (iconName: string) => {
-    const iconProps = { size: 36, color: MEDICAL_COLORS.white, strokeWidth: 2.5 };
-    switch (iconName) {
-      case 'stethoscope':
-        return <Stethoscope {...iconProps} />;
-      case 'heart':
-        return <Heart {...iconProps} />;
-      case 'alert':
-        return <AlertTriangle {...iconProps} />;
-      case 'activity':
-        return <Activity {...iconProps} />;
-      case 'droplet':
-        return <Droplet {...iconProps} />;
-      case 'scan':
-        return <Scan {...iconProps} />;
-      default:
-        return <Stethoscope {...iconProps} />;
-    }
-  };
-
   return (
     <Animated.View
       style={[
-        styles.categoryCardWrapper,
+        styles.cardWrapper,
         {
           opacity: fadeAnim,
           transform: [{ scale: scaleAnim }],
@@ -219,53 +65,19 @@ const AnimatedCategoryCard: React.FC<{
         onPressOut={handlePressOut}
         activeOpacity={1}
         accessibilityRole="button"
-        accessibilityLabel={`${category.title}, ${category.count} Kategorien`}
-        accessibilityHint="Tippen Sie, um die Kategorien anzuzeigen"
+        accessibilityLabel={title}
+        accessibilityHint={`Öffnet ${title}`}
       >
-        <LinearGradient
-          colors={category.gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.categoryCard}
-        >
-          {/* Content */}
+        <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
           <View style={styles.cardContent}>
-            {/* Favorite Button */}
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={onToggleFavorite}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isFavorite ? `${category.title} von Favoriten entfernen` : `${category.title} zu Favoriten hinzufügen`
-              }
-              accessibilityState={{ selected: isFavorite }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Heart size={24} color={MEDICAL_COLORS.white} fill={isFavorite ? MEDICAL_COLORS.white : 'none'} />
-            </TouchableOpacity>
-
-            {/* Icon Container with Pulse */}
-            <Animated.View
-              style={[
-                styles.iconContainer,
-                {
-                  transform: [{ scale: iconPulse }],
-                },
-              ]}
-            >
-              {getIconComponent(category.iconName)}
-            </Animated.View>
-
-            {/* Title */}
-            <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
-              {category.title}
-            </Text>
-
-            {/* Count and Arrow */}
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardCount}>{category.count} Kategorien</Text>
-              <ChevronRight size={24} color={MEDICAL_COLORS.white} />
+            <View style={styles.iconContainer}>{icon}</View>
+            <View style={styles.textContainer}>
+              <Text style={styles.cardSubtitle}>{subtitle}</Text>
+              <Text style={styles.cardTitle}>{title}</Text>
+              <Text style={styles.cardDescription}>{description}</Text>
+            </View>
+            <View style={styles.arrowContainer}>
+              <ChevronRight size={28} color="rgba(255,255,255,0.9)" />
             </View>
           </View>
         </LinearGradient>
@@ -274,333 +86,27 @@ const AnimatedCategoryCard: React.FC<{
   );
 };
 
-// Helper function to get gradient colors based on slug
-const getGradientForSlug = (slug: string): readonly [string, string, ...string[]] => {
-  const gradientMap: Record<string, readonly [string, string, ...string[]]> = {
-    chirurgie: MEDICAL_COLORS.redGradient as unknown as readonly [string, string, ...string[]],
-    'innere-medizin': MEDICAL_COLORS.primaryGradient as unknown as readonly [string, string, ...string[]],
-    kardiologie: MEDICAL_COLORS.pinkGradient as unknown as readonly [string, string, ...string[]],
-    pneumologie: MEDICAL_COLORS.primaryGradient as unknown as readonly [string, string, ...string[]],
-    gastroenterologie: MEDICAL_COLORS.orangeGradient as unknown as readonly [string, string, ...string[]],
-    nephrologie: MEDICAL_COLORS.cyanGradient as unknown as readonly [string, string, ...string[]],
-    'endokrinologie-und-stoffwechsel': MEDICAL_COLORS.purpleGradient as unknown as readonly [
-      string,
-      string,
-      ...string[],
-    ],
-    notfallmedizin: MEDICAL_COLORS.warmOrangeGradient as unknown as readonly [string, string, ...string[]],
-    infektiologie: MEDICAL_COLORS.greenGradient as unknown as readonly [string, string, ...string[]],
-    urologie: MEDICAL_COLORS.amberGradient as unknown as readonly [string, string, ...string[]],
-    radiologie: MEDICAL_COLORS.blueGradient as unknown as readonly [string, string, ...string[]],
-    dermatologie: MEDICAL_COLORS.pinkGradient as unknown as readonly [string, string, ...string[]],
-    neurologie: MEDICAL_COLORS.purpleGradient as unknown as readonly [string, string, ...string[]],
-    orthopädie: [...MEDICAL_COLORS.darkMenuGradient].reverse() as unknown as readonly [string, string, ...string[]],
-  };
-  return gradientMap[slug] || (MEDICAL_COLORS.cyanGradient as unknown as readonly [string, string, ...string[]]); // Default cyan
-};
-
-// Helper function to get icon name based on slug
-const getIconForSlug = (slug: string, title: string): string => {
-  const lowerTitle = title.toLowerCase();
-  const lowerSlug = slug.toLowerCase();
-
-  if (lowerSlug.includes('kardio') || lowerTitle.includes('herz')) return 'heart';
-  if (lowerSlug.includes('chirurg') || lowerSlug.includes('trauma')) return 'stethoscope';
-  if (lowerSlug.includes('notfall') || lowerSlug.includes('emergency')) return 'alert';
-  if (lowerSlug.includes('diagnostik') || lowerSlug.includes('radio')) return 'scan';
-  if (lowerSlug.includes('pneumo') || lowerTitle.includes('lunge')) return 'activity';
-  if (lowerSlug.includes('urolog') || lowerSlug.includes('niere')) return 'droplet';
-  if (lowerSlug.includes('infekt') || lowerSlug.includes('hygiene')) return 'activity';
-
-  return 'stethoscope'; // Default icon
-};
-
-type SortOption = 'alphabetical' | 'count-desc' | 'count-asc' | 'favorites';
-
-const BibliothekIndex: React.FC = () => {
+const BibliothekSelectionScreen: React.FC = () => {
   const router = useRouter();
   const { session } = useAuth();
-  const { width: screenWidth, isMobile, isSmallMobile, isTablet } = useResponsive();
-
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('alphabetical');
-  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
-  // NOTE: Removed Voiceflow cleanup - support widget should be visible on this page
-  // Cleanup only runs when navigating away from simulation pages
-
-  // Fetch top-level categories from database
-  const fetchCategories = useCallback(async () => {
-    if (!session) {
-      setError('Sie müssen angemeldet sein.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch top-level sections (where parent_slug is null)
-      const { data: sections, error: sectionsError } = await supabase
-        .from('sections')
-        .select('id, slug, title, description, parent_slug')
-        .is('parent_slug', null)
-        .order('display_order', { ascending: true });
-
-      if (sectionsError) throw sectionsError;
-      if (!sections || sections.length === 0) {
-        setCategories([]);
-        return;
-      }
-
-      // FIX: Fetch all child counts in a SINGLE query instead of N queries
-      // Get all children where parent_slug matches any of our sections
-      const parentSlugs = sections.map((s) => s.slug);
-      const { data: allChildren, error: childrenError } = await supabase
-        .from('sections')
-        .select('parent_slug')
-        .in('parent_slug', parentSlugs);
-
-      if (childrenError) throw childrenError;
-
-      // Create a map of parent_slug -> count for O(1) lookup
-      const childCountMap = new Map<string, number>();
-      (allChildren || []).forEach((child) => {
-        const currentCount = childCountMap.get(child.parent_slug) || 0;
-        childCountMap.set(child.parent_slug, currentCount + 1);
-      });
-
-      // Map sections to categories with their counts
-      const categoriesWithCounts = sections.map((section) => ({
-        id: section.id,
-        title: section.title,
-        slug: section.slug,
-        description: section.description,
-        count: childCountMap.get(section.slug) || 0,
-        gradientColors: getGradientForSlug(section.slug),
-        iconName: getIconForSlug(section.slug, section.title),
-      }));
-
-      setCategories(categoriesWithCounts);
-    } catch (e) {
-      SecureLogger.error('Error fetching categories:', e);
-      setError(e instanceof Error ? e.message : 'Fehler beim Laden der Kategorien');
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-  // Fetch categories on mount
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  // Toggle favorite
-  const toggleFavorite = (categoryId: string) => {
-    setFavorites((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
-    );
+  const handleHauptPress = () => {
+    router.push('/(tabs)/bibliothek/haupt' as Href);
   };
 
-  // Handle category press
-  const handleCategoryPress = (slug: string) => {
-    router.push(`/(tabs)/bibliothek/${slug}`);
+  const handleKPPress = () => {
+    router.push('/(tabs)/bibliothek/kp' as Href);
   };
 
-  // Handle simulation start
-  const handleStartSimulation = () => {
-    router.push('/(tabs)/simulation');
-  };
-
-  // Filter and sort categories
-  const filteredCategories = useMemo(() => {
-    let result = [...categories];
-
-    // Apply search filter
-    if (searchQuery) {
-      result = result.filter((cat) => cat.title.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-
-    // Apply favorites filter
-    if (showOnlyFavorites) {
-      result = result.filter((cat) => favorites.includes(cat.id));
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'alphabetical':
-        result.sort((a, b) => a.title.localeCompare(b.title, 'de'));
-        break;
-      case 'count-desc':
-        result.sort((a, b) => b.count - a.count);
-        break;
-      case 'count-asc':
-        result.sort((a, b) => a.count - b.count);
-        break;
-      case 'favorites':
-        result.sort((a, b) => {
-          const aIsFav = favorites.includes(a.id) ? 1 : 0;
-          const bIsFav = favorites.includes(b.id) ? 1 : 0;
-          return bIsFav - aIsFav;
-        });
-        break;
-    }
-
-    return result;
-  }, [categories, searchQuery, showOnlyFavorites, sortBy, favorites]);
-
-  // Calculate total sections count
-  const totalSectionsCount = categories.reduce((sum, cat) => sum + cat.count, 0);
-
-  // Gradient colors (cast to tuple type for LinearGradient compatibility)
   const backgroundGradient = MEDICAL_COLORS.backgroundGradient as unknown as readonly [string, string, ...string[]];
-
-  // Dynamic styles for dark mode support
-  const dynamicStyles = StyleSheet.create({
-    loadingText: {
-      ...styles.loadingText,
-      color: colors.textSecondary,
-    },
-    errorText: {
-      ...styles.errorText,
-      color: colors.textSecondary,
-    },
-    retryButton: {
-      ...styles.retryButton,
-      backgroundColor: colors.primary,
-    },
-    breadcrumbActive: {
-      ...styles.breadcrumbActive,
-      color: colors.primary,
-    },
-    pageTitle: {
-      ...styles.pageTitle,
-      color: colors.text,
-    },
-    pageSubtitle: {
-      ...styles.pageSubtitle,
-      color: colors.textSecondary,
-    },
-    searchContainer: {
-      ...styles.searchContainer,
-    },
-    searchInput: {
-      ...styles.searchInput,
-      backgroundColor: colors.card,
-      borderColor: MEDICAL_COLORS.slate200,
-      color: colors.text,
-    },
-    filterButton: {
-      ...styles.filterButton,
-      backgroundColor: colors.card,
-      borderColor: MEDICAL_COLORS.slate200,
-    },
-    filterButtonActive: {
-      ...styles.filterButtonActive,
-      backgroundColor: MEDICAL_COLORS.warmOrangeBg,
-    },
-    filterText: {
-      ...styles.filterText,
-      color: colors.text,
-    },
-    modalContent: {
-      ...styles.modalContent,
-      backgroundColor: colors.card,
-    },
-    modalTitle: {
-      ...styles.modalTitle,
-      color: colors.text,
-    },
-    filterSectionTitle: {
-      ...styles.filterSectionTitle,
-      color: colors.textSecondary,
-    },
-    filterOption: {
-      ...styles.filterOption,
-      backgroundColor: MEDICAL_COLORS.slate50,
-    },
-    filterOptionText: {
-      ...styles.filterOptionText,
-      color: colors.text,
-    },
-    resetButtonText: {
-      ...styles.resetButtonText,
-      color: colors.textSecondary,
-    },
-    statCard: {
-      ...styles.statCard,
-      backgroundColor: colors.card,
-      borderColor: MEDICAL_COLORS.slate100,
-    },
-    statLabel: {
-      ...styles.statLabel,
-      color: colors.textSecondary,
-    },
-    sectionHeader: {
-      ...styles.sectionHeader,
-      color: colors.text,
-    },
-    noResultsText: {
-      ...styles.noResultsText,
-      color: colors.textSecondary,
-    },
-    ctaButton: {
-      ...styles.ctaButton,
-      backgroundColor: MEDICAL_COLORS.white,
-    },
-    ctaButtonText: {
-      ...styles.ctaButtonText,
-      color: MEDICAL_COLORS.warmOrangeDark,
-    },
-  });
-
-  // Loading state
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={dynamicStyles.loadingText}>Kategorien werden geladen...</Text>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Fehler</Text>
-            <Text style={dynamicStyles.errorText}>{error}</Text>
-            <TouchableOpacity style={dynamicStyles.retryButton} onPress={fetchCategories}>
-              <Text style={styles.retryButtonText}>Erneut versuchen</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
-      {/* Background Gradient */}
       <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient} />
 
       <SafeAreaView style={styles.safeArea}>
-        {/* Modern Header - Matching Homepage */}
+        {/* Header */}
         <View
           style={[
             styles.modernHeader,
@@ -611,10 +117,9 @@ const BibliothekIndex: React.FC = () => {
             },
           ]}
         >
-          {/* Orange accent line at top */}
           {Platform.OS === 'web' && (
             <LinearGradient
-              colors={['#FF8C42', '#FF6B6B', '#FFA66B']}
+              colors={['#6366f1', '#8b5cf6', '#a78bfa']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{ height: 3, width: '100%' }}
@@ -622,7 +127,6 @@ const BibliothekIndex: React.FC = () => {
           )}
           <LinearGradient colors={MEDICAL_COLORS.headerGradient as any} style={styles.headerGradient}>
             <View style={styles.headerContent}>
-              {/* Left Section: Menu + Logo */}
               <View style={styles.headerLeft}>
                 <TouchableOpacity
                   style={styles.menuButton}
@@ -630,18 +134,16 @@ const BibliothekIndex: React.FC = () => {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel="Menü öffnen"
-                  accessibilityHint="Öffnet das Navigationsmenü"
                 >
                   <LinearGradient
-                    colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
+                    colors={['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.10)']}
                     style={styles.menuButtonGradient}
                   >
-                    <MenuIcon size={22} color={MEDICAL_COLORS.warmOrange} />
+                    <MenuIcon size={22} color="#6366f1" />
                   </LinearGradient>
                 </TouchableOpacity>
-                <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={false} />
+                <Logo size="medium" variant="medical" textColor="#6366f1" animated={false} />
               </View>
-              {/* Right Section: User Avatar */}
               <UserAvatar size="medium" />
             </View>
           </LinearGradient>
@@ -650,220 +152,55 @@ const BibliothekIndex: React.FC = () => {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            {/* Breadcrumb */}
-            <View style={styles.breadcrumb}>
-              <Home size={16} color={colors.textSecondary} />
-              <ChevronRight size={16} color={colors.textSecondary} style={styles.breadcrumbSeparator} />
-              <Text style={dynamicStyles.breadcrumbActive}>Bibliothek</Text>
+            <View style={styles.heroIconContainer}>
+              <Library size={48} color="#6366f1" />
             </View>
-
-            {/* Title */}
-            <Text style={dynamicStyles.pageTitle}>Bibliothek</Text>
-            <Text style={dynamicStyles.pageSubtitle}>
-              Entdecken Sie medizinische Fachgebiete und vertiefen Sie Ihr Wissen
+            <Text style={styles.heroTitle}>Bibliothek</Text>
+            <Text style={styles.heroSubtitle}>
+              Wählen Sie eine Bibliothek aus, um medizinisches Wissen zu vertiefen
             </Text>
           </View>
 
-          {/* Search & Filter Bar */}
-          <View style={styles.searchFilterContainer}>
-            {/* Search Input */}
-            <View style={dynamicStyles.searchContainer}>
-              <Search size={20} color={colors.textSecondary} style={styles.searchIcon} />
-              <TextInput
-                style={dynamicStyles.searchInput}
-                placeholder="Fachgebiet suchen..."
-                placeholderTextColor={colors.textSecondary}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                accessibilityLabel="Fachgebiet suchen"
-                accessibilityHint="Geben Sie den Namen eines Fachgebiets ein"
-                accessibilityRole="search"
-              />
-            </View>
+          {/* Selection Cards */}
+          <View style={styles.cardsContainer}>
+            {/* Haupt Bibliothek Card */}
+            <SelectionCard
+              title="Haupt Bibliothek"
+              subtitle="Vollständige Sammlung"
+              description="Umfassende medizinische Fachgebiete mit strukturierten Inhalten nach Kategorien"
+              icon={<BookOpen size={36} color="#ffffff" strokeWidth={2} />}
+              gradient={['#6366f1', '#8b5cf6', '#a78bfa'] as readonly [string, string, ...string[]]}
+              onPress={handleHauptPress}
+              index={0}
+            />
 
-            {/* Filter Button */}
-            <TouchableOpacity
-              style={[
-                dynamicStyles.filterButton,
-                (showOnlyFavorites || sortBy !== 'alphabetical') && dynamicStyles.filterButtonActive,
-              ]}
-              onPress={() => setFilterModalVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Filter und Sortieren"
-              accessibilityHint="Öffnet Optionen zum Filtern und Sortieren der Fachgebiete"
-              accessibilityState={{ expanded: filterModalVisible }}
-            >
-              <Filter
-                size={20}
-                color={showOnlyFavorites || sortBy !== 'alphabetical' ? MEDICAL_COLORS.warmOrangeDark : colors.text}
-              />
-              <Text
-                style={[
-                  dynamicStyles.filterText,
-                  (showOnlyFavorites || sortBy !== 'alphabetical') && styles.filterTextActive,
-                ]}
-              >
-                Filter
-              </Text>
-            </TouchableOpacity>
+            {/* KP Bibliothek (444) Card */}
+            <SelectionCard
+              title="KP Bibliothek (444)"
+              subtitle="Prüfungsvorbereitung"
+              description="444 prüfungsrelevante Themen mit Prioritäten und strukturierten Lerninhalten"
+              icon={<GraduationCap size={36} color="#ffffff" strokeWidth={2} />}
+              gradient={['#ec4899', '#f472b6', '#fda4af'] as readonly [string, string, ...string[]]}
+              onPress={handleKPPress}
+              index={1}
+            />
           </View>
 
-          {/* Filter Modal */}
-          <Modal
-            visible={filterModalVisible}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setFilterModalVisible(false)}
-          >
-            <TouchableOpacity
-              style={styles.modalOverlay}
-              activeOpacity={1}
-              onPress={() => setFilterModalVisible(false)}
-            >
-              <View style={dynamicStyles.modalContent} onStartShouldSetResponder={() => true}>
-                <View style={styles.modalHeader}>
-                  <Text style={dynamicStyles.modalTitle}>Filter & Sortieren</Text>
-                  <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                    <Text style={styles.modalCloseText}>Fertig</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Sort Options */}
-                <View style={styles.filterSection}>
-                  <Text style={dynamicStyles.filterSectionTitle}>Sortieren nach</Text>
-
-                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('alphabetical')}>
-                    <View style={styles.filterOptionContent}>
-                      <Text style={dynamicStyles.filterOptionText}>Alphabetisch (A-Z)</Text>
-                      {sortBy === 'alphabetical' && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('count-desc')}>
-                    <View style={styles.filterOptionContent}>
-                      <Text style={dynamicStyles.filterOptionText}>Meiste Kategorien</Text>
-                      {sortBy === 'count-desc' && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('count-asc')}>
-                    <View style={styles.filterOptionContent}>
-                      <Text style={dynamicStyles.filterOptionText}>Wenigste Kategorien</Text>
-                      {sortBy === 'count-asc' && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={dynamicStyles.filterOption} onPress={() => setSortBy('favorites')}>
-                    <View style={styles.filterOptionContent}>
-                      <Text style={dynamicStyles.filterOptionText}>Favoriten zuerst</Text>
-                      {sortBy === 'favorites' && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Filter Options */}
-                <View style={styles.filterSection}>
-                  <Text style={dynamicStyles.filterSectionTitle}>Anzeigen</Text>
-
-                  <TouchableOpacity
-                    style={dynamicStyles.filterOption}
-                    onPress={() => setShowOnlyFavorites(!showOnlyFavorites)}
-                  >
-                    <View style={styles.filterOptionContent}>
-                      <Text style={dynamicStyles.filterOptionText}>Nur Favoriten</Text>
-                      {showOnlyFavorites && (
-                        <View style={styles.checkmark}>
-                          <Text style={styles.checkmarkText}>✓</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Reset Button */}
-                <TouchableOpacity
-                  style={styles.resetButton}
-                  onPress={() => {
-                    setSortBy('alphabetical');
-                    setShowOnlyFavorites(false);
-                  }}
-                >
-                  <Text style={dynamicStyles.resetButtonText}>Filter zurücksetzen</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-
-          {/* Stats Grid - Animated */}
-          {/* <AnimatedStatsGrid
-            favorites={favorites.length}
-            totalCategories={categories.length}
-            totalSections={totalSectionsCount}
-            cardStyle={dynamicStyles.statCard}
-            labelColor={colors.textSecondary}
-          /> */}
-
-          {/* Section Header */}
-          <Text style={dynamicStyles.sectionHeader}>
-            {searchQuery ? `Suchergebnisse (${filteredCategories.length})` : 'Alle Fachgebiete'}
-          </Text>
-
-          {/* Category Cards Grid */}
-          <View style={styles.categoryGrid}>
-            {filteredCategories.length > 0 ? (
-              filteredCategories.map((category, index) => (
-                <AnimatedCategoryCard
-                  key={category.id}
-                  category={category}
-                  isFavorite={favorites.includes(category.id)}
-                  onPress={() => handleCategoryPress(category.slug)}
-                  onToggleFavorite={() => toggleFavorite(category.id)}
-                  index={index}
-                />
-              ))
-            ) : (
-              <View style={styles.noResultsContainer}>
-                <Text style={dynamicStyles.noResultsText}>
-                  Keine Fachgebiete gefunden für &ldquo;{searchQuery}&rdquo;
+          {/* Info Section */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoCard}>
+              <FileText size={24} color={MEDICAL_COLORS.slate500} />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoTitle}>Tipp</Text>
+                <Text style={styles.infoText}>
+                  Die KP Bibliothek enthält priorisierte Themen für die Prüfungsvorbereitung mit +++ (sehr wichtig), ++
+                  (wichtig) und + (relevant) Markierungen.
                 </Text>
               </View>
-            )}
+            </View>
           </View>
-
-          {/* Call to Action Banner */}
-          <LinearGradient
-            colors={MEDICAL_COLORS.warmOrangeGradient as unknown as readonly [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.ctaBanner}
-          >
-            <Text style={styles.ctaTitle}>Bereit zum Lernen?</Text>
-            <Text style={styles.ctaSubtitle}>Starten Sie jetzt mit einer Simulation und testen Sie Ihr Wissen</Text>
-
-            <TouchableOpacity style={dynamicStyles.ctaButton} onPress={handleStartSimulation} activeOpacity={0.8}>
-              <Text style={dynamicStyles.ctaButtonText}>Simulation starten</Text>
-              <ChevronRight size={20} color={MEDICAL_COLORS.warmOrangeDark} />
-            </TouchableOpacity>
-          </LinearGradient>
         </ScrollView>
 
-        {/* Menu */}
         <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       </SafeAreaView>
     </View>
@@ -884,8 +221,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-
-  // Header Styles - Matching Homepage
   modernHeader: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.08)',
@@ -921,427 +256,127 @@ const styles = StyleSheet.create({
   menuButtonGradient: {
     padding: SPACING.sm + 2,
     borderRadius: BORDER_RADIUS.md,
-    shadowColor: 'rgba(0,0,0,0.05)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
     minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 32,
     paddingBottom: 96,
   },
-
-  // Loading & Error States
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxxxxl,
-  },
-  loadingText: {
-    marginTop: SPACING.lg,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xxxxxl,
-  },
-  errorTitle: {
-    fontSize: TYPOGRAPHY.fontSize['2xl'],
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.warmRed,
-    marginBottom: SPACING.md,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  errorText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    textAlign: 'center',
-    marginBottom: SPACING.xxl,
-    lineHeight: 24,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  retryButton: {
-    backgroundColor: MEDICAL_COLORS.secondary,
-    paddingHorizontal: SPACING.xxxl,
-    paddingVertical: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  retryButtonText: {
-    color: MEDICAL_COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  noResultsContainer: {
-    width: '100%',
-    padding: SPACING.xxxxxl,
-    alignItems: 'center',
-  },
-  noResultsText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate500,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-
-  // Hero Section
   heroSection: {
+    alignItems: 'center',
     marginBottom: SPACING.xxxl,
   },
-  breadcrumb: {
-    flexDirection: 'row',
+  heroIconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
-  breadcrumbSeparator: {
-    marginHorizontal: SPACING.sm,
-  },
-  breadcrumbActive: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    color: MEDICAL_COLORS.warmOrange,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  pageTitle: {
+  heroTitle: {
     fontSize: 36,
     fontWeight: '800',
-    color: '#000000',
+    color: MEDICAL_COLORS.slate900,
+    textAlign: 'center',
     marginBottom: SPACING.md,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     letterSpacing: -0.5,
   },
-  pageSubtitle: {
+  heroSubtitle: {
     fontSize: TYPOGRAPHY.fontSize.lg,
     color: MEDICAL_COLORS.slate600,
-    lineHeight: 26,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: TYPOGRAPHY.fontWeight.normal,
-  },
-
-  // Search & Filter Bar
-  searchFilterContainer: {
-    flexDirection: 'row',
-    gap: SPACING.lg,
-    marginBottom: SPACING.xxxl,
-  },
-  searchContainer: {
-    flex: 1,
-    position: 'relative',
-    height: 48,
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: SPACING.lg,
-    top: 14,
-    zIndex: 1,
-  },
-  searchInput: {
-    height: '100%',
-    backgroundColor: MEDICAL_COLORS.white,
-    borderWidth: 2,
-    borderColor: MEDICAL_COLORS.slate200,
-    borderRadius: BORDER_RADIUS.lg,
-    paddingLeft: 48,
-    paddingRight: SPACING.lg,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate900,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xxl,
-    paddingVertical: SPACING.md,
-    backgroundColor: MEDICAL_COLORS.white,
-    borderWidth: 2,
-    borderColor: MEDICAL_COLORS.slate200,
-    borderRadius: BORDER_RADIUS.lg,
-    gap: SPACING.sm,
-  },
-  filterButtonActive: {
-    borderColor: MEDICAL_COLORS.warmOrangeDark,
-    backgroundColor: MEDICAL_COLORS.warmOrangeBg,
-  },
-  filterText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: MEDICAL_COLORS.slate700,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  filterTextActive: {
-    color: MEDICAL_COLORS.warmOrangeDark,
-  },
-
-  // Filter Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: MEDICAL_COLORS.white,
-    borderTopLeftRadius: BORDER_RADIUS['2xl'],
-    borderTopRightRadius: BORDER_RADIUS['2xl'],
-    paddingTop: SPACING.xxl,
-    paddingBottom: SPACING.xxxxxl,
-    paddingHorizontal: SPACING.xxl,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xxl,
-    paddingBottom: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: MEDICAL_COLORS.slate200,
-  },
-  modalTitle: {
-    fontSize: TYPOGRAPHY.fontSize['2xl'],
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.slate900,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  modalCloseText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.warmOrangeDark,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  filterSection: {
-    marginBottom: SPACING.xxl,
-  },
-  filterSectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.slate500,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: SPACING.md,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  filterOption: {
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: MEDICAL_COLORS.slate50,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.sm,
-  },
-  filterOptionContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  filterOptionText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate900,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: MEDICAL_COLORS.warmOrangeDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkmarkText: {
-    color: MEDICAL_COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-  resetButton: {
-    backgroundColor: MEDICAL_COLORS.slate100,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.xxl,
-    borderRadius: BORDER_RADIUS.lg,
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-  },
-  resetButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: MEDICAL_COLORS.slate500,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-    marginBottom: SPACING.xxxl,
-    justifyContent: 'flex-start',
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '47%',
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    ...SHADOWS.lg,
-    borderWidth: 1,
-    borderColor: MEDICAL_COLORS.slate100,
-  },
-  statNumber: {
-    fontSize: 42,
-    fontWeight: '800',
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.slate700,
     textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    lineHeight: 26,
+    maxWidth: 320,
   },
-
-  // Section Header
-  sectionHeader: {
-    fontSize: TYPOGRAPHY.fontSize['2xl'],
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.slate900,
-    marginBottom: SPACING.xxl,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-
-  // Category Cards Grid
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xxxxxl,
-  },
-  categoryCardWrapper: {
-    width: '48%',
+  cardsContainer: {
+    gap: SPACING.xl,
     marginBottom: SPACING.xxxl,
   },
-  categoryCard: {
-    borderRadius: BORDER_RADIUS['3xl'],
-    paddingVertical: SPACING.xxxl,
-    paddingHorizontal: SPACING.xl,
-    minHeight: 220,
+  cardWrapper: {
+    width: '100%',
+  },
+  card: {
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.xxl,
+    minHeight: 160,
     ...SHADOWS.xl,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  bgCircle: {
-    position: 'absolute',
-    backgroundColor: MEDICAL_COLORS.white,
-    borderRadius: 1000,
-  },
-  bgCircle1: {
-    width: 128,
-    height: 128,
-    top: -64,
-    right: -64,
-  },
-  bgCircle2: {
-    width: 96,
-    height: 96,
-    bottom: -48,
-    left: -48,
   },
   cardContent: {
-    position: 'relative',
-    zIndex: 10,
-    flex: 1,
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    padding: SPACING.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   iconContainer: {
     width: 72,
     height: 72,
+    borderRadius: 36,
     backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: BORDER_RADIUS.xl,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.xl,
-    ...SHADOWS.md,
+    alignItems: 'center',
+    marginRight: SPACING.xl,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  cardSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: SPACING.xs,
   },
   cardTitle: {
     fontSize: 22,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.white,
-    marginBottom: SPACING.md,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    flexShrink: 1,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: SPACING.sm,
   },
-  cardFooter: {
+  cardDescription: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 20,
+  },
+  arrowContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: SPACING.md,
+  },
+  infoSection: {
+    marginTop: SPACING.lg,
+  },
+  infoCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardCount: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: MEDICAL_COLORS.white,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-
-  // CTA Banner
-  ctaBanner: {
-    borderRadius: BORDER_RADIUS['2xl'],
-    padding: SPACING.xxxxxl,
-    alignItems: 'center',
-    marginTop: SPACING.xxxxxl,
-    marginBottom: SPACING.xxxl,
-    ...SHADOWS.xl,
-  },
-  ctaTitle: {
-    fontSize: 28,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.white,
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  ctaSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.base,
-    color: MEDICAL_COLORS.white,
-    marginBottom: SPACING.xxl,
-    textAlign: 'center',
-    lineHeight: 24,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: MEDICAL_COLORS.white,
-    paddingHorizontal: SPACING.xxxl,
-    paddingVertical: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    gap: SPACING.sm,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    ...SHADOWS.md,
+    alignItems: 'flex-start',
+    gap: SPACING.lg,
   },
-  ctaButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+  infoTextContainer: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: TYPOGRAPHY.fontSize.base,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: MEDICAL_COLORS.warmOrangeDark,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    color: MEDICAL_COLORS.slate900,
+    marginBottom: SPACING.xs,
+  },
+  infoText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: MEDICAL_COLORS.slate600,
+    lineHeight: 20,
   },
 });
 
-export default withErrorBoundary(BibliothekIndex, 'Bibliothek');
+export default withErrorBoundary(BibliothekSelectionScreen, 'Bibliothek');
