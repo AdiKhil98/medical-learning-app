@@ -29,20 +29,20 @@ export function RegistrationStatusBanner() {
     return null; // Failed to load, don't block user
   }
 
-  const spotsRemaining = status.max_users - status.current_count;
+  const spotsRemaining = Math.max(0, status.max_users - status.current_count);
   const percentFilled = (status.current_count / status.max_users) * 100;
 
   // Show different messages based on how many spots left
-  if (!status.allowed) {
+  // If no spots remaining OR registration not allowed, show closed message
+  if (!status.allowed || spotsRemaining === 0) {
     return (
       <View style={styles.bannerYellow}>
         <AlertCircle color="#d97706" size={20} style={styles.icon} />
         <View style={styles.content}>
-          <Text style={styles.titleYellow}>
-            Registration Currently Closed
-          </Text>
+          <Text style={styles.titleYellow}>Registration Currently Closed</Text>
           <Text style={styles.messageYellow}>
-            We've reached our limit of {status.max_users} beta users. Join our waitlist to be notified when spots open up!
+            We've reached our limit of {status.max_users} beta users. Join our waitlist to be notified when spots open
+            up!
           </Text>
         </View>
       </View>
@@ -55,12 +55,8 @@ export function RegistrationStatusBanner() {
       <View style={styles.bannerRed}>
         <Clock color="#dc2626" size={20} style={styles.icon} />
         <View style={styles.content}>
-          <Text style={styles.titleRed}>
-            Only {spotsRemaining} Spots Remaining!
-          </Text>
-          <Text style={styles.messageRed}>
-            We're in limited beta. Register now before spots run out.
-          </Text>
+          <Text style={styles.titleRed}>Only {spotsRemaining} Spots Remaining!</Text>
+          <Text style={styles.messageRed}>We're in limited beta. Register now before spots run out.</Text>
         </View>
       </View>
     );
@@ -72,9 +68,7 @@ export function RegistrationStatusBanner() {
       <View style={styles.bannerBlue}>
         <Users color="#2563eb" size={20} style={styles.icon} />
         <View style={styles.content}>
-          <Text style={styles.titleBlue}>
-            Limited Beta Access
-          </Text>
+          <Text style={styles.titleBlue}>Limited Beta Access</Text>
           <Text style={styles.messageBlue}>
             {spotsRemaining} spots remaining out of {status.max_users} total
           </Text>
