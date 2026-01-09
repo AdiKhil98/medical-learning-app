@@ -31,6 +31,7 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import PromoBanner from '@/components/ui/PromoBanner';
+import TrustBadges from '@/components/ui/TrustBadges';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -717,6 +718,11 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
             Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
           </Text>
         </TouchableOpacity>
+
+        {/* Trust Badges */}
+        <View style={styles.trustBadgesWrapper}>
+          <TrustBadges variant="horizontal" size="small" />
+        </View>
       </View>
 
       {/* Menu */}
@@ -1199,5 +1205,9 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.primary,
     fontFamily: 'Inter-SemiBold',
     fontWeight: '600',
+  },
+  trustBadgesWrapper: {
+    marginTop: SPACING.md,
+    width: '100%',
   },
 });
