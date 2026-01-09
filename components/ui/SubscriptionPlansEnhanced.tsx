@@ -603,7 +603,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
           lineHeight: 24,
         },
         trustBadgesContainer: {
-          marginVertical: 32,
+          marginVertical: 12,
           paddingHorizontal: 20,
           alignItems: 'center',
         },
@@ -863,7 +863,7 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
 
           {/* Trust Badges */}
           <View style={styles.trustBadgesContainer}>
-            <TrustBadges variant="horizontal" size="medium" />
+            <TrustBadges variant="horizontal" size="small" />
           </View>
 
           {/* Footer */}
