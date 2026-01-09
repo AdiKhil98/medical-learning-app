@@ -1015,6 +1015,12 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: MEDICAL_COLORS.slate900,
+    ...(Platform.OS === 'web' && {
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%',
+    }),
   },
   recentCardSubtitle: {
     fontSize: TYPOGRAPHY.fontSize.sm,
