@@ -157,9 +157,10 @@ async function logWebhookEvent(
   }
 }
 
-// Helper function to find user by email
+// Helper function to find user by email (case-insensitive)
 async function findUserByEmail(email) {
-  const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
+  // Use ilike for case-insensitive email matching
+  const { data, error } = await supabase.from('users').select('*').ilike('email', email).single();
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116 = no rows returned
