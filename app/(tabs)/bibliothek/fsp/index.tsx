@@ -33,8 +33,8 @@ const fspSections: FSPSection[] = [
     icon: 'chatbubbles',
     route: '/bibliothek/fsp/anamnese',
     gradient: ['#f59e0b', '#d97706'],
-    available: false,
-    count: 'Demnächst',
+    available: true,
+    count: '29 Themen',
   },
   {
     id: 'arztbrief',
