@@ -1,13 +1,19 @@
 # Cache control for static assets and HTML
 
-# Early Hints for faster API connections (improves LCP)
+# Global headers for all routes
 /*
+  # Early Hints for faster API connections (improves LCP)
   Link: <https://pavjavrijaihnwbydfrk.supabase.co>; rel=preconnect
   Link: <https://pavjavrijaihnwbydfrk.supabase.co>; rel=dns-prefetch
-
-# Permissions Policy - Allow microphone and camera access
-/*
+  # Preconnect for Voiceflow (deferred loading)
+  Link: <https://cdn.voiceflow.com>; rel=dns-prefetch
+  Link: <https://general-runtime.voiceflow.com>; rel=dns-prefetch
+  # Permissions Policy - Allow microphone and camera access
   Permissions-Policy: geolocation=(self), microphone=(*), camera=(*)
+  # Security headers
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
 
 # Don't cache HTML files - force revalidation
 /*.html

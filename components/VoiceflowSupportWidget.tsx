@@ -86,33 +86,44 @@ export default function VoiceflowSupportWidget({
       return;
     }
 
-    logger.info('Loading Voiceflow support widget...');
+    // Defer loading to avoid blocking LCP - load after page is idle
+    const loadWidget = () => {
+      logger.info('Loading Voiceflow support widget...');
 
-    const script = document.createElement('script');
-    script.id = scriptIdRef.current;
-    script.type = 'text/javascript';
-    script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
+      const script = document.createElement('script');
+      script.id = scriptIdRef.current;
+      script.type = 'text/javascript';
+      script.src = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
+      script.async = true;
 
-    script.onload = () => {
-      if (window.voiceflow) {
-        window.voiceflow.chat.load({
-          verify: { projectID },
-          url: 'https://general-runtime.voiceflow.com',
-          versionID: 'production',
-          voice: {
-            url: 'https://runtime-api.voiceflow.com',
-          },
-        });
-        window.voiceflowSupportLoaded = true;
-        logger.info('Voiceflow support widget loaded successfully');
-      }
+      script.onload = () => {
+        if (window.voiceflow) {
+          window.voiceflow.chat.load({
+            verify: { projectID },
+            url: 'https://general-runtime.voiceflow.com',
+            versionID: 'production',
+            voice: {
+              url: 'https://runtime-api.voiceflow.com',
+            },
+          });
+          window.voiceflowSupportLoaded = true;
+          logger.info('Voiceflow support widget loaded successfully');
+        }
+      };
+
+      script.onerror = (error) => {
+        logger.error('Failed to load Voiceflow support widget script:', error);
+      };
+
+      document.body.appendChild(script);
     };
 
-    script.onerror = (error) => {
-      logger.error('Failed to load Voiceflow support widget script:', error);
-    };
-
-    document.body.appendChild(script);
+    // Use requestIdleCallback to defer loading, fallback to setTimeout
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(loadWidget, { timeout: 3000 });
+    } else {
+      setTimeout(loadWidget, 2000);
+    }
   }, [projectID, isSimulationPage, pathname]);
 
   // This component doesn't render anything - the widget is injected into the DOM
