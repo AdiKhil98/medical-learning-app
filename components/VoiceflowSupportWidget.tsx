@@ -34,7 +34,7 @@ interface VoiceflowSupportWidgetProps {
  * Only loads on web platform.
  */
 export default function VoiceflowSupportWidget({
-  projectID = '695939f1f022b12146822729',
+  projectID = '696417447c7984b9e7027c3e',
 }: VoiceflowSupportWidgetProps) {
   const scriptIdRef = useRef('voiceflow-support-widget-script');
   const pathname = usePathname();
@@ -101,7 +101,7 @@ export default function VoiceflowSupportWidget({
           window.voiceflow.chat.load({
             verify: { projectID },
             url: 'https://general-runtime.voiceflow.com',
-            versionID: 'production',
+            versionID: '696417447c7984b9e7027c3f',
             voice: {
               url: 'https://runtime-api.voiceflow.com',
             },
