@@ -162,6 +162,22 @@ export default function RootLayout() {
           overflow-x: hidden;
         }
 
+        /* FID Optimization: Improve touch responsiveness */
+        button, a, [role="button"], input, textarea, select {
+          touch-action: manipulation;
+        }
+
+        /* FID Optimization: Hardware acceleration hints for interactive elements */
+        .touchable, [data-pressable], button {
+          will-change: transform, opacity;
+          transform: translateZ(0);
+        }
+
+        /* FID Optimization: Content containment for better rendering performance */
+        main, article, section {
+          contain: content;
+        }
+
         /* Mobile-specific adjustments - 2025 best practices */
         @media screen and (max-width: 768px) {
           html {
@@ -228,8 +244,9 @@ export default function RootLayout() {
       setAppHeight();
 
       // Update on resize (handles orientation change and address bar show/hide)
-      window.addEventListener('resize', setAppHeight);
-      window.addEventListener('orientationchange', setAppHeight);
+      // Use passive listeners to avoid blocking main thread (improves FID)
+      window.addEventListener('resize', setAppHeight, { passive: true });
+      window.addEventListener('orientationchange', setAppHeight, { passive: true });
 
       // Reset scroll position on load
       window.scrollTo(0, 0);
