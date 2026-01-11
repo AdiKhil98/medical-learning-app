@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, startTransition, memo } from 'react';
 import {
   View,
   Text,
@@ -54,7 +54,7 @@ interface SlidingHomepageProps {
   onGetStarted?: () => void;
 }
 
-export default function SlidingHomepage({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
+function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -63,6 +63,32 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const { user } = useAuth();
+
+  // INP OPTIMIZATION: Memoized handlers for menu and modal toggles
+  const openMenu = useCallback(() => {
+    startTransition(() => setMenuOpen(true));
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
+
+  const openAboutUs = useCallback(() => {
+    startTransition(() => setShowAboutUs(true));
+  }, []);
+
+  const closeAboutUs = useCallback(() => {
+    setShowAboutUs(false);
+  }, []);
+
+  // INP OPTIMIZATION: Memoized navigation handlers
+  const navigateToSimulation = useCallback(() => {
+    router.push('/(tabs)/simulation');
+  }, [router]);
+
+  const navigateToSubscription = useCallback(() => {
+    router.push('/subscription');
+  }, [router]);
 
   // Get responsive values
   const { isMobile, isSmallMobile, width: screenWidth, height: screenHeight } = useResponsive();
@@ -99,50 +125,65 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
     }
   }, []);
 
-  const nextSlide = () => {
+  // INP OPTIMIZATION: Wrap event handlers with useCallback to prevent recreating on every render
+  const nextSlide = useCallback(() => {
     const nextIndex = (currentSlide + 1) % totalSlides;
     scrollViewRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
     setCurrentSlide(nextIndex);
-  };
+  }, [currentSlide, screenWidth]);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     const prevIndex = (currentSlide - 1 + totalSlides) % totalSlides;
     scrollViewRef.current?.scrollTo({ x: prevIndex * screenWidth, animated: true });
     setCurrentSlide(prevIndex);
-  };
+  }, [currentSlide, screenWidth]);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x;
-    const index = Math.round(scrollPosition / screenWidth);
-    setCurrentSlide(index);
-  };
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const scrollPosition = event.nativeEvent.contentOffset.x;
+      const index = Math.round(scrollPosition / screenWidth);
+      setCurrentSlide(index);
+    },
+    [screenWidth]
+  );
 
-  const _scrollToSlide = (index: number) => {
-    scrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
-    setCurrentSlide(index);
-  };
+  const _scrollToSlide = useCallback(
+    (index: number) => {
+      scrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
+      setCurrentSlide(index);
+    },
+    [screenWidth]
+  );
 
-  // Handle answer selection for daily question
-  const handleAnswerSelect = (option: string) => {
-    setSelectedAnswer(option);
-  };
+  // INP OPTIMIZATION: Use startTransition for non-critical UI updates (answer selection)
+  const handleAnswerSelect = useCallback((option: string) => {
+    startTransition(() => {
+      setSelectedAnswer(option);
+    });
+  }, []);
 
-  // Check if selected answer is correct
-  const isCorrectAnswer = (option: string) => {
-    if (!dailyQuestion || !selectedAnswer) return null;
-    const correctAnswer = (dailyQuestion.correct_answer || dailyQuestion.correct_choice || '').toLowerCase();
-    return option.toLowerCase() === correctAnswer;
-  };
+  // Check if selected answer is correct - memoized for performance
+  const isCorrectAnswer = useCallback(
+    (option: string) => {
+      if (!dailyQuestion || !selectedAnswer) return null;
+      const correctAnswer = (dailyQuestion.correct_answer || dailyQuestion.correct_choice || '').toLowerCase();
+      return option.toLowerCase() === correctAnswer;
+    },
+    [dailyQuestion, selectedAnswer]
+  );
 
-  // Navigate to recent content page
-  const handleRecentContentClick = (slug: string) => {
-    router.push(`/(tabs)/bibliothek/content/${slug}`);
-  };
+  // Navigate to recent content page - memoized
+  const handleRecentContentClick = useCallback(
+    (slug: string) => {
+      router.push(`/(tabs)/bibliothek/content/${slug}`);
+    },
+    [router]
+  );
 
-  // Navigate to all content (Bibliothek)
-  const handleViewAllContent = () => {
+  // Navigate to all content (Bibliothek) - memoized
+  const handleViewAllContent = useCallback(() => {
     router.push('/(tabs)/bibliothek');
-  };
+  }, [router]);
 
   // PERFORMANCE FIX: Memoize dynamic styles to prevent recreation on every render
   // These styles support dark mode by merging base styles with theme colors
@@ -242,7 +283,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
           <View style={styles.headerContent}>
             {/* Left Section: Menu + Logo */}
             <View style={styles.headerLeft}>
-              <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.menuButton} onPress={openMenu} activeOpacity={0.7}>
                 <LinearGradient
                   colors={['rgba(251, 146, 60, 0.15)', 'rgba(239, 68, 68, 0.10)']}
                   style={styles.menuButtonGradient}
@@ -305,11 +346,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
 
                 {/* CTA Buttons */}
                 <View style={styles.buttonsContainer}>
-                  <TouchableOpacity
-                    style={styles.buttonWrapper}
-                    onPress={() => router.push('/(tabs)/simulation')}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSimulation} activeOpacity={0.7}>
                     <LinearGradient
                       colors={MEDICAL_COLORS.warmOrangeGradient}
                       start={{ x: 0, y: 0 }}
@@ -320,11 +357,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                     </LinearGradient>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.buttonWrapper}
-                    onPress={() => router.push('/subscription')}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSubscription} activeOpacity={0.7}>
                     <LinearGradient
                       colors={MEDICAL_COLORS.warmYellowGradient}
                       start={{ x: 0, y: 0 }}
@@ -335,11 +368,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                     </LinearGradient>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.outlineButton}
-                    onPress={() => setShowAboutUs(true)}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
                     <Text style={styles.outlineButtonText}>Über KP Med</Text>
                   </TouchableOpacity>
                 </View>
@@ -520,11 +549,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                   {/* CTA Buttons */}
                   <View style={styles.buttonsContainer}>
                     {/* Button 1 - Simulation testen */}
-                    <TouchableOpacity
-                      style={styles.buttonWrapper}
-                      onPress={() => router.push('/(tabs)/simulation')}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSimulation} activeOpacity={0.7}>
                       <LinearGradient
                         colors={MEDICAL_COLORS.warmOrangeGradient}
                         start={{ x: 0, y: 0 }}
@@ -536,11 +561,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                     </TouchableOpacity>
 
                     {/* Button 2 - Abonnieren */}
-                    <TouchableOpacity
-                      style={styles.buttonWrapper}
-                      onPress={() => router.push('/subscription')}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSubscription} activeOpacity={0.7}>
                       <LinearGradient
                         colors={MEDICAL_COLORS.warmYellowGradient}
                         start={{ x: 0, y: 0 }}
@@ -552,11 +573,7 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
                     </TouchableOpacity>
 
                     {/* Button 3 - Über KP Med */}
-                    <TouchableOpacity
-                      style={styles.outlineButton}
-                      onPress={() => setShowAboutUs(true)}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
                       <Text style={styles.outlineButtonText}>Über KP Med</Text>
                     </TouchableOpacity>
                   </View>
@@ -740,10 +757,10 @@ export default function SlidingHomepage({ onGetStarted: _onGetStarted }: Sliding
       )}
 
       {/* Menu */}
-      <Menu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <Menu isOpen={menuOpen} onClose={closeMenu} />
 
       {/* About Us Modal */}
-      <AboutUsModal visible={showAboutUs} onClose={() => setShowAboutUs(false)} />
+      <AboutUsModal visible={showAboutUs} onClose={closeAboutUs} />
     </SafeAreaView>
   );
 }
@@ -1237,3 +1254,8 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xxl,
   },
 });
+
+// INP OPTIMIZATION: Wrap component with React.memo to prevent unnecessary re-renders
+// This significantly improves INP by avoiding render cycles when parent components re-render
+const SlidingHomepage = memo(SlidingHomepageComponent);
+export default SlidingHomepage;
