@@ -10,6 +10,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,8 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 
 const { width } = Dimensions.get('window');
-const CARD_GAP = 16;
-const HORIZONTAL_PADDING = 20;
+const CARD_GAP = 12;
+const HORIZONTAL_PADDING = 16;
 const CARD_WIDTH = (width - HORIZONTAL_PADDING * 2 - CARD_GAP) / 2;
 
 interface Topic {
@@ -26,47 +27,99 @@ interface Topic {
   slug: string;
   title_de: string;
   fachgebiet: string;
-  bereich: string;
+  bereich: string; // This is actually priority in the DB
   priority: string;
 }
 
-// Fachgebiet configuration matching KP (444) exactly
+// Fachgebiet configuration with colors and icons for all 17 FSP Fachgebiete
 const fachgebietConfig: {
   [key: string]: {
     gradient: [string, string];
     icon: keyof typeof Ionicons.glyphMap;
   };
 } = {
-  'Innere Medizin': {
+  // Innere Medizin Subspecialties
+  Kardiologie: {
     gradient: ['#ef4444', '#dc2626'],
     icon: 'heart',
   },
-  Chirurgie: {
-    gradient: ['#a855f7', '#7c3aed'],
+  Pneumologie: {
+    gradient: ['#3b82f6', '#2563eb'],
+    icon: 'cloud',
+  },
+  Gastroenterologie: {
+    gradient: ['#f59e0b', '#d97706'],
+    icon: 'nutrition',
+  },
+  Endokrinologie: {
+    gradient: ['#8b5cf6', '#7c3aed'],
+    icon: 'fitness',
+  },
+  Nephrologie: {
+    gradient: ['#06b6d4', '#0891b2'],
+    icon: 'water',
+  },
+  Hämatologie: {
+    gradient: ['#ec4899', '#db2777'],
+    icon: 'water-outline',
+  },
+  Rheumatologie: {
+    gradient: ['#14b8a6', '#0d9488'],
+    icon: 'body',
+  },
+  // Chirurgie
+  Allgemeinchirurgie: {
+    gradient: ['#a855f7', '#9333ea'],
     icon: 'cut',
   },
-  Neurologie: {
-    gradient: ['#3b82f6', '#2563eb'],
+  Unfallchirurgie: {
+    gradient: ['#f97316', '#ea580c'],
+    icon: 'bandage',
+  },
+  // Neurologie
+  Zerebrovaskulär: {
+    gradient: ['#6366f1', '#4f46e5'],
     icon: 'flash',
   },
-  Notfallmedizin: {
-    gradient: ['#f97316', '#ea580c'],
-    icon: 'alert-circle',
+  Kopfschmerzen: {
+    gradient: ['#84cc16', '#65a30d'],
+    icon: 'pulse',
   },
-  Sonstige: {
-    gradient: ['#06b6d4', '#0891b2'],
-    icon: 'ellipsis-horizontal-circle',
+  Anfallsleiden: {
+    gradient: ['#facc15', '#eab308'],
+    icon: 'thunderstorm',
+  },
+  // Others
+  Infektionen: {
+    gradient: ['#22c55e', '#16a34a'],
+    icon: 'bug',
+  },
+  Wirbelsäule: {
+    gradient: ['#64748b', '#475569'],
+    icon: 'man',
+  },
+  Leitsymptome: {
+    gradient: ['#0ea5e9', '#0284c7'],
+    icon: 'search',
+  },
+  Wundheilung: {
+    gradient: ['#fb7185', '#e11d48'],
+    icon: 'medkit',
+  },
+  Suchtmedizin: {
+    gradient: ['#a78bfa', '#8b5cf6'],
+    icon: 'warning',
   },
 };
 
 // Priority colors
 const priorityColors: { [key: string]: string } = {
   '+++': '#ef4444',
-  '++': '#a855f7',
-  '+': '#3b82f6',
+  '++': '#f59e0b',
+  '+': '#22c55e',
 };
 
-type ViewLevel = 'fachgebiet' | 'bereich' | 'topics';
+type ViewLevel = 'fachgebiet' | 'topics';
 
 export default function FSPBibliothekIndex() {
   const router = useRouter();
@@ -76,7 +129,6 @@ export default function FSPBibliothekIndex() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewLevel, setViewLevel] = useState<ViewLevel>('fachgebiet');
   const [selectedFachgebiet, setSelectedFachgebiet] = useState<string | null>(null);
-  const [selectedBereich, setSelectedBereich] = useState<string | null>(null);
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
 
   const fetchTopics = useCallback(async () => {
@@ -106,79 +158,71 @@ export default function FSPBibliothekIndex() {
     fetchTopics();
   }, [fetchTopics]);
 
-  // Group data by Fachgebiet and Bereich
+  // Group data by Fachgebiet
   const groupedData = useMemo(() => {
     const result: {
       [fachgebiet: string]: {
-        bereiche: { [bereich: string]: Topic[] };
-        totalCount: number;
-        bereichCount: number;
+        topics: Topic[];
+        priorityCounts: { [key: string]: number };
       };
     } = {};
 
     topics.forEach((topic) => {
       if (!result[topic.fachgebiet]) {
-        result[topic.fachgebiet] = { bereiche: {}, totalCount: 0, bereichCount: 0 };
+        result[topic.fachgebiet] = { topics: [], priorityCounts: { '+++': 0, '++': 0, '+': 0 } };
       }
-      if (!result[topic.fachgebiet].bereiche[topic.bereich]) {
-        result[topic.fachgebiet].bereiche[topic.bereich] = [];
-        result[topic.fachgebiet].bereichCount++;
+      result[topic.fachgebiet].topics.push(topic);
+      // bereich in the DB actually stores priority
+      if (topic.bereich in result[topic.fachgebiet].priorityCounts) {
+        result[topic.fachgebiet].priorityCounts[topic.bereich]++;
       }
-      result[topic.fachgebiet].bereiche[topic.bereich].push(topic);
-      result[topic.fachgebiet].totalCount++;
     });
 
     return result;
   }, [topics]);
 
-  // Get unique Fachgebiete for filter tabs
-  const fachgebiete = useMemo(() => Object.keys(groupedData), [groupedData]);
+  // Get unique Fachgebiete sorted by topic count
+  const fachgebiete = useMemo(() => {
+    return Object.keys(groupedData).sort((a, b) => groupedData[b].topics.length - groupedData[a].topics.length);
+  }, [groupedData]);
 
   // Search results
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
-    return topics.filter((t) => t.title_de.toLowerCase().includes(query) || t.bereich.toLowerCase().includes(query));
+    return topics.filter((t) => t.title_de.toLowerCase().includes(query) || t.fachgebiet.toLowerCase().includes(query));
   }, [topics, searchQuery]);
 
-  // Get filtered topics for current view
+  // Get filtered topics for current Fachgebiet
   const currentTopics = useMemo(() => {
-    if (!selectedFachgebiet || !selectedBereich) return [];
-    let result = groupedData[selectedFachgebiet]?.bereiche[selectedBereich] || [];
+    if (!selectedFachgebiet) return [];
+    let result = groupedData[selectedFachgebiet]?.topics || [];
     if (filterPriority) {
-      result = result.filter((t) => t.priority === filterPriority);
+      result = result.filter((t) => t.bereich === filterPriority);
     }
     return result;
-  }, [groupedData, selectedFachgebiet, selectedBereich, filterPriority]);
+  }, [groupedData, selectedFachgebiet, filterPriority]);
 
   // Navigation
   const goBack = () => {
     if (viewLevel === 'topics') {
-      setViewLevel('bereich');
-      setSelectedBereich(null);
-      setFilterPriority(null);
-    } else if (viewLevel === 'bereich') {
       setViewLevel('fachgebiet');
       setSelectedFachgebiet(null);
+      setFilterPriority(null);
     } else {
       router.back();
     }
   };
 
   const getTitle = () => {
-    if (viewLevel === 'topics') return selectedBereich || '';
-    if (viewLevel === 'bereich') return selectedFachgebiet || '';
+    if (viewLevel === 'topics') return selectedFachgebiet || '';
     return 'FSP Bibliothek';
   };
 
   const getSubtitle = () => {
     if (viewLevel === 'topics') {
-      const count = groupedData[selectedFachgebiet!]?.bereiche[selectedBereich!]?.length || 0;
+      const count = groupedData[selectedFachgebiet!]?.topics.length || 0;
       return `${count} Themen`;
-    }
-    if (viewLevel === 'bereich') {
-      const data = groupedData[selectedFachgebiet!];
-      return `${data?.bereichCount || 0} Bereiche • ${data?.totalCount || 0} Themen`;
     }
     return `${topics.length} Themen für die Fachsprachprüfung`;
   };
@@ -187,90 +231,34 @@ export default function FSPBibliothekIndex() {
     router.push(`/bibliothek/fsp/bibliothek/${slug}`);
   };
 
-  // Render Fachgebiet filter tabs (horizontal scroll)
-  const renderFilterTabs = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.filterTabsContainer}
-      contentContainerStyle={styles.filterTabsContent}
-    >
-      <TouchableOpacity
-        style={[styles.filterTab, !selectedFachgebiet && viewLevel === 'fachgebiet' && styles.filterTabActive]}
-        onPress={() => {
-          setViewLevel('fachgebiet');
-          setSelectedFachgebiet(null);
-          setSelectedBereich(null);
-        }}
-      >
-        <Text
-          style={[
-            styles.filterTabText,
-            !selectedFachgebiet && viewLevel === 'fachgebiet' && styles.filterTabTextActive,
-          ]}
-        >
-          Alle
-        </Text>
-        <View
-          style={[
-            styles.filterTabBadge,
-            !selectedFachgebiet && viewLevel === 'fachgebiet' && styles.filterTabBadgeActive,
-          ]}
-        >
-          <Text
-            style={[
-              styles.filterTabBadgeText,
-              !selectedFachgebiet && viewLevel === 'fachgebiet' && styles.filterTabBadgeTextActive,
-            ]}
-          >
-            {topics.length}
-          </Text>
-        </View>
-      </TouchableOpacity>
+  const handleFachgebietPress = (fg: string) => {
+    setSelectedFachgebiet(fg);
+    setViewLevel('topics');
+    setFilterPriority(null);
+  };
 
-      {fachgebiete.map((fg) => {
-        const config = fachgebietConfig[fg] || fachgebietConfig['Sonstige'];
-        const isActive = selectedFachgebiet === fg;
-        const count = groupedData[fg]?.totalCount || 0;
-
-        return (
-          <TouchableOpacity
-            key={fg}
-            style={[styles.filterTab, isActive && styles.filterTabActive]}
-            onPress={() => {
-              setSelectedFachgebiet(fg);
-              setViewLevel('bereich');
-              setSelectedBereich(null);
-            }}
-          >
-            <Ionicons name={config.icon} size={16} color={isActive ? '#fff' : '#64748b'} style={{ marginRight: 6 }} />
-            <Text style={[styles.filterTabText, isActive && styles.filterTabTextActive]}>
-              {fg.replace('Innere Medizin', 'Innere').replace('Notfallmedizin', 'Notfall')}
-            </Text>
-            <View style={[styles.filterTabBadge, isActive && styles.filterTabBadgeActive]}>
-              <Text style={[styles.filterTabBadgeText, isActive && styles.filterTabBadgeTextActive]}>{count}</Text>
-            </View>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  );
+  // Get priority counts for selected Fachgebiet
+  const getPriorityCounts = () => {
+    if (!selectedFachgebiet) return { '+++': 0, '++': 0, '+': 0 };
+    return groupedData[selectedFachgebiet]?.priorityCounts || { '+++': 0, '++': 0, '+': 0 };
+  };
 
   // Render Fachgebiet cards (Level 1)
   const renderFachgebietGrid = () => (
     <View style={styles.cardGrid}>
       {fachgebiete.map((fg) => {
-        const config = fachgebietConfig[fg] || fachgebietConfig['Sonstige'];
+        const config = fachgebietConfig[fg] || {
+          gradient: ['#64748b', '#475569'],
+          icon: 'folder' as keyof typeof Ionicons.glyphMap,
+        };
         const data = groupedData[fg];
+        const highPriorityCount = data.priorityCounts['+++'] || 0;
 
         return (
           <TouchableOpacity
             key={fg}
             style={styles.fachgebietCard}
-            onPress={() => {
-              setSelectedFachgebiet(fg);
-              setViewLevel('bereich');
-            }}
+            onPress={() => handleFachgebietPress(fg)}
             activeOpacity={0.85}
           >
             <LinearGradient
@@ -280,12 +268,17 @@ export default function FSPBibliothekIndex() {
               style={styles.fachgebietCardGradient}
             >
               <View style={styles.fachgebietIconContainer}>
-                <Ionicons name={config.icon} size={24} color="#fff" />
+                <Ionicons name={config.icon} size={22} color="#fff" />
               </View>
-              <Text style={styles.fachgebietCardTitle}>{fg}</Text>
-              <Text style={styles.fachgebietCardSubtitle}>
-                {data.bereichCount} Bereiche • {data.totalCount} Themen
+              <Text style={styles.fachgebietCardTitle} numberOfLines={2}>
+                {fg}
               </Text>
+              <Text style={styles.fachgebietCardSubtitle}>{data.topics.length} Themen</Text>
+              {highPriorityCount > 0 && (
+                <View style={styles.highPriorityBadge}>
+                  <Text style={styles.highPriorityText}>+++ {highPriorityCount}</Text>
+                </View>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         );
@@ -293,78 +286,45 @@ export default function FSPBibliothekIndex() {
     </View>
   );
 
-  // Render Bereich cards (Level 2)
-  const renderBereichGrid = () => {
-    if (!selectedFachgebiet) return null;
-    const bereiche = Object.keys(groupedData[selectedFachgebiet]?.bereiche || {});
-    const config = fachgebietConfig[selectedFachgebiet] || fachgebietConfig['Sonstige'];
-
+  // Render priority filter pills (Level 2)
+  const renderPriorityFilter = () => {
+    const counts = getPriorityCounts();
     return (
-      <View style={styles.cardGrid}>
-        {bereiche.map((bereich) => {
-          const bereichTopics = groupedData[selectedFachgebiet].bereiche[bereich];
-          const highPriorityCount = bereichTopics.filter((t) => t.priority === '+++').length;
-
-          return (
-            <TouchableOpacity
-              key={bereich}
-              style={styles.bereichCard}
-              onPress={() => {
-                setSelectedBereich(bereich);
-                setViewLevel('topics');
-              }}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={[`${config.gradient[0]  }dd`, `${config.gradient[1]  }dd`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.bereichCardGradient}
-              >
-                <View style={styles.bereichIconContainer}>
-                  <Ionicons name="folder-open" size={20} color="#fff" />
-                </View>
-                <Text style={styles.bereichCardTitle}>{bereich}</Text>
-                <Text style={styles.bereichCardSubtitle}>{bereichTopics.length} Themen</Text>
-                {highPriorityCount > 0 && (
-                  <View style={styles.bereichPriorityBadge}>
-                    <Text style={styles.bereichPriorityText}>+++ {highPriorityCount}</Text>
-                  </View>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.priorityFilterContainer}>
+        <TouchableOpacity
+          style={[styles.priorityPill, !filterPriority && styles.priorityPillActive]}
+          onPress={() => setFilterPriority(null)}
+        >
+          <Text style={[styles.priorityPillText, !filterPriority && styles.priorityPillTextActive]}>Alle</Text>
+          <View style={[styles.priorityCount, !filterPriority && styles.priorityCountActive]}>
+            <Text style={[styles.priorityCountText, !filterPriority && styles.priorityCountTextActive]}>
+              {currentTopics.length || groupedData[selectedFachgebiet!]?.topics.length || 0}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {['+++', '++', '+'].map((p) => (
+          <TouchableOpacity
+            key={p}
+            style={[
+              styles.priorityPill,
+              filterPriority === p && styles.priorityPillActive,
+              filterPriority === p && { backgroundColor: priorityColors[p] },
+            ]}
+            onPress={() => setFilterPriority(filterPriority === p ? null : p)}
+          >
+            <Text style={[styles.priorityPillText, filterPriority === p && styles.priorityPillTextActive]}>{p}</Text>
+            <View style={[styles.priorityCount, filterPriority === p && styles.priorityCountActive]}>
+              <Text style={[styles.priorityCountText, filterPriority === p && styles.priorityCountTextActive]}>
+                {counts[p]}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
     );
   };
 
-  // Render priority filter pills (Level 3)
-  const renderPriorityFilter = () => (
-    <View style={styles.priorityFilterContainer}>
-      <TouchableOpacity
-        style={[styles.priorityPill, !filterPriority && styles.priorityPillActive]}
-        onPress={() => setFilterPriority(null)}
-      >
-        <Text style={[styles.priorityPillText, !filterPriority && styles.priorityPillTextActive]}>Alle</Text>
-      </TouchableOpacity>
-      {['+++', '++', '+'].map((p) => (
-        <TouchableOpacity
-          key={p}
-          style={[
-            styles.priorityPill,
-            filterPriority === p && styles.priorityPillActive,
-            filterPriority === p && { backgroundColor: priorityColors[p] },
-          ]}
-          onPress={() => setFilterPriority(filterPriority === p ? null : p)}
-        >
-          <Text style={[styles.priorityPillText, filterPriority === p && styles.priorityPillTextActive]}>{p}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  // Render topics grid (Level 3) - 2 column like KP (444)
+  // Render topics grid (Level 2) - 2 column
   const renderTopicsGrid = () => (
     <View style={styles.topicsGrid}>
       {currentTopics.map((topic) => (
@@ -374,8 +334,8 @@ export default function FSPBibliothekIndex() {
           onPress={() => handleTopicPress(topic.slug)}
           activeOpacity={0.7}
         >
-          <View style={[styles.topicPriorityPill, { backgroundColor: priorityColors[topic.priority] || '#64748b' }]}>
-            <Text style={styles.topicPriorityText}>{topic.priority}</Text>
+          <View style={[styles.topicPriorityPill, { backgroundColor: priorityColors[topic.bereich] || '#64748b' }]}>
+            <Text style={styles.topicPriorityText}>{topic.bereich}</Text>
           </View>
           <Text style={styles.topicTitle} numberOfLines={2}>
             {topic.title_de}
@@ -397,14 +357,12 @@ export default function FSPBibliothekIndex() {
       ) : (
         searchResults.map((topic) => (
           <TouchableOpacity key={topic.id} style={styles.searchResultCard} onPress={() => handleTopicPress(topic.slug)}>
-            <View style={[styles.topicPriorityPill, { backgroundColor: priorityColors[topic.priority] }]}>
-              <Text style={styles.topicPriorityText}>{topic.priority}</Text>
+            <View style={[styles.topicPriorityPill, { backgroundColor: priorityColors[topic.bereich] }]}>
+              <Text style={styles.topicPriorityText}>{topic.bereich}</Text>
             </View>
             <View style={styles.searchResultContent}>
               <Text style={styles.searchResultTitle}>{topic.title_de}</Text>
-              <Text style={styles.searchResultMeta}>
-                {topic.fachgebiet} › {topic.bereich}
-              </Text>
+              <Text style={styles.searchResultMeta}>{topic.fachgebiet}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
           </TouchableOpacity>
@@ -416,24 +374,47 @@ export default function FSPBibliothekIndex() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#a855f7" />
+        <ActivityIndicator size="large" color="#6366f1" />
         <Text style={styles.loadingText}>Lade FSP Bibliothek...</Text>
       </View>
     );
   }
 
+  // Get gradient for header based on selected Fachgebiet
+  const headerGradient: [string, string] =
+    viewLevel === 'topics' && selectedFachgebiet
+      ? fachgebietConfig[selectedFachgebiet]?.gradient || ['#6366f1', '#4f46e5']
+      : ['#6366f1', '#4f46e5'];
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={goBack}>
-          <Ionicons name="arrow-back" size={24} color="#1e293b" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{getTitle()}</Text>
-          <Text style={styles.headerSubtitle}>{getSubtitle()}</Text>
+      {/* Header with gradient when in topics view */}
+      {viewLevel === 'topics' ? (
+        <LinearGradient
+          colors={headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <TouchableOpacity style={styles.backButtonWhite} onPress={goBack}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitleWhite}>{getTitle()}</Text>
+            <Text style={styles.headerSubtitleWhite}>{getSubtitle()}</Text>
+          </View>
+        </LinearGradient>
+      ) : (
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={goBack}>
+            <Ionicons name="arrow-back" size={24} color="#1e293b" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>{getTitle()}</Text>
+            <Text style={styles.headerSubtitle}>{getSubtitle()}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -452,10 +433,7 @@ export default function FSPBibliothekIndex() {
         )}
       </View>
 
-      {/* Filter Tabs */}
-      {renderFilterTabs()}
-
-      {/* Priority Filter (only on Level 3) */}
+      {/* Priority Filter (only on Level 2) */}
       {viewLevel === 'topics' && renderPriorityFilter()}
 
       {/* Content */}
@@ -469,9 +447,10 @@ export default function FSPBibliothekIndex() {
           ? renderSearchResults()
           : viewLevel === 'fachgebiet'
             ? renderFachgebietGrid()
-            : viewLevel === 'bereich'
-              ? renderBereichGrid()
-              : renderTopicsGrid()}
+            : renderTopicsGrid()}
+
+        {/* Bottom spacer */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -496,12 +475,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  headerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingTop: Platform.OS === 'ios' ? 8 : 20,
   },
   backButton: {
     marginRight: 16,
+    padding: 4,
+  },
+  backButtonWhite: {
+    marginRight: 16,
+    padding: 4,
   },
   headerContent: {
     flex: 1,
@@ -511,16 +504,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1e293b',
   },
+  headerTitleWhite: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
   headerSubtitle: {
     fontSize: 14,
     color: '#64748b',
+    marginTop: 2,
+  },
+  headerSubtitleWhite: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 2,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -532,71 +535,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
   },
-  filterTabsContainer: {
+  priorityFilterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
-  filterTabsContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 10,
-  },
-  filterTab: {
+  priorityPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f1f5f9',
-    marginRight: 10,
-  },
-  filterTabActive: {
-    backgroundColor: '#a855f7',
-  },
-  filterTabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748b',
-  },
-  filterTabTextActive: {
-    color: '#fff',
-  },
-  filterTabBadge: {
-    marginLeft: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    backgroundColor: '#e2e8f0',
-  },
-  filterTabBadgeActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  filterTabBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  filterTabBadgeTextActive: {
-    color: '#fff',
-  },
-  priorityFilterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  priorityPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    gap: 6,
   },
   priorityPillActive: {
-    backgroundColor: '#a855f7',
+    backgroundColor: '#6366f1',
   },
   priorityPillText: {
     fontSize: 14,
@@ -606,12 +564,28 @@ const styles = StyleSheet.create({
   priorityPillTextActive: {
     color: '#fff',
   },
+  priorityCount: {
+    backgroundColor: '#e2e8f0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  priorityCountActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  priorityCountText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  priorityCountTextActive: {
+    color: '#fff',
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 16,
   },
   cardGrid: {
     flexDirection: 'row',
@@ -620,30 +594,39 @@ const styles = StyleSheet.create({
   },
   fachgebietCard: {
     width: CARD_WIDTH,
-    marginBottom: 16,
+    marginBottom: 12,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      },
+    }),
   },
   fachgebietCardGradient: {
-    padding: 20,
-    minHeight: 140,
+    padding: 16,
+    minHeight: 130,
   },
   fachgebietIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   fachgebietCardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
     marginBottom: 4,
@@ -652,51 +635,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
   },
-  bereichCard: {
-    width: CARD_WIDTH,
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  bereichCardGradient: {
-    padding: 20,
-    minHeight: 130,
-  },
-  bereichIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  bereichCardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  bereichCardSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  bereichPriorityBadge: {
+  highPriorityBadge: {
     position: 'absolute',
-    bottom: 16,
-    left: 20,
+    top: 12,
+    right: 12,
     backgroundColor: 'rgba(239,68,68,0.9)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
-  bereichPriorityText: {
-    fontSize: 11,
+  highPriorityText: {
+    fontSize: 10,
     fontWeight: '700',
     color: '#fff',
   },
@@ -709,21 +658,30 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 14,
-    padding: 16,
+    padding: 14,
     marginBottom: 12,
-    minHeight: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    minHeight: 90,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      },
+    }),
   },
   topicPriorityPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   topicPriorityText: {
     fontSize: 11,
@@ -731,15 +689,16 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   topicTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
     lineHeight: 20,
+    paddingRight: 20,
   },
   topicArrow: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
+    bottom: 14,
+    right: 14,
   },
   searchResults: {
     gap: 10,
@@ -750,11 +709,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      },
+    }),
   },
   searchResultContent: {
     flex: 1,
