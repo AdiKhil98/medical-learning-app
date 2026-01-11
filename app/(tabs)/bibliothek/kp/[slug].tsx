@@ -293,7 +293,7 @@ export default function KPTopicDetail() {
         {/* Section Header */}
         <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection(key)} activeOpacity={0.7}>
           <View style={styles.sectionHeaderLeft}>
-            <View style={[styles.sectionIconBg, { backgroundColor: `${config.color  }15` }]}>
+            <View style={[styles.sectionIconBg, { backgroundColor: `${config.color}15` }]}>
               <Text style={styles.sectionEmoji}>{config.emoji}</Text>
             </View>
             <Text style={styles.sectionTitle}>{config.title}</Text>
@@ -356,81 +356,91 @@ export default function KPTopicDetail() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient colors={['#6366f1', '#8b5cf6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
-        {/* Top Bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.expandButton} onPress={toggleAllSections}>
-            <Text style={styles.expandButtonText}>
-              {expandedSections.size === SECTION_ORDER.length ? 'Alle einklappen' : 'Alle ausklappen'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Title Area */}
-        <View style={styles.titleArea}>
-          <View style={styles.breadcrumb}>
-            <Text style={styles.breadcrumbText}>{topic.fachgebiet}</Text>
-            <Ionicons name="chevron-forward" size={12} color="rgba(255,255,255,0.6)" />
-            <Text style={styles.breadcrumbText}>{topic.bereich}</Text>
-          </View>
-
-          <Text style={styles.topicTitle}>{topic.title_de}</Text>
-
-          {topic.title_short && <Text style={styles.topicShort}>({topic.title_short})</Text>}
-
-          {/* Priority Badge */}
-          <View style={styles.priorityContainer}>
-            <View style={[styles.priorityBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Text style={styles.priorityStars}>{priorityConfig.stars}</Text>
-              <Text style={styles.priorityLabel}>{priorityConfig.label}</Text>
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-
-      {/* Quick Nav */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.quickNav}
-        contentContainerStyle={styles.quickNavContent}
-      >
-        {SECTION_ORDER.map((key) => {
-          if (!parsedContent || !parsedContent[key as keyof ParsedContent]) return null;
-          const config = SECTION_CONFIG[key];
-          return (
-            <TouchableOpacity
-              key={key}
-              style={styles.quickNavItem}
-              onPress={() => {
-                if (!expandedSections.has(key)) {
-                  setExpandedSections((prev) => new Set([...prev, key]));
-                }
-                // TODO: Scroll to section
-              }}
-            >
-              <Text style={styles.quickNavEmoji}>{config.emoji}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Content */}
+      {/* Single ScrollView for entire page - header, quick nav, and content all scroll together */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentFull}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {parsedContent &&
-          SECTION_ORDER.map((key) => {
-            const section = parsedContent[key as keyof ParsedContent];
-            return section ? renderSection(key, section) : null;
-          })}
+        {/* Header */}
+        <LinearGradient
+          colors={['#6366f1', '#8b5cf6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.expandButton} onPress={toggleAllSections}>
+              <Text style={styles.expandButtonText}>
+                {expandedSections.size === SECTION_ORDER.length ? 'Alle einklappen' : 'Alle ausklappen'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Title Area */}
+          <View style={styles.titleArea}>
+            <View style={styles.breadcrumb}>
+              <Text style={styles.breadcrumbText}>{topic.fachgebiet}</Text>
+              <Ionicons name="chevron-forward" size={12} color="rgba(255,255,255,0.6)" />
+              <Text style={styles.breadcrumbText}>{topic.bereich}</Text>
+            </View>
+
+            <Text style={styles.topicTitle}>{topic.title_de}</Text>
+
+            {topic.title_short && <Text style={styles.topicShort}>({topic.title_short})</Text>}
+
+            {/* Priority Badge */}
+            <View style={styles.priorityContainer}>
+              <View style={[styles.priorityBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Text style={styles.priorityStars}>{priorityConfig.stars}</Text>
+                <Text style={styles.priorityLabel}>{priorityConfig.label}</Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* Quick Nav - now inside the main ScrollView */}
+        <View style={styles.quickNav}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickNavContent}
+            nestedScrollEnabled={true}
+          >
+            {SECTION_ORDER.map((key) => {
+              if (!parsedContent || !parsedContent[key as keyof ParsedContent]) return null;
+              const config = SECTION_CONFIG[key];
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={styles.quickNavItem}
+                  onPress={() => {
+                    if (!expandedSections.has(key)) {
+                      setExpandedSections((prev) => new Set([...prev, key]));
+                    }
+                    // TODO: Scroll to section
+                  }}
+                >
+                  <Text style={styles.quickNavEmoji}>{config.emoji}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Content sections */}
+        <View style={styles.contentArea}>
+          {parsedContent &&
+            SECTION_ORDER.map((key) => {
+              const section = parsedContent[key as keyof ParsedContent];
+              return section ? renderSection(key, section) : null;
+            })}
+        </View>
 
         {/* Bottom Spacer */}
         <View style={styles.bottomSpacer} />
@@ -554,12 +564,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Quick Nav
+  // Quick Nav - now a View container for nested horizontal ScrollView
   quickNav: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-    maxHeight: 56,
   },
   quickNavContent: {
     paddingHorizontal: 12,
@@ -584,6 +593,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    padding: 16,
+  },
+  scrollContentFull: {
+    // Full page scrolling - no flex:1 to allow content to determine height
+    flexGrow: 1,
+  },
+  contentArea: {
     padding: 16,
   },
   bottomSpacer: {
