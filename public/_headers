@@ -1,5 +1,10 @@
 # Cache control for static assets and HTML
 
+# Early Hints for faster API connections (improves LCP)
+/*
+  Link: <https://pavjavrijaihnwbydfrk.supabase.co>; rel=preconnect
+  Link: <https://pavjavrijaihnwbydfrk.supabase.co>; rel=dns-prefetch
+
 # Permissions Policy - Allow microphone and camera access
 /*
   Permissions-Policy: geolocation=(self), microphone=(*), camera=(*)
