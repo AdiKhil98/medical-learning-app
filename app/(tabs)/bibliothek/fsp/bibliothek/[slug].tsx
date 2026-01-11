@@ -83,6 +83,17 @@ export default function FSPTopicDetail() {
       const { data, error } = await supabase.from('fsp_bibliothek').select('*').eq('slug', slug).single();
 
       if (error) throw error;
+
+      // Parse content if it's a JSON string (database stores it as text)
+      if (data && typeof data.content === 'string') {
+        try {
+          data.content = JSON.parse(data.content);
+        } catch (parseError) {
+          console.error('Error parsing content JSON:', parseError);
+          data.content = {};
+        }
+      }
+
       setTopic(data);
     } catch (error) {
       console.error('Error fetching topic:', error);
