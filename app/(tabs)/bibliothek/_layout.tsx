@@ -45,6 +45,12 @@ export default function BibliothekLayout() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="fsp"
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack>
       </BibliothekErrorBoundary>
     </ErrorBoundary>
