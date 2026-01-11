@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpen, GraduationCap, ChevronRight, Menu as MenuIcon, Library, FileText } from 'lucide-react-native';
+import {
+  BookOpen,
+  GraduationCap,
+  ChevronRight,
+  Menu as MenuIcon,
+  Library,
+  FileText,
+  Languages,
+} from 'lucide-react-native';
 import { useRouter, Href } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Menu from '@/components/ui/Menu';
@@ -99,6 +107,10 @@ const BibliothekSelectionScreen: React.FC = () => {
     router.push('/(tabs)/bibliothek/kp' as Href);
   };
 
+  const handleFSPPress = () => {
+    router.push('/(tabs)/bibliothek/fsp' as Href);
+  };
+
   const backgroundGradient = MEDICAL_COLORS.backgroundGradient as unknown as readonly [string, string, ...string[]];
 
   return (
@@ -183,6 +195,17 @@ const BibliothekSelectionScreen: React.FC = () => {
               gradient={['#ec4899', '#f472b6', '#fda4af'] as readonly [string, string, ...string[]]}
               onPress={handleKPPress}
               index={1}
+            />
+
+            {/* FSP Bereich Card */}
+            <SelectionCard
+              title="FSP Bereich"
+              subtitle="Fachsprachprüfung"
+              description="Bibliothek, Anamnese, Arztbrief & Fachbegriffe für die FSP-Vorbereitung"
+              icon={<Languages size={36} color="#ffffff" strokeWidth={2} />}
+              gradient={['#10b981', '#34d399', '#6ee7b7'] as readonly [string, string, ...string[]]}
+              onPress={handleFSPPress}
+              index={2}
             />
           </View>
 
