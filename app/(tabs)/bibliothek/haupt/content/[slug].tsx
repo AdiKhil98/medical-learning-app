@@ -296,6 +296,9 @@ const ContentDetailScreen = memo(() => {
         container: {
           flex: 1,
           backgroundColor: colors.background,
+          // Web compatibility: ensure container allows scrolling
+          overflow: 'hidden',
+          minHeight: '100%',
         },
         center: {
           flex: 1,

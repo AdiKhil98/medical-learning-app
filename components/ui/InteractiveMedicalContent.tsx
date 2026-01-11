@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Animated,
-  TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, TextInput } from 'react-native';
 import { colors } from '@/constants/colors';
 import {
   ChevronDown,
@@ -30,7 +22,7 @@ import {
   Circle,
   Clock,
   ChevronRight,
-  StickyNote
+  StickyNote,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -65,8 +57,12 @@ interface InteractiveMedicalContentProps {
   currentSection?: any;
 }
 
-const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ supabaseRow, onBackPress, onOpenModal, currentSection }) => {
-  
+const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({
+  supabaseRow,
+  onBackPress,
+  onOpenModal,
+  currentSection,
+}) => {
   const { triggerActivity } = useSessionTimeout();
   const { user } = useAuth();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ '0': true });
@@ -94,7 +90,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     // Try content_improved first, then content_html as fallback
     const contentSource = supabaseRow?.content_improved || supabaseRow?.content_html;
-    
+
     if (!contentSource) {
       logger.info('❌ No content found in content_improved or content_html');
       return [];
@@ -103,13 +99,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     try {
       // Ensure contentSource is a string before checking startsWith
       const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
-      
+
       logger.info('📊 Content type:', typeof contentSource, 'Content length:', contentString.length);
-      
+
       // If it's JSON, parse it
       if (contentString.startsWith('[') || contentString.startsWith('{')) {
         let sections: any[] = [];
-        
+
         if (typeof contentSource === 'string') {
           sections = JSON.parse(contentSource);
         } else if (Array.isArray(contentSource)) {
@@ -118,26 +114,31 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           return [];
         }
 
-        return sections.map((section, index) => ({
-          title: section?.title || `Section ${index + 1}`,
-          content: (section?.content || '').replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-        })).filter(section => section.content.length > 0);
+        return sections
+          .map((section, index) => ({
+            title: section?.title || `Section ${index + 1}`,
+            content: (section?.content || '').replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+          }))
+          .filter((section) => section.content.length > 0);
       } else {
         // If it's plain text or HTML, create a single section
-        return [{
-          title: supabaseRow?.title || 'Medizinischer Inhalt',
-          content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-        }];
+        return [
+          {
+            title: supabaseRow?.title || 'Medizinischer Inhalt',
+            content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+          },
+        ];
       }
-
     } catch (error) {
       logger.error('Error parsing content:', error);
       // Fallback to treating as plain text
       const contentString = typeof contentSource === 'string' ? contentSource : String(contentSource || '');
-      return [{
-        title: supabaseRow?.title || 'Medizinischer Inhalt',
-        content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
-      }];
+      return [
+        {
+          title: supabaseRow?.title || 'Medizinischer Inhalt',
+          content: contentString.replace(/\\n/g, '\n').replace(/\\"/g, '"').trim(),
+        },
+      ];
     }
   }, [supabaseRow?.content_improved, supabaseRow?.content_html, supabaseRow?.title]);
 
@@ -147,50 +148,66 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     const contentLower = content.toLowerCase();
 
     // Definition sections
-    if (titleLower.includes('definition') || titleLower.includes('klassifikation') ||
-        contentLower.includes('wird definiert') || contentLower.includes('ist eine')) {
+    if (
+      titleLower.includes('definition') ||
+      titleLower.includes('klassifikation') ||
+      contentLower.includes('wird definiert') ||
+      contentLower.includes('ist eine')
+    ) {
       return {
         borderColor: MEDICAL_COLORS.blue,
         backgroundColor: MEDICAL_COLORS.blueBg,
         icon: FileText,
         iconColor: MEDICAL_COLORS.blue,
-        type: 'definition'
+        type: 'definition',
       };
     }
 
     // Clinical procedures
-    if (titleLower.includes('therapie') || titleLower.includes('behandlung') ||
-        titleLower.includes('intervention') || titleLower.includes('management')) {
+    if (
+      titleLower.includes('therapie') ||
+      titleLower.includes('behandlung') ||
+      titleLower.includes('intervention') ||
+      titleLower.includes('management')
+    ) {
       return {
         borderColor: MEDICAL_COLORS.success,
         backgroundColor: MEDICAL_COLORS.lightGreen,
         icon: Activity,
         iconColor: MEDICAL_COLORS.success,
-        type: 'clinical'
+        type: 'clinical',
       };
     }
 
     // Diagnostics
-    if (titleLower.includes('diagnostik') || titleLower.includes('untersuchung') ||
-        titleLower.includes('befund') || titleLower.includes('symptom')) {
+    if (
+      titleLower.includes('diagnostik') ||
+      titleLower.includes('untersuchung') ||
+      titleLower.includes('befund') ||
+      titleLower.includes('symptom')
+    ) {
       return {
         borderColor: MEDICAL_COLORS.warmYellow,
         backgroundColor: MEDICAL_COLORS.warmYellowBg,
         icon: Stethoscope,
         iconColor: MEDICAL_COLORS.warmYellow,
-        type: 'diagnostic'
+        type: 'diagnostic',
       };
     }
 
     // Critical/Emergency
-    if (titleLower.includes('notfall') || titleLower.includes('kritisch') ||
-        titleLower.includes('komplikation') || contentLower.includes('lebensbedrohlich')) {
+    if (
+      titleLower.includes('notfall') ||
+      titleLower.includes('kritisch') ||
+      titleLower.includes('komplikation') ||
+      contentLower.includes('lebensbedrohlich')
+    ) {
       return {
         borderColor: MEDICAL_COLORS.warmRed,
         backgroundColor: MEDICAL_COLORS.lightCoral,
         icon: AlertTriangle,
         iconColor: MEDICAL_COLORS.warmRed,
-        type: 'emergency'
+        type: 'emergency',
       };
     }
 
@@ -200,7 +217,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       backgroundColor: MEDICAL_COLORS.offWhite,
       icon: BookOpen,
       iconColor: MEDICAL_COLORS.secondary,
-      type: 'general'
+      type: 'general',
     };
   };
 
@@ -260,7 +277,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     if (result.success) {
       // Update local state
-      setSectionNotes(prev => {
+      setSectionNotes((prev) => {
         const newMap = new Map(prev);
         if (noteContent.trim()) {
           newMap.set(sectionId, noteContent);
@@ -271,7 +288,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       });
 
       // Show success toast
-      setToastMessage('Erfolgreich gespeichert! Du kannst sie im Seitenmenü unter \'Gespeicherte Notizen\' überprüfen.');
+      setToastMessage("Erfolgreich gespeichert! Du kannst sie im Seitenmenü unter 'Gespeicherte Notizen' überprüfen.");
       setToastVisible(true);
     } else {
       // Show error
@@ -288,7 +305,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     if (result.success) {
       // Update local state
-      setSectionNotes(prev => {
+      setSectionNotes((prev) => {
         const newMap = new Map(prev);
         newMap.delete(sectionId);
         return newMap;
@@ -354,11 +371,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   // Filter sections based on search
   const filteredSections = React.useMemo(() => {
     if (!searchTerm.trim()) return parsedSections;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return parsedSections.filter(section => 
-      section.title.toLowerCase().includes(searchLower) ||
-      section.content.toLowerCase().includes(searchLower)
+    return parsedSections.filter(
+      (section) =>
+        section.title.toLowerCase().includes(searchLower) || section.content.toLowerCase().includes(searchLower)
     );
   }, [parsedSections, searchTerm]);
 
@@ -367,27 +384,58 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     return filteredSections.map((section, index) => ({
       id: `section-${index}`,
       title: section.title,
-      index: index,
+      index,
     }));
   }, [filteredSections]);
 
   // Enhanced function to auto-bold medical terminology
   const enhanceMedicalText = (text: string) => {
     const medicalTerms = [
-      'Bradykardie', 'Tachykardie', 'Hypertonie', 'Hypotonie', 'Myokardinfarkt',
-      'Angina pectoris', 'Herzinsuffizienz', 'Vorhofflimmern', 'Kammerflimmern',
-      'AV-Block', 'Schrittmacher', 'Defibrillation', 'Reanimation', 'CPR',
-      'EKG', 'Echokardiographie', 'Koronarangiographie', 'Stent', 'Bypass',
-      'Pneumonie', 'Asthma', 'COPD', 'Pneumothorax', 'Pleuraerguss',
-      'Intubation', 'Beatmung', 'Sauerstoff', 'CO2', 'pH-Wert',
-      'Diabetes', 'Insulin', 'Glukose', 'HbA1c', 'Ketoacidose',
-      'Sepsis', 'Antibiotika', 'Infektion', 'Fieber', 'Leukozytose'
+      'Bradykardie',
+      'Tachykardie',
+      'Hypertonie',
+      'Hypotonie',
+      'Myokardinfarkt',
+      'Angina pectoris',
+      'Herzinsuffizienz',
+      'Vorhofflimmern',
+      'Kammerflimmern',
+      'AV-Block',
+      'Schrittmacher',
+      'Defibrillation',
+      'Reanimation',
+      'CPR',
+      'EKG',
+      'Echokardiographie',
+      'Koronarangiographie',
+      'Stent',
+      'Bypass',
+      'Pneumonie',
+      'Asthma',
+      'COPD',
+      'Pneumothorax',
+      'Pleuraerguss',
+      'Intubation',
+      'Beatmung',
+      'Sauerstoff',
+      'CO2',
+      'pH-Wert',
+      'Diabetes',
+      'Insulin',
+      'Glukose',
+      'HbA1c',
+      'Ketoacidose',
+      'Sepsis',
+      'Antibiotika',
+      'Infektion',
+      'Fieber',
+      'Leukozytose',
     ];
 
     let enhancedText = text;
 
     // Auto-bold medical terms
-    medicalTerms.forEach(term => {
+    medicalTerms.forEach((term) => {
       const regex = new RegExp(`\\b(${term})\\b`, 'gi');
       enhancedText = enhancedText.replace(regex, '**$1**');
     });
@@ -398,13 +446,26 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   // Function to render numerical values with colored badges
   const renderNumericalValue = (value: string, type: 'normal' | 'pathological' | 'range') => {
     const badgeStyle = {
-      normal: { backgroundColor: MEDICAL_COLORS.lightGreen, color: MEDICAL_COLORS.success, borderColor: MEDICAL_COLORS.success },
-      pathological: { backgroundColor: MEDICAL_COLORS.lightCoral, color: MEDICAL_COLORS.warmRed, borderColor: MEDICAL_COLORS.warmRed },
-      range: { backgroundColor: MEDICAL_COLORS.blueBg, color: MEDICAL_COLORS.blue, borderColor: MEDICAL_COLORS.blue }
+      normal: {
+        backgroundColor: MEDICAL_COLORS.lightGreen,
+        color: MEDICAL_COLORS.success,
+        borderColor: MEDICAL_COLORS.success,
+      },
+      pathological: {
+        backgroundColor: MEDICAL_COLORS.lightCoral,
+        color: MEDICAL_COLORS.warmRed,
+        borderColor: MEDICAL_COLORS.warmRed,
+      },
+      range: { backgroundColor: MEDICAL_COLORS.blueBg, color: MEDICAL_COLORS.blue, borderColor: MEDICAL_COLORS.blue },
     };
 
     return (
-      <View style={[styles.numericalBadge, { borderColor: badgeStyle[type].borderColor, backgroundColor: badgeStyle[type].backgroundColor }]}>
+      <View
+        style={[
+          styles.numericalBadge,
+          { borderColor: badgeStyle[type].borderColor, backgroundColor: badgeStyle[type].backgroundColor },
+        ]}
+      >
         <Text style={[styles.numericalText, { color: badgeStyle[type].color }]}>{value}</Text>
       </View>
     );
@@ -426,13 +487,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     // First handle ranges
     const rangeMatches = [...enhancedText.matchAll(rangePattern)];
-    rangeMatches.forEach(rangeMatch => {
+    rangeMatches.forEach((rangeMatch) => {
       if (rangeMatch.index !== undefined) {
         // Add text before range
         if (rangeMatch.index > lastIndex) {
           parts.push({
             type: 'text',
-            content: enhancedText.slice(lastIndex, rangeMatch.index)
+            content: enhancedText.slice(lastIndex, rangeMatch.index),
           });
         }
 
@@ -440,7 +501,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         parts.push({
           type: 'numerical',
           content: `${rangeMatch[1]}-${rangeMatch[2]} ${rangeMatch[3]}`,
-          valueType: 'range'
+          valueType: 'range',
         });
 
         lastIndex = rangeMatch.index + rangeMatch[0].length;
@@ -451,7 +512,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     if (lastIndex < enhancedText.length) {
       parts.push({
         type: 'text',
-        content: enhancedText.slice(lastIndex)
+        content: enhancedText.slice(lastIndex),
       });
     }
 
@@ -464,100 +525,100 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     const boldRegex = /(\*\*(.+?)\*\*|__(.+?)__)/g;
     // Handle italic text: *text* or _text_
     const italicRegex = /(?<!\*)\*([^*]+)\*(?!\*)|(?<!_)_([^_]+)_(?!_)/g;
-    
+
     let parts = [{ text, isBold: false, isItalic: false }];
-    
+
     // Parse bold text
-    parts = parts.flatMap(part => {
+    parts = parts.flatMap((part) => {
       if (part.isBold || part.isItalic) return [part];
-      
+
       const matches = [...part.text.matchAll(boldRegex)];
       if (matches.length === 0) return [part];
-      
+
       const newParts = [];
       let lastIndex = 0;
-      
-      matches.forEach(match => {
+
+      matches.forEach((match) => {
         // Add text before match
         if (match.index! > lastIndex) {
-          newParts.push({ 
-            text: part.text.slice(lastIndex, match.index), 
-            isBold: false, 
-            isItalic: false 
+          newParts.push({
+            text: part.text.slice(lastIndex, match.index),
+            isBold: false,
+            isItalic: false,
           });
         }
-        
+
         // Add bold text
-        newParts.push({ 
-          text: match[2] || match[3], 
-          isBold: true, 
-          isItalic: false 
+        newParts.push({
+          text: match[2] || match[3],
+          isBold: true,
+          isItalic: false,
         });
-        
+
         lastIndex = match.index! + match[0].length;
       });
-      
+
       // Add remaining text
       if (lastIndex < part.text.length) {
-        newParts.push({ 
-          text: part.text.slice(lastIndex), 
-          isBold: false, 
-          isItalic: false 
+        newParts.push({
+          text: part.text.slice(lastIndex),
+          isBold: false,
+          isItalic: false,
         });
       }
-      
+
       return newParts;
     });
-    
+
     // Parse italic text
-    parts = parts.flatMap(part => {
+    parts = parts.flatMap((part) => {
       if (part.isBold || part.isItalic) return [part];
-      
+
       const matches = [...part.text.matchAll(italicRegex)];
       if (matches.length === 0) return [part];
-      
+
       const newParts = [];
       let lastIndex = 0;
-      
-      matches.forEach(match => {
+
+      matches.forEach((match) => {
         // Add text before match
         if (match.index! > lastIndex) {
-          newParts.push({ 
-            text: part.text.slice(lastIndex, match.index), 
-            isBold: false, 
-            isItalic: false 
+          newParts.push({
+            text: part.text.slice(lastIndex, match.index),
+            isBold: false,
+            isItalic: false,
           });
         }
-        
+
         // Add italic text
-        newParts.push({ 
-          text: match[1] || match[2], 
-          isBold: false, 
-          isItalic: true 
+        newParts.push({
+          text: match[1] || match[2],
+          isBold: false,
+          isItalic: true,
         });
-        
+
         lastIndex = match.index! + match[0].length;
       });
-      
+
       // Add remaining text
       if (lastIndex < part.text.length) {
-        newParts.push({ 
-          text: part.text.slice(lastIndex), 
-          isBold: false, 
-          isItalic: false 
+        newParts.push({
+          text: part.text.slice(lastIndex),
+          isBold: false,
+          isItalic: false,
         });
       }
-      
+
       return newParts;
     });
-    
+
     return (
       <Text style={baseStyle}>
         {parts.map((part, index) => {
           let style = {};
           if (part.isBold) style = { ...style, ...styles.boldText };
           if (part.isItalic) style = { ...style, ...styles.italicText };
-          
+
           return (
             <Text key={index} style={style}>
               {part.text}
@@ -579,7 +640,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
     return (
       <Text style={baseStyle}>
-        {parts.map((part, index) => 
+        {parts.map((part, index) =>
           regex.test(part) ? (
             <Text key={index} style={styles.highlightedText}>
               {parseFormattedText(part, {})}
@@ -597,8 +658,8 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
     // Split content into paragraphs by double line breaks or single line breaks
     const paragraphs = content
       .split(/\n\s*\n|\n/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
 
     if (paragraphs.length === 0) {
       return <Text style={styles.contentText}>{content}</Text>;
@@ -613,13 +674,11 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             return (
               <View key={index} style={styles.listItemContainer}>
                 <Text style={styles.bulletPoint}>•</Text>
-                <View style={{ flex: 1 }}>
-                  {highlightSearchTerm(listText, searchTerm, styles.listItemText)}
-                </View>
+                <View style={{ flex: 1 }}>{highlightSearchTerm(listText, searchTerm, styles.listItemText)}</View>
               </View>
             );
           }
-          
+
           // Check if this is a numbered list item
           if (paragraph.match(/^\d+\.\s+/)) {
             const match = paragraph.match(/^(\d+)\.\s+(.*)$/);
@@ -627,14 +686,12 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
               return (
                 <View key={index} style={styles.listItemContainer}>
                   <Text style={styles.numberPoint}>{match[1]}.</Text>
-                  <View style={{ flex: 1 }}>
-                    {highlightSearchTerm(match[2], searchTerm, styles.listItemText)}
-                  </View>
+                  <View style={{ flex: 1 }}>{highlightSearchTerm(match[2], searchTerm, styles.listItemText)}</View>
                 </View>
               );
             }
           }
-          
+
           // Regular paragraph
           return (
             <View key={index} style={styles.paragraphContainer}>
@@ -649,9 +706,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
   // Navigation handler for table of contents
   const handleNavigateToSection = (sectionIndex: number) => {
     // First expand the section if it's collapsed
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [sectionIndex]: true
+      [sectionIndex]: true,
     }));
     triggerActivity(); // Trigger activity when user navigates to section
 
@@ -664,14 +721,14 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           (x, y) => {
             scrollViewRef.current?.scrollTo({
               y: Math.max(0, y - 20), // Offset for better visibility
-              animated: true
+              animated: true,
             });
           },
           () => {
             // Fallback: scroll to approximate position
             scrollViewRef.current?.scrollTo({
               y: sectionIndex * 200, // Approximate section height
-              animated: true
+              animated: true,
             });
           }
         );
@@ -685,9 +742,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
           <AlertCircle size={48} color={colors.textSecondary} />
-          <Text style={[styles.errorTitle, { color: colors.text }]}>
-            Keine Daten verfügbar
-          </Text>
+          <Text style={[styles.errorTitle, { color: colors.text }]}>Keine Daten verfügbar</Text>
         </View>
       </View>
     );
@@ -698,9 +753,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
           <AlertCircle size={48} color={colors.textSecondary} />
-          <Text style={[styles.errorTitle, { color: colors.text }]}>
-            Keine medizinischen Inhalte gefunden
-          </Text>
+          <Text style={[styles.errorTitle, { color: colors.text }]}>Keine medizinischen Inhalte gefunden</Text>
           <Text style={[styles.errorSubtitle, { color: colors.textSecondary }]}>
             content_improved und content_html sind leer oder ungültig formatiert
           </Text>
@@ -742,7 +795,6 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         }}
         scrollEventThrottle={2000} // Only trigger every 2 seconds to avoid excessive calls
       >
-
         {/* Modern Header Section */}
         <LinearGradient
           colors={MEDICAL_COLORS.warmOrangeGradient}
@@ -752,11 +804,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         >
           {/* Navigation Bar */}
           <View style={styles.navigationBar}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={onBackPress}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={onBackPress} activeOpacity={0.8}>
               <View style={styles.backButtonInner}>
                 <ChevronLeft size={22} color={MEDICAL_COLORS.white} />
                 <Text style={styles.backText}>Zurück</Text>
@@ -764,11 +812,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
             </TouchableOpacity>
 
             {onOpenModal && currentSection && (
-              <TouchableOpacity
-                style={styles.modalButtonModern}
-                onPress={onOpenModal}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.modalButtonModern} onPress={onOpenModal} activeOpacity={0.8}>
                 <Maximize2 size={18} color={MEDICAL_COLORS.white} />
               </TouchableOpacity>
             )}
@@ -776,9 +820,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
           {/* Title Section */}
           <View style={styles.modernTitleContainer}>
-            <Text style={styles.modernTitle}>
-              {supabaseRow?.title || 'Medizinischer Inhalt'}
-            </Text>
+            <Text style={styles.modernTitle}>{supabaseRow?.title || 'Medizinischer Inhalt'}</Text>
             <TableOfContents
               sections={tableOfContentsItems}
               onNavigateToSection={handleNavigateToSection}
@@ -789,19 +831,13 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           {/* Meta Info Badges */}
           <View style={styles.modernMetaInfo}>
             <View style={styles.modernMetaBadge}>
-              <Text style={styles.modernMetaText}>
-                📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}
-              </Text>
+              <Text style={styles.modernMetaText}>📚 {supabaseRow?.parent_slug?.replace(/-/g, ' ') || 'Medizin'}</Text>
             </View>
             <View style={styles.modernMetaBadge}>
-              <Text style={styles.modernMetaText}>
-                ⏱️ {totalReadingTime} Min. Lesezeit
-              </Text>
+              <Text style={styles.modernMetaText}>⏱️ {totalReadingTime} Min. Lesezeit</Text>
             </View>
             <View style={styles.modernMetaBadge}>
-              <Text style={styles.modernMetaText}>
-                📖 {parsedSections.length} Abschnitte
-              </Text>
+              <Text style={styles.modernMetaText}>📖 {parsedSections.length} Abschnitte</Text>
             </View>
           </View>
         </LinearGradient>
@@ -826,7 +862,6 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
         {/* Search and Study Controls Container */}
         <View style={styles.controlsContainer}>
-
           {/* Modern Search Bar */}
           <View style={styles.modernSearchContainer}>
             <Search size={22} color={MEDICAL_COLORS.warmOrangeDark} />
@@ -890,7 +925,9 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
         </View>
 
         {searchTerm.length > 0 && (
-          <Text style={[styles.searchResults, { color: MEDICAL_COLORS.slate500, marginHorizontal: 20 }]}>  {/* Medium gray for white background */}
+          <Text style={[styles.searchResults, { color: MEDICAL_COLORS.slate500, marginHorizontal: 20 }]}>
+            {' '}
+            {/* Medium gray for white background */}
             🔍 Suche nach: "{searchTerm}" ({filteredSections.length} von {parsedSections.length} Abschnitten)
           </Text>
         )}
@@ -906,24 +943,25 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
           return (
             <TouchableOpacity
               key={index}
-              ref={(ref) => { sectionRefs.current[index] = ref; }}
+              ref={(ref) => {
+                sectionRefs.current[index] = ref;
+              }}
               activeOpacity={0.95}
               onPress={() => {
-                setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
+                setExpandedSections((prev) => ({ ...prev, [index]: !prev[index] }));
                 triggerActivity();
               }}
-              style={[
-                styles.modernSectionCard,
-                isExpanded && styles.modernSectionCardExpanded,
-              ]}
+              style={[styles.modernSectionCard, isExpanded && styles.modernSectionCardExpanded]}
             >
               {/* Section Card Header */}
               <View style={styles.modernSectionCardHeader}>
                 {/* Left Side: Icon Container */}
-                <View style={[
-                  styles.modernIconContainer,
-                  isCompleted ? styles.modernIconContainerCompleted : styles.modernIconContainerIncomplete
-                ]}>
+                <View
+                  style={[
+                    styles.modernIconContainer,
+                    isCompleted ? styles.modernIconContainerCompleted : styles.modernIconContainerIncomplete,
+                  ]}
+                >
                   <IconComponent
                     size={24}
                     color={isCompleted ? MEDICAL_COLORS.success : MEDICAL_COLORS.warmOrangeDark}
@@ -978,10 +1016,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                   <ChevronDown
                     size={20}
                     color={MEDICAL_COLORS.slate400}
-                    style={[
-                      styles.modernChevronIcon,
-                      isExpanded && { transform: [{ rotate: '180deg' }] }
-                    ]}
+                    style={[styles.modernChevronIcon, isExpanded && { transform: [{ rotate: '180deg' }] }]}
                   />
                 </View>
               </View>
@@ -1003,9 +1038,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                   )}
 
                   {/* Main Content */}
-                  <View style={styles.modernContentBody}>
-                    {renderFormattedContent(section.content)}
-                  </View>
+                  <View style={styles.modernContentBody}>{renderFormattedContent(section.content)}</View>
 
                   {/* Action Buttons */}
                   <View style={styles.modernActionButtons}>
@@ -1024,10 +1057,10 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
 
                         // Expand next section if available
                         if (index < filteredSections.length - 1) {
-                          setExpandedSections(prev => ({
+                          setExpandedSections((prev) => ({
                             ...prev,
                             [index]: false,
-                            [index + 1]: true
+                            [index + 1]: true,
                           }));
                         }
                         triggerActivity();
@@ -1057,12 +1090,22 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                     >
                       <StickyNote
                         size={18}
-                        color={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? MEDICAL_COLORS.warmOrangeDark : MEDICAL_COLORS.slate500}
+                        color={
+                          sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`)
+                            ? MEDICAL_COLORS.warmOrangeDark
+                            : MEDICAL_COLORS.slate500
+                        }
                         strokeWidth={2}
-                        fill={sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? MEDICAL_COLORS.warmOrangeBg : 'none'}
+                        fill={
+                          sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`)
+                            ? MEDICAL_COLORS.warmOrangeBg
+                            : 'none'
+                        }
                       />
                       <Text style={styles.modernSecondaryButtonText}>
-                        {sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`) ? 'Notiz bearbeiten' : 'Notizen'}
+                        {sectionNotes.has(`${supabaseRow.slug || supabaseRow.title}_section_${index}`)
+                          ? 'Notiz bearbeiten'
+                          : 'Notizen'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1094,9 +1137,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
                 <Circle size={24} color={MEDICAL_COLORS.warmYellow} strokeWidth={2} />
               </View>
               <View style={styles.summaryStatContent}>
-                <Text style={styles.summaryStatValue}>
-                  {parsedSections.length - completedSections.size}
-                </Text>
+                <Text style={styles.summaryStatValue}>{parsedSections.length - completedSections.size}</Text>
                 <Text style={styles.summaryStatLabel}>Verbleibend</Text>
               </View>
             </View>
@@ -1141,11 +1182,7 @@ const InteractiveMedicalContent: React.FC<InteractiveMedicalContentProps> = ({ s
       />
 
       {/* Success Toast */}
-      <Toast
-        visible={toastVisible}
-        message={toastMessage}
-        onHide={() => setToastVisible(false)}
-      />
+      <Toast visible={toastVisible} message={toastMessage} onHide={() => setToastVisible(false)} />
     </Animated.View>
   );
 };
@@ -1156,6 +1193,9 @@ const styles = StyleSheet.create({
   },
   appContainer: {
     flex: 1,
+    // Web compatibility: ensure container takes full height and allows scrolling
+    minHeight: '100%',
+    overflow: 'visible',
   },
   gradientBackground: {
     position: 'absolute',
@@ -1392,7 +1432,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
-  backText: {
+  backTextAlt: {
     marginLeft: 4,
     fontSize: 14,
     fontWeight: '500',
@@ -1522,10 +1562,15 @@ const styles = StyleSheet.create({
   },
   fullScreenContent: {
     flex: 1,
+    // Web compatibility: ensure ScrollView fills available space and scrolls
+    flexGrow: 1,
+    flexShrink: 1,
   },
   fullContentContainer: {
     paddingTop: 0,
-    paddingBottom: 40,
+    paddingBottom: 100, // Increased padding to account for bottom tab bar
+    // Web compatibility: ensure content can grow and trigger scrolling
+    flexGrow: 1,
   },
   scrollableContent: {
     flex: 1,
@@ -1559,7 +1604,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'transparent',  // Transparent to show card background
+    backgroundColor: 'transparent', // Transparent to show card background
   },
   enhancedSectionHeader: {
     flexDirection: 'row',
@@ -1583,7 +1628,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 12,
-    color: MEDICAL_COLORS.primaryDark,  // Brown Rust for coral branding
+    color: MEDICAL_COLORS.primaryDark, // Brown Rust for coral branding
   },
   enhancedSectionTitle: {
     flex: 1,
@@ -1599,7 +1644,7 @@ const styles = StyleSheet.create({
   },
   sectionContent: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(184, 126, 112, 0.2)',  // Old Rose border
+    borderTopColor: 'rgba(184, 126, 112, 0.2)', // Old Rose border
     padding: 20,
   },
   enhancedSectionContent: {
@@ -1631,7 +1676,7 @@ const styles = StyleSheet.create({
     color: MEDICAL_COLORS.slate500,
     lineHeight: 20,
   },
-  contentContainer: {
+  formattedContentContainer: {
     // Container for formatted content
   },
   paragraphContainer: {

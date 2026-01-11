@@ -1,23 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ChevronLeft,
-  ChevronDown,
-  BookOpen,
-  List,
-  Lightbulb,
-  Info,
-  Maximize2,
-} from 'lucide-react-native';
+import { ChevronLeft, ChevronDown, BookOpen, List, Lightbulb, Info, Maximize2 } from 'lucide-react-native';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,19 +46,34 @@ interface ContentSection {
 
 // Content skeleton loader
 const ContentSkeleton = memo(() => {
-  
   return (
     <View style={{ padding: 16 }}>
       {Array.from({ length: 3 }, (_, i) => (
-        <View key={i} style={{
-          backgroundColor: colors.card,
-          borderRadius: 16,
-          marginBottom: 16,
-          padding: 20,
-        }}>
-          <View style={{ height: 24, backgroundColor: colors.border, borderRadius: 4, opacity: 0.7, marginBottom: 16 }} />
-          <View style={{ height: 16, backgroundColor: colors.border, borderRadius: 4, opacity: 0.5, marginBottom: 8 }} />
-          <View style={{ height: 16, backgroundColor: colors.border, borderRadius: 4, opacity: 0.5, width: '80%', marginBottom: 8 }} />
+        <View
+          key={i}
+          style={{
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            marginBottom: 16,
+            padding: 20,
+          }}
+        >
+          <View
+            style={{ height: 24, backgroundColor: colors.border, borderRadius: 4, opacity: 0.7, marginBottom: 16 }}
+          />
+          <View
+            style={{ height: 16, backgroundColor: colors.border, borderRadius: 4, opacity: 0.5, marginBottom: 8 }}
+          />
+          <View
+            style={{
+              height: 16,
+              backgroundColor: colors.border,
+              borderRadius: 4,
+              opacity: 0.5,
+              width: '80%',
+              marginBottom: 8,
+            }}
+          />
           <View style={{ height: 16, backgroundColor: colors.border, borderRadius: 4, opacity: 0.5, width: '60%' }} />
         </View>
       ))}
@@ -89,7 +89,7 @@ const ContentDetailScreen = memo(() => {
   const { slug, previousPage } = useLocalSearchParams<{ slug: string; previousPage?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  
+
   const { session, user, loading: authLoading } = useAuth();
 
   const [currentSection, setCurrentSection] = useState<Section | null>(null);
@@ -104,13 +104,13 @@ const ContentDetailScreen = memo(() => {
 
   const fetchSection = useCallback(async () => {
     if (!slug || typeof slug !== 'string') return;
-    
+
     // Check if user is authenticated
     if (!session) {
       setError('Sie müssen angemeldet sein, um Inhalte zu sehen.');
       return;
     }
-    
+
     // Check cache first (uses LRU with automatic expiration)
     const cached = contentCache.getValue(slug);
 
@@ -124,15 +124,18 @@ const ContentDetailScreen = memo(() => {
 
       // Track content view for cached content too
       try {
-        await recentContentService.trackContentView({
-          slug: cached.slug,
-          title: cached.title,
-          description: cached.description,
-          category: cached.category || cached.type,
-          type: cached.type,
-          icon: cached.icon,
-          color: cached.color
-        }, user?.id);
+        await recentContentService.trackContentView(
+          {
+            slug: cached.slug,
+            title: cached.title,
+            description: cached.description,
+            category: cached.category || cached.type,
+            type: cached.type,
+            icon: cached.icon,
+            color: cached.color,
+          },
+          user?.id
+        );
         SecureLogger.log('📖 Tracked cached content view:', cached.title, 'for user:', user?.id);
       } catch (trackingError) {
         SecureLogger.warn('⚠️ Failed to track cached content view:', trackingError);
@@ -147,20 +150,16 @@ const ContentDetailScreen = memo(() => {
     }
 
     setLoading(true);
-    
+
     try {
       // Use direct Supabase query instead of service
-      const { data: sectionData, error } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
-        
+      const { data: sectionData, error } = await supabase.from('sections').select('*').eq('slug', slug).maybeSingle();
+
       if (error) throw error;
       if (!sectionData) throw new Error('Abschnitt nicht gefunden');
-      
+
       setCurrentSection(sectionData);
-      
+
       // Update navigation title with the actual title
       navigation.setOptions({
         headerTitle: sectionData.title || slug,
@@ -168,23 +167,26 @@ const ContentDetailScreen = memo(() => {
 
       // Cache the result (LRU cache handles timestamp automatically)
       contentCache.setValue(slug, sectionData);
-      
+
       // Track content view for recent content
       try {
-        await recentContentService.trackContentView({
-          slug: sectionData.slug,
-          title: sectionData.title,
-          description: sectionData.description,
-          category: sectionData.category || sectionData.type,
-          type: sectionData.type,
-          icon: sectionData.icon,
-          color: sectionData.color
-        }, user?.id);
+        await recentContentService.trackContentView(
+          {
+            slug: sectionData.slug,
+            title: sectionData.title,
+            description: sectionData.description,
+            category: sectionData.category || sectionData.type,
+            type: sectionData.type,
+            icon: sectionData.icon,
+            color: sectionData.color,
+          },
+          user?.id
+        );
         SecureLogger.log('📖 Tracked content view:', sectionData.title, 'for user:', user?.id);
       } catch (trackingError) {
         SecureLogger.warn('⚠️ Failed to track content view:', trackingError);
       }
-      
+
       // Auto-expand first section if content_improved exists
       if (Array.isArray(sectionData.content_improved) && sectionData.content_improved.length > 0) {
         setExpandedSections({ '0': true });
@@ -202,7 +204,7 @@ const ContentDetailScreen = memo(() => {
         if (related) {
           setRelatedSections([
             { id: sectionData.id, slug: sectionData.slug, title: sectionData.title, type: sectionData.type },
-            ...related
+            ...related,
           ]);
         }
       } catch (relatedError) {
@@ -239,9 +241,9 @@ const ContentDetailScreen = memo(() => {
   );
 
   const toggleSection = useCallback((index: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: !prev[index],
     }));
   }, []);
 
@@ -278,66 +280,76 @@ const ContentDetailScreen = memo(() => {
     setModalVisible(false);
   }, []);
 
-  const handleModalSectionChange = useCallback((newSlug: string) => {
-    // Navigate to the new slug
-    router.replace(`/(tabs)/bibliothek/content/${newSlug}`);
-  }, [router]);
+  const handleModalSectionChange = useCallback(
+    (newSlug: string) => {
+      // Navigate to the new slug
+      router.replace(`/(tabs)/bibliothek/content/${newSlug}`);
+    },
+    [router]
+  );
 
-  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF'];  // White Linen to light coral to white
+  const gradientColors = ['#F8F3E8', '#FBEEEC', '#FFFFFF']; // White Linen to light coral to white
 
-  const dynamicStyles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    center: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 16,
-      backgroundColor: colors.background,
-    },
-    backText: {
-      marginLeft: 4,
-      fontSize: 16,
-      color: colors.primary,
-    },
-    headerTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    headerDescription: {
-      fontSize: 16,
-      color: colors.textSecondary,
-      marginTop: 4,
-    },
-    fallbackContent: {
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 16,
-    },
-    fallbackTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 12,
-    },
-    fallbackText: {
-      fontSize: 16,
-      color: colors.text,
-      lineHeight: 24,
-    },
-    errorText: {
-      fontSize: 16,
-      color: colors.error,
-      marginBottom: 8,
-    },
-    errorLink: {
-      color: colors.primary,
-    },
-  }), [colors]);
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+          // Web compatibility: ensure container allows scrolling
+          overflow: 'hidden',
+          minHeight: '100%',
+        },
+        center: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 16,
+          backgroundColor: colors.background,
+        },
+        backText: {
+          marginLeft: 4,
+          fontSize: 16,
+          color: colors.primary,
+        },
+        headerTitle: {
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: colors.text,
+        },
+        headerDescription: {
+          fontSize: 16,
+          color: colors.textSecondary,
+          marginTop: 4,
+        },
+        fallbackContent: {
+          backgroundColor: colors.card,
+          borderRadius: 16,
+          padding: 20,
+          marginBottom: 16,
+        },
+        fallbackTitle: {
+          fontSize: 18,
+          fontWeight: 'bold',
+          color: colors.text,
+          marginBottom: 12,
+        },
+        fallbackText: {
+          fontSize: 16,
+          color: colors.text,
+          lineHeight: 24,
+        },
+        errorText: {
+          fontSize: 16,
+          color: colors.error,
+          marginBottom: 8,
+        },
+        errorLink: {
+          color: colors.primary,
+        },
+      }),
+    [colors]
+  );
 
   if (loading) {
     return (
@@ -377,7 +389,6 @@ const ContentDetailScreen = memo(() => {
       </SafeAreaView>
     );
   }
-
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
