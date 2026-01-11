@@ -417,6 +417,11 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
       subscription_status: status === 'active' ? 'active' : 'inactive',
       simulation_limit: simulationLimit,
       simulations_used_this_month: 0,
+      subscription_id: String(subscriptionId),
+      variant_id: String(variantId),
+      subscription_period_start: periodStartDate.toISOString().split('T')[0], // YYYY-MM-DD
+      subscription_period_end: periodEndDate.toISOString().split('T')[0], // YYYY-MM-DD
+      subscription_created_at: createdAt || new Date().toISOString(),
       subscription_updated_at: new Date().toISOString(),
     })
     .eq('id', userId);
