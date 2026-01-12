@@ -1,0 +1,14 @@
+import { Stack } from 'expo-router';
+
+export default function FachbegriffeLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="[slug]" />
+    </Stack>
+  );
+}

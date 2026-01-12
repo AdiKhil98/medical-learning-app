@@ -53,8 +53,8 @@ const fspSections: FSPSection[] = [
     icon: 'text',
     route: '/bibliothek/fsp/fachbegriffe',
     gradient: ['#14b8a6', '#0d9488'],
-    available: false,
-    count: 'Demnächst',
+    available: true,
+    count: '~400 Begriffe',
   },
 ];
 
