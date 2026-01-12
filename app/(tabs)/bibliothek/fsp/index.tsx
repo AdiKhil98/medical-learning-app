@@ -43,8 +43,8 @@ const fspSections: FSPSection[] = [
     icon: 'document-text',
     route: '/bibliothek/fsp/arztbrief',
     gradient: ['#ec4899', '#db2777'],
-    available: false,
-    count: 'Demnächst',
+    available: true,
+    count: '24 Themen',
   },
   {
     id: 'fachbegriffe',
