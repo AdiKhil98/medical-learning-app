@@ -54,6 +54,7 @@ const FACHGEBIET_CONFIG: Record<string, { icon: string; color: string; gradient:
   Notfallmedizin: { icon: 'warning', color: '#f59e0b', gradient: ['#f59e0b', '#d97706'] },
   Urologie: { icon: 'water', color: '#06b6d4', gradient: ['#06b6d4', '#0891b2'] },
   Rheumatologie: { icon: 'body', color: '#10b981', gradient: ['#10b981', '#059669'] },
+  EKG: { icon: 'pulse', color: '#14b8a6', gradient: ['#14b8a6', '#0d9488'] },
 };
 
 // Bereich icons
@@ -75,6 +76,11 @@ const BEREICH_ICONS: Record<string, string> = {
   'Traumatologische Notfälle': 'medkit',
   Urologie: 'water',
   Rheumatologie: 'body',
+  // EKG Bereiche
+  'EKG Grundlagen': 'pulse',
+  Rhythmusstörungen: 'heart-circle',
+  'Ischämie und Infarkt': 'warning',
+  'Weitere Pathologien': 'medical',
 };
 
 // Priority badge colors
@@ -257,7 +263,7 @@ export default function KPBibliothekIndex() {
         return (
           <TouchableOpacity
             key={fach}
-            style={[styles.tab, isActive && { backgroundColor: `${config.color  }20`, borderColor: config.color }]}
+            style={[styles.tab, isActive && { backgroundColor: `${config.color}20`, borderColor: config.color }]}
             onPress={() => {
               setSelectedFachgebiet(fach);
               setSelectedBereich(null);
