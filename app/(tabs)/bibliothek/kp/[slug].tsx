@@ -51,6 +51,7 @@ interface ParsedContent {
   aetiologie?: Section;
   klassifikation?: Section;
   pathophysiologie?: Section;
+  ekg_merkmale?: Section;
   symptome?: Section;
   diagnostik?: Section;
   differentialdiagnosen?: Section;
@@ -58,6 +59,7 @@ interface ParsedContent {
   komplikationen?: Section;
   prognose?: Section;
   praevention?: Section;
+  cave?: Section;
   pruefungsfokus?: Section;
 }
 
@@ -68,6 +70,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: string; color: strin
   aetiologie: { title: 'Ätiologie & Risikofaktoren', icon: 'git-branch-outline', color: '#8b5cf6', emoji: '🔬' },
   klassifikation: { title: 'Klassifikation', icon: 'layers-outline', color: '#ec4899', emoji: '📋' },
   pathophysiologie: { title: 'Pathophysiologie', icon: 'pulse-outline', color: '#f59e0b', emoji: '⚙️' },
+  ekg_merkmale: { title: 'EKG-Merkmale', icon: 'pulse', color: '#14b8a6', emoji: '📈' },
   symptome: { title: 'Symptome & Klinik', icon: 'body-outline', color: '#ef4444', emoji: '🩺' },
   diagnostik: { title: 'Diagnostik', icon: 'search-outline', color: '#10b981', emoji: '🔍' },
   differentialdiagnosen: { title: 'Differentialdiagnosen', icon: 'git-compare-outline', color: '#6366f1', emoji: '⚖️' },
@@ -75,6 +78,7 @@ const SECTION_CONFIG: Record<string, { title: string; icon: string; color: strin
   komplikationen: { title: 'Komplikationen', icon: 'warning-outline', color: '#f97316', emoji: '⚠️' },
   prognose: { title: 'Prognose', icon: 'trending-up-outline', color: '#84cc16', emoji: '📈' },
   praevention: { title: 'Prävention', icon: 'shield-checkmark-outline', color: '#22c55e', emoji: '🛡️' },
+  cave: { title: 'Cave / Wichtig', icon: 'alert-circle-outline', color: '#ef4444', emoji: '⚠️' },
   pruefungsfokus: { title: 'Prüfungsfokus', icon: 'school-outline', color: '#dc2626', emoji: '🎯' },
 };
 
@@ -85,6 +89,7 @@ const SECTION_ORDER = [
   'aetiologie',
   'klassifikation',
   'pathophysiologie',
+  'ekg_merkmale',
   'symptome',
   'diagnostik',
   'differentialdiagnosen',
@@ -92,6 +97,7 @@ const SECTION_ORDER = [
   'komplikationen',
   'prognose',
   'praevention',
+  'cave',
   'pruefungsfokus',
 ];
 
@@ -157,35 +163,96 @@ export default function KPTopicDetail() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(SECTION_ORDER));
 
-  // Fetch topic
+  // Fetch topic (from main table or EKG table)
   const fetchTopic = useCallback(async () => {
     try {
       setError(null);
-      const { data, error: fetchError } = await supabase
+
+      // First try the main medical content table
+      const { data: mainData, error: mainError } = await supabase
         .from('kp_medical_content')
         .select('*')
         .eq('slug', slug)
         .single();
 
-      if (fetchError) throw fetchError;
-      setTopic(data);
+      if (mainData && !mainError) {
+        setTopic(mainData);
 
-      // Parse JSON content
-      if (data?.content) {
-        try {
-          let contentObj = data.content;
-          if (typeof contentObj === 'string') {
-            const jsonStart = contentObj.indexOf('{');
-            if (jsonStart > 0) {
-              contentObj = contentObj.substring(jsonStart);
+        // Parse JSON content
+        if (mainData.content) {
+          try {
+            let contentObj = mainData.content;
+            if (typeof contentObj === 'string') {
+              const jsonStart = contentObj.indexOf('{');
+              if (jsonStart > 0) {
+                contentObj = contentObj.substring(jsonStart);
+              }
+              contentObj = JSON.parse(contentObj);
             }
-            contentObj = JSON.parse(contentObj);
+            setParsedContent(contentObj);
+          } catch (parseError) {
+            console.error('Error parsing content:', parseError);
+            setError('Inhalt konnte nicht geladen werden');
           }
-          setParsedContent(contentObj);
-        } catch (parseError) {
-          console.error('Error parsing content:', parseError);
-          setError('Inhalt konnte nicht geladen werden');
         }
+        return;
+      }
+
+      // If not found in main table, try EKG table
+      const { data: ekgData, error: ekgError } = await supabase
+        .from('kp_ekg_content')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (ekgError) {
+        console.error('Error fetching from EKG table:', ekgError);
+        setError('Thema nicht gefunden');
+        return;
+      }
+
+      if (ekgData) {
+        // Transform EKG data to match expected format
+        const transformedTopic: KPContent = {
+          id: ekgData.id,
+          slug: ekgData.slug,
+          title_de: ekgData.title_de,
+          title_short: ekgData.title_short,
+          fachgebiet: 'EKG',
+          bereich: ekgData.bereich,
+          priority: ekgData.priority,
+          content: '', // EKG content is in separate columns
+        };
+        setTopic(transformedTopic);
+
+        // Build parsed content from EKG-specific columns
+        const ekgParsedContent: ParsedContent = {};
+
+        // Map EKG table columns to ParsedContent
+        const ekgSections = [
+          'definition',
+          'epidemiologie',
+          'ekg_merkmale',
+          'klassifikation',
+          'pathophysiologie',
+          'aetiologie',
+          'symptome',
+          'diagnostik',
+          'therapie',
+          'komplikationen',
+          'differentialdiagnosen',
+          'cave',
+          'prognose',
+          'pruefungsfokus',
+        ];
+
+        ekgSections.forEach((section) => {
+          if (ekgData[section]) {
+            ekgParsedContent[section as keyof ParsedContent] = ekgData[section];
+          }
+        });
+
+        setParsedContent(ekgParsedContent);
       }
     } catch (err) {
       console.error('Error fetching topic:', err);

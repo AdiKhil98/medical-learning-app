@@ -107,10 +107,11 @@ export default function KPBibliothekIndex() {
   const [selectedBereich, setSelectedBereich] = useState<string | null>(null);
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
 
-  // Fetch topics from Supabase
+  // Fetch topics from Supabase (both main table and EKG table)
   const fetchTopics = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch from main medical content table
+      const { data: mainData, error: mainError } = await supabase
         .from('kp_medical_content')
         .select('id, slug, title_de, title_short, fachgebiet, bereich, priority, status')
         .eq('status', 'active')
@@ -118,8 +119,38 @@ export default function KPBibliothekIndex() {
         .order('bereich', { ascending: true })
         .order('title_de', { ascending: true });
 
-      if (error) throw error;
-      setTopics(data || []);
+      if (mainError) throw mainError;
+
+      // Fetch from EKG-specific table
+      const { data: ekgData, error: ekgError } = await supabase
+        .from('kp_ekg_content')
+        .select('id, slug, title_de, title_short, bereich, priority, status')
+        .eq('status', 'active')
+        .order('bereich', { ascending: true })
+        .order('title_de', { ascending: true });
+
+      if (ekgError) {
+        // EKG table might not exist yet, continue with main data only
+        console.log('EKG table not available:', ekgError.message);
+        setTopics(mainData || []);
+        return;
+      }
+
+      // Transform EKG data to match KPTopic structure
+      const transformedEkg: KPTopic[] = (ekgData || []).map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        title_de: item.title_de,
+        title_short: item.title_short,
+        fachgebiet: 'EKG',
+        bereich: item.bereich,
+        priority: item.priority,
+        status: item.status,
+      }));
+
+      // Combine both datasets
+      const allTopics = [...(mainData || []), ...transformedEkg];
+      setTopics(allTopics);
     } catch (error) {
       console.error('Error fetching KP topics:', error);
     } finally {
