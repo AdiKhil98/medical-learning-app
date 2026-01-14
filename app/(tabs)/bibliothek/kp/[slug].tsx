@@ -945,12 +945,16 @@ const styles = StyleSheet.create({
   },
   ekgDiagramImageContainer: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 12,
+    marginVertical: 8,
   },
   ekgDiagramImage: {
     width: '100%',
-    height: 150,
+    height: 220,
+    minHeight: 200,
   },
   ekgDiagramCaption: {
     fontSize: 13,
