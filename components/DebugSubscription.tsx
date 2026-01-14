@@ -30,11 +30,7 @@ export function DebugSubscription() {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { data, error } = await supabase.from('users').select('*').eq('id', user.id).single();
 
       if (error) {
         logger.error('Error fetching raw data:', error);
@@ -61,14 +57,8 @@ export function DebugSubscription() {
         usedCount = usedFree;
         remaining = Math.max(0, 3 - usedFree);
         canUse = remaining > 0;
-      } else if (tier === 'unlimited') {
-        // UNLIMITED
-        totalLimit = 999999;
-        usedCount = usedMonthly;
-        remaining = 999999;
-        canUse = true;
       } else {
-        // PAID TIER
+        // PAID TIER (basic/premium)
         totalLimit = limit;
         usedCount = usedMonthly;
         remaining = Math.max(0, limit - usedMonthly);
@@ -82,9 +72,8 @@ export function DebugSubscription() {
         usedCount,
         remaining,
         canUse,
-        counterUsed: tier === 'free' || status !== 'active' ? 'free_simulations_used' : 'simulations_used_this_month'
+        counterUsed: tier === 'free' || status !== 'active' ? 'free_simulations_used' : 'simulations_used_this_month',
       });
-
     } catch (err) {
       logger.error('Error in debug fetch:', err);
     }
@@ -96,21 +85,17 @@ export function DebugSubscription() {
     const tier = rawData.subscription_tier;
     let newLimit = 30; // default
 
-    if (tier === 'basis') newLimit = 30;
-    else if (tier === 'profi') newLimit = 60;
-    else if (tier === 'unlimited') newLimit = 999999;
+    if (tier === 'basic' || tier === 'basis') newLimit = 30;
+    else if (tier === 'premium' || tier === 'profi') newLimit = 60;
     else if (tier?.startsWith('custom_')) {
       const match = tier.match(/custom_(\d+)/);
       if (match) newLimit = parseInt(match[1]);
     }
 
-    const { error } = await supabase
-      .from('users')
-      .update({ simulation_limit: newLimit })
-      .eq('id', user.id);
+    const { error } = await supabase.from('users').update({ simulation_limit: newLimit }).eq('id', user.id);
 
     if (error) {
-      alert('Error fixing limit: ' + error.message);
+      alert(`Error fixing limit: ${  error.message}`);
     } else {
       alert(`Fixed! Set limit to ${newLimit}`);
       fetchRawData();
@@ -129,7 +114,7 @@ export function DebugSubscription() {
       .eq('id', user.id);
 
     if (error) {
-      alert('Error resetting counter: ' + error.message);
+      alert(`Error resetting counter: ${  error.message}`);
     } else {
       alert(`Reset ${counterField} to 0`);
       fetchRawData();
@@ -215,7 +200,8 @@ export function DebugSubscription() {
             {rawData.simulation_limit !== null && rawData.simulations_used_this_month > rawData.simulation_limit && (
               <View style={styles.issue}>
                 <Text style={styles.issueText}>
-                  ⚠️ EXCEEDED LIMIT: Used ({rawData.simulations_used_this_month}) exceeds limit ({rawData.simulation_limit})
+                  ⚠️ EXCEEDED LIMIT: Used ({rawData.simulations_used_this_month}) exceeds limit (
+                  {rawData.simulation_limit})
                 </Text>
               </View>
             )}
@@ -229,12 +215,12 @@ export function DebugSubscription() {
             )}
 
             {rawData.simulation_limit === null &&
-             rawData.subscription_tier === null &&
-             rawData.subscription_status === null && (
-              <View style={styles.issueOk}>
-                <Text style={styles.issueOkText}>✅ Free tier - no issues detected</Text>
-              </View>
-            )}
+              rawData.subscription_tier === null &&
+              rawData.subscription_status === null && (
+                <View style={styles.issueOk}>
+                  <Text style={styles.issueOkText}>✅ Free tier - no issues detected</Text>
+                </View>
+              )}
           </View>
         </View>
       )}

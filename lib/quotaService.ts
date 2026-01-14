@@ -21,7 +21,6 @@ export interface QuotaStatus {
   total_simulations?: number;
   simulations_used?: number;
   simulations_remaining?: number;
-  is_unlimited?: boolean;
   period_start?: string;
   period_end?: string;
   usage_text?: string;
@@ -234,13 +233,10 @@ class QuotaService {
    * Format usage text for display
    *
    * @param used - Simulations used
-   * @param total - Total simulations (-1 for unlimited)
-   * @returns Formatted text like "3 / 20" or "Unbegrenzt"
+   * @param total - Total simulations
+   * @returns Formatted text like "3 / 20"
    */
   formatUsageText(used: number, total: number): string {
-    if (total === -1) {
-      return 'Unbegrenzt';
-    }
     return `${used} / ${total}`;
   }
 

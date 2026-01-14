@@ -718,7 +718,7 @@ class SimulationTrackingService {
       const updates: any = {};
 
       // CASE 1: NULL or 0 simulation_limit for paid tier
-      if (user.subscription_tier && user.subscription_tier !== 'free' && user.subscription_tier !== 'unlimited') {
+      if (user.subscription_tier && user.subscription_tier !== 'free') {
         if (!user.simulation_limit || user.simulation_limit <= 0) {
           const defaultLimit = this.getDefaultLimitForTier(user.subscription_tier);
           updates.simulation_limit = defaultLimit;
@@ -769,17 +769,12 @@ class SimulationTrackingService {
 
   /**
    * Get default limit for a subscription tier
-   * UNIVERSAL: Add custom tiers here as needed
    */
   private getDefaultLimitForTier(tier: string): number {
     const defaults: Record<string, number> = {
-      basis: 30,
-      profi: 60,
-      unlimited: 999999,
-      // Custom tiers
-      custom_5: 5,
-      custom_50: 50,
-      custom_100: 100,
+      free: 3,
+      basic: 30,
+      premium: 60,
     };
     return defaults[tier] || 30; // Default to 30 if unknown
   }

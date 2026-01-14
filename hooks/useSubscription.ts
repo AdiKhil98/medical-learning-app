@@ -87,12 +87,10 @@ export const useSubscription = (userId: string | undefined) => {
 
       // Determine subscription tier from reason or total
       let tier = 'free';
-      if (simTotal === -1 || reason === 'unlimited') {
-        tier = 'unlimited';
-      } else if (simTotal >= 100) {
-        tier = 'profi';
-      } else if (simTotal >= 20) {
-        tier = 'basis';
+      if (simTotal >= 60) {
+        tier = 'premium';
+      } else if (simTotal >= 30) {
+        tier = 'basic';
       } else {
         tier = 'free';
       }
@@ -224,35 +222,23 @@ export const useSubscription = (userId: string | undefined) => {
     // Use actual database count - quota updates happen at 5-minute mark server-side
     const displayUsed = simulationsUsed;
 
-    // UNIVERSAL: Map tier to display name (works for any tier)
+    // Map tier to display name
     const tierDisplayNames: Record<string, string> = {
       free: 'Kostenlos',
-      basis: 'Basis-Plan',
-      profi: 'Profi-Plan',
-      unlimited: 'Unlimited-Plan',
-      // Add any custom tiers here
-      custom_5: 'Custom 5',
-      custom_50: 'Custom 50',
-      custom_100: 'Custom 100',
+      basic: 'Basis-Plan',
+      premium: 'Premium-Plan',
     };
 
     const planName = tierDisplayNames[subscriptionTier || 'free'] || `${subscriptionTier}-Plan`;
 
-    // UNIVERSAL: Format usage text based on tier (works for any limit)
-    let usageText = '';
-    if (subscriptionTier === 'unlimited') {
-      usageText = `${displayUsed} Simulationen genutzt`;
-    } else {
-      // Works for 3, 5, 30, 50, 100, or ANY limit value
-      usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
-    }
+    // Format usage text
+    const usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
 
     return {
       planName,
       usageText,
       message,
-      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basis' || subscriptionTier === 'profi',
-      isUnlimited: subscriptionTier === 'unlimited',
+      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basic',
       // Additional info for universal handling
       displayUsed, // Real-time database count
       totalLimit: simulationLimit,

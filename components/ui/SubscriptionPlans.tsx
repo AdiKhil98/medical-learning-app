@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, Star, Crown, Infinity, Shield, Calendar, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Check, Star, Crown, Shield, Calendar, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
 const { width } = Dimensions.get('window');
@@ -94,33 +94,33 @@ export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansPro
       ],
     },
     {
-      id: 'unlimited',
-      name: 'Unlimited',
-      price: 120,
-      quarterlyPrice: 340, // €340 for 3 months
+      id: 'premium',
+      name: 'Premium-Plan',
+      price: 90,
+      quarterlyPrice: 250, // €250 for 3 months
       currency: '€',
       period: 'Monat',
-      simulations: 'Unbegrenzt',
-      badge: '∞',
+      simulations: '60',
+      badge: '60',
       ctaText: 'Jetzt starten',
-      savings: 'Sparen Sie €20 pro Quartal', // 120*3=360, 360-340=20 savings
-      icon: Infinity,
+      savings: 'Sparen Sie €20 pro Quartal', // 90*3=270, 270-250=20 savings
+      icon: Crown,
       gradient: ['#B15740', '#A04A35'], // Unified coral gradient
       keyFeatures: [
-        'Unbegrenzte Simulationen',
+        '180 Simulationen pro Quartal',
         'VIP Support & Account Manager',
-        'KI-Powered Insights',
+        'Erweiterte Analysen',
         'Alle Premium Features',
       ],
       allFeatures: [
-        { text: 'Unbegrenzte Simulationen', included: true },
+        { text: '180 Medizinische Simulationen pro Quartal', included: true },
         { text: '14 Tage kostenlose Testversion', included: true },
         { text: 'Vollständige Analytics Suite', included: true },
         { text: 'VIP Support & Account Manager', included: true },
         { text: 'Alle Plattformen', included: true },
         { text: 'Komplette Bibliothek', included: true },
         { text: 'Erweiterte Exports', included: true },
-        { text: 'KI-Powered Insights', included: true },
+        { text: 'Prioritäts-Support', included: true },
       ],
     },
   ];

@@ -54,12 +54,10 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
     const totalSims = quotaData.total_simulations || 0;
     const tier = quotaData.subscription_tier || 'free';
 
-    if (totalSims === -1 || tier === 'unlimited') {
-      return 'Premium Plan (Unbegrenzt)';
-    } else if (totalSims >= 100 || tier === 'profi') {
-      return 'Profi Plan (100 Simulationen)';
-    } else if (totalSims >= 20 || tier === 'basis') {
-      return 'Basis Plan (20 Simulationen)';
+    if (totalSims >= 60 || tier === 'premium' || tier === 'profi') {
+      return 'Premium Plan (60 Simulationen)';
+    } else if (totalSims >= 30 || tier === 'basic' || tier === 'basis') {
+      return 'Basis Plan (30 Simulationen)';
     } else {
       return 'Kostenlos (3 Simulationen)';
     }

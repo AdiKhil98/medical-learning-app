@@ -9,52 +9,61 @@ const supabase = createClient(
 
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
-  'basis': {
-    name: 'Basis-Plan',
-    simulationLimit: 30
+  free: {
+    name: 'Free-Plan',
+    simulationLimit: 3,
   },
-  'profi': {
-    name: 'Profi-Plan',
-    simulationLimit: 60
+  basic: {
+    name: 'Basic-Plan',
+    simulationLimit: 30,
   },
-  'unlimited': {
-    name: 'Unlimited-Plan',
-    simulationLimit: null
-  }
+  premium: {
+    name: 'Premium-Plan',
+    simulationLimit: 60,
+  },
 };
 
-// Helper function to verify webhook signature (Lemon Squeezy format)function verifyWebhookSignature(payload, signature, secret) {  const hmac = crypto.createHmac('sha256', secret);  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');  const signatureBuffer = Buffer.from(signature || ', 'utf8');  return crypto.timingSafeEqual(digest, signatureBuffer);}
+// Helper function to verify webhook signature (Lemon Squeezy format)
+function verifyWebhookSignature(payload, signature, secret) {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = Buffer.from(hmac.update(payload).digest('hex'), 'utf8');
+  const signatureBuffer = Buffer.from(signature || '', 'utf8');
+  return crypto.timingSafeEqual(digest, signatureBuffer);
+}
 
 // Helper function to determine subscription tier from variant name or ID
 function determineSubscriptionTier(variantName, variantId) {
   const name = variantName?.toLowerCase() || '';
 
   if (name.includes('basis') || name.includes('basic')) {
-    return 'basis';
-  } else if (name.includes('profi') || name.includes('pro')) {
-    return 'profi';
-  } else if (name.includes('unlimited') || name.includes('premium')) {
-    return 'unlimited';
+    return 'basic';
+  } else if (name.includes('profi') || name.includes('pro') || name.includes('premium')) {
+    return 'premium';
   }
 
   // Fallback based on variant ID or default
-  console.warn(`Unknown subscription tier for variant: ${variantName} (${variantId}), defaulting to basis`);
-  return 'basis';
+  console.warn(`Unknown subscription tier for variant: ${variantName} (${variantId}), defaulting to basic`);
+  return 'basic';
 }
 
 // Helper function to log webhook events
-async function logWebhookEvent(eventType, eventData, subscriptionId, userId, status = 'processed', errorMessage = null) {
+async function logWebhookEvent(
+  eventType,
+  eventData,
+  subscriptionId,
+  userId,
+  status = 'processed',
+  errorMessage = null
+) {
   try {
-    const { error } = await supabase
-      .from('webhook_events')
-      .insert({
-        event_type: eventType,
-        event_data: eventData,
-        subscription_id: subscriptionId,
-        user_id: userId,
-        status: status,
-        error_message: errorMessage
-      });
+    const { error } = await supabase.from('webhook_events').insert({
+      event_type: eventType,
+      event_data: eventData,
+      subscription_id: subscriptionId,
+      user_id: userId,
+      status,
+      error_message: errorMessage,
+    });
 
     if (error) {
       console.error('Failed to log webhook event:', error);
@@ -66,13 +75,10 @@ async function logWebhookEvent(eventType, eventData, subscriptionId, userId, sta
 
 // Helper function to find user by email
 async function findUserByEmail(email) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
-    .single();
+  const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 = no rows returned
     console.error('Error finding user by email:', error);
     return null;
   }
@@ -86,7 +92,7 @@ async function updateUserSubscription(userId, subscriptionData) {
     .from('users')
     .update({
       ...subscriptionData,
-      subscription_updated_at: new Date().toISOString()
+      subscription_updated_at: new Date().toISOString(),
     })
     .eq('id', userId);
 
@@ -114,16 +120,16 @@ exports.handler = async (event, context) => {
         environment: {
           hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
           hasSupabaseUrl: !!process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL,
-          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-        }
-      })
+          hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        },
+      }),
     };
   }
 
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
 
@@ -137,7 +143,7 @@ exports.handler = async (event, context) => {
       console.error('LEMONSQUEEZY_WEBHOOK_SECRET not configured');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Webhook secret not configured' })
+        body: JSON.stringify({ error: 'Webhook secret not configured' }),
       };
     }
 
@@ -145,7 +151,7 @@ exports.handler = async (event, context) => {
       console.error('No signature provided in webhook');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'No signature provided' })
+        body: JSON.stringify({ error: 'No signature provided' }),
       };
     }
 
@@ -154,7 +160,7 @@ exports.handler = async (event, context) => {
       console.error('Invalid webhook signature');
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid signature' })
+        body: JSON.stringify({ error: 'Invalid signature' }),
       };
     }
 
@@ -168,7 +174,7 @@ exports.handler = async (event, context) => {
       await logWebhookEvent('unknown', eventData, null, null, 'failed', 'Missing event_name in webhook');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing event_name' })
+        body: JSON.stringify({ error: 'Missing event_name' }),
       };
     }
 
@@ -184,17 +190,24 @@ exports.handler = async (event, context) => {
       await logWebhookEvent(eventType, eventData, subscriptionId, null, 'failed', 'Missing required subscription data');
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing subscription ID or customer email' })
+        body: JSON.stringify({ error: 'Missing subscription ID or customer email' }),
       };
     }
 
     // Find user by email
     const user = await findUserByEmail(customerEmail);
     if (!user) {
-      await logWebhookEvent(eventType, eventData, subscriptionId, null, 'failed', `User not found for email: ${customerEmail}`);
+      await logWebhookEvent(
+        eventType,
+        eventData,
+        subscriptionId,
+        null,
+        'failed',
+        `User not found for email: ${customerEmail}`
+      );
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: 'User not found' })
+        body: JSON.stringify({ error: 'User not found' }),
       };
     }
 
@@ -221,7 +234,7 @@ exports.handler = async (event, context) => {
           simulations_used_this_month: 0, // RESET monthly counter on upgrade
           lemon_squeezy_customer_email: customerEmail,
           subscription_created_at: new Date().toISOString(),
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
+          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
         });
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
@@ -244,7 +257,7 @@ exports.handler = async (event, context) => {
           subscription_tier: newTier,
           subscription_variant_name: newTierConfig.name,
           simulation_limit: newTierConfig.simulationLimit,
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
+          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
         };
 
         // CRITICAL: Reset counter if tier changed (upgrade/downgrade)
@@ -265,7 +278,7 @@ exports.handler = async (event, context) => {
         // Mark as cancelled but keep access until end of period
         await updateUserSubscription(userId, {
           subscription_status: 'cancelled',
-          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null
+          subscription_expires_at: subscriptionData.ends_at ? new Date(subscriptionData.ends_at).toISOString() : null,
         });
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
@@ -281,7 +294,7 @@ exports.handler = async (event, context) => {
           subscription_tier: null,
           subscription_variant_name: null,
           simulation_limit: null,
-          subscription_expires_at: new Date().toISOString()
+          subscription_expires_at: new Date().toISOString(),
         });
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed');
@@ -290,7 +303,14 @@ exports.handler = async (event, context) => {
 
       default:
         console.log(`Unhandled event type: ${eventType}`);
-        await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'ignored', `Unhandled event type: ${eventType}`);
+        await logWebhookEvent(
+          eventType,
+          eventData,
+          subscriptionId,
+          userId,
+          'ignored',
+          `Unhandled event type: ${eventType}`
+        );
         break;
     }
 
@@ -303,10 +323,9 @@ exports.handler = async (event, context) => {
         success: true,
         message: `Event ${eventType} processed successfully`,
         user_id: userId,
-        subscription_id: subscriptionId
-      })
+        subscription_id: subscriptionId,
+      }),
     };
-
   } catch (error) {
     console.error('Webhook processing error:', error);
 
@@ -327,8 +346,8 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         error: 'Internal server error',
-        message: error.message
-      })
+        message: error.message,
+      }),
     };
   }
 };

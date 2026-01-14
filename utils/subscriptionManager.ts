@@ -32,7 +32,8 @@ export class SubscriptionManager {
     try {
       const { data: user, error } = await this.supabase
         .from('users')
-        .select(`
+        .select(
+          `
           id,
           subscription_tier,
           subscription_status,
@@ -40,7 +41,8 @@ export class SubscriptionManager {
           simulations_used_this_month,
           free_simulations_used,
           subscription_period_end
-        `)
+        `
+        )
         .eq('id', userId)
         .single();
 
@@ -50,7 +52,7 @@ export class SubscriptionManager {
           simulationsUsed: 0,
           simulationLimit: 0,
           subscriptionTier: null,
-          message: 'User not found'
+          message: 'User not found',
         };
       }
 
@@ -75,22 +77,11 @@ export class SubscriptionManager {
           subscriptionTier: 'free',
           message: canUse
             ? `${freeLimit - user.free_simulations_used} kostenlose Simulationen verbleibend`
-            : 'Kostenlose Simulationen aufgebraucht. Bitte upgraden um fortzufahren.'
+            : 'Kostenlose Simulationen aufgebraucht. Bitte upgraden um fortzufahren.',
         };
       }
 
-      // Paid subscription logic
-      if (user.subscription_tier === 'unlimited') {
-        return {
-          canUseSimulation: true,
-          simulationsUsed: user.simulations_used_this_month,
-          simulationLimit: null,
-          subscriptionTier: user.subscription_tier,
-          message: 'Unlimited simulations'
-        };
-      }
-
-      // Basis/Profi plans with limits
+      // Paid subscription logic (basic/premium plans with limits)
       const canUse = user.simulations_used_this_month < user.simulation_limit;
       const remaining = user.simulation_limit - user.simulations_used_this_month;
 
@@ -101,9 +92,8 @@ export class SubscriptionManager {
         subscriptionTier: user.subscription_tier,
         message: canUse
           ? `${remaining} Simulationen verbleibend in diesem Monat`
-          : 'Monatliches Simulationslimit erreicht. Upgraden oder auf nächste Periode warten.'
+          : 'Monatliches Simulationslimit erreicht. Upgraden oder auf nächste Periode warten.',
       };
-
     } catch (error) {
       logger.error('Error checking simulation access:', error);
       return {
@@ -111,7 +101,7 @@ export class SubscriptionManager {
         simulationsUsed: 0,
         simulationLimit: 0,
         subscriptionTier: null,
-        message: 'Error checking subscription status'
+        message: 'Error checking subscription status',
       };
     }
   }
@@ -135,8 +125,7 @@ export class SubscriptionManager {
       // Update usage based on subscription type
       if (!user.subscription_tier || user.subscription_status !== 'active') {
         // Free tier - increment free simulations used
-        const { error: updateError } = await this.supabase
-          .rpc('increment_free_simulations', { user_id: userId });
+        const { error: updateError } = await this.supabase.rpc('increment_free_simulations', { user_id: userId });
 
         if (updateError) {
           logger.error('Error updating free simulation usage:', updateError);
@@ -144,8 +133,7 @@ export class SubscriptionManager {
         }
       } else {
         // Paid tier - increment monthly usage
-        const { error: updateError } = await this.supabase
-          .rpc('increment_monthly_simulations', { user_id: userId });
+        const { error: updateError } = await this.supabase.rpc('increment_monthly_simulations', { user_id: userId });
 
         if (updateError) {
           logger.error('Error updating simulation usage:', updateError);
@@ -173,7 +161,7 @@ export class SubscriptionManager {
         .update({
           simulations_used_this_month: 0,
           subscription_period_start: new Date().toISOString().split('T')[0],
-          subscription_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          subscription_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         })
         .eq('id', userId);
 
@@ -192,13 +180,11 @@ export class SubscriptionManager {
     try {
       // This assumes you have a simulation_usage_logs table
       // Adjust the table name and columns as needed
-      await this.supabase
-        .from('simulation_usage_logs')
-        .insert({
-          user_id: userId,
-          used_at: new Date().toISOString(),
-          simulation_type: 'medical_simulation'
-        });
+      await this.supabase.from('simulation_usage_logs').insert({
+        user_id: userId,
+        used_at: new Date().toISOString(),
+        simulation_type: 'medical_simulation',
+      });
     } catch (error) {
       // Don't throw error if logging fails - just log it
       logger.info('Note: Could not log to simulation_usage_logs table:', error);

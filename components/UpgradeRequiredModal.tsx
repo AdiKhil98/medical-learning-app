@@ -1,14 +1,6 @@
 import React from 'react';
 import { logger } from '@/utils/logger';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -25,16 +17,18 @@ export function UpgradeRequiredModal({
   onClose,
   currentTier,
   remainingSimulations,
-  totalLimit
+  totalLimit,
 }: UpgradeRequiredModalProps) {
   const router = useRouter();
 
   const getTierName = (tier: string) => {
     const names: Record<string, string> = {
-      'free': 'Kostenlos',
-      'basis': 'Basis',
-      'profi': 'Profi',
-      'unlimited': 'Unlimited'
+      free: 'Kostenlos',
+      basic: 'Basis',
+      premium: 'Premium',
+      // Legacy names
+      basis: 'Basis',
+      profi: 'Premium',
     };
     return names[tier] || 'Aktuell';
   };
@@ -55,24 +49,12 @@ export function UpgradeRequiredModal({
   };
 
   return (
-    <Modal
-      visible={isOpen}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={isOpen} transparent={true} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={(e) => e.stopPropagation()}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-              accessibilityLabel="Schließen"
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} accessibilityLabel="Schließen">
               <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
 
@@ -123,19 +105,11 @@ export function UpgradeRequiredModal({
 
             {/* Buttons */}
             <View style={styles.actionsContainer}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={handleUpgradeClick}
-              >
-                <Text style={styles.primaryButtonText}>
-                  Pläne ansehen & upgraden
-                </Text>
+              <TouchableOpacity style={styles.primaryButton} onPress={handleUpgradeClick}>
+                <Text style={styles.primaryButtonText}>Pläne ansehen & upgraden</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={onClose}
-              >
+              <TouchableOpacity style={styles.secondaryButton} onPress={onClose}>
                 <Text style={styles.secondaryButtonText}>Später</Text>
               </TouchableOpacity>
             </View>

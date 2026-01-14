@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export interface SubscriptionPlan {
-  tier: 'free' | 'basis' | 'profi' | 'unlimited';
+  tier: 'free' | 'basic' | 'premium';
   simulationLimit: number | null;
   status: 'active' | 'inactive';
 }
@@ -9,24 +9,19 @@ export interface SubscriptionPlan {
 const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
   free: {
     tier: 'free',
-    simulationLimit: null, // Free tier uses free_simulations_used (limit: 3)
-    status: 'inactive'
+    simulationLimit: 3,
+    status: 'inactive',
   },
   basic: {
-    tier: 'basis',
+    tier: 'basic',
     simulationLimit: 30,
-    status: 'active'
+    status: 'active',
   },
-  professional: {
-    tier: 'profi',
+  premium: {
+    tier: 'premium',
     simulationLimit: 60,
-    status: 'active'
+    status: 'active',
   },
-  unlimited: {
-    tier: 'unlimited',
-    simulationLimit: null,
-    status: 'active'
-  }
 };
 
 export class SubscriptionService {
@@ -50,7 +45,7 @@ export class SubscriptionService {
 
       console.log('📊 User free tier status:', {
         has_used_free_tier: user.has_used_free_tier,
-        subscription_tier: user.subscription_tier
+        subscription_tier: user.subscription_tier,
       });
 
       // Allow new users who haven't used free tier yet
@@ -63,9 +58,9 @@ export class SubscriptionService {
       console.log('❌ User has already used free tier - blocking');
       return {
         canSwitch: false,
-        reason: 'Sie haben bereits Ihren kostenlosen Plan genutzt. Um mehr Simulationen zu erhalten, wählen Sie bitte einen kostenpflichtigen Plan.'
+        reason:
+          'Sie haben bereits Ihren kostenlosen Plan genutzt. Um mehr Simulationen zu erhalten, wählen Sie bitte einen kostenpflichtigen Plan.',
       };
-
     } catch (error) {
       console.error('Error checking free tier eligibility:', error);
       return { canSwitch: false, reason: 'Ein unerwarteter Fehler ist aufgetreten' };
@@ -100,7 +95,7 @@ export class SubscriptionService {
         subscription_tier: plan.tier === 'free' ? null : plan.tier,
         subscription_status: plan.status,
         simulation_limit: plan.simulationLimit,
-        subscription_updated_at: new Date().toISOString()
+        subscription_updated_at: new Date().toISOString(),
       };
 
       // Reset usage counters when changing plans
@@ -117,7 +112,9 @@ export class SubscriptionService {
         // Switch to paid tier - reset monthly usage, keep free usage
         updateData.simulations_used_this_month = 0;
         updateData.subscription_period_start = new Date().toISOString().split('T')[0];
-        updateData.subscription_period_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        updateData.subscription_period_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0];
 
         // Mark that they've used free tier if switching from free
         if (!updateData.has_used_free_tier) {
@@ -126,12 +123,7 @@ export class SubscriptionService {
         }
       }
 
-      const { data, error } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', userId)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('users').update(updateData).eq('id', userId).select().single();
 
       if (error) {
         console.error('Error updating subscription:', error);
@@ -145,21 +137,17 @@ export class SubscriptionService {
         console.log('📊 Creating quota record for free tier user...');
 
         // Call RPC function (bypasses RLS)
-        const { data: quotaResult, error: quotaError } = await supabase
-          .rpc('create_free_tier_quota', {
-            p_user_id: userId
-          });
+        const { data: quotaResult, error: quotaError } = await supabase.rpc('create_free_tier_quota', {
+          p_user_id: userId,
+        });
 
         if (quotaError || !quotaResult?.success) {
           console.error('❌ Error creating quota:', quotaError || quotaResult);
           // Rollback: reset has_used_free_tier flag
-          await supabase
-            .from('users')
-            .update({ has_used_free_tier: false })
-            .eq('id', userId);
+          await supabase.from('users').update({ has_used_free_tier: false }).eq('id', userId);
           return {
             success: false,
-            error: quotaError?.message || quotaResult?.error || 'Fehler beim Erstellen der Simulation-Quota'
+            error: quotaError?.message || quotaResult?.error || 'Fehler beim Erstellen der Simulation-Quota',
           };
         }
 
@@ -167,7 +155,6 @@ export class SubscriptionService {
       }
 
       return { success: true };
-
     } catch (error) {
       console.error('Error in updateUserSubscription:', error);
       return { success: false, error: 'Unexpected error occurred' };

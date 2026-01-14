@@ -2,25 +2,22 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
-  'basis': {
-    name: 'Basis-Plan',
-    simulationLimit: 30
+  free: {
+    name: 'Free-Plan',
+    simulationLimit: 3,
   },
-  'profi': {
-    name: 'Profi-Plan',
-    simulationLimit: 60
+  basic: {
+    name: 'Basic-Plan',
+    simulationLimit: 30,
   },
-  'unlimited': {
-    name: 'Unlimited-Plan',
-    simulationLimit: null
-  }
+  premium: {
+    name: 'Premium-Plan',
+    simulationLimit: 60,
+  },
 };
 
 // Helper function to verify webhook signature
@@ -49,10 +46,7 @@ function verifyWebhookSignature(payload, signature, secret) {
   }
 
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(cleanSignature, 'hex')
-    );
+    return crypto.timingSafeEqual(Buffer.from(expectedSignature, 'hex'), Buffer.from(cleanSignature, 'hex'));
   } catch (error) {
     console.error('Error comparing signatures:', error);
     return false;
@@ -60,7 +54,7 @@ function verifyWebhookSignature(payload, signature, secret) {
 }
 
 // Valid subscription tiers
-const VALID_TIERS = ['basis', 'profi', 'unlimited'];
+const VALID_TIERS = ['free', 'basic', 'premium'];
 
 // Helper function to validate tier value
 function isValidTier(tier) {
@@ -74,11 +68,9 @@ function determineSubscriptionTier(variantName, variantId) {
   let tier = null;
 
   if (name.includes('basis') || name.includes('basic')) {
-    tier = 'basis';
-  } else if (name.includes('profi') || name.includes('pro')) {
-    tier = 'profi';
-  } else if (name.includes('unlimited') || name.includes('premium')) {
-    tier = 'unlimited';
+    tier = 'basic';
+  } else if (name.includes('profi') || name.includes('pro') || name.includes('premium')) {
+    tier = 'premium';
   }
 
   // Validate the determined tier
@@ -87,23 +79,28 @@ function determineSubscriptionTier(variantName, variantId) {
   }
 
   // Fallback based on variant ID or default
-  console.warn(`Unknown subscription tier for variant: ${variantName} (${variantId}), defaulting to basis`);
-  return 'basis';
+  console.warn(`Unknown subscription tier for variant: ${variantName} (${variantId}), defaulting to basic`);
+  return 'basic';
 }
 
 // Helper function to log webhook events
-async function logWebhookEvent(eventType, eventData, subscriptionId, userId, status = 'processed', errorMessage = null) {
+async function logWebhookEvent(
+  eventType,
+  eventData,
+  subscriptionId,
+  userId,
+  status = 'processed',
+  errorMessage = null
+) {
   try {
-    const { error } = await supabase
-      .from('webhook_events')
-      .insert({
-        event_type: eventType,
-        event_data: eventData,
-        subscription_id: subscriptionId,
-        user_id: userId,
-        status: status,
-        error_message: errorMessage
-      });
+    const { error } = await supabase.from('webhook_events').insert({
+      event_type: eventType,
+      event_data: eventData,
+      subscription_id: subscriptionId,
+      user_id: userId,
+      status,
+      error_message: errorMessage,
+    });
 
     if (error) {
       console.error('Failed to log webhook event:', error);
@@ -130,7 +127,8 @@ async function findUserByEmail(email) {
     .ilike('email', trimmedEmail) // Case-insensitive search handles casing
     .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 = no rows returned
     console.error('Error finding user by email:', error);
     return null;
   }
@@ -152,7 +150,7 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
         .from('users')
         .update({
           ...subscriptionData,
-          subscription_updated_at: new Date().toISOString()
+          subscription_updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
         .select();
@@ -165,7 +163,7 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
         if (attempt < retries) {
           const waitTime = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
           console.log(`Retrying in ${waitTime}ms...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
           continue;
         }
       } else {
@@ -178,7 +176,7 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
 
       if (attempt < retries) {
         const waitTime = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
         continue;
       }
     }
@@ -190,7 +188,19 @@ async function updateUserSubscription(userId, subscriptionData, retries = 3) {
 }
 
 // NEW: Helper function to upsert subscription using the multi-subscription system
-async function upsertSubscription(userId, subscriptionId, tier, status, variantId, variantName, customerEmail, tierConfig, subscriptionData, webhookEvent, retries = 3) {
+async function upsertSubscription(
+  userId,
+  subscriptionId,
+  tier,
+  status,
+  variantId,
+  variantName,
+  customerEmail,
+  tierConfig,
+  subscriptionData,
+  webhookEvent,
+  retries = 3
+) {
   // ISSUE #14 FIX: Validate tier before database operation
   if (!isValidTier(tier)) {
     console.error(`❌ Invalid tier value: ${tier}. Must be one of: ${VALID_TIERS.join(', ')}`);
@@ -209,14 +219,14 @@ async function upsertSubscription(userId, subscriptionId, tier, status, variantI
         p_variant_id: variantId?.toString() || null,
         p_variant_name: variantName || tierConfig.name,
         p_customer_email: customerEmail,
-        p_simulation_limit: tier === 'unlimited' ? 999999 : (tierConfig.simulationLimit || null),
+        p_simulation_limit: tierConfig.simulationLimit || null,
         p_created_at: subscriptionData.created_at || new Date().toISOString(),
         p_updated_at: new Date().toISOString(),
         p_expires_at: subscriptionData.ends_at || null,
         p_renews_at: subscriptionData.renews_at || null,
         p_period_start: subscriptionData.current_period_start || new Date().toISOString(),
         p_period_end: subscriptionData.current_period_end || subscriptionData.renews_at || null,
-        p_webhook_event: webhookEvent
+        p_webhook_event: webhookEvent,
       });
 
       if (error) {
@@ -226,7 +236,7 @@ async function upsertSubscription(userId, subscriptionId, tier, status, variantI
         if (attempt < retries) {
           const waitTime = Math.pow(2, attempt) * 1000;
           console.log(`Retrying in ${waitTime}ms...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
           continue;
         }
       } else {
@@ -246,7 +256,7 @@ async function upsertSubscription(userId, subscriptionId, tier, status, variantI
 
       if (attempt < retries) {
         const waitTime = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
         continue;
       }
     }
@@ -269,7 +279,9 @@ async function handleWebhook(req, res) {
     // This ensures the exact bytes sent by LemonSqueezy are used for verification
     // req.rawBody is set by Vercel/Next.js when bodyParser is disabled
     const payload = req.rawBody
-      ? (typeof req.rawBody === 'string' ? req.rawBody : req.rawBody.toString('utf8'))
+      ? typeof req.rawBody === 'string'
+        ? req.rawBody
+        : req.rawBody.toString('utf8')
       : JSON.stringify(req.body);
 
     const signature = req.headers['x-signature'];
@@ -320,7 +332,14 @@ async function handleWebhook(req, res) {
     // Find user by email
     const user = await findUserByEmail(customerEmail);
     if (!user) {
-      await logWebhookEvent(eventType, event, subscriptionId, null, 'failed', `User not found for email: ${customerEmail}`);
+      await logWebhookEvent(
+        eventType,
+        event,
+        subscriptionId,
+        null,
+        'failed',
+        `User not found for email: ${customerEmail}`
+      );
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -568,7 +587,14 @@ async function handleWebhook(req, res) {
 
       default:
         console.log(`Unhandled event type: ${eventType}`);
-        await logWebhookEvent(eventType, event, subscriptionId, userId, 'ignored', `Unhandled event type: ${eventType}`);
+        await logWebhookEvent(
+          eventType,
+          event,
+          subscriptionId,
+          userId,
+          'ignored',
+          `Unhandled event type: ${eventType}`
+        );
         break;
     }
 
@@ -576,9 +602,8 @@ async function handleWebhook(req, res) {
       success: true,
       message: `Event ${eventType} processed successfully`,
       user_id: userId,
-      subscription_id: subscriptionId
+      subscription_id: subscriptionId,
     });
-
   } catch (error) {
     console.error('❌ Webhook processing error:', error);
     console.error('Error stack:', error.stack);
@@ -593,19 +618,12 @@ async function handleWebhook(req, res) {
       const errorDetails = {
         message: error.message,
         stack: error.stack,
-        eventType: eventType,
-        subscriptionId: subscriptionId,
-        customerEmail: customerEmail
+        eventType,
+        subscriptionId,
+        customerEmail,
       };
 
-      await logWebhookEvent(
-        eventType || 'error',
-        event,
-        subscriptionId,
-        null,
-        'failed',
-        JSON.stringify(errorDetails)
-      );
+      await logWebhookEvent(eventType || 'error', event, subscriptionId, null, 'failed', JSON.stringify(errorDetails));
 
       console.log('✅ Error logged to webhook_events table');
     } catch (logError) {
@@ -615,7 +633,7 @@ async function handleWebhook(req, res) {
     return res.status(500).json({
       error: 'Internal server error',
       message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 }

@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   ChevronLeft,
@@ -42,7 +52,6 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   showArrow = true,
   rightComponent,
 }) => {
-
   return (
     <TouchableOpacity
       style={[styles.settingsItem, { borderBottomColor: colors.border }]}
@@ -114,7 +123,7 @@ export default function ProfileScreen() {
       }
 
       // Load subscription tier from quota system
-      const { data: quotaData, error: quotaError} = await supabase.rpc('get_user_quota_status', {
+      const { data: quotaData, error: quotaError } = await supabase.rpc('get_user_quota_status', {
         p_user_id: user.id,
       });
 
@@ -135,12 +144,10 @@ export default function ProfileScreen() {
     const totalSims = quotaData.total_simulations || 0;
     const tier = quotaData.subscription_tier || 'free';
 
-    if (totalSims === -1 || tier === 'unlimited') {
-      return 'Premium Plan (Unbegrenzt)';
-    } else if (totalSims >= 100 || tier === 'profi') {
-      return 'Profi Plan (100 Simulationen)';
-    } else if (totalSims >= 20 || tier === 'basis') {
-      return 'Basis Plan (20 Simulationen)';
+    if (totalSims >= 60 || tier === 'premium' || tier === 'profi') {
+      return 'Premium Plan (60 Simulationen)';
+    } else if (totalSims >= 30 || tier === 'basic' || tier === 'basis') {
+      return 'Basis Plan (30 Simulationen)';
     } else {
       return 'Kostenlos (3 Simulationen)';
     }
@@ -179,7 +186,7 @@ export default function ProfileScreen() {
 
   // Toggle font size with cycling (Klein → Mittel → Groß → Klein)
   const handleFontSize = async () => {
-    const fontSizes: Array<'Klein' | 'Mittel' | 'Groß'> = ['Klein', 'Mittel', 'Groß'];
+    const fontSizes: ('Klein' | 'Mittel' | 'Groß')[] = ['Klein', 'Mittel', 'Groß'];
     const currentIndex = fontSizes.indexOf(fontSize);
     const nextIndex = (currentIndex + 1) % fontSizes.length;
     const nextSize = fontSizes[nextIndex];
@@ -189,10 +196,7 @@ export default function ProfileScreen() {
 
     // Save to database
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ font_size_preference: nextSize })
-        .eq('id', user?.id);
+      const { error } = await supabase.from('users').update({ font_size_preference: nextSize }).eq('id', user?.id);
 
       if (error) {
         logger.error('Error updating font size:', error);
@@ -353,7 +357,9 @@ export default function ProfileScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <HelpCircle size={20} color={MEDICAL_COLORS.warmOrangeDark} />
-                <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>Support & Rechtliches</Text>
+                <Text style={[styles.sectionTitle, { color: MEDICAL_COLORS.warmOrangeDark }]}>
+                  Support & Rechtliches
+                </Text>
               </View>
               <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
                 <SettingsItem
