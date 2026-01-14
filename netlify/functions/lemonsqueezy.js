@@ -407,7 +407,8 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
 
   // STEP 2: Update users table
   // Users table uses German tier names: 'basis', 'profi'
-  const usersTier = tier === 'basic' ? 'basis' : tier === 'premium' ? 'profi' : tier;
+  // Note: 'free' tier maps to null since the constraint only allows ('basis', 'profi', 'unlimited')
+  const usersTier = tier === 'basic' ? 'basis' : tier === 'premium' ? 'profi' : tier === 'free' ? null : tier;
   console.log(`📊 Step 2: Updating users table (tier: ${usersTier})...`);
 
   const { error: userError } = await supabase
@@ -721,10 +722,10 @@ exports.handler = async (event, context) => {
             const { error: resetError } = await supabase
               .from('user_simulation_quota')
               .update({
-                simulations_used: 0,  // ⭐ RESET COUNTER ⭐
+                simulations_used: 0, // ⭐ RESET COUNTER ⭐
                 period_start: subData.periodStart,
                 period_end: subData.periodEnd,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
               })
               .eq('user_id', userId);
 
@@ -734,16 +735,12 @@ exports.handler = async (event, context) => {
               console.log(`✅ Counter reset from ${existingQuota.simulations_used} → 0`);
 
               // Also sync users table
-              await supabase
-                .from('users')
-                .update({ simulations_used_this_month: 0 })
-                .eq('id', userId);
+              await supabase.from('users').update({ simulations_used_this_month: 0 }).eq('id', userId);
             }
           } else {
             console.log('ℹ️  No renewal detected (period end unchanged)');
           }
         }
-
 
         // Re-determine tier in case of upgrade/downgrade
         const newTier = determineSubscriptionTier(variantName, variantId);
