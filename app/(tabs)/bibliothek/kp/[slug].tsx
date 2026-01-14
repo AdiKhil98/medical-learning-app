@@ -12,6 +12,7 @@ import {
   Platform,
   RefreshControl,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,12 @@ interface Section {
   tabellen?: TableData[];
 }
 
+interface EKGDiagram {
+  type: string;
+  url: string;
+  description: string;
+}
+
 interface KPContent {
   id: string;
   slug: string;
@@ -43,6 +50,7 @@ interface KPContent {
   bereich: string;
   priority: string;
   content: string;
+  ekg_diagram?: EKGDiagram | null;
 }
 
 interface ParsedContent {
@@ -222,6 +230,7 @@ export default function KPTopicDetail() {
           bereich: ekgData.bereich,
           priority: ekgData.priority,
           content: '', // EKG content is in separate columns
+          ekg_diagram: ekgData.ekg_diagram || null,
         };
         setTopic(transformedTopic);
 
@@ -345,6 +354,31 @@ export default function KPTopicDetail() {
       </LinearGradient>
     </View>
   );
+
+  // Render EKG Diagram
+  const renderEKGDiagram = () => {
+    if (!topic?.ekg_diagram?.url) return null;
+
+    return (
+      <View style={styles.ekgDiagramCard}>
+        {/* Header */}
+        <View style={styles.ekgDiagramHeader}>
+          <View style={styles.ekgDiagramIconBg}>
+            <Ionicons name="pulse" size={20} color="#14b8a6" />
+          </View>
+          <Text style={styles.ekgDiagramTitle}>EKG-Darstellung</Text>
+        </View>
+
+        {/* Image */}
+        <View style={styles.ekgDiagramImageContainer}>
+          <Image source={{ uri: topic.ekg_diagram.url }} style={styles.ekgDiagramImage} resizeMode="contain" />
+        </View>
+
+        {/* Caption */}
+        {topic.ekg_diagram.description && <Text style={styles.ekgDiagramCaption}>{topic.ekg_diagram.description}</Text>}
+      </View>
+    );
+  };
 
   // Render section
   const renderSection = (key: string, section: Section) => {
@@ -505,7 +539,15 @@ export default function KPTopicDetail() {
           {parsedContent &&
             SECTION_ORDER.map((key) => {
               const section = parsedContent[key as keyof ParsedContent];
-              return section ? renderSection(key, section) : null;
+              if (!section) return null;
+
+              return (
+                <React.Fragment key={key}>
+                  {renderSection(key, section)}
+                  {/* Show EKG diagram after definition section */}
+                  {key === 'definition' && renderEKGDiagram()}
+                </React.Fragment>
+              );
             })}
         </View>
 
@@ -856,5 +898,68 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#78350f',
     fontStyle: 'italic',
+  },
+
+  // EKG Diagram Card
+  ekgDiagramCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+      },
+    }),
+  },
+  ekgDiagramHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f0fdfa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccfbf1',
+  },
+  ekgDiagramIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#ccfbf1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  ekgDiagramTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0f766e',
+  },
+  ekgDiagramImageContainer: {
+    padding: 16,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+  ekgDiagramImage: {
+    width: '100%',
+    height: 150,
+  },
+  ekgDiagramCaption: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
   },
 });
