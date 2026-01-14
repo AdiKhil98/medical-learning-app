@@ -406,9 +406,8 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
   }
 
   // STEP 2: Update users table
-  // Users table uses German tier names: 'basis', 'profi'
-  // Note: 'free' tier maps to null since the constraint only allows ('basis', 'profi', 'unlimited')
-  const usersTier = tier === 'basic' ? 'basis' : tier === 'premium' ? 'profi' : tier === 'free' ? null : tier;
+  // Users table now uses English tier names: 'free', 'basic', 'premium' (after migration 20260114191630)
+  const usersTier = tier;
   console.log(`📊 Step 2: Updating users table (tier: ${usersTier})...`);
 
   const { error: userError } = await supabase
