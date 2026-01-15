@@ -1977,8 +1977,26 @@ function KPSimulationScreen() {
       // Step 2: Wait briefly for any pending operations to complete
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Step 3: Close Voiceflow widget
-      console.log('🔚 KP: Step 3 - Closing Voiceflow widget...');
+      // Step 3: END THE VOICE CALL - Send end event to Voiceflow backend
+      console.log('📞 KP: Step 3 - Ending Voiceflow conversation...');
+      if (window.voiceflow?.chat) {
+        try {
+          // Send end interaction to terminate the conversation on Voiceflow's backend
+          if (typeof window.voiceflow.chat.interact === 'function') {
+            console.log('🔚 KP: Sending end interaction to Voiceflow...');
+            await window.voiceflow.chat.interact({ type: 'end' });
+            console.log('✅ KP: End interaction sent');
+          }
+        } catch (error) {
+          console.error('❌ KP: Error ending conversation:', error);
+        }
+      }
+
+      // Step 4: Wait for end event to be processed
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Step 5: Close Voiceflow widget
+      console.log('🔚 KP: Step 5 - Closing Voiceflow widget...');
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.close && window.voiceflow.chat.close();
@@ -1989,11 +2007,11 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 4: Wait for widget to close
+      // Step 6: Wait for widget to close
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Step 5: Destroy controller
-      console.log('🔧 KP: Step 5 - Destroying controller...');
+      // Step 7: Destroy controller
+      console.log('🔧 KP: Step 7 - Destroying controller...');
       if (voiceflowController.current) {
         try {
           voiceflowController.current.destroy();
@@ -2004,8 +2022,8 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 6: Force remove DOM elements
-      console.log('🗑️ KP: Step 6 - Force removing DOM elements...');
+      // Step 8: Force remove DOM elements
+      console.log('🗑️ KP: Step 8 - Force removing DOM elements...');
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         try {
           const widgetSelectors = [
@@ -2027,9 +2045,9 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 7: Update database if needed
+      // Step 9: Update database if needed
       if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
-        console.log('📊 KP: Step 7 - Updating database...');
+        console.log('📊 KP: Step 9 - Updating database...');
         try {
           await simulationTracker.updateSimulationStatus(
             sessionToken,
@@ -2042,8 +2060,8 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 8: Clear storage (AsyncStorage + SecureStore)
-      console.log('💾 KP: Step 8 - Clearing simulation storage...');
+      // Step 10: Clear storage (AsyncStorage + SecureStore)
+      console.log('💾 KP: Step 10 - Clearing simulation storage...');
       await clearSimulationStorage();
 
       console.log('✅ KP: Centralized cleanup completed successfully');

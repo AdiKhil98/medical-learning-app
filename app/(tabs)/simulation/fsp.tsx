@@ -1711,8 +1711,26 @@ function FSPSimulationScreen() {
       // Step 2: Wait briefly for any pending operations to complete
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Step 3: Close Voiceflow widget
-      console.log('🔚 FSP: Step 3 - Closing Voiceflow widget...');
+      // Step 3: END THE VOICE CALL - Send end event to Voiceflow backend
+      console.log('📞 FSP: Step 3 - Ending Voiceflow conversation...');
+      if (window.voiceflow?.chat) {
+        try {
+          // Send end interaction to terminate the conversation on Voiceflow's backend
+          if (typeof window.voiceflow.chat.interact === 'function') {
+            console.log('🔚 FSP: Sending end interaction to Voiceflow...');
+            await window.voiceflow.chat.interact({ type: 'end' });
+            console.log('✅ FSP: End interaction sent');
+          }
+        } catch (error) {
+          console.error('❌ FSP: Error ending conversation:', error);
+        }
+      }
+
+      // Step 4: Wait for end event to be processed
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Step 5: Close Voiceflow widget
+      console.log('🔚 FSP: Step 5 - Closing Voiceflow widget...');
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.close && window.voiceflow.chat.close();
@@ -1723,11 +1741,11 @@ function FSPSimulationScreen() {
         }
       }
 
-      // Step 4: Wait for widget to close
+      // Step 6: Wait for widget to close
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Step 5: Destroy controller
-      console.log('🔧 FSP: Step 5 - Destroying controller...');
+      // Step 7: Destroy controller
+      console.log('🔧 FSP: Step 7 - Destroying controller...');
       if (voiceflowController.current) {
         try {
           voiceflowController.current.destroy();
@@ -1738,8 +1756,8 @@ function FSPSimulationScreen() {
         }
       }
 
-      // Step 6: Force remove DOM elements
-      console.log('🗑️ FSP: Step 6 - Force removing DOM elements...');
+      // Step 8: Force remove DOM elements
+      console.log('🗑️ FSP: Step 8 - Force removing DOM elements...');
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         try {
           const widgetSelectors = [
@@ -1761,9 +1779,9 @@ function FSPSimulationScreen() {
         }
       }
 
-      // Step 7: Update database if needed
+      // Step 9: Update database if needed
       if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
-        console.log('📊 FSP: Step 7 - Updating database...');
+        console.log('📊 FSP: Step 9 - Updating database...');
         try {
           await simulationTracker.updateSimulationStatus(
             sessionToken,
@@ -1776,8 +1794,8 @@ function FSPSimulationScreen() {
         }
       }
 
-      // Step 8: Clear storage (AsyncStorage + SecureStore)
-      console.log('💾 FSP: Step 8 - Clearing simulation storage...');
+      // Step 10: Clear storage (AsyncStorage + SecureStore)
+      console.log('💾 FSP: Step 10 - Clearing simulation storage...');
       await clearSimulationStorage();
 
       console.log('✅ FSP: Centralized cleanup completed successfully');
