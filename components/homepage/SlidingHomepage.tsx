@@ -26,6 +26,7 @@ import {
   HelpCircle,
   Mail,
 } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Menu from '@/components/ui/Menu';
 import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -53,6 +54,52 @@ const IS_SMALL_MOBILE = TEMP_WIDTH < SMALL_MOBILE_THRESHOLD;
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
 }
+
+// Social Icon Button with hover effect for web
+interface SocialIconButtonProps {
+  iconName: string;
+  url: string;
+  hoverColor: string;
+  label: string;
+}
+
+const SocialIconButton = memo(({ iconName, url, hoverColor, label }: SocialIconButtonProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const webHoverProps = IS_WEB
+    ? {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+      }
+    : {};
+
+  return (
+    <TouchableOpacity
+      style={[socialIconStyles.button, isHovered && IS_WEB && { backgroundColor: `${hoverColor}15` }]}
+      onPress={() => Linking.openURL(url)}
+      activeOpacity={0.7}
+      accessibilityLabel={label}
+      {...webHoverProps}
+    >
+      <Ionicons name={iconName as any} size={20} color={isHovered && IS_WEB ? hoverColor : MEDICAL_COLORS.slate500} />
+    </TouchableOpacity>
+  );
+});
+
+const socialIconStyles = StyleSheet.create({
+  button: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...(IS_WEB && {
+      transition: 'all 0.2s ease' as any,
+      cursor: 'pointer' as any,
+    }),
+  },
+});
 
 function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -293,8 +340,25 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
               </TouchableOpacity>
               <Logo size="medium" variant="medical" textColor={MEDICAL_COLORS.warmOrange} animated={false} />
             </View>
-            {/* Right Section: User Avatar */}
-            <UserAvatar size="medium" />
+            {/* Right Section: Social Icons + User Avatar */}
+            <View style={styles.headerRight}>
+              {/* Social Media Icons */}
+              <View style={styles.socialIconsContainer}>
+                <SocialIconButton
+                  iconName="logo-telegram"
+                  url="https://t.me/kpmed57"
+                  hoverColor="#0088cc"
+                  label="Telegram"
+                />
+                <SocialIconButton
+                  iconName="logo-facebook"
+                  url="https://www.facebook.com/share/19zKPyofTZ/?mibextid=wwXIfr"
+                  hoverColor="#1877f2"
+                  label="Facebook"
+                />
+              </View>
+              <UserAvatar size="medium" />
+            </View>
           </View>
         </LinearGradient>
       </View>
@@ -827,6 +891,16 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  socialIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
 
   // Navigation Arrows - ALWAYS VISIBLE with z-index 50
