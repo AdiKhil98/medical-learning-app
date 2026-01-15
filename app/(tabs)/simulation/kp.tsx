@@ -1977,8 +1977,32 @@ function KPSimulationScreen() {
       // Step 2: Wait briefly for any pending operations to complete
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Step 3: Close Voiceflow widget
-      console.log('🔚 KP: Step 3 - Closing Voiceflow widget...');
+      // Step 3: END THE VOICE CALL - This is critical to stop the Voiceflow conversation
+      console.log('📞 KP: Step 3 - Ending Voiceflow conversation/voice call...');
+      if (window.voiceflow?.chat) {
+        try {
+          // Send end interaction to terminate the conversation on Voiceflow's backend
+          if (typeof window.voiceflow.chat.interact === 'function') {
+            console.log('🔚 KP: Sending end interaction to Voiceflow...');
+            await window.voiceflow.chat.interact({ type: 'end' });
+            console.log('✅ KP: End interaction sent');
+          }
+
+          // Clear any proactive messages
+          if (window.voiceflow.chat.proactive?.clear) {
+            window.voiceflow.chat.proactive.clear();
+            console.log('✅ KP: Proactive messages cleared');
+          }
+        } catch (error) {
+          console.error('❌ KP: Error ending Voiceflow conversation:', error);
+        }
+      }
+
+      // Step 4: Wait for end event to be processed by Voiceflow backend
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Step 5: Close Voiceflow widget UI
+      console.log('🔚 KP: Step 5 - Closing Voiceflow widget UI...');
       if (window.voiceflow?.chat) {
         try {
           window.voiceflow.chat.close && window.voiceflow.chat.close();
@@ -1989,14 +2013,19 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 4: Wait for widget to close
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Step 6: Wait for widget to close
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Step 5: Destroy controller
-      console.log('🔧 KP: Step 5 - Destroying controller...');
+      // Step 7: Destroy controller using async method for complete cleanup
+      console.log('🔧 KP: Step 7 - Destroying controller...');
       if (voiceflowController.current) {
         try {
-          voiceflowController.current.destroy();
+          // Use destroyAsync if available for proper WebRTC cleanup
+          if (typeof voiceflowController.current.destroyAsync === 'function') {
+            await voiceflowController.current.destroyAsync();
+          } else {
+            voiceflowController.current.destroy();
+          }
           voiceflowController.current = null;
           console.log('✅ KP: Controller destroyed');
         } catch (error) {
@@ -2004,8 +2033,35 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 6: Force remove DOM elements
-      console.log('🗑️ KP: Step 6 - Force removing DOM elements...');
+      // Step 8: Force close any remaining WebRTC connections
+      console.log('🔌 KP: Step 8 - Closing remaining WebRTC connections...');
+      if (typeof window !== 'undefined') {
+        try {
+          const peerConnections = (window as any).__voiceflowPeerConnections || [];
+          peerConnections.forEach((pc: RTCPeerConnection) => {
+            if (pc && pc.connectionState !== 'closed') {
+              pc.close();
+              console.log('✅ KP: Closed RTCPeerConnection');
+            }
+          });
+          (window as any).__voiceflowPeerConnections = [];
+
+          // Close AudioContexts
+          const audioContexts = (window as any).__voiceflowAudioContexts || [];
+          for (const ctx of audioContexts) {
+            if (ctx && ctx.state !== 'closed') {
+              await ctx.close();
+              console.log('✅ KP: Closed AudioContext');
+            }
+          }
+          (window as any).__voiceflowAudioContexts = [];
+        } catch (error) {
+          console.error('❌ KP: Error closing WebRTC/Audio:', error);
+        }
+      }
+
+      // Step 9: Force remove DOM elements
+      console.log('🗑️ KP: Step 9 - Force removing DOM elements...');
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         try {
           const widgetSelectors = [
@@ -2027,9 +2083,9 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 7: Update database if needed
+      // Step 10: Update database if needed
       if (!options.skipDatabaseUpdate && sessionToken && options.finalStatus) {
-        console.log('📊 KP: Step 7 - Updating database...');
+        console.log('📊 KP: Step 10 - Updating database...');
         try {
           await simulationTracker.updateSimulationStatus(
             sessionToken,
@@ -2042,8 +2098,8 @@ function KPSimulationScreen() {
         }
       }
 
-      // Step 8: Clear storage (AsyncStorage + SecureStore)
-      console.log('💾 KP: Step 8 - Clearing simulation storage...');
+      // Step 11: Clear storage (AsyncStorage + SecureStore)
+      console.log('💾 KP: Step 11 - Clearing simulation storage...');
       await clearSimulationStorage();
 
       console.log('✅ KP: Centralized cleanup completed successfully');
