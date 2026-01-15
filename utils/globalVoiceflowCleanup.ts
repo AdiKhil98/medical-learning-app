@@ -140,17 +140,6 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
       // Properly cleanup the Voiceflow widget to allow re-initialization later
       if (window.voiceflow?.chat) {
         try {
-          // CRITICAL: Send end interaction to terminate voice call on backend
-          if (typeof window.voiceflow.chat.interact === 'function') {
-            logger.info('📞 Sending end interaction to terminate voice call...');
-            window.voiceflow.chat.interact({ type: 'end' });
-          }
-
-          // Clear proactive messages
-          if (window.voiceflow.chat.proactive?.clear) {
-            window.voiceflow.chat.proactive.clear();
-          }
-
           window.voiceflow.chat.hide?.();
           window.voiceflow.chat.close?.();
           window.voiceflow.chat.destroy?.();
@@ -158,34 +147,6 @@ export function runGlobalVoiceflowCleanup(forceCleanup: boolean = false) {
         } catch (error) {
           logger.error('⚠️ Error cleaning up Voiceflow widget', error);
         }
-      }
-
-      // Close any tracked WebRTC connections
-      try {
-        const peerConnections = (window as any).__voiceflowPeerConnections || [];
-        peerConnections.forEach((pc: RTCPeerConnection) => {
-          if (pc && pc.connectionState !== 'closed') {
-            pc.close();
-            logger.info('✅ Closed RTCPeerConnection');
-          }
-        });
-        (window as any).__voiceflowPeerConnections = [];
-      } catch (e) {
-        logger.warn('⚠️ Error closing WebRTC connections:', e);
-      }
-
-      // Close any tracked AudioContexts
-      try {
-        const audioContexts = (window as any).__voiceflowAudioContexts || [];
-        audioContexts.forEach((ctx: AudioContext) => {
-          if (ctx && ctx.state !== 'closed') {
-            ctx.close();
-            logger.info('✅ Closed AudioContext');
-          }
-        });
-        (window as any).__voiceflowAudioContexts = [];
-      } catch (e) {
-        logger.warn('⚠️ Error closing AudioContexts:', e);
       }
 
       // Delete the global object to allow proper re-initialization

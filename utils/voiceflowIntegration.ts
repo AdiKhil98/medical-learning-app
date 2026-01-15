@@ -606,66 +606,8 @@ export class VoiceflowController {
 
         (window as any).voiceflowObserver = observer;
       }
-
-      // Track WebRTC and AudioContext for proper cleanup
-      this.setupMediaTracking();
     } catch (error) {
       logger.warn('⚠️ Could not set up Voiceflow event listeners:', error);
-    }
-  }
-
-  /**
-   * Setup tracking for WebRTC connections and AudioContexts
-   * This allows us to properly close them when ending the conversation
-   */
-  private setupMediaTracking(): void {
-    if (typeof window === 'undefined') return;
-
-    try {
-      // Initialize tracking arrays if they don't exist
-      if (!(window as any).__voiceflowPeerConnections) {
-        (window as any).__voiceflowPeerConnections = [];
-      }
-      if (!(window as any).__voiceflowAudioContexts) {
-        (window as any).__voiceflowAudioContexts = [];
-      }
-
-      // Intercept RTCPeerConnection creation
-      if (typeof RTCPeerConnection !== 'undefined' && !(window as any).__rtcIntercepted) {
-        const OriginalRTCPeerConnection = RTCPeerConnection;
-        (window as any).RTCPeerConnection = function (...args: any[]) {
-          const pc = new OriginalRTCPeerConnection(...args);
-          (window as any).__voiceflowPeerConnections.push(pc);
-          logger.info('📡 Tracked new RTCPeerConnection');
-          return pc;
-        };
-        // Copy static properties
-        Object.setPrototypeOf((window as any).RTCPeerConnection, OriginalRTCPeerConnection);
-        (window as any).__rtcIntercepted = true;
-        logger.info('✅ RTCPeerConnection tracking enabled');
-      }
-
-      // Intercept AudioContext creation
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioContextClass && !(window as any).__audioContextIntercepted) {
-        const OriginalAudioContext = AudioContextClass;
-        const newAudioContext = function (...args: any[]) {
-          const ctx = new OriginalAudioContext(...args);
-          (window as any).__voiceflowAudioContexts.push(ctx);
-          logger.info('🔊 Tracked new AudioContext');
-          return ctx;
-        };
-        if (window.AudioContext) {
-          (window as any).AudioContext = newAudioContext;
-        }
-        if ((window as any).webkitAudioContext) {
-          (window as any).webkitAudioContext = newAudioContext;
-        }
-        (window as any).__audioContextIntercepted = true;
-        logger.info('✅ AudioContext tracking enabled');
-      }
-    } catch (error) {
-      logger.warn('⚠️ Could not setup media tracking:', error);
     }
   }
 
@@ -806,72 +748,7 @@ export class VoiceflowController {
   }
 
   /**
-   * End the Voiceflow conversation/voice call properly
-   * This sends an 'end' event to Voiceflow's backend to terminate the session
-   * MUST be called before destroy() to ensure voice calls are properly terminated
-   */
-  async endConversation(): Promise<boolean> {
-    logger.info(`📞 VoiceflowController: Ending conversation for ${this.config.simulationType.toUpperCase()}...`);
-
-    if (typeof window === 'undefined' || !window.voiceflow?.chat) {
-      logger.warn('⚠️ Cannot end conversation - Voiceflow not available');
-      return false;
-    }
-
-    try {
-      // Method 1: Send 'end' interaction to terminate the conversation on Voiceflow's backend
-      if (typeof window.voiceflow.chat.interact === 'function') {
-        logger.info('🔚 Sending end interaction to Voiceflow...');
-        await window.voiceflow.chat.interact({ type: 'end' });
-        logger.info('✅ End interaction sent successfully');
-      }
-
-      // Method 2: Clear any proactive messages
-      if (window.voiceflow.chat.proactive?.clear) {
-        logger.info('🧹 Clearing proactive messages...');
-        window.voiceflow.chat.proactive.clear();
-      }
-
-      // Method 3: Close any active voice/audio connections
-      // This targets the WebRTC peer connections used by Voiceflow voice
-      if (typeof RTCPeerConnection !== 'undefined') {
-        logger.info('🔌 Closing WebRTC peer connections...');
-        // Get all RTCPeerConnection instances and close them
-        const peerConnections = (window as any).__voiceflowPeerConnections || [];
-        peerConnections.forEach((pc: RTCPeerConnection) => {
-          if (pc && pc.connectionState !== 'closed') {
-            pc.close();
-            logger.info('✅ Closed RTCPeerConnection');
-          }
-        });
-      }
-
-      // Method 4: Stop all audio contexts (used by voice widgets)
-      if (typeof AudioContext !== 'undefined' || typeof (window as any).webkitAudioContext !== 'undefined') {
-        logger.info('🔇 Closing audio contexts...');
-        const audioContexts = (window as any).__voiceflowAudioContexts || [];
-        audioContexts.forEach((ctx: AudioContext) => {
-          if (ctx && ctx.state !== 'closed') {
-            ctx.close();
-            logger.info('✅ Closed AudioContext');
-          }
-        });
-      }
-
-      // Small delay to ensure the end event is processed
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      logger.info('✅ Conversation ended successfully');
-      return true;
-    } catch (error) {
-      logger.error('❌ Error ending conversation:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Clean up widget properly (synchronous version for backward compatibility)
-   * For proper voice call termination, call endConversation() first
+   * Clean up widget properly
    */
   destroy(): void {
     logger.info(`🧹 VoiceflowController: Starting cleanup for ${this.config.simulationType.toUpperCase()}...`);
@@ -884,17 +761,6 @@ export class VoiceflowController {
       if (window.voiceflow?.chat) {
         try {
           logger.info('🔧 Calling Voiceflow cleanup methods...');
-
-          // Try to end conversation synchronously (best effort)
-          if (typeof window.voiceflow.chat.interact === 'function') {
-            try {
-              window.voiceflow.chat.interact({ type: 'end' });
-              logger.info('📞 Sent end interaction (sync)');
-            } catch (e) {
-              logger.warn('⚠️ Could not send end interaction:', e);
-            }
-          }
-
           window.voiceflow.chat.hide && window.voiceflow.chat.hide();
           window.voiceflow.chat.close && window.voiceflow.chat.close();
           window.voiceflow.chat.destroy && window.voiceflow.chat.destroy();
@@ -934,100 +800,6 @@ export class VoiceflowController {
     this.isLoaded = false;
     this.widget = null;
     logger.info('✅ VoiceflowController cleanup completed');
-  }
-
-  /**
-   * Async version of destroy that properly ends the conversation first
-   * This is the RECOMMENDED method for ending simulations as it ensures
-   * the voice call is properly terminated on Voiceflow's backend
-   */
-  async destroyAsync(): Promise<void> {
-    logger.info(`🧹 VoiceflowController: Starting ASYNC cleanup for ${this.config.simulationType.toUpperCase()}...`);
-
-    // Step 1: End the conversation on Voiceflow's backend
-    await this.endConversation();
-
-    // Step 2: Stop all media streams
-    this.stopAllMediaStreams();
-
-    // Step 3: Close all tracked WebRTC connections
-    await this.closeAllWebRTCConnections();
-
-    // Step 4: Close all tracked AudioContexts
-    await this.closeAllAudioContexts();
-
-    // Step 5: Run the synchronous cleanup
-    this.destroy();
-
-    logger.info('✅ VoiceflowController ASYNC cleanup completed');
-  }
-
-  /**
-   * Close all tracked WebRTC peer connections
-   */
-  private async closeAllWebRTCConnections(): Promise<void> {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const peerConnections = (window as any).__voiceflowPeerConnections || [];
-      logger.info(`🔌 Closing ${peerConnections.length} WebRTC connections...`);
-
-      for (const pc of peerConnections) {
-        if (pc && pc.connectionState !== 'closed') {
-          try {
-            // Stop all tracks first
-            pc.getSenders?.().forEach((sender: RTCRtpSender) => {
-              if (sender.track) {
-                sender.track.stop();
-              }
-            });
-            pc.getReceivers?.().forEach((receiver: RTCRtpReceiver) => {
-              if (receiver.track) {
-                receiver.track.stop();
-              }
-            });
-            // Close the connection
-            pc.close();
-            logger.info('✅ Closed RTCPeerConnection');
-          } catch (e) {
-            logger.warn('⚠️ Error closing RTCPeerConnection:', e);
-          }
-        }
-      }
-
-      // Clear the tracking array
-      (window as any).__voiceflowPeerConnections = [];
-    } catch (error) {
-      logger.warn('⚠️ Error closing WebRTC connections:', error);
-    }
-  }
-
-  /**
-   * Close all tracked AudioContexts
-   */
-  private async closeAllAudioContexts(): Promise<void> {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const audioContexts = (window as any).__voiceflowAudioContexts || [];
-      logger.info(`🔇 Closing ${audioContexts.length} AudioContexts...`);
-
-      for (const ctx of audioContexts) {
-        if (ctx && ctx.state !== 'closed') {
-          try {
-            await ctx.close();
-            logger.info('✅ Closed AudioContext');
-          } catch (e) {
-            logger.warn('⚠️ Error closing AudioContext:', e);
-          }
-        }
-      }
-
-      // Clear the tracking array
-      (window as any).__voiceflowAudioContexts = [];
-    } catch (error) {
-      logger.warn('⚠️ Error closing AudioContexts:', error);
-    }
   }
 
   /**
