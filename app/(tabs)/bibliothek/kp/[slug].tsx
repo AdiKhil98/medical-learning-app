@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
+import { EkgClinicalCase, KlinischerFall } from '@/components/ui/EkgClinicalCase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -170,6 +171,7 @@ export default function KPTopicDetail() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(SECTION_ORDER));
+  const [klinischerFall, setKlinischerFall] = useState<KlinischerFall | null>(null);
 
   // Fetch topic (from main table or EKG table)
   const fetchTopic = useCallback(async () => {
@@ -185,6 +187,7 @@ export default function KPTopicDetail() {
 
       if (mainData && !mainError) {
         setTopic(mainData);
+        setKlinischerFall(null); // Clear clinical case for non-EKG content
 
         // Parse JSON content
         if (mainData.content) {
@@ -209,7 +212,7 @@ export default function KPTopicDetail() {
       // If not found in main table, try EKG table
       const { data: ekgData, error: ekgError } = await supabase
         .from('kp_ekg_content')
-        .select('*')
+        .select('*, klinischer_fall')
         .eq('slug', slug)
         .single();
 
@@ -233,6 +236,13 @@ export default function KPTopicDetail() {
           ekg_diagram: ekgData.ekg_diagram || null,
         };
         setTopic(transformedTopic);
+
+        // Set clinical case data if available
+        if (ekgData.klinischer_fall) {
+          setKlinischerFall(ekgData.klinischer_fall as KlinischerFall);
+        } else {
+          setKlinischerFall(null);
+        }
 
         // Build parsed content from EKG-specific columns
         const ekgParsedContent: ParsedContent = {};
@@ -549,6 +559,9 @@ export default function KPTopicDetail() {
                 </React.Fragment>
               );
             })}
+
+          {/* Clinical Case Section for EKG topics */}
+          <EkgClinicalCase klinischerFall={klinischerFall} />
         </View>
 
         {/* Bottom Spacer */}
