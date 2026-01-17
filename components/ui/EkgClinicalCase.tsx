@@ -65,6 +65,18 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
   // Calculate image width based on screen width minus padding
   const imageWidth = SCREEN_WIDTH - 64; // Account for container padding
 
+  // Ensure HTTPS for mobile compatibility (iOS blocks HTTP by default)
+  const getSecureImageUrl = (url: string): string => {
+    if (!url) return '';
+    // Convert HTTP to HTTPS
+    if (url.startsWith('http://')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  };
+
+  const secureImageUrl = klinischerFall ? getSecureImageUrl(klinischerFall.ekg_bild_url) : '';
+
   if (!klinischerFall) return null;
 
   const toggleQuestion = (nummer: number) => {
@@ -197,7 +209,7 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
             </View>
           ) : (
             <Image
-              source={{ uri: klinischerFall.ekg_bild_url }}
+              source={{ uri: secureImageUrl }}
               style={[styles.ekgImage, { width: imageWidth, height: imageWidth * 0.6 }]}
               resizeMode="contain"
               onLoadStart={() => {
@@ -274,7 +286,7 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
           >
-            <Image source={{ uri: klinischerFall.ekg_bild_url }} style={styles.modalImage} resizeMode="contain" />
+            <Image source={{ uri: secureImageUrl }} style={styles.modalImage} resizeMode="contain" />
           </ScrollView>
 
           <View style={styles.modalFooter}>
