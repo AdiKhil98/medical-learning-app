@@ -62,9 +62,6 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  // Calculate image width based on screen width minus padding
-  const imageWidth = SCREEN_WIDTH - 64; // Account for container padding
-
   // Ensure HTTPS for mobile compatibility (iOS blocks HTTP by default)
   const getSecureImageUrl = (url: string): string => {
     if (!url) return '';
@@ -210,7 +207,7 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
           ) : (
             <Image
               source={{ uri: secureImageUrl }}
-              style={[styles.ekgImage, { width: imageWidth, height: imageWidth * 0.6 }]}
+              style={styles.ekgImage}
               resizeMode="contain"
               onLoadStart={() => {
                 setImageLoading(true);
@@ -536,6 +533,8 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   ekgImage: {
+    width: SCREEN_WIDTH - 64,
+    height: (SCREEN_WIDTH - 64) * 0.6,
     alignSelf: 'center',
   },
   imageErrorContainer: {
