@@ -60,6 +60,10 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
   const [showAnswers, setShowAnswers] = useState<Set<number>>(new Set());
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  // Calculate image width based on screen width minus padding
+  const imageWidth = SCREEN_WIDTH - 64; // Account for container padding
 
   if (!klinischerFall) return null;
 
@@ -167,26 +171,52 @@ export const EkgClinicalCase: React.FC<EkgClinicalCaseProps> = ({ klinischerFall
 
         <TouchableOpacity
           style={styles.ekgImageContainer}
-          onPress={() => setImageModalVisible(true)}
+          onPress={() => !imageError && setImageModalVisible(true)}
           activeOpacity={0.9}
         >
-          {imageLoading && (
+          {imageLoading && !imageError && (
             <View style={styles.imageLoader}>
               <ActivityIndicator size="large" color="#10b981" />
               <Text style={styles.loadingText}>EKG wird geladen...</Text>
             </View>
           )}
-          <Image
-            source={{ uri: klinischerFall.ekg_bild_url }}
-            style={styles.ekgImage}
-            resizeMode="contain"
-            onLoadStart={() => setImageLoading(true)}
-            onLoadEnd={() => setImageLoading(false)}
-          />
-          <View style={styles.tapHint}>
-            <Ionicons name="search" size={14} color="#fff" />
-            <Text style={styles.tapHintText}>Antippen zum Vergrößern</Text>
-          </View>
+          {imageError ? (
+            <View style={styles.imageErrorContainer}>
+              <Ionicons name="image-outline" size={48} color="#9ca3af" />
+              <Text style={styles.imageErrorText}>EKG-Bild konnte nicht geladen werden</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => {
+                  setImageError(false);
+                  setImageLoading(true);
+                }}
+              >
+                <Ionicons name="refresh" size={16} color="#3b82f6" />
+                <Text style={styles.retryButtonText}>Erneut versuchen</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <Image
+              source={{ uri: klinischerFall.ekg_bild_url }}
+              style={[styles.ekgImage, { width: imageWidth, height: imageWidth * 0.6 }]}
+              resizeMode="contain"
+              onLoadStart={() => {
+                setImageLoading(true);
+                setImageError(false);
+              }}
+              onLoadEnd={() => setImageLoading(false)}
+              onError={() => {
+                setImageLoading(false);
+                setImageError(true);
+              }}
+            />
+          )}
+          {!imageError && !imageLoading && (
+            <View style={styles.tapHint}>
+              <Ionicons name="search" size={14} color="#fff" />
+              <Text style={styles.tapHintText}>Antippen zum Vergrößern</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -494,8 +524,34 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   ekgImage: {
-    width: '100%',
-    height: 250,
+    alignSelf: 'center',
+  },
+  imageErrorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  imageErrorText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    color: '#3b82f6',
+    fontWeight: '500',
+    marginLeft: 6,
   },
   imageLoader: {
     position: 'absolute',
