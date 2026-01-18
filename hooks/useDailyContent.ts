@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { SecureLogger } from '@/lib/security';
+
+// Cache key prefix
+const CACHE_KEY_PREFIX = 'dailyContent_';
+
+// In-memory cache for instant access during session
+let memoryCache: {
+  date: string;
+  dailyTip: DailyTip | null;
+  dailyQuestion: DailyQuestion | null;
+} | null = null;
+
+// Helper to get/set localStorage (web only)
+const storage = {
+  get: (key: string): string | null => {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  },
+  set: (key: string, value: string): void => {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  },
+};
 
 export interface DailyTip {
   id?: string;
@@ -42,13 +68,42 @@ export const useDailyContent = (): DailyContentState => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDailyContent = async () => {
+  const fetchDailyContent = async (bypassCache = false) => {
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = `${CACHE_KEY_PREFIX}${today}`;
+
+      // Check memory cache first (instant)
+      if (!bypassCache && memoryCache && memoryCache.date === today) {
+        SecureLogger.log('Using memory cache for daily content');
+        setDailyTip(memoryCache.dailyTip);
+        setDailyQuestion(memoryCache.dailyQuestion);
+        setLoading(false);
+        return;
+      }
+
+      // Check localStorage cache (web only)
+      if (!bypassCache) {
+        const cachedData = storage.get(cacheKey);
+        if (cachedData) {
+          try {
+            const parsed = JSON.parse(cachedData);
+            SecureLogger.log('Using localStorage cache for daily content');
+            memoryCache = { date: today, dailyTip: parsed.dailyTip, dailyQuestion: parsed.dailyQuestion };
+            setDailyTip(parsed.dailyTip);
+            setDailyQuestion(parsed.dailyQuestion);
+            setLoading(false);
+            return;
+          } catch (e) {
+            SecureLogger.log('Failed to parse cached data, fetching fresh');
+          }
+        }
+      }
+
       setLoading(true);
       setError(null);
-      
-      const today = new Date().toISOString().split('T')[0];
-      SecureLogger.log('Fetching daily content for date:', today);
+
+      SecureLogger.log('Fetching daily content from API for date:', today);
 
       // Fetch daily tip
       let { data: tipData, error: tipError } = await supabase
@@ -102,7 +157,12 @@ export const useDailyContent = (): DailyContentState => {
 
       setDailyTip(tipData);
       setDailyQuestion(questionData);
-      
+
+      // Update caches
+      memoryCache = { date: today, dailyTip: tipData, dailyQuestion: questionData };
+      storage.set(cacheKey, JSON.stringify({ dailyTip: tipData, dailyQuestion: questionData }));
+      SecureLogger.log('Daily content cached successfully');
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch daily content';
       SecureLogger.error('Error in fetchDailyContent:', errorMessage);
@@ -121,6 +181,6 @@ export const useDailyContent = (): DailyContentState => {
     dailyQuestion,
     loading,
     error,
-    refetch: fetchDailyContent,
+    refetch: () => fetchDailyContent(true), // Bypass cache on manual refetch
   };
 };
