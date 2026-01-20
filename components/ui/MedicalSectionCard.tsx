@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronRight,
@@ -222,10 +222,13 @@ export default memo(function MedicalSectionCard({
             {/* Image if available */}
             {section.image_url && !compact && (
               <View style={styles.imageContainer}>
-                <Image
+                <OptimizedImage
                   source={{ uri: section.image_url }}
                   style={styles.image}
                   resizeMode="cover"
+                  lazy={true}
+                  height={120}
+                  alt={section.title}
                 />
               </View>
             )}
