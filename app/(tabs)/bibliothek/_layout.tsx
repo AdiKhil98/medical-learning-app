@@ -51,6 +51,12 @@ export default function BibliothekLayout() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="audio"
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack>
       </BibliothekErrorBoundary>
     </ErrorBoundary>

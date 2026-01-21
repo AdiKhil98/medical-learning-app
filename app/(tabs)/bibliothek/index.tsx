@@ -9,6 +9,7 @@ import {
   Library,
   FileText,
   Languages,
+  Headphones,
 } from 'lucide-react-native';
 import { useRouter, Href } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -96,7 +97,7 @@ const SelectionCard: React.FC<{
 
 const BibliothekSelectionScreen: React.FC = () => {
   const router = useRouter();
-  const { session } = useAuth();
+  useAuth(); // Auth context for session management
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleHauptPress = () => {
@@ -109,6 +110,10 @@ const BibliothekSelectionScreen: React.FC = () => {
 
   const handleFSPPress = () => {
     router.push('/(tabs)/bibliothek/fsp' as Href);
+  };
+
+  const handleAudioPress = () => {
+    router.push('/(tabs)/bibliothek/audio' as Href);
   };
 
   const backgroundGradient = MEDICAL_COLORS.backgroundGradient as unknown as readonly [string, string, ...string[]];
@@ -206,6 +211,17 @@ const BibliothekSelectionScreen: React.FC = () => {
               gradient={['#10b981', '#34d399', '#6ee7b7'] as readonly [string, string, ...string[]]}
               onPress={handleFSPPress}
               index={2}
+            />
+
+            {/* Audio Bibliothek Card */}
+            <SelectionCard
+              title="Audio Bibliothek"
+              subtitle="Lernen unterwegs"
+              description="Hören Sie medizinische Inhalte - perfekt für unterwegs oder beim Pendeln"
+              icon={<Headphones size={36} color="#ffffff" strokeWidth={2} />}
+              gradient={['#f59e0b', '#fbbf24', '#fcd34d'] as readonly [string, string, ...string[]]}
+              onPress={handleAudioPress}
+              index={3}
             />
           </View>
 
