@@ -362,12 +362,6 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
               {/* Social Media Icons */}
               <View style={styles.socialIconsContainer}>
                 <SocialIconButton
-                  iconType="telegram"
-                  url="https://t.me/kpmed57"
-                  hoverColor="#0088cc"
-                  label="Telegram"
-                />
-                <SocialIconButton
                   iconType="facebook"
                   url="https://www.facebook.com/share/19zKPyofTZ/?mibextid=wwXIfr"
                   hoverColor="#1877f2"
