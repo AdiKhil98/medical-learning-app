@@ -7,8 +7,10 @@ import { useRouter } from 'expo-router';
 interface QuotaExhaustedCardProps {
   simulationsUsed: number;
   totalSimulations: number;
-  subscriptionTier: 'free' | 'basic' | 'premium';
+  subscriptionTier: 'free' | 'basic' | 'premium' | 'trial';
   periodEnd?: Date;
+  // Trial-specific props
+  trialExpired?: boolean;
 }
 
 export default function QuotaExhaustedCard({
@@ -16,6 +18,7 @@ export default function QuotaExhaustedCard({
   totalSimulations,
   subscriptionTier,
   periodEnd,
+  trialExpired,
 }: QuotaExhaustedCardProps) {
   const router = useRouter();
 
@@ -34,25 +37,43 @@ export default function QuotaExhaustedCard({
     router.push('/subscription');
   };
 
+  // Trial expired specific content
+  const isTrialExpired = trialExpired || subscriptionTier === 'trial';
+
+  const getHeadline = () => {
+    if (isTrialExpired) {
+      return 'Deine Testphase ist beendet!';
+    }
+    return `Super! Du hast ${simulationsUsed} Simulation${simulationsUsed !== 1 ? 'en' : ''} abgeschlossen`;
+  };
+
+  const getDescription = () => {
+    if (isTrialExpired) {
+      return 'Deine 5-Tage-Testphase ist abgelaufen.\nAbonniere jetzt, um weiterhin unbegrenzte Simulationen zu nutzen!';
+    }
+    return `Du hast dein monatliches Limit von ${totalSimulations} Simulationen erreicht.\nDein Kontingent wird ${formatResetDate()} zurückgesetzt.`;
+  };
+
+  const getIcon = () => {
+    if (isTrialExpired) {
+      return 'time' as const;
+    }
+    return 'trophy' as const;
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#FF8C42', '#FF6B6B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
         {/* Icon */}
         <View style={styles.iconContainer}>
-          <Ionicons name="trophy" size={48} color="#FFFFFF" />
+          <Ionicons name={getIcon()} size={48} color="#FFFFFF" />
         </View>
 
         {/* Headline */}
-        <Text style={styles.headline}>
-          Super! Du hast {simulationsUsed} Simulation{simulationsUsed !== 1 ? 'en' : ''} abgeschlossen
-        </Text>
+        <Text style={styles.headline}>{getHeadline()}</Text>
 
         {/* Description */}
-        <Text style={styles.description}>
-          Du hast dein monatliches Limit von {totalSimulations} Simulationen erreicht.
-          {'\n'}
-          Dein Kontingent wird {formatResetDate()} zurückgesetzt.
-        </Text>
+        <Text style={styles.description}>{getDescription()}</Text>
 
         {/* Info Box */}
         <View style={styles.infoBox}>
@@ -61,7 +82,7 @@ export default function QuotaExhaustedCard({
         </View>
 
         {/* Upgrade Button */}
-        {subscriptionTier !== 'premium' && (
+        {(subscriptionTier !== 'premium' || isTrialExpired) && (
           <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade} activeOpacity={0.8}>
             <LinearGradient
               colors={['#6366f1', '#8b5cf6']}
@@ -70,7 +91,9 @@ export default function QuotaExhaustedCard({
               style={styles.buttonGradient}
             >
               <Ionicons name="rocket" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Jetzt upgraden für unbegrenzte Simulationen</Text>
+              <Text style={styles.buttonText}>
+                {isTrialExpired ? 'Jetzt abonnieren' : 'Jetzt upgraden für mehr Simulationen'}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -95,17 +118,19 @@ export default function QuotaExhaustedCard({
         </View>
       </LinearGradient>
 
-      {/* Quota Info Footer */}
-      <View style={styles.footer}>
-        <View style={styles.quotaInfo}>
-          <View style={styles.quotaBar}>
-            <View style={[styles.quotaFill, { width: '100%' }]} />
+      {/* Quota Info Footer - Hide for trial expired */}
+      {!isTrialExpired && totalSimulations > 0 && (
+        <View style={styles.footer}>
+          <View style={styles.quotaInfo}>
+            <View style={styles.quotaBar}>
+              <View style={[styles.quotaFill, { width: '100%' }]} />
+            </View>
+            <Text style={styles.quotaText}>
+              {simulationsUsed} / {totalSimulations} Simulationen verwendet
+            </Text>
           </View>
-          <Text style={styles.quotaText}>
-            {simulationsUsed} / {totalSimulations} Simulationen verwendet
-          </Text>
         </View>
-      </View>
+      )}
     </View>
   );
 }

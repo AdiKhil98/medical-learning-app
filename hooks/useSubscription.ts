@@ -10,6 +10,11 @@ interface SubscriptionStatus {
   message: string;
   shouldUpgrade?: boolean;
   remainingSimulations?: number;
+  // Trial-specific fields
+  isTrial?: boolean;
+  trialExpiresAt?: string;
+  trialDaysRemaining?: number;
+  trialExpired?: boolean;
 }
 
 export const useSubscription = (userId: string | undefined) => {
@@ -76,6 +81,12 @@ export const useSubscription = (userId: string | undefined) => {
       const simTotal = data.total_simulations || 0;
       const dbMessage = data.message || '';
 
+      // Trial-specific fields
+      const isTrial = data.is_trial || reason === 'trial_active' || reason === 'trial_started';
+      const trialExpiresAt = data.trial_expires_at;
+      const trialDaysRemaining = data.days_remaining;
+      const trialExpired = data.trial_expired || reason === 'trial_expired';
+
       logger.info('[Access Control] Quota check result:', {
         can_start: canStart,
         reason,
@@ -83,29 +94,41 @@ export const useSubscription = (userId: string | undefined) => {
         simulations_used: simUsed,
         total_simulations: simTotal,
         message: dbMessage,
+        is_trial: isTrial,
+        trial_days_remaining: trialDaysRemaining,
       });
 
-      // Determine subscription tier from reason or total
+      // Determine subscription tier from reason or response
       let tier = 'free';
-      if (simTotal >= 60) {
+      if (isTrial) {
+        tier = 'trial';
+      } else if (simTotal >= 60) {
         tier = 'premium';
       } else if (simTotal >= 30) {
         tier = 'basic';
+      } else if (simTotal === -1) {
+        tier = 'trial'; // Unlimited = trial
       } else {
         tier = 'free';
       }
 
       // Determine if should show upgrade prompt
-      const shouldUpgrade = !canStart && reason === 'quota_exceeded';
+      const shouldUpgrade =
+        !canStart && (reason === 'quota_exceeded' || reason === 'trial_expired' || reason === 'no_subscription');
 
-      const status = {
+      const status: SubscriptionStatus = {
         canUseSimulation: canStart,
         simulationsUsed: simUsed,
-        simulationLimit: simTotal === -1 ? 999999 : simTotal,
+        simulationLimit: simTotal === -1 ? null : simTotal, // null = unlimited
         subscriptionTier: tier,
         message: dbMessage,
         shouldUpgrade,
-        remainingSimulations: simRemaining === -1 ? 999999 : simRemaining,
+        remainingSimulations: simRemaining === -1 ? null : simRemaining, // null = unlimited
+        // Trial fields
+        isTrial,
+        trialExpiresAt,
+        trialDaysRemaining,
+        trialExpired,
       };
 
       logger.info('[Access Control] Final Result:', {
@@ -115,6 +138,8 @@ export const useSubscription = (userId: string | undefined) => {
         remaining: simRemaining,
         canStart,
         shouldUpgrade,
+        isTrial,
+        trialDaysRemaining,
       });
 
       setSubscriptionStatus(status);
@@ -217,13 +242,23 @@ export const useSubscription = (userId: string | undefined) => {
   const getSubscriptionInfo = useCallback(() => {
     if (!subscriptionStatus) return null;
 
-    const { subscriptionTier, simulationsUsed, simulationLimit, message, remainingSimulations } = subscriptionStatus;
+    const {
+      subscriptionTier,
+      simulationsUsed,
+      simulationLimit,
+      message,
+      remainingSimulations,
+      isTrial,
+      trialDaysRemaining,
+      trialExpired,
+    } = subscriptionStatus;
 
     // Use actual database count - quota updates happen at 5-minute mark server-side
     const displayUsed = simulationsUsed;
 
     // Map tier to display name
     const tierDisplayNames: Record<string, string> = {
+      trial: 'Testphase',
       free: 'Kostenlos',
       basic: 'Basis-Plan',
       premium: 'Premium-Plan',
@@ -231,18 +266,38 @@ export const useSubscription = (userId: string | undefined) => {
 
     const planName = tierDisplayNames[subscriptionTier || 'free'] || `${subscriptionTier}-Plan`;
 
-    // Format usage text
-    const usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
+    // Format usage text based on trial or subscription
+    let usageText: string;
+    if (isTrial && trialDaysRemaining !== undefined) {
+      // Trial: show days remaining
+      if (trialDaysRemaining === 1) {
+        usageText = '1 Tag Testphase verbleibend';
+      } else if (trialDaysRemaining > 1) {
+        usageText = `${trialDaysRemaining} Tage Testphase verbleibend`;
+      } else {
+        usageText = 'Testphase endet heute';
+      }
+    } else if (trialExpired) {
+      usageText = 'Testphase abgelaufen';
+    } else if (simulationLimit === null || simulationLimit === 0) {
+      usageText = 'Keine Simulationen verfuegbar';
+    } else {
+      usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
+    }
 
     return {
       planName,
       usageText,
       message,
-      canUpgrade: subscriptionTier === 'free' || subscriptionTier === 'basic',
+      canUpgrade: subscriptionTier !== 'premium',
       // Additional info for universal handling
       displayUsed, // Real-time database count
       totalLimit: simulationLimit,
       remaining: remainingSimulations ?? 0, // Real database value
+      // Trial-specific
+      isTrial,
+      trialDaysRemaining,
+      trialExpired,
     };
   }, [subscriptionStatus]);
 
@@ -341,5 +396,9 @@ export const useSubscription = (userId: string | undefined) => {
     canUseSimulation: subscriptionStatus?.canUseSimulation || false,
     subscriptionTier: subscriptionStatus?.subscriptionTier,
     simulationsRemaining: subscriptionStatus?.remainingSimulations ?? null,
+    // Trial-specific helper properties
+    isTrial: subscriptionStatus?.isTrial || false,
+    trialDaysRemaining: subscriptionStatus?.trialDaysRemaining,
+    trialExpired: subscriptionStatus?.trialExpired || false,
   };
 };

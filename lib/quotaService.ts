@@ -25,6 +25,11 @@ export interface QuotaStatus {
   period_end?: string;
   usage_text?: string;
   message?: string;
+  // Trial-specific fields
+  is_trial?: boolean;
+  trial_expires_at?: string;
+  days_remaining?: number;
+  trial_expired?: boolean;
 }
 
 export interface CanStartResult {
@@ -34,6 +39,11 @@ export interface CanStartResult {
   simulations_remaining?: number;
   simulations_used?: number;
   total_simulations?: number;
+  // Trial-specific fields
+  is_trial?: boolean;
+  trial_expires_at?: string;
+  days_remaining?: number;
+  trial_expired?: boolean;
 }
 
 export interface RecordUsageResult {
@@ -215,18 +225,117 @@ class QuotaService {
    * Get tier simulation limit (client-side helper)
    *
    * @param tier - Subscription tier
-   * @returns Number of simulations for tier
+   * @returns Number of simulations for tier (-1 = unlimited)
    */
   getTierLimit(tier: string): number {
     const limits: Record<string, number> = {
-      free: 3,
+      trial: -1, // Unlimited during trial
+      free: 0, // No access after trial expires
       basic: 30,
       premium: 60,
       // Legacy tier names for backward compatibility
       basis: 30,
       profi: 60,
     };
-    return limits[tier] || 3;
+    return limits[tier] ?? 0;
+  }
+
+  /**
+   * Get trial status for a user
+   *
+   * @param userId - User UUID
+   * @returns Promise with trial status details
+   */
+  async getTrialStatus(userId: string): Promise<{
+    has_trial: boolean;
+    is_active: boolean;
+    trial_started_at?: string;
+    trial_expires_at?: string;
+    days_remaining?: number;
+    hours_remaining?: number;
+    message?: string;
+    trial_available?: boolean;
+  }> {
+    try {
+      const { data, error } = await supabase.rpc('get_trial_status', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('Error getting trial status:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Failed to get trial status:', error);
+      return {
+        has_trial: false,
+        is_active: false,
+        message: 'Fehler beim Laden des Trial-Status',
+      };
+    }
+  }
+
+  /**
+   * Initialize trial period for a user
+   *
+   * @param userId - User UUID
+   * @returns Promise with trial initialization result
+   */
+  async startTrial(userId: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    trial_started_at?: string;
+    trial_expires_at?: string;
+    days_remaining?: number;
+  }> {
+    try {
+      const { data, error } = await supabase.rpc('initialize_trial_period', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('Error starting trial:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Failed to start trial:', error);
+      return {
+        success: false,
+        error: 'Fehler beim Starten der Testphase',
+      };
+    }
+  }
+
+  /**
+   * Check if user is on active trial
+   *
+   * @param userId - User UUID
+   * @returns Promise with boolean
+   */
+  async isOnTrial(userId: string): Promise<boolean> {
+    const status = await this.getTrialStatus(userId);
+    return status.has_trial && status.is_active;
+  }
+
+  /**
+   * Format trial days remaining for display
+   *
+   * @param daysRemaining - Number of days remaining
+   * @returns Formatted string like "3 Tage" or "1 Tag"
+   */
+  formatTrialDaysRemaining(daysRemaining: number): string {
+    if (daysRemaining <= 0) {
+      return 'Testphase abgelaufen';
+    }
+    if (daysRemaining === 1) {
+      return '1 Tag verbleibend';
+    }
+    return `${daysRemaining} Tage verbleibend`;
   }
 
   /**

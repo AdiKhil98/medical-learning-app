@@ -10,6 +10,9 @@ interface UpgradeRequiredModalProps {
   currentTier: string;
   remainingSimulations: number;
   totalLimit: number;
+  // Trial-specific props
+  trialExpired?: boolean;
+  trialDaysRemaining?: number;
 }
 
 export function UpgradeRequiredModal({
@@ -18,11 +21,14 @@ export function UpgradeRequiredModal({
   currentTier,
   remainingSimulations,
   totalLimit,
+  trialExpired,
+  trialDaysRemaining,
 }: UpgradeRequiredModalProps) {
   const router = useRouter();
 
   const getTierName = (tier: string) => {
     const names: Record<string, string> = {
+      trial: 'Testphase',
       free: 'Kostenlos',
       basic: 'Basis',
       premium: 'Premium',
@@ -34,11 +40,31 @@ export function UpgradeRequiredModal({
   };
 
   const getUpgradeMessage = () => {
+    // Trial expired message
+    if (trialExpired || currentTier === 'expired_trial') {
+      return 'Ihre 5-Tage-Testphase ist abgelaufen. Abonnieren Sie jetzt, um weiterhin unbegrenzte Simulationen zu nutzen!';
+    }
+
+    // Regular quota exceeded messages
     if (currentTier === 'free' || !currentTier) {
       return `Sie haben alle ${totalLimit} kostenlosen Simulationen verbraucht.`;
     } else {
       return `Sie haben alle ${totalLimit} Simulationen Ihres ${getTierName(currentTier)}-Plans für diesen Monat verbraucht.`;
     }
+  };
+
+  const getTitle = () => {
+    if (trialExpired || currentTier === 'expired_trial') {
+      return 'Testphase abgelaufen';
+    }
+    return 'Simulationslimit erreicht';
+  };
+
+  const getIcon = () => {
+    if (trialExpired || currentTier === 'expired_trial') {
+      return '⏰';
+    }
+    return '🚀';
   };
 
   const handleUpgradeClick = () => {
@@ -59,26 +85,28 @@ export function UpgradeRequiredModal({
             </TouchableOpacity>
 
             {/* Icon */}
-            <Text style={styles.icon}>🚀</Text>
+            <Text style={styles.icon}>{getIcon()}</Text>
 
             {/* Title */}
-            <Text style={styles.title}>Simulationslimit erreicht</Text>
+            <Text style={styles.title}>{getTitle()}</Text>
 
             {/* Message */}
             <Text style={styles.message}>{getUpgradeMessage()}</Text>
 
-            {/* Usage Display */}
-            <View style={styles.usageContainer}>
-              <View style={styles.usageBarContainer}>
-                <View style={[styles.usageBarFill, { width: '100%' }]} />
+            {/* Usage Display - Hide for trial expired */}
+            {!trialExpired && currentTier !== 'expired_trial' && totalLimit > 0 && (
+              <View style={styles.usageContainer}>
+                <View style={styles.usageBarContainer}>
+                  <View style={[styles.usageBarFill, { width: '100%' }]} />
+                </View>
+                <Text style={styles.usageText}>
+                  <Text style={styles.usageUsed}>{totalLimit - remainingSimulations}</Text>
+                  <Text style={styles.usageSeparator}>/</Text>
+                  <Text style={styles.usageTotal}>{totalLimit}</Text>
+                  <Text style={styles.usageLabel}> Simulationen verbraucht</Text>
+                </Text>
               </View>
-              <Text style={styles.usageText}>
-                <Text style={styles.usageUsed}>{totalLimit - remainingSimulations}</Text>
-                <Text style={styles.usageSeparator}>/</Text>
-                <Text style={styles.usageTotal}>{totalLimit}</Text>
-                <Text style={styles.usageLabel}> Simulationen verbraucht</Text>
-              </Text>
-            </View>
+            )}
 
             {/* Benefits */}
             <View style={styles.benefitsContainer}>

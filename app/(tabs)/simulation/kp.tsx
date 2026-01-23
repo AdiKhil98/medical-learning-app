@@ -2197,12 +2197,15 @@ function KPSimulationScreen() {
           scrollEventThrottle={16}
         >
           <View style={styles.content}>
-            {/* Quota Exhausted Card - Shows when limit reached */}
+            {/* Quota Exhausted Card - Shows when limit reached or trial expired */}
             {isSimulationLocked && subscriptionStatus && (
               <QuotaExhaustedCard
                 simulationsUsed={subscriptionStatus.simulationsUsed || 0}
                 totalSimulations={subscriptionStatus.simulationLimit || 0}
-                subscriptionTier={(subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium') || 'free'}
+                subscriptionTier={
+                  (subscriptionStatus.subscriptionTier as 'free' | 'basic' | 'premium' | 'trial') || 'free'
+                }
+                trialExpired={subscriptionStatus.trialExpired}
               />
             )}
 
@@ -2401,6 +2404,8 @@ function KPSimulationScreen() {
           currentTier={subscriptionStatus?.subscriptionTier || 'free'}
           remainingSimulations={subscriptionStatus?.remainingSimulations || 0}
           totalLimit={subscriptionStatus?.simulationLimit || 0}
+          trialExpired={subscriptionStatus?.trialExpired}
+          trialDaysRemaining={subscriptionStatus?.trialDaysRemaining}
         />
       </SafeAreaView>
     </ErrorBoundary>

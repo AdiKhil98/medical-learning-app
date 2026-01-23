@@ -6,9 +6,13 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 // Subscription tier mapping
 const SUBSCRIPTION_TIERS = {
+  trial: {
+    name: 'Trial-Plan',
+    simulationLimit: -1, // Unlimited during trial
+  },
   free: {
     name: 'Free-Plan',
-    simulationLimit: 3,
+    simulationLimit: 0, // No simulations after trial expires
   },
   basic: {
     name: 'Basic-Plan',
@@ -406,25 +410,31 @@ async function processSubscriptionAtomically(userId, subscriptionData, eventType
   }
 
   // STEP 2: Update users table
-  // Users table now uses English tier names: 'free', 'basic', 'premium' (after migration 20260114191630)
+  // Users table now uses English tier names: 'free', 'basic', 'premium', 'trial' (after migration 20260123)
   const usersTier = tier;
   console.log(`📊 Step 2: Updating users table (tier: ${usersTier})...`);
 
-  const { error: userError } = await supabase
-    .from('users')
-    .update({
-      subscription_tier: usersTier,
-      subscription_status: status === 'active' ? 'active' : 'inactive',
-      simulation_limit: simulationLimit,
-      simulations_used_this_month: 0,
-      subscription_id: String(subscriptionId),
-      variant_id: String(variantId),
-      subscription_period_start: periodStartDate.toISOString().split('T')[0], // YYYY-MM-DD
-      subscription_period_end: periodEndDate.toISOString().split('T')[0], // YYYY-MM-DD
-      subscription_created_at: createdAt || new Date().toISOString(),
-      subscription_updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId);
+  // When user subscribes to paid plan, clear trial status (trial is no longer relevant)
+  const userUpdateData = {
+    subscription_tier: usersTier,
+    subscription_status: status === 'active' ? 'active' : 'inactive',
+    simulation_limit: simulationLimit,
+    simulations_used_this_month: 0,
+    subscription_id: String(subscriptionId),
+    variant_id: String(variantId),
+    subscription_period_start: periodStartDate.toISOString().split('T')[0], // YYYY-MM-DD
+    subscription_period_end: periodEndDate.toISOString().split('T')[0], // YYYY-MM-DD
+    subscription_created_at: createdAt || new Date().toISOString(),
+    subscription_updated_at: new Date().toISOString(),
+  };
+
+  // If subscribing to paid plan (basic/premium), keep trial info but mark subscription as active
+  // The trial is effectively superseded by the paid subscription
+  if (tier === 'basic' || tier === 'premium') {
+    console.log('📝 User subscribing to paid plan - trial superseded');
+  }
+
+  const { error: userError } = await supabase.from('users').update(userUpdateData).eq('id', userId);
 
   if (userError) {
     console.error('❌ Failed to update users table:', userError.message);
@@ -787,17 +797,28 @@ exports.handler = async (event, context) => {
 
         subData.status = 'expired';
         subData.expiresAt = new Date().toISOString();
-        subData.tier = 'free'; // Reset to free tier
-        subData.simulationLimit = 3;
+        // Don't reset to free tier - user already used trial, so simulations should be locked
+        // They need to subscribe again to get access
+        subData.tier = 'free'; // Free tier now means 0 simulations (locked)
+        subData.simulationLimit = 0; // No simulations available
 
         // ✨ ATOMIC: Process subscription + quota in single transaction
         const expireResult = await processSubscriptionAtomically(userId, subData, eventType);
 
+        // Also update users table to mark subscription as expired (simulations locked)
+        await supabase
+          .from('users')
+          .update({
+            subscription_status: 'expired',
+            subscription_tier: null, // Clear tier
+          })
+          .eq('id', userId);
+
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
           success: expireResult.success,
-          reset_to_free: true,
+          simulations_locked: true,
         });
-        console.log(`✅ Subscription expired for user ${userId}, reset to free tier`);
+        console.log(`✅ Subscription expired for user ${userId}, simulations locked until re-subscription`);
         console.log('Expire result:', expireResult);
         break;
 
