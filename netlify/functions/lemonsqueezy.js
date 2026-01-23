@@ -46,15 +46,13 @@ function verifyWebhookSignature(payload, signature, secret) {
 }
 
 // Variant ID to subscription tier mapping
-// TODO: Update these with your actual Lemon Squeezy variant IDs
 const VARIANT_TIER_MAPPING = {
-  // New plans - update these variant IDs after creating products in Lemon Squeezy
-  // MONTHLY_VARIANT_ID: 'monthly',    // 100€/month
-  // QUARTERLY_VARIANT_ID: 'quarterly', // 200€/3 months
-
-  // Legacy mappings (keep for existing subscribers, now map to unlimited)
-  1006948: 'monthly', // Was basic, now monthly unlimited
-  1006934: 'quarterly', // Was premium, now quarterly unlimited
+  // New subscription plans
+  1246140: 'monthly', // Monthly - 100€/month
+  1246166: 'quarterly', // 3-month - 200€/3 months
+  // Legacy mappings (keep for existing subscribers)
+  1006948: 'monthly',
+  1006934: 'quarterly',
 };
 
 // Helper function to determine subscription tier from variant ID
