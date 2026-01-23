@@ -24,8 +24,11 @@ export default function TrialStatusBanner() {
     router.push('/subscription');
   };
 
-  // Trial active - show days remaining
-  if (isTrial && trialDaysRemaining !== undefined && trialDaysRemaining > 0) {
+  // Debug logging
+  console.log('[TrialBanner] Data:', { tier, isTrial, trialDaysRemaining, trialExpired, subscriptionStatus });
+
+  // Trial active - show days remaining (check tier === 'trial' as fallback)
+  if ((isTrial || tier === 'trial') && trialDaysRemaining !== undefined && trialDaysRemaining > 0) {
     return (
       <LinearGradient colors={['#10B981', '#059669']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.banner}>
         <View style={styles.content}>
@@ -37,6 +40,26 @@ export default function TrialStatusBanner() {
               {trialDaysRemaining === 1 ? '1 Tag' : `${trialDaysRemaining} Tage`} Testphase verbleibend
             </Text>
             <Text style={styles.subtitle}>Unbegrenzte Simulationen bis zum Ende der Testphase</Text>
+          </View>
+          <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade} activeOpacity={0.8}>
+            <Text style={styles.upgradeButtonText}>Abo wählen</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    );
+  }
+
+  // Trial active without days info - show generic trial banner
+  if ((isTrial || tier === 'trial') && (trialDaysRemaining === undefined || trialDaysRemaining === null)) {
+    return (
+      <LinearGradient colors={['#10B981', '#059669']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.banner}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="time-outline" size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>Testphase aktiv</Text>
+            <Text style={styles.subtitle}>Unbegrenzte Simulationen während der Testphase</Text>
           </View>
           <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade} activeOpacity={0.8}>
             <Text style={styles.upgradeButtonText}>Abo wählen</Text>
