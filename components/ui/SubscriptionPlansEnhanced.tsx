@@ -33,58 +33,26 @@ interface FeatureCategory {
   features: Feature[];
 }
 
-// Plans data - moved outside component for better performance
+// Plans data - simplified to two subscription options
 const PLANS_DATA: Plan[] = [
   {
-    id: 'free',
-    name: 'Frei',
-    icon: '🎯',
-    description: 'Perfekt zum Ausprobieren und ersten Üben',
-    monthlyPrice: 0,
-    quarterlyPrice: 0,
-    originalQuarterlyPrice: 0,
-    savings: 0,
-    ctaText: 'Jetzt starten',
-    mainFeatures: [
-      {
-        title: '✨ Grundfunktionen',
-        features: [
-          { text: '3 FSP-Simulationen pro Monat', included: true },
-          { text: '3 KP-Simulationen pro Monat', included: true },
-          { text: 'Zugang zu allen Fachgebieten', included: true },
-          { text: 'Basis-Evaluation mit Punktzahl', included: true },
-        ],
-      },
-      {
-        title: '🔒 Eingeschränkt',
-        features: [
-          { text: 'Detailliertes Feedback', included: false },
-          { text: 'Verlaufsübersicht', included: false },
-          { text: 'Lernressourcen & Tipps', included: false },
-        ],
-      },
-    ],
-    expandedFeatures: [],
-  },
-  {
-    id: 'basic',
-    name: 'Standard',
+    id: 'monthly',
+    name: 'Monatlich',
     icon: '🚀',
-    description: 'Optimal für regelmäßiges und fokussiertes Training',
-    monthlyPrice: 60,
-    quarterlyPrice: 170,
-    originalQuarterlyPrice: 180,
-    savings: 10,
-    popular: true,
-    ctaText: 'Jetzt upgraden',
+    description: 'Flexibel monatlich kündbar',
+    monthlyPrice: 100,
+    quarterlyPrice: 100,
+    originalQuarterlyPrice: 100,
+    savings: 0,
+    ctaText: 'Jetzt abonnieren',
     mainFeatures: [
       {
-        title: '✨ Alles aus Frei, plus:',
+        title: '✨ Vollzugang',
         features: [
           { text: 'Unbegrenzte FSP-Simulationen', included: true },
           { text: 'Unbegrenzte KP-Simulationen', included: true },
+          { text: 'Zugang zu allen Fachgebieten', included: true },
           { text: 'Detailliertes Feedback nach jeder Simulation', included: true },
-          { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
         ],
       },
       {
@@ -92,7 +60,7 @@ const PLANS_DATA: Plan[] = [
         features: [
           { text: 'Vollständige Verlaufsübersicht', included: true },
           { text: 'Leistungsstatistiken im Dashboard', included: true },
-          { text: 'Vergleich deiner Entwicklung', included: true },
+          { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
         ],
       },
     ],
@@ -112,50 +80,47 @@ const PLANS_DATA: Plan[] = [
     ],
   },
   {
-    id: 'premium',
-    name: 'Premium',
+    id: 'quarterly',
+    name: '3 Monate',
     icon: '👑',
-    description: 'Maximale Vorbereitung mit persönlicher Betreuung',
-    monthlyPrice: 120,
-    quarterlyPrice: 340,
-    originalQuarterlyPrice: 360,
-    savings: 20,
-    ctaText: 'Premium werden',
+    description: 'Spare 100€ gegenüber monatlicher Zahlung',
+    monthlyPrice: 200,
+    quarterlyPrice: 200,
+    originalQuarterlyPrice: 300,
+    savings: 100,
+    popular: true,
+    ctaText: 'Beste Wahl - Jetzt sparen',
     mainFeatures: [
       {
-        title: '✨ Alles aus Standard, plus:',
+        title: '✨ Vollzugang',
         features: [
-          { text: 'Prioritäts-Support innerhalb 4h', included: true },
-          { text: 'Persönliche Lernplan-Erstellung', included: true },
-          { text: '1:1 Videokonsultation mit Experten (30 Min/Monat)', included: true },
-          { text: 'Individuelle Schwachstellen-Analyse', included: true },
+          { text: 'Unbegrenzte FSP-Simulationen', included: true },
+          { text: 'Unbegrenzte KP-Simulationen', included: true },
+          { text: 'Zugang zu allen Fachgebieten', included: true },
+          { text: 'Detailliertes Feedback nach jeder Simulation', included: true },
         ],
       },
       {
-        title: '🎓 Exklusiver Zugang',
+        title: '📊 Fortschrittsverfolgung',
         features: [
-          { text: 'Premium-Fälle aus realen Prüfungen', included: true },
-          { text: 'Früher Zugang zu neuen Features', included: true },
-          { text: 'Spezial-Workshops & Webinare', included: true },
-          { text: 'Private Community-Zugang', included: true },
+          { text: 'Vollständige Verlaufsübersicht', included: true },
+          { text: 'Leistungsstatistiken im Dashboard', included: true },
+          { text: 'Kategorie-Analyse deiner Stärken & Schwächen', included: true },
         ],
       },
     ],
     expandedFeatures: [
       {
-        title: '📈 Erweiterte Analytik',
+        title: '📚 Lernmaterialien',
         features: [
-          { text: 'Detaillierte Trend-Analysen', included: true },
-          { text: 'KI-gestützte Empfehlungen', included: true },
-          { text: 'Benchmark-Vergleich mit anderen Nutzern', included: true },
+          { text: 'Zugang zu Lernressourcen', included: true },
+          { text: 'Prüfungstipps & Best Practices', included: true },
+          { text: 'Musterbeispiele erfolgreicher Gespräche', included: true },
         ],
       },
       {
-        title: '🎁 Bonus',
-        features: [
-          { text: 'Downloadbare PDF-Zusammenfassungen', included: true },
-          { text: 'Zertifikat nach Abschluss', included: true },
-        ],
+        title: '🎯 Support',
+        features: [{ text: 'E-Mail Support innerhalb 24h', included: true }],
       },
     ],
   },
@@ -166,22 +131,22 @@ const FAQS_DATA = [
   {
     question: 'Kann ich jederzeit kündigen?',
     answer:
-      'Ja, absolut! Bei monatlichen Plänen können Sie jederzeit zum Monatsende kündigen. Bei 3-Monats-Plänen ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
+      'Ja, absolut! Beim monatlichen Abo können Sie jederzeit zum Monatsende kündigen. Beim 3-Monats-Abo ist eine Kündigung nach Ablauf der 3 Monate möglich. Es gibt keine versteckten Gebühren oder Kündigungsfristen.',
   },
   {
-    question: 'Was passiert nach dem Ende meines kostenlosen Plans?',
+    question: 'Was passiert nach der 5-tägigen Testphase?',
     answer:
-      'Ihr kostenloser Zugang bleibt bestehen - Sie können weiterhin 3 FSP- und 3 KP-Simulationen pro Monat durchführen. Um unbegrenzten Zugang und erweiterte Features zu erhalten, können Sie jederzeit auf Standard oder Premium upgraden.',
+      'Nach Ablauf Ihrer kostenlosen 5-Tage-Testphase werden die Simulationen gesperrt. Sie können weiterhin auf die Bibliothek und andere Inhalte zugreifen. Um unbegrenzten Zugang zu Simulationen zu erhalten, wählen Sie ein Abonnement.',
   },
   {
     question: 'Wie funktioniert die 14-Tage Geld-zurück-Garantie?',
     answer:
-      'Wenn Sie innerhalb der ersten 14 Tage nach dem Upgrade nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
+      'Wenn Sie innerhalb der ersten 14 Tage nach dem Abschluss nicht zufrieden sind, erstatten wir Ihnen den vollen Betrag zurück - ohne Fragen zu stellen. Senden Sie einfach eine E-Mail an unseren Support.',
   },
   {
-    question: 'Kann ich meinen Plan später ändern?',
+    question: 'Was ist der Unterschied zwischen den beiden Abos?',
     answer:
-      'Selbstverständlich! Sie können jederzeit zwischen den Plänen wechseln. Bei einem Upgrade erhalten Sie sofort Zugang zu allen erweiterten Features. Bei einem Downgrade bleiben die Premium-Features bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.',
+      'Beide Abonnements bieten den gleichen Funktionsumfang mit unbegrenzten Simulationen. Der einzige Unterschied ist die Laufzeit und der Preis: Das 3-Monats-Abo für 200€ spart Ihnen 100€ gegenüber 3 einzelnen Monaten à 100€.',
   },
 ];
 
@@ -189,13 +154,8 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
-  const [isQuarterly, setIsQuarterly] = useState(false);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
-
-  const getPrice = (plan: Plan) => {
-    return isQuarterly ? plan.quarterlyPrice : plan.monthlyPrice;
-  };
 
   const handleSelectPlan = (planId: string) => {
     if (!onSelectPlan) {
@@ -643,29 +603,6 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
             </Text>
           </View>
 
-          {/* Billing Toggle */}
-          <View style={styles.billingToggle}>
-            <View style={styles.billingOptions}>
-              <TouchableOpacity
-                style={[styles.billingOption, !isQuarterly && styles.billingOptionActive]}
-                onPress={() => setIsQuarterly(false)}
-              >
-                <Text style={[styles.billingText, !isQuarterly && styles.billingTextActive]}>MONATLICH</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.billingOption, isQuarterly && styles.billingOptionActive]}
-                onPress={() => setIsQuarterly(true)}
-              >
-                <Text style={[styles.billingText, isQuarterly && styles.billingTextActive]}>3 MONATE</Text>
-              </TouchableOpacity>
-            </View>
-            {isQuarterly && (
-              <View style={styles.savingsBadge}>
-                <Text style={styles.savingsBadgeText}>✨ SPARE 15%</Text>
-              </View>
-            )}
-          </View>
-
           {/* Pricing Cards */}
           <View style={styles.pricingGrid}>
             {PLANS_DATA.map((plan) => (
@@ -688,27 +625,15 @@ export default function SubscriptionPlansEnhanced({ onSelectPlan, currentPlanId 
                 {/* Price Section */}
                 <View style={styles.priceSection}>
                   <View style={styles.priceRow}>
-                    {plan.id === 'free' ? (
-                      <Text style={styles.amount}>Frei</Text>
-                    ) : (
-                      <>
-                        {isQuarterly && plan.originalQuarterlyPrice > 0 && (
-                          <Text style={styles.originalPrice}>€{plan.originalQuarterlyPrice}</Text>
-                        )}
-                        <Text style={styles.currency}>€</Text>
-                        <Text style={styles.amount}>{getPrice(plan)}</Text>
-                        {plan.id !== 'free' && (
-                          <Text style={styles.period}>{isQuarterly ? '/3 Monate' : '/Monat'}</Text>
-                        )}
-                      </>
-                    )}
+                    {plan.savings > 0 && <Text style={styles.originalPrice}>€{plan.originalQuarterlyPrice}</Text>}
+                    <Text style={styles.currency}>€</Text>
+                    <Text style={styles.amount}>{plan.monthlyPrice}</Text>
+                    <Text style={styles.period}>{plan.id === 'quarterly' ? '/3 Monate' : '/Monat'}</Text>
                   </View>
                   <Text style={styles.priceNote}>
-                    {plan.id === 'free'
-                      ? 'Kostenlos • Keine Kreditkarte erforderlich'
-                      : isQuarterly && plan.savings > 0
-                        ? `€${(plan.quarterlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
-                        : 'Monatlich kündbar'}
+                    {plan.id === 'quarterly'
+                      ? `€${(plan.monthlyPrice / 3).toFixed(2)}/Monat • Spare €${plan.savings}`
+                      : 'Monatlich kündbar'}
                   </Text>
                 </View>
 

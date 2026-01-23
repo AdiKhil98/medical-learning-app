@@ -99,16 +99,14 @@ export const useSubscription = (userId: string | undefined) => {
       });
 
       // Determine subscription tier from reason or response
-      let tier = 'free';
+      let tier = data.subscription_tier || 'free';
       if (isTrial) {
         tier = 'trial';
-      } else if (simTotal >= 60) {
-        tier = 'premium';
-      } else if (simTotal >= 30) {
-        tier = 'basic';
-      } else if (simTotal === -1) {
-        tier = 'trial'; // Unlimited = trial
-      } else {
+      } else if (simTotal === -1 && !isTrial) {
+        // Unlimited simulations from paid subscription
+        // Keep the tier from the response (monthly, quarterly, basic, premium)
+        tier = data.subscription_tier || 'monthly';
+      } else if (tier === 'expired_trial' || reason === 'trial_expired') {
         tier = 'free';
       }
 
@@ -260,8 +258,10 @@ export const useSubscription = (userId: string | undefined) => {
     const tierDisplayNames: Record<string, string> = {
       trial: 'Testphase',
       free: 'Kostenlos',
-      basic: 'Basis-Plan',
-      premium: 'Premium-Plan',
+      monthly: 'Monatsabo',
+      quarterly: '3-Monats-Abo',
+      basic: 'Monatsabo', // Legacy
+      premium: '3-Monats-Abo', // Legacy
     };
 
     const planName = tierDisplayNames[subscriptionTier || 'free'] || `${subscriptionTier}-Plan`;
@@ -279,17 +279,23 @@ export const useSubscription = (userId: string | undefined) => {
       }
     } else if (trialExpired) {
       usageText = 'Testphase abgelaufen';
+    } else if (simulationLimit === null && subscriptionTier && !['free', 'trial'].includes(subscriptionTier)) {
+      // Paid subscription with unlimited simulations
+      usageText = 'Unbegrenzte Simulationen';
     } else if (simulationLimit === null || simulationLimit === 0) {
       usageText = 'Keine Simulationen verfuegbar';
     } else {
       usageText = `${displayUsed}/${simulationLimit} Simulationen genutzt`;
     }
 
+    // Check if user can upgrade (only if on trial or expired)
+    const isPaidSubscriber = ['monthly', 'quarterly', 'basic', 'premium'].includes(subscriptionTier || '');
+
     return {
       planName,
       usageText,
       message,
-      canUpgrade: subscriptionTier !== 'premium',
+      canUpgrade: !isPaidSubscriber,
       // Additional info for universal handling
       displayUsed, // Real-time database count
       totalLimit: simulationLimit,

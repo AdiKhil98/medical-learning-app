@@ -25,22 +25,31 @@ import { supabase } from '@/lib/supabase';
 import { colors } from '@/constants/colors';
 
 // Variant ID mappings - centralized
+// TODO: Update these with your actual Lemon Squeezy variant IDs after creating the products
 const VARIANT_TO_PLAN: Record<number, string> = {
-  1006948: 'basic',
-  1006934: 'premium',
+  // Monthly subscription - 100€/month
+  MONTHLY_VARIANT_ID: 'monthly',
+  // 3-month subscription - 200€/3 months
+  QUARTERLY_VARIANT_ID: 'quarterly',
+  // Legacy mappings (keep for existing subscribers)
+  1006948: 'monthly',
+  1006934: 'quarterly',
 };
 
 const PLAN_TO_VARIANT: Record<string, number> = {
-  basic: 1006948,
-  premium: 1006934,
+  // TODO: Replace with actual variant IDs from Lemon Squeezy
+  monthly: 1006948, // Update this with your monthly variant ID
+  quarterly: 1006934, // Update this with your quarterly variant ID
 };
 
 // Checkout URL builder
+// TODO: Update these URLs with your actual Lemon Squeezy checkout links
 const getCheckoutUrl = (planId: string, userEmail: string): string => {
   const encodedEmail = encodeURIComponent(userEmail || '');
   const checkoutUrls: Record<string, string> = {
-    basic: `https://kpmed.lemonsqueezy.com/buy/b45b24cd-f6c7-48b5-8f7d-f08d6b793e20?enabled=1006948&checkout[email]=${encodedEmail}`,
-    premium: `https://kpmed.lemonsqueezy.com/buy/cf4938e1-62b0-47f8-9d39-4a60807594d6?enabled=1006934&checkout[email]=${encodedEmail}`,
+    // TODO: Replace with actual checkout URLs from Lemon Squeezy
+    monthly: `https://kpmed.lemonsqueezy.com/buy/MONTHLY_PRODUCT_ID?checkout[email]=${encodedEmail}`,
+    quarterly: `https://kpmed.lemonsqueezy.com/buy/QUARTERLY_PRODUCT_ID?checkout[email]=${encodedEmail}`,
   };
   return checkoutUrls[planId] || '';
 };

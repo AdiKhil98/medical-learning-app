@@ -14,13 +14,22 @@ const SUBSCRIPTION_TIERS = {
     name: 'Free-Plan',
     simulationLimit: 0, // No simulations after trial expires
   },
+  monthly: {
+    name: 'Monatlich',
+    simulationLimit: -1, // Unlimited simulations
+  },
+  quarterly: {
+    name: '3-Monats-Abo',
+    simulationLimit: -1, // Unlimited simulations
+  },
+  // Legacy tiers (keep for backward compatibility)
   basic: {
     name: 'Basic-Plan',
-    simulationLimit: 30,
+    simulationLimit: -1, // Now also unlimited
   },
   premium: {
     name: 'Premium-Plan',
-    simulationLimit: 60,
+    simulationLimit: -1, // Now also unlimited
   },
 };
 
@@ -37,9 +46,15 @@ function verifyWebhookSignature(payload, signature, secret) {
 }
 
 // Variant ID to subscription tier mapping
+// TODO: Update these with your actual Lemon Squeezy variant IDs
 const VARIANT_TIER_MAPPING = {
-  1006948: 'basic', // Basic Plan (30 simulations/month)
-  1006934: 'premium', // Premium Plan (60 simulations/month)
+  // New plans - update these variant IDs after creating products in Lemon Squeezy
+  // MONTHLY_VARIANT_ID: 'monthly',    // 100€/month
+  // QUARTERLY_VARIANT_ID: 'quarterly', // 200€/3 months
+
+  // Legacy mappings (keep for existing subscribers, now map to unlimited)
+  1006948: 'monthly', // Was basic, now monthly unlimited
+  1006934: 'quarterly', // Was premium, now quarterly unlimited
 };
 
 // Helper function to determine subscription tier from variant ID
@@ -53,20 +68,26 @@ function determineSubscriptionTier(variantName, variantId) {
 
   // Fallback to name-based matching if variant ID not found
   const name = variantName?.toLowerCase() || '';
-  if (name.includes('basic') || name.includes('basis')) {
-    console.log(`Mapped variant name "${variantName}" to tier: basic`);
-    return 'basic';
+  if (name.includes('monatlich') || name.includes('monthly')) {
+    console.log(`Mapped variant name "${variantName}" to tier: monthly`);
+    return 'monthly';
+  } else if (name.includes('3 monate') || name.includes('quarterly') || name.includes('quartal')) {
+    console.log(`Mapped variant name "${variantName}" to tier: quarterly`);
+    return 'quarterly';
+  } else if (name.includes('basic') || name.includes('basis')) {
+    console.log(`Mapped variant name "${variantName}" to tier: monthly (legacy basic)`);
+    return 'monthly';
   } else if (name.includes('premium') || name.includes('profi') || name.includes('pro')) {
-    console.log(`Mapped variant name "${variantName}" to tier: premium`);
-    return 'premium';
+    console.log(`Mapped variant name "${variantName}" to tier: quarterly (legacy premium)`);
+    return 'quarterly';
   } else if (name.includes('free')) {
     console.log(`Mapped variant name "${variantName}" to tier: free`);
     return 'free';
   }
 
-  // Final fallback to free tier (safe default)
-  console.warn(`Unknown subscription tier for variant: ${variantName} (ID: ${variantId}), defaulting to free`);
-  return 'free';
+  // Final fallback - any paid subscription gets monthly tier
+  console.warn(`Unknown subscription tier for variant: ${variantName} (ID: ${variantId}), defaulting to monthly`);
+  return 'monthly';
 }
 
 // Helper function to update user quota

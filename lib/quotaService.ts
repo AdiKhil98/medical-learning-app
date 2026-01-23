@@ -231,11 +231,13 @@ class QuotaService {
     const limits: Record<string, number> = {
       trial: -1, // Unlimited during trial
       free: 0, // No access after trial expires
-      basic: 30,
-      premium: 60,
-      // Legacy tier names for backward compatibility
-      basis: 30,
-      profi: 60,
+      monthly: -1, // Unlimited simulations
+      quarterly: -1, // Unlimited simulations
+      // Legacy tier names (now also unlimited)
+      basic: -1,
+      premium: -1,
+      basis: -1,
+      profi: -1,
     };
     return limits[tier] ?? 0;
   }

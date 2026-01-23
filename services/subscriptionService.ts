@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export interface SubscriptionPlan {
-  tier: 'trial' | 'free' | 'basic' | 'premium';
+  tier: 'trial' | 'free' | 'monthly' | 'quarterly' | 'basic' | 'premium';
   simulationLimit: number | null; // null = unlimited
   status: 'active' | 'inactive' | 'on_trial';
 }
@@ -26,14 +26,25 @@ const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
     simulationLimit: 0, // No simulations after trial expires
     status: 'inactive',
   },
+  monthly: {
+    tier: 'monthly',
+    simulationLimit: null, // Unlimited simulations
+    status: 'active',
+  },
+  quarterly: {
+    tier: 'quarterly',
+    simulationLimit: null, // Unlimited simulations
+    status: 'active',
+  },
+  // Legacy tiers (for backward compatibility with existing subscribers)
   basic: {
     tier: 'basic',
-    simulationLimit: 30,
+    simulationLimit: null, // Now also unlimited
     status: 'active',
   },
   premium: {
     tier: 'premium',
-    simulationLimit: 60,
+    simulationLimit: null, // Now also unlimited
     status: 'active',
   },
 };

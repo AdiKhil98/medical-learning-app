@@ -30,11 +30,13 @@ export function UpgradeRequiredModal({
     const names: Record<string, string> = {
       trial: 'Testphase',
       free: 'Kostenlos',
-      basic: 'Basis',
-      premium: 'Premium',
+      monthly: 'Monatsabo',
+      quarterly: '3-Monats-Abo',
       // Legacy names
-      basis: 'Basis',
-      profi: 'Premium',
+      basic: 'Monatsabo',
+      premium: '3-Monats-Abo',
+      basis: 'Monatsabo',
+      profi: '3-Monats-Abo',
     };
     return names[tier] || 'Aktuell';
   };

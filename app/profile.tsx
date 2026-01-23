@@ -143,14 +143,28 @@ export default function ProfileScreen() {
   const mapSubscriptionTier = (quotaData: any): string => {
     const totalSims = quotaData.total_simulations || 0;
     const tier = quotaData.subscription_tier || 'free';
+    const isTrial = quotaData.is_trial;
+    const daysRemaining = quotaData.days_remaining;
 
-    if (totalSims >= 60 || tier === 'premium' || tier === 'profi') {
-      return 'Premium Plan (60 Simulationen)';
-    } else if (totalSims >= 30 || tier === 'basic' || tier === 'basis') {
-      return 'Basis Plan (30 Simulationen)';
-    } else {
-      return 'Kostenlos (3 Simulationen)';
+    // Trial period
+    if (isTrial || tier === 'trial') {
+      if (daysRemaining !== undefined && daysRemaining > 0) {
+        return `Testphase (${daysRemaining} Tage verbleibend)`;
+      }
+      return 'Testphase';
     }
+
+    // Paid subscriptions (all have unlimited simulations now)
+    if (tier === 'quarterly' || tier === 'premium' || tier === 'profi') {
+      return '3-Monats-Abo (Unbegrenzt)';
+    } else if (tier === 'monthly' || tier === 'basic' || tier === 'basis') {
+      return 'Monatsabo (Unbegrenzt)';
+    } else if (totalSims === -1) {
+      return 'Aktives Abo (Unbegrenzt)';
+    }
+
+    // Trial expired or no subscription
+    return 'Kein aktives Abo';
   };
 
   const getUserInitials = () => {
