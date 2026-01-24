@@ -24,9 +24,6 @@ export default function TrialStatusBanner() {
     router.push('/subscription');
   };
 
-  // Debug logging
-  console.log('[TrialBanner] Data:', { tier, isTrial, trialDaysRemaining, trialExpired, subscriptionStatus });
-
   // Trial active - show days remaining (check tier === 'trial' as fallback)
   if ((isTrial || tier === 'trial') && trialDaysRemaining !== undefined && trialDaysRemaining > 0) {
     return (

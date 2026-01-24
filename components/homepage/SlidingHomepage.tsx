@@ -34,6 +34,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import PromoBanner from '@/components/ui/PromoBanner';
 import TrialStatusBanner from '@/components/ui/TrialStatusBanner';
+import TrialStatusTimeline from '@/components/ui/TrialStatusTimeline';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
 import { MEDICAL_COLORS } from '@/constants/medicalColors';
@@ -423,6 +424,9 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                   Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
                 </Text>
 
+                {/* Trial Status Timeline */}
+                <TrialStatusTimeline />
+
                 {/* CTA Buttons */}
                 <View style={styles.buttonsContainer}>
                   <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSimulation} activeOpacity={0.7}>
@@ -624,6 +628,9 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                   <Text style={styles.subheading}>
                     Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
                   </Text>
+
+                  {/* Trial Status Timeline */}
+                  <TrialStatusTimeline />
 
                   {/* CTA Buttons */}
                   <View style={styles.buttonsContainer}>
