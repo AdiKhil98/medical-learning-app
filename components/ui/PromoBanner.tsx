@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, X } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Facebook page URL
+// To change this, update the URL below
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = screenWidth < 768;
 const isSmallMobile = screenWidth < 375;
 
-const STORAGE_KEY = 'promo-banner-2025-dismissed';
+const STORAGE_KEY = 'facebook-banner-dismissed';
+const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61574498798498';
 
 export default function PromoBanner() {
   const [isVisible, setIsVisible] = useState(true);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const router = useRouter();
 
   useEffect(() => {
     checkDismissed();
@@ -50,7 +53,7 @@ export default function PromoBanner() {
   };
 
   const handleBannerPress = () => {
-    router.push('/subscription');
+    Linking.openURL(FACEBOOK_URL);
   };
 
   if (!isVisible) return null;
@@ -71,17 +74,18 @@ export default function PromoBanner() {
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
         >
-          {/* Special Offer Badge */}
+          {/* Facebook Badge */}
           <View style={styles.badgeContainer}>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>Sonderangebot</Text>
+              <Ionicons name="logo-facebook" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.badgeText}>Facebook</Text>
             </View>
           </View>
 
           {/* Static Text Content */}
           <View style={styles.contentContainer}>
             <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-              Letzte Chance: 50 % Rabatt – Jetzt Premium sichern mit dem Code U4NJUYOA!
+              Folgen Sie uns auf Facebook und verpassen Sie keine Neuigkeiten!
             </Text>
           </View>
 
@@ -134,10 +138,12 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   badge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: '#1877F2',
     paddingHorizontal: isMobile ? (isSmallMobile ? 10 : 14) : 20,
     paddingVertical: isMobile ? (isSmallMobile ? 4 : 6) : 8,
     borderRadius: isMobile ? 16 : 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   badgeText: {
     color: '#FFFFFF',
