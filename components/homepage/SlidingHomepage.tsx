@@ -33,7 +33,6 @@ import Logo from '@/components/ui/Logo';
 import UserAvatar from '@/components/ui/UserAvatar';
 import AboutUsModal from '@/components/ui/AboutUsModal';
 import PromoBanner from '@/components/ui/PromoBanner';
-import TrialStatusBanner from '@/components/ui/TrialStatusBanner';
 import TrialStatusTimeline from '@/components/ui/TrialStatusTimeline';
 import { useRouter } from 'expo-router';
 import { SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/constants/tokens';
@@ -297,9 +296,6 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
     <SafeAreaView style={dynamicStyles.container}>
       {/* Promotional Banner */}
       <PromoBanner />
-
-      {/* Trial Status Banner */}
-      <TrialStatusBanner />
 
       {/* Clean gradient background */}
       <LinearGradient colors={backgroundGradient as any} style={styles.backgroundGradient} />

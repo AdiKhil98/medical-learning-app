@@ -2,62 +2,101 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/hooks/useSubscription';
+import { Ionicons } from '@expo/vector-icons';
+import { useTrialStatus } from '@/hooks/useTrialStatus';
 
 export default function TrialStatusTimeline() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { subscriptionStatus, isTrial, trialDaysRemaining, trialExpired } = useSubscription(user?.id);
-
-  // Don't show if no user or loading
-  if (!user || !subscriptionStatus) return null;
-
-  const tier = subscriptionStatus.subscriptionTier;
-  const isPaidSubscriber = ['monthly', 'quarterly', 'basic', 'premium'].includes(tier || '');
-
-  // Don't show for paid subscribers
-  if (isPaidSubscriber) return null;
-
-  // Don't show if trial expired (different UI handles that)
-  if (trialExpired && tier !== 'trial') return null;
-
-  // Calculate days used and other metrics
-  const totalDays = 5;
-  const daysRemaining = trialDaysRemaining ?? 0;
-  const daysUsed = Math.max(0, totalDays - daysRemaining);
-  const isExpiringSoon = daysRemaining <= 2 && daysRemaining > 0;
-
-  // Format expiration date
-  const getTrialEndsFormatted = () => {
-    if (subscriptionStatus.trialExpiresAt) {
-      const expiresAt = new Date(subscriptionStatus.trialExpiresAt);
-      const formatter = new Intl.DateTimeFormat('de-DE', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-      return formatter.format(expiresAt);
-    }
-    // Calculate from days remaining
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + daysRemaining);
-    const formatter = new Intl.DateTimeFormat('de-DE', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    return formatter.format(expiresAt);
-  };
-
-  const trialEndsFormatted = getTrialEndsFormatted();
+  const {
+    isLoading,
+    isTrialActive,
+    daysRemaining,
+    daysUsed,
+    totalDays,
+    trialEndsFormatted,
+    isExpiringSoon,
+    isExpired,
+    isSubscribed,
+  } = useTrialStatus();
 
   const handleUpgrade = () => {
     router.push('/subscription');
   };
 
-  // Show timeline for active trial users
-  if ((isTrial || tier === 'trial') && daysRemaining > 0) {
+  // ============================================
+  // SUBSCRIBED USER - Show premium status badge
+  // ============================================
+  if (isSubscribed) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.subscriberCard}>
+          <LinearGradient
+            colors={['#10B981', '#059669']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.subscriberGradient}
+          >
+            <View style={styles.subscriberContent}>
+              <View style={styles.subscriberIconContainer}>
+                <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.subscriberTextContainer}>
+                <Text style={styles.subscriberTitle}>Premium Mitglied</Text>
+                <Text style={styles.subscriberSubtitle}>Unbegrenzter Zugang zu allen Simulationen</Text>
+              </View>
+              <Ionicons name="star" size={20} color="#FCD34D" />
+            </View>
+          </LinearGradient>
+        </View>
+      </View>
+    );
+  }
+
+  // Show loading skeleton
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.skeleton} />
+      </View>
+    );
+  }
+
+  // ============================================
+  // TRIAL EXPIRED - Show expired state
+  // ============================================
+  if (isExpired) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.expiredCard}>
+          <View style={styles.expiredHeader}>
+            <View style={styles.expiredIconContainer}>
+              <Ionicons name="time-outline" size={24} color="#EF4444" />
+            </View>
+            <View style={styles.expiredTextContainer}>
+              <Text style={styles.expiredTitle}>Testphase abgelaufen</Text>
+              <Text style={styles.expiredSubtitle}>Abonnieren Sie für unbegrenzten Zugang</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity onPress={handleUpgrade} style={styles.expiredUpgradeButton} activeOpacity={0.8}>
+            <LinearGradient
+              colors={['#F97316', '#EF4444']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.expiredUpgradeGradient}
+            >
+              <Text style={styles.expiredUpgradeText}>Jetzt abonnieren</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ============================================
+  // TRIAL ACTIVE - Show timeline
+  // ============================================
+  if (isTrialActive && daysRemaining > 0) {
     return (
       <View style={styles.container}>
         <View style={styles.card}>
@@ -75,12 +114,14 @@ export default function TrialStatusTimeline() {
             <View style={styles.progressLineBackground} />
 
             {/* Progress Line Filled */}
-            <LinearGradient
-              colors={['#F97316', '#FBBF24']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.progressLineFilled, { width: `${(daysUsed / (totalDays - 1)) * 100}%` }]}
-            />
+            {daysUsed > 0 && (
+              <LinearGradient
+                colors={['#F97316', '#FBBF24']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressLineFilled, { width: `${Math.min((daysUsed / (totalDays - 1)) * 100, 100)}%` }]}
+              />
+            )}
 
             {/* Day Dots */}
             <View style={styles.dotsContainer}>
@@ -144,6 +185,7 @@ export default function TrialStatusTimeline() {
     );
   }
 
+  // Fallback - show nothing if no state matches
   return null;
 }
 
@@ -152,7 +194,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
     marginTop: 16,
+    width: '100%',
   },
+  // ============================================
+  // TRIAL TIMELINE CARD STYLES
+  // ============================================
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -171,6 +217,11 @@ const styles = StyleSheet.create({
     }),
     borderWidth: 1,
     borderColor: '#F3F4F6',
+  },
+  skeleton: {
+    height: 180,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
   },
   header: {
     flexDirection: 'row',
@@ -322,5 +373,116 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#92400E',
     textAlign: 'center',
+  },
+  // ============================================
+  // SUBSCRIBER STYLES
+  // ============================================
+  subscriberCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(16, 185, 129, 0.2)',
+      },
+      default: {
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+      },
+    }),
+  },
+  subscriberGradient: {
+    padding: 16,
+  },
+  subscriberContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  subscriberIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  subscriberTextContainer: {
+    flex: 1,
+  },
+  subscriberTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subscriberSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 2,
+  },
+  // ============================================
+  // EXPIRED STYLES
+  // ============================================
+  expiredCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#FEE2E2',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.1)',
+      },
+      default: {
+        shadowColor: '#EF4444',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 2,
+      },
+    }),
+  },
+  expiredHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  expiredIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  expiredTextContainer: {
+    flex: 1,
+  },
+  expiredTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#991B1B',
+  },
+  expiredSubtitle: {
+    fontSize: 13,
+    color: '#B91C1C',
+    marginTop: 2,
+  },
+  expiredUpgradeButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  expiredUpgradeGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  expiredUpgradeText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
