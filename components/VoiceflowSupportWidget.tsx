@@ -86,9 +86,37 @@ export default function VoiceflowSupportWidget({
       return;
     }
 
+    // Add CSS to hide widget on mobile devices
+    const addMobileHideStyles = () => {
+      if (document.getElementById('voiceflow-mobile-hide-styles')) return;
+
+      const style = document.createElement('style');
+      style.id = 'voiceflow-mobile-hide-styles';
+      style.textContent = `
+        /* Hide Voiceflow widget on mobile devices (< 768px) */
+        @media screen and (max-width: 767px) {
+          #voiceflow-chat,
+          [class*="vfrc-widget"],
+          [class*="vfrc-launcher"],
+          .vfrc-widget,
+          .vfrc-widget--launcher {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      logger.info('Voiceflow mobile hide styles added');
+    };
+
     // Defer loading to avoid blocking LCP - load after page is idle
     const loadWidget = () => {
       logger.info('Loading Voiceflow support widget...');
+
+      // Add mobile hide styles first
+      addMobileHideStyles();
 
       const script = document.createElement('script');
       script.id = scriptIdRef.current;
