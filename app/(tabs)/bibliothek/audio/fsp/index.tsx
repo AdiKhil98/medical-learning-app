@@ -58,19 +58,26 @@ export default function FSPAudioIndex() {
   const fetchTopics = useCallback(async () => {
     try {
       // Fetch from all three FSP tables
+      // Note: Each table has different column names for grouping
       const [bibliothekResult, anamneseResult, fachbegriffeResult] = await Promise.all([
         supabase
           .from('fsp_bibliothek')
           .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
           .not('audio_url', 'is', null),
+        // fsp_anamnese uses 'gruppe' for grouping, not fachgebiet/bereich
         supabase
           .from('fsp_anamnese')
-          .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
-          .not('audio_url', 'is', null),
+          .select('id, slug, title_de, gruppe, sort_order, audio_url')
+          .not('audio_url', 'is', null)
+          .eq('status', 'active')
+          .order('sort_order', { ascending: true }),
+        // fsp_fachbegriffe uses 'kategorie' for grouping, not fachgebiet/bereich
         supabase
           .from('fsp_fachbegriffe')
-          .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
-          .not('audio_url', 'is', null),
+          .select('id, slug, title_de, kategorie, sort_order, audio_url')
+          .not('audio_url', 'is', null)
+          .eq('status', 'active')
+          .order('sort_order', { ascending: true }),
       ]);
 
       const allTopics: AudioTopic[] = [];
@@ -85,18 +92,28 @@ export default function FSPAudioIndex() {
       }
 
       if (anamneseResult.data) {
+        // Map 'gruppe' to 'fachgebiet' for type compatibility
         allTopics.push(
-          ...anamneseResult.data.map((t) => ({
-            ...t,
+          ...anamneseResult.data.map((t: any) => ({
+            id: t.id,
+            slug: t.slug,
+            title_de: t.title_de,
+            fachgebiet: t.gruppe || 'Anamnese',
+            audio_url: t.audio_url,
             source_table: 'fsp_anamnese' as const,
           }))
         );
       }
 
       if (fachbegriffeResult.data) {
+        // Map 'kategorie' to 'fachgebiet' for type compatibility
         allTopics.push(
-          ...fachbegriffeResult.data.map((t) => ({
-            ...t,
+          ...fachbegriffeResult.data.map((t: any) => ({
+            id: t.id,
+            slug: t.slug,
+            title_de: t.title_de,
+            fachgebiet: t.kategorie || 'Fachbegriffe',
+            audio_url: t.audio_url,
             source_table: 'fsp_fachbegriffe' as const,
           }))
         );

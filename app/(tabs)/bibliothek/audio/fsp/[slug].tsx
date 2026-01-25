@@ -32,28 +32,84 @@ export default function FSPAudioPlayerScreen() {
         // Determine which table to query
         const sourceTable = source || 'fsp_bibliothek';
 
-        const { data, error: fetchError } = await supabase
-          .from(sourceTable)
-          .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
-          .eq('slug', slug)
-          .single();
+        // Different tables have different columns
+        let data: any = null;
+        let fetchError: any = null;
 
-        if (fetchError) {
+        if (sourceTable === 'fsp_anamnese') {
+          const result = await supabase
+            .from('fsp_anamnese')
+            .select('id, slug, title_de, gruppe, sort_order, audio_url')
+            .eq('slug', slug)
+            .single();
+          if (!result.error && result.data) {
+            data = {
+              ...result.data,
+              fachgebiet: result.data.gruppe || 'Anamnese',
+            };
+          } else {
+            fetchError = result.error;
+          }
+        } else if (sourceTable === 'fsp_fachbegriffe') {
+          const result = await supabase
+            .from('fsp_fachbegriffe')
+            .select('id, slug, title_de, kategorie, sort_order, audio_url')
+            .eq('slug', slug)
+            .single();
+          if (!result.error && result.data) {
+            data = {
+              ...result.data,
+              fachgebiet: result.data.kategorie || 'Fachbegriffe',
+            };
+          } else {
+            fetchError = result.error;
+          }
+        } else {
+          // fsp_bibliothek
+          const result = await supabase
+            .from(sourceTable)
+            .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
+            .eq('slug', slug)
+            .single();
+          data = result.data;
+          fetchError = result.error;
+        }
+
+        if (fetchError || !data) {
           // Try other tables if source wasn't specified
           if (!source) {
-            const tables = ['fsp_anamnese', 'fsp_fachbegriffe'];
-            for (const table of tables) {
-              const { data: altData, error: altError } = await supabase
-                .from(table)
-                .select('id, slug, title_de, fachgebiet, bereich, priority, audio_url')
-                .eq('slug', slug)
-                .single();
+            // Try fsp_anamnese
+            const anamneseResult = await supabase
+              .from('fsp_anamnese')
+              .select('id, slug, title_de, gruppe, sort_order, audio_url')
+              .eq('slug', slug)
+              .single();
 
-              if (!altError && altData) {
-                setTopic({ ...altData, source_table: table as any });
-                setLoading(false);
-                return;
-              }
+            if (!anamneseResult.error && anamneseResult.data) {
+              setTopic({
+                ...anamneseResult.data,
+                fachgebiet: anamneseResult.data.gruppe || 'Anamnese',
+                source_table: 'fsp_anamnese' as any,
+              });
+              setLoading(false);
+              return;
+            }
+
+            // Try fsp_fachbegriffe
+            const fachbegriffeResult = await supabase
+              .from('fsp_fachbegriffe')
+              .select('id, slug, title_de, kategorie, sort_order, audio_url')
+              .eq('slug', slug)
+              .single();
+
+            if (!fachbegriffeResult.error && fachbegriffeResult.data) {
+              setTopic({
+                ...fachbegriffeResult.data,
+                fachgebiet: fachbegriffeResult.data.kategorie || 'Fachbegriffe',
+                source_table: 'fsp_fachbegriffe' as any,
+              });
+              setLoading(false);
+              return;
             }
           }
 
