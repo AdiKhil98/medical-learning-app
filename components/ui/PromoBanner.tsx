@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRight, X } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Facebook page URL
-// To change this, update the URL below
 
 const { width: screenWidth } = Dimensions.get('window');
 const isMobile = screenWidth < 768;
 const isSmallMobile = screenWidth < 375;
 
 const STORAGE_KEY = 'facebook-banner-dismissed';
-const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61574498798498';
 
 export default function PromoBanner() {
   const [isVisible, setIsVisible] = useState(true);
@@ -34,11 +29,7 @@ export default function PromoBanner() {
     }
   };
 
-  const handleClose = async (e?: any) => {
-    if (e) {
-      e.stopPropagation();
-    }
-
+  const handleClose = async () => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, 'true');
       Animated.timing(slideAnim, {
@@ -52,10 +43,6 @@ export default function PromoBanner() {
     }
   };
 
-  const handleBannerPress = () => {
-    Linking.openURL(FACEBOOK_URL);
-  };
-
   if (!isVisible) return null;
 
   return (
@@ -67,42 +54,31 @@ export default function PromoBanner() {
         },
       ]}
     >
-      <TouchableOpacity activeOpacity={0.95} onPress={handleBannerPress} style={styles.touchable}>
-        <LinearGradient
-          colors={['#F97316', '#FB923C', '#FBBF24', '#FCD34D', '#FDE047']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {/* Facebook Badge */}
-          <View style={styles.badgeContainer}>
-            <View style={styles.badge}>
-              <Ionicons name="logo-facebook" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-              <Text style={styles.badgeText}>Facebook</Text>
-            </View>
-          </View>
+      <LinearGradient
+        colors={['#F97316', '#FB923C', '#FBBF24', '#FCD34D', '#FDE047']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradient}
+      >
+        {/* Static Text Content */}
+        <View style={styles.contentContainer}>
+          <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
+            Folgen Sie uns auf Facebook und verpassen Sie keine Neuigkeiten!
+          </Text>
+        </View>
 
-          {/* Static Text Content */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-              Folgen Sie uns auf Facebook und verpassen Sie keine Neuigkeiten!
-            </Text>
-          </View>
-
-          {/* Right Actions */}
-          <View style={styles.actionsContainer}>
-            <ChevronRight size={20} color="#000000" strokeWidth={2.5} />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleClose}
-              activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <X size={24} color="#000000" strokeWidth={2.5} />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+        {/* Close Button */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={handleClose}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <X size={24} color="#000000" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </Animated.View>
   );
 }
@@ -116,12 +92,6 @@ const styles = StyleSheet.create({
       top: 0,
     }),
   },
-  touchable: {
-    width: '100%',
-    ...(Platform.OS === 'web' && {
-      cursor: 'pointer' as any,
-    }),
-  },
   gradient: {
     width: '100%',
     height: isMobile ? (isSmallMobile ? 44 : 48) : 50,
@@ -132,29 +102,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  badgeContainer: {
-    position: 'absolute',
-    left: isMobile ? (isSmallMobile ? 8 : 12) : 20,
-    zIndex: 10,
-  },
-  badge: {
-    backgroundColor: '#1877F2',
-    paddingHorizontal: isMobile ? (isSmallMobile ? 10 : 14) : 20,
-    paddingVertical: isMobile ? (isSmallMobile ? 4 : 6) : 8,
-    borderRadius: isMobile ? 16 : 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: isMobile ? (isSmallMobile ? 11 : 12) : 14,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
   contentContainer: {
     flex: 1,
-    marginLeft: isMobile ? (isSmallMobile ? 95 : 120) : 180,
-    marginRight: isMobile ? (isSmallMobile ? 55 : 70) : 100,
+    marginLeft: isMobile ? (isSmallMobile ? 12 : 16) : 20,
+    marginRight: isMobile ? (isSmallMobile ? 50 : 60) : 70,
     justifyContent: 'center',
     alignItems: 'center',
   },
