@@ -252,7 +252,7 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
 
   // PERFORMANCE FIX: Memoize dynamic styles to prevent recreation on every render
   // These styles support dark mode by merging base styles with theme colors
-  // Note: colors are from module scope, so empty deps array is intentional
+  // Also handle responsive sizing for mobile web browsers
   const dynamicStyles = useMemo(
     () => ({
       container: {
@@ -262,22 +262,59 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
       heroCard: {
         ...styles.heroCard,
         backgroundColor: colors.card,
+        // Override padding for mobile web
+        padding: isMobile ? (isSmallMobile ? 16 : 20) : SPACING.xxxxl,
+        maxWidth: '100%',
       },
       recentCard: {
         ...styles.recentCard,
         backgroundColor: colors.card,
+        maxWidth: '100%',
       },
       tipCard: {
         ...styles.tipCard,
         backgroundColor: colors.card,
+        maxWidth: '100%',
+        padding: isMobile ? SPACING.xl : SPACING.xxxl,
       },
       questionCard: {
         ...styles.questionCard,
         backgroundColor: colors.card,
+        maxWidth: '100%',
+        padding: isMobile ? SPACING.xl : SPACING.xxxl,
+      },
+      // Responsive heading for mobile web
+      heading: {
+        ...styles.heading,
+        fontSize: isMobile ? 20 : TYPOGRAPHY.fontSize['3xl'],
+        lineHeight: isMobile ? 28 : 40,
+        paddingHorizontal: isMobile ? 4 : 0,
+      },
+      // Responsive subheading
+      subheading: {
+        ...styles.subheading,
+        fontSize: isMobile ? 14 : TYPOGRAPHY.fontSize.lg,
+        lineHeight: isMobile ? 20 : 28,
+        paddingHorizontal: isMobile ? 4 : 0,
+      },
+      // Responsive buttons
+      primaryButton: {
+        ...styles.primaryButton,
+        paddingVertical: isMobile ? SPACING.md : SPACING.lg,
+        paddingHorizontal: isMobile ? SPACING.lg : SPACING.xxxl,
+      },
+      secondaryButton: {
+        ...styles.secondaryButton,
+        paddingVertical: isMobile ? SPACING.md : SPACING.lg,
+        paddingHorizontal: isMobile ? SPACING.lg : SPACING.xxxl,
+      },
+      outlineButton: {
+        ...styles.outlineButton,
+        paddingVertical: isMobile ? SPACING.md : SPACING.lg,
+        paddingHorizontal: isMobile ? SPACING.lg : SPACING.xxxl,
       },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [isMobile, isSmallMobile]
   );
 
   // Gradient colors
@@ -413,10 +450,10 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                 </View>
 
                 {/* Heading */}
-                <Text style={styles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
+                <Text style={dynamicStyles.heading}>Bestehen Sie Ihre KP & FSP{'\n'}Prüfung beim ersten Versuch</Text>
 
                 {/* Subheading */}
-                <Text style={styles.subheading}>
+                <Text style={dynamicStyles.subheading}>
                   Realistische Prüfungen • Persönliches Feedback • Relevante Inhalte
                 </Text>
 
@@ -430,7 +467,7 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                       colors={MEDICAL_COLORS.warmOrangeGradient}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={styles.primaryButton}
+                      style={dynamicStyles.primaryButton}
                     >
                       <Text style={styles.buttonText}>Simulation testen</Text>
                     </LinearGradient>
@@ -441,13 +478,13 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                       colors={MEDICAL_COLORS.warmYellowGradient}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      style={styles.secondaryButton}
+                      style={dynamicStyles.secondaryButton}
                     >
                       <Text style={styles.buttonText}>Abonnieren</Text>
                     </LinearGradient>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
+                  <TouchableOpacity style={dynamicStyles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
                     <Text style={styles.outlineButtonText}>Über KP Med</Text>
                   </TouchableOpacity>
                 </View>
@@ -1280,13 +1317,16 @@ const styles = StyleSheet.create({
   // Web Layout Styles
   webContainer: {
     maxWidth: 1200,
+    width: '100%',
     marginHorizontal: 'auto',
-    paddingHorizontal: SPACING.xxl,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xxl,
+    overflow: 'hidden',
   },
   webSlide: {
     marginBottom: SPACING.xxxl,
     width: '100%',
+    maxWidth: '100%',
   },
 
   // Carousel Indicators (Dots) - Mobile Only

@@ -191,10 +191,12 @@ export default function TrialStatusTimeline() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     marginBottom: 24,
     marginTop: 16,
     width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   // ============================================
   // TRIAL TIMELINE CARD STYLES
@@ -380,6 +382,8 @@ const styles = StyleSheet.create({
   subscriberCard: {
     borderRadius: 16,
     overflow: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
     ...Platform.select({
       web: {
         boxShadow: '0 4px 8px rgba(16, 185, 129, 0.2)',
@@ -395,10 +399,12 @@ const styles = StyleSheet.create({
   },
   subscriberGradient: {
     padding: 16,
+    width: '100%',
   },
   subscriberContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   subscriberIconContainer: {
     width: 40,
@@ -408,9 +414,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    flexShrink: 0,
   },
   subscriberTextContainer: {
     flex: 1,
+    minWidth: 0,
   },
   subscriberTitle: {
     fontSize: 16,
@@ -421,6 +429,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 2,
+    flexWrap: 'wrap',
   },
   // ============================================
   // EXPIRED STYLES
