@@ -119,11 +119,13 @@ function injectSeo() {
   // Fix language attribute
   distHtml = distHtml.replace(/<html\s+lang="en"/, '<html lang="de"');
 
-  // Remove existing title (Expo generates a basic one)
-  distHtml = distHtml.replace(/<title>[^<]*<\/title>/, '');
-
-  // Remove existing favicon link if any
+  // Remove existing tags that we're replacing (Expo generates these)
+  distHtml = distHtml.replace(/<title>[^<]*<\/title>/gi, '');
+  distHtml = distHtml.replace(/<meta\s+name="description"[^>]*>/gi, '');
+  distHtml = distHtml.replace(/<meta\s+name="keywords"[^>]*>/gi, '');
   distHtml = distHtml.replace(/<link\s+rel="shortcut icon"[^>]*>/gi, '');
+  distHtml = distHtml.replace(/<link\s+rel="canonical"[^>]*>/gi, '');
+  distHtml = distHtml.replace(/<meta\s+name="theme-color"[^>]*>/gi, '');
 
   // Find the </head> tag and inject SEO content before it
   const seoContent = '\n  <!-- SEO Tags (injected by scripts/inject-seo.js) -->\n  ' +
