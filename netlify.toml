@@ -105,24 +105,17 @@
 
 # ===========================================
 # LANDING PAGE PROXY
-# Serve the Next.js landing page at root
+# Serve the Next.js landing page at /land
 # ===========================================
 [[redirects]]
-  from = "/"
+  from = "/land"
   to = "https://kpmed-landing.netlify.app/"
   status = 200
-  force = true
 
 # Proxy Next.js static assets for landing page
 [[redirects]]
   from = "/_next/*"
   to = "https://kpmed-landing.netlify.app/_next/:splat"
-  status = 200
-
-# Landing page sections (hash links handled client-side, but direct access needs proxy)
-[[redirects]]
-  from = "/#*"
-  to = "https://kpmed-landing.netlify.app/#:splat"
   status = 200
 
 # ===========================================
