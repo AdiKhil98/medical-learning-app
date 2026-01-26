@@ -103,6 +103,31 @@
   [headers.values]
     Cache-Control = "public, max-age=0, stale-while-revalidate=86400"
 
+# ===========================================
+# LANDING PAGE PROXY
+# Serve the Next.js landing page at root
+# ===========================================
+[[redirects]]
+  from = "/"
+  to = "https://kpmed-landing.netlify.app/"
+  status = 200
+  force = true
+
+# Proxy Next.js static assets for landing page
+[[redirects]]
+  from = "/_next/*"
+  to = "https://kpmed-landing.netlify.app/_next/:splat"
+  status = 200
+
+# Landing page sections (hash links handled client-side, but direct access needs proxy)
+[[redirects]]
+  from = "/#*"
+  to = "https://kpmed-landing.netlify.app/#:splat"
+  status = 200
+
+# ===========================================
+# API ROUTES
+# ===========================================
 [[redirects]]
   from = "/api/webhook/lemonsqueezy"
   to = "/.netlify/functions/lemonsqueezy"
@@ -128,6 +153,76 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# ===========================================
+# APP ROUTES
+# All app routes serve the React SPA
+# ===========================================
+[[redirects]]
+  from = "/auth/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/app/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/bibliothek/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/simulation/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/progress"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/subscription"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/feedback"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/updates"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/impressum"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/haftung"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/datenschutz-einstellungen"
+  to = "/index.html"
+  status = 200
+
+# Catch-all for any other app routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
