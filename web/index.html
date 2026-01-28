@@ -154,58 +154,53 @@
 </head>
 <body>
   <div id="root">
-    <!-- SEO Content: Visible to crawlers, replaced by React when app loads -->
-    <div style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a;">
-      <header style="text-align: center; margin-bottom: 40px;">
-        <h1 style="font-size: 2rem; color: #B8860B; margin-bottom: 16px;">
-          KP Med - Kenntnisprüfung & FSP Vorbereitung für Ärzte
-        </h1>
-        <p style="font-size: 1.1rem; color: #555; line-height: 1.6;">
-          Professionelle Prüfungsvorbereitung für internationale Ärzte in Deutschland.
-          Bestehen Sie Ihre Fachsprachprüfung (FSP) und Kenntnisprüfung (KP) mit Vertrauen.
+    <!-- Loading Screen: What users see while app loads -->
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+      <div style="text-align: center;">
+        <img src="/logo.jpg" width="100" height="100" alt="KP Med" style="border-radius: 20px; margin-bottom: 24px;" />
+        <p style="color: #D4A574; font-family: system-ui, -apple-system, sans-serif; font-size: 1.1rem; font-weight: 500;">
+          Laden...
         </p>
+      </div>
+    </div>
+
+    <!-- SEO Content: Hidden from users, visible to search engine crawlers -->
+    <div style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; overflow: hidden;" aria-hidden="true">
+      <header>
+        <h1>KP Med - Kenntnisprüfung & FSP Vorbereitung für Ärzte</h1>
+        <p>Professionelle Prüfungsvorbereitung für internationale Ärzte in Deutschland. Bestehen Sie Ihre Fachsprachprüfung (FSP) und Kenntnisprüfung (KP) mit Vertrauen.</p>
       </header>
 
       <main>
-        <section style="margin-bottom: 32px;">
-          <h2 style="font-size: 1.4rem; color: #333; margin-bottom: 12px;">Warum KP Med?</h2>
-          <ul style="line-height: 1.8; color: #444;">
-            <li><strong>KI-gestützte Simulationen</strong> - Realistische FSP und KP Prüfungssimulationen</li>
-            <li><strong>Umfassende Bibliothek</strong> - Über 257 medizinische Themen und Fachbegriffe</li>
-            <li><strong>Audio-Lernmaterial</strong> - Lernen Sie unterwegs mit Hörübungen</li>
-            <li><strong>Personalisiertes Feedback</strong> - Detaillierte Auswertungen Ihrer Leistung</li>
+        <section>
+          <h2>Warum KP Med?</h2>
+          <ul>
+            <li>KI-gestützte Simulationen - Realistische FSP und KP Prüfungssimulationen</li>
+            <li>Umfassende Bibliothek - Über 257 medizinische Themen und Fachbegriffe</li>
+            <li>Audio-Lernmaterial - Lernen Sie unterwegs mit Hörübungen</li>
+            <li>Personalisiertes Feedback - Detaillierte Auswertungen Ihrer Leistung</li>
           </ul>
         </section>
 
-        <section style="margin-bottom: 32px;">
-          <h2 style="font-size: 1.4rem; color: #333; margin-bottom: 12px;">Unsere Kurse</h2>
-          <p style="line-height: 1.6; color: #444;">
-            <strong>Fachsprachprüfung (FSP):</strong> Arzt-Patienten-Kommunikation, Anamnese, Arztbrief und medizinische Fachbegriffe.
-          </p>
-          <p style="line-height: 1.6; color: #444;">
-            <strong>Kenntnisprüfung (KP):</strong> Medizinisches Fachwissen, Fallbeispiele und praktische Prüfungsvorbereitung.
-          </p>
+        <section>
+          <h2>Unsere Kurse</h2>
+          <p>Fachsprachprüfung (FSP): Arzt-Patienten-Kommunikation, Anamnese, Arztbrief und medizinische Fachbegriffe.</p>
+          <p>Kenntnisprüfung (KP): Medizinisches Fachwissen, Fallbeispiele und praktische Prüfungsvorbereitung.</p>
         </section>
 
-        <nav style="text-align: center; margin-top: 40px;">
-          <a href="/land" style="display: inline-block; padding: 12px 24px; background: #D4A574; color: white; text-decoration: none; border-radius: 8px; margin: 8px; font-weight: 600;">
-            Mehr erfahren
-          </a>
-          <a href="/auth/register" style="display: inline-block; padding: 12px 24px; background: #1a1a1a; color: white; text-decoration: none; border-radius: 8px; margin: 8px; font-weight: 600;">
-            Kostenlos starten
-          </a>
-          <a href="/auth/login" style="display: inline-block; padding: 12px 24px; border: 2px solid #D4A574; color: #D4A574; text-decoration: none; border-radius: 8px; margin: 8px; font-weight: 600;">
-            Anmelden
-          </a>
+        <nav>
+          <a href="/land">Mehr erfahren</a>
+          <a href="/auth/register">Kostenlos starten</a>
+          <a href="/auth/login">Anmelden</a>
         </nav>
       </main>
 
-      <footer style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 0.9rem;">
+      <footer>
         <p>Über 1.000 Ärzte vertrauen KP Med | Made in Germany</p>
-        <nav style="margin-top: 12px;">
-          <a href="/impressum" style="color: #888; margin: 0 12px;">Impressum</a>
-          <a href="/datenschutz-einstellungen" style="color: #888; margin: 0 12px;">Datenschutz</a>
-          <a href="/haftung" style="color: #888; margin: 0 12px;">Haftung</a>
+        <nav>
+          <a href="/impressum">Impressum</a>
+          <a href="/datenschutz-einstellungen">Datenschutz</a>
+          <a href="/haftung">Haftung</a>
         </nav>
       </footer>
     </div>
