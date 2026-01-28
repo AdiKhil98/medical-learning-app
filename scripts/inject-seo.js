@@ -133,15 +133,28 @@ function injectSeo() {
 
   distHtml = distHtml.replace('</head>', seoContent + '</head>');
 
+  // Extract and inject body SEO content (content inside <div id="root">)
+  const rootContentMatch = webHtml.match(/<div id="root">([\s\S]*?)<\/div>\s*<\/body>/i);
+  if (rootContentMatch && rootContentMatch[1].trim()) {
+    const rootContent = rootContentMatch[1];
+    // Replace empty <div id="root"></div> with our SEO content
+    distHtml = distHtml.replace(
+      /<div id="root"><\/div>/i,
+      `<div id="root">${rootContent}</div>`
+    );
+    console.log('\n📄 Body SEO content injected (H1, paragraphs, links)');
+  }
+
   // Write the updated file
   fs.writeFileSync(DIST_INDEX, distHtml);
 
-  console.log('\n✅ SEO tags injected successfully!');
+  console.log('\n✅ SEO injection complete!');
   console.log(`   - Language: de`);
   console.log(`   - Title, description, keywords: ✓`);
   console.log(`   - Structured data (JSON-LD): ✓`);
   console.log(`   - Google Analytics: ✓`);
   console.log(`   - Favicons & manifest: ✓`);
+  console.log(`   - Body content (H1, links): ✓`);
 }
 
 // Run
