@@ -23,6 +23,7 @@ import {
   FileText,
   Info,
   LogOut,
+  Link2,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,10 +94,12 @@ export default function ProfileScreen() {
   const [fontSize, setFontSize] = useState<'Klein' | 'Mittel' | 'Groß'>('Mittel');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('Kostenlos');
   const [loading, setLoading] = useState(true);
+  const [isAffiliate, setIsAffiliate] = useState(false);
 
   // Load user preferences on mount
   useEffect(() => {
     loadUserPreferences();
+    checkAffiliateStatus();
   }, [user]);
 
   const loadUserPreferences = async () => {
@@ -138,6 +141,24 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkAffiliateStatus = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase.rpc('is_affiliate');
+      if (!error && data === true) {
+        setIsAffiliate(true);
+      }
+    } catch (error) {
+      logger.error('Error checking affiliate status:', error);
+    }
+  };
+
+  const handleAffiliateDashboard = () => {
+    setTimeout(() => {
+      router.push('/affiliate-dashboard' as any);
+    }, 0);
   };
 
   const mapSubscriptionTier = (quotaData: any): string => {
@@ -347,6 +368,15 @@ export default function ProfileScreen() {
                   subtitle={subscriptionTier}
                   onPress={handleSubscription}
                 />
+                {isAffiliate && (
+                  <SettingsItem
+                    icon={<Link2 size={24} color="#10B981" />}
+                    iconBg="rgba(16, 185, 129, 0.15)"
+                    title="Referral Dashboard"
+                    subtitle="Deine Empfehlungen & Provisionen"
+                    onPress={handleAffiliateDashboard}
+                  />
+                )}
               </View>
             </View>
 
