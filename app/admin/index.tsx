@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Lightbulb,
   CreditCard,
+  Link2,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 
@@ -94,6 +95,13 @@ export default function AdminDashboard() {
       route: '/admin/daily-tips',
       description: 'Tägliche Tipps verwalten',
       color: '#F59E0B',
+    },
+    {
+      title: 'Affiliates',
+      icon: Link2,
+      route: '/admin/affiliates',
+      description: 'Affiliate-Partner verwalten',
+      color: '#10B981',
     },
   ];
 

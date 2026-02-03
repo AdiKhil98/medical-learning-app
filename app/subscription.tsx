@@ -40,13 +40,17 @@ const PLAN_TO_VARIANT: Record<string, number> = {
 };
 
 // Checkout URL builder
-const getCheckoutUrl = (planId: string, userEmail: string): string => {
+const getCheckoutUrl = (planId: string, userEmail: string, referredBy?: string | null): string => {
   const encodedEmail = encodeURIComponent(userEmail || '');
-  const checkoutUrls: Record<string, string> = {
+  const baseUrls: Record<string, string> = {
     monthly: `https://checkout.kpmed.de/checkout/buy/3bf90308-6ffb-45f8-8116-9c8d825bf543?checkout[email]=${encodedEmail}`,
     quarterly: `https://checkout.kpmed.de/checkout/buy/815e4fe6-b774-4a6e-bb06-70a7b40b0d76?checkout[email]=${encodedEmail}`,
   };
-  return checkoutUrls[planId] || '';
+  let url = baseUrls[planId] || '';
+  if (url && referredBy) {
+    url += `&checkout[custom][referred_by]=${encodeURIComponent(referredBy)}`;
+  }
+  return url;
 };
 
 export default function SubscriptionPage() {
@@ -326,7 +330,7 @@ export default function SubscriptionPage() {
 
         setLoadingMessage('Weiterleitung zum Checkout...');
 
-        const checkoutUrl = getCheckoutUrl(planId, user?.email || '');
+        const checkoutUrl = getCheckoutUrl(planId, user?.email || '', user?.referred_by);
 
         console.log('🔗 CHECKOUT URL GENERATED:', checkoutUrl);
         console.log('📧 USER EMAIL FOR CHECKOUT:', user?.email);

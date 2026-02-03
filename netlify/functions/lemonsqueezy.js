@@ -712,6 +712,32 @@ exports.handler = async (event, context) => {
         // ✨ ATOMIC: Process subscription + quota in single transaction
         const createResult = await processSubscriptionAtomically(userId, subData, eventType);
 
+        // 💰 AFFILIATE: Check for referral and create commission
+        try {
+          const customData = eventData.meta?.custom_data || eventData.data?.attributes?.first_order_item?.custom_data;
+          const referredBy = customData?.referred_by || user?.referred_by;
+          if (referredBy) {
+            const saleAmount = parseFloat(subscriptionData?.first_subscription_item?.price || subscriptionData?.subtotal || 0) / 100;
+            if (saleAmount > 0) {
+              console.log(`💰 Referral detected: ${referredBy}, sale: €${saleAmount}`);
+              const { data: commResult, error: commError } = await supabase.rpc('create_referral_commission', {
+                p_referred_user_id: userId,
+                p_sale_amount: saleAmount,
+                p_lemonsqueezy_order_id: String(subscriptionId),
+              });
+              if (commError) {
+                console.error('❌ Failed to create referral commission:', commError);
+              } else if (commResult?.success) {
+                console.log(`✅ Referral commission created: €${commResult.commission_amount} for affiliate`);
+              } else {
+                console.log('ℹ️ No commission created:', commResult?.message);
+              }
+            }
+          }
+        } catch (refErr) {
+          console.error('❌ Error processing referral commission:', refErr);
+        }
+
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
           success: createResult.success,
           tier: createResult.new_tier,
@@ -779,6 +805,28 @@ exports.handler = async (event, context) => {
 
         // ✨ ATOMIC: Process subscription + quota in single transaction
         const updateResult = await processSubscriptionAtomically(userId, subData, eventType);
+
+        // 💰 AFFILIATE: Create commission on renewal if user was referred
+        try {
+          if (user?.referred_by) {
+            const renewalAmount = parseFloat(subscriptionData?.first_subscription_item?.price || subscriptionData?.subtotal || 0) / 100;
+            if (renewalAmount > 0) {
+              console.log(`💰 Renewal referral commission check: ${user.referred_by}, amount: €${renewalAmount}`);
+              const { data: commResult, error: commError } = await supabase.rpc('create_referral_commission', {
+                p_referred_user_id: userId,
+                p_sale_amount: renewalAmount,
+                p_lemonsqueezy_order_id: `${subscriptionId}-renewal-${new Date().toISOString().split('T')[0]}`,
+              });
+              if (commError) {
+                console.error('❌ Failed to create renewal commission:', commError);
+              } else if (commResult?.success) {
+                console.log(`✅ Renewal commission created: €${commResult.commission_amount}`);
+              }
+            }
+          }
+        } catch (refErr) {
+          console.error('❌ Error processing renewal commission:', refErr);
+        }
 
         await logWebhookEvent(eventType, eventData, subscriptionId, userId, 'processed', null, {
           success: updateResult.success,

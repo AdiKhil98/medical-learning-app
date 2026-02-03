@@ -5,6 +5,7 @@ import { Session } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, SecureLogger, SessionTimeoutManager, RateLimiter } from '@/lib/security';
 import { AuditLogger } from '@/lib/auditLogger';
 import { analytics } from '@/utils/analytics';
+import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralTracking';
 
 type AuthContextType = {
   session: Session | null;
@@ -221,6 +222,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (updateError) {
           SecureLogger.log('Notification update failed', updateError);
+        }
+      }
+
+      // Register referral if user came from a referral link
+      if (!existingUser && Platform.OS === 'web') {
+        try {
+          const refCode = getStoredReferralCode();
+          if (refCode) {
+            SecureLogger.log('Registering referral for new user', { refCode });
+            const { data: refResult, error: refError } = await supabase.rpc('register_referral', {
+              p_referred_user_id: authUser.id,
+              p_affiliate_code: refCode,
+            });
+            if (refError) {
+              SecureLogger.error('Failed to register referral', refError);
+            } else if (refResult?.success) {
+              SecureLogger.log('Referral registered successfully');
+              clearStoredReferralCode();
+            } else {
+              SecureLogger.warn('Referral not registered:', refResult?.message);
+            }
+          }
+        } catch (refErr) {
+          SecureLogger.error('Error registering referral', refErr);
         }
       }
 

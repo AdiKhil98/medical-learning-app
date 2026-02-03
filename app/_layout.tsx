@@ -12,11 +12,19 @@ import { runGlobalVoiceflowCleanup } from '@/utils/globalVoiceflowCleanup';
 import { preloadCriticalRoutes, trackNavigation } from '@/utils/routePreloader';
 import { registerServiceWorker, checkForAppUpdate, skipWaitingAndReload } from '@/utils/serviceWorkerRegistration';
 import { SessionTimeoutManager } from '@/lib/security';
+import { handleReferralParam } from '@/lib/referralTracking';
 
 export default function RootLayout() {
   logger.info('RootLayout rendering...');
   const pathname = usePathname();
   const previousPathRef = useRef<string | null>(null);
+
+  // Handle referral tracking (?ref= parameter)
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      handleReferralParam();
+    }
+  }, []);
 
   // Preload critical routes on app init
   useEffect(() => {

@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input';
 import PasswordStrengthIndicator from '@/components/ui/PasswordStrengthIndicator';
 import { RegistrationStatusBanner } from '@/components/RegistrationStatusBanner';
 import { checkRegistrationStatus, joinWaitlist } from '@/lib/registrationLimit';
+import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralTracking';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
