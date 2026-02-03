@@ -97,7 +97,7 @@ export default function AffiliateDashboard() {
 
   const copyLink = () => {
     if (!stats) return;
-    const link = `https://kpmed.de/land?ref=${stats.affiliate.code}`;
+    const link = `https://kpmed.de/auth/register?ref=${stats.affiliate.code}`;
     if (Platform.OS === 'web' && navigator.clipboard) {
       navigator.clipboard.writeText(link);
       showAlert('Kopiert', link);
@@ -190,7 +190,7 @@ export default function AffiliateDashboard() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.linkLabel, { color: colors.textSecondary }]}>Dein Referral-Link</Text>
             <Text style={[styles.linkText, { color: colors.text }]}>
-              kpmed.de/land?ref={affiliate.code}
+              kpmed.de/auth/register?ref={affiliate.code}
             </Text>
           </View>
           <Copy size={20} color="#3B82F6" />

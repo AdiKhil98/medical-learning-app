@@ -220,7 +220,7 @@ export default function AffiliateManagement() {
         return;
       }
 
-      showAlert('Erfolg', `Affiliate "${newName}" erstellt.\n\nLink: kpmed.de/land?ref=${code.toLowerCase()}`);
+      showAlert('Erfolg', `Affiliate "${newName}" erstellt.\n\nLink: kpmed.de/auth/register?ref=${code.toLowerCase()}`);
       setShowAddModal(false);
       setNewName('');
       setNewEmail('');
@@ -302,7 +302,7 @@ export default function AffiliateManagement() {
   };
 
   const copyLink = (code: string) => {
-    const link = `https://kpmed.de/land?ref=${code}`;
+    const link = `https://kpmed.de/auth/register?ref=${code}`;
     if (Platform.OS === 'web' && navigator.clipboard) {
       navigator.clipboard.writeText(link);
       showAlert('Kopiert', link);
@@ -456,7 +456,7 @@ export default function AffiliateManagement() {
                 {/* Code & Link */}
                 <TouchableOpacity style={styles.codeRow} onPress={() => copyLink(affiliate.affiliate_code)}>
                   <Text style={[styles.codeText, { color: colors.textSecondary }]}>
-                    kpmed.de/land?ref={affiliate.affiliate_code}
+                    kpmed.de/auth/register?ref={affiliate.affiliate_code}
                   </Text>
                   <Copy size={16} color="#3B82F6" />
                 </TouchableOpacity>
