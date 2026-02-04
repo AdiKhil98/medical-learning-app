@@ -344,9 +344,13 @@ function FSPSimulationScreen() {
           limit: accessCheck.simulationLimit,
         });
 
-        if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-          console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
-          setInitializationError('No simulations remaining');
+        if (!accessCheck.canUseSimulation) {
+          console.log(
+            `🚫 [${timestamp}] Blocking Voiceflow initialization - access denied (reason: ${accessCheck.message})`
+          );
+          // Set lock state directly so QuotaExhaustedCard shows immediately
+          // (avoids race with lock monitor useEffect)
+          setIsSimulationLocked(true);
           moduleInitialized = false; // Reset module guard to allow retry after upgrade
           hasInitializedRef.current = false; // Reset guard to allow retry after upgrade
           return; // Do NOT initialize widget

@@ -403,10 +403,14 @@ function KPSimulationScreen() {
           limit: accessCheck.simulationLimit,
         });
 
-        if (!accessCheck.canUseSimulation || accessCheck.remainingSimulations === 0) {
-          console.log(`🚫 [${timestamp}] Blocking Voiceflow initialization - no simulations remaining`);
-          addDebugLog('BLOCKED: No simulations remaining');
-          setInitializationError('No simulations remaining');
+        if (!accessCheck.canUseSimulation) {
+          console.log(
+            `🚫 [${timestamp}] Blocking Voiceflow initialization - access denied (reason: ${accessCheck.message})`
+          );
+          addDebugLog(`BLOCKED: ${accessCheck.message || 'Access denied'}`);
+          // Set lock state directly so QuotaExhaustedCard shows immediately
+          // (avoids race with lock monitor useEffect)
+          setIsSimulationLocked(true);
           moduleInitialized = false; // Reset module guard to allow retry after upgrade
           hasInitializedRef.current = false; // Reset ref guard to allow retry after upgrade
           return; // Do NOT initialize widget

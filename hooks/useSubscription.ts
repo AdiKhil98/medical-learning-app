@@ -76,9 +76,9 @@ export const useSubscription = (userId: string | undefined) => {
       // Parse the response from can_start_simulation
       const canStart = data.can_start;
       const reason = data.reason;
-      const simRemaining = data.simulations_remaining || 0;
-      const simUsed = data.simulations_used || 0;
-      const simTotal = data.total_simulations || 0;
+      const simRemaining = data.simulations_remaining ?? 0;
+      const simUsed = data.simulations_used ?? 0;
+      const simTotal = data.total_simulations ?? 0;
       const dbMessage = data.message || '';
 
       // Trial-specific fields
