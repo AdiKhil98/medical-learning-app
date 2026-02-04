@@ -1,11 +1,15 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { validatePassword, validateEmail, SecureLogger, SessionTimeoutManager, RateLimiter } from '@/lib/security';
 import { AuditLogger } from '@/lib/auditLogger';
 import { analytics } from '@/utils/analytics';
 import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralTracking';
+
+// Storage key for pending verification email
+const PENDING_VERIFICATION_EMAIL_KEY = 'pending_verification_email';
 
 type AuthContextType = {
   session: Session | null;
@@ -328,7 +332,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         SecureLogger.warn('Sign in failed');
         // Record failed attempt (client-side)
         const failedAttemptStartTime = performance.now();
-        await RateLimiter.recordFailedAttempt(email);
+        const rateLimitResult = await RateLimiter.recordFailedAttempt(email);
 
         // SECURITY FIX: Record failed attempt on server
         const serverFailedStartTime = performance.now();
@@ -346,7 +350,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Log failed login audit event
         const auditStartTime = performance.now();
         await AuditLogger.logAuthEvent('login_failed', undefined, { email, error: error.message });
-        throw error;
+
+        // Enhance error with rate limit info
+        const enhancedError: any = new Error(error.message);
+        enhancedError.attemptsRemaining = rateLimitResult.attemptsRemaining;
+        enhancedError.isLocked = rateLimitResult.isLocked;
+        if (rateLimitResult.lockoutEndsAt) {
+          enhancedError.lockoutEndsAt = rateLimitResult.lockoutEndsAt;
+        }
+        throw enhancedError;
       }
 
       if (data.user) {
@@ -356,6 +368,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         analytics.identifyUser(data.user.id, {
           email: data.user.email,
         });
+
+        // Clear stored verification email (if any)
+        try {
+          await AsyncStorage.removeItem(PENDING_VERIFICATION_EMAIL_KEY);
+        } catch (storageError) {
+          SecureLogger.warn('Failed to clear pending verification email', storageError);
+        }
 
         // Clear failed attempts on success (client-side)
         const clearAttemptsStartTime = performance.now();
@@ -452,6 +471,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if user needs email confirmation
       if (authData.user && !authData.user.email_confirmed_at) {
         SecureLogger.log('Sign up successful - email verification required');
+        // Store email for later use (e.g., resending verification)
+        try {
+          await AsyncStorage.setItem(PENDING_VERIFICATION_EMAIL_KEY, email.toLowerCase().trim());
+        } catch (storageError) {
+          SecureLogger.warn('Failed to store pending verification email', storageError);
+        }
         // Return a special status to indicate email verification is needed
         throw new Error('VERIFICATION_REQUIRED');
       }

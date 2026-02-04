@@ -9,36 +9,37 @@ export interface PasswordValidation {
 
 export const validatePassword = (password: string): PasswordValidation => {
   const errors: string[] = [];
-  
+
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long');
   }
-  
+
   if (!/[A-Z]/.test(password)) {
     errors.push('Password must contain at least one uppercase letter');
   }
-  
+
   if (!/[a-z]/.test(password)) {
     errors.push('Password must contain at least one lowercase letter');
   }
-  
+
   if (!/\d/.test(password)) {
     errors.push('Password must contain at least one number');
   }
-  
+
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     errors.push('Password must contain at least one special character');
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };
 
 // Email validation utility
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   return emailRegex.test(email.toLowerCase());
 };
 
@@ -61,7 +62,7 @@ export class SecureLogger {
     /medical/i,
     /patient/i,
     /diagnosis/i,
-    /medication/i
+    /medication/i,
   ];
 
   private static sanitizeData(data: any): any {
@@ -74,40 +75,40 @@ export class SecureLogger {
       }
       return data;
     }
-    
+
     if (Array.isArray(data)) {
-      return data.map(item => this.sanitizeData(item));
+      return data.map((item) => this.sanitizeData(item));
     }
-    
+
     if (data && typeof data === 'object') {
       const sanitized: any = {};
       for (const [key, value] of Object.entries(data)) {
-        const isSensitiveKey = this.sensitivePatterns.some(pattern => pattern.test(key));
+        const isSensitiveKey = this.sensitivePatterns.some((pattern) => pattern.test(key));
         sanitized[key] = isSensitiveKey ? '[REDACTED]' : this.sanitizeData(value);
       }
       return sanitized;
     }
-    
+
     return data;
   }
 
   static log(message: string, ...args: any[]): void {
     if (__DEV__) {
-      const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
+      const sanitizedArgs = args.map((arg) => this.sanitizeData(arg));
       logger.info(`[SECURE LOG] ${message}`, ...sanitizedArgs);
     }
   }
 
   static warn(message: string, ...args: any[]): void {
     if (__DEV__) {
-      const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
+      const sanitizedArgs = args.map((arg) => this.sanitizeData(arg));
       logger.warn(`[SECURE WARN] ${message}`, ...sanitizedArgs);
     }
   }
 
   static error(message: string, ...args: any[]): void {
     if (__DEV__) {
-      const sanitizedArgs = args.map(arg => this.sanitizeData(arg));
+      const sanitizedArgs = args.map((arg) => this.sanitizeData(arg));
       logger.error(`[SECURE ERROR] ${message}`, ...sanitizedArgs);
     }
   }
@@ -118,22 +119,19 @@ export class SessionTimeoutManager {
   private static readonly TIMEOUT_DURATION = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
   private static readonly WARNING_DURATION = 5 * 60 * 1000; // 5 minutes warning
   private static readonly STORAGE_KEY = 'last_activity_timestamp';
-  
+
   private static timeoutId: NodeJS.Timeout | null = null;
   private static warningTimeoutId: NodeJS.Timeout | null = null;
   private static onWarningCallback: (() => void) | null = null;
   private static onTimeoutCallback: (() => void) | null = null;
 
-  static async init(
-    onWarning: () => void,
-    onTimeout: () => void
-  ): Promise<void> {
+  static async init(onWarning: () => void, onTimeout: () => void): Promise<void> {
     this.onWarningCallback = onWarning;
     this.onTimeoutCallback = onTimeout;
-    
+
     await this.updateLastActivity();
     this.startTimer();
-    
+
     SecureLogger.log('Session timeout manager initialized');
   }
 
@@ -191,15 +189,15 @@ export class SessionTimeoutManager {
     try {
       const lastActivity = await AsyncStorage.getItem(this.STORAGE_KEY);
       if (!lastActivity) return false;
-      
+
       const timeSinceLastActivity = Date.now() - parseInt(lastActivity);
       const isValid = timeSinceLastActivity < this.TIMEOUT_DURATION;
-      
+
       if (!isValid) {
         SecureLogger.warn('Session expired based on last activity');
         await this.handleTimeout();
       }
-      
+
       return isValid;
     } catch (error) {
       SecureLogger.error('Error checking session validity', error);
@@ -229,91 +227,107 @@ export class RateLimiter {
     try {
       const key = `${this.STORAGE_PREFIX}${identifier}`;
       const data = await AsyncStorage.getItem(key);
-      
+
       if (!data) {
         return {
           allowed: true,
-          attemptsRemaining: this.MAX_ATTEMPTS
+          attemptsRemaining: this.MAX_ATTEMPTS,
         };
       }
-      
+
       const { attempts, firstAttemptTime, lockoutEndsAt } = JSON.parse(data);
       const now = Date.now();
-      
+
       // Check if lockout period has expired
       if (lockoutEndsAt && now < lockoutEndsAt) {
         return {
           allowed: false,
           attemptsRemaining: 0,
-          lockoutEndsAt
+          lockoutEndsAt,
         };
       }
-      
+
       // Reset if lockout has expired
       if (lockoutEndsAt && now >= lockoutEndsAt) {
         await AsyncStorage.removeItem(key);
         return {
           allowed: true,
-          attemptsRemaining: this.MAX_ATTEMPTS
+          attemptsRemaining: this.MAX_ATTEMPTS,
         };
       }
-      
+
       // Check if we're within the rate limit window (1 hour)
       const windowExpired = now - firstAttemptTime > 60 * 60 * 1000;
       if (windowExpired) {
         await AsyncStorage.removeItem(key);
         return {
           allowed: true,
-          attemptsRemaining: this.MAX_ATTEMPTS
+          attemptsRemaining: this.MAX_ATTEMPTS,
         };
       }
-      
+
       const remaining = this.MAX_ATTEMPTS - attempts;
       return {
         allowed: remaining > 0,
-        attemptsRemaining: Math.max(0, remaining)
+        attemptsRemaining: Math.max(0, remaining),
       };
-      
     } catch (error) {
       SecureLogger.error('Error checking rate limit', error);
       // Fail open - allow the attempt if we can't check
       return {
         allowed: true,
-        attemptsRemaining: this.MAX_ATTEMPTS
+        attemptsRemaining: this.MAX_ATTEMPTS,
       };
     }
   }
 
-  static async recordFailedAttempt(identifier: string): Promise<void> {
+  static async recordFailedAttempt(identifier: string): Promise<{
+    attemptsRemaining: number;
+    isLocked: boolean;
+    lockoutEndsAt?: number;
+  }> {
     try {
       const key = `${this.STORAGE_PREFIX}${identifier}`;
       const existing = await AsyncStorage.getItem(key);
       const now = Date.now();
-      
+
       let attempts = 1;
       let firstAttemptTime = now;
-      
+
       if (existing) {
         const data = JSON.parse(existing);
         attempts = data.attempts + 1;
         firstAttemptTime = data.firstAttemptTime;
       }
-      
+
       const newData: any = {
         attempts,
-        firstAttemptTime
+        firstAttemptTime,
       };
-      
+
+      const attemptsRemaining = Math.max(0, this.MAX_ATTEMPTS - attempts);
+      let isLocked = false;
+
       // If max attempts reached, set lockout
       if (attempts >= this.MAX_ATTEMPTS) {
         newData.lockoutEndsAt = now + this.LOCKOUT_DURATION;
+        isLocked = true;
         SecureLogger.warn(`Rate limit exceeded for ${identifier}, lockout until ${new Date(newData.lockoutEndsAt)}`);
       }
-      
+
       await AsyncStorage.setItem(key, JSON.stringify(newData));
-      
+
+      return {
+        attemptsRemaining,
+        isLocked,
+        lockoutEndsAt: newData.lockoutEndsAt,
+      };
     } catch (error) {
       SecureLogger.error('Error recording failed attempt', error);
+      return {
+        attemptsRemaining: this.MAX_ATTEMPTS,
+        isLocked: false,
+      };
     }
   }
 
@@ -327,21 +341,23 @@ export class RateLimiter {
     }
   }
 
-  static async getAllLockouts(): Promise<Array<{
-    identifier: string;
-    lockoutEndsAt: number;
-    attempts: number;
-  }>> {
+  static async getAllLockouts(): Promise<
+    {
+      identifier: string;
+      lockoutEndsAt: number;
+      attempts: number;
+    }[]
+  > {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const rateLimitKeys = keys.filter(key => key.startsWith(this.STORAGE_PREFIX));
-      
-      const lockouts: Array<{
+      const rateLimitKeys = keys.filter((key) => key.startsWith(this.STORAGE_PREFIX));
+
+      const lockouts: {
         identifier: string;
         lockoutEndsAt: number;
         attempts: number;
-      }> = [];
-      
+      }[] = [];
+
       for (const key of rateLimitKeys) {
         const data = await AsyncStorage.getItem(key);
         if (data) {
@@ -350,12 +366,12 @@ export class RateLimiter {
             lockouts.push({
               identifier: key.replace(this.STORAGE_PREFIX, ''),
               lockoutEndsAt: parsed.lockoutEndsAt,
-              attempts: parsed.attempts
+              attempts: parsed.attempts,
             });
           }
         }
       }
-      
+
       return lockouts;
     } catch (error) {
       SecureLogger.error('Error getting lockouts', error);
@@ -370,7 +386,7 @@ export const SecurityUtils = {
   validateEmail,
   SecureLogger,
   SessionTimeoutManager,
-  RateLimiter
+  RateLimiter,
 };
 
 export default SecurityUtils;

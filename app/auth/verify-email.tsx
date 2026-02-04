@@ -3,16 +3,41 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Ale
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, RefreshCw, BriefcaseMedical } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import Logo from '@/components/ui/Logo';
+
+// Storage key for pending verification email (must match AuthContext)
+const PENDING_VERIFICATION_EMAIL_KEY = 'pending_verification_email';
 
 export default function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [countdown, setCountdown] = useState(3);
+  const [storedEmail, setStoredEmail] = useState<string | null>(null);
   const router = useRouter();
   const params = useLocalSearchParams();
+
+  // Get the email from params or AsyncStorage
+  const displayEmail = (params.email as string) || storedEmail;
+
+  // Load email from AsyncStorage if not in params
+  useEffect(() => {
+    const loadStoredEmail = async () => {
+      if (!params.email) {
+        try {
+          const email = await AsyncStorage.getItem(PENDING_VERIFICATION_EMAIL_KEY);
+          if (email) {
+            setStoredEmail(email);
+          }
+        } catch (error) {
+          console.warn('Failed to load stored email:', error);
+        }
+      }
+    };
+    loadStoredEmail();
+  }, [params.email]);
 
   useEffect(() => {
     // Listen for auth state changes to handle email verification
@@ -20,9 +45,16 @@ export default function VerifyEmail() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
         setVerificationStatus('success');
+
+        // Clear stored verification email
+        try {
+          await AsyncStorage.removeItem(PENDING_VERIFICATION_EMAIL_KEY);
+        } catch (error) {
+          console.warn('Failed to clear stored email:', error);
+        }
 
         // Start countdown timer
         countdownTimer = setInterval(() => {
@@ -42,10 +74,10 @@ export default function VerifyEmail() {
   }, [router]);
 
   const handleResendVerification = async () => {
-    if (!params.email) {
+    if (!displayEmail) {
       Alert.alert(
         'Fehler',
-        'Keine E-Mail-Adresse gefunden. Bitte gehen Sie zurück und versuchen Sie sich erneut zu registrieren.'
+        'Keine E-Mail-Adresse gefunden. Bitte gehen Sie zurück zur Anmeldung und geben Sie Ihre E-Mail-Adresse ein.'
       );
       return;
     }
@@ -54,7 +86,7 @@ export default function VerifyEmail() {
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: params.email as string,
+        email: displayEmail,
         options: {
           emailRedirectTo:
             Platform.OS === 'web'
@@ -67,9 +99,19 @@ export default function VerifyEmail() {
         throw error;
       }
 
-      Alert.alert('E-Mail gesendet', 'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet.');
+      Alert.alert(
+        'E-Mail gesendet',
+        'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet. Bitte überprüfen Sie auch Ihren Spam-Ordner.'
+      );
     } catch (error: any) {
-      Alert.alert('Fehler', error.message || 'Fehler beim erneuten Senden der Bestätigungs-E-Mail');
+      if (error.message?.includes('rate limit')) {
+        Alert.alert(
+          'Bitte warten',
+          'Sie haben zu viele E-Mails angefordert. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.'
+        );
+      } else {
+        Alert.alert('Fehler', error.message || 'Fehler beim erneuten Senden der Bestätigungs-E-Mail');
+      }
     } finally {
       setResendLoading(false);
     }
@@ -125,9 +167,16 @@ export default function VerifyEmail() {
                   {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
                 </Text>
                 <Text style={styles.subtitle}>Wir haben einen Bestätigungslink gesendet an:</Text>
-                <View style={styles.emailContainer}>
-                  <Text style={styles.email}>{params.email}</Text>
-                </View>
+                {displayEmail ? (
+                  <View style={styles.emailContainer}>
+                    <Text style={styles.email}>{displayEmail}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.noEmailText}>
+                    (E-Mail-Adresse nicht verfügbar - Sie können sich über die Anmeldeseite erneut eine Bestätigung
+                    senden lassen)
+                  </Text>
+                )}
 
                 <Text style={styles.instructions}>
                   Klicken Sie auf den Link in Ihrer E-Mail, um Ihr Konto zu verifizieren und mit dem Lernen zu beginnen.
@@ -300,6 +349,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#10b981',
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  noEmailText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: 16,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   instructions: {

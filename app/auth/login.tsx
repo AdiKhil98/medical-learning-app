@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Mail, Lock, Eye, EyeOff, Stethoscope, Heart, Shield, Sparkles } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, Stethoscope, Heart, Shield, Sparkles, RefreshCw } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import Input from '@/components/ui/Input';
 import { useResponsive } from '@/hooks/useResponsive';
+import { supabase } from '@/lib/supabase';
 
 export default function Login() {
   const { width: screenWidth } = useResponsive();
@@ -28,6 +29,10 @@ export default function Login() {
   const [emailError, setEmailError] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [isEmailUnconfirmed, setIsEmailUnconfirmed] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const router = useRouter();
   const { signIn, session } = useAuth();
 
@@ -78,24 +83,38 @@ export default function Login() {
       return;
     }
 
+    // Reset states
+    setIsEmailUnconfirmed(false);
+    setVerificationSent(false);
+    setAttemptsRemaining(null);
+
     setLoading(true);
     try {
       await signIn(email.trim(), password);
       setEmail('');
       setPassword('');
     } catch (error: any) {
-      // SECURITY FIX: Use generic messages to prevent user enumeration
-      // Don't reveal whether email exists or is confirmed
-      if (error.message?.includes('Invalid login credentials') || error.message?.includes('Email not confirmed')) {
-        // Generic message for both invalid credentials AND unconfirmed email
-        // This prevents attackers from knowing if an email exists
+      // Check for specific error types to provide better guidance
+      if (error.message?.includes('Email not confirmed')) {
+        // Email exists but is not confirmed - show resend option
+        setIsEmailUnconfirmed(true);
         setLoginError(
-          'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten oder bestätigen Sie Ihre E-Mail-Adresse.'
+          'Ihre E-Mail-Adresse wurde noch nicht bestätigt. Bitte überprüfen Sie Ihr Postfach oder fordern Sie einen neuen Bestätigungslink an.'
         );
-      } else if (error.message?.includes('Too many requests')) {
+      } else if (error.message?.includes('Invalid login credentials')) {
+        // Wrong email or password
+        setLoginError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail-Adresse und Ihr Passwort.');
+        // Show remaining attempts warning after 2 failed attempts
+        // Parse attempts from error if available, or track locally
+        if (error.attemptsRemaining !== undefined && error.attemptsRemaining <= 3) {
+          setAttemptsRemaining(error.attemptsRemaining);
+        }
+      } else if (error.message?.includes('Too many requests') || error.message?.includes('Too many failed attempts')) {
         setLoginError('Zu viele Anmeldeversuche. Bitte warten Sie einen Moment.');
+        setAttemptsRemaining(0);
       } else if (error.message?.includes('Account locked')) {
-        setLoginError('Konto temporär gesperrt. Versuchen Sie es in 30 Minuten erneut.');
+        setLoginError('Konto temporär gesperrt. Versuchen Sie es in 15 Minuten erneut.');
+        setAttemptsRemaining(0);
       } else if (error.message?.includes('Network')) {
         setLoginError('Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.');
       } else {
@@ -103,6 +122,49 @@ export default function Login() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email || !validateEmailFormat(email)) {
+      Alert.alert('Fehler', 'Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      return;
+    }
+
+    setResendingVerification(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: {
+          emailRedirectTo:
+            Platform.OS === 'web'
+              ? `${window.location.origin}/auth/verify-email`
+              : 'medicallearningapp://auth/verify-email',
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setVerificationSent(true);
+      setLoginError('');
+      Alert.alert(
+        'E-Mail gesendet',
+        'Eine neue Bestätigungs-E-Mail wurde an Ihr Postfach gesendet. Bitte überprüfen Sie auch Ihren Spam-Ordner.'
+      );
+    } catch (error: any) {
+      if (error.message?.includes('rate limit')) {
+        Alert.alert(
+          'Bitte warten',
+          'Sie haben zu viele E-Mails angefordert. Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.'
+        );
+      } else {
+        Alert.alert('Fehler', 'Fehler beim Senden der Bestätigungs-E-Mail. Bitte versuchen Sie es später erneut.');
+      }
+    } finally {
+      setResendingVerification(false);
     }
   };
 
@@ -189,6 +251,26 @@ export default function Login() {
             {loginError ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{loginError}</Text>
+                {/* Remaining attempts warning */}
+                {attemptsRemaining !== null && attemptsRemaining > 0 && attemptsRemaining <= 3 && (
+                  <Text style={styles.attemptsWarning}>
+                    ⚠️ Noch {attemptsRemaining} {attemptsRemaining === 1 ? 'Versuch' : 'Versuche'} übrig
+                  </Text>
+                )}
+                {/* Resend verification button */}
+                {isEmailUnconfirmed && !verificationSent && (
+                  <TouchableOpacity
+                    style={styles.resendButton}
+                    onPress={handleResendVerification}
+                    disabled={resendingVerification}
+                  >
+                    <RefreshCw size={16} color="#D4A574" style={resendingVerification ? { opacity: 0.5 } : undefined} />
+                    <Text style={styles.resendButtonText}>
+                      {resendingVerification ? 'Wird gesendet...' : 'Bestätigungslink erneut senden'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {verificationSent && <Text style={styles.successText}>✓ Bestätigungs-E-Mail wurde gesendet!</Text>}
               </View>
             ) : null}
 
@@ -419,6 +501,42 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  attemptsWarning: {
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#B45309',
+    textAlign: 'center',
+    marginTop: 8,
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  resendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D4A574',
+  },
+  resendButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#D4A574',
+  },
+  successText: {
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#059669',
+    textAlign: 'center',
+    marginTop: 8,
   },
 
   // Options Row
