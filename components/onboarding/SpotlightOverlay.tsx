@@ -282,9 +282,11 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
               </View>
 
               <View style={styles.buttonRow}>
-                <TouchableOpacity onPress={skip} style={styles.skipBtn}>
-                  <Text style={styles.skipText}>{isLast ? '' : 'Überspringen'}</Text>
-                </TouchableOpacity>
+                {!isLast && (
+                  <TouchableOpacity onPress={skip} style={styles.skipBtn}>
+                    <Text style={styles.skipText}>Überspringen</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity onPress={goNext} activeOpacity={0.85}>
                   <LinearGradient
                     colors={['#F97316', '#EF4444']}
@@ -318,18 +320,21 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    // On web: use transparent (spotlight box-shadow creates the dark overlay)
+    // On native: use semi-transparent black background
+    backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.6)',
   },
   spotlight: {
     position: 'absolute',
     // The spotlight creates a "hole" effect.
     // On web, use box-shadow trick. On native, we rely on the visual contrast.
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(249, 115, 22, 0.5)',
+    borderWidth: 3,
+    borderColor: 'rgba(249, 115, 22, 0.8)',
+    borderRadius: 16,
     ...Platform.select({
       web: {
-        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
+        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
       },
       default: {
         // On native, the overlay behind handles the dimming.

@@ -437,7 +437,13 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
           <View style={styles.webContainer}>
             {/* SLIDE 0 - Welcome Card */}
             <View style={styles.webSlide}>
-              <View style={dynamicStyles.heroCard}>
+              <View
+                ref={(el) => {
+                  if (onboardingRefs?.current) onboardingRefs.current['hero_card'] = el;
+                }}
+                collapsable={false}
+                style={dynamicStyles.heroCard}
+              >
                 {/* Icon Container */}
                 <View style={styles.iconContainer}>
                   <LinearGradient
@@ -489,7 +495,15 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
                     </LinearGradient>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSubscription} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    ref={(el) => {
+                      if (onboardingRefs?.current) onboardingRefs.current['subscribe_button'] = el;
+                    }}
+                    collapsable={false}
+                    style={styles.buttonWrapper}
+                    onPress={navigateToSubscription}
+                    activeOpacity={0.7}
+                  >
                     <LinearGradient
                       colors={MEDICAL_COLORS.warmYellowGradient}
                       start={{ x: 0, y: 0 }}
