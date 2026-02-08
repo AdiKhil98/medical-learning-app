@@ -35,13 +35,17 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
 
   // Fade in on mount after a short delay
   useEffect(() => {
+    console.log('[SpotlightOverlay] Setting up fade-in timer (600ms delay)');
     const timer = setTimeout(() => {
+      console.log('[SpotlightOverlay] Timer fired - setting visible to true');
       setVisible(true);
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        console.log('[SpotlightOverlay] Fade animation completed');
+      });
     }, 600); // 600ms delay so dashboard renders first
     return () => clearTimeout(timer);
   }, [fadeAnim]);
@@ -58,7 +62,9 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
       ref.measureInWindow((x: number, y: number, w: number, h: number) => {
         console.log('[SpotlightOverlay] Measured (measureInWindow):', { x, y, w, h });
         if (w > 0 && h > 0) {
-          setRect({ x, y, width: w, height: h });
+          const newRect = { x, y, width: w, height: h };
+          console.log('[SpotlightOverlay] Setting rect:', newRect);
+          setRect(newRect);
         } else {
           console.log('[SpotlightOverlay] Invalid dimensions (w or h is 0)');
         }
@@ -117,7 +123,12 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
     });
   };
 
-  if (!visible || !currentStep) return null;
+  console.log('[SpotlightOverlay] Render check:', { visible, currentStep: !!currentStep, rect: !!rect });
+  if (!visible || !currentStep) {
+    console.log('[SpotlightOverlay] NOT rendering - visible:', visible, 'currentStep:', !!currentStep);
+    return null;
+  }
+  console.log('[SpotlightOverlay] RENDERING overlay');
 
   // Calculate tooltip position
   const padding = 12; // padding around spotlight
