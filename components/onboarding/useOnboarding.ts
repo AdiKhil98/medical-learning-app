@@ -11,12 +11,17 @@ export function useOnboarding() {
     (async () => {
       try {
         const done = await AsyncStorage.getItem(KEY);
+        console.log('[Onboarding] AsyncStorage value:', done);
         // Only show onboarding if user hasn't completed it
-        setShowOnboarding(done !== 'true');
-      } catch {
+        const shouldShow = done !== 'true';
+        console.log('[Onboarding] Should show:', shouldShow);
+        setShowOnboarding(shouldShow);
+      } catch (e) {
+        console.error('[Onboarding] Error reading AsyncStorage:', e);
         setShowOnboarding(false);
       }
       setIsReady(true);
+      console.log('[Onboarding] Ready state set to true');
     })();
   }, []);
 

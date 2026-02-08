@@ -29,6 +29,10 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
   const currentStep = ONBOARDING_STEPS[stepIndex];
   const isLast = stepIndex === ONBOARDING_STEPS.length - 1;
 
+  console.log('[SpotlightOverlay] Mounted. Steps:', ONBOARDING_STEPS.length);
+  console.log('[SpotlightOverlay] Current step:', stepIndex, currentStep?.refKey);
+  console.log('[SpotlightOverlay] Available refs:', Object.keys(refs));
+
   // Fade in on mount after a short delay
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,20 +48,32 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
 
   // Measure the current target element
   const measureTarget = useCallback(() => {
-    if (!currentStep) return;
+    if (!currentStep) {
+      console.log('[SpotlightOverlay] No current step');
+      return;
+    }
     const ref = refs[currentStep.refKey];
+    console.log('[SpotlightOverlay] Measuring ref:', currentStep.refKey, 'exists:', !!ref);
     if (ref && ref.measureInWindow) {
       ref.measureInWindow((x: number, y: number, w: number, h: number) => {
+        console.log('[SpotlightOverlay] Measured (measureInWindow):', { x, y, w, h });
         if (w > 0 && h > 0) {
           setRect({ x, y, width: w, height: h });
+        } else {
+          console.log('[SpotlightOverlay] Invalid dimensions (w or h is 0)');
         }
       });
     } else if (ref && ref.measure) {
       ref.measure((_x: number, _y: number, w: number, h: number, pageX: number, pageY: number) => {
+        console.log('[SpotlightOverlay] Measured (measure):', { pageX, pageY, w, h });
         if (w > 0 && h > 0) {
           setRect({ x: pageX, y: pageY, width: w, height: h });
+        } else {
+          console.log('[SpotlightOverlay] Invalid dimensions (w or h is 0)');
         }
       });
+    } else {
+      console.log('[SpotlightOverlay] Ref not found or no measure method');
     }
   }, [stepIndex, currentStep, refs]);
 

@@ -20,6 +20,9 @@ function DashboardScreen() {
   const { showOnboarding, isReady, dismiss } = useOnboarding();
   const onboardingRefs = useRef<Record<string, any>>({});
 
+  console.log('[Dashboard] Onboarding state:', { isReady, showOnboarding });
+  console.log('[Dashboard] Onboarding refs:', Object.keys(onboardingRefs.current));
+
   const handleGetStarted = () => {
     // You can navigate to a specific screen or show a modal
     logger.info('Get Started button pressed');
