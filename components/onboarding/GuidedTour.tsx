@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Dimensions } from 
 import { OnboardingFeature } from './onboardingData';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const ARROW_HEIGHT = 12;
 
 export interface TourRect {
   x: number;
@@ -29,7 +30,6 @@ const GuidedTour: React.FC<GuidedTourProps> = ({
   onSkip,
 }) => {
   const spotlightPadding = 8;
-  const arrowHeight = 12;
 
   return (
     <View style={styles.overlay}>
@@ -87,7 +87,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({
           style={[
             styles.tooltip,
             {
-              top: currentRect.y + currentRect.height + spotlightPadding + arrowHeight + 8,
+              top: currentRect.y + currentRect.height + spotlightPadding + ARROW_HEIGHT + 8,
               left: Math.max(16, Math.min(currentRect.x + currentRect.width / 2 - 160, SCREEN_WIDTH - 336)),
             },
           ]}
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   arrow: {
     position: 'absolute',
-    top: -arrowHeight,
+    top: -ARROW_HEIGHT,
     width: 0,
     height: 0,
     borderLeftWidth: 8,
