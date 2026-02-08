@@ -55,6 +55,7 @@ const IS_SMALL_MOBILE = TEMP_WIDTH < SMALL_MOBILE_THRESHOLD;
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
+  onboardingRefs?: React.MutableRefObject<Record<string, any>>;
 }
 
 // Custom Telegram Icon SVG (Ionicons doesn't have it)
@@ -119,7 +120,7 @@ const socialIconStyles = StyleSheet.create({
   },
 });
 
-function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
+function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs }: SlidingHomepageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -458,11 +459,26 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepa
                 </Text>
 
                 {/* Trial Status Timeline */}
-                <TrialStatusTimeline />
+                <View
+                  ref={(el) => {
+                    if (onboardingRefs?.current) onboardingRefs.current['trial_banner'] = el;
+                  }}
+                  collapsable={false}
+                >
+                  <TrialStatusTimeline />
+                </View>
 
                 {/* CTA Buttons */}
                 <View style={styles.buttonsContainer}>
-                  <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSimulation} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    ref={(el) => {
+                      if (onboardingRefs?.current) onboardingRefs.current['simulation_button'] = el;
+                    }}
+                    collapsable={false}
+                    style={styles.buttonWrapper}
+                    onPress={navigateToSimulation}
+                    activeOpacity={0.7}
+                  >
                     <LinearGradient
                       colors={MEDICAL_COLORS.warmOrangeGradient}
                       start={{ x: 0, y: 0 }}

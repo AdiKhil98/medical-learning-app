@@ -368,13 +368,6 @@ export default function RootLayout() {
             <Stack.Screen name="auth/forgot-password" />
             <Stack.Screen name="auth/reset-password" />
             <Stack.Screen name="auth/verify-email" />
-            <Stack.Screen
-              name="onboarding"
-              options={{
-                headerShown: false,
-                animation: 'fade',
-              }}
-            />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="subscription" />
             <Stack.Screen name="updates" />
