@@ -55,7 +55,6 @@ const IS_SMALL_MOBILE = TEMP_WIDTH < SMALL_MOBILE_THRESHOLD;
 
 interface SlidingHomepageProps {
   onGetStarted?: () => void;
-  featureRefs?: React.MutableRefObject<Record<string, any>>;
 }
 
 // Custom Telegram Icon SVG (Ionicons doesn't have it)
@@ -120,7 +119,7 @@ const socialIconStyles = StyleSheet.create({
   },
 });
 
-function SlidingHomepageComponent({ onGetStarted: _onGetStarted, featureRefs }: SlidingHomepageProps) {
+function SlidingHomepageComponent({ onGetStarted: _onGetStarted }: SlidingHomepageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -463,15 +462,7 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, featureRefs }: 
 
                 {/* CTA Buttons */}
                 <View style={styles.buttonsContainer}>
-                  <TouchableOpacity
-                    ref={(el) => {
-                      if (featureRefs?.current) featureRefs.current['simulation'] = el;
-                    }}
-                    collapsable={false}
-                    style={styles.buttonWrapper}
-                    onPress={navigateToSimulation}
-                    activeOpacity={0.7}
-                  >
+                  <TouchableOpacity style={styles.buttonWrapper} onPress={navigateToSimulation} activeOpacity={0.7}>
                     <LinearGradient
                       colors={MEDICAL_COLORS.warmOrangeGradient}
                       start={{ x: 0, y: 0 }}
@@ -537,15 +528,7 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, featureRefs }: 
                     ))}
                   </View>
 
-                  <TouchableOpacity
-                    ref={(el) => {
-                      if (featureRefs?.current) featureRefs.current['bibliothek'] = el;
-                    }}
-                    collapsable={false}
-                    style={styles.viewAllLink}
-                    activeOpacity={0.7}
-                    onPress={handleViewAllContent}
-                  >
+                  <TouchableOpacity style={styles.viewAllLink} activeOpacity={0.7} onPress={handleViewAllContent}>
                     <FileText size={20} color={MEDICAL_COLORS.warmOrange} />
                     <Text style={styles.viewAllText}>Alle Inhalte anzeigen</Text>
                     <ChevronRight size={20} color={MEDICAL_COLORS.warmOrange} />

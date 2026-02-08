@@ -34,7 +34,11 @@ const FeatureSheet: React.FC<FeatureSheetProps> = ({ feature, visible, onClose }
 
           {/* Scrollable Content */}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {feature.details.map((block, index) => (
+            {/* Intro */}
+            {feature.intro && <Text style={styles.intro}>{feature.intro}</Text>}
+
+            {/* Content Blocks */}
+            {feature.blocks.map((block, index) => (
               <View key={index} style={styles.contentBlock}>
                 <Text style={styles.blockTitle}>{block.title}</Text>
                 {block.subtitle && <Text style={styles.blockSubtitle}>{block.subtitle}</Text>}
@@ -42,8 +46,11 @@ const FeatureSheet: React.FC<FeatureSheetProps> = ({ feature, visible, onClose }
                   <View style={styles.itemsList}>
                     {block.items.map((item, itemIndex) => (
                       <View key={itemIndex} style={styles.itemRow}>
-                        <View style={[styles.bullet, { backgroundColor: feature.color }]} />
-                        <Text style={styles.itemText}>{item}</Text>
+                        <View style={styles.itemLabelRow}>
+                          <View style={[styles.bullet, { backgroundColor: feature.color }]} />
+                          <Text style={styles.itemLabel}>{item[0]}</Text>
+                        </View>
+                        <Text style={styles.itemDescription}>{item[1]}</Text>
                       </View>
                     ))}
                   </View>
@@ -136,6 +143,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
   },
+  intro: {
+    fontSize: 16,
+    color: '#4B5563',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
   contentBlock: {
     marginBottom: 24,
   },
@@ -152,24 +165,31 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   itemsList: {
-    gap: 12,
+    gap: 16,
   },
   itemRow: {
+    gap: 8,
+  },
+  itemLabelRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
   bullet: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginTop: 7,
   },
-  itemText: {
-    flex: 1,
+  itemLabel: {
     fontSize: 15,
-    color: '#374151',
-    lineHeight: 22,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginLeft: 14,
   },
   tipBox: {
     flexDirection: 'row',

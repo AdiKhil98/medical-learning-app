@@ -1,13 +1,14 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { View, ActivityIndicator, Text } from 'react-native';
 
 export default function Index() {
-  const { session, loading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
+  const { hasCompletedOnboarding, isLoading: onboardingLoading } = useOnboarding();
 
-
-  // Show loading state while checking authentication
-  if (loading) {
+  // Show loading state while checking authentication and onboarding
+  if (authLoading || onboardingLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" />
@@ -21,6 +22,11 @@ export default function Index() {
     return <Redirect href="/auth/login" />;
   }
 
-  // If authenticated, redirect to the main app
+  // If authenticated but hasn't completed onboarding, redirect to onboarding
+  if (!hasCompletedOnboarding) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  // If authenticated and onboarding complete, redirect to the main app
   return <Redirect href="/(tabs)" />;
 }
