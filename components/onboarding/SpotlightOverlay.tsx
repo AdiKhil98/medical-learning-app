@@ -84,10 +84,37 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
   }, [stepIndex, currentStep, refs]);
 
   useEffect(() => {
-    // Remeasure when step changes, with a small delay for layout
-    const timer = setTimeout(measureTarget, 200);
-    return () => clearTimeout(timer);
-  }, [stepIndex, measureTarget]);
+    // Remeasure when step changes, with retry logic for 0 dimensions
+    let attemptCount = 0;
+    const maxAttempts = 15;
+    const retryDelay = 200;
+
+    const measureWithRetry = () => {
+      attemptCount++;
+      console.log(`[SpotlightOverlay] Measurement attempt ${attemptCount}/${maxAttempts}`);
+      measureTarget();
+    };
+
+    // Initial measurement after a delay
+    const initialTimer = setTimeout(measureWithRetry, 300);
+
+    // Set up interval to retry if rect is still null
+    const retryInterval = setInterval(() => {
+      if (!rect && attemptCount < maxAttempts) {
+        measureWithRetry();
+      } else if (rect || attemptCount >= maxAttempts) {
+        clearInterval(retryInterval);
+        if (!rect) {
+          console.log('[SpotlightOverlay] Failed to measure element after max attempts');
+        }
+      }
+    }, retryDelay);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(retryInterval);
+    };
+  }, [stepIndex, measureTarget, rect]);
 
   // Also remeasure on layout changes
   useEffect(() => {
