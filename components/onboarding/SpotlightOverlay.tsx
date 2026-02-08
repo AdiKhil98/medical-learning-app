@@ -163,18 +163,38 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
   // Calculate tooltip position
   const padding = 12; // padding around spotlight
   const tooltipWidth = Math.min(320, SW - 40);
+  const estimatedTooltipHeight = 250; // Estimated height of tooltip
 
   let tooltipTop = 0;
   let tooltipLeft = Math.max(20, (SW - tooltipWidth) / 2);
   let arrowLeft = tooltipWidth / 2;
+  let actualPosition: 'above' | 'below' = 'below';
 
   if (rect) {
-    if (currentStep.tooltipPosition === 'below') {
+    // Calculate space available above and below
+    const spaceBelow = SH - (rect.y + rect.height + padding + 12);
+    const spaceAbove = rect.y - padding - 12;
+
+    // Auto-detect best position based on available space
+    if (currentStep.tooltipPosition === 'below' && spaceBelow < estimatedTooltipHeight) {
+      // Not enough space below, force position above
+      actualPosition = 'above';
+      console.log(`[SpotlightOverlay] Not enough space below (${spaceBelow}px), positioning above instead`);
+    } else if (currentStep.tooltipPosition === 'above' && spaceAbove < estimatedTooltipHeight) {
+      // Not enough space above, force position below
+      actualPosition = 'below';
+      console.log(`[SpotlightOverlay] Not enough space above (${spaceAbove}px), positioning below instead`);
+    } else {
+      actualPosition = currentStep.tooltipPosition;
+    }
+
+    if (actualPosition === 'below') {
       tooltipTop = rect.y + rect.height + padding + 12;
     } else {
       // above: tooltip bottom edge is above the spotlight
-      tooltipTop = rect.y - padding - 12; // will be adjusted by tooltip height
+      tooltipTop = rect.y - padding - 12 - estimatedTooltipHeight;
     }
+
     // Try to center tooltip on the element
     const elementCenter = rect.x + rect.width / 2;
     tooltipLeft = Math.max(20, Math.min(elementCenter - tooltipWidth / 2, SW - tooltipWidth - 20));
@@ -217,7 +237,7 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
           ]}
         >
           {/* Arrow pointing to element */}
-          {currentStep.tooltipPosition === 'below' && (
+          {actualPosition === 'below' && (
             <View style={[styles.arrowUp, { left: Math.max(16, Math.min(arrowLeft - 8, tooltipWidth - 24)) }]} />
           )}
 
@@ -281,7 +301,7 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
           </View>
 
           {/* Arrow pointing to element (below) */}
-          {currentStep.tooltipPosition === 'above' && (
+          {actualPosition === 'above' && (
             <View style={[styles.arrowDown, { left: Math.max(16, Math.min(arrowLeft - 8, tooltipWidth - 24)) }]} />
           )}
         </View>
