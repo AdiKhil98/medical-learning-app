@@ -1,11 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, ViewToken } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface OnboardingSlide {
   id: string;
@@ -17,252 +15,220 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     id: '1',
-    title: 'Willkommen bei MedLearn',
+    title: 'Willkommen bei KP Med',
     description:
-      'Deine persönliche Lernplattform für medizinisches Wissen. Lerne effektiv mit KI-gestützten Fragen und Erklärungen.',
+      'Ihre KI-gestützte Plattform für die Vorbereitung auf die Fachsprachprüfung (FSP) und Kenntnisprüfung (KP).',
     icon: 'school-outline',
   },
   {
     id: '2',
-    title: 'Personalisiertes Lernen',
-    description: 'Erstelle eigene Fragenkataloge, markiere Favoriten und verfolge deinen Lernfortschritt in Echtzeit.',
-    icon: 'trophy-outline',
+    title: 'Alles an einem Ort',
+    description:
+      'Simulation, Bibliothek, EKG-Training und Fortschrittsanalyse — alles was Sie für Ihre Prüfung brauchen.',
+    icon: 'apps-outline',
   },
   {
     id: '3',
-    title: 'Jederzeit bereit',
+    title: 'So funktioniert die Simulation',
     description:
-      'Lerne wo und wann du willst. Alle Inhalte sind offline verfügbar und synchronisieren sich automatisch.',
-    icon: 'rocket-outline',
+      'Wählen Sie einen Fall, führen Sie die Anamnese, beantworten Sie Prüferfragen und erhalten Sie sofortiges Feedback.',
+    icon: 'mic-outline',
   },
 ];
 
 export default function OnboardingScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const [step, setStep] = useState(0);
+  const currentSlide = slides[step];
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index || 0);
-    }
-  }).current;
-
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
-  }).current;
-
-  const scrollTo = (index: number) => {
-    flatListRef.current?.scrollToIndex({ index, animated: true });
-  };
-
-  const handleNext = () => {
-    if (currentIndex < slides.length - 1) {
-      scrollTo(currentIndex + 1);
+  const goNext = () => {
+    if (step < slides.length - 1) {
+      setStep(step + 1);
     } else {
       completeOnboarding();
     }
   };
 
-  const handleBack = () => {
-    if (currentIndex > 0) {
-      scrollTo(currentIndex - 1);
+  const goBack = () => {
+    if (step > 0) {
+      setStep(step - 1);
     }
-  };
-
-  const handleSkip = () => {
-    completeOnboarding();
   };
 
   const completeOnboarding = async () => {
     try {
       await AsyncStorage.setItem('kpmed_onboarding_completed', 'true');
-      router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Error saving onboarding status:', error);
-      router.replace('/(tabs)');
+    } catch (e) {
+      console.error('Error saving onboarding:', e);
     }
+    setTimeout(() => {
+      router.replace('/(tabs)');
+    }, 100);
   };
 
-  const renderSlide = ({ item }: { item: OnboardingSlide }) => (
-    <View style={styles.slide}>
-      <View style={styles.iconContainer}>
-        <LinearGradient
-          colors={['#F97316', '#EF4444']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.iconGradient}
-        >
-          <Ionicons name={item.icon} size={80} color="#FFF" />
-        </LinearGradient>
-      </View>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.description}>{item.description}</Text>
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        renderItem={renderSlide}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        bounces={false}
-      />
-
-      <View style={styles.footer}>
-        <View style={styles.indicatorContainer}>
+    <View style={{ flex: 1, backgroundColor: '#FFF9F5' }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* TOP: Progress dots */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 6,
+            paddingTop: 20,
+            paddingBottom: 10,
+          }}
+        >
           {slides.map((_, index) => (
-            <View key={index} style={[styles.indicator, index === currentIndex && styles.indicatorActive]} />
+            <View
+              key={index}
+              style={{
+                width: index === step ? 24 : 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: index === step ? '#F97316' : '#E5E7EB',
+              }}
+            />
           ))}
         </View>
 
-        <View style={styles.buttonContainer}>
-          {currentIndex > 0 && (
-            <TouchableOpacity onPress={handleBack} style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Zurück</Text>
-            </TouchableOpacity>
-          )}
+        {/* MIDDLE: Content - centered vertically */}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 32,
+          }}
+        >
+          {/* Icon */}
+          <View style={{ marginBottom: 40 }}>
+            <LinearGradient
+              colors={['#F97316', '#EF4444']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                width: 140,
+                height: 140,
+                borderRadius: 70,
+                justifyContent: 'center',
+                alignItems: 'center',
+                shadowColor: '#F97316',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.3,
+                shadowRadius: 20,
+                elevation: 10,
+              }}
+            >
+              <Ionicons name={currentSlide.icon} size={70} color="#FFF" />
+            </LinearGradient>
+          </View>
 
-          {currentIndex < slides.length - 1 ? (
-            <>
-              <TouchableOpacity onPress={handleSkip} style={styles.secondaryButton}>
-                <Text style={styles.secondaryButtonText}>Überspringen</Text>
-              </TouchableOpacity>
+          {/* Title */}
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: 'bold',
+              color: '#1F2937',
+              marginBottom: 16,
+              textAlign: 'center',
+            }}
+          >
+            {currentSlide.title}
+          </Text>
 
-              <TouchableOpacity onPress={handleNext} style={styles.primaryButtonWrapper}>
-                <LinearGradient
-                  colors={['#F97316', '#EF4444']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.primaryButton}
-                >
-                  <Text style={styles.primaryButtonText}>Weiter</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#FFF" />
-                </LinearGradient>
+          {/* Description */}
+          <Text
+            style={{
+              fontSize: 16,
+              color: '#6B7280',
+              textAlign: 'center',
+              lineHeight: 24,
+              maxWidth: 400,
+            }}
+          >
+            {currentSlide.description}
+          </Text>
+        </View>
+
+        {/* BOTTOM: Buttons - pinned to bottom */}
+        <View style={{ paddingHorizontal: 24, paddingBottom: 30 }}>
+          {/* Button row - centered */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
+            {/* Back button */}
+            {step > 0 && (
+              <TouchableOpacity
+                onPress={goBack}
+                style={{
+                  paddingVertical: 15,
+                  paddingHorizontal: 28,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(249, 115, 22, 0.15)',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <Text style={{ color: '#6B7280', fontSize: 15, fontWeight: '500' }}>Zurück</Text>
               </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity onPress={handleNext} style={styles.primaryButtonWrapper}>
+            )}
+
+            {/* Primary button (Weiter / Los geht's!) */}
+            <TouchableOpacity
+              onPress={goNext}
+              activeOpacity={0.85}
+              style={{
+                flex: step === 0 ? undefined : 1,
+                maxWidth: 300,
+              }}
+            >
               <LinearGradient
-                colors={['#F97316', '#EF4444']}
+                colors={['#F97316', '#EF4444', '#F59E0B']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.primaryButton}
+                style={{
+                  paddingVertical: 15,
+                  paddingHorizontal: 40,
+                  borderRadius: 14,
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 8,
+                  shadowColor: '#F97316',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 5,
+                }}
               >
-                <Text style={styles.primaryButtonText}>Los geht's!</Text>
-                <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                  {step < 2 ? 'Weiter' : "Los geht's!"}
+                </Text>
+                <Ionicons name="arrow-forward" size={18} color="white" />
               </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Skip button - centered below */}
+          {step < 2 && (
+            <TouchableOpacity
+              onPress={completeOnboarding}
+              style={{
+                alignSelf: 'center',
+                paddingVertical: 14,
+              }}
+            >
+              <Text style={{ color: '#9CA3AF', fontSize: 14 }}>Überspringen</Text>
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF9F5',
-  },
-  slide: {
-    width: SCREEN_WIDTH,
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  iconContainer: {
-    marginBottom: 40,
-  },
-  iconGradient: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#F97316',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  indicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 4,
-  },
-  indicatorActive: {
-    backgroundColor: '#F97316',
-    width: 24,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '600',
-  },
-  primaryButtonWrapper: {
-    flex: 1,
-    maxWidth: 200,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    gap: 8,
-    shadowColor: '#F97316',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-});
