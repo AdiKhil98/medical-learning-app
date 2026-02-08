@@ -29,10 +29,6 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
   const currentStep = ONBOARDING_STEPS[stepIndex];
   const isLast = stepIndex === ONBOARDING_STEPS.length - 1;
 
-  console.log('[SpotlightOverlay] Mounted. Steps:', ONBOARDING_STEPS.length);
-  console.log('[SpotlightOverlay] Current step:', stepIndex, currentStep?.refKey);
-  console.log('[SpotlightOverlay] Available refs:', Object.keys(refs));
-
   // Fade in on mount after a short delay
   useEffect(() => {
     console.log('[SpotlightOverlay] Setting up fade-in timer (600ms delay)');
@@ -88,8 +84,10 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
     let attemptCount = 0;
     const maxAttempts = 15;
     const retryDelay = 200;
+    let hasSucceeded = false;
 
     const measureWithRetry = () => {
+      if (hasSucceeded) return;
       attemptCount++;
       console.log(`[SpotlightOverlay] Measurement attempt ${attemptCount}/${maxAttempts}`);
       measureTarget();
@@ -100,11 +98,15 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
 
     // Set up interval to retry if rect is still null
     const retryInterval = setInterval(() => {
-      if (!rect && attemptCount < maxAttempts) {
+      if (!rect && attemptCount < maxAttempts && !hasSucceeded) {
         measureWithRetry();
-      } else if (rect || attemptCount >= maxAttempts) {
+      } else {
+        if (rect && !hasSucceeded) {
+          hasSucceeded = true;
+          console.log('[SpotlightOverlay] Measurement succeeded, stopping retries');
+        }
         clearInterval(retryInterval);
-        if (!rect) {
+        if (!rect && attemptCount >= maxAttempts) {
           console.log('[SpotlightOverlay] Failed to measure element after max attempts');
         }
       }
@@ -113,8 +115,9 @@ export default function SpotlightOverlay({ refs, onDismiss }: SpotlightOverlayPr
     return () => {
       clearTimeout(initialTimer);
       clearInterval(retryInterval);
+      hasSucceeded = true; // Stop retries on cleanup
     };
-  }, [stepIndex, measureTarget, rect]);
+  }, [stepIndex, measureTarget]);
 
   // Also remeasure on layout changes
   useEffect(() => {
