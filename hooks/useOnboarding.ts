@@ -1,45 +1,49 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SecureLogger } from '@/lib/security';
 
-export interface OnboardingState {
-  showWelcome: boolean;
-  loading: boolean;
-  completeOnboarding: () => Promise<void>;
-}
+const ONBOARDING_KEY = 'kpmed_onboarding_completed';
 
-export const useOnboarding = (): OnboardingState => {
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const checkOnboardingStatus = async () => {
-    try {
-      // Always treat onboarding as completed to disable welcome flow
-      setShowWelcome(false);
-    } catch (error) {
-      SecureLogger.error('Error checking onboarding status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const completeOnboarding = async () => {
-    try {
-      await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
-      setShowWelcome(false);
-      SecureLogger.log('Onboarding completed and saved to AsyncStorage');
-    } catch (error) {
-      SecureLogger.error('Error saving onboarding completion:', error);
-    }
-  };
+export function useOnboarding() {
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     checkOnboardingStatus();
   }, []);
 
-  return {
-    showWelcome,
-    loading,
-    completeOnboarding,
+  const checkOnboardingStatus = async () => {
+    try {
+      const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+      setHasCompletedOnboarding(value === 'true');
+    } catch (error) {
+      setHasCompletedOnboarding(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
-};
+
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      setHasCompletedOnboarding(true);
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+    }
+  };
+
+  const resetOnboarding = async () => {
+    try {
+      await AsyncStorage.removeItem(ONBOARDING_KEY);
+      setHasCompletedOnboarding(false);
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
+    }
+  };
+
+  return {
+    hasCompletedOnboarding,
+    isLoading,
+    completeOnboarding,
+    resetOnboarding,
+  };
+}

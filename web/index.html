@@ -153,57 +153,32 @@
   </style>
 </head>
 <body>
-  <div id="root">
-    <!-- Loading Screen: What users see while app loads -->
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
-      <div style="text-align: center;">
-        <img src="/logo.jpg" width="100" height="100" alt="KP Med" style="border-radius: 20px; margin-bottom: 24px;" />
-        <p style="color: #D4A574; font-family: system-ui, -apple-system, sans-serif; font-size: 1.1rem; font-weight: 500;">
-          Laden...
-        </p>
-      </div>
-    </div>
-
-    <!-- SEO Content: Hidden from users, visible to search engine crawlers -->
-    <div style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; overflow: hidden;" aria-hidden="true">
-      <header>
-        <h1>KP Med - Kenntnisprüfung & FSP Vorbereitung für Ärzte</h1>
-        <p>Professionelle Prüfungsvorbereitung für internationale Ärzte in Deutschland. Bestehen Sie Ihre Fachsprachprüfung (FSP) und Kenntnisprüfung (KP) mit Vertrauen.</p>
-      </header>
-
-      <main>
-        <section>
-          <h2>Warum KP Med?</h2>
-          <ul>
-            <li>KI-gestützte Simulationen - Realistische FSP und KP Prüfungssimulationen</li>
-            <li>Umfassende Bibliothek - Über 257 medizinische Themen und Fachbegriffe</li>
-            <li>Audio-Lernmaterial - Lernen Sie unterwegs mit Hörübungen</li>
-            <li>Personalisiertes Feedback - Detaillierte Auswertungen Ihrer Leistung</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>Unsere Kurse</h2>
-          <p>Fachsprachprüfung (FSP): Arzt-Patienten-Kommunikation, Anamnese, Arztbrief und medizinische Fachbegriffe.</p>
-          <p>Kenntnisprüfung (KP): Medizinisches Fachwissen, Fallbeispiele und praktische Prüfungsvorbereitung.</p>
-        </section>
-
-        <nav>
-          <a href="/land">Mehr erfahren</a>
-          <a href="/auth/register">Kostenlos starten</a>
-          <a href="/auth/login">Anmelden</a>
-        </nav>
-      </main>
-
-      <footer>
-        <p>Über 1.000 Ärzte vertrauen KP Med | Made in Germany</p>
-        <nav>
-          <a href="/impressum">Impressum</a>
-          <a href="/datenschutz-einstellungen">Datenschutz</a>
-          <a href="/haftung">Haftung</a>
-        </nav>
-      </footer>
+  <!-- Loading overlay: visible while JS bundle loads, fades out when React mounts -->
+  <div id="loading-overlay" style="position:fixed;inset:0;z-index:9999;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#F8FAFC 0%,#FFFFFF 50%,#F1F5F9 100%);transition:opacity 0.3s ease;">
+    <div style="text-align:center;">
+      <img src="/logo.jpg" width="80" height="80" alt="" style="border-radius:20px;margin-bottom:16px;" />
+      <p style="color:#D4A574;font-family:system-ui,-apple-system,sans-serif;font-size:1rem;font-weight:500;margin:0;">Laden...</p>
     </div>
   </div>
+  <script>
+    (function(){
+      var overlay=document.getElementById('loading-overlay');
+      if(!overlay)return;
+      var root=document.getElementById('root');
+      if(!root){overlay.remove();return;}
+      var obs=new MutationObserver(function(){
+        if(root.children.length>0){
+          overlay.style.opacity='0';
+          setTimeout(function(){overlay.remove();},300);
+          obs.disconnect();
+        }
+      });
+      obs.observe(root,{childList:true});
+      // Fallback: remove after 5s even if React fails to mount
+      setTimeout(function(){if(overlay.parentNode){overlay.style.opacity='0';setTimeout(function(){overlay.remove();},300);}},5000);
+    })();
+  </script>
+
+  <div id="root"></div>
 </body>
 </html>

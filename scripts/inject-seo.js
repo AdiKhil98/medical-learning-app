@@ -45,7 +45,9 @@ function extractSeoContent(html) {
   }
 
   // Extract Google Analytics
-  const gaMatch = html.match(/<!-- Google tag[\s\S]*?<\/script>\s*<script>[\s\S]*?gtag\('config'[^)]+\);\s*<\/script>/i);
+  const gaMatch = html.match(
+    /<!-- Google tag[\s\S]*?<\/script>\s*<script>[\s\S]*?gtag\('config'[^)]+\);\s*<\/script>/i
+  );
   if (gaMatch) {
     seoTags.push(gaMatch[0]);
   }
@@ -83,10 +85,19 @@ function extractSeoContent(html) {
   // Extract focus styles
   const styleMatch = html.match(/<style>[\s\S]*?\/\* Focus indicators[\s\S]*?<\/style>/i);
   if (styleMatch) {
-    seoTags.push('\n  <!-- Keyboard Focus Indicators for Accessibility -->\n  ' + styleMatch[0]);
+    seoTags.push(`\n  <!-- Keyboard Focus Indicators for Accessibility -->\n  ${  styleMatch[0]}`);
   }
 
   return seoTags;
+}
+
+function extractBodyContent(html) {
+  // Extract everything between <body> and <div id="root"> (loading overlay + script)
+  const match = html.match(/<body[^>]*>([\s\S]*?)<div\s+id="root"/i);
+  if (match && match[1].trim()) {
+    return match[1];
+  }
+  return null;
 }
 
 function injectSeo() {
@@ -128,33 +139,29 @@ function injectSeo() {
   distHtml = distHtml.replace(/<meta\s+name="theme-color"[^>]*>/gi, '');
 
   // Find the </head> tag and inject SEO content before it
-  const seoContent = '\n  <!-- SEO Tags (injected by scripts/inject-seo.js) -->\n  ' +
-                     seoTags.join('\n  ') + '\n';
+  const seoContent = `\n  <!-- SEO Tags (injected by scripts/inject-seo.js) -->\n  ${  seoTags.join('\n  ')  }\n`;
 
-  distHtml = distHtml.replace('</head>', seoContent + '</head>');
+  distHtml = distHtml.replace('</head>', `${seoContent  }</head>`);
 
-  // Extract and inject body SEO content (content inside <div id="root">)
-  const rootContentMatch = webHtml.match(/<div id="root">([\s\S]*?)<\/div>\s*<\/body>/i);
-  if (rootContentMatch && rootContentMatch[1].trim()) {
-    const rootContent = rootContentMatch[1];
-    // Replace empty <div id="root"></div> with our SEO content
-    distHtml = distHtml.replace(
-      /<div id="root"><\/div>/i,
-      `<div id="root">${rootContent}</div>`
-    );
-    console.log('\n📄 Body SEO content injected (H1, paragraphs, links)');
+  // Inject loading overlay from web/index.html body (before <div id="root">)
+  const bodyContent = extractBodyContent(webHtml);
+  if (bodyContent) {
+    // Remove any old loading screen content that might be inside #root
+    distHtml = distHtml.replace(/(<div\s+id="root">)[\s\S]*?(?=<\/div>\s*<script\s|<\/div>\s*<\/body>)/i, '$1');
+    // Insert the loading overlay before <div id="root">
+    distHtml = distHtml.replace(/<div\s+id="root"/, `${bodyContent  }<div id="root"`);
+    console.log(`   - Loading overlay: ✓`);
   }
 
   // Write the updated file
   fs.writeFileSync(DIST_INDEX, distHtml);
 
-  console.log('\n✅ SEO injection complete!');
+  console.log('\n✅ SEO tags injected successfully!');
   console.log(`   - Language: de`);
   console.log(`   - Title, description, keywords: ✓`);
   console.log(`   - Structured data (JSON-LD): ✓`);
   console.log(`   - Google Analytics: ✓`);
   console.log(`   - Favicons & manifest: ✓`);
-  console.log(`   - Body content (H1, links): ✓`);
 }
 
 // Run

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Mail, RefreshCw, BriefcaseMedical } from 'lucide-react-native';
+import { Mail, RefreshCw, BriefcaseMedical, CheckCircle, AlertCircle, Clock } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import Logo from '@/components/ui/Logo';
@@ -163,13 +163,16 @@ export default function VerifyEmail() {
             ) : (
               <>
                 <Text style={styles.title}>Registrierung erfolgreich!</Text>
-                <Text style={styles.successMessage}>
-                  {params.message || 'Bestätigungs-E-Mail gesendet! Bitte überprüfen Sie Ihr Postfach.'}
-                </Text>
-                <Text style={styles.subtitle}>Wir haben einen Bestätigungslink gesendet an:</Text>
+                <Text style={styles.successMessage}>Bestätigungs-E-Mail wurde versendet</Text>
+
+                {/* Email Sent To Box */}
                 {displayEmail ? (
-                  <View style={styles.emailContainer}>
-                    <Text style={styles.email}>{displayEmail}</Text>
+                  <View style={styles.emailSentToBox}>
+                    <Mail size={20} color="#10b981" />
+                    <View style={styles.emailSentToContent}>
+                      <Text style={styles.emailSentToLabel}>E-Mail gesendet an:</Text>
+                      <Text style={styles.emailSentToAddress}>{displayEmail}</Text>
+                    </View>
                   </View>
                 ) : (
                   <Text style={styles.noEmailText}>
@@ -178,10 +181,59 @@ export default function VerifyEmail() {
                   </Text>
                 )}
 
-                <Text style={styles.instructions}>
-                  Klicken Sie auf den Link in Ihrer E-Mail, um Ihr Konto zu verifizieren und mit dem Lernen zu beginnen.
-                  Der Link läuft in 24 Stunden ab.
-                </Text>
+                {/* Next Steps Section */}
+                <View style={styles.nextStepsContainer}>
+                  <Text style={styles.nextStepsTitle}>📋 Nächste Schritte:</Text>
+
+                  {/* Step 1 */}
+                  <View style={styles.stepContainer}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>1</Text>
+                    </View>
+                    <View style={styles.stepContent}>
+                      <Text style={styles.stepTitle}>Öffnen Sie Ihr E-Mail-Postfach</Text>
+                      <Text style={styles.stepDescription}>
+                        Suchen Sie nach einer E-Mail von KP Med (Ankunft in 1-2 Minuten)
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Step 2 */}
+                  <View style={styles.stepContainer}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>2</Text>
+                    </View>
+                    <View style={styles.stepContent}>
+                      <Text style={styles.stepTitle}>Klicken Sie auf den Bestätigungslink</Text>
+                      <Text style={styles.stepDescription}>Ein Klick genügt, um Ihr Konto zu aktivieren</Text>
+                    </View>
+                  </View>
+
+                  {/* Step 3 */}
+                  <View style={styles.stepContainer}>
+                    <View style={styles.stepNumber}>
+                      <Text style={styles.stepNumberText}>3</Text>
+                    </View>
+                    <View style={styles.stepContent}>
+                      <Text style={styles.stepTitle}>Starten Sie Ihre 5-Tage-Testversion</Text>
+                      <Text style={styles.stepDescription}>Unbegrenzter Zugang zu allen Simulationen für 5 Tage</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Important Notice */}
+                <View style={styles.noticeBox}>
+                  <Clock size={18} color="#F59E0B" />
+                  <Text style={styles.noticeText}>Der Bestätigungslink ist 24 Stunden gültig</Text>
+                </View>
+
+                {/* Warning Box */}
+                <View style={styles.warningBox}>
+                  <AlertCircle size={18} color="#EF4444" />
+                  <Text style={styles.warningText}>
+                    Keine E-Mail? Prüfen Sie Ihren <Text style={styles.warningBold}>Spam-Ordner</Text>
+                  </Text>
+                </View>
               </>
             )}
           </View>
@@ -222,14 +274,7 @@ export default function VerifyEmail() {
             )}
           </View>
 
-          {/* Help Section */}
-          {verificationStatus !== 'success' && (
-            <View style={styles.helpSection}>
-              <Text style={styles.helpText}>
-                E-Mail nicht erhalten? Überprüfen Sie Ihren Spam-Ordner oder senden Sie die E-Mail erneut.
-              </Text>
-            </View>
-          )}
+          {/* Help Section - Removed as info is now in warning box */}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -322,10 +367,10 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   successMessage: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#059669',
-    marginBottom: 16,
+    marginBottom: 24,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
@@ -335,6 +380,35 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'center',
     marginBottom: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  emailSentToBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 32,
+    borderWidth: 2,
+    borderColor: '#10b981',
+    gap: 12,
+    width: '100%',
+  },
+  emailSentToContent: {
+    flex: 1,
+  },
+  emailSentToLabel: {
+    fontSize: 12,
+    color: '#059669',
+    fontWeight: '500',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  emailSentToAddress: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#047857',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   emailContainer: {
@@ -350,6 +424,98 @@ const styles = StyleSheet.create({
     color: '#10b981',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  nextStepsContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    width: '100%',
+  },
+  nextStepsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 12,
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  stepNumberText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  stepDescription: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  noticeText: {
+    fontSize: 14,
+    color: '#92400E',
+    fontWeight: '500',
+    flex: 1,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#991B1B',
+    flex: 1,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  warningBold: {
+    fontWeight: '700',
   },
   noEmailText: {
     fontSize: 14,
@@ -414,18 +580,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 16,
     fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
-  },
-  helpSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 24,
-  },
-  helpText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    lineHeight: 20,
-    textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   spinning: {
