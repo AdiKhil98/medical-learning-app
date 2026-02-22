@@ -139,7 +139,7 @@ export default function VerifyEmail() {
                 <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
-            <Text style={styles.brandName}>MEDMEISTER</Text>
+            <Text style={styles.brandName}>KP MED</Text>
             <Text style={styles.brandTagline}>Professional Medical Training</Text>
           </View>
 
@@ -193,7 +193,7 @@ export default function VerifyEmail() {
                     <View style={styles.stepContent}>
                       <Text style={styles.stepTitle}>Öffnen Sie Ihr E-Mail-Postfach</Text>
                       <Text style={styles.stepDescription}>
-                        Suchen Sie nach einer E-Mail von MedMeister (Ankunft in 1-2 Minuten)
+                        Suchen Sie nach einer E-Mail von KP Med (Ankunft in 1-2 Minuten)
                       </Text>
                     </View>
                   </View>

@@ -25,7 +25,7 @@ const STORAGE_KEYS = {
 const TIP_MESSAGES = [
   {
     title: "💡 Tipp des Tages!",
-    body: "Entdecke heute einen neuen medizinischen Tipp in der MedMeister App!"
+    body: "Entdecke heute einen neuen medizinischen Tipp in der KP Med App!"
   },
   {
     title: "🩺 Dein täglicher Lerntipp!",
@@ -33,7 +33,7 @@ const TIP_MESSAGES = [
   },
   {
     title: "📚 Wissen für heute!",
-    body: "Ein neuer Tipp wartet auf dich - öffne MedMeister und lerne etwas Neues!"
+    body: "Ein neuer Tipp wartet auf dich - öffne KP Med und lerne etwas Neues!"
   },
   {
     title: "⭐ Tipp des Tages verfügbar!",
@@ -41,7 +41,7 @@ const TIP_MESSAGES = [
   },
   {
     title: "🔬 Medizin-Tipp für dich!",
-    body: "Dein täglicher Lerntipp ist bereit - schau jetzt in die MedMeister App!"
+    body: "Dein täglicher Lerntipp ist bereit - schau jetzt in die KP Med App!"
   }
 ];
 

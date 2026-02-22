@@ -96,7 +96,7 @@ const Slide1: React.FC = () => (
         <Text style={styles.badgeEmoji}>✓</Text>
       </View>
     </View>
-    <Text style={styles.slideTitle}>Willkommen bei MedMeister</Text>
+    <Text style={styles.slideTitle}>Willkommen bei KP Med</Text>
     <Text style={styles.slideSubtitle}>
       Ihre persönliche Plattform für medizinisches Lernen und Prüfungsvorbereitung
     </Text>

@@ -1,17 +1,17 @@
--- German Email Templates for MedMeister
--- Based on the "About MedMeister" content and messaging
+-- German Email Templates for KP Med
+-- Based on the "About KP Med" content and messaging
 -- Run these in your Supabase SQL Editor
 
 -- 1. EMAIL VERIFICATION TEMPLATE (Welcome Email)
 UPDATE auth.config
 SET value = jsonb_build_object(
-  'subject', '🎉 Willkommen bei MedMeister - Effektive Prüfungsvorbereitung, die wirklich funktioniert!',
+  'subject', '🎉 Willkommen bei KP Med - Effektive Prüfungsvorbereitung, die wirklich funktioniert!',
   'body_html', '<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Willkommen bei MedMeister</title>
+    <title>Willkommen bei KP Med</title>
     <style>
         body { margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; background: #f8f9fa; line-height: 1.6; }
         .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -38,12 +38,12 @@ SET value = jsonb_build_object(
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🩺 MedMeister 📚</div>
+            <div class="logo">🩺 KP Med 📚</div>
             <p class="tagline">Effektive Prüfungsvorbereitung, die wirklich funktioniert</p>
         </div>
 
         <div class="content">
-            <h1 class="welcome-title">🎉 Willkommen bei MedMeister!</h1>
+            <h1 class="welcome-title">🎉 Willkommen bei KP Med!</h1>
 
             <p class="welcome-text">
                 Herzlichen Glückwunsch! Sie haben sich für die <strong>effektivste Prüfungsvorbereitung</strong> entschieden,
@@ -101,7 +101,7 @@ SET value = jsonb_build_object(
 
         <div class="footer">
             <p class="footer-text">
-                <strong>MedMeister</strong> - Effektive Prüfungsvorbereitung, die wirklich funktioniert<br>
+                <strong>KP Med</strong> - Effektive Prüfungsvorbereitung, die wirklich funktioniert<br>
                 Haben Sie Fragen? Kontaktieren Sie uns jederzeit über die App.
             </p>
         </div>
@@ -114,13 +114,13 @@ WHERE parameter = 'MAILER_TEMPLATES_CONFIRMATION';
 -- 2. PASSWORD RESET TEMPLATE
 UPDATE auth.config
 SET value = jsonb_build_object(
-  'subject', '🔐 Passwort zurücksetzen - MedMeister',
+  'subject', '🔐 Passwort zurücksetzen - KP Med',
   'body_html', '<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passwort zurücksetzen - MedMeister</title>
+    <title>Passwort zurücksetzen - KP Med</title>
     <style>
         body { margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; background: #f8f9fa; line-height: 1.6; }
         .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -139,7 +139,7 @@ SET value = jsonb_build_object(
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🔐 MedMeister</div>
+            <div class="logo">🔐 KP Med</div>
             <p style="margin: 0; opacity: 0.9;">Passwort zurücksetzen</p>
         </div>
 
@@ -147,7 +147,7 @@ SET value = jsonb_build_object(
             <h1 class="title">Passwort zurücksetzen</h1>
 
             <p class="text">
-                Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts für Ihr MedMeister Konto gestellt.
+                Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts für Ihr KP Med Konto gestellt.
                 Klicken Sie auf den Button unten, um ein neues, sicheres Passwort zu erstellen:
             </p>
 
@@ -170,7 +170,7 @@ SET value = jsonb_build_object(
 
         <div class="footer">
             <p class="footer-text">
-                <strong>MedMeister</strong> - Effektive Prüfungsvorbereitung, die wirklich funktioniert<br>
+                <strong>KP Med</strong> - Effektive Prüfungsvorbereitung, die wirklich funktioniert<br>
                 Bei Fragen kontaktieren Sie uns über die App.
             </p>
         </div>

@@ -1,6 +1,6 @@
 # ✅ Favicon Setup Complete!
 
-Your MedMeister website now has a complete, professional favicon setup.
+Your KP Med website now has a complete, professional favicon setup.
 
 ## What Was Done
 

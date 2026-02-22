@@ -1,6 +1,6 @@
 {
-  "name": "MedMeister - Medical Learning App",
-  "short_name": "MedMeister",
+  "name": "KP MED - Medical Learning App",
+  "short_name": "KP MED",
   "description": "Medizinische Prüfungsvorbereitung mit KI-gestützten Simulationen für KP & FSP",
   "start_url": "/",
   "display": "standalone",

@@ -121,7 +121,7 @@ export default function ImpressumScreen() {
         </View>
 
         <Text style={dynamicStyles.subtitle}>
-          Angaben gemäß § 5 TMG und rechtliche Informationen zur MedMeister Plattform.
+          Angaben gemäß § 5 TMG und rechtliche Informationen zur KP Med Plattform.
         </Text>
 
         <View style={dynamicStyles.companyCard}>
@@ -129,7 +129,7 @@ export default function ImpressumScreen() {
 
           <View style={dynamicStyles.contactItem}>
             <Building2 size={20} color={MEDICAL_COLORS.primary} />
-            <Text style={dynamicStyles.contactText}>MedMeister GmbH</Text>
+            <Text style={dynamicStyles.contactText}>KP Med GmbH</Text>
           </View>
 
           <View style={dynamicStyles.contactItem}>
@@ -142,17 +142,17 @@ export default function ImpressumScreen() {
 
           <TouchableOpacity
             style={dynamicStyles.contactItem}
-            onPress={() => Linking.openURL('mailto:support@medmeister.eu')}
+            onPress={() => Linking.openURL('mailto:support@kpmed.de')}
             activeOpacity={0.7}
           >
             <Mail size={20} color={MEDICAL_COLORS.primary} />
-            <Text style={dynamicStyles.contactText}>support@medmeister.eu</Text>
+            <Text style={dynamicStyles.contactText}>support@kpmed.de</Text>
           </TouchableOpacity>
         </View>
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Geschäftsführung</Text>
-          <Text style={dynamicStyles.sectionText}>Geschäftsführer der MedMeister GmbH</Text>
+          <Text style={dynamicStyles.sectionText}>Geschäftsführer der KP Med GmbH</Text>
         </View>
 
         <View style={dynamicStyles.section}>
@@ -180,7 +180,7 @@ export default function ImpressumScreen() {
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</Text>
           <Text style={dynamicStyles.sectionText}>
-            MedMeister GmbH{'\n'}
+            KP Med GmbH{'\n'}
             Geschäftsführung{'\n'}
             [Adresse wie oben]
           </Text>
@@ -219,7 +219,7 @@ export default function ImpressumScreen() {
           <Text style={dynamicStyles.sectionTitle}>App Version</Text>
           <Text style={dynamicStyles.sectionText}>
             Version 1.0.0{'\n'}
-            Letzte Aktualisierung: Dezember 2024{'\n\n'}© 2024 MedMeister GmbH. Alle Rechte vorbehalten.
+            Letzte Aktualisierung: Dezember 2024{'\n\n'}© 2024 KP Med GmbH. Alle Rechte vorbehalten.
           </Text>
         </View>
 

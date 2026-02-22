@@ -124,10 +124,10 @@ export default function DatenschutzAGBScreen() {
     <>
       <Text style={stylesD.heading}>1. Verantwortlicher</Text>
       <Text style={stylesD.text}>
-        <Text style={{ fontFamily: 'Inter-Bold' }}>MedMeister GmbH</Text>
+        <Text style={{ fontFamily: 'Inter-Bold' }}>KP Med GmbH</Text>
         {'\n'}
         Sitz in Österreich{'\n'}
-        E-Mail: support@medmeister.eu
+        E-Mail: support@kpmed.de
       </Text>
 
       <Text style={stylesD.heading}>2. Verarbeitete Daten</Text>
@@ -174,7 +174,7 @@ export default function DatenschutzAGBScreen() {
     <>
       <Text style={stylesD.heading}>§ 1 Geltungsbereich</Text>
       <Text style={stylesD.text}>
-        Diese AGB gelten für alle Verträge zwischen MedMeister GmbH und Nutzer:innen der Plattform.
+        Diese AGB gelten für alle Verträge zwischen KP Med GmbH und Nutzer:innen der Plattform.
       </Text>
 
       <Text style={stylesD.heading}>§ 2 Vertragsgegenstand</Text>
@@ -233,7 +233,7 @@ export default function DatenschutzAGBScreen() {
 
       <Text style={stylesD.heading}>Haftungsausschluss</Text>
       <Text style={stylesD.text}>
-        MedMeister GmbH übernimmt keine Haftung für Schäden, die durch die Verwendung der bereitgestellten Informationen
+        KP Med GmbH übernimmt keine Haftung für Schäden, die durch die Verwendung der bereitgestellten Informationen
         entstehen. Die Nutzung erfolgt auf eigene Verantwortung.
       </Text>
 

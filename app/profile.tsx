@@ -306,7 +306,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <LinearGradient colors={MEDICAL_COLORS.warmOrangeGradient} style={styles.headerLogo}>
-          <Text style={styles.headerLogoText}>+ MEDMEISTER</Text>
+          <Text style={styles.headerLogoText}>+ KP MED</Text>
         </LinearGradient>
 
         <View style={styles.headerAvatar}>

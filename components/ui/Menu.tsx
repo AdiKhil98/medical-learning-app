@@ -305,7 +305,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
           </LinearGradient>
           <View style={styles.userInfo}>
             <Text style={styles.userWelcome}>Willkommen</Text>
-            <Text style={styles.userSubtitle}>Ihr MedMeister Profil</Text>
+            <Text style={styles.userSubtitle}>Ihr KP Med Profil</Text>
           </View>
         </View>
 

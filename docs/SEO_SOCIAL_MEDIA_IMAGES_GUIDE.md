@@ -1,4 +1,4 @@
-# Social Media Images Guide for MedMeister
+# Social Media Images Guide for KP Med
 
 This guide will help you create optimized social media preview images for your website.
 
@@ -24,8 +24,8 @@ This guide will help you create optimized social media preview images for your w
 
 Your social media images should include:
 
-1. **MedMeister Logo** - Use your app icon as the main branding element
-2. **App Name**: "MedMeister" prominently displayed
+1. **KP Med Logo** - Use your app icon as the main branding element
+2. **App Name**: "KP Med" prominently displayed
 3. **Tagline**: "Medizinische Prüfungsvorbereitung" or similar
 4. **Brand Colors**:
    - Primary: #D4A574 (gold/bronze)
@@ -50,7 +50,7 @@ Your social media images should include:
 5. Design your image:
    - Add background color (#F8FAFC)
    - Upload your app icon from `/assets/images/icon.png`
-   - Add text: "MedMeister" with large font
+   - Add text: "KP Med" with large font
    - Add tagline: "Medizinische Prüfungsvorbereitung"
    - Add accent color (#D4A574) as decorative elements
 6. Download as PNG
@@ -70,7 +70,7 @@ If you want a quick solution:
    - Create canvas: 1200 x 630 px
    - Add solid color background (#F8FAFC or #D4A574)
    - Center your icon (resize to about 400-500px)
-   - Add text "MedMeister" below icon
+   - Add text "KP Med" below icon
 3. Export as PNG
 
 ### Method 3: AI Image Generation
@@ -82,7 +82,7 @@ Use AI tools like:
 
 **Prompt example**:
 ```
-Create a professional social media banner for a medical education app called "MedMeister".
+Create a professional social media banner for a medical education app called "KP Med".
 1200x630 pixels. Medical theme with gold/bronze accent color (#D4A574),
 light background (#F8FAFC). Include medical symbols, clean modern design,
 German language context. Professional and trustworthy look.
@@ -110,8 +110,8 @@ If you want to use the same image for both platforms:
 
 ```html
 <!-- In web/index.html -->
-<meta property="og:image" content="https://medmeister.eu/og-image.png" />
-<meta name="twitter:image" content="https://medmeister.eu/og-image.png" />
+<meta property="og:image" content="https://kpmed.de/og-image.png" />
+<meta name="twitter:image" content="https://kpmed.de/og-image.png" />
 ```
 
 ### 4. Test Your Images
@@ -120,13 +120,13 @@ After deploying, test your social media previews:
 
 #### Facebook & LinkedIn
 1. Go to [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
-2. Enter your URL: `https://medmeister.eu`
+2. Enter your URL: `https://kpmed.de`
 3. Click "Scrape Again" to refresh cache
 4. Verify image displays correctly
 
 #### Twitter
 1. Go to [Twitter Card Validator](https://cards-dev.twitter.com/validator)
-2. Enter your URL: `https://medmeister.eu`
+2. Enter your URL: `https://kpmed.de`
 3. Click "Preview Card"
 4. Verify image and text display correctly
 
@@ -149,7 +149,7 @@ After deploying, test your social media previews:
 |                                          |
 |         [APP ICON - 400x400px]          |
 |                                          |
-|              MedMeister                      |
+|              KP Med                      |
 |    (Large, bold, brand color)            |
 |                                          |
 |  Medizinische Prüfungsvorbereitung      |

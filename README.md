@@ -1,4 +1,4 @@
-# MedMeister - Medical Learning App
+# KP Med - Medical Learning App
 
 A comprehensive medical learning application built with React Native and Expo, featuring flashcards, quizzes, and spaced repetition for medical education.
 

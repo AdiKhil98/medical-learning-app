@@ -5,7 +5,7 @@
 
 -- ============================================
 -- 1. AFFILIATES TABLE
--- People who promote MedMeister with referral links
+-- People who promote KP Med with referral links
 -- ============================================
 CREATE TABLE IF NOT EXISTS affiliates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS affiliates (
   updated_at timestamptz DEFAULT now()
 );
 
-COMMENT ON TABLE affiliates IS 'Affiliate partners who promote MedMeister with referral links';
+COMMENT ON TABLE affiliates IS 'Affiliate partners who promote KP Med with referral links';
 COMMENT ON COLUMN affiliates.commission_rate IS 'Commission rate as decimal (0.2000 = 20%)';
 COMMENT ON COLUMN affiliates.affiliate_code IS 'Unique code used in referral URLs (e.g. kpmed.de/land?ref=CODE)';
 

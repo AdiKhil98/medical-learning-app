@@ -1,4 +1,4 @@
-# Favicon Update Guide for MedMeister
+# Favicon Update Guide for KP Med
 
 ## Quick Update Method
 
@@ -72,8 +72,8 @@ Update `public/manifest.json` to reference your icons:
 
 ```json
 {
-  "name": "MedMeister",
-  "short_name": "MedMeister",
+  "name": "KP Med",
+  "short_name": "KP Med",
   "icons": [
     {
       "src": "/assets/images/favicon-192x192.png",
@@ -149,7 +149,7 @@ Create `web/index.html` (if it doesn't exist):
     <!-- Theme Color -->
     <meta name="theme-color" content="#D4A574" />
 
-    <title>MedMeister</title>
+    <title>KP Med</title>
   </head>
   <body>
     <div id="root"></div>

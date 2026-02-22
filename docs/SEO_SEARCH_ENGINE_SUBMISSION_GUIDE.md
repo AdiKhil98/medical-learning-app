@@ -1,4 +1,4 @@
-# Search Engine Submission Guide for MedMeister
+# Search Engine Submission Guide for KP Med
 
 Complete guide to submit your website to search engines and optimize for discovery.
 
@@ -6,9 +6,9 @@ Complete guide to submit your website to search engines and optimize for discove
 
 Before submitting to search engines, ensure:
 
-- [x] Website is deployed and accessible at https://medmeister.eu
-- [x] `robots.txt` is in place at https://medmeister.eu/robots.txt
-- [x] `sitemap.xml` is in place at https://medmeister.eu/sitemap.xml
+- [x] Website is deployed and accessible at https://kpmed.de
+- [x] `robots.txt` is in place at https://kpmed.de/robots.txt
+- [x] `sitemap.xml` is in place at https://kpmed.de/sitemap.xml
 - [ ] Social media images are uploaded (og-image.png, twitter-image.png)
 - [ ] Website loads correctly on desktop and mobile
 - [ ] All meta tags are properly configured
@@ -68,7 +68,7 @@ You have several verification methods:
 
 ### Step 5: Request Indexing (Optional - for faster indexing)
 1. Go to "URL Inspection" tool
-2. Enter your homepage: `https://medmeister.eu`
+2. Enter your homepage: `https://kpmed.de`
 3. Click "Request Indexing"
 4. Repeat for important pages (login, register)
 
@@ -89,7 +89,7 @@ After a few days, check:
 
 ### Step 2: Add Site
 1. Click "Add a site"
-2. Enter: `https://medmeister.eu`
+2. Enter: `https://kpmed.de`
 3. Choose verification method
 
 ### Step 3: Verify Ownership
@@ -112,7 +112,7 @@ After a few days, check:
 
 ### Step 4: Submit Sitemap
 1. Go to "Sitemaps" section
-2. Enter: `https://medmeister.eu/sitemap.xml`
+2. Enter: `https://kpmed.de/sitemap.xml`
 3. Click "Submit"
 
 ### Step 5: Submit URL
@@ -128,9 +128,9 @@ After a few days, check:
 If you want to reach Russian-speaking users:
 
 1. Go to [Yandex Webmaster](https://webmaster.yandex.com/)
-2. Add site: `https://medmeister.eu`
+2. Add site: `https://kpmed.de`
 3. Verify ownership (HTML file or meta tag)
-4. Submit sitemap: `https://medmeister.eu/sitemap.xml`
+4. Submit sitemap: `https://kpmed.de/sitemap.xml`
 
 ### Baidu (Chinese Market)
 If targeting Chinese users (note: requires ICP license for hosting in China):
@@ -241,28 +241,28 @@ To improve rankings:
 ### Test Sitemap
 ```bash
 # Visit directly in browser
-https://medmeister.eu/sitemap.xml
+https://kpmed.de/sitemap.xml
 ```
 
 ### Test Robots.txt
 ```bash
 # Visit directly in browser
-https://medmeister.eu/robots.txt
+https://kpmed.de/robots.txt
 ```
 
 ### Test Structured Data
 1. Go to [Google Rich Results Test](https://search.google.com/test/rich-results)
-2. Enter URL: `https://medmeister.eu`
+2. Enter URL: `https://kpmed.de`
 3. Check for errors
 
 ### Test Mobile Friendliness
 1. Go to [Mobile-Friendly Test](https://search.google.com/test/mobile-friendly)
-2. Enter URL: `https://medmeister.eu`
+2. Enter URL: `https://kpmed.de`
 3. Ensure it passes
 
 ### Test Page Speed
 1. Go to [PageSpeed Insights](https://pagespeed.web.dev/)
-2. Enter URL: `https://medmeister.eu`
+2. Enter URL: `https://kpmed.de`
 3. Aim for scores > 90
 
 ---

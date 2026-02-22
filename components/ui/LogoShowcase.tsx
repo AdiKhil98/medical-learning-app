@@ -90,7 +90,7 @@ export default function LogoShowcase() {
         </LinearGradient>
         <Text style={styles.description}>
           • Shield icon suggests protection/trust{'\n'}
-          • "MedMeister" + "Prüfungsvorbereitung"{'\n'}
+          • "KPMed" + "Prüfungsvorbereitung"{'\n'}
           • Perfect for German exam prep focus{'\n'}
           • Official/institutional feel
         </Text>

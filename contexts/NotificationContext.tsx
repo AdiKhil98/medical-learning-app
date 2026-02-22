@@ -359,16 +359,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           // For web, show a browser notification if supported
           if ('Notification' in window) {
             if (Notification.permission === 'granted') {
-              new Notification('MedMeister Test', {
-                body: 'Dies ist eine Test-Benachrichtigung von MedMeister!',
+              new Notification('KP Med Test', {
+                body: 'Dies ist eine Test-Benachrichtigung von KP Med!',
                 icon: '/favicon.png',
               });
               SecureLogger.log('Web notification sent successfully');
             } else if (Notification.permission !== 'denied') {
               const permission = await Notification.requestPermission();
               if (permission === 'granted') {
-                new Notification('MedMeister Test', {
-                  body: 'Dies ist eine Test-Benachrichtigung von MedMeister!',
+                new Notification('KP Med Test', {
+                  body: 'Dies ist eine Test-Benachrichtigung von KP Med!',
                   icon: '/favicon.png',
                 });
                 SecureLogger.log('Web notification sent after permission grant');
@@ -382,7 +382,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             }
           } else {
             SecureLogger.log('Web notifications not supported, showing alert');
-            alert('Test-Benachrichtigung: Dies ist eine Test-Benachrichtigung von MedMeister!');
+            alert('Test-Benachrichtigung: Dies ist eine Test-Benachrichtigung von KP Med!');
           }
         } catch (webNotificationError) {
           SecureLogger.error('Web notification failed', webNotificationError);
@@ -395,8 +395,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       try {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'MedMeister Test',
-            body: 'Dies ist eine Test-Benachrichtigung von MedMeister! 🔔',
+            title: 'KP Med Test',
+            body: 'Dies ist eine Test-Benachrichtigung von KP Med! 🔔',
             data: { test: true },
           },
           trigger: { seconds: 1 },

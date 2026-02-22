@@ -1,5 +1,5 @@
 /**
- * Service Worker for MedMeister App
+ * Service Worker for KP MED App
  *
  * Implements caching strategies for optimal offline experience:
  * - Cache-first for static assets (JS, CSS, fonts, images)
@@ -8,8 +8,8 @@
  */
 
 // IMPORTANT: This version MUST change with each deployment to force cache refresh
-// Format: medmeister-v{major}.{timestamp}
-const CACHE_VERSION = `medmeister-v2-${  Date.now()}`;
+// Format: kp-med-v{major}.{timestamp}
+const CACHE_VERSION = `kp-med-v2-${  Date.now()}`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -55,7 +55,7 @@ self.addEventListener('activate', (event) => {
           cacheNames
             .filter(
               (name) =>
-                (name.startsWith('kp-med-') || name.startsWith('medmeister-')) && name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE
+                name.startsWith('kp-med-') && name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE
             )
             .map((name) => {
               console.log('[SW] Deleting old cache:', name);

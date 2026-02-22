@@ -297,7 +297,7 @@ export default function SimulationScreen() {
         {/* Why Choose Section */}
         <View style={dynamicStyles.whyChooseSection}>
           <View style={styles.whyChooseHeader}>
-            <Text style={dynamicStyles.whyChooseTitle}>Warum MedMeister Simulationen?</Text>
+            <Text style={dynamicStyles.whyChooseTitle}>Warum KP MED Simulationen?</Text>
             <Text style={dynamicStyles.whyChooseSubtitle}>
               Die effektivste Methode zur Prüfungsvorbereitung mit nachweislichen Ergebnissen
             </Text>

@@ -1,5 +1,5 @@
 /**
- * Generate Favicon Files for MedMeister
+ * Generate Favicon Files for KP Med
  *
  * This script generates all necessary favicon sizes from the main icon
  * and copies them to the correct locations for web deployment.

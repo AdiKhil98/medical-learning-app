@@ -163,8 +163,8 @@ Deno.serve(async (req: Request) => {
 
       const testMessage: PushMessage = {
         to: push_token,
-        title: title || 'MedMeister Test',
-        body: body || 'Dies ist eine Test-Benachrichtigung von MedMeister!',
+        title: title || 'KP Med Test',
+        body: body || 'Dies ist eine Test-Benachrichtigung von KP Med!',
         data: { test: true }
       };
 

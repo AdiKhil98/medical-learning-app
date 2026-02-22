@@ -515,7 +515,7 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
                   </TouchableOpacity>
 
                   <TouchableOpacity style={dynamicStyles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
-                    <Text style={styles.outlineButtonText}>Über MedMeister</Text>
+                    <Text style={styles.outlineButtonText}>Über KP Med</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -639,13 +639,13 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
             {/* Contact Footer - Inside Scroll */}
             <View style={styles.contactFooterInScroll}>
               <TouchableOpacity
-                onPress={() => Linking.openURL('mailto:support@medmeister.eu')}
+                onPress={() => Linking.openURL('mailto:support@kpmed.de')}
                 style={styles.contactFooterButton}
                 activeOpacity={0.7}
               >
                 <Mail size={16} color={MEDICAL_COLORS.primary} />
                 <Text style={styles.contactFooterText}>
-                  Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@medmeister.eu</Text>
+                  Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -721,9 +721,9 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
                       </LinearGradient>
                     </TouchableOpacity>
 
-                    {/* Button 3 - Über MedMeister */}
+                    {/* Button 3 - Über KP Med */}
                     <TouchableOpacity style={styles.outlineButton} onPress={openAboutUs} activeOpacity={0.7}>
-                      <Text style={styles.outlineButtonText}>Über MedMeister</Text>
+                      <Text style={styles.outlineButtonText}>Über KP Med</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -893,13 +893,13 @@ function SlidingHomepageComponent({ onGetStarted: _onGetStarted, onboardingRefs 
       {!IS_WEB && (
         <View style={styles.contactFooter}>
           <TouchableOpacity
-            onPress={() => Linking.openURL('mailto:support@medmeister.eu')}
+            onPress={() => Linking.openURL('mailto:support@kpmed.de')}
             style={styles.contactFooterButton}
             activeOpacity={0.7}
           >
             <Mail size={16} color={MEDICAL_COLORS.primary} />
             <Text style={styles.contactFooterText}>
-              Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@medmeister.eu</Text>
+              Fragen? Kontaktieren Sie uns: <Text style={styles.contactFooterEmail}>support@kpmed.de</Text>
             </Text>
           </TouchableOpacity>
         </View>

@@ -24,9 +24,9 @@ module.exports = ({ config }) => {
         'theme-color': '#B15740',
         'apple-mobile-web-app-capable': 'yes',
         'apple-mobile-web-app-status-bar-style': 'default',
-        'apple-mobile-web-app-title': 'MEDMEISTER',
+        'apple-mobile-web-app-title': 'KP MED',
         'mobile-web-app-capable': 'yes',
-        'application-name': 'MEDMEISTER',
+        'application-name': 'KP MED',
       },
     },
 

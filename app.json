@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "MedMeister",
+    "name": "KP Med",
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,7 +24,7 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "shortName": "MedMeister",
+      "shortName": "KP Med",
       "lang": "de",
       "themeColor": "#D4A574",
       "backgroundColor": "#F8FAFC",
@@ -34,12 +34,12 @@
         "apple-mobile-web-app-capable": "yes",
         "apple-mobile-web-app-status-bar-style": "default",
         "og:type": "website",
-        "og:site_name": "MedMeister",
-        "og:title": "MedMeister - Medizinische Prüfungsvorbereitung für Ärzte",
+        "og:site_name": "KP Med",
+        "og:title": "KP Med - Medizinische Prüfungsvorbereitung für Ärzte",
         "og:description": "Professionelle Vorbereitung für KP und FSP Prüfungen. Interaktive Simulationen für internationale Ärzte in Deutschland.",
         "og:locale": "de_DE",
         "twitter:card": "summary_large_image",
-        "twitter:title": "MedMeister - Medizinische Prüfungsvorbereitung",
+        "twitter:title": "KP Med - Medizinische Prüfungsvorbereitung",
         "twitter:description": "Professionelle Vorbereitung für KP und FSP Prüfungen für internationale Ärzte."
       }
     },

@@ -98,7 +98,7 @@ Registered in: `app/_layout.tsx`
 
 1. Visit https://splendid-swan-dade5c.netlify.app
 2. Click install icon in address bar (Chrome/Edge)
-3. Or: Menu → Install MEDMEISTER
+3. Or: Menu → Install KP MED
 
 **Mobile:**
 

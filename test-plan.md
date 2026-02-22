@@ -1,7 +1,7 @@
 # Push Notification & Tone/Vibration Settings - Test Plan
 
 ## Overview
-This test plan verifies the end-to-end functionality of push notification and tone/vibration settings in the MedMeister app.
+This test plan verifies the end-to-end functionality of push notification and tone/vibration settings in the KP Med app.
 
 ## Prerequisites
 - Physical device (iOS/Android) for full testing
@@ -59,8 +59,8 @@ This test plan verifies the end-to-end functionality of push notification and to
 - [ ] Test notification respects sound/vibration settings
 
 #### 4.2 Test Notification Content
-- [ ] Title: "MedMeister Test"
-- [ ] Body: "Dies ist eine Test-Benachrichtigung von MedMeister!"
+- [ ] Title: "KP Med Test"
+- [ ] Body: "Dies ist eine Test-Benachrichtigung von KP Med!"
 - [ ] Notification appears in system notification center
 - [ ] Tapping notification opens app (if applicable)
 
