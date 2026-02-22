@@ -67,7 +67,7 @@ const faqs: FAQ[] = [
     id: '5',
     question: 'Wie kontaktiere ich den Support?',
     answer:
-      'Sie können uns per E-Mail unter support@kpmed.de erreichen oder den Chat-Button in dieser Hilfe-Sektion verwenden. Wir antworten normalerweise innerhalb von 24 Stunden.',
+      'Sie können uns per E-Mail unter support@medmeister.eu erreichen oder den Chat-Button in dieser Hilfe-Sektion verwenden. Wir antworten normalerweise innerhalb von 24 Stunden.',
     icon: HelpCircle,
   },
 ];
@@ -117,9 +117,9 @@ export default function HelpSupportScreen() {
   };
 
   const handleEmailSupport = async () => {
-    const email = 'support@kpmed.de';
-    const subject = 'KP Med App - Support Anfrage';
-    const body = 'Hallo KP Med Team,\n\nIch benötige Hilfe bei:\n\n[Beschreiben Sie hier Ihr Problem]\n\nVielen Dank!';
+    const email = 'support@medmeister.eu';
+    const subject = 'MedMeister App - Support Anfrage';
+    const body = 'Hallo MedMeister Team,\n\nIch benötige Hilfe bei:\n\n[Beschreiben Sie hier Ihr Problem]\n\nVielen Dank!';
 
     const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
@@ -145,10 +145,10 @@ export default function HelpSupportScreen() {
 
   const handleChatSupport = async () => {
     // Open email composer for chat support as well
-    const email = 'support@kpmed.de';
-    const subject = 'KP Med App - Chat Support Anfrage';
+    const email = 'support@medmeister.eu';
+    const subject = 'MedMeister App - Chat Support Anfrage';
     const body =
-      'Hallo KP Med Team,\n\nIch möchte gerne mit dem Support-Team chatten bezüglich:\n\n[Beschreiben Sie hier Ihr Anliegen]\n\nBitte kontaktieren Sie mich für weitere Unterstützung.\n\nVielen Dank!';
+      'Hallo MedMeister Team,\n\nIch möchte gerne mit dem Support-Team chatten bezüglich:\n\n[Beschreiben Sie hier Ihr Anliegen]\n\nBitte kontaktieren Sie mich für weitere Unterstützung.\n\nVielen Dank!';
 
     const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
@@ -422,7 +422,7 @@ export default function HelpSupportScreen() {
           <View style={dynamicStyles.contactMethods}>
             <TouchableOpacity style={dynamicStyles.contactMethod} onPress={handleEmailSupport} activeOpacity={0.7}>
               <Mail size={20} color={colors.primary} style={dynamicStyles.contactMethodIcon} />
-              <Text style={dynamicStyles.contactMethodText}>support@kpmed.de</Text>
+              <Text style={dynamicStyles.contactMethodText}>support@medmeister.eu</Text>
             </TouchableOpacity>
 
             <Button

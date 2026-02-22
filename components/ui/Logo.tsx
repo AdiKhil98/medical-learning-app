@@ -106,7 +106,7 @@ export default function Logo({
                     { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 32 : 24 },
                   ]}
                 >
-                  KP|MED
+                  MedMeister
                 </Text>
                 <Text style={[styles.modernTagline, { color: finalTextColor }]}>MEDICAL EXCELLENCE</Text>
               </View>
@@ -135,7 +135,7 @@ export default function Logo({
                     { color: finalTextColor, fontSize: size === 'small' ? 18 : size === 'large' ? 28 : 22 },
                   ]}
                 >
-                  KPMed
+                  MedMeister
                 </Text>
                 <Text style={[styles.badgeSubtitle, { color: finalTextColor }]}>Prüfungsvorbereitung</Text>
               </View>
@@ -225,7 +225,7 @@ export default function Logo({
                       },
                     ]}
                   >
-                    KP Med
+                    MedMeister
                   </Text>
                 ) : null}
               </View>
@@ -271,7 +271,7 @@ export default function Logo({
                       },
                     ]}
                   >
-                    KP Med
+                    MedMeister
                   </Text>
                   {(size === 'large' || size === 'medium') && (
                     <Text style={[styles.premiumSubtext, { color: finalTextColor }]}>

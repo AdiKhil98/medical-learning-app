@@ -1,7 +1,7 @@
 /**
  * App Color Constants
  *
- * Light theme colors for the KP Med application.
+ * Light theme colors for the MedMeister application.
  * These colors match the brand identity and provide consistent styling throughout the app.
  */
 

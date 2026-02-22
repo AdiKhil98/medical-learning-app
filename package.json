@@ -1,5 +1,5 @@
 {
-  "name": "kp-app-medical-learning",
+  "name": "medmeister-medical-learning",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "private": true,

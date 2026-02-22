@@ -171,7 +171,7 @@ export default function ResetPassword() {
                   <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
                 </LinearGradient>
               </View>
-              <Text style={styles.brandName}>KP MED</Text>
+              <Text style={styles.brandName}>MEDMEISTER</Text>
               <Text style={styles.brandTagline}>Professional Medical Training</Text>
             </View>
 
@@ -238,7 +238,7 @@ export default function ResetPassword() {
                 <BriefcaseMedical size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
-            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandName}>MEDMEISTER</Text>
             <Text style={styles.brandTagline}>Professional Medical Training</Text>
           </View>
 

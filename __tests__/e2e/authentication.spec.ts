@@ -13,7 +13,7 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should load homepage without errors', async ({ page }) => {
-    await expect(page).toHaveTitle(/KP Med/i);
+    await expect(page).toHaveTitle(/MedMeister/i);
 
     // Check for no console errors
     const errors: string[] = [];

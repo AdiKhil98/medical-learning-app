@@ -11,7 +11,7 @@ const sampleHTMLContent = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akute Nierenschädigung - KP Med</title>
+    <title>Akute Nierenschädigung - MedMeister</title>
     <style>
         .section-card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; }
         .section-title { font-size: 1.5rem; color: #2c3e50; margin-bottom: 20px; }

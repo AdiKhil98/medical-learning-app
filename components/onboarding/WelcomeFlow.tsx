@@ -41,13 +41,13 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
 
   const steps = [
     {
-      title: 'Über KP Med – Der Elite-Weg zum Erfolg',
+      title: 'Über MedMeister – Der Elite-Weg zum Erfolg',
       subtitle: 'Die führende Plattform für Ärztinnen und Ärzte',
       icon: Stethoscope,
       iconColor: '#667eea',
       bgGradient: ['#667eea', '#764ba2'] as readonly [string, string],
       content:
-        'KP Med ist nicht einfach eine weitere Lernplattform. Es ist eine exklusive, spezialisierte Umgebung, entwickelt für internationale Mediziner, die die Fachsprachprüfung, Kenntnisprüfung oder ähnliche Hürden erfolgreich meistern wollen.\n\nHochwertige medizinische Inhalte treffen auf KI-gestützte Lerntechnologie, die sich individuell an Ihre Stärken und Schwächen anpasst. Bei KP Med lernen Sie nicht einfach – Sie bereiten sich strategisch und effizient auf den echten Prüfungstag vor.\n\nMedizinerinnen und Mediziner, die sich gezielt für Exzellenz entschieden haben, haben mit KP Med den entscheidenden Schritt gemacht.\n\nJetzt ist es Ihre Gelegenheit, sich denselben Vorsprung zu verschaffen – mit einer Vorbereitung, die Sie konsequent an Ihr Ziel bringt.\n\nWenn Bestehen Ihr Ziel ist, ist KP Med Ihr Schlüssel. Wenn Exzellenz Ihr Anspruch ist, ist KP Med Ihr Zuhause.',
+        'MedMeister ist nicht einfach eine weitere Lernplattform. Es ist eine exklusive, spezialisierte Umgebung, entwickelt für internationale Mediziner, die die Fachsprachprüfung, Kenntnisprüfung oder ähnliche Hürden erfolgreich meistern wollen.\n\nHochwertige medizinische Inhalte treffen auf KI-gestützte Lerntechnologie, die sich individuell an Ihre Stärken und Schwächen anpasst. Bei MedMeister lernen Sie nicht einfach – Sie bereiten sich strategisch und effizient auf den echten Prüfungstag vor.\n\nMedizinerinnen und Mediziner, die sich gezielt für Exzellenz entschieden haben, haben mit MedMeister den entscheidenden Schritt gemacht.\n\nJetzt ist es Ihre Gelegenheit, sich denselben Vorsprung zu verschaffen – mit einer Vorbereitung, die Sie konsequent an Ihr Ziel bringt.\n\nWenn Bestehen Ihr Ziel ist, ist MedMeister Ihr Schlüssel. Wenn Exzellenz Ihr Anspruch ist, ist MedMeister Ihr Zuhause.',
       features: [
         'Personalisierte Lernpfade',
         'Realistische Patientensimulationen',
@@ -61,7 +61,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       iconColor: '#f093fb',
       bgGradient: ['#f093fb', '#f5576c'] as readonly [string, string],
       content:
-        'Die Inhalte von KP Med gehen weit über Standardwissen hinaus – sie sind hochrelevant, klinisch fokussiert und genau auf die Prüfungsanforderungen in Deutschland abgestimmt. Entwickelt von Ärztinnen und Ärzten mit echter Prüfungserfahrung, ist jedes Modul auf Präzision, Verstehen und Nachhaltigkeit ausgerichtet.\n\nKeine PDFs von gestern, keine zusammengewürfelten Notizen.\nBei KP Med finden Sie strukturierte, verständliche Inhalte, die auf das Wesentliche reduziert sind – perfekt zum gezielten Lernen und schnellen Fortschritt.\n\nUnsere Lernpfade fördern nicht nur das Verstehen, sondern auch das diagnostische Denken, das in deutschen Prüfungen erwartet wird. Sie lernen nicht nur – Sie werden klinisch denken und handeln.\n\nKP Med ist Ihr Partner für gezielte, effektive Prüfungsvorbereitung.',
+        'Die Inhalte von MedMeister gehen weit über Standardwissen hinaus – sie sind hochrelevant, klinisch fokussiert und genau auf die Prüfungsanforderungen in Deutschland abgestimmt. Entwickelt von Ärztinnen und Ärzten mit echter Prüfungserfahrung, ist jedes Modul auf Präzision, Verstehen und Nachhaltigkeit ausgerichtet.\n\nKeine PDFs von gestern, keine zusammengewürfelten Notizen.\nBei MedMeister finden Sie strukturierte, verständliche Inhalte, die auf das Wesentliche reduziert sind – perfekt zum gezielten Lernen und schnellen Fortschritt.\n\nUnsere Lernpfade fördern nicht nur das Verstehen, sondern auch das diagnostische Denken, das in deutschen Prüfungen erwartet wird. Sie lernen nicht nur – Sie werden klinisch denken und handeln.\n\nMedMeister ist Ihr Partner für gezielte, effektive Prüfungsvorbereitung.',
       features: ['Von Ärzten für Ärzte entwickelt', 'Klinisch fokussierte Inhalte', 'Diagnostisches Denken fördern'],
     },
     {
@@ -71,7 +71,7 @@ export default function WelcomeFlow({ visible, onComplete, onDismiss }: WelcomeF
       iconColor: '#4facfe',
       bgGradient: ['#4facfe', '#00f2fe'] as readonly [string, string],
       content:
-        'Mit KP Med erhalten Sie Zugang zur modernsten und realistischsten Prüfungssimulation, die es für internationale Ärzte in Deutschland gibt. Unsere KI-basierte Simulation repliziert die echte Prüfungssituation, bewertet Ihre Antworten intelligent und liefert eine detaillierte Analyse Ihrer individuellen Stärken und Schwächen.\n\nDas bedeutet: Sie testen nicht nur Ihr Wissen – Sie verbessern aktiv Ihre Strategie, Ihr Zeitmanagement und Ihre Prüfungskompetenz.\nJede Simulation bringt Sie messbar weiter – zielgerichtet, datenbasiert und personalisiert.\n\nÄrztinnen und Ärzte, die mit KP Med trainiert haben, gehen selbstsicher, fokussiert und mit echter Prüfungsroutine in die Prüfung.\n\nKP Med ist nicht einfach ein Test – es ist Ihre Generalprobe mit maximaler Wirkung.',
+        'Mit MedMeister erhalten Sie Zugang zur modernsten und realistischsten Prüfungssimulation, die es für internationale Ärzte in Deutschland gibt. Unsere KI-basierte Simulation repliziert die echte Prüfungssituation, bewertet Ihre Antworten intelligent und liefert eine detaillierte Analyse Ihrer individuellen Stärken und Schwächen.\n\nDas bedeutet: Sie testen nicht nur Ihr Wissen – Sie verbessern aktiv Ihre Strategie, Ihr Zeitmanagement und Ihre Prüfungskompetenz.\nJede Simulation bringt Sie messbar weiter – zielgerichtet, datenbasiert und personalisiert.\n\nÄrztinnen und Ärzte, die mit MedMeister trainiert haben, gehen selbstsicher, fokussiert und mit echter Prüfungsroutine in die Prüfung.\n\nMedMeister ist nicht einfach ein Test – es ist Ihre Generalprobe mit maximaler Wirkung.',
       features: [
         'Realistische KI-Prüfungssimulation',
         'Intelligente Leistungsanalyse',

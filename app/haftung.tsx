@@ -109,7 +109,7 @@ export default function HaftungScreen() {
         </View>
 
         <Text style={dynamicStyles.subtitle}>
-          Wichtige Informationen zur Haftung und zu den rechtlichen Bestimmungen der KP Med Plattform.
+          Wichtige Informationen zur Haftung und zu den rechtlichen Bestimmungen der MedMeister Plattform.
         </Text>
 
         <View style={dynamicStyles.warningBox}>
@@ -138,7 +138,7 @@ export default function HaftungScreen() {
 
         <View style={dynamicStyles.section}>
           <Text style={dynamicStyles.sectionTitle}>3. Haftungsausschluss</Text>
-          <Text style={dynamicStyles.sectionText}>KP Med GmbH übernimmt keine Haftung für:</Text>
+          <Text style={dynamicStyles.sectionText}>MedMeister GmbH übernimmt keine Haftung für:</Text>
           <Text style={dynamicStyles.sectionText}>
             • Schäden, die durch die Nutzung der bereitgestellten Informationen entstehen{'\n'}• Die Richtigkeit,
             Vollständigkeit oder Aktualität der Inhalte{'\n'}• Entscheidungen, die auf Basis der Plattforminhalte

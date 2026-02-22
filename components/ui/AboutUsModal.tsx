@@ -87,7 +87,7 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                 </LinearGradient>
                 <Text style={styles.cardTitle}>Unsere Lösung: Fokussiertes Lernen + Realistische Simulation</Text>
                 <Text style={styles.cardText}>
-                  Bei KP Med erhalten Sie genau das, was Sie brauchen: prüfungsrelevante medizinische Inhalte kombiniert
+                  Bei MedMeister erhalten Sie genau das, was Sie brauchen: prüfungsrelevante medizinische Inhalte kombiniert
                   mit realistischen Simulationen für Kenntnisprüfung und Fachsprachprüfung. Kein überflüssiges Wissen,
                   keine Zeitverschwendung – nur das, was wirklich in der Prüfung vorkommt.
                 </Text>
@@ -97,7 +97,7 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
             {/* Features Section */}
             <View style={styles.featuresSection}>
               <View style={styles.featuresHeader}>
-                <Text style={styles.featuresTitle}>Was macht KP Med besonders?</Text>
+                <Text style={styles.featuresTitle}>Was macht MedMeister besonders?</Text>
                 <Text style={styles.featuresSubtitle}>
                   Eine Plattform, die Ihnen die besten Lernressourcen und realistische Prüfungssituationen bietet.
                 </Text>
@@ -174,13 +174,13 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
                   </Text>
                 </View>
 
-                {/* KP Med Card */}
+                {/* MedMeister Card */}
                 <View style={[styles.pricingCard, styles.kpMedCard]}>
                   <View style={styles.recommendedBadge}>
                     <Text style={styles.recommendedBadgeText}>EMPFOHLEN</Text>
                   </View>
                   <Text style={styles.pricingCardIcon}>⚡</Text>
-                  <Text style={styles.pricingCardTitle}>KP Med Premium</Text>
+                  <Text style={styles.pricingCardTitle}>MedMeister Premium</Text>
                   <LinearGradient
                     colors={['#FF8C42', '#FF6B6B']}
                     start={{ x: 0, y: 0 }}
@@ -202,7 +202,7 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
             <LinearGradient colors={['#FFF7ED', '#FFEDD5']} style={styles.testimonial}>
               <Quote size={48} color="#FF8C42" strokeWidth={1.5} style={styles.quoteIcon} />
               <Text style={styles.testimonialText}>
-                "Ich habe mit KP Med beim ersten Versuch bestanden – die Simulationen waren fast identisch mit der
+                "Ich habe mit MedMeister beim ersten Versuch bestanden – die Simulationen waren fast identisch mit der
                 echten Prüfung!"
               </Text>
               <Text style={styles.testimonialAuthor}>— Dr. Sarah M.</Text>
@@ -212,7 +212,7 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
             <View style={styles.finalCta}>
               <Text style={styles.finalCtaTitle}>Starten Sie heute Ihre erfolgreiche Prüfungsvorbereitung</Text>
               <Text style={styles.finalCtaText}>
-                Erleben Sie den Unterschied selbst und sehen Sie, wie KP Med Ihre Vorbereitung transformiert.
+                Erleben Sie den Unterschied selbst und sehen Sie, wie MedMeister Ihre Vorbereitung transformiert.
               </Text>
               <TouchableOpacity onPress={handleGetStarted} activeOpacity={0.9}>
                 <LinearGradient colors={['#FF8C42', '#FF6B6B']} style={styles.ctaButtonLarge}>
@@ -224,12 +224,12 @@ export default function AboutUsModal({ visible, onClose }: AboutUsModalProps) {
               <View style={styles.contactSection}>
                 <Text style={styles.contactTitle}>Noch Fragen? Wir helfen gerne!</Text>
                 <TouchableOpacity
-                  onPress={() => Linking.openURL('mailto:support@kpmed.de')}
+                  onPress={() => Linking.openURL('mailto:support@medmeister.eu')}
                   style={styles.contactButton}
                   activeOpacity={0.7}
                 >
                   <Mail size={20} color="#FF6B6B" />
-                  <Text style={styles.contactEmail}>support@kpmed.de</Text>
+                  <Text style={styles.contactEmail}>support@medmeister.eu</Text>
                 </TouchableOpacity>
               </View>
             </View>

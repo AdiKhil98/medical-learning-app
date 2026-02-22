@@ -292,7 +292,7 @@ export default function RegisterScreen() {
                 <Stethoscope size={40} color="#FFFFFF" strokeWidth={2} />
               </LinearGradient>
             </View>
-            <Text style={styles.brandName}>KP MED</Text>
+            <Text style={styles.brandName}>MEDMEISTER</Text>
             <Text style={styles.brandTagline}>Professional Medical Training</Text>
           </View>
 

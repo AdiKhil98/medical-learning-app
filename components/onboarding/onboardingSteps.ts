@@ -9,7 +9,7 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     refKey: 'simulation_button',
-    title: 'Willkommen bei KP Med!',
+    title: 'Willkommen bei MedMeister!',
     description:
       'Starten Sie hier Ihre erste FSP oder KP Simulation mit einem KI-Patienten und Prüfer. Alles per Sprache — wie in der echten Prüfung.',
     tooltipPosition: 'above',

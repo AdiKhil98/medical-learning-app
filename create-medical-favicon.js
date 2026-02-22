@@ -1,5 +1,5 @@
 /**
- * Create Custom Medical-Themed Favicon for KP Med
+ * Create Custom Medical-Themed Favicon for MedMeister
  *
  * Design: Medical cross with book/learning element
  * Colors: Brand gold (#D4A574) and medical blue/white
@@ -16,7 +16,7 @@ const WHITE = '#FFFFFF';
 const MEDICAL_BLUE = '#2563EB';
 
 async function createMedicalFavicon() {
-  console.log('🎨 Creating custom medical-themed favicon for KP Med...\n');
+  console.log('🎨 Creating custom medical-themed favicon for MedMeister...\n');
 
   // Create SVG for medical cross with book icon
   const svg = `

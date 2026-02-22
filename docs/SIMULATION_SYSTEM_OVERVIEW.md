@@ -1,7 +1,7 @@
 # Simulation System - Complete Overview
 
 **Last Updated:** December 2, 2025
-**Document Purpose:** Comprehensive explanation of how the KP and FSP simulation systems work in the KP Med application
+**Document Purpose:** Comprehensive explanation of how the KP and FSP simulation systems work in the MedMeister application
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## Overview
 
-The Simulation System is a core feature of KP Med that provides realistic medical exam simulations for two types of medical assessments:
+The Simulation System is a core feature of MedMeister that provides realistic medical exam simulations for two types of medical assessments:
 
 - **KP (Klinische Prüfung)** - Clinical examination simulations
 - **FSP (Fachsprachprüfung)** - Medical language proficiency test simulations
@@ -829,7 +829,7 @@ const isValidSessionToken = (token: string): boolean => {
 
 ## Summary
 
-The KP Med Simulation System is a sophisticated feature that combines:
+The MedMeister Simulation System is a sophisticated feature that combines:
 
 1. **Access Control** - Subscription-based limits with free tier support
 2. **Session Tracking** - Precise logging with 5-minute minimum rule
